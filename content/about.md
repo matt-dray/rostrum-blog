@@ -18,4 +18,14 @@ I like data analysis and ecology. I currently work as an analyst ('data scientis
 
 # The site
 
-Generated with the [blogdown](https://github.com/rstudio/blogdown) package. The theme was forked from [@jrutheiser/hugo-lithium-theme](https://github.com/jrutheiser/hugo-lithium-theme) and modified by [Yihui Xie](https://github.com/yihui/hugo-lithium-theme).
+### 'Rostrum'?
+
+The mouthparts of insects in the order [Hemiptera](https://en.wikipedia.org/wiki/Hemiptera) (true bugs). But also a [speaker's platform](https://en.wikipedia.org/wiki/Rostra). *Do you see what we did there?*
+
+### Construction
+
+Site generated with the [blogdown](https://github.com/rstudio/blogdown) package. Theme forked from [@jrutheiser/hugo-lithium-theme](https://github.com/jrutheiser/hugo-lithium-theme) and modified by [Yihui Xie](https://github.com/yihui/hugo-lithium-theme). Hosted with [Netlify](https://www.netlify.com/).
+
+### Logo
+
+The logo is a cicada by Yu Luck from the [Noun Project](https://thenounproject.com/yuluck/collection/insect/).
