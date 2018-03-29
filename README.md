@@ -1,3 +1,3 @@
 # Rostrum
 
-Blog site under construction}
+Blog site under construction
