@@ -31,3 +31,7 @@ Site generated with the [blogdown](https://github.com/rstudio/blogdown) package.
 ### Logo and favicon
 
 Logo design by Matt. Logo created with [pixlr](https://pixlr.com) online image editor. Favicon created with [favicon.cc](https://www.favicon.cc/), a favicon.ico generator. 
+
+### Obligatory hex sticker
+
+![](https://raw.githubusercontent.com/matt-dray/stickers/master/output/rostrum_hex.png)
