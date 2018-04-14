@@ -24,13 +24,17 @@ I like data analysis and ecology. I currently work as an analyst ('data scientis
 
 The mouthparts of insects in the order [Hemiptera](https://en.wikipedia.org/wiki/Hemiptera) (true bugs). But also a [speaker's platform](https://en.wikipedia.org/wiki/Rostra). *Do you see what we did there?*
 
+### Doesn't this already exist?
+
+Sort-of. This was originally a [Wordpress blog](https://therostrumblog.wordpress.com/). We might migrate those posts at some point.
+
 ### Construction
 
 Site generated with the [blogdown](https://github.com/rstudio/blogdown) package. Theme forked from [@jrutheiser/hugo-lithium-theme](https://github.com/jrutheiser/hugo-lithium-theme) and modified by [Yihui Xie](https://github.com/yihui/hugo-lithium-theme). Hosted with [Netlify](https://www.netlify.com/).
 
 ### Logo and favicon
 
-Logo design by Matt. Logo created with [pixlr](https://pixlr.com) online image editor. Favicon created with [favicon.cc](https://www.favicon.cc/), a favicon.ico generator. 
+Logo design by Matt. Logo created with [pixlr](https://pixlr.com) online image editor. Favicon created with [favicon.cc](https://www.favicon.cc/), a favicon.ico generator (the antennae in the favicon will wiggle if your browser allows it). 
 
 ### Obligatory hex sticker
 
