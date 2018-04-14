@@ -1,42 +1,37 @@
 ---
-title: 'R Trek: exploring stardates with R'
+title: 'R Trek: exploring stardates'
 author: Matt Dray
 date: '2018-04-14'
-slug: r-trek-exploring-stardates-with-r
 categories:
-  - R
-  - pop culture
-  - text analysis
   - dataviz
+  - pop culture
+  - R
+  - text analysis
 tags:
+  - datatable
+  - dplyr
+  - ggplot
+  - leaflet
+  - plotly
+  - purrr
   - scifi
   - star trek
-  - datatable
-  - leaflet
-  - purrr
   - stringr
-  - ggplot
-  - plotly
-  - dplyr
+slug: r-trek-exploring-stardates
 ---
+
+<span style="color:lightgray">Matt Dray</span>
+
+![](https://media.giphy.com/media/bKnEnd65zqxfq/giphy.gif)
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, error = FALSE, message = FALSE, eval = TRUE)
 library(emo)
 ```
 
-`r emo::ji('star')`
-`r emo::ji('date')`
-`r emo::ji('page_with_curl')`
-`r emo::ji("point_right")`
-`r emo::ji("open_book")`
-`r emo::ji("man_facepalming")`
-`r emo::ji("vulcan_salute")`
-`r emo::ji("nerd_face")`
+# Captain’s log `r emo::ji("open_book")`
 
-# Captain’s log
-
->Star date 71750.5[^1]. Our mission is to use [R statistical software]() to extract star dates mentioned in the captain's log from the scripts of *Star Trek: The Next Generation* and observe their progression over the course of the show’s seven seasons. There appears to be some mismatch in the frequency of digits after the decimal point – could this indicate poor abillity to choose random numbers? Or something more sinister? We shall venture deep into uncharted territory for answers...
+>Star date 71750.5[^1]. Our mission is to use [R statistical software](https://www.r-project.org/about.html) to extract star dates mentioned in the captain's log from the scripts of *Star Trek: The Next Generation* and observe their progression over the course of the show’s seven seasons. There appears to be some mismatch in the frequency of digits after the decimal point – could this indicate poor abillity to choose random numbers? Or something more sinister? We shall venture deep into uncharted territory for answers...
 
 We're going to:
 
@@ -44,11 +39,11 @@ We're going to:
 * web scrape episode names using the `rvest` package and join them to the stardates data
 * tabulate and plot these interactively with `ggplot2`, `plotly` and `DT`
 
-Disclimaer: there's probably nothing new here for real Star Trek fans, but you might learn something new if you're an R fan.
+Disclaimer: there's probably nothing new here for real Star Trek fans, but you might learn something new if you're an R fan. `r emo::ji ("nerd_face")`
 
-# Make it so!
+# Lieutenant Commander Data
 
-Start by downloading all the [Star Trek: The Next Generation](https://en.wikipedia.org/wiki/Star_Trek:_The_Next_Generation) scripts from the [Star Trek Minutiae](http://www.st-minutiae.com/resources/scripts/#thenextgeneration) website. These are provided in a zipped folder with 176 text files -- one for each episode.
+Download the [Star Trek: The Next Generation](https://en.wikipedia.org/wiki/Star_Trek:_The_Next_Generation) scripts from the [Star Trek Minutiae](http://www.st-minutiae.com/resources/scripts/#thenextgeneration) website. These are provided in a zipped folder with 176 text files -- one for each episode.
 
 # Energise!
 
@@ -62,15 +57,14 @@ library(dplyr)  # data manipulation and pipe operator (%>%)
 library(janitor)  # misc data manipulation and aggregation
 ```
 
-# Lieutenant Commander Data
+# Number One
 
-We're going to extract the content of the the text files using the `read_lines()` function from the `readr` package. We'll iterate over each file with the `map()` function from the `purrr` package to read them into a list object where each element is a script.
-
+First, we're going to extract the content of the the text files using the `read_lines()` function from the `readr` package. We'll iterate over each file with the `map()` function from the `purrr` package to read them into a list object where each element is a script.
 
 ```{r read}
 scripts <- purrr::map(
   list.files(  # create vector of filepath strings to each file
-    "data/tng_scripts",  # filepath to where .txt files are
+    "data/tng_scripts",  # filepath to where downloaded scrpt files are
     full.names = TRUE  # full filepath
     ),
   readr::read_lines # read the content from each filepath
@@ -89,7 +83,7 @@ Our first example of a star date is in the Captain's log voiceover in lines 46 t
 scripts[[1]][46:50]
 ```
 
-# Engage! 
+# Engage! `r emo::ji("point_right")`
 
 We want to extract stardate strings from each script as delivered in the captain's voiceover. As you can see above, the stardates are given in the form 'captiain's log, stardate XXXXX.X', where each X is a digit. We can start our search pattern with 'date' to help us avoid matching to strings that have a stardate-like pattern but aren't stardates.
 
@@ -108,13 +102,13 @@ head(stardate_extract)  # see the first few list elements
 
 We're now going to tidy the data to:
 
-* turn the list into a dataframe (`tibble::enframe()`) with one row per episode
-* turn this into a dataframe with one row per stardate (`tidyr::unnest()`)
-* rename the columns 'episode' and 'stardate' (`dplyr::transmute()`) and remove the instances of the string 'date ' (`stringr::str_replace()`)
-* create a season column that manually applies the season number to each row depending on its episode number (`dplyr::mutate(dplyr::case_when())`)
-* remove strings not in the form XXXXX.X (`dplyr::mutate(dplyr::if_else())`)
+* turn the list into a dataframe -- `tibble::enframe()` -- with one row per episode
+* turn this into a dataframe with one row per stardate -- `tidyr::unnest()`
+* rename the columns 'episode' and 'stardate' -- `dplyr::transmute()`--  and remove the instances of the string 'date ' -- `stringr::str_replace()`
+* create a season column that manually applies the season number to each row depending on its episode number -- `dplyr::mutate(dplyr::case_when())`
+* remove strings not in the form XXXXX.X -- `dplyr::mutate(dplyr::if_else())`
 * extract the digit after the decimal place in the stardate
-* remove any NAs (`dplyr::filter()`)
+* remove any NAs -- `dplyr::filter()`
 
 ```{r tidy}
 stardate_tidy <- stardate_extract %>% 
@@ -165,7 +159,7 @@ stardate_tidy <- stardate_extract %>%
 dplyr::glimpse(stardate_tidy)
 ```
 
-# Prepare a scanner probe!
+# Prepare a scanner probe
 
 So we have the season and episode numbers, but we don't have the episode names. We could extract these from the scripts using regex as well, but another option is simply to scrape them from the [Wikipedia page](https://en.wikipedia.org/wiki/List_of_Star_Trek:_The_Next_Generation_episodes) that gives episode information for *The Next Generation*. If ou visit that link, you'll notice that the table sof episodes actually give a stardate, but they only provide one per episode -- our script-scraping shows that many episodes have mulitple instances of stardates and voiceovers by the captain.
 
@@ -218,16 +212,17 @@ stardate_tidy_names %>%
     ) %>% 
   DT::datatable(
     filter = "top",
-    extensions = 'Buttons',
+    rownames = FALSE,
+    extensions = "Buttons",
       options = list(
+        compact = TRUE,
+        pageLength = 5, # default number rows to show
         autoWidth = TRUE,  # column width consistent when making selections
         dom = "Blfrtip",
-        buttons = 
-          list("copy", list(
+        buttons = list(
             extend = "collection",
-            buttons = c("csv", "excel", "pdf"),
+            buttons = "csv",
             text = "Download"
-          ) 
           ),
         # customize the length menu
         lengthMenu = list(
@@ -239,7 +234,7 @@ stardate_tidy_names %>%
     )
 ```
 
-# On screen!
+# On screen
 
 Let's visualise the stardates by episode. 
 
@@ -319,7 +314,7 @@ stardate_tidy_names %>%
   knitr::kable()
 ```
 
-# Belay that!
+# Belay that
 
 How does this look across the seasons?
 
@@ -339,7 +334,7 @@ stardate_tidy_names %>%
     )
   ) +
   labs(
-    title = "There's a similar(ish) pattern of decimal stardate frequency across seasons",
+    title = "There's a similar(ish) pattern of decimal stardate frequency\nacross seasons",
     x = "stardate decimal value"
   ) +
   facet_wrap(~ season) +
@@ -347,20 +342,7 @@ stardate_tidy_names %>%
   scale_color_startrek()
 ```
 
-And in tabular form:
-
-```{r tabyl_decimal_season}
-stardate_tidy_names %>% 
-  group_by(season) %>% 
-  count(stardate_decimal) %>% 
-  rename(count = n) %>% 
-  DT::datatable(
-    filter = "top",
-    rownames = FALSE
-  )
-```
-
-# Speculate!
+# Speculate
 
 So stardates are more or less chronological across the duration of *The Next Generation*'s seven series, implying that the writers had a system in place. A few wobbles in consistency appear during the first few season suggest that it took some time to get this right. None of this is new information (see the links in the [Open Channel!](#open_channel) section below).
 
@@ -370,7 +352,7 @@ There appears to be some non-random pattern in the frequency of the digits 0 to 
 
 It turns out that this kind of investigation has been down before, buried in [Section II.5](http://starchive.cs.umanitoba.ca/?stardates/part2#1) of [STArchive]'s stardate FAQ. I don't know what method was used, but the exact results differ to the ones presented here. The basic pattern is similar though: few zeroes with 1, 2 and 3 being most common.
 
-# <a name="open_channel"></a>Open channel!
+# <a name="open_channel"></a>Open channel
 
 A selection of further reading:
 
@@ -386,5 +368,7 @@ A selection of further reading:
 ```{r}
 sessionInfo()
 ```
+
+![](https://media.giphy.com/media/OLPsCbh2N7QZi/giphy.gif)
 
 [^1]: The star date for today's date (14 April 2018) as calculated using the [trekguide.com method](http://trekguide.com/Stardates.htm); this "would be the stardate of this week's episode if *The Next Generation* and its spinoffs were still in production".
