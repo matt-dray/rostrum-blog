@@ -1,0 +1,103 @@
+---
+title: The Mountain Goats with geniusr
+author: Matt Dray
+date: '2018-04-17'
+slug: the-mountain-goats-with-geniusr
+categories:
+  - R
+  - pop culture
+  - text analysis
+tags:
+  - dplyr
+  - tidytext
+  - geniusr
+  - lyrics
+  - the mountain goats
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warnings = FALSE, message = FALSE, error = FALSE)
+```
+
+[Genius](https://genius.com/) is a lyrics site. You can access its data via API using [R](https://www.r-project.org/about.html) with the [`genuisr`](https://github.com/ewenme/geniusr) package by Ewen Henderson ([web](https://ewen.io/), [Github](https://github.com/ewenme), [Twitter](https://twitter.com/ewen_)).
+
+```{r cars}
+library(geniusr)  # access lyrics data
+library(dplyr)  # data manipulation
+library(tidytext)  # text wrangling
+```
+
+# Set up a genius app 
+
+To set up:
+
+1. create a [Genius API client](https://genius.com/api-clients/new)
+2. click 'generate access token' to generate an access token
+3. after `install.packages("geniusr"); library(geniusr); geniusr::genius_token()` you'll be promopted to enter the access token (if you need to change this, you can use `geniusr::genius_token(force = TRUE)` to be re-prompted)
+
+Now you can use the functions in the 'geniusr' package.
+
+# The Mountain Goats
+
+Find the artist ID for the band.
+
+```{r}
+goat_id <- geniusr::search_artist("the mountain goats") %>% 
+  dplyr::select(artist_id) %>% 
+  dplyr::pull()  # column to vector
+```
+
+The ID is `print(goat_id)`.
+
+Get the metadata for the band.
+
+```{r}
+goat_meta <- geniusr::get_artist_meta(artist_id = goat_id)
+
+print(goat_meta)
+```
+
+et songs
+
+Use the artist ID to obtain all the songs on Genius. Out of interest, we can see the songs with the highest number of annotations -- notes left by users -- on the site.
+
+```{r cache=TRUE}
+goat_songs <- geniusr::get_artist_songs(artist_id = goat_id)
+
+goat_songs %>% 
+  dplyr::arrange(desc(annotation_count)) %>% 
+  dplyr::select(song_id, song_name, annotation_count) %>% 
+  head()
+```
+
+Retrieve the song lyrics URLs as a vector.
+
+```{r}
+goat_song_urls <- goat_songs %>% select(song_lyrics_url) %>% pull()
+
+head(goat_song_urls)  # show first few
+```
+
+# Get lyrics
+
+Scrape the lyrics for each of the songs URLs.
+
+```{r cache=TRUE}
+library(tictoc)  # for timing
+library(beepr)  # for alerts
+
+goat_lyric_list <- list()  # Set up an empty list
+
+tictoc::tic()  # start timer
+
+for (i in 1:length(goat_song_urls)){
+
+  goat_lyric_list[[i]] <- try(
+    geniusr::scrape_lyrics_url(goat_song_urls[i])
+  )
+}
+
+tictoc::toc()  # end timer
+
+beepr::beep(8)  # alert on completion
+```
