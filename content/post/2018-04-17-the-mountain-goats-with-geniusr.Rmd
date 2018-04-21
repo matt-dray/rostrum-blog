@@ -33,7 +33,7 @@ To set up:
 
 1. create a [Genius API client](https://genius.com/api-clients/new)
 2. click 'generate access token' to generate an access token
-3. after `install.packages("geniusr"); library(geniusr); geniusr::genius_token()` you'll be promopted to enter the access token (if you need to change this, you can use `geniusr::genius_token(force = TRUE)` to be re-prompted)
+3. after `install.packages("geniusr"); library(geniusr); geniusr::genius_token()` you'll be promopted to enter the access token (if you need to change this, you can use `geniusr::genius_token(force = TRUE)` to be re-prompted for a new token, which you can regenerate from the [Genius site](https://genius.com/api-clients)
 
 Now you can use the functions in the 'geniusr' package.
 
@@ -92,9 +92,14 @@ tictoc::tic()  # start timer
 
 for (i in 1:length(goat_song_urls)){
 
-  goat_lyric_list[[i]] <- try(
-    geniusr::scrape_lyrics_url(goat_song_urls[i])
+  try_genius <- try(geniusr::scrape_lyrics_url(goat_song_urls[i]))
+  
+  goat_lyric_list[[goat_song_urls[i]]] <- ifelse(
+    test = class(try_genius) == "try-error",
+    yes = "No lyrics",
+    no = try_genius
   )
+
 }
 
 tictoc::toc()  # end timer
