@@ -32,8 +32,8 @@ library(tidytext)  # text wrangling
 To set up:
 
 1. create a [Genius API client](https://genius.com/api-clients/new)
-2. click 'generate access token' to generate an access token
-3. after `install.packages("geniusr"); library(geniusr); geniusr::genius_token()` you'll be promopted to enter the access token (if you need to change this, you can use `geniusr::genius_token(force = TRUE)` to be re-prompted for a new token, which you can regenerate from the [Genius site](https://genius.com/api-clients)
+2. click 'generate access token' under 'client access token' to generate an access token
+3. after `install.packages("geniusr"); library(geniusr); geniusr::genius_token()` you'll be promopted to enter the access token (if you need to change this, you can use `geniusr::genius_token(force = TRUE)` to be re-prompted for a new token, which you can regenerate from the [Genius site](https://genius.com/api-clients) as in step 2)
 
 Now you can use the functions in the 'geniusr' package.
 
@@ -90,13 +90,17 @@ goat_lyric_list <- list()  # Set up an empty list
 
 tictoc::tic()  # start timer
 
-for (i in 1:length(goat_song_urls)){
+for (i in 1:length(goat_song_urls)) {
 
-  try_genius <- try(geniusr::scrape_lyrics_url(goat_song_urls[i]))
+  # try because some songs don't return lyrics (instrumentals)
+  try_genius <- try(
+    geniusr::scrape_lyrics_url(goat_song_urls[i])  # 
+  )
+  
   
   goat_lyric_list[[goat_song_urls[i]]] <- ifelse(
     test = class(try_genius) == "try-error",
-    yes = "No lyrics",
+    yes = "No lyrics returned",
     no = try_genius
   )
 
@@ -104,5 +108,16 @@ for (i in 1:length(goat_song_urls)){
 
 tictoc::toc()  # end timer
 
-beepr::beep(8)  # alert on completion
+beepr::beep(5)  # alert on completion
+```
+
+The output is a list object wher each element is a song. Each of these song elements is itself a list of three elements: each line of the song, the song URL and the song name.
+
+### prep the data
+
+```{r}
+goat_lyric_df <- goat_lyric_list %>% 
+    unlist(recursive = FALSE) %>% 
+    tibble::enframe() %>% 
+    tidyr::unnest()
 ```
