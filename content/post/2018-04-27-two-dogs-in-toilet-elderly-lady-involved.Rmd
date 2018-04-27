@@ -1,0 +1,213 @@
+---
+title: TWO DOGS IN TOILET ELDERLY LADY INVOLVED
+author: Matt Dray
+date: '2018-04-27'
+slug: two-dogs-in-toilet-elderly-lady-involved
+categories:
+  - R
+  - dataviz
+tags:
+  - dplyr
+  - stringr
+  - leaflet
+  - sf
+  - datatable
+  - animals
+---
+
+<span style="color:lightgray">Matt Dray</span>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  error = FALSE,
+  warning = FALSE,
+  message = FALSE
+)
+```
+
+# TL;DR
+
+Animals get stuck in weird places. Oh, and the `sf` package in R can be used to convert co-ordinates for interactive mapping.
+
+# The problem
+
+I often work with data that has a [column for eastings and a column for northings](https://en.wikipedia.org/wiki/Easting_and_northing). Typically I want to convert these to [latitude](https://en.wikipedia.org/wiki/Latitude) and [longitude](https://en.wikipedia.org/wiki/Longitude) for interactive mapping using the [`leaflet`](https://rstudio.github.io/leaflet/) package in [R](https://www.r-project.org/about.html). What might be an easy way to do this?
+
+# Data
+
+## Animal rescues
+
+I've got some data with eastings and northings. It's [animal rescue incidents](https://data.london.gov.uk/dataset/animal-rescue-incidents-attended-by-lfb/resource/e6211993-9ea2-4ed4-9378-7344653e9c31) attended by the `r emo::ji("fire_engine")` [London Fire Brigade](https://www.london-fire.gov.uk/incidents/) `r emo::ji("fire_engine")` from the excellent [London Data Store](https://data.london.gov.uk/). In their words:
+
+> The London Fire Brigade attends a range of non-fire incidents (which we call 'special services'). These 'special services' include assistance to animals that may be trapped or in distress.
+
+This is pertinent because a pigeon recently fell down our chimney.
+
+![](/post/2018-04-27-two-dogs-in-toilet-elderly-lady-involved_files/mr-chimney.jpg)
+
+## Clean the data
+
+First download the data from [the datastore](https://data.london.gov.uk/dataset/animal-rescue-incidents-attended-by-lfb/resource/e6211993-9ea2-4ed4-9378-7344653e9c31). Then we can read it and clean the column names, one of which contains a rogue '£' (pounds sterling) symbol.
+
+```{r read_data}
+library(readr)  # for reading data
+library(dplyr)  # data manipulation and pipes (%>%)
+library(janitor)  # cleaning and misc functions
+library(lubridate)  # dealing with dates
+
+rescue <- readr::read_csv("data/lfb-animal-rescue.csv")
+
+# replace rogue encoded '£' with blank
+names(rescue) <- iconv(names(rescue), to = "ASCII", sub = "")
+
+# more cleaning
+rescue <- rescue %>% 
+  rename(IncidentNominalCost = `IncidentNominalCost()`) %>%  # no brackets
+  mutate(DateTimeOfCall = lubridate::ymd_hms(DateTimeOfCall))  # convert type
+
+glimpse(rescue)  # take a look at the structure
+```
+
+So each row is an 'incident' to which the brigade were called and there are columns for when, what, and where.
+
+## Explore the data
+
+It's a very interesting dataset. Below is a simplified interactive table for you to search through the data at your leisure.
+
+```{r datatable}
+# interactive table
+rescue %>%
+  mutate(  # allows for dropdown on interactive table
+    Animal = as.factor(AnimalGroupParent),
+    Borough = as.factor(Borough),
+    IncidentNominalCost = ifelse(
+      test = IncidentNominalCost == "NULL",
+      yes = NA,
+      no = as.numeric(IncidentNominalCost)
+    )
+  ) %>% 
+  select(
+    Incident = FinalDescription,
+    Animal,
+    Borough,
+    `Nominal cost (£)` = IncidentNominalCost
+  ) %>% 
+  DT::datatable(
+    filter = "top",
+    rownames = FALSE,
+    style = "bootstrap",
+    class = "compact",
+    caption = "Filter using the boxes under the column headers or the search box in the top right"
+  )
+```
+<p>
+<p>
+Some of the more... 'unique' entries:
+
+> DOG WITH JAW TRAPPED IN MAGAZINE RACK `r paste(emo::ji("dog"), emo::ji("newspaper"))`
+
+> SWAN IN DISTRESS `r paste(emo::ji("duck"), emo::ji("confounded"))`
+
+> FERRET STUCK IN LIFT SHAFT [ferret emoji needed]
+
+And of course:
+
+> TWO DOGS IN TOILET ELDERLY LADY INVOLVED `r paste(emo::ji("dog2"), emo::ji("poodle"), emo::ji("toilet"), emo::ji("older_woman"))`
+
+Hmmm.
+
+# The `sf` package
+
+The `leaflet()` function expects latitude and longitude, not eastings and northings. There's a number of ways to make the conversion, but I'm going to use the [`sf` ('special features') package](https://github.com/r-spatial/sf).
+
+```{r}
+library(sf)
+
+rescue_sf <- rescue %>% 
+  sf::st_as_sf(
+    coords = c("Easting_rounded", "Northing_rounded"),  # columns with coordinates
+    crs = 27700  # coordinate reference system code for eastings/northings
+  ) %>% 
+  sf::st_transform(crs = 4326)  # the coord ref system code for latlong
+
+print(rescue_sf)
+```
+
+So what happened?
+
+Our eastings and northings have been combined with `st_as_sf()` into a two element [list-column](https://jennybc.github.io/purrr-tutorial/ls13_list-columns.html) called `geometry` that has type `sfc_POINT`. Our object also contains some metadata detailing the geometry type -- points in our case -- and the projection system of the coordinate data, which we converted to latlong with the `st_transform()` function.
+
+Functions in the the `sf` package add an additional class -- the 'sf' class -- to our dataframe-class object. This makes it possible to perform spatial analysis.
+
+## `dplyr`-friendly
+
+One advantage of using `sf` is that sf-class objects use the [tidy data](http://r4ds.had.co.nz/tidy-data.html) paradigm that allows for manipulation using elements of the [tidyverse](https://www.tidyverse.org/). This is a familiar and simple concept to grasp for many people, particularly R beginners. Conversely, the `sp` package creates the 'Spatial Points Data Frame' (SPDF) class for points data. SPDFs are an [S4 class](http://adv-r.had.co.nz/S4.html), which means they have 'slots' of data, coordinates, etc. This is probably slightly less wieldy for beginners.
+
+So for example we can use the `filter()` function on our sf object.
+
+```{r dplyr}
+filtered_sf <- rescue_sf %>%
+  dplyr::filter(
+    AnimalGroupParent %in% c("Dog", "Cat", "Bird"),  # just these animals
+    DateTimeOfCall > lubridate::ymd("2017-01-01") &
+      DateTimeOfCall < lubridate::ymd("2017-12-31")  # 2017 only
+  )
+```
+
+# Map it
+
+So now we can plot the data. The `addMarkers()` function in `leaflet` will accept our `geometry` list-column and plot the latitude and longitude of each point.
+
+This is a very simple map for now. You can:
+
+* zoom with the `+` and `-` buttons or scroll with your mouse wheel
+* click and drag to move the map
+* click the points to get a pop-up showing more information
+
+```{r leaflet}
+library(leaflet)
+
+filtered_sf %>% 
+  leaflet::leaflet() %>% 
+  leaflet::addTiles() %>% 
+  leaflet::addAwesomeMarkers(
+    icon = leaflet::awesomeIcons(
+      library = "ion",
+      icon = "ion-android-alert",
+      iconColor = "white",
+      # colour by animal
+      markerColor = case_when(
+        filtered_sf$AnimalGroupParent == "Dog" ~ "red",
+        filtered_sf$AnimalGroupParent == "Cat" ~ "blue",
+        filtered_sf$AnimalGroupParent == "Bird" ~ "black"
+      )
+    ),
+    popup = ~paste0(
+      "<b>Animal</b>: ", filtered_sf$AnimalGroupParent, "<br>",
+      "<b>Incident</b>: ", filtered_sf$FinalDescription, "<br>",
+      "<b>Date</b>: ", filtered_sf$DateTimeOfCall, "<br>",
+      "<b>Borough</b>: ", filtered_sf$Borough, "<br>",
+      "<b>Nominal cost</b>: £", filtered_sf$IncidentNominalCost
+    )
+  )
+```
+<p>
+<p>
+Mostly I wrote this for my own reference. Feel free to discuss anything in the comments.
+
+My main advice? Keep an eye on your pets.
+
+# Further reading on `sf`
+
+* [Geocomputation with R](https://bookdown.org/robinlovelace/geocompr/) by Robin Lovelace, Jakub Nowosad and Jannes Muenchow
+* [Spatial Data in R: New Directions](https://edzer.github.io/UseR2017/#sf-handling-real-data) by Edzer Pebesma
+* [Spatial analysis pipelines with simple features in R](http://walkerke.github.io/2016/12/spatial-pipelines/) from Kyle Walker Data
+* [Should I learn sf or sp for spatial R programming?](http://www.seascapemodels.org/rstats/2018/03/23/should-I-learn-sp-or-sf.html) by Seascape Models
+* [Introduction to GIS with R: Spatial data with the sp and sf packages](https://www.jessesadler.com/post/gis-with-r-intro/) and [Geocoding with R: Using ggmap to geocode and map historical data](https://www.jessesadler.com/post/geocoding-with-r/) by Jesse Sadler
+
+# R session information
+
+```{r sessionInfo}
+sessionInfo()
+```
