@@ -1,0 +1,188 @@
+---
+title: The Mountain Goats with geniusr
+author: Matt Dray
+date: '2018-04-30'
+slug: the-mountain-goats-with-geniusr
+draft: true
+categories:
+  - R
+  - pop culture
+  - text analysis
+tags:
+  - dplyr
+  - tidytext
+  - geniusr
+  - lyrics
+  - the mountain goats
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warnings = FALSE, message = FALSE, error = FALSE)
+```
+
+[Genius](https://genius.com/) is a lyrics site. You can access its data via API using [R](https://www.r-project.org/about.html) with the [`genuisr`](https://github.com/ewenme/geniusr) package by Ewen Henderson ([web](https://ewen.io/), [Github](https://github.com/ewenme), [Twitter](https://twitter.com/ewen_)).
+
+```{r packages}
+library(geniusr)  # access lyrics data (from dev version)
+library(dplyr)  # data manipulation
+library(tidytext)  # text wrangling
+library(purrr)  # functional programming
+library(beepr)  # for alerts
+library(ggplot2)  # plotting
+```
+
+# Set up a genius app 
+
+To set up:
+
+1. create a [Genius API client](https://genius.com/api-clients/new)
+2. click 'generate access token' under 'client access token' to generate an access token
+3. after `install.packages("geniusr"); library(geniusr); geniusr::genius_token()` you'll be promopted to enter the access token (if you need to change this, you can use `geniusr::genius_token(force = TRUE)` to be re-prompted for a new token, which you can regenerate from the [Genius site](https://genius.com/api-clients) as in step 2)
+
+Now you can use the functions in the 'geniusr' package.
+
+# The Mountain Goats
+
+Find the artist ID for the band.
+
+```{r get_artist_id}
+artist_id <- geniusr::search_artist("the mountain goats") %>% 
+  dplyr::select(artist_id) %>% 
+  dplyr::pull()  # column to vector
+```
+
+The ID is `print(artist_id)`.
+
+Get the metadata for the band.
+
+```{r get_artist_meta}
+artist_meta <- geniusr::get_artist_meta(artist_id = artist_id)
+
+print(artist_meta)
+```
+
+# Get songs
+
+Use the artist ID to obtain all the songs on Genius. Out of interest, we can see the songs with the highest number of annotations -- notes left by users -- on the site.
+
+```{r get_songs}
+# get all songs for a given artist id
+songs <- geniusr::get_artist_songs(artist_id = artist_id)
+
+# a random sample of the returned 
+songs %>% 
+  dplyr::sample_n(10)
+```
+
+We can also access a greater list of data for each song, including the album name and release date.
+
+```{r get_song_metadata}
+
+songs_meta <- map_df(
+  songs$song_id,
+  get_song_meta
+)
+
+# get_song_meta(song_id = 1449474)
+# # get the metadata for each song (album, etc)
+# songs_meta <- geniusr::get_song_meta(songs, select(songs, song_id))
+# 
+# # join the meta data to the song data
+# artist_songs %>%
+#   left_join(
+#     x = songs,
+#     y = songs_meta,
+#     by = song_id,
+#     suffix = c("_song", "_meta")
+#   )
+```
+
+# Get lyrics
+
+Scrape the lyrics for each of the songs URLs.
+
+There are some songs that have no lyrics, so let's remove these first.
+
+```{r remove_instrumentals}
+songs <- songs %>% 
+  dplyr::filter(
+    !song_lyrics_url %in% c(
+      "https://genius.com/The-mountain-goats--lyrics",
+      "https://genius.com/The-mountain-goats-for-the-west-coast-dark-ambient-bedroom-warriors-lyrics",
+      "https://genius.com/The-mountain-goats-grave-dust-lyrics",
+      "https://genius.com/The-mountain-goats-scaling-the-well-lyrics",
+      "https://genius.com/The-mountain-goats-vanishing-act-lyrics"
+    )
+  )
+```
+
+Now we'll iterate over all of the song lyrics URLs to retrieve the lyrics associated with each.
+
+This gives a dataframe with a row per line of lyrics, with columns for song name, lyrics URL and artist name.
+
+```{r purrr_lyrics}
+lyrics <- map_df(
+  songs$song_lyrics_url,
+  scrape_lyrics_url
+)
+
+lyrics <- lyrics %>%
+  group_by(song_name) %>% 
+  mutate(line_number = row_number()) %>% 
+  ungroup(); beepr::beep(5)
+
+# check out a sample of lines
+lyrics %>% 
+  dplyr::sample_n(10) %>% 
+  select(line, song_name)
+```
+
+# Text analysis
+
+## Extract words
+
+```{r word_per_row}
+lyrics_tidy <- lyrics %>%
+  unnest_tokens(word, line) %>% 
+  anti_join(stop_words)
+
+sample_n(lyrics_tidy, 10) %>% 
+  select(word, song_name)
+```
+
+## Word frequency
+
+```{r count_words}
+lyrics_tidy %>%
+  count(word, sort = TRUE) 
+```
+
+And as a plot.
+
+```{r plot_word_freq}
+lyrics_tidy %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 100) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n)) +
+  geom_col() +
+  xlab(NULL) +
+  coord_flip() +
+  theme_minimal()
+```
+
+## Sentiment
+
+To what extent to songs and albums differ in sentiment?
+
+Join a lexicon of sentiment-labelled words to the lyrics.
+
+### By song
+
+Assign a sentiment score for each song as a whole and look at the most positive nad most negative; grouping.
+
+### By album
+
+## Topic modelling
+
+Can we group songs by similar lyrical content?
