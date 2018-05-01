@@ -28,7 +28,7 @@ knitr::opts_chunk$set(
 
 # TL;DR
 
-Animals get stuck in weird places. Oh, and the `sf` package in R can be used to convert co-ordinates for interactive mapping.
+Animals get stuck in weird places. Oh, and the `sf` package in R can be used in conjunction with `leaflet` for interactive mapping.
 
 # The problem
 
@@ -38,7 +38,7 @@ I often work with data that has a [column for eastings and a column for northing
 
 ## Animal rescues
 
-I've got some data with eastings and northings. It's [animal rescue incidents](https://data.london.gov.uk/dataset/animal-rescue-incidents-attended-by-lfb/resource/e6211993-9ea2-4ed4-9378-7344653e9c31) attended by the `r emo::ji("fire_engine")` [London Fire Brigade](https://www.london-fire.gov.uk/incidents/) `r emo::ji("fire_engine")` from the excellent [London Data Store](https://data.london.gov.uk/). In their words:
+I've got some data with eastings and northings. It's [animal rescue incidents](https://data.london.gov.uk/dataset/animal-rescue-incidents-attended-by-lfb/resource/e6211993-9ea2-4ed4-9378-7344653e9c31) attended by the [London Fire Brigade](https://www.london-fire.gov.uk/incidents/) `r emo::ji("fire_engine")` from the excellent [London Data Store](https://data.london.gov.uk/). In their words:
 
 > The London Fire Brigade attends a range of non-fire incidents (which we call 'special services'). These 'special services' include assistance to animals that may be trapped or in distress.
 
@@ -105,7 +105,7 @@ rescue %>%
 ```
 <p>
 <p>
-Some of the more... 'unique' entries:
+Obviously there are plenty of cats up trees, but there's so much more. Some of the more unique entries are:
 
 > DOG WITH JAW TRAPPED IN MAGAZINE RACK `r paste(emo::ji("dog"), emo::ji("newspaper"))`
 
@@ -117,11 +117,17 @@ And of course:
 
 > TWO DOGS IN TOILET ELDERLY LADY INVOLVED `r paste(emo::ji("dog2"), emo::ji("poodle"), emo::ji("toilet"), emo::ji("older_woman"))`
 
-Hmmm.
+Hmmm. `r emo::ji("thinking_face")`
 
 # The `sf` package
 
-The `leaflet()` function expects latitude and longitude, not eastings and northings. There's a number of ways to make the conversion, but I'm going to use the [`sf` ('special features') package](https://github.com/r-spatial/sf).
+Why the [`sf` ('special features') package](https://github.com/r-spatial/sf)? Most importantly, simple feature access is a widely-used [ISO standard](https://www.iso.org/standard/40114.html) and the package supports the [tidy data](http://r4ds.had.co.nz/tidy-data.html) paradigm and [tidyverse operations](https://www.tidyverse.org/). This and more was [spelled out by Edzer Pebesma (hte author of `sf`) in a post](https://edzer.github.io/UseR2017/) from [UseR! 2017](https://user2017.brussels/).
+
+You can also get an opinion on whether you [should learn `sf` or `sp` for spatial R programming](http://www.seascapemodels.org/rstats/2018/03/23/should-I-learn-sp-or-sf.html) from Seascape Models.
+
+## Points
+
+The `leaflet()` interactive mapping function expects latitude and longitude, not eastings and northings. There's a number of ways to make the conversion for our dataset, but here I'm using the `st_transform()` function from `sf`.
 
 ```{r}
 library(sf)
@@ -142,9 +148,7 @@ Our eastings and northings have been combined with `st_as_sf()` into a two eleme
 
 Functions in the the `sf` package add an additional class -- the 'sf' class -- to our dataframe-class object. This makes it possible to perform spatial analysis.
 
-## `dplyr`-friendly
-
-One advantage of using `sf` is that sf-class objects use the [tidy data](http://r4ds.had.co.nz/tidy-data.html) paradigm that allows for manipulation using elements of the [tidyverse](https://www.tidyverse.org/). This is a familiar and simple concept to grasp for many people, particularly R beginners. Conversely, the `sp` package creates the 'Spatial Points Data Frame' (SPDF) class for points data. SPDFs are an [S4 class](http://adv-r.had.co.nz/S4.html), which means they have 'slots' of data, coordinates, etc. This is probably slightly less wieldy for beginners.
+As mentiond, one advantage of using `sf` is that sf-class objects use the [tidy data](http://r4ds.had.co.nz/tidy-data.html) paradigm that allows for manipulation using elements of the [tidyverse](https://www.tidyverse.org/). This is a familiar and simple concept to grasp for many people, particularly R beginners. Conversely, the `sp` package creates the 'Spatial Points Data Frame' (SPDF) class for points data. SPDFs are an [S4 class](http://adv-r.had.co.nz/S4.html), which means they have 'slots' of data, coordinates, etc. This is probably slightly less wieldy for beginners.
 
 So for example we can use the `filter()` function on our sf object.
 
@@ -157,9 +161,68 @@ filtered_sf <- rescue_sf %>%
   )
 ```
 
+We can also the `st_coordinates` function to extract the XY (latitude and longitude) coordinates from the column containing our `sf` point geometry.
+
+```{r st_coordinates}
+# extract coordinates into two-column dataframe
+rescue_coords <- as.data.frame(st_coordinates(filtered_sf))
+
+# bind these to rescue dataset
+filtered_sf <- dplyr::bind_cols(filtered_sf, rescue_coords)
+
+# preview
+head(filtered_sf)
+```
+
+# Polygons 
+
+While we're messing around with the `sf` package we can add in the borders for each of the London boroughs from a [GeoJSON](http://geojson.org/) file.
+
+We can do this by reading [Local Authority Districts](https://en.wikipedia.org/wiki/Districts_of_England) (LADs) from the [Open Geography Portal](http://geoportal.statistics.gov.uk/) and then use the `st_as_sf()` function to make the conversion from the sp class to the sf class. This means our polygon dataset is a tidy dataframe with the polygon information stored in a `geometry` list-column with as many elements as required to draw each polygon.
+
+```{r geojson}
+library(geojsonio)  # for working with geojson files
+
+# read geojson from the web (local authorities)
+lad_json <- geojsonio::geojson_read(
+  x = "https://opendata.arcgis.com/datasets/fab4feab211c4899b602ecfbfbc420a3_4.geojson",
+  what = "sp"  # spatial class
+)
+
+# convert to sf
+lad_sf <- sf::st_as_sf(lad_json)
+
+# preview
+head(lad_sf)
+```
+
+But which of these LADs are London boroughs? We can extract a vector of the boroughs from Wikipedia using the `rvest` package and use it to filter our data. The CSS selector used in `html_nodes()` can be extracted using the very handy [`SelectorGadget` tool](http://selectorgadget.com/).
+
+```{r boroughs}
+library(rvest)  # scraping webpages
+library(xml2)  # parsing XML
+
+# read the webpage
+wiki <- xml2::read_html("https://en.wikipedia.org/wiki/List_of_London_boroughs")
+
+# get borough names
+boroughs <- wiki %>% 
+  rvest::html_nodes(css = "td:nth-child(1) > a") %>%
+  rvest::html_text() %>% 
+  tolower()
+
+# filter the sf for london boroughs
+boroughs_sf <- lad_sf %>% 
+  mutate(lad17nm = tolower(lad17nm)) %>% 
+  dplyr::filter(lad17nm %in% boroughs)
+
+# preview
+head(boroughs_sf)
+```
+
 # Map it
 
-So now we can plot the data. The `addMarkers()` function in `leaflet` will accept our `geometry` list-column and plot the latitude and longitude of each point.
+So now we can plot the data. The `addPolygons()` function accepts each `MULTIPOLYGON` in the list-column of our London boroughs dataset.  The `addMarkers()` function accepts the `POINTS` list-column to plot each point at the latitude and longitude specified.
 
 This is a very simple map for now. You can:
 
@@ -168,24 +231,37 @@ This is a very simple map for now. You can:
 * click the points to get a pop-up showing more information
 
 ```{r leaflet}
-library(leaflet)
+library(leaflet)  # for interactive mapping
 
-filtered_sf %>% 
-  leaflet::leaflet() %>% 
-  leaflet::addTiles() %>% 
-  leaflet::addAwesomeMarkers(
+# put the map together
+leaflet::leaflet(boroughs_sf) %>% 
+  leaflet::addTiles() %>%
+  leaflet::addPolygons(  # add London borough boundaries
+    label = ~tools::toTitleCase(lad17nm),  # label on hover
+    color = "black",  # boundary colour
+    weight = 2,  # boundary thickness
+    opacity = 1,  # fully opaque lines
+    fillOpacity = 0.2,  # mostly transparent
+    highlightOptions = highlightOptions(
+      color = "white",  # turn boundary white on hover
+      weight = 2,  # same as polygon boundary
+      bringToFront = TRUE  # overlay the highglight
+    )
+  ) %>% 
+  leaflet::addAwesomeMarkers( # add incident points
+    lng = filtered_sf$X, lat = filtered_sf$Y,
     icon = leaflet::awesomeIcons(
-      library = "ion",
-      icon = "ion-android-alert",
-      iconColor = "white",
+      library = "ion",  # from this icon library
+      icon = "ion-android-alert",  # use this icon
+      iconColor = "white",  # colour it white
       # colour by animal
-      markerColor = case_when(
+      markerColor = case_when(  # different colours for each
         filtered_sf$AnimalGroupParent == "Dog" ~ "red",
         filtered_sf$AnimalGroupParent == "Cat" ~ "blue",
         filtered_sf$AnimalGroupParent == "Bird" ~ "black"
       )
     ),
-    popup = ~paste0(
+    popup = ~paste0(  # display this information on click
       "<b>Animal</b>: ", filtered_sf$AnimalGroupParent, "<br>",
       "<b>Incident</b>: ", filtered_sf$FinalDescription, "<br>",
       "<b>Date</b>: ", filtered_sf$DateTimeOfCall, "<br>",
@@ -196,17 +272,17 @@ filtered_sf %>%
 ```
 <p>
 <p>
-Mostly I wrote this for my own reference. Feel free to discuss anything in the comments.
+Okay cool, we get a map of London with borough boundaries and markers showing incidents in 2017, with a different colout for each of three selected animal groups.
 
-My main advice? Keep an eye on your pets.
+Mostly I wrote this for my own reference to learn a bit more about using `sf` for points and polygons. Feel free to discuss or suggest anything in the comments.
+
+My main advice? _Keep an eye on your pets. And consider covering your chimney_.
 
 # Further reading on `sf`
 
 * [Geocomputation with R](https://bookdown.org/robinlovelace/geocompr/) by Robin Lovelace, Jakub Nowosad and Jannes Muenchow
-* [Spatial Data in R: New Directions](https://edzer.github.io/UseR2017/#sf-handling-real-data) by Edzer Pebesma
-* [Spatial analysis pipelines with simple features in R](http://walkerke.github.io/2016/12/spatial-pipelines/) from Kyle Walker Data
-* [Should I learn sf or sp for spatial R programming?](http://www.seascapemodels.org/rstats/2018/03/23/should-I-learn-sp-or-sf.html) by Seascape Models
 * [Introduction to GIS with R: Spatial data with the sp and sf packages](https://www.jessesadler.com/post/gis-with-r-intro/) and [Geocoding with R: Using ggmap to geocode and map historical data](https://www.jessesadler.com/post/geocoding-with-r/) by Jesse Sadler
+* [Spatial analysis pipelines with simple features in R](http://walkerke.github.io/2016/12/spatial-pipelines/) from Kyle Walker Data
 
 # R session information
 
