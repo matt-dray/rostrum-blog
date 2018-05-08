@@ -16,7 +16,7 @@ In terms of my research, I am particularly interested in using large scale ecolo
 
 [Twitter](https://twitter.com/mattdray) | [Github](https://github.com/matt-dray) | [RPubs](https://rpubs.com/mattdray)
 
-I like data analysis and ecology. I currently work as an analyst ('data scientist') and [R](https://www.r-project.org/) evangelist in the public sector. I have a PhD in the effects of environmental change on plant litter decay from Cardiff University and an Entomology MSc from Imperial College London. I'm not [the rapper](https://www.drdre.com/).
+I like data analysis and ecology. I currently work as an analyst ('data scientist') and [R](https://www.r-project.org/) evangelist in the public sector. I have a PhD in the effects of environmental change on plant litter decay from Cardiff University and an Entomology MSc from Imperial College London. I'm not [the rapper](https://www.drdre.com/). Nor the [gynaecologist](http://www.bbc.co.uk/news/entertainment-arts-44043205).
 
 # The site
 
