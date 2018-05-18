@@ -67,7 +67,9 @@ artist_meta <- geniusr::get_artist_meta(artist_id = artist_id)
 print(artist_meta)
 ```
 
-# Get songs
+# Get
+
+## Songs
 
 Use the artist ID to obtain all the songs on Genius. Out of interest, we can see the songs with the highest number of annotations -- notes left by users -- on the site.
 
@@ -87,12 +89,30 @@ Normally this would be done with the `get_song_meta()` function, but there appea
 songs_meta <- map_df(songs$song_id, get_song_meta)
 ```
 
+## Albums
+
 John Darnielle is well-known for 
 
 ```{r album_count}
 unique(songs_meta$album_name)
 ```
 
+We can label the studio albums by scraping a list of them from [The Mountain Goats discography page on Wikipedia(https://en.wikipedia.org/wiki/The_Mountain_Goats_discography).
+
+```{r scrape}
+library(rvest)  # scraping webpages
+library(xml2)  # parsing XML
+
+# read the webpage
+wiki <- xml2::read_html("https://en.wikipedia.org/wiki/The_Mountain_Goats_discography")
+
+# get borough names
+studio_albums <- wiki %>% 
+  rvest::html_nodes(css = ".plainrowheaders tr~ tr+ tr th") %>%
+  rvest::html_text()
+
+studio_albums
+```
 
 # Get lyrics
 
