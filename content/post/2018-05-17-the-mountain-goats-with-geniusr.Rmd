@@ -87,11 +87,18 @@ Normally this would be done with the `get_song_meta()` function, but there appea
 songs_meta <- map_df(songs$song_id, get_song_meta)
 ```
 
+John Darnielle is well-known for 
+
+```{r album_count}
+unique(songs_meta$album_name)
+```
+
+
 # Get lyrics
 
 Scrape the lyrics for each of the songs URLs. We'll iterate over all of the song lyrics URLs to retrieve the lyrics associated with each.
 
-<!-- There are some songs that have no lyrics, so let's remove these first. -->
+There are some songs that have no lyrics, so let's remove these first.
 
 ```{r remove_instrumentals}
 songs_meta_filtered <- songs_meta %>%
@@ -116,17 +123,18 @@ You'll get an error if you try to run the `scrape_lyrics_url()` function inside 
 lyrics <- map_df(
   songs_meta_filtered$song_lyrics_url,
   scrape_lyrics_url
-); beepr::beep(5)
+)
 
 lyrics <- lyrics %>%
   group_by(song_name) %>% 
   mutate(line_number = row_number()) %>% 
-  ungroup()
+  ungroup() %>% 
+  left_join(songs_meta_filtered, by = "song_name")
 
 # check out a sample of lines
 lyrics %>% 
   dplyr::sample_n(10) %>% 
-  select(line, song_name)
+  select(line, song_name, album_name)
 ```
 
 # Text analysis
@@ -143,6 +151,7 @@ sample_n(lyrics_tidy, 10) %>%
 ```
 
 ## Word frequency
+
 
 ```{r count_words}
 lyrics_tidy %>%
@@ -161,4 +170,17 @@ lyrics_tidy %>%
   xlab(NULL) +
   coord_flip() +
   theme_minimal()
+```
+
+## Sentiment
+
+```{r}
+sentiment_nrc <- get_sentiments("nrc")
+
+lyrics_tidy %>%
+  filter(album_name %in% c("All Hail West Texas", "Goths", "Beat the Champ", "The Sunset Tree")) %>%
+  inner_join(sentiment_nrc, by = "word") %>%
+  group_by(album_name) %>% 
+  count(sentiment) %>% 
+  arrange(album_name, desc(n))
 ```
