@@ -1,5 +1,7 @@
 # rostrum-blog
 
+<img src="https://raw.githubusercontent.com/matt-dray/stickers/master/output/rostrum_hex.png" alt="Hexagonal sticker with the Rostrum logo on it" width="20%">
+
 ## What?
 
 Hello and welcome to the source files for [rostrum.blog](https://www.rostrum.blog/) by Matt and Adriana.
@@ -13,7 +15,3 @@ The site was generated with the [blogdown](https://bookdown.org/yihui/blogdown/)
 We used the Hugo Lithium Theme forked from [\@jrutheiser/hugo-lithium-theme](https://github.com/jrutheiser/hugo-lithium-theme) and modified by [Yihui Xie](https://github.com/yihui/hugo-lithium-theme).
 
 The site is hosted with [Netlify](https://www.netlify.com/).
-
-## Sticker!
-
-![](https://raw.githubusercontent.com/matt-dray/stickers/master/output/rostrum_hex.png)
