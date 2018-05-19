@@ -2,6 +2,8 @@
 title: "About"
 ---
 
+<img src="https://raw.githubusercontent.com/matt-dray/stickers/master/output/rostrum_hex.png" alt="Hexagonal sticker with the Rostrum logo on it" width="20%">
+
 # Us
 
 ### Adriana De Palma
@@ -41,9 +43,3 @@ The site is hosted with [Netlify](https://www.netlify.com/).
 ### Logo and favicon
 
 Logo designed by Matt using [pixlr](https://pixlr.com) online image editor. Favicon created with [favicon.cc](https://www.favicon.cc/) (the antennae in the favicon will wiggle if your browser allows it). 
-
-### Obligatory hex sticker
-
-![](https://raw.githubusercontent.com/matt-dray/stickers/master/output/rostrum_hex.png)
-
-More [here](https://github.com/matt-dray/stickers).
