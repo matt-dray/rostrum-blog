@@ -4,6 +4,8 @@ title: "About"
 
 <img src="https://raw.githubusercontent.com/matt-dray/stickers/master/output/rostrum_hex.png" alt="Hexagonal sticker with the Rostrum logo on it" width="20%">
 
+Rostrum: a blog (mostly) about [R](https://www.r-project.org/about.html), statistics and ecology. But also Pokemon and stuff.
+
 # Us
 
 ### Adriana De Palma
