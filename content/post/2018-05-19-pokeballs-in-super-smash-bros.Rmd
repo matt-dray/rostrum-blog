@@ -1,0 +1,97 @@
+---
+title: Pokeballs in Super Smash Bros
+author: Matt Dray
+date: '2018-05-19'
+slug: pokeballs-in-super-smash-bros
+categories:
+  - pop culture
+  - R
+tags:
+  - pokemon
+  - dplyr
+  - ggplot
+  - n64
+draft: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warnings = FALSE, message = FALSE, error = FALSE, eval = TRUE)
+```
+
+<span style="color:lightgray">Matt Dray</span>
+
+# Smash!
+
+[Super Smash Bros](https://en.wikipedia.org/wiki/Super_Smash_Bros.) (SSB) is a beat 'em up videogame series featuring characters from various Nintendo franchises and beyond. 
+
+The series has featured on Nintendo 64 ([Super Smash Bros, 1998](https://en.wikipedia.org/wiki/Super_Smash_Bros._(video_game))), Gamecube ([SSB Melee, 2001](https://en.wikipedia.org/wiki/Super_Smash_Bros._Melee)), Wii ([SSB Brawl, 2008](https://en.wikipedia.org/wiki/Super_Smash_Bros._Brawl)), Wii U and 3DS ([SSB '4', 2014](https://en.wikipedia.org/wiki/Super_Smash_Bros._for_Nintendo_3DS_and_Wii_U)) and an upcoming title for the Switch console.
+
+The game is popular enough to have resulted in [a series of organised tournaments](https://www.ssbwiki.com/List_of_largest_Smash_tournaments)[^1].
+
+You can fight characters directly but you can also make use of items and weapons from games across the Nintendo universe, such as the mushroom ([the Super Mario series](https://en.wikipedia.org/wiki/Super_Mario)), the heart container ([Zelda](https://en.wikipedia.org/wiki/The_Legend_of_Zelda)) and the home run bat ([EarthBound](https://en.wikipedia.org/wiki/EarthBound)).
+
+One of the more interesting items in SSB is the pokeball. This item is used in [the Pokemon series of games](https://en.wikipedia.org/wiki/Pok%C3%A9mon_(video_game_series)) to capture and store pokemon.
+
+When a player picks up and throws a pokeball in SSB, it opens to release a a randomly selected pokemon. How frequently does each pokemon emerge from a pokeball in SSB on N64?
+
+This is a short post to sate my curiosity. The post will update as I gather more data.
+
+# Data
+
+I watched four computer-controlled players face-off in versus mode. Pokeballs were the only items set to 'on' and frequency was set to 'highest'. I saved the file as [a CSV on GitHub](https://github.com/matt-dray/draytasets/blob/master/ssb_pokeballs.csv).
+
+```{r read}
+library(dplyr)
+library(readr)
+
+balls <- readr::read_csv(
+  "https://raw.githubusercontent.com/matt-dray/draytasets/master/ssb_pokeballs.csv"
+) %>% 
+  mutate(pokemon = tools::toTitleCase(pokemon))
+```
+
+# Frequency
+
+## Table
+
+```{r table}
+library(knitr)
+library(rvest)  # scraping webpages
+library(xml2)  # parsing XML
+
+wiki <- xml2::read_html("https://www.ssbwiki.com/Pok%C3%A9_Ball")
+
+pkmn <- wiki %>% 
+  rvest::html_nodes(css = ".messagebox~ p+ .jquery-tablesorter td") %>%
+  rvest::html_text()
+
+
+
+
+
+balls %>%
+  group_by(pokemon) %>%
+  tally() %>% 
+  arrange(desc(n)) %>% 
+  rename(Pokemon = pokemon, Count = n) %>%
+  kable()
+```
+
+## Plot
+
+```{r plot}
+library(ggplot2)
+
+balls %>% 
+  ggplot() +
+  geom_bar(aes(x = forcats::fct_infreq(pokemon))) +
+  labs(
+    title = "Frequency of pokemon released from pokeballs",
+    subtitle = "Super Smash Bros on Nintendo 64"
+    ) + xlab("Pokemon") + ylab("Count")
+```
+
+So Onix was the most frequent and Meowth and Clefairy the least frequent.
+
+
+[^1]: I recommend you watch [the indie documentary on YouTube about the rise of SSB Melee tournaments](https://www.youtube.com/watch?v=NSf2mgkRm7Q&list=PLoUHkRwnRH-IXbZfwlgiEN8eXmoj6DtKM).
