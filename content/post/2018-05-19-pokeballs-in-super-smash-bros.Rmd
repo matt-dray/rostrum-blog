@@ -9,9 +9,10 @@ categories:
 tags:
   - pokemon
   - dplyr
-  - ggplot
+  - ggplot2
+  - readr
+  - janitor
   - n64
-draft: true
 ---
 
 ```{r setup, include=FALSE}
@@ -19,6 +20,8 @@ knitr::opts_chunk$set(echo = TRUE, warnings = FALSE, message = FALSE, error = FA
 ```
 
 <span style="color:lightgray">Matt Dray</span>
+
+<img src="https://media.giphy.com/media/2TOlr2Cams64M/giphy.gif" alt="Super Smash Bros for N64" width="100%">
 
 # Smash!
 
@@ -30,68 +33,76 @@ The game is popular enough to have resulted in [a series of organised tournament
 
 You can fight characters directly but you can also make use of items and weapons from games across the Nintendo universe, such as the mushroom ([the Super Mario series](https://en.wikipedia.org/wiki/Super_Mario)), the heart container ([Zelda](https://en.wikipedia.org/wiki/The_Legend_of_Zelda)) and the home run bat ([EarthBound](https://en.wikipedia.org/wiki/EarthBound)).
 
-One of the more interesting items in SSB is the pokeball. This item is used in [the Pokemon series of games](https://en.wikipedia.org/wiki/Pok%C3%A9mon_(video_game_series)) to capture and store pokemon.
+One of the more interesting items in SSB is the pokeball. This item is used in [the Pokemon series of games](https://en.wikipedia.org/wiki/Pok%C3%A9mon_(video_game_series)) to capture and store Pokemon. When a player picks up and throws a pokeball in SSB, it opens to release 1 of a possible 13 Pokemon. [The SSB wiki](https://www.ssbwiki.com/Pok%C3%A9_Ball) says that all of them are 'common', except for 'uncommon' Snorlax and 'rare' Mew (apparently only once every 151 releases, which is related to the number of Pokemon in the original game).
 
-When a player picks up and throws a pokeball in SSB, it opens to release a a randomly selected pokemon. How frequently does each pokemon emerge from a pokeball in SSB on N64?
+So how frequently in practice does each Pokemon emerge from a pokeball in SSB on N64?
 
-This is a short post to sate my curiosity. The post will update as I gather more data.
+This is a short post to sate my curiosity. I've used R code throughout. The post will update as I gather more data.
 
 # Data
 
-I watched four computer-controlled players face-off in versus mode. Pokeballs were the only items set to 'on' and frequency was set to 'highest'. I saved the file as [a CSV on GitHub](https://github.com/matt-dray/draytasets/blob/master/ssb_pokeballs.csv).
+I'm a recovering ecologist, so data collection by observation is very important to me. I watched four computer-controlled players face-off in versus mode (it's a weekend and I'm old enough to do whatever I want (after I've done my chores)). Pokeballs were the only items set to 'on' and frequency was set to 'very high'. I saved the file as [a CSV on GitHub](https://github.com/matt-dray/draytasets/blob/master/ssb_pokeballs.csv).
 
 ```{r read}
-library(dplyr)
-library(readr)
+library(dplyr)  # data manipulation
+library(readr)  # reading files
 
 balls <- readr::read_csv(
   "https://raw.githubusercontent.com/matt-dray/draytasets/master/ssb_pokeballs.csv"
 ) %>% 
-  mutate(pokemon = tools::toTitleCase(pokemon))
+  dplyr::mutate(pokemon = tools::toTitleCase(pokemon))
+
+dplyr::pull(balls)[1:25]  # be careful when pulling balls
 ```
 
 # Frequency
 
 ## Table
 
-```{r table}
-library(knitr)
-library(rvest)  # scraping webpages
-library(xml2)  # parsing XML
+We can make use of the `tabyl()` function from the `janitor` package.
 
-wiki <- xml2::read_html("https://www.ssbwiki.com/Pok%C3%A9_Ball")
-
-pkmn <- wiki %>% 
-  rvest::html_nodes(css = ".messagebox~ p+ .jquery-tablesorter td") %>%
-  rvest::html_text()
-
-
-
-
-
-balls %>%
-  group_by(pokemon) %>%
-  tally() %>% 
-  arrange(desc(n)) %>% 
-  rename(Pokemon = pokemon, Count = n) %>%
-  kable()
+```{r}
+balls_summary <- balls %>%
+  janitor::tabyl(pokemon) %>% 
+  dplyr::arrange(desc(n)) %>% 
+  dplyr::mutate(percent = percent * 100) %>% 
+  dplyr::rename(Pokemon = pokemon, Count = n, Percent = percent)
+  
+knitr::kable(balls_summary)
 ```
 
 ## Plot
 
+Of course we can plot these data a well. It seems fitting to have a Pokemon theme, so we can use the `gghealth()` function from [the `Rokemon` package](https://github.com/schochastics/Rokemon) by [David Schoch](http://schochastics.net/). This creates a bar chart where the bars look like the health point (HP) meter from the original Pokemon games on the Nintendo Game Boy.[^2]
+
 ```{r plot}
-library(ggplot2)
+library(ggplot2)  # plots
+library(Rokemon)  # poke-themed package
 
 balls %>% 
-  ggplot() +
-  geom_bar(aes(x = forcats::fct_infreq(pokemon))) +
+  group_by(pokemon) %>% 
+  dplyr::count() %>% 
+  Rokemon::gghealth("pokemon", "n") +
   labs(
-    title = "Frequency of pokemon released from pokeballs",
+    x = "", y = "Count",
+    title = "Pokeball release frequencies",
     subtitle = "Super Smash Bros on Nintendo 64"
-    ) + xlab("Pokemon") + ylab("Count")
+  )
 ```
 
-So Onix was the most frequent and Meowth and Clefairy the least frequent.
+# Revelation
 
+So it looks like the 'common' Pokemon according to [the SSB wiki](https://www.ssbwiki.com/Pok%C3%A9_Ball) are indeed more common, though Snorlax appears equal second on this list, despite being labelled as 'uncommon'. Clefairy also appeared less than expected, given it was labelled as 'common'.
+
+Mew appeared `r balls_summary[balls_summary$Pokemon == "Mew", "Count"]` times out of `r nrow(balls)`, which is once every `r round((nrow(balls)/balls_summary[balls_summary$Pokemon == "Mew", "Count"]), 1)` releases.
+
+Bear in mind that this is only based on a sample of `r nrow(balls)` so far . I'll keep collecting data to update this post.
+
+# 
+
+```{r sessionInfo}
+sessionInfo()
+```
 
 [^1]: I recommend you watch [the indie documentary on YouTube about the rise of SSB Melee tournaments](https://www.youtube.com/watch?v=NSf2mgkRm7Q&list=PLoUHkRwnRH-IXbZfwlgiEN8eXmoj6DtKM).
+[^2]: Also check out the `geom_pokemon()` function in the `ggimage` package by [Guangchuang Yu](https://guangchuangyu.github.io/), which [plots points as Pokemon sprites](https://cran.r-project.org/web/packages/ggimage/vignettes/ggimage.html).

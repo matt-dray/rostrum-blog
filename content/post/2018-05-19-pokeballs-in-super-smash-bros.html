@@ -1,0 +1,206 @@
+---
+title: Pokeballs in Super Smash Bros
+author: Matt Dray
+date: '2018-05-19'
+slug: pokeballs-in-super-smash-bros
+categories:
+  - pop culture
+  - R
+tags:
+  - pokemon
+  - dplyr
+  - ggplot2
+  - readr
+  - janitor
+  - n64
+---
+
+
+
+<p><span style="color:lightgray">Matt Dray</span></p>
+<p><img src="https://media.giphy.com/media/2TOlr2Cams64M/giphy.gif" alt="Super Smash Bros for N64" width="100%"></p>
+<div id="smash" class="section level1">
+<h1>Smash!</h1>
+<p><a href="https://en.wikipedia.org/wiki/Super_Smash_Bros.">Super Smash Bros</a> (SSB) is a beat ’em up videogame series featuring characters from various Nintendo franchises and beyond.</p>
+<p>The series has featured on Nintendo 64 (<a href="https://en.wikipedia.org/wiki/Super_Smash_Bros._(video_game)">Super Smash Bros, 1998</a>), Gamecube (<a href="https://en.wikipedia.org/wiki/Super_Smash_Bros._Melee">SSB Melee, 2001</a>), Wii (<a href="https://en.wikipedia.org/wiki/Super_Smash_Bros._Brawl">SSB Brawl, 2008</a>), Wii U and 3DS (<a href="https://en.wikipedia.org/wiki/Super_Smash_Bros._for_Nintendo_3DS_and_Wii_U">SSB ‘4’, 2014</a>) and an upcoming title for the Switch console.</p>
+<p>The game is popular enough to have resulted in <a href="https://www.ssbwiki.com/List_of_largest_Smash_tournaments">a series of organised tournaments</a><a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>.</p>
+<p>You can fight characters directly but you can also make use of items and weapons from games across the Nintendo universe, such as the mushroom (<a href="https://en.wikipedia.org/wiki/Super_Mario">the Super Mario series</a>), the heart container (<a href="https://en.wikipedia.org/wiki/The_Legend_of_Zelda">Zelda</a>) and the home run bat (<a href="https://en.wikipedia.org/wiki/EarthBound">EarthBound</a>).</p>
+<p>One of the more interesting items in SSB is the pokeball. This item is used in <a href="https://en.wikipedia.org/wiki/Pok%C3%A9mon_(video_game_series)">the Pokemon series of games</a> to capture and store Pokemon. When a player picks up and throws a pokeball in SSB, it opens to release 1 of a possible 13 Pokemon. <a href="https://www.ssbwiki.com/Pok%C3%A9_Ball">The SSB wiki</a> says that all of them are ‘common’, except for ‘uncommon’ Snorlax and ‘rare’ Mew (apparently only once every 151 releases, which is related to the number of Pokemon in the original game).</p>
+<p>So how frequently in practice does each Pokemon emerge from a pokeball in SSB on N64?</p>
+<p>This is a short post to sate my curiosity. I’ve used R code throughout. The post will update as I gather more data.</p>
+</div>
+<div id="data" class="section level1">
+<h1>Data</h1>
+<p>I’m a recovering ecologist, so data collection by observation is very important to me. I watched four computer-controlled players face-off in versus mode (it’s a weekend and I’m old enough to do whatever I want (after I’ve done my chores)). Pokeballs were the only items set to ‘on’ and frequency was set to ‘very high’. I saved the file as <a href="https://github.com/matt-dray/draytasets/blob/master/ssb_pokeballs.csv">a CSV on GitHub</a>.</p>
+<pre class="r"><code>library(dplyr)  # data manipulation
+library(readr)  # reading files
+
+balls &lt;- readr::read_csv(
+  &quot;https://raw.githubusercontent.com/matt-dray/draytasets/master/ssb_pokeballs.csv&quot;
+) %&gt;% 
+  dplyr::mutate(pokemon = tools::toTitleCase(pokemon))
+
+dplyr::pull(balls)[1:25]  # be careful when pulling balls</code></pre>
+<pre><code>##  [1] &quot;Onix&quot;      &quot;Starmie&quot;   &quot;Goldeen&quot;   &quot;Beedrill&quot;  &quot;Starmie&quot;  
+##  [6] &quot;Koffing&quot;   &quot;Hitmonlee&quot; &quot;Chansey&quot;   &quot;Beedrill&quot;  &quot;Meowth&quot;   
+## [11] &quot;Blastoise&quot; &quot;Hitmonlee&quot; &quot;Chansey&quot;   &quot;Charizard&quot; &quot;Starmie&quot;  
+## [16] &quot;Hitmonlee&quot; &quot;Onix&quot;      &quot;Blastoise&quot; &quot;Hitmonlee&quot; &quot;Onix&quot;     
+## [21] &quot;Koffing&quot;   &quot;Beedrill&quot;  &quot;Charizard&quot; &quot;Starmie&quot;   &quot;Snorlax&quot;</code></pre>
+</div>
+<div id="frequency" class="section level1">
+<h1>Frequency</h1>
+<div id="table" class="section level2">
+<h2>Table</h2>
+<p>We can make use of the <code>tabyl()</code> function from the <code>janitor</code> package.</p>
+<pre class="r"><code>balls_summary &lt;- balls %&gt;%
+  janitor::tabyl(pokemon) %&gt;% 
+  dplyr::arrange(desc(n)) %&gt;% 
+  dplyr::mutate(percent = percent * 100) %&gt;% 
+  dplyr::rename(Pokemon = pokemon, Count = n, Percent = percent)
+  
+knitr::kable(balls_summary)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Pokemon</th>
+<th align="right">Count</th>
+<th align="right">Percent</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Goldeen</td>
+<td align="right">20</td>
+<td align="right">10.0</td>
+</tr>
+<tr class="even">
+<td align="left">Onix</td>
+<td align="right">19</td>
+<td align="right">9.5</td>
+</tr>
+<tr class="odd">
+<td align="left">Snorlax</td>
+<td align="right">19</td>
+<td align="right">9.5</td>
+</tr>
+<tr class="even">
+<td align="left">Chansey</td>
+<td align="right">18</td>
+<td align="right">9.0</td>
+</tr>
+<tr class="odd">
+<td align="left">Charizard</td>
+<td align="right">18</td>
+<td align="right">9.0</td>
+</tr>
+<tr class="even">
+<td align="left">Beedrill</td>
+<td align="right">17</td>
+<td align="right">8.5</td>
+</tr>
+<tr class="odd">
+<td align="left">Koffing</td>
+<td align="right">17</td>
+<td align="right">8.5</td>
+</tr>
+<tr class="even">
+<td align="left">Starmie</td>
+<td align="right">17</td>
+<td align="right">8.5</td>
+</tr>
+<tr class="odd">
+<td align="left">Blastoise</td>
+<td align="right">14</td>
+<td align="right">7.0</td>
+</tr>
+<tr class="even">
+<td align="left">Hitmonlee</td>
+<td align="right">14</td>
+<td align="right">7.0</td>
+</tr>
+<tr class="odd">
+<td align="left">Meowth</td>
+<td align="right">14</td>
+<td align="right">7.0</td>
+</tr>
+<tr class="even">
+<td align="left">Clefairy</td>
+<td align="right">10</td>
+<td align="right">5.0</td>
+</tr>
+<tr class="odd">
+<td align="left">Mew</td>
+<td align="right">3</td>
+<td align="right">1.5</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="plot" class="section level2">
+<h2>Plot</h2>
+<p>Of course we can plot these data a well. It seems fitting to have a Pokemon theme, so we can use the <code>gghealth()</code> function from <a href="https://github.com/schochastics/Rokemon">the <code>Rokemon</code> package</a> by <a href="http://schochastics.net/">David Schoch</a>. This creates a bar chart where the bars look like the health point (HP) meter from the original Pokemon games on the Nintendo Game Boy.<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a></p>
+<pre class="r"><code>library(ggplot2)  # plots
+library(Rokemon)  # poke-themed package
+
+balls %&gt;% 
+  group_by(pokemon) %&gt;% 
+  dplyr::count() %&gt;% 
+  Rokemon::gghealth(&quot;pokemon&quot;, &quot;n&quot;) +
+  labs(
+    x = &quot;&quot;, y = &quot;Count&quot;,
+    title = &quot;Pokeball release frequencies&quot;,
+    subtitle = &quot;Super Smash Bros on Nintendo 64&quot;
+  )</code></pre>
+<p><img src="/post/2018-05-19-pokeballs-in-super-smash-bros_files/figure-html/plot-1.png" width="672" /></p>
+</div>
+</div>
+<div id="revelation" class="section level1">
+<h1>Revelation</h1>
+<p>So it looks like the ‘common’ Pokemon according to <a href="https://www.ssbwiki.com/Pok%C3%A9_Ball">the SSB wiki</a> are indeed more common, though Snorlax appears equal second on this list, despite being labelled as ‘uncommon’. Clefairy also appeared less than expected, given it was labelled as ‘common’.</p>
+<p>Mew appeared 3 times out of 200, which is once every 66.7 releases.</p>
+<p>Bear in mind that this is only based on a sample of 200 so far . I’ll keep collecting data to update this post.</p>
+</div>
+<div id="section" class="section level1">
+<h1></h1>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>## R version 3.4.3 (2017-11-30)
+## Platform: x86_64-apple-darwin15.6.0 (64-bit)
+## Running under: macOS High Sierra 10.13.4
+## 
+## Matrix products: default
+## BLAS: /Library/Frameworks/R.framework/Versions/3.4/Resources/lib/libRblas.0.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/3.4/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_GB.UTF-8/en_GB.UTF-8/en_GB.UTF-8/C/en_GB.UTF-8/en_GB.UTF-8
+## 
+## attached base packages:
+## [1] methods   stats     graphics  grDevices utils     datasets  base     
+## 
+## other attached packages:
+## [1] Rokemon_0.0.1      ggplot2_2.2.1.9000 bindrcpp_0.2      
+## [4] readr_1.1.1        dplyr_0.7.4       
+## 
+## loaded via a namespace (and not attached):
+##  [1] Rcpp_0.12.16      pillar_1.2.1      compiler_3.4.3   
+##  [4] highr_0.6         plyr_1.8.4        bindr_0.1        
+##  [7] tools_3.4.3       extrafont_0.17    digest_0.6.15    
+## [10] evaluate_0.10.1   tibble_1.4.2      gtable_0.2.0     
+## [13] pkgconfig_2.0.1   rlang_0.2.0       curl_3.0         
+## [16] yaml_2.1.18       blogdown_0.1      Rttf2pt1_1.3.6   
+## [19] withr_2.1.2       stringr_1.3.0     knitr_1.18       
+## [22] janitor_0.3.0     hms_0.3           rprojroot_1.2    
+## [25] grid_3.4.3        glue_1.2.0        R6_2.2.2         
+## [28] rmarkdown_1.6     bookdown_0.5      extrafontdb_1.0  
+## [31] tidyr_0.7.2       purrr_0.2.4       magrittr_1.5     
+## [34] backports_1.1.1   scales_0.5.0.9000 htmltools_0.3.6  
+## [37] assertthat_0.2.0  colorspace_1.3-2  labeling_0.3     
+## [40] stringi_1.1.7     lazyeval_0.2.1    munsell_0.4.3</code></pre>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>I recommend you watch <a href="https://www.youtube.com/watch?v=NSf2mgkRm7Q&amp;list=PLoUHkRwnRH-IXbZfwlgiEN8eXmoj6DtKM">the indie documentary on YouTube about the rise of SSB Melee tournaments</a>.<a href="#fnref1">↩</a></p></li>
+<li id="fn2"><p>Also check out the <code>geom_pokemon()</code> function in the <code>ggimage</code> package by <a href="https://guangchuangyu.github.io/">Guangchuang Yu</a>, which <a href="https://cran.r-project.org/web/packages/ggimage/vignettes/ggimage.html">plots points as Pokemon sprites</a>.<a href="#fnref2">↩</a></p></li>
+</ol>
+</div>
