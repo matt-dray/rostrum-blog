@@ -12,13 +12,13 @@ title: "About"
 
 I’m a Postdoctoral Researcher at the [Natural History Museum](http://www.nhm.ac.uk/), London. I have a PhD in Ecology and an MRes in Entomology from Imperial College London, and a BSc in Biology from the University of Sussex.
 
-In terms of my research, I am particularly interested in using large scale ecological datasets to answer policy relevant questions. I work on the [PREDICTS project](http://www.predicts.org.uk/) with [Andy Purvis](http://www.nhm.ac.uk/our-science/departments-and-staff/staff-directory/andy-purvis.html), looking at how biodiversity responds over time to land-use change and related pressures. My more general interests lie with science policy, statistics and weird and wonderful invertebrates (my favourite being [Collembola](https://en.wikipedia.org/wiki/Springtail) – the beautiful springtails).
+In terms of my research, I am particularly interested in using large scale ecological datasets to answer policy relevant questions. I work on the [PREDICTS project](http://www.predicts.org.uk/) with [Andy Purvis](http://www.nhm.ac.uk/our-science/departments-and-staff/staff-directory/andy-purvis.html), looking at how biodiversity responds over time to land-use change and related pressures. My more general interests lie with science policy, statistics and weird and wonderful invertebrates (my favourite being [Collembola](https://en.wikipedia.org/wiki/Springtail) -– the beautiful springtails).
 
 ### Matt Dray
 
 [Twitter](https://twitter.com/mattdray) | [Github](https://github.com/matt-dray) | [RPubs](https://rpubs.com/mattdray)
 
-I like data analysis and ecology. I currently work as an analyst ('data scientist') and [R](https://www.r-project.org/) evangelist in the public sector. I have a PhD in the effects of environmental change on plant litter decay from Cardiff University and an Entomology MSc from Imperial College London. I'm not [the rapper](https://www.drdre.com/). Nor the [gynaecologist](http://www.bbc.co.uk/news/entertainment-arts-44043205).
+I like data analysis and ecology. I currently work as an analyst and [R](https://www.r-project.org/) evangelist in the public sector. I have a PhD in the effects of environmental change on plant litter decay ('watching leaves rot') from Cardiff University and an Entomology MSc from Imperial College London. I'm not [the rapper](https://www.drdre.com/). Nor the [gynaecologist](http://www.bbc.co.uk/news/entertainment-arts-44043205).
 
 # The site
 
