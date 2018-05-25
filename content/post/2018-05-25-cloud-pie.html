@@ -1,0 +1,81 @@
+---
+title: Cloudy with a chance of pie
+author: Matt Dray
+date: '2018-05-25'
+slug: cloud-pie
+categories:
+  - dataviz
+  - R
+tags:
+  - design
+  - plotrix
+  - wordcloud
+  - function
+  - pie
+---
+
+
+
+<p><span style="color:lightgray">Matt Dray</span></p>
+<div id="the-pinnacle-of-visualisation" class="section level1">
+<h1>The pinnacle of visualisation</h1>
+<p>Great news everyone: I’ve taken the best of two stellar data visualisations and smashed them together into something that can only be described as <em>perfection</em>.</p>
+<p><img src="https://media.giphy.com/media/LOcPt9gfuNOSI/giphy.gif" alt="Michael Fassbander as Steve JObs saying 'perfection'" width="100%"></p>
+<p>Let me set the scene. There’s three things we can agree on:</p>
+<ol style="list-style-type: decimal">
+<li><a href="https://duckduckgo.com/?q=pie+charts+suck">Everyone loves pie charts</a>, particularly when they’re in 3D, exploded and tilted.</li>
+<li><a href="https://duckduckgo.com/?q=word+clouds+suck">Word clouds aren’t at all overused</a>.</li>
+<li>I have too much time on my hands.</li>
+</ol>
+<p>With that in mind, I’ve artfully melded clouds and pies into the function <code>cloud_pie</code>, which I think sounds rather sweet.</p>
+<p>You can find the function in my personal package <code>dray</code>, which I made following <a href="https://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/">Hilary Parker’s excellent ‘Writing an R Package from Scratch’ blogpost</a>.</p>
+<pre class="r"><code>devtools::install_github(&quot;matt-dray/dray&quot;)
+library(dray)</code></pre>
+</div>
+<div id="pie-in-the-sky" class="section level1">
+<h1>Pie in the sky</h1>
+<p><code>cloud_pie</code> depends on the <code>plotrix</code> and <code>wordcloud</code> packages and takes three arguments:</p>
+<ul>
+<li><code>data</code>: summary dataframe with two columns: categories, and counts for those categories</li>
+<li><code>name_col</code>: column containing the category names</li>
+<li><code>count_col</code>: column containing the counts for each category</li>
+</ul>
+<p><code>data</code> must be a dataframe with a column of categories (i.e. <code>name_col</code>) and a column of count values associated with those categories (i.e. <code>count_col</code>).</p>
+<p>It’s also completely untested and will probably break if you actually try to use it. So let’s try to use it.</p>
+</div>
+<div id="pokemon-data-of-course" class="section level1">
+<h1>Pokemon data, of course</h1>
+<p>Let’s use the same data as in the <a href="https://www.rostrum.blog/2018/05/19/pokeballs-in-super-smash-bros/">Pokeballs in Super Smash Bros</a> blog post, which is <a href="https://github.com/matt-dray/draytasets">hosted on GitHub</a>.</p>
+<pre class="r"><code>library(dplyr)  # pipes and data manipulation
+
+#read raw data
+pkmn_raw &lt;- read.csv(&quot;https://raw.githubusercontent.com/matt-dray/draytasets/master/ssb_pokeballs.csv&quot;)
+
+# shape the data
+pkmn_summary &lt;- pkmn_raw %&gt;%
+  group_by(pokemon) %&gt;%
+  count() %&gt;%
+  ungroup()
+
+# take a look
+dplyr::glimpse(pkmn_summary)</code></pre>
+<pre><code>## Observations: 13
+## Variables: 2
+## $ pokemon &lt;fct&gt; beedrill, blastoise, chansey, charizard, clefairy, gol...
+## $ n       &lt;int&gt; 17, 14, 18, 18, 10, 20, 14, 17, 14, 3, 19, 19, 17</code></pre>
+</div>
+<div id="hold-on-tight" class="section level1">
+<h1>Hold on tight</h1>
+<p>Accept your fate.</p>
+<pre class="r"><code>dray::cloud_pie(
+  data = pkmn_summary,
+  name_col = &quot;pokemon&quot;,
+  count_col = &quot;n&quot;
+)</code></pre>
+<p><img src="/post/2018-05-25-cloud-pie_files/figure-html/cloud_pie-1.png" width="672" /></p>
+<p>Did I forget to mention that it defaults to a rainbow colour palette and gothic typeface? The colours and pie slices are sized by frequency and match up by colour. <em>Sensational</em>.</p>
+</div>
+<div id="you-know-what-to-do" class="section level1">
+<h1>You know what to do</h1>
+<p>Let me know if you decide to nominate me for an <a href="https://youtu.be/dQw4w9WgXcQ">Information is Beautiful award</a>.</p>
+</div>
