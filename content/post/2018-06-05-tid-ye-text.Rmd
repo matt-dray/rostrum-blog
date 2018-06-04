@@ -1,0 +1,196 @@
+---
+title: Tid-ye-text
+author: Matt Dray
+date: '2018-06-05'
+slug: tid-ye-text
+categories:
+  - pop culture
+  - R
+  - text analysis
+tags:
+  - geniusr
+  - dplyr
+  - ggplot2
+  - kanye
+  - music
+  - tidytext
+  - datatable
+  - purrr
+draft: TRUE
+---
+
+<span style="color:lightgray">Matt Dray</span>
+
+Warning: this post may contain offensive content.
+
+***
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warnings = FALSE, message = FALSE, error = FALSE, eval = TRUE)
+```
+
+# Genius?
+
+Kanye West dropped his latest album *ye* last week, so obviously we should use R to have a look at what he's been saying. This album is different from his other records at only seven tracks long, with a *slightly* less complicated production process than his last offering: *Yeezus*. Since then, Kanye has once again courted controversy with comments about slavery; comments that appear to have impacted his mental health. 'I hate being bipolar, its awesome' is scrawled in his handwriting over a Wyoming mountainscape that's featured on the cover of *ye*.
+
+How has Kanye reflected on his latest tumultuous period? It seems like an apt time to try out some lyrics extraction and simple text analysis with `` and `tidytext`.
+
+# Genius
+
+I'm using lyrics from the [Genius](https://genius.com/) website. Genius allows users to upload and comment on song lyrics. You can access its data via API using [R](https://www.r-project.org/about.html) with the [`genuisr`](https://github.com/ewenme/geniusr) package by Ewen Henderson ([web](https://ewen.io/), [Github](https://github.com/ewenme), [Twitter](https://twitter.com/ewen_)). (Not the `geniusR` package, which has a very similar name.)
+
+# Set up a genius app 
+
+To set up:
+
+1. create a [Genius API client](https://genius.com/api-clients/new)
+2. click 'generate access token' under 'client access token' to generate an access token
+3. after `install.packages("geniusr"); library(geniusr); geniusr::genius_token()` you'll be prompted to enter the access token (if you need to change this, you can use `geniusr::genius_token(force = TRUE)` to be re-prompted for a new token, which you can regenerate from the [Genius site](https://genius.com/api-clients) as in step 2)
+
+I added my Genius client access token to my .Renviron file, stored as the object `GENIUS_API_TOKEN`.
+
+Now you can use the functions in the 'geniusr' package.
+
+# Yeezus
+
+Let's start by loading the packages we'll need and then use the API to get the lyrics.
+
+```{r packages}
+library(geniusr)  # access lyrics
+library(dplyr)  # data manipulation
+library(tidytext)  # text wrangling
+library(purrr)  # functional programming
+library(ggplot2)  # plotting
+library(datatable)  # interactive tables
+```
+
+So first we need to find the artist ID for Kanye. We can use `search_artist()` to look for him.
+
+```{r get_artist_id}
+geniusr::search_artist("kanye west")
+```
+
+So Kanye's solo artist ID on Genius is 72. Now we can get the metadata about him: the web address for the artist on Genius, a link to an image of the artist and the number of people following Kanye's lyrics on the site.
+
+```{r get_artist_meta}
+ye_id <- 72
+
+artist_meta <- geniusr::get_artist_meta(artist_id = ye_id)
+
+# preview
+glimpse(artist_meta)
+```
+
+# Get
+
+## Songs
+
+Now we can use Kanye's artist ID to obtain *all* his songs on Genius.
+
+```{r get_songs}
+# get all songs for a given artist id
+songs <- geniusr::get_artist_songs(artist_id = ye_id)
+
+# a random preview
+dplyr::sample_n(songs, 10)
+```
+
+We can also access a greater list of data for each song, including the album name and release date.
+
+```{r get_song_metadata}
+# apply apply function over each song id
+songs_meta <- map_df(songs$song_id, get_song_meta)
+
+# a random preview
+dplyr::sample_n(songs_meta, 10)
+```
+
+Looking at the album names, it seems we've got songs from 37 albums at least. Some are studio releases, others are motion picture soundtracks and other things.
+
+```{r unique_albums}
+# the songs are from which albums?
+unique(songs_meta$album_name)
+```
+
+So you can see *ye* is definitely in the list of albums and we can filter our data frame so we just get the seven tracks from that particular album. Maybe we'll explore the other lyrics more deeply another day.
+
+```{r just_ye_album}
+# filter songs from album 'ye'
+ye <- songs_meta %>% 
+  filter(album_name == "ye")
+
+# preview songs
+select(ye, song_name)
+```
+
+We can fecth the lyrics from Genius for each song now that we have their details. We can do this using `map_df()` from the `purrr` package to apply the `scrape_lyrics_url()` function to each row of our dataframe, where each row represents a single song.
+
+
+```{r ye_get_lyrics}
+# get lyrics
+ye_lyrics <- map_df(
+  ye$song_lyrics_url,
+  scrape_lyrics_url
+)
+
+# join additional information
+ye_lyrics <- ye_lyrics %>%
+  group_by(song_name) %>% 
+  mutate(line_number = row_number()) %>% 
+  ungroup() %>% 
+  left_join(ye, by = "song_name")
+
+# check out a sample of lines
+ye_lyrics %>% 
+  dplyr::sample_n(10) %>% 
+  select(line, song_name)
+```
+
+# Text analysis
+
+## Extract words
+
+Now we've got the lines separated, we can bring in the `tidytext` package from Julia Silge and David Robinson to break the lines into 'tokens'. Tokens are individual units of text prepared for analysis. In our case, we're looking at individual words, or 'unigrams'.
+
+We can remove 'stop words' from this list. These are words that don't really have much meaning because of their ubiquity, like 'if', 'and' and 'but'. We can get rid of these by anti-joining a pre-prepared list of such words.
+
+```{r word_per_row}
+lyrics_tidye <- ye_lyrics %>%
+  unnest_tokens(word, line) %>%  # separate the tokens out
+  anti_join(stop_words)  # remove words like 'if', 'and', 'but'
+
+sample_n(lyrics_tidye, 10) %>% 
+  select(word, song_name)
+```
+
+Note that this isn't *completely* successful. Kanye also uses colloquialisms and words like 'ima'; a contraction of two stop words that isn't represented in our stop-word dictionary.
+
+## Word frequency
+
+
+```{r count_words_table}
+lyrics_tidye %>%
+  mutate(word = as.factor(word)) %>% 
+  count(word, sort = TRUE) %>% 
+  DT::datatable(
+    filter = "top",
+    options = list(
+      autoWidth = TRUE,
+      pageLength = 10
+    )
+  )
+```
+
+And as a plot.
+
+```{r plot_word_freq}
+lyrics_tidye %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 5) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n)) +
+  geom_col() +
+  xlab(NULL) +
+  coord_flip() +
+  theme_minimal()
+```
