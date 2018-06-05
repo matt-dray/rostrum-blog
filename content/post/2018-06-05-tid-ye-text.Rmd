@@ -21,7 +21,7 @@ draft: TRUE
 
 <span style="color:lightgray">Matt Dray</span>
 
-Warning: this post may contain offensive content.
+Warning: this post is highly likely to contain offensive content.
 
 ***
 
@@ -33,7 +33,7 @@ knitr::opts_chunk$set(echo = TRUE, warnings = FALSE, message = FALSE, error = FA
 
 Kanye West dropped his latest album *ye* last week, so obviously we should use R to have a look at what he's been saying. This album is different from his other records at only seven tracks long, with a *slightly* less complicated production process than his last offering: *Yeezus*. Since then, Kanye has once again courted controversy with comments about slavery; comments that appear to have impacted his mental health. 'I hate being bipolar, its awesome' is scrawled in his handwriting over a Wyoming mountainscape that's featured on the cover of *ye*.
 
-How has Kanye reflected on his latest tumultuous period? It seems like an apt time to try out some lyrics extraction and simple text analysis with `` and `tidytext`.
+How has Kanye reflected on his latest tumultuous period? It seems like an apt time to try out some lyrics extraction and simple text analysis with the `geniusr` and `tidytext` R packages.
 
 # Genius
 
@@ -59,9 +59,10 @@ Let's start by loading the packages we'll need and then use the API to get the l
 library(geniusr)  # access lyrics
 library(dplyr)  # data manipulation
 library(tidytext)  # text wrangling
+library(tidyr)  # working with tidy data
 library(purrr)  # functional programming
 library(ggplot2)  # plotting
-library(datatable)  # interactive tables
+library(DT)  # interactive tables
 ```
 
 So first we need to find the artist ID for Kanye. We can use `search_artist()` to look for him.
@@ -75,7 +76,9 @@ So Kanye's solo artist ID on Genius is 72. Now we can get the metadata about him
 ```{r get_artist_meta}
 ye_id <- 72
 
-artist_meta <- geniusr::get_artist_meta(artist_id = ye_id)
+artist_meta <- geniusr::get_artist_meta(
+  artist_id = ye_id
+)
 
 # preview
 glimpse(artist_meta)
@@ -155,11 +158,11 @@ Now we've got the lines separated, we can bring in the `tidytext` package from J
 We can remove 'stop words' from this list. These are words that don't really have much meaning because of their ubiquity, like 'if', 'and' and 'but'. We can get rid of these by anti-joining a pre-prepared list of such words.
 
 ```{r word_per_row}
-lyrics_tidye <- ye_lyrics %>%
+ye_words <- ye_lyrics %>%
   unnest_tokens(word, line) %>%  # separate the tokens out
   anti_join(stop_words)  # remove words like 'if', 'and', 'but'
 
-sample_n(lyrics_tidye, 10) %>% 
+sample_n(ye_words, 10) %>% 
   select(word, song_name)
 ```
 
@@ -167,9 +170,10 @@ Note that this isn't *completely* successful. Kanye also uses colloquialisms and
 
 ## Word frequency
 
+### Words
 
 ```{r count_words_table}
-lyrics_tidye %>%
+ye_words %>%
   mutate(word = as.factor(word)) %>% 
   count(word, sort = TRUE) %>% 
   DT::datatable(
@@ -184,11 +188,55 @@ lyrics_tidye %>%
 And as a plot.
 
 ```{r plot_word_freq}
-lyrics_tidye %>%
+ye_words %>%
   count(word, sort = TRUE) %>%
   filter(n > 5) %>%
   mutate(word = reorder(word, n)) %>%
   ggplot(aes(word, n)) +
+  geom_col() +
+  xlab(NULL) +
+  coord_flip() +
+  theme_minimal()
+```
+
+### Bigrams
+
+```{r count_bigrams_table}
+ye_bigrams <- ye_lyrics %>%
+  unnest_tokens(bigram, line, token = "ngrams", n = 2)
+
+ye_bigrams_separated <- ye_bigrams %>%
+  separate(bigram, c("word1", "word2"), sep = " ")
+
+ye_bigrams_filtered <- ye_bigrams_separated %>%
+  filter(
+    !word1 %in% stop_words$word,
+    !word2 %in% stop_words$word
+  ) %>%
+  mutate(bigram = paste(word1, word2))
+
+sample_n(ye_bigrams_filtered, 10) %>% 
+  select(bigram, song_name)
+```
+
+```{r}
+ye_bigrams_filtered %>%
+  mutate(bigram = as.factor(bigram)) %>% 
+  count(bigram, sort = TRUE) %>% 
+  DT::datatable(
+    options = list(
+      autoWidth = TRUE,
+      pageLength = 10
+    )
+  )
+```
+
+```{r}
+ye_bigrams_filtered %>%
+  count(bigram, sort = TRUE) %>%
+  filter(n > 3) %>%
+  mutate(bigram = reorder(bigram, n)) %>%
+  ggplot(aes(bigram, n)) +
   geom_col() +
   xlab(NULL) +
   coord_flip() +
