@@ -180,7 +180,7 @@ We should probabaly remove stop words. These are words don't really have much me
 ```{r word_per_row}
 ye_words <- ye_lyrics %>%
   tidytext::unnest_tokens(word, line) %>%  # separate the tokens out
-  dplyr::anti_join(stop_words)  # remove words like 'if', 'and', 'but'
+  dplyr::anti_join(tidytext::stop_words)  # remove words like 'if', 'and', 'but'
 
 dplyr::sample_n(ye_words, 10) %>% 
   dplyr::select(word, song_name) %>% 
@@ -240,8 +240,8 @@ ye_bigrams_separated <- ye_bigrams %>%
 
 ye_bigrams_filtered <- ye_bigrams_separated %>%
   dplyr::filter(
-    !word1 %in% stop_words$word,
-    !word2 %in% stop_words$word
+    !word1 %in% tidytext::stop_words$word,
+    !word2 %in% tidytext::stop_words$word
   ) %>%
   dplyr::mutate(bigram = paste(word1, word2))
 
