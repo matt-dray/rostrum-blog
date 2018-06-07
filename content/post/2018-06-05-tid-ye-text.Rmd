@@ -25,11 +25,9 @@ library(emo)
 
 <span style="color:lightgray">Matt Dray</span>
 
-`r emo::ji("warning")` Warning: this post contains offensive content. `r emo::ji("warning")`
+`r emo::ji("warning")` Warning: this post contains offensive words. `r emo::ji("warning")`
 
-***
-
-<img src="https://media.giphy.com/media/9cmVjltMzhPUY/giphy.gif" alt="An animated gif of Kanye saying that he's a genius">
+<img src="https://media.giphy.com/media/9cmVjltMzhPUY/giphy.gif" alt="An animated gif of Kanye saying that he's a genius" width="100%">
 
 # Genius?
 
@@ -43,7 +41,7 @@ I think the real question is why don't we scrape Yeezus's lyrics from the web an
 
 You can access the lyrics data via Genius's API[^3]. Luckily, the [R](https://www.r-project.org/about.html) package [`genuisr`](https://github.com/ewenme/geniusr) was developed by [Ewen Henderson](https://ewen.io/) for exactly this purpose.[^4] 
 
-# Acces API 
+# Access the API
 
 You need to register with Genius so you can get tokens for accessing their API. To do this:
 
@@ -51,9 +49,9 @@ You need to register with Genius so you can get tokens for accessing their API. 
 2. Click 'generate access token' under 'client access token' to generate an access token.
 3. After `install.packages("geniusr")`, `library(geniusr)` you'll be prompted to enter the access token when you try to use a `geniusr` function
 
-I stored my token in my system .Renviron file. This plain-text file provides a place to store variables that R will look for and load automatically on start up. Edit this file by running `usethis::edit_r_environ()` and adding the line `GENIUS_API_TOKEN=X`, replacing X with your token.
+I stored the token in my .Renviron file. This is a file for store variables that R will look for and load automatically on startup. Edit the file on your system by running `usethis::edit_r_environ()` and adding the line `GENIUS_API_TOKEN=X`, replacing X with your token.
 
-If you don't store your token this way then you'll be prompted for a new token every time you start a new R session, which could get quite tedious.
+If you don't store your token this way then you'll be prompted for a new token every time you start a new R session, which could get quite tedious. It also means you don't have to store it in plain sight
 
 # Use `geniusr`
 
@@ -136,7 +134,7 @@ ye <- songs_meta %>%
 dplyr::select(ye, song_name)
 ```
 
-We can fecth the lyrics from Genius for each song now that we have their details. We can do this using `map_df()` again to apply the `scrape_lyrics_url()` function to each row of our dataframe, where each row represents a single song.
+We can fecth the lyrics from Genius for each song now that we have their details. We can do this using `map_df()` again to apply the `scrape_lyrics_url()` function to each row of our dataframe, where each row represents a single song. 
 
 ```{r ye_get_lyrics}
 # get lyrics
@@ -159,7 +157,7 @@ ye_lyrics %>%
   knitr::kable()
 ```
 
-# Text analysis
+# Break the lyrics down
 
 ## Words
 
@@ -333,13 +331,21 @@ ye_bigrams_filtered %>%
 
 ## What did we learn?
 
-It's difficult to get a deep insight from looking at individual words from a 24-minute album. You might argue that looking for deep insight from Kanye West's lyrics is a fool's errand anyway.
+It's difficult to get a deep insight from looking at individual words from a 24-minute, seven-song album. You might argue that looking for deep insight from Kanye West's lyrics is a fool's errand anyway.
 
 Despite this, 'love' and 'feel' were in the top 10, which might indicate Kanye expressing his feelings. 'Bad', 'mistake' and 'pray' were also repeated a bunch of times, which might also indicate what's on Ye's mind. 
 
-Most of the other most common words should probably have been removed as stop words but weren't in our stop-word dictionary (e.g. 'yeah', 'mhm', 'i'ma', 'gon', 'ayy', 'wanna'). And, perhaps unsurprisingly, the flexibility of 'shit' and 'fuck' means they're pretty high up the list.
+Most of the other most common words should probably have been removed as stop words but weren't in our stop-word dictionary (e.g. 'yeah', 'mhm', 'i'ma', 'gon', 'ayy', 'wanna'). Perhaps unsurprisingly, the flexibility of 'shit' and 'fuck' means they're pretty high up the list.
 
-# R session info
+We've seen how simple it is to use the `geniusr` functions `search_artist()`, `get_artist_meta()`, `get_artist_songs()`, `get_songs_meta()` `and scrape_lyrics_url()` in conjunction with `purrr`, followed by some `tidytext`.
+
+The next step might be to look at Ye's entire back catalogue and see how his lyrics have changed over time and how they compare to `ye` in particular.
+
+Obviously I only made this post for the 'tid-ye-text' pun, so take it or leave it.
+
+<img src="https://media.giphy.com/media/YBUr4QQ1Mn6Eg/giphy.gif" alt="An animated gif of Kanye saying that the internet breaks when he says truthful things out loud" width="100%">
+
+# I'm sorry, I'mma let you finish, but this `sessionInfo()` was the best `sessionInfo()` *of all time*
 
 ```{r sessionInfo}
 sessionInfo()
