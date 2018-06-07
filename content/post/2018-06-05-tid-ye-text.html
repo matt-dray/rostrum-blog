@@ -1,0 +1,623 @@
+---
+title: Tid-ye-text with geniusr
+author: Matt Dray
+date: '2018-06-05'
+slug: tid-ye-text
+categories:
+  - pop culture
+  - R
+  - text analysis
+tags:
+  - geniusr
+  - dplyr
+  - ggplot2
+  - kanye
+  - music
+  - tidytext
+  - datatable
+  - purrr
+draft: TRUE
+---
+
+<script src="/rmarkdown-libs/htmlwidgets/htmlwidgets.js"></script>
+<script src="/rmarkdown-libs/jquery/jquery.min.js"></script>
+<link href="/rmarkdown-libs/datatables-css/datatables-crosstalk.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/datatables-binding/datatables.js"></script>
+<link href="/rmarkdown-libs/dt-core/css/jquery.dataTables.min.css" rel="stylesheet" />
+<link href="/rmarkdown-libs/dt-core/css/jquery.dataTables.extra.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/dt-core/js/jquery.dataTables.min.js"></script>
+<link href="/rmarkdown-libs/crosstalk/css/crosstalk.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/crosstalk/js/crosstalk.min.js"></script>
+
+
+<p><span style="color:lightgray">Matt Dray</span></p>
+<p>⚠️ Warning: this post contains offensive content. ⚠️</p>
+<hr />
+<p><img src="https://media.giphy.com/media/9cmVjltMzhPUY/giphy.gif" alt="An animated gif of Kanye saying that he's a genius"></p>
+<div id="genius" class="section level1">
+<h1>Genius?</h1>
+<p>Kanye West released his latest album – <a href="https://en.wikipedia.org/wiki/Ye_(album)"><em>ye</em></a> – last week<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> after a(nother) pretty turbulent and controversial period of his life<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a>. So what’s been on his mind?</p>
+<p>I think the real question is why don’t we scrape Yeezus’s lyrics from the web and analyse them using R? Obviously.</p>
+</div>
+<div id="genius-1" class="section level1">
+<h1>Genius</h1>
+<p><a href="https://genius.com/">Genius</a> is a website where you can upload and comment on song lyrics. It’s like <a href="https://www.youtube.com/watch?v=vam8l-JtqcI">Pop Up Video</a> for young people.</p>
+<p>You can access the lyrics data via Genius’s API<a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a>. Luckily, the <a href="https://www.r-project.org/about.html">R</a> package <a href="https://github.com/ewenme/geniusr"><code>genuisr</code></a> was developed by <a href="https://ewen.io/">Ewen Henderson</a> for exactly this purpose.<a href="#fn4" class="footnoteRef" id="fnref4"><sup>4</sup></a></p>
+</div>
+<div id="acces-api" class="section level1">
+<h1>Acces API</h1>
+<p>You need to register with Genius so you can get tokens for accessing their API. To do this:</p>
+<ol style="list-style-type: decimal">
+<li><a href="https://genius.com/api-clients/new">Create a new Genius API client</a>.</li>
+<li>Click ‘generate access token’ under ‘client access token’ to generate an access token.</li>
+<li>After <code>install.packages(&quot;geniusr&quot;)</code>, <code>library(geniusr)</code> you’ll be prompted to enter the access token when you try to use a <code>geniusr</code> function</li>
+</ol>
+<p>I stored my token in my system .Renviron file. This plain-text file provides a place to store variables that R will look for and load automatically on start up. Edit this file by running <code>usethis::edit_r_environ()</code> and adding the line <code>GENIUS_API_TOKEN=X</code>, replacing X with your token.</p>
+<p>If you don’t store your token this way then you’ll be prompted for a new token every time you start a new R session, which could get quite tedious.</p>
+</div>
+<div id="use-geniusr" class="section level1">
+<h1>Use <code>geniusr</code></h1>
+<div id="find-kanye" class="section level2">
+<h2>Find Kanye</h2>
+<p>First we need to find the artist ID for Kanye. We can use <code>search_artist()</code> to look for him.</p>
+<pre class="r"><code>library(geniusr)  # access genius api
+library(dplyr)  # manipulate data
+library(knitr)  # pretty table printing
+
+geniusr::search_artist(&quot;kanye west&quot;) %&gt;% 
+  knitr::kable()  # prints the table nice</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="right">artist_id</th>
+<th align="left">artist_name</th>
+<th align="left">artist_url</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">72</td>
+<td align="left">Kanye West</td>
+<td align="left"><a href="https://genius.com/artists/Kanye-west" class="uri">https://genius.com/artists/Kanye-west</a></td>
+</tr>
+<tr class="even">
+<td align="right">652275</td>
+<td align="left">JAY-Z &amp; Kanye West</td>
+<td align="left"><a href="https://genius.com/artists/Jay-z-and-kanye-west" class="uri">https://genius.com/artists/Jay-z-and-kanye-west</a></td>
+</tr>
+</tbody>
+</table>
+<p>Kanye’s ID on Genius is 72 as a solo artist. We can save this value as the object <code>kanye_id</code> and use it to get metadata about him. This includes the web address for his artist page on Genius, a link to the image of him used on the site and the number of people ‘following’ his lyrics page.</p>
+<pre class="r"><code># artist ID
+kanye_id &lt;- 72
+
+# access meta info
+artist_meta &lt;- geniusr::get_artist_meta(
+  artist_id = kanye_id
+)
+
+# preview
+dplyr::glimpse(artist_meta)</code></pre>
+<pre><code>## Observations: 1
+## Variables: 5
+## $ artist_id        &lt;int&gt; 72
+## $ artist_name      &lt;chr&gt; &quot;Kanye West&quot;
+## $ artist_url       &lt;chr&gt; &quot;https://genius.com/artists/Kanye-west&quot;
+## $ artist_image_url &lt;chr&gt; &quot;https://images.genius.com/92fee84306e9a1ec88...
+## $ followers_count  &lt;int&gt; 8752</code></pre>
+</div>
+<div id="get-songs" class="section level2">
+<h2>Get songs</h2>
+<p>Now we can use Kanye’s artist ID to obtain <em>all</em> his songs on Genius.</p>
+<pre class="r"><code># get all songs for a given artist id
+kanye_songs &lt;- geniusr::get_artist_songs(
+  artist_id = kanye_id
+)
+
+# a random preview
+dplyr::sample_n(kanye_songs, 10) %&gt;%
+  dplyr::select(song_name) %&gt;% 
+  knitr::kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">song_name</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Through the Wire (Still Standing) (Ft. Chaka Khan &amp; Elton John)</td>
+</tr>
+<tr class="even">
+<td align="left">On Rich People</td>
+</tr>
+<tr class="odd">
+<td align="left">On Hurricane Katrina (Ft. Mike Myers)</td>
+</tr>
+<tr class="even">
+<td align="left">Extravaganza</td>
+</tr>
+<tr class="odd">
+<td align="left">Through the Wire</td>
+</tr>
+<tr class="even">
+<td align="left">Eyes Closed Intro (Ft. George W. Bush)</td>
+</tr>
+<tr class="odd">
+<td align="left">Still Dreaming</td>
+</tr>
+<tr class="even">
+<td align="left">FML (Demo) (Ft. Travis Scott &amp; The Weeknd)</td>
+</tr>
+<tr class="odd">
+<td align="left">Everything I Got (Ft. Termanology)</td>
+</tr>
+<tr class="even">
+<td align="left">Be-Cleve in Yourself (Ft. Keke Palmer &amp; Mike Henry)</td>
+</tr>
+</tbody>
+</table>
+<p>We can also access a greater list of data for each song, including the album name and release date. We can use the <code>map_df</code> function from the <code>purrr</code> package to look for the meta data for each song in turn.</p>
+<pre class="r"><code>library(purrr)  # functional programming
+
+# apply function over each song id
+songs_meta &lt;- purrr::map_df(
+  kanye_songs$song_id,
+  geniusr::get_song_meta
+)
+
+# a random preview
+dplyr::sample_n(songs_meta, 10) %&gt;% 
+  dplyr::select(song_name, album_name) %&gt;% 
+  knitr::kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">song_name</th>
+<th align="left">album_name</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">No More For Me (Ft. Mark Spitz)</td>
+<td align="left">Kon the Louis Vuitton Don</td>
+</tr>
+<tr class="even">
+<td align="left">Touch the Sky (album version) (Promo Only clean edit) (Ft. Lupe Fiasco)</td>
+<td align="left">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">BLK SKN HEAD [Demo]</td>
+<td align="left">NA</td>
+</tr>
+<tr class="even">
+<td align="left">Trend is always late [April 18, 2018]</td>
+<td align="left">Kanye’s Poop-di-Scoopty 2018</td>
+</tr>
+<tr class="odd">
+<td align="left">No More Parties In LA (Demo)</td>
+<td align="left">NA</td>
+</tr>
+<tr class="even">
+<td align="left">FML (Original Demo) (Ft. Travis Scott)</td>
+<td align="left">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">Heartless (Remix) (Ft. Rick Ross)</td>
+<td align="left">NA</td>
+</tr>
+<tr class="even">
+<td align="left">New Slaves (Live Acoustic Performance) (Ft. Frank Ocean)</td>
+<td align="left">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">On Saint Paul and Personal Debt</td>
+<td align="left">Kanye West’s Visionary Streams of Consciousness</td>
+</tr>
+<tr class="even">
+<td align="left">Kinda Like A Big Deal</td>
+<td align="left">NA</td>
+</tr>
+</tbody>
+</table>
+<p>Looking at the album names, it seems we’ve got songs from 37 albums at least plus a bunch that are unknown or unclassified.</p>
+<pre class="r"><code># the songs are from which albums?
+unique(songs_meta$album_name)</code></pre>
+<pre><code>##  [1] NA                                                                
+##  [2] &quot;Def Poetry Jam&quot;                                                  
+##  [3] &quot;Kanye West&#39;s Visionary Streams of Consciousness&quot;                 
+##  [4] &quot;Zane Lowe BBC Radio Interviews (Kanye West)&quot;                     
+##  [5] &quot;The Life of Pablo&quot;                                               
+##  [6] &quot;808s &amp; Heartbreak&quot;                                               
+##  [7] &quot;Late Registration&quot;                                               
+##  [8] &quot;The College Dropout&quot;                                             
+##  [9] &quot;Freshmen Adjustment&quot;                                             
+## [10] &quot;World Record Holders&quot;                                            
+## [11] &quot;ye&quot;                                                              
+## [12] &quot;My Beautiful Dark Twisted Fantasy&quot;                               
+## [13] &quot;VH1 Storytellers&quot;                                                
+## [14] &quot;Get Well Soon...&quot;                                                
+## [15] &quot;Freshmen Adjustment Vol. 2&quot;                                      
+## [16] &quot;The Cons, Volume 5: Refuse to Die&quot;                               
+## [17] &quot;Graduation&quot;                                                      
+## [18] &quot;Can&#39;t Tell Me Nothing&quot;                                           
+## [19] &quot;Kon the Louis Vuitton Don&quot;                                       
+## [20] &quot;Yeezus&quot;                                                          
+## [21] &quot;I&#39;m Good&quot;                                                        
+## [22] &quot;Graduation \&quot;Bonus Tracks, Remixes, Unreleased\&quot; EP&quot;             
+## [23] &quot;Turbo Grafx 16*&quot;                                                 
+## [24] &quot;G.O.O.D. Fridays&quot;                                                
+## [25] &quot;Kanye West Presents Good Music Cruel Summer&quot;                     
+## [26] &quot;Kanye&#39;s Poop-di-Scoopty 2018&quot;                                    
+## [27] &quot;King&quot;                                                            
+## [28] &quot;Freshmen Adjustment Vol. 3&quot;                                      
+## [29] &quot;2016 G.O.O.D. Fridays&quot;                                           
+## [30] &quot;Welcome to Kanye&#39;s Soul Mix Show&quot;                                
+## [31] &quot;Late Orchestration&quot;                                              
+## [32] &quot;College Dropout: Video Anthology&quot;                                
+## [33] &quot;The Lost Tapes&quot;                                                  
+## [34] &quot;NBA 2K13 Soundtrack&quot;                                             
+## [35] &quot;Rapper&#39;s Delight&quot;                                                
+## [36] &quot;Boys Don&#39;t Cry (Magazine)&quot;                                       
+## [37] &quot;The Man With the Iron Fists (Original Motion Picture Soundtrack)&quot;
+## [38] &quot;Coach Carter (Music from the Motion Picture)&quot;</code></pre>
+<p>So you can see <em>ye</em> is definitely in the list of albums and we can filter our data frame so we just get the seven tracks from that particular album. Maybe we’ll explore the other lyrics more deeply another day.</p>
+<pre class="r"><code># filter songs from album &#39;ye&#39;
+ye &lt;- songs_meta %&gt;% 
+  dplyr::filter(album_name == &quot;ye&quot;)
+
+# preview songs
+dplyr::select(ye, song_name)</code></pre>
+<pre><code>## # A tibble: 7 x 1
+##   song_name                  
+##   &lt;chr&gt;                      
+## 1 All Mine                   
+## 2 Ghost Town                 
+## 3 I Thought About Killing You
+## 4 No Mistakes                
+## 5 Violent Crimes             
+## 6 Wouldn&#39;t Leave             
+## 7 Yikes</code></pre>
+<p>We can fecth the lyrics from Genius for each song now that we have their details. We can do this using <code>map_df()</code> again to apply the <code>scrape_lyrics_url()</code> function to each row of our dataframe, where each row represents a single song.</p>
+<pre class="r"><code># get lyrics
+ye_lyrics &lt;- purrr::map_df(
+  ye$song_lyrics_url,
+  geniusr::scrape_lyrics_url
+)
+
+# join additional information
+ye_lyrics &lt;- ye_lyrics %&gt;%
+  dplyr::group_by(song_name) %&gt;% 
+  dplyr::mutate(line_number = row_number()) %&gt;% 
+  dplyr::ungroup() %&gt;% 
+  dplyr::left_join(ye, by = &quot;song_name&quot;)
+
+# check out a sample of lines
+ye_lyrics %&gt;% 
+  dplyr::sample_n(10) %&gt;% 
+  dplyr::select(line, song_name) %&gt;% 
+  knitr::kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">line</th>
+<th align="left">song_name</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Make no mistake, girl, I still love you (no way)</td>
+<td align="left">No Mistakes</td>
+</tr>
+<tr class="even">
+<td align="left">When I’m thinkin’ like George Jetson</td>
+<td align="left">Wouldn’t Leave</td>
+</tr>
+<tr class="odd">
+<td align="left">And we up in this bitch until they turn the club off</td>
+<td align="left">No Mistakes</td>
+</tr>
+<tr class="even">
+<td align="left">I pray that you don’t get it all at once</td>
+<td align="left">Violent Crimes</td>
+</tr>
+<tr class="odd">
+<td align="left">If you tweakin’ out on my texts again</td>
+<td align="left">Wouldn’t Leave</td>
+</tr>
+<tr class="even">
+<td align="left">Get so bright, it’s no sun, get so loud, I hear none</td>
+<td align="left">I Thought About Killing You</td>
+</tr>
+<tr class="odd">
+<td align="left">Get the genie out the bottle</td>
+<td align="left">All Mine</td>
+</tr>
+<tr class="even">
+<td align="left">Agghhhh!</td>
+<td align="left">Yikes</td>
+</tr>
+<tr class="odd">
+<td align="left">I love your titties ’cause they prove</td>
+<td align="left">All Mine</td>
+</tr>
+<tr class="even">
+<td align="left">Niggas is pimps, niggas is players, ’til niggas have daughters</td>
+<td align="left">Violent Crimes</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="text-analysis" class="section level1">
+<h1>Text analysis</h1>
+<div id="words" class="section level2">
+<h2>Words</h2>
+<div id="extract" class="section level3">
+<h3>Extract</h3>
+<p>Now we’ve got the lines separated, we can bring in <a href="https://www.tidytextmining.com/index.html">the <code>tidytext</code> package from Julia Silge and David Robinson</a> to break the lines into ‘tokens’ for further text analysis. Tokens are individual units of text prepared for analysis. In our case, we’re looking at individual words, or ‘unigrams’.</p>
+<p>We should probabaly remove stop words. These are words don’t really have much meaning in this context because of their ubiquity, like ‘if’, ‘and’ and ‘but’. We can get rid of these by anti-joining a pre-prepared list of such words.</p>
+<pre class="r"><code>library(tidytext)  # wrangle text
+
+ye_words &lt;- ye_lyrics %&gt;%
+  tidytext::unnest_tokens(word, line) %&gt;%  # separate the tokens out
+  dplyr::anti_join(tidytext::stop_words)  # remove words like &#39;if&#39;, &#39;and&#39;, &#39;but&#39;
+
+dplyr::sample_n(ye_words, 10) %&gt;% 
+  dplyr::select(word, song_name) %&gt;% 
+  knitr::kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">word</th>
+<th align="left">song_name</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">yeah</td>
+<td align="left">Ghost Town</td>
+</tr>
+<tr class="even">
+<td align="left">daughters</td>
+<td align="left">Violent Crimes</td>
+</tr>
+<tr class="odd">
+<td align="left">test</td>
+<td align="left">Yikes</td>
+</tr>
+<tr class="even">
+<td align="left">warn</td>
+<td align="left">Yikes</td>
+</tr>
+<tr class="odd">
+<td align="left">joke</td>
+<td align="left">I Thought About Killing You</td>
+</tr>
+<tr class="even">
+<td align="left">girl</td>
+<td align="left">No Mistakes</td>
+</tr>
+<tr class="odd">
+<td align="left">miss</td>
+<td align="left">Wouldn’t Leave</td>
+</tr>
+<tr class="even">
+<td align="left">ye</td>
+<td align="left">I Thought About Killing You</td>
+</tr>
+<tr class="odd">
+<td align="left">shit</td>
+<td align="left">I Thought About Killing You</td>
+</tr>
+<tr class="even">
+<td align="left">mine</td>
+<td align="left">Wouldn’t Leave</td>
+</tr>
+</tbody>
+</table>
+<p>Note that this isn’t <em>completely</em> successful. Kanye also uses colloquialisms and words like ‘ima’; a contraction of two stop words that isn’t represented in our stop-word dictionary.</p>
+</div>
+<div id="count-words" class="section level3">
+<h3>Count words</h3>
+<p>Now we’ve tokenised the lyrics to removed stopwords, we can just do a simple count of each one. I’ve shown this in an interactive table.</p>
+<pre class="r"><code>library(DT)  # interactive tables
+
+ye_words %&gt;%
+  dplyr::count(word, sort = TRUE) %&gt;% 
+  DT::datatable(
+    options = list(
+      autoWidth = TRUE,
+      pageLength = 10
+    )
+  )</code></pre>
+<div id="htmlwidget-1" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-1">{"x":{"filter":"none","data":[["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50","51","52","53","54","55","56","57","58","59","60","61","62","63","64","65","66","67","68","69","70","71","72","73","74","75","76","77","78","79","80","81","82","83","84","85","86","87","88","89","90","91","92","93","94","95","96","97","98","99","100","101","102","103","104","105","106","107","108","109","110","111","112","113","114","115","116","117","118","119","120","121","122","123","124","125","126","127","128","129","130","131","132","133","134","135","136","137","138","139","140","141","142","143","144","145","146","147","148","149","150","151","152","153","154","155","156","157","158","159","160","161","162","163","164","165","166","167","168","169","170","171","172","173","174","175","176","177","178","179","180","181","182","183","184","185","186","187","188","189","190","191","192","193","194","195","196","197","198","199","200","201","202","203","204","205","206","207","208","209","210","211","212","213","214","215","216","217","218","219","220","221","222","223","224","225","226","227","228","229","230","231","232","233","234","235","236","237","238","239","240","241","242","243","244","245","246","247","248","249","250","251","252","253","254","255","256","257","258","259","260","261","262","263","264","265","266","267","268","269","270","271","272","273","274","275","276","277","278","279","280","281","282","283","284","285","286","287","288","289","290","291","292","293","294","295","296","297","298","299","300","301","302","303","304","305","306","307","308","309","310","311","312","313","314","315","316","317","318","319","320","321","322","323","324","325","326","327","328","329","330","331","332","333","334","335","336","337","338","339","340","341","342","343","344","345","346","347","348","349","350","351","352","353","354","355","356","357","358","359","360","361","362","363","364","365","366","367","368","369","370","371","372","373","374","375","376","377","378","379","380","381","382","383","384","385","386","387","388","389","390","391","392","393","394","395","396","397","398","399","400","401","402","403","404","405","406","407","408","409","410","411","412","413","414","415","416","417","418","419","420","421","422","423","424","425","426","427","428","429","430","431","432","433","434","435","436","437","438","439","440","441","442","443","444","445","446","447","448","449","450","451","452","453","454","455","456","457","458","459","460","461","462","463","464","465","466","467","468","469","470","471","472","473","474","475","476","477","478","479","480","481","482","483","484","485","486","487","488","489","490","491","492","493","494","495","496","497","498","499","500","501","502","503","504","505","506","507","508","509","510","511","512","513","514","515","516","517","518","519","520","521","522","523","524","525","526","527","528","529","530","531","532","533","534","535","536","537"],["love","yeah","mhm","niggas","day","shit","feel","i'ma","girl","gon","huh","ass","ayy","fuck","mistake","nigga","ye","wanna","bad","night","killing","pray","bottle","colors","frightenin","genie","menacin","mind","scare","type","anymore","damn","free","gotta","hurts","kinda","leave","lose","somethin","time","told","tweakin","aw","bleed","bottom","bustin","crazy","daughters","days","drippin","hand","hate","kids","lamp","loud","medulla","mine","murder","oblongata","premeditated","rubbin","skin","stove","supermodel","thick","ape","baby","beautiful","bitch","bitches","bout","bring","called","darkest","em","energy","god","happen","hear","hit","hold","lord","nights","people","pimps","play","players","remembered","run","set","shines","talk","til","times","tryin","tryna","uh","wife","women","y'all","2c","ahead","beat","bein","break","butterfly","calm","caught","coke","cry","devil","died","dogs","drop","embarrassed","feels","fifty","friends","george","girls","glory","grow","heroes","hundred","hurry","lay","lie","live","livin","lost","meant","meds","mental","mhmm","mom'll","monster","monsters","nicki","ohh","past","pipe","pretty","promise","pu","pull","pussy","reality","repaint","savage","scary","speak","story","sun","sunday","superhero","takes","talkin","thinkin","top","wearin","whoop","windin","woah","worried","wrist","yeezy","50","abercrombie","advice","age","agghhhh","altar","answered","army","asap","ashtrays","attitude","aww","bag","ball","band","bands","basic","bay","beard","bet","bill","bipolar","blogs","blood","blunt","body's","bold","books","born","boss","braids","breathe","bright","bringin","broke","buckwheat","build","burning","bye","cache","call","callin","calls","campbell","cap","cape","care","centuries","charges","child","chipped","choice","chopped","christian","city","class","close","clout","club","college","comments","common","compensate","comprehend","conquer","contemplated","corey","court","cousins","cover","crown","cube","cubs","cum","curves","cuttin","daddy","danger","daniels","daughter","dead","dealin","death","debt","deebo","defend","demons","die","dirt","disability","dmc","dmt","doa","doin","door","dot","drama'll","drank","draped","dreamin","dress","dressed","dri","drivin","drums","dry","dude","dumb","dvd","empathy","enjoy","enormous","extremely","fade","fallin","father","felicia","fell","female","fentanyl","fight","findin","finna","fire","fit","floor","fockers","focus","food","forgive","frees","frito","fucked","gambles","game","gandhi","gentle","gettin","glass","gloves","gonna","grand'll","grown","guarantee","guess","gunned","guy","haan","half","halfway","hangin","happened","hard","harm","havin","heatstroke","hero","hm","homegirl","homie","hope","hospital","hurt","ice","imagine","incident","incidentals","income","infinity","inside","jefferson","jetson","joke","juicy","karate","karma","kerry","khalifa","kill","kobe","korea","lack","leader","light","listen","lived","lot","loved","loving","loyalty","lungs","mad","marijuana","marlon","marshal","martin","matter","meet","menagés","ménages","messagin","methods","metoo'd","mike","minds","mingle","miss","moment","mommy's","money","mouth","move","muslims","naked","naomi","net","news","newtone","north","notch","nother","nothing's","nuke","numb","nurture","nuts","obey","od","oooh","opps","options","otay","outcome","pack","packed","pajamas","pay","person","pervs","piano","pilates","pin","plottin","pop","precautious","prefer","prince","prove","prrt","publicly","pum","questionin","raw","reason","rebukin","reception","red","relate","reminders","rich","rope","round","rules","rum","russell","salty","sample","sayin","scandal","scared","scars","schemin","school","screamed","screamin","season","sensitive","sentimental","serve","shade","shaky","shine","shinin","shocked","shop","shot","silence","silly","simmons","sin","single","slavery","sleep","smack","smash","smith","smoke","smokin","snipe","snitch","snubs","socked","soul","soundin","space","spend","spirits","starry","stayed","stick","stormy","strategizin","stratosphere","stripes","struggling","stuck","successful","sundress","superpower","supposed","sway","swear","table","takin","taste","tbd","test","testin","texts","theme","thots","threesome","titties","titty","tmz","tongue","tooth","traits","tristan","trollin","true","truth","truths","tv","uhh","us'd","valuable","violent","vomit","wait","warn","washington","waste","watch","wave","wear","weigh","white","wild","wildest","wine","wiz","workin","worse","worst","wrongs'll","wrote","yesterday","yoga","you's","zombie"],[28,24,20,16,13,13,12,12,11,11,11,10,10,10,10,10,10,9,8,8,7,7,6,6,6,6,6,6,6,6,5,5,5,5,5,5,5,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>word<\/th>\n      <th>n<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"autoWidth":true,"pageLength":10,"columnDefs":[{"className":"dt-right","targets":2},{"orderable":false,"targets":0}],"order":[],"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+<p>Let’s also show this as a plot. For simplicity, we’ll show only the words that appeared more than five times.</p>
+<p>I’ve sampled seven colours from the album cover of ye, stored as hexadecimal values in a vector that’s part of the <code>dray</code> package. We can select from these to decorate our plot, because why not. The album cover is a Wyoming mountainscape, taken on Kanye’s own iPhone shortly before he held a listening party for the new album. Scrawled in green lettering over the image is the phrase ‘I hate being Bi-Polar it’s awesome’.</p>
+<pre class="r"><code>#devtools::install_github(&quot;matt-dray/dray&quot;)
+library(dray)  # for ye_cols
+dray::ye_cols  # see the named colours</code></pre>
+<pre><code>## mountain_blue    grass_blue   cloud_blue1   cloud_white    cloud_grey 
+##     &quot;#233956&quot;     &quot;#0e1e27&quot;     &quot;#7a8aa2&quot;     &quot;#dfd7c9&quot;     &quot;#b5b2b0&quot; 
+##   cloud_blue2    text_green 
+##     &quot;#9da3ae&quot;     &quot;#31ef56&quot;</code></pre>
+<p>Okay, on with the plot.</p>
+<pre class="r"><code>library(ggplot2)  # plots
+
+ye_words %&gt;%
+  dplyr::count(word, sort = TRUE) %&gt;%  # tally words
+  dplyr::filter(n &gt; 5) %&gt;%  # more than5 occurrences 
+  dplyr::mutate(word = reorder(word, n)) %&gt;%  # order by count
+  ggplot2::ggplot(aes(word, n)) +
+  geom_col(fill = ye_cols[&quot;mountain_blue&quot;]) +
+  labs(
+    title = &quot;Frequency of words in &#39;ye&#39; (2018) by Kanye West&quot;,
+    subtitle = &quot;Using the geniusr and tidytext packages&quot;,
+    x = &quot;&quot;, y = &quot;Count&quot;,
+    caption = &quot;Lyrics from genius.com&quot;
+  ) +
+  coord_flip() +
+  theme(  # apply ye theming
+    plot.title = element_text(colour = ye_cols[&quot;cloud_white&quot;]),
+    plot.subtitle = element_text(colour = ye_cols[&quot;cloud_white&quot;]),
+    plot.caption = element_text(colour = ye_cols[&quot;cloud_blue1&quot;]),
+    axis.title = element_text(colour = ye_cols[&quot;text_green&quot;]),
+    axis.text = element_text(colour = ye_cols[&quot;text_green&quot;]),
+    plot.background = element_rect(fill = ye_cols[&quot;grass_blue&quot;]),
+    panel.background = element_rect(fill = ye_cols[&quot;cloud_grey&quot;]),
+    panel.grid = element_line(ye_cols[&quot;cloud_grey&quot;])
+  )</code></pre>
+<p><img src="/post/2018-06-05-tid-ye-text_files/figure-html/plot_word_freq-1.png" width="672" /></p>
+</div>
+</div>
+<div id="bigrams" class="section level2">
+<h2>Bigrams</h2>
+<div id="extract-1" class="section level3">
+<h3>Extract</h3>
+<p>Tokenising by individual words is fine, but we aren’t restricted to unigrams. We can also tokenise by <em>bigrams</em>, which are pairs of adjacent words. For example, ‘damn croissant’ is a bigram in the sentence ‘hurry up with my damn croissaint’.</p>
+<pre class="r"><code>ye_bigrams &lt;- ye_lyrics %&gt;%
+  tidytext::unnest_tokens(
+    bigram,
+    line,
+    token = &quot;ngrams&quot;,
+    n = 2
+  )</code></pre>
+<p>Removing stopwords is tricker than for tokenising by word. We should tokenise by bigram first, then separate the words and match them to our stopword list.</p>
+<pre class="r"><code>library(tidyr)  # to isolate bigram words
+
+ye_bigrams_separated &lt;- ye_bigrams %&gt;%
+  tidyr::separate(
+    bigram,
+    c(&quot;word1&quot;, &quot;word2&quot;),
+    sep = &quot; &quot;
+  )</code></pre>
+<p>Then we can filter to remove the stopwords.</p>
+<pre class="r"><code>ye_bigrams_filtered &lt;- ye_bigrams_separated %&gt;%
+  dplyr::filter(
+    !word1 %in% tidytext::stop_words$word,
+    !word2 %in% tidytext::stop_words$word
+  ) %&gt;%
+  dplyr::mutate(bigram = paste(word1, word2))</code></pre>
+<p>The results look a bit like this:</p>
+<pre class="r"><code>sample_n(ye_bigrams_filtered, 10) %&gt;% 
+  dplyr::select(bigram, song_name)</code></pre>
+<pre><code>## # A tibble: 10 x 2
+##    bigram              song_name                  
+##    &lt;chr&gt;               &lt;chr&gt;                      
+##  1 bipolar shit        Yikes                      
+##  2 bitch gonna         All Mine                   
+##  3 premeditated murder I Thought About Killing You
+##  4 scary nights        Violent Crimes             
+##  5 wave cap            I Thought About Killing You
+##  6 hurts anymore       Ghost Town                 
+##  7 ayy i&#39;ma            All Mine                   
+##  8 simmons wanna       Yikes                      
+##  9 til niggas          Violent Crimes             
+## 10 die nigga           I Thought About Killing You</code></pre>
+</div>
+<div id="count-bigrams" class="section level3">
+<h3>Count bigrams</h3>
+<p>So let’s count the most frequent bigram occurrences, like we did for the single words.</p>
+<pre class="r"><code>ye_bigrams_filtered %&gt;%
+  dplyr::mutate(bigram = as.factor(bigram)) %&gt;% 
+  dplyr::count(bigram, sort = TRUE) %&gt;% 
+  DT::datatable(
+    options = list(
+      autoWidth = TRUE,
+      pageLength = 10
+    )
+  )</code></pre>
+<div id="htmlwidget-2" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-2">{"x":{"filter":"none","data":[["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50","51","52","53","54","55","56","57","58","59","60","61","62","63","64","65","66","67","68","69","70","71","72","73","74","75","76","77","78","79","80","81","82","83","84","85","86","87","88","89","90","91","92","93","94","95","96","97","98","99","100","101","102","103","104","105","106","107","108","109","110","111","112","113","114","115","116","117","118","119","120","121","122","123","124","125","126","127","128","129","130","131","132","133","134","135","136","137","138","139","140","141","142","143","144","145","146","147","148","149","150","151","152","153","154","155","156","157","158","159","160","161","162","163","164","165","166","167","168","169","170","171","172","173","174","175","176","177","178","179","180","181","182","183","184","185"],["mhm mhm","mistake girl","menacin frightenin","feel kinda","hurts anymore","kinda free","ass bustin","bleed yeah","colors drippin","i'ma lose","medulla oblongata","night night","premeditated murder","supermodel thick","yeah yeah","pimps niggas","til niggas","ape ape","ayy ayy","ayy i'ma","bitches fuck","gotta repaint","mhm mhmm","players til","pretty women","remembered aw","savage niggas","scary nights","shit nigga","tweakin tweakin","worried aw","ye ye","50 pop","ass nigga","ass pray","ayy hospital","ayy time","bad bitches","bad days","bad traits","bands fuck","bein salty","bein silly","bipolar shit","bitch gonna","blogs gettin","body's draped","buckwheat ass","burning mhm","bye felicia","callin screamin","chopped yeah","christian mingle","clout game","common theme","contemplated premeditated","corey gambles","cover incidentals","cubs lost","cuttin class","damn female","days ohh","dead yeah","devil rebukin","die nigga","dmc huh","dmt huh","dreamin talkin","dri fit","drivin round","dry snitch","dvd huh","em hear","em set","enormous scandal","extremely valuable","fallin dreamin","father forgive","fifty blogs","fifty calls","finna talk","fire marshal","food court","frito lay","gentle mental","george jefferson","george jetson","gettin fifty","girl love","gon fuck","gon hate","gon run","gon set","gonna leave","gotta bag","half truths","halfway i'ma","hate nigga","havin ménages","hear y'all","hero mhm","hm mhm","hospital band","hundred bands","hundred grand'll","i'ma fuck","i'ma leave","i'ma pipe","i'ma pray","ice cube","kerry washington","khalifa uh","leave love","light skin","love lost","lungs hurt","marshal bill","mhm yeah","naked minds","naomi campbell","nicki aww","nigga doa","nigga shit","north korea","od huh","ohh heatstroke","options nothing's","play piano","plottin schemin","prrt pu","pu pu","pu pum","red dot","run dmc","russell simmons","schemin findin","season nigga","shaky ass","shit halfway","shit ohh","simmons wanna","skin run","smack dvd","smokin marijuana","somethin frees","somethin happen","starry crown","stormy daniels","superpower nigga","takin corey","talkin bout","taste coke","tbd huh","time baby","time somethin","titty shop","tooth chipped","top chopped","tristan single","trollin od","true soul","truth told","tryna test","tryna warn","tv huh","uh told","violent nights","wanna hit","wanna lay","wanna listen","wanna pray","wanna vomit","wave cap","wife callin","wild day","wiz khalifa","worse huh","worst times","y'all bringin","ye season","ye shit","yeah moment","yeezy trollin","yeezy yeezy","you's gon"],[12,10,6,5,5,5,4,4,4,4,4,4,4,4,4,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>bigram<\/th>\n      <th>n<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"autoWidth":true,"pageLength":10,"columnDefs":[{"className":"dt-right","targets":2},{"orderable":false,"targets":0}],"order":[],"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+<p>And once again we can plot this with our <em>ye</em> theming.</p>
+<pre class="r"><code>ye_bigrams_filtered %&gt;%
+  dplyr::count(bigram, sort = TRUE) %&gt;%
+  dplyr::filter(n &gt; 3) %&gt;%
+  dplyr::mutate(bigram = reorder(bigram, n)) %&gt;%
+  ggplot2::ggplot(aes(bigram, n)) +
+  geom_col(fill = ye_cols[&quot;mountain_blue&quot;]) +
+  labs(
+    title = &quot;Frequency of bigrams in &#39;ye&#39; (2018) by Kanye West&quot;,
+    subtitle = &quot;Using the geniusr and tidytext packages&quot;,
+    x = &quot;&quot;, y = &quot;Count&quot;,
+    caption = &quot;Lyrics from genius.com&quot;
+  ) +
+  coord_flip() +
+  theme(  # apply ye theming
+    plot.title = element_text(colour = ye_cols[&quot;cloud_white&quot;]),
+    plot.subtitle = element_text(colour = ye_cols[&quot;cloud_white&quot;]),
+    plot.caption = element_text(colour = ye_cols[&quot;cloud_blue1&quot;]),
+    axis.title = element_text(colour = ye_cols[&quot;text_green&quot;]),
+    axis.text = element_text(colour = ye_cols[&quot;text_green&quot;]),
+    plot.background = element_rect(fill = ye_cols[&quot;grass_blue&quot;]),
+    panel.background = element_rect(fill = ye_cols[&quot;cloud_grey&quot;]),
+    panel.grid = element_line(ye_cols[&quot;cloud_grey&quot;])
+  )</code></pre>
+<p><img src="/post/2018-06-05-tid-ye-text_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+</div>
+</div>
+<div id="what-did-we-learn" class="section level2">
+<h2>What did we learn?</h2>
+<p>It’s difficult to get a deep insight from looking at individual words from a 24-minute album. You might argue that looking for deep insight from Kanye West’s lyrics is a fool’s errand anyway.</p>
+<p>Despite this, ‘love’ and ‘feel’ were in the top 10, which might indicate Kanye expressing his feelings. ‘Bad’, ‘mistake’ and ‘pray’ were also repeated a bunch of times, which might also indicate what’s on Ye’s mind.</p>
+<p>Most of the other most common words should probably have been removed as stop words but weren’t in our stop-word dictionary (e.g. ‘yeah’, ‘mhm’, ‘i’ma’, ‘gon’, ‘ayy’, ‘wanna’). And, perhaps unsurprisingly, the flexibility of ‘shit’ and ‘fuck’ means they’re pretty high up the list.</p>
+</div>
+</div>
+<div id="r-session-info" class="section level1">
+<h1>R session info</h1>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>## R version 3.4.3 (2017-11-30)
+## Platform: x86_64-apple-darwin15.6.0 (64-bit)
+## Running under: macOS High Sierra 10.13.4
+## 
+## Matrix products: default
+## BLAS: /Library/Frameworks/R.framework/Versions/3.4/Resources/lib/libRblas.0.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/3.4/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_GB.UTF-8/en_GB.UTF-8/en_GB.UTF-8/C/en_GB.UTF-8/en_GB.UTF-8
+## 
+## attached base packages:
+## [1] methods   stats     graphics  grDevices utils     datasets  base     
+## 
+## other attached packages:
+##  [1] tidyr_0.7.2        ggplot2_2.2.1.9000 dray_0.0.0.9000   
+##  [4] DT_0.4.5           tidytext_0.1.4     bindrcpp_0.2      
+##  [7] purrr_0.2.4        knitr_1.18         dplyr_0.7.4       
+## [10] geniusr_1.0.0.9000 emo_0.0.0.9000    
+## 
+## loaded via a namespace (and not attached):
+##  [1] httr_1.3.1         jsonlite_1.5       shiny_1.1.0       
+##  [4] assertthat_0.2.0   highr_0.6          selectr_0.3-1     
+##  [7] yaml_2.1.18        slam_0.1-42        pillar_1.2.1      
+## [10] backports_1.1.1    lattice_0.20-35    glue_1.2.0        
+## [13] digest_0.6.15      RColorBrewer_1.1-2 promises_1.0.1    
+## [16] rvest_0.3.2        colorspace_1.3-2   htmltools_0.3.6   
+## [19] httpuv_1.4.3       Matrix_1.2-12      plyr_1.8.4        
+## [22] psych_1.7.8        XML_3.98-1.9       pkgconfig_2.0.1   
+## [25] broom_0.4.2        bookdown_0.5       xtable_1.8-2      
+## [28] scales_0.5.0.9000  later_0.7.2        tibble_1.4.2      
+## [31] withr_2.1.2        lazyeval_0.2.1     cli_1.0.0         
+## [34] mnormt_1.5-5       magrittr_1.5       crayon_1.3.4      
+## [37] mime_0.5           evaluate_0.10.1    tokenizers_0.1.4  
+## [40] janeaustenr_0.1.5  nlme_3.1-131       SnowballC_0.5.1   
+## [43] xml2_1.2.0         foreign_0.8-69     blogdown_0.1      
+## [46] tools_3.4.3        stringr_1.3.0      munsell_0.4.3     
+## [49] plotrix_3.7-2      compiler_3.4.3     rlang_0.2.1       
+## [52] grid_3.4.3         htmlwidgets_1.0    crosstalk_1.0.1   
+## [55] labeling_0.3       rmarkdown_1.6      gtable_0.2.0      
+## [58] curl_3.0           reshape2_1.4.3     R6_2.2.2          
+## [61] lubridate_1.7.2    utf8_1.1.3         bindr_0.1         
+## [64] rprojroot_1.2      stringi_1.1.7      parallel_3.4.3    
+## [67] Rcpp_0.12.17       wordcloud_2.5      tidyselect_0.2.3</code></pre>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>This is not a review of the album. <a href="http://www.metacritic.com/music/ye/kanye-west">There’s plenty of those already</a>.<a href="#fnref1">↩</a></p></li>
+<li id="fn2"><p>This is also not a commentary on <a href="https://en.wikipedia.org/wiki/Kanye_West#Controversies">his <em>many</em> controversies</a>.<a href="#fnref2">↩</a></p></li>
+<li id="fn3"><p>An API is an <a href="https://medium.freecodecamp.org/what-is-an-api-in-english-please-b880a3214a82">‘Application Programme Interface’</a>, which is a fancy way of saying ‘computers talking to computers’.<a href="#fnref3">↩</a></p></li>
+<li id="fn4"><p>Note that there’s also a <code>geniusR</code> package, which has a very similar name, but has to be <a href="https://github.com/JosiahParry/geniusR">installed from GitHub</a> rather than CRAN.<a href="#fnref4">↩</a></p></li>
+</ol>
+</div>
