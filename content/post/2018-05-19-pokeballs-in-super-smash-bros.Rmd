@@ -44,15 +44,19 @@ This is a short post to sate my curiosity. I've used R code throughout. The post
 I'm a recovering ecologist, so data collection by observation is very important to me. I watched four computer-controlled players face-off in versus mode (it's a weekend and I'm old enough to do whatever I want (after I've done my chores)). Pokeballs were the only items set to 'on' and frequency was set to 'very high'. I saved the file as [a CSV on GitHub](https://github.com/matt-dray/draytasets/blob/master/ssb_pokeballs.csv).
 
 ```{r read}
+# load packages
 library(dplyr)  # data manipulation
 library(readr)  # reading files
 
+# read data from github 
 balls <- readr::read_csv(
   "https://raw.githubusercontent.com/matt-dray/draytasets/master/ssb_pokeballs.csv"
 ) %>% 
-  dplyr::mutate(pokemon = tools::toTitleCase(pokemon))
+  dplyr::mutate(pokemon = tools::toTitleCase(pokemon))  # start names with caps
 
-dplyr::pull(balls)[1:25]  # be careful when pulling balls
+# preview 25 random observations
+dplyr::sample_n(balls, 25) %>%  # sample of 25
+  dplyr::pull()  # column to vector
 ```
 
 # Frequency
@@ -65,7 +69,7 @@ We can make use of the `tabyl()` function from the `janitor` package.
 balls_summary <- balls %>%
   janitor::tabyl(pokemon) %>% 
   dplyr::arrange(desc(n)) %>% 
-  dplyr::mutate(percent = percent * 100) %>% 
+  dplyr::mutate(percent = round(percent * 100, 1)) %>% 
   dplyr::rename(Pokemon = pokemon, Count = n, Percent = percent)
   
 knitr::kable(balls_summary)
@@ -92,13 +96,13 @@ balls %>%
 
 # Revelation
 
-So it looks like the 'common' Pokemon according to [the SSB wiki](https://www.ssbwiki.com/Pok%C3%A9_Ball) are indeed more common, though Snorlax appears equal second on this list, despite being labelled as 'uncommon'. Clefairy also appeared less than expected, given it was labelled as 'common'.
+So it looks like the 'common' Pokemon according to [the SSB wiki](https://www.ssbwiki.com/Pok%C3%A9_Ball) are indeed more common, though Snorlax appears equal first on this list, despite being labelled as 'uncommon'. Clefairy also appeared less than expected, given it was labelled as 'common'.
 
-Mew appeared `r balls_summary[balls_summary$Pokemon == "Mew", "Count"]` times out of `r nrow(balls)`, which is once every `r round((nrow(balls)/balls_summary[balls_summary$Pokemon == "Mew", "Count"]), 1)` releases.
+Mew appeared `r balls_summary[balls_summary$Pokemon == "Mew", "Count"]` times out of `r nrow(balls)`, which is once every `r round((nrow(balls)/balls_summary[balls_summary$Pokemon == "Mew", "Count"]), 1)` releases; `r ifelse(round((nrow(balls)/balls_summary[balls_summary$Pokemon == "Mew", "Count"]), 1) < 151, "less", "more")` than the once every 151 releases.
 
 Bear in mind that this is only based on a sample of `r nrow(balls)` so far . I'll keep collecting data to update this post.
 
-# Gratuitous shot of my coveted Pokemon Stadium special edition N64 playing SSB
+# Gratuitous shot of my coveted Pokemon Stadium special-edition N64 playing SSB
 
 <img src="/post/2018-05-19-pokeballs-in-super-smash-bros_files/n64.JPG" alt="Special edition N64 playing Super Smash Bros" width="100%">
 
