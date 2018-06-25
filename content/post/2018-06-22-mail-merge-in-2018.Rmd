@@ -47,9 +47,35 @@ This is the file containing the actual content of your letter or report.
 
 The default output from an R Markdown file to a Word document isn't great. You can create a separate Word document that contains modified styles to match the theme.
 
+```
+---
+output:  
+  word_document:
+    reference_docx: style_reference.docx
+---
+```
+
 ## The loop
 
 For each X in some vector of things, render the R Markdown template file according to the style document and save it with a unique name
+
+```
+for (i in unique(dataset$urn)){  # loop through each element from the dataset
+ 
+  data <- dataset[dataset$urn == i, ]  # isolate the row for that URN
+ 
+  # the dataframe object 'data' we just created will be used as the source
+  # for filling the details in on the template
+ 
+  # now render ('knit') the R Markdown file to Word format, name it and save it
+ 
+  render(
+    "01_template.rmd",  # where to source the template from
+    output_file = paste0("report_", i, ".docx"),  # name the output
+    output_dir = "output"  # folder to put the output file
+  )
+}
+```
 
 # Execute
 
