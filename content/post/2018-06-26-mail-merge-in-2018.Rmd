@@ -1,0 +1,109 @@
+---
+title: Mail merge in 2018
+author: Matt Dray
+date: '2018-06-26'
+slug: mail-merge-in-2018
+categories:
+  - R
+tags: []
+draft: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, error = FALSE, message = FALSE)
+```
+
+<span style="color:lightgray">Matt Dray</span>
+
+Clip art. Fax machines. CD-ROMs. Dial-up modems. The World Wide Web. *Mail merge*.
+
+These exotic terms all give me flashbacks to computer class at the turn of the millennium.
+
+The last one -- mail merge -- is a technique you might still need to use. It involves filling a template document, typically a template letter, with information from unique cases in a database.
+
+I've had to do something like this a few times recently, so [as David Robinson said](https://twitter.com/drob/status/928447584712253440):
+
+> When you’ve given the same in-person advice 3 times, write a blog post
+
+So here we are.
+
+# Approach
+
+We'll make an R Markdown template and fill it with data for each entity by looping each of them in turn. Each will be rendered to Word (.docx) and formatted according to a style template. 
+
+I don't claim this to be the most efficient method, but it's useful for beginners and, well, it works.
+
+Your working directory should contain three important files:
+
+* your letter or report template (.Rmd)
+* your style document (.docx)
+* a file for reading data and looping through X (.R)
+
+The folder should also contain:
+
+* your R Project file (.Rproj)
+* a folder to hold the output files
+* any additional folders you need for input files (e.g. data and images)
+
+I've created ![an accompanying GitHub repository](https://github.com/matt-dray/mail-merge-2018) from which you can download an R Project containing these items.
+
+## The template
+
+This is the R Markdown file containing the actual content of your letter or report. In short, R Markdown files allow you to write plain text formatted with special symbols and insert R code inline or in 'chunks'.[^1]
+
+Here's an example:
+
+```
+---
+output:  
+  word_document:
+    reference_docx: style_reference.docx
+---
+
+
+
+
+```
+
+## The style
+
+The default output from an R Markdown file to a Word document isn't great. You can create a separate Word document that contains modified styles to match the theme.
+
+You can read more about doing this in ![Richard Layton's 'happy collaboration with Rmd to docx'](https://rmarkdown.rstudio.com/articles_docx.html) on the R Markdown site.
+
+90s
+## The loop
+
+This is an R script (.R) file that reads the data and executes the loop to apply the data for each entity in turn to the template before saving it with a unique name to a specified subfolder of your repository.
+
+The key part looks something like this:
+
+```
+for (i in unique(dataset$urn)){  # loop through each element from the dataset
+ 
+  data <- dataset[dataset$urn == i, ]  # isolate the row for that URN
+ 
+  # the dataframe object 'data' we just created will be used as the source
+  # for filling the details in on the template
+ 
+  # now render ('knit') the R Markdown file to Word format, name it and save it
+ 
+  render(
+    "01_template.rmd",  # where to source the template from
+    output_file = paste0("report_", i, ".docx"),  # name the output
+    output_dir = "output"  # folder to put the output file
+  )
+}
+```
+
+# Execute
+
+Run the loop. The files will be output in turn to the output folder.
+
+# R session info
+
+```{r session_info}
+devtools::session_info()
+```
+
+[^1]: You can ![find out more about R Markdown](https://rmarkdown.rstudio.com/) from the RStudio website. I've also written ![a short guide to writing R Markdown documents](https://matt-dray.github.io/knitting-club/) and created ![a small set of slides](https://matt-dray.github.io/quick-rmd/#1), both with beginners in mind.
