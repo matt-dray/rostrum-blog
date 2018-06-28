@@ -15,68 +15,87 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, error = FALSE, message = FAL
 
 <span style="color:lightgray">Matt Dray</span>
 
-Clip art. Fax machines. CD-ROMs. Dial-up modems. The World Wide Web. *Mail merge*.
+[Clip art](http://hddfhm.com/clip-art/clipart-word-2000.html). [Fax machines](http://www.bbc.com/future/story/20150224-why-the-fax-machine-wont-die). [CD-ROMs](https://archive.org/download/encarta95/encarta95.jpg). [Dial-up modems](https://gizmodo.com/i-used-a-56k-modem-for-a-week-and-it-was-hell-on-earth-1693124620). [The World Wide Web](http://www.cs.trinity.edu/~thicks/Tutorials/WebEditor-Composer0-Install/Netscape1.gif). [*Mail merge*](https://en.wikipedia.org/wiki/Mail_merge).
 
-These exotic terms all give me flashbacks to computer class at the turn of the millennium.
+These exotic terms give me flashbacks to computer class at the turn of the millennium.
 
 The last one -- mail merge -- is a technique you might still need to use. It involves filling a template document, typically a template letter, with information from unique cases in a database.
 
-I've had to do something like this a few times recently, so [as David Robinson said](https://twitter.com/drob/status/928447584712253440):
+I've had to do something like this a few times recently -- but using R rather than proprietary products -- so [as David Robinson said](https://twitter.com/drob/status/928447584712253440):
 
 > When you’ve given the same in-person advice 3 times, write a blog post
 
-So here we are.
+So here we are. 
+
+And to keep to theme, I've got a dataset composed of details for each episode of the first season of the hit late-90s-early-2000s-teen-angst-love-triangle-articulate-children masterpiece that is [**Dawson's Creek**](https://en.wikipedia.org/wiki/Dawson%27s_Creek), via [Wikipedia](https://en.wikipedia.org/wiki/List_of_Dawson%27s_Creek_episodes#Season_1:_1998).
 
 # Approach
 
-We'll make an R Markdown template and fill it with data for each entity by looping each of them in turn. Each will be rendered to Word (.docx) and formatted according to a style template. 
+We'll make an R Markdown template and fill it with data for each entity by looping each of them in turn. Each will be rendered to a .docx file and formatted according to a style template that we've created and specified. 
 
 I don't claim this to be the most efficient method, but it's useful for beginners and, well, it works.
 
 Your working directory should contain three important files:
 
-* your letter or report template (.Rmd)
-* your style document (.docx)
-* a file for reading data and looping through X (.R)
+* your letter or report template preapred in R Markdown (.Rmd)
+* your style-reference document (.docx), in a file called 'style'
+* a script file for reading your data and looping through each element (.R)
 
 The folder should also contain:
 
 * your R Project file (.Rproj)
-* a folder to hold the output files
-* any additional folders you need for input files (e.g. data and images)
+* a folder to hold the output files (why not call it 'output'?)
+* any additional folders you need for input files (e.g. 'data' and 'images')
+* a README file to explain the purpose of your work (.md or something)
 
-I've created ![an accompanying GitHub repository](https://github.com/matt-dray/mail-merge-2018) from which you can download an R Project containing these items.
+I've created [an accompanying GitHub repository](https://github.com/matt-dray/mail-merge-2018) where you can download or clone a whole R Project that contains these items.
 
 ## The template
 
 This is the R Markdown file containing the actual content of your letter or report. In short, R Markdown files allow you to write plain text formatted with special symbols and insert R code inline or in 'chunks'.[^1]
 
-Here's an example:
+It should start with a YAML header that indicates things like the title and author, but also -- crucially -- the output and reference style:
 
 ```
 ---
-output:  
+title: "Dawson's Creek Episode Guide"
+author: "Matt Dray"
+output:
   word_document:
-    reference_docx: style_reference.docx
+    reference_docx: style/my_style.docx
 ---
-
-
-
-
 ```
 
-## The style
+So we're sayign that we'd like the output to be in .docx format and the style information should be taken from the .docx file we've pre-prepared and stored in the 'style' folder.
 
-The default output from an R Markdown file to a Word document isn't great. You can create a separate Word document that contains modified styles to match the theme.
+You're then free to add script to the body of the R Markdown file as you would normally. Just note that you'll be referring to a subset of the data you haven't created yet; it'll be created when we get to the loop stage. I've chosen to refer to the subset as `episode`, so the following code will be filled with each episode's production code and title in turn as we go through the loop:
 
-You can read more about doing this in ![Richard Layton's 'happy collaboration with Rmd to docx'](https://rmarkdown.rstudio.com/articles_docx.html) on the R Markdown site.
+```
+# `r paste0(episode$production_code, ": '", episode$title, "'")`
+```
 
-90s
+We can also do someting like this to get a table containing information about the episodes:
+
+````
+```{r episode_info, echo=false}
+episode %>% 
+  select(  # choose these columns for display
+    Season = season,
+    `Number in season` = number_in_season,
+    `Number in series` = number_in_series,
+    `Original air date` = original_air_date
+  ) %>% 
+  kable()  # print to output table
+```
+````
+
+Add whatever text and chunks you need to flesh out your report where the informatino from each element of your dataset will be added wherever you specify it. For example, everywhere I refer to `episode` will be filled with information for each row of my dataset in turn as I loop through the vector of unique episode IDs in the next step.
+
 ## The loop
 
-This is an R script (.R) file that reads the data and executes the loop to apply the data for each entity in turn to the template before saving it with a unique name to a specified subfolder of your repository.
+This is an R script (.R) file that (1) reads the data and (2) executes the loop that applies the data for each episode in turn to the template and saves it with a unique name to a specified subfolder.
 
-The key part looks something like this:
+After reading that CSV of the data (I've assigned it to `data`), you can write a loop that looks something like this:
 
 ```
 for (i in unique(dataset$urn)){  # loop through each element from the dataset
@@ -88,7 +107,7 @@ for (i in unique(dataset$urn)){  # loop through each element from the dataset
  
   # now render ('knit') the R Markdown file to Word format, name it and save it
  
-  render(
+  render(  # requires the rmarkdown package
     "01_template.rmd",  # where to source the template from
     output_file = paste0("report_", i, ".docx"),  # name the output
     output_dir = "output"  # folder to put the output file
@@ -96,14 +115,28 @@ for (i in unique(dataset$urn)){  # loop through each element from the dataset
 }
 ```
 
+## The style
+
+The default output is **okay** when an R Markdown file rendered a .docx. You can create a separate Word document that contains modified styles to suit your theme. 
+
+You can read more about creating a style document in [Richard Layton's 'happy collaboration with Rmd to docx'](https://rmarkdown.rstudio.com/articles_docx.html) on the R Markdown site. Basically you create a fake document in which you've set the formatting for each style element (title, third-level header, paragraph text, etc), store it in your working repository and refer to it from the YAML of your R Markdown report (see secton above).
+
+Here I stole and modified a template from [the `dfeR` package](https://dfe-analytical-services.github.io/dfeR/), which is intended for use in presenting official statistics.
+
 # Execute
 
-Run the loop. The files will be output in turn to the output folder.
+So now you have an R Project folder with, among other things, an R Markdown template report to be populated and a script that reads your data and loops through each element to fill that template (e.g. **Dawons' Creek** episodes) Run the code in your loop script.
+
+The files will be rendered in turn according to the formatting in the style document, and added one by one to the output folder.
+
+Congratulations! You now have a separate file that contains the information for each of the episodes in season 1 of **Dawson's Creek**! Make sure to share with your friends.
 
 # R session info
+
+**I don't wanna wait... for this post to be oooover**
 
 ```{r session_info}
 devtools::session_info()
 ```
 
-[^1]: You can ![find out more about R Markdown](https://rmarkdown.rstudio.com/) from the RStudio website. I've also written ![a short guide to writing R Markdown documents](https://matt-dray.github.io/knitting-club/) and created ![a small set of slides](https://matt-dray.github.io/quick-rmd/#1), both with beginners in mind.
+[^1]: You can ![find out more about R Markdown](https://rmarkdown.rstudio.com/) from the RStudio website. I've also written [a short guide to writing R Markdown documents](https://matt-dray.github.io/knitting-club/) and created ![a small set of slides](https://matt-dray.github.io/quick-rmd/#1), both with beginners in mind.
