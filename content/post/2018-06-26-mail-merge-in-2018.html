@@ -16,22 +16,28 @@ slug: mail-merge
 
 <p><span style="color:lightgray">Matt Dray</span></p>
 <p><img src="https://media.giphy.com/media/L1PqqvVFtQiEU/giphy.gif" alt="Gif of cool guy ready to surf the web" width=75%></p>
+<div id="two-thousand-and-late" class="section level1">
+<h1>Two-thousand and late</h1>
 <p><a href="http://hddfhm.com/clip-art/clipart-word-2000.html">Clip art</a>! <a href="http://www.bbc.com/future/story/20150224-why-the-fax-machine-wont-die">Fax machines</a>! <a href="https://archive.org/download/encarta95/encarta95.jpg">CD-ROMs</a>! <a href="https://gizmodo.com/i-used-a-56k-modem-for-a-week-and-it-was-hell-on-earth-1693124620">Dial-up modems</a>! <a href="http://www.cs.trinity.edu/~thicks/Tutorials/WebEditor-Composer0-Install/Netscape1.gif">The World Wide Web</a>! <a href="https://en.wikipedia.org/wiki/Mail_merge"><em>Mail merge</em></a><em>!</em></p>
 <p>These exotic terms give me flashbacks to computer class at the turn of the millennium.</p>
-<p>The last one – mail merge – is a technique you might still need to use. It involves filling a template document, typically a template letter, with information from unique cases in a database.</p>
-<p>I’ve helped out some colleagues with report autogeneration a few times recently (mostly so no-one has to waste hours copy-pasting values into a template by hand). R seems a natural choice to do this; it has the obvious advantage of reproducibility and allows you to process the data as you see fit.</p>
-<p>And to keep to theme, I’ve got a dataset composed of details for each episode of the first season of the hit late-90s-early-2000s-teen-angst-love-triangle-articulate-children masterpiece that is <a href="https://en.wikipedia.org/wiki/Dawson%27s_Creek"><em>Dawson’s Creek</em></a>, via <a href="https://en.wikipedia.org/wiki/List_of_Dawson%27s_Creek_episodes#Season_1:_1998">Wikipedia</a>.</p>
-<p>I’ve created <a href="https://github.com/matt-dray/mail-merge-2018">an accompanying GitHub repository</a> where you can download or clone a whole R Project to replicate the approach used in this post.</p>
+<p>The last one–mail merge–was taught as a way to autocomplete template Word letters for made-up customers in an Access database. I no longer need to invoice ‘Mr Sonic The-Hedgehog’ for ordering ‘25 chili dogs’, but the general approach of generating the same template multiple times with different information is still pertinent.</p>
+<p>I’ve helped a few colleagues with this recently to avoid the need for hours of copy-pasting. R is a natural choice for automating and maximising the reproducibility of this kind of task.</p>
+</div>
+<div id="who-will-she-choose" class="section level1">
+<h1><em>Who will she choose?</em></h1>
+<p>To keep to the theme, I’ll be autogenerating reports that detail each episode of the first season of the hit late-90s-early-2000s-weirdly-articulate-teen-angst-love-triangle masterpiece that is <a href="https://www.imdb.com/title/tt0118300/"><em>Dawson’s Creek</em></a>. Data via <a href="https://en.wikipedia.org/wiki/List_of_Dawson%27s_Creek_episodes#Season_1:_1998">Wikipedia</a>.</p>
+<p>I’ve created <a href="https://github.com/matt-dray/mail-merge-2018">an accompanying GitHub repository</a> where you can download or clone a whole R Project that replicates the approach used in this post.</p>
+</div>
 <div id="approach" class="section level1">
 <h1>Approach</h1>
-<p>We’ll make an R Markdown template and fill it with data for each episode of <em>Dawson’s Creek</em> by looping through each of them in turn. Each will be rendered to a .docx file and formatted according to a style template that we’ve created and specified.</p>
+<p>We’ll make an R Markdown template and fill it with data for each episode of <em>Dawson’s Creek</em> by looping through each of them in turn. Each will be rendered to a Word (.docx) file and formatted according to a style template that we’ve created and specified.</p>
 <p>I don’t claim this to be the most efficient method, but it’s useful for beginners and, well, it works.</p>
 <p>Your working directory should contain three important files:</p>
-<ul>
-<li>your letter or report template preapred in R Markdown (.Rmd)</li>
-<li>your style-reference document (.docx), in a file called ‘style’</li>
+<ol style="list-style-type: decimal">
+<li>your letter or report template prepared in R Markdown (filetype .Rmd)</li>
+<li>your style-reference document (.docx) that we’ll put in a folder called ‘style’</li>
 <li>a script file for reading your data and looping through each element (.R)</li>
-</ul>
+</ol>
 <p>The folder should also contain:</p>
 <ul>
 <li>your R Project file (.Rproj)</li>
@@ -39,19 +45,20 @@ slug: mail-merge
 <li>any additional folders you need for input files (e.g. ‘data’ and ‘images’)</li>
 <li>a README file to explain the purpose of your work (.md or something)</li>
 </ul>
+<p>Something like this:</p>
 <p><img src="/post/2018-06-26-mail-merge-in-2018_files/directory_structure.PNG" alt="Screenshot of the folders needed in the directory" width=50%></p>
 <div id="the-template" class="section level2">
-<h2>The template</h2>
-<p>Your template is an R Markdown file containing the actual content of your letter or report. In short, R Markdown files allow you to write plain text formatted with special symbols and insert R code inline or in ‘chunks’. You can <a href="https://rmarkdown.rstudio.com/">find out more about R Markdown from the RStudio website</a>. I’ve also written <a href="https://matt-dray.github.io/knitting-club/">a short guide to writing R Markdown documents</a> and created <a href="https://matt-dray.github.io/quick-rmd/#1">a small set of slides</a>, both with beginners in mind.</p>
-<p>Throughout this template you should refer to the subset of data for which you’re creating reports. In other words, episodes of the <em>Dawson’s Creek</em> dataset that have been subset to a one-row dataframe for each episode called <code>episode</code>.</p>
-<p>So it’s the <code>episode</code> object that the template should refer to.</p>
-<p>The template itself should start with a YAML header section that indicates the output type (<code>word_document</code>) and reference style (at the path <code>style/dawson_style.docx</code> in our case). You can also add title, name, etc, to this section if you like.</p>
+<h2>1. The template</h2>
+<p>Your report template should be an R Markdown file. In short, R Markdown files allow you to write plain text formatted with special symbols and insert R code inline or in ‘chunks’. You can <a href="https://rmarkdown.rstudio.com/">find out more about R Markdown from the RStudio website</a>. I’ve also written <a href="https://matt-dray.github.io/knitting-club/">a short guide to writing R Markdown documents</a> and created <a href="https://matt-dray.github.io/quick-rmd/#1">a small set of slides</a>, both with beginners in mind.</p>
+<p>The R code in your template should refer to the subset of data for each element of your dataset that you’re generating reports for. In our case we need to refer to episodes of the <em>Dawson’s Creek</em> dataset.</p>
+<p>We’ll be subsetting the data to create one-row dataframes of each episode, so it’s this <code>episode</code> object that the template should refer to.</p>
+<p>The template itself should start with a YAML header section that indicates the output type (<code>word_document</code>) and document containing style information (at the path <code>style/dawson_style.docx</code> in our case). (We’ll look at this style document in the next section.) You can of course add add a title, name, etc, to the YAML section if you like.</p>
 <pre class="r"><code>---
 output:
   word_document:
     reference_docx: style/dawson_style.docx
 ---</code></pre>
-<p>You’re then free to add script to the body of the R Markdown file as you would normally. For example, the following code in the temaplte will be filled with each episode’s production code and title as we go through the loop:</p>
+<p>You’re then free to add script to the body of the R Markdown file as you would normally. For example, the following code in the template will be filled with the episode’s production code and title:</p>
 <pre class="r"><code>`r paste0(episode$production_code, &quot;: &#39;&quot;, episode$title, &quot;&#39;&quot;)`</code></pre>
 <p>We can also do someting like this inside an R Markdown code chunk to get a table containing information about the episodes:</p>
 <pre class="r"><code>episode %&gt;% 
@@ -64,15 +71,15 @@ output:
   kable()  # print to output table</code></pre>
 </div>
 <div id="the-style" class="section level2">
-<h2>The style</h2>
-<p>The default output is <em>okay</em> when an R Markdown file rendered a .docx. You can create a separate Word document that contains modified styles to suit your theme.</p>
+<h2>2. The style</h2>
+<p>The default output when rendering R Markdown to .docx is a bit boring. You can create a separate dummy Word document that contains modified styles to suit your theme.</p>
 <p>You can read more about creating a style document in <a href="https://rmarkdown.rstudio.com/articles_docx.html">Richard Layton’s ‘happy collaboration with Rmd to docx’</a> on the R Markdown site. Basically you create a fake document in which you’ve set the formatting for each style element (title, third-level header, paragraph text, etc), store it in your working repository and refer to it from the YAML of your R Markdown report (see secton above).</p>
 <p>Here I stole and modified a template from <a href="https://dfe-analytical-services.github.io/dfeR/">the <code>dfeR</code> package</a>, which is intended for use in presenting official statistics.</p>
 <p><img src="/post/2018-06-26-mail-merge-in-2018_files/dawson_style.PNG" alt="Screenshot of the .docx style document" width=75%></p>
 </div>
 <div id="readloop" class="section level2">
-<h2>Read/loop</h2>
-<p>We have the template and style in place.</p>
+<h2>3. Read/loop</h2>
+<p>We now have the template and style in place.</p>
 <p>You should have an R script (.R) file that (1) reads the data and (2) executes a loop that applies episode data to the template and saves it with a unique name to a specified subfolder. You’ll get one document for each unique element, so we’ll get 13 because there are 13 rows in our dataset; one for each episode.</p>
 <p>After reading in the data with something like <code>data &lt;- readr::read_csv(file = &quot;data/dawsons-creek-season-1.csv&quot;)</code> you can write a loop that looks something like this:</p>
 <pre class="r"><code>for (i in data$production_code){  # for each unique episode...
@@ -93,20 +100,19 @@ output:
   )
 
 }  # end of loop</code></pre>
-<p>You can see we’re:</p>
+<p>So this code:</p>
 <ul>
-<li>looping through unique values from the <code>production_code</code> column</li>
-<li>subsetting the <code>data</code> object to isolate the production code for the ith element</li>
-<li>rendering the template document using the <code>episode</code> data</li>
-<li>giving the file a name that incorporates the production code</li>
-<li>saving this to the ‘output’ folder in our project directory</li>
+<li>loops through episodes given unique values in the <code>production_code</code> column</li>
+<li>subsets the <code>data</code> object (a dataframe of all epiosdes) to isolate the production code for each episode in turn</li>
+<li>renders the template document after fillling it with the <code>episode</code> data</li>
+<li>gives the file a name that incorporates the production code</li>
+<li>saves this file to the ‘output’ folder in our project directory</li>
 </ul>
 </div>
 </div>
 <div id="execute" class="section level1">
 <h1>Execute</h1>
-<p>So now you have an R Project folder with, among other things, an R Markdown template report to be populated and a script that reads your data and loops through each element to fill that template. Run the code in the read/loop script.</p>
-<p>The files will be rendered in turn according to the formatting in the style document, and added one by one to the output folder. It’s fun to open this folder and watch them pop into existence.</p>
+<p>Run the R script and the files will be rendered in turn according to the formatting in the style document, and added one by one to the output folder. It’s fun to open this folder and watch them pop into existence.</p>
 <p>Congratulations! You now have a separate file that contains the information for each of the episodes in season 1 of <em>Dawson’s Creek</em>! Make sure to share with your friends (assuming you’re not in an awkward love triangle).</p>
 <p><img src="/post/2018-06-26-mail-merge-in-2018_files/dawson101.PNG" alt="Screenshot of the first report showing episode 101 of Dawson's Creek" width=75%> <img src="/post/2018-06-26-mail-merge-in-2018_files/dawson102.PNG" alt="Screenshot of the first report showing episode 102 of Dawson's Creek" width=75%></p>
 </div>
