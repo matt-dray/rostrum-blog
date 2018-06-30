@@ -24,7 +24,7 @@ I wrote a PhD thesis in 2014 called *Effects of multiple environmental stressors
 
 On graduation day, a stranger came up to me and, to paraphrase, said 'you doctors should be proud of what you've achieved, you're doing a great service'. I didn't have the heart to tell him that I wasn't a medical doctor. No, I was something nobler and altogether more unique: *a doctor of rotting leaves*.
 
-I know you're thinking 'gosh, what a complicated subject that must be; how could I ever hope to achieve such greatness?'. My answer is that you should simply take my thesis and use a Markov chain to generate new text from it. The output will make probably as much sense as the original but won't be detected easily by plagiarism software.
+I know you're thinking 'gosh, what a complicated subject that must be; how could I ever hope to achieve such greatness?'. The answer is that you should simply take my thesis and use a Markov chain to generate new sentences until you have a fresh new thesis. The output will make probably as much sense as the original but won't be detected easily by plagiarism software.
 
 Heck, I'll even do it for you in this post.
 
@@ -40,15 +40,61 @@ There's [a great post on Hackernoon that explains Markov chains for text generat
 
 Text generation is an expanding field and there are much more successful and complicated methods for doing it. For example, [Andrej Karpathy generated some pretty convincing Shakespeare passages, Wikipedia pages and geometry papers in LaTeX using the 'unreasonably effective' and 'magical' power of Recurrent Neural Networks (RNNs)](http://karpathy.github.io/2015/05/21/rnn-effectiveness/).
 
-# Code
+# Generate text
 
-I'll be using R code written by [Kory Becker](http://www.primaryobjects.com/) that I found [in a GitHub gist](https://gist.github.com/primaryobjects/4c7cca705eeba0d8bad6).
+## Code source
+
+I'll be using modified R code written by [Kory Becker](http://www.primaryobjects.com/) that I found [in a GitHub gist](https://gist.github.com/primaryobjects/4c7cca705eeba0d8bad6).
 
 In a similar vein, [Roel Hogervorst](https://rmhogervorst.nl/) did a swell job of [generating Captain Picard text](http://rmhogervorst.nl/cleancode/blog/2017/01/21/content/post/2017-01-21-markov-chain/) in R from *Star Trek: The Next Generation* scripts, which is certainly [in our wheelhouse](https://www.rostrum.blog/2018/04/14/r-trek-exploring-stardates/).
 
-# Data
+## Data
 
-# Output
+Because I'm helpful I've created a text file version of my thesis. You can get it raw from my [draytasets GitHub repo](), or from the [`dray` package with `dray::phd`](https://github.com/matt-dray/dray).
+
+```{r read}
+library(readr)
+
+phd_text <- read_lines("2014draymwphd.txt")
+```
+
+We'll alter the data slightly for it to be ready for passing into the Markov chain.
+
+```{r data_prep}
+phd_text <- phd_text[nchar(phd_text) > 0]
+
+phd_text <- tolower(phd_text)
+
+phd_text <- gsub(".", " .", phd_text, fixed = TRUE)
+phd_text <- gsub(",", " ,", phd_text, fixed = TRUE)
+phd_text <- gsub("(", "( ", phd_text, fixed = TRUE)
+phd_text <- gsub(")", " )", phd_text, fixed = TRUE)
+
+terms <- unlist(strsplit(phd_text, " "))
+```
+
+## Script
+
+```{r markov}
+library(markovchain)
+
+fit <- markovchainFit(data = terms)
+
+for (i in 1:100) {
+  
+  set.seed(i)
+  
+  markov_text <- paste(
+    markovchainSequence(
+    n = 50
+    , markovchain = fit$estimate)
+    , collapse = " "
+    )
+  
+  print(markov_text)
+
+  }
+```
 
 ## Full output
 
