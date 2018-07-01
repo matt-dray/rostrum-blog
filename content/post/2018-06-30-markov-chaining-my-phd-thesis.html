@@ -61,13 +61,14 @@ phd_text &lt;- dray::phd</code></pre>
 <pre class="r"><code># remove blank lines
 phd_text &lt;- phd_text[nchar(phd_text) &gt; 0]
 
-# replace common punctuation with 
+# put spaces around common punctuation
+# so they&#39;re not interpreted as part of a word
 phd_text &lt;- gsub(&quot;.&quot;, &quot; .&quot;, phd_text, fixed = TRUE)
 phd_text &lt;- gsub(&quot;,&quot;, &quot; ,&quot;, phd_text, fixed = TRUE)
 phd_text &lt;- gsub(&quot;(&quot;, &quot;( &quot;, phd_text, fixed = TRUE)
 phd_text &lt;- gsub(&quot;)&quot;, &quot; )&quot;, phd_text, fixed = TRUE)
 
-# split into single tokens where the separator is a space
+# split into single tokens
 terms &lt;- unlist(strsplit(phd_text, &quot; &quot;))</code></pre>
 </div>
 <div id="script" class="section level2">
@@ -82,7 +83,7 @@ library(markovchain)</code></pre>
 ## BugReport: http://github.com/spedygiorgio/markovchain/issues</code></pre>
 <pre class="r"><code># fit the markov chain to the data
 fit &lt;- markovchainFit(data = terms)</code></pre>
-<p>We’re going to randomly seed the first start of each ‘sentence’ (a sequence of <em>n</em> words, where we specify <em>n</em>). We’ll do this by supplying one of 200 unique values to the <code>set.seed()</code> function in turn. This seed starts the chain within the <code>markovchainSequence()</code> function.</p>
+<p>We’re going to seed the start of each ‘sentence’ (a sequence of <em>n</em> words, where we specify <em>n</em>). We’ll do this by supplying one of 200 unique values to the <code>set.seed()</code> function in turn. This seed then starts the chain within the <code>markovchainSequence()</code> function.</p>
 <pre class="r"><code>markov_output &lt;- data.frame(output = rep(NA, 200))
 
 for (i in 1:200) {
@@ -115,11 +116,11 @@ for (i in 1:200) {
 <p>My favourites (my comments in square brackets):</p>
 <ul>
 <li>Not all invertebrate species are among tree species [FACT.]</li>
-<li>Permutational Analysis and xylophagous invertebrates can affect ecosystem service provision [Wait, my analysis will affect the thing I’m studying?]</li>
 <li>Bags permitted entry of stream ecosystem [I should hope so given that the bags contained the leaf litter I was studying!]</li>
-<li>Most studies could shift invertebrate communities [hang on, studies are affecting the thing ehy’re investigating again!]</li>
-<li>Species-specific utilization of Cardiff University [Well, humans go inside the uni, pigeons sit on the roof; I guess that’s species-specific.]</li>
-<li>Litter was affected by Wallace , Dordrecht [Who is this German guy who’s interfering with my studies?]</li>
+<li>Permutational Analysis and xylophagous invertebrates can affect ecosystem service provision [Wait, my analysis will affect the thing I’m studying?]</li>
+<li>Most studies could shift invertebrate communities [hang on, studies are affecting the thing they’re investigating again – very quantum]</li>
+<li>Species-specific utilization of Cardiff University [Well, humans go inside the uni, pigeons sit on the roof; I guess that’s ‘species-specific’.]</li>
+<li>Litter was affected by Wallace , Dordrecht [Who is this Dutch guy who’s interfering with my studies?]</li>
 <li>This thesis is responsible for broad underlying principles to mass loss [Actually I gained a little weight during the development of the thesis.]</li>
 <li>Carbon dioxide enrichment altered chemical composition [Aha! Actually true!]</li>
 </ul>
@@ -162,13 +163,14 @@ for (i in 1:200) {
 ##  language (EN)                        
 ##  collate  en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2018-06-30</code></pre>
+##  date     2018-07-01</code></pre>
 <pre><code>## Packages -----------------------------------------------------------------</code></pre>
 <pre><code>##  package      * version    date       source                            
 ##  backports      1.1.2      2017-12-13 cran (@1.1.2)                     
 ##  base         * 3.4.3      2017-12-07 local                             
 ##  blogdown       0.6.5      2018-06-10 Github (rstudio/blogdown@ad8be3f) 
 ##  bookdown       0.7        2018-02-18 cran (@0.7)                       
+##  codetools      0.2-15     2016-10-05 CRAN (R 3.4.3)                    
 ##  compiler       3.4.3      2017-12-07 local                             
 ##  crosstalk      1.0.1      2018-03-09 Github (rstudio/crosstalk@0f21b45)
 ##  datasets     * 3.4.3      2017-12-07 local                             

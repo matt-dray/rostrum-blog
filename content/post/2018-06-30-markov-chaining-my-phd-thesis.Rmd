@@ -71,13 +71,14 @@ We'll alter the data slightly for it to be ready for passing into the Markov cha
 # remove blank lines
 phd_text <- phd_text[nchar(phd_text) > 0]
 
-# replace common punctuation with 
+# put spaces around common punctuation
+# so they're not interpreted as part of a word
 phd_text <- gsub(".", " .", phd_text, fixed = TRUE)
 phd_text <- gsub(",", " ,", phd_text, fixed = TRUE)
 phd_text <- gsub("(", "( ", phd_text, fixed = TRUE)
 phd_text <- gsub(")", " )", phd_text, fixed = TRUE)
 
-# split into single tokens where the separator is a space
+# split into single tokens
 terms <- unlist(strsplit(phd_text, " "))
 ```
 
@@ -94,7 +95,7 @@ library(markovchain)
 fit <- markovchainFit(data = terms)
 ```
 
-We're going to randomly seed the first start of each 'sentence' (a sequence of *n* words, where we specify *n*). We'll do this by supplying one of 200 unique values to the `set.seed()` function in turn. This seed starts the chain within the `markovchainSequence()` function.
+We're going to seed the start of each 'sentence' (a sequence of *n* words, where we specify *n*). We'll do this by supplying one of 200 unique values to the `set.seed()` function in turn. This seed then starts the chain within the `markovchainSequence()` function.
 
 ```{r loop, cache = TRUE}
 
@@ -136,11 +137,11 @@ I've selected some things from the output that basically look like normal(ish) p
 My favourites (my comments in square brackets):
 
 * Not all invertebrate species are among tree species [FACT.]
-* Permutational Analysis and xylophagous invertebrates can affect ecosystem service provision [Wait, my analysis will affect the thing I'm studying?]
 * Bags permitted entry of stream ecosystem [I should hope so given that the bags contained the leaf litter I was studying!]
-* Most studies could shift invertebrate communities [hang on, studies are affecting the thing ehy're investigating again!]
-* Species-specific utilization of Cardiff University [Well, humans go inside the uni, pigeons sit on the roof; I guess that's species-specific.]
-* Litter was affected by Wallace , Dordrecht [Who is this German guy who's interfering with my studies?]
+* Permutational Analysis and xylophagous invertebrates can affect ecosystem service provision [Wait, my analysis will affect the thing I'm studying?]
+* Most studies could shift invertebrate communities [hang on, studies are affecting the thing they're investigating again -- very quantum]
+* Species-specific utilization of Cardiff University [Well, humans go inside the uni, pigeons sit on the roof; I guess that's 'species-specific'.]
+* Litter was affected by Wallace , Dordrecht [Who is this Dutch guy who's interfering with my studies?]
 * This thesis is responsible for broad underlying principles to mass loss [Actually I gained a little weight during the development of the thesis.]
 * Carbon dioxide enrichment altered chemical composition [Aha! Actually true!]
 
