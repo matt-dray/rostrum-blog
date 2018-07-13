@@ -1,0 +1,93 @@
+---
+draft: yes
+title: How accessible is my post about accessibility?
+author: Matt Dray
+date: '2018-07-12'
+slug: how-accessible-is-my-post-about-accessibility
+categories: [accessibility]
+tags:
+  - tenor
+  - wave
+  - screen-reader
+  - alt-text
+  - design
+---
+
+
+
+<p><span style="color:lightgray">Matt Dray</span></p>
+<div class="figure">
+<img src="/post/2018-07-12-how-accessible-is-my-post-about-accessibility_files/accessibility-workshop.jpg" alt="The accessibility empathy lab at the Government Digital Services building" />
+<p class="caption">The accessibility empathy lab at the Government Digital Services building</p>
+</div>
+<div id="digital-accessibility" class="section level1">
+<h1>Digital accessibility</h1>
+<p>I wrote about <a href="https://www.rostrum.blog/2018/05/12/accessibility-workshop-at-sprint18/">an accessibility workshop at the recent Sprint 18 conference</a>.</p>
+<p>I’ve since been to a more in-depth workshop with <a href="https://gds.blog.gov.uk/">Government Digital Service</a> and learnt a bit more about some web-based services that can evaluate web pages against <a href="https://www.w3.org/TR/WCAG20/">the Web Content Accessibility Guidelines</a> (WCAG 2.0).</p>
+<p><a href="https://tenon.io/">Tenon</a> and <a href="https://wave.webaim.org/">WAVE</a> were mentioned specifically and you can find more in the World Wide Web Consortium’s (W3C) <a href="https://www.w3.org/WAI/ER/tools/">list of web accessibility evaluation tools</a>.</p>
+<p>What better way to investigate one of these services that to test it on myself? I’m going to assess the accessibility of my post about accessibility. <em>So meta</em>.</p>
+<div id="tenon-example" class="section level2">
+<h2>Tenon example</h2>
+<p><a href="https://tenon.io/">Tenon</a> is a webservice that tests for compliance against WCAG 2.0<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>. It reports back on errors and warnings and assigns an order of priority for fixing the problems.</p>
+<p>Tenon offers an API for automating accessibility tests. <a href="https://tenon.io/">You can test the service in your browser</a> by inputting a URL into the search box on their website.</p>
+</div>
+</div>
+<div id="output" class="section level1">
+<h1>Output</h1>
+<p>The service reported back that 4 of 74 tests failed for <a href="https://www.rostrum.blog/2018/05/12/accessibility-workshop-at-sprint18/">the post</a>.</p>
+<div class="figure">
+<img src="/post/2018-07-12-how-accessible-is-my-post-about-accessibility_files/tenon-issues.png" alt="In-browser results of Tenon’s test" />
+<p class="caption">In-browser results of Tenon’s test</p>
+</div>
+<p>The in-browser output also provdes a CSV report of the failures. <a href="https://gist.github.com/matt-dray/921a77981c95cdbb55acb206c5167dd2">I’ve hosted my report in a GitHub Gist</a>.</p>
+<p>An example of an error is that one of my images was missing alt-text. Tenon reported:</p>
+<ul>
+<li>the line of HTML code causing the error</li>
+<li>the priority for fixing the issue</li>
+<li>the line location in the HTML code</li>
+<li>the specific WCAG 2.0 guideline that was breached</li>
+<li>a description of <em>why</em> this is a problem</li>
+<li>a link to a recommended fix for the problem</li>
+</ul>
+<div class="figure">
+<img src="/post/2018-07-12-how-accessible-is-my-post-about-accessibility_files/tenon-error.png" alt="Example of an error, where it is, and a recommended fix" />
+<p class="caption">Example of an error, where it is, and a recommended fix</p>
+</div>
+<p>That’s pretty helpful.</p>
+</div>
+<div id="reflection" class="section level1">
+<h1>Reflection</h1>
+<p>Not too bad.</p>
+<p>The default settings for the blog’s <a href="https://gohugo.io/">Hugo theme</a> was accountable for at least one issue: the Hugo logo in the footer is missing alt-text, so it can’t be described by a screen reader.</p>
+<p>I also had problems where I actually did have alt-text in place. These were identified as being too long. I tried to be as descriptive as possible, but went too far. For example, I used these 24 words for one image:</p>
+<blockquote>
+<p>Thumbnail views of example posters including designing for users on the autistic spectrum, for users of screen readers and for users with low vision</p>
+</blockquote>
+<p>That’s verbose. I could do this in half the number of words:</p>
+<blockquote>
+<p>Posters by the Home Office showing the dos and don’ts of accessibility</p>
+</blockquote>
+<p>The use of <em>implicit headings</em> was also flagged. This was because I had whole lines – audience questions – tagged as <code>&lt;strong&gt;</code> (meaning <strong>bold</strong>). It would be preferable for all section titles to use the header tags (first-level header is <code>&lt;h1&gt;</code>, second-level is <code>&lt;h2&gt;</code>, etc), since these a recognised specifically by screen readers.</p>
+</div>
+<div id="behaviour-change" class="section level1">
+<h1>Behaviour change</h1>
+<p>I will:</p>
+<ul>
+<li>keep my alternative text short but descriptive</li>
+<li>use explicit headers using the HTML header tags (<code>&lt;h1&gt;</code>, etc)</li>
+<li>investigate default settings for accessibility before using them</li>
+</ul>
+<p>Other improvements could be made. For example, I also ran the webpage through <a href="https://wave.webaim.org/">WAVE web accessibility tool</a> and one of the errors was the low contrast between the white background and the light grey of the date and author name. These could be made darker.</p>
+<p>The obvious next step is to assess the accessibility of my post that assesses the accessibility of my post about accessibility.</p>
+<p><em>Accessibility inception</em>. I’ll leave that to you.</p>
+<div class="figure">
+<img src="/post/2018-07-12-how-accessible-is-my-post-about-accessibility_files/accessibility-posters.jpg" alt="Design accessible services advice posters made by the Home Office" />
+<p class="caption">‘Design accessible services’ advice posters made by the Home Office</p>
+</div>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>This is not an advertisement. I mention this service because it was discussed specifically in the workshop. Try out some of the other services available and make your own choice.<a href="#fnref1">↩</a></p></li>
+</ol>
+</div>

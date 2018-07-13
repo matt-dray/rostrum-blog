@@ -10,30 +10,35 @@ tags:
   - screen-reader
   - alt-text
   - design
-draft: true
 ---
 
 <span style="color:lightgray">Matt Dray</span>
 
 ![The accessibility empathy lab at the Government Digital Services building](/post/2018-07-12-how-accessible-is-my-post-about-accessibility_files/accessibility-workshop.jpg)
 
-# Accessibility workshops
+# Digital accessibility
 
 I wrote about [an accessibility workshop at the recent Sprint 18 conference](https://www.rostrum.blog/2018/05/12/accessibility-workshop-at-sprint18/).
 
-I've since been to a more in-depth workshop with [Government Digital Service](https://gds.blog.gov.uk/) and learnt a bit more about some web-based services that can assess the [accessibility](https://www.w3.org/WAI/fundamentals/accessibility-intro/) of a given web page.
+I've since been to a more in-depth workshop with [Government Digital Service](https://gds.blog.gov.uk/) and learnt a bit more about some web-based services that can evaluate web pages against [the Web Content Accessibility Guidelines](https://www.w3.org/TR/WCAG20/) (WCAG 2.0).
 
-[Tenon](https://tenon.io/) and [WAVE](https://wave.webaim.org/) were mentioned specifically and you can find more in [the list of web accessibility evaluation tools](https://www.w3.org/WAI/ER/tools/) from the World Wide Web Consortium (W3C).
+[Tenon](https://tenon.io/) and [WAVE](https://wave.webaim.org/) were mentioned specifically and you can find more in the World Wide Web Consortium's (W3C) [list of web accessibility evaluation tools](https://www.w3.org/WAI/ER/tools/).
 
-What better way to investigate one of these services that to test it on myself? I'm going to assess the accessibility of my post about accessibility. So meta.
+What better way to investigate one of these services that to test it on myself? I'm going to assess the accessibility of my post about accessibility. *So meta*.
 
 ## Tenon example
 
-[The results page for Tenon](https://tenon.io/testNow.php?url=https://www.rostrum.blog/2018/05/12/accessibility-workshop-at-sprint18/)
+[Tenon](https://tenon.io/) is a webservice that tests for compliance against WCAG 2.0[^tenon]. It reports back on errors and warnings and assigns an order of priority for fixing the problems.
 
-Tenon tests for compliance with the Web Content Accessibility Guidelines (WCAG 2.0). It reports back on errors and warnings and assigns an order of priority for fixing the problems.
+Tenon offers an API for automating accessibility tests. [You can test the service in your browser](https://tenon.io/) by inputting a URL into the search box on their website.
 
-![Results of Tenon’s tests](/post/2018-07-12-how-accessible-is-my-post-about-accessibility_files/tenon-issues.png)
+# Output
+
+The service reported back that 4 of 74 tests failed for [the post](https://www.rostrum.blog/2018/05/12/accessibility-workshop-at-sprint18/).
+
+![In-browser results of Tenon’s test](/post/2018-07-12-how-accessible-is-my-post-about-accessibility_files/tenon-issues.png)
+
+The in-browser output also provdes a CSV report of the failures. [I've hosted my report in a GitHub Gist](https://gist.github.com/matt-dray/921a77981c95cdbb55acb206c5167dd2).
 
 An example of an error is that one of my images was missing alt-text. Tenon reported:
 
@@ -44,19 +49,17 @@ An example of an error is that one of my images was missing alt-text. Tenon repo
 * a description of *why* this is a problem
 * a link to a recommended fix for the problem
 
-![Example of an error, where it is and a recommended fix](/post/2018-07-12-how-accessible-is-my-post-about-accessibility_files/tenon-error.png)
+![Example of an error, where it is, and a recommended fix](/post/2018-07-12-how-accessible-is-my-post-about-accessibility_files/tenon-error.png)
 
 That's pretty helpful. 
 
-Tenon also generates a CSV report that details each failure. [I've hosted my report in a GitHub Gist](https://www.gist.github.com).
-
-# Result
+# Reflection
 
 Not too bad.
 
-The default settings for my Hugo theme was accountable for at least one issue: the Hugo logo image is missing alt-text, so it can't be described by a screen reader.
+The default settings for the blog's [Hugo theme](https://gohugo.io/) was accountable for at least one issue: the Hugo logo in the footer is missing alt-text, so it can't be described by a screen reader.
 
-I also have issues where I actually have alt-text in place. These were identified by tenon as being too long. I tried to be as descriptive as possible, but it's probably a bit tedious to listen to. For example, I used these 24 words for one image:
+I also had problems where I actually did have alt-text in place. These were identified as being too long. I tried to be as descriptive as possible, but went too far. For example, I used these 24 words for one image:
 
 >Thumbnail views of example posters including designing for users on the autistic spectrum, for users of screen readers and for users with low vision
 
@@ -64,18 +67,22 @@ That's verbose. I could do this in half the number of words:
 
 >Posters by the Home Office showing the dos and don'ts of accessibility
 
-Tenon also highlighted the use of *implicit headings* in my post. This was becuase I had whole single lines tagged as `\<strong>` (meaning **bold text**) to signify an audience question. It would be preferable for all section titles to use the header tags (first-level header is `\<h1>`, second-level is `\<h2>`, etc), since these a recognised specifically by screen readers.
+The use of *implicit headings* was also flagged. This was because I had whole lines -- audience questions -- tagged as `<strong>` (meaning **bold**). It would be preferable for all section titles to use the header tags (first-level header is `<h1>`, second-level is `<h2>`, etc), since these a recognised specifically by screen readers.
 
 # Behaviour change
 
 I will:
 
 * keep my alternative text short but descriptive
-* use explicit headers using the HTML header tags (`\<h1>`, etc)
+* use explicit headers using the HTML header tags (`<h1>`, etc)
 * investigate default settings for accessibility before using them
+
+Other improvements could be made. For example, I also ran the webpage through [WAVE web accessibility tool](https://wave.webaim.org/) and one of the errors was the low contrast between the white background and the light grey of the date and author name. These could be made darker.
 
 The obvious next step is to assess the accessibility of my post that assesses the accessibility of my post about accessibility.
 
-But I'll leave that to you.
+*Accessibility inception*. I'll leave that to you.
 
 ![‘Design accessible services’ advice posters made by the Home Office](/post/2018-07-12-how-accessible-is-my-post-about-accessibility_files/accessibility-posters.jpg)
+
+[^tenon]: This is not an advertisement. I mention this service because it was discussed specifically in the workshop. Try out some of the other services available and make your own choice.
