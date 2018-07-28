@@ -11,28 +11,50 @@ tags:
   - gif
   - gifski
   - animation
-draft: true
 ---
 
 
 
-<div id="gifski" class="section level1">
-<h1>gifski</h1>
-<p><a href="https://ropensci.org/technotes/2018/07/23/gifski-release/">The `gifski’ package for R has been released</a>. It was built by Jeroen Oom (<a href="https://twitter.com/OpenCPU">@opencpu</a>) for <a href="https://ropensci.org/">ROpenSci</a>.</p>
+<p><img src="https://media.giphy.com/media/I8eorWE0QuYYU/giphy.gif" alt="Gif of sloth on pizza in space"></p>
+<div id="gifskigifski" class="section level1">
+<h1><code>gifski::gifski()</code></h1>
+<p>You and I both know that the world needs more intergalatic-sloth-pizza gifs.</p>
+<p>Great news: ‘the fastest gif encoder in the universe’ has been created. The <a href="https://cran.r-project.org/web/packages/gifski/index.html">the <code>gifski</code> package for R is now in CRAN</a>. It’s a simple yet fast and powerful way to create gifs from within R, built by Jeroen Oom (<a href="https://twitter.com/OpenCPU">@opencpu</a>) for <a href="https://ropensci.org/">ROpenSci</a>.</p>
+<p>The obvious application is for creating gifs from plots, as in the following example from <a href="https://ropensci.org/technotes/2018/07/23/gifski-release/">the ROpenSci announcement</a>.</p>
+<p><img src="https://i.imgur.com/Uwz4Fyi.gif" alt="Example of ggplot animation produced with gifski"></p>
 </div>
-<div id="make_gif" class="section level1">
-<h1>make_gif()</h1>
-<p>I’ve made a quick function for my <code>dray</code> package that takes a folder of PNGs and stitches them into a gif using the <code>gifski::gifski()</code> function. I’ve called it <code>make_gif()</code> because it makes gifs.</p>
-<p>You can find the documentation on the <code>dray</code> package site, which is built with <code>pkgdown</code>.</p>
+<div id="draymake_gif" class="section level1">
+<h1><code>dray::make_gif()</code></h1>
+<p>I’ve made a quick function for my <code>dray</code> package that – in one line of code – takes a folder of PNGs and stitches them into a gif using the <code>gifski::gifski()</code> function. I’ve called it <code>make_gif()</code> because it makes gifs. Mostly I’ve done this for my own benefit, but maybe you’ll find it useful too.</p>
+<p>You can <a href="https://matt-dray.github.io/dray/">find the documentation on the <code>dray</code> package site</a>, which is built with <a href="http://pkgdown.r-lib.org/">the awesome <code>pkgdown</code> package</a>.</p>
+<p>Also I’m endorsing the verb ‘to <em>engif</em>’ as in ‘I am <em>engiffing</em> a bunch of PNGs’. Join me.</p>
 </div>
 <div id="example" class="section level1">
 <h1>Example</h1>
-<p>With plain <code>gifski()</code>.</p>
-<pre class="r"><code>1+1</code></pre>
-<p>With <code>make_gif()</code>.</p>
+<p>There’s an example of producing a hand-made gif (i.e. an <em>artisanal</em> gif) on the gifski help pages (execute <code>?gifski</code> in your console). It looks like this:</p>
+<pre class="r"><code>png_path &lt;- file.path(tempdir(), &quot;frame%03d.png&quot;)
+png(png_path)
+par(ask = FALSE)
+for(i in 1:10)
+  plot(rnorm(i * 10), main = i)
+dev.off()
+png_files &lt;- sprintf(png_path, 1:10)
+gif_file &lt;- tempfile(fileext = &quot;.gif&quot;)
+gifski(png_files, gif_file)
+unlink(png_files)
+utils::browseURL(gif_file)</code></pre>
+<p>With <code>dray::make_gif()</code> you supply two things:</p>
+<ol style="list-style-type: decimal">
+<li>a path to a folder containing the images</li>
+<li>a path for where the gif should be written</li>
+</ol>
 <pre class="r"><code>dray::make_gif(
   png_folder = &quot;img&quot;,  # folder containing PNGs
-  gif_path = &quot;gif/lotad_evo.gif&quot;  # path for the output
+  gif_path = &quot;gif/intergalactic-sloth-pizza.gif&quot;  # path for the output
 )</code></pre>
+<p>I created the following very important gif with <code>make_gif()</code> from seven PNG images.</p>
 <p><img src="https://media.giphy.com/media/oNrPlnnezq1tjhSkH8/giphy.gif" alt="Gif of the evolution chain of the Pokemon Lotad"></p>
+<p>You should make sure your PNGs are ordered alphabetically or numerically in the folder so that they’re <em>engiffed</em> (see, isn’t that a great verb?) in the right order. Don’t worry if your folder has other filetypes; <code>make_gif()</code> only extracts PNGs. You’ll get a warning if you try to make a gif with less than two PNGs, obviously.</p>
+<p>So get out there and <em>engif</em> to your heart’s content!</p>
+<p><img src="https://media.giphy.com/media/LDg3KMkI5QuKQ/giphy.gif" alt="Gif of cat on pizza in space"></p>
 </div>
