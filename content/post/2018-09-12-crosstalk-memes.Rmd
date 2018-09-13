@@ -21,27 +21,64 @@ Matt Dray
 
 # EARL 2018
 
-[EARL 2018](https://earlconf.com/2018/london/) is a conference for solving business problems with R.
+I gave a talk called [*Crosstalk: Shiny-like without Shiny*](https://earlconf.com/2018/london/#matt-dray)[^1] at the [EARL 2018 conference in London](https://earlconf.com/2018/london/).
 
-[I'm speaking there](https://earlconf.com/2018/london/#matt-dray) about [the Crosstalk package](http://rstudio.github.io/crosstalk/) for [the R programming language](https://www.r-project.org/about.html).
+[The `crosstalk` package](http://rstudio.github.io/crosstalk/) by [Joe Cheng](https://twitter.com/jcheng?lang=en) allows [HTML widgets](https://www.htmlwidgets.org/) -- JavaScript visualisations wrapped in R code -- to interact with each other. This can be done inside an [R Markdown](https://rmarkdown.rstudio.com/) document (including [Flexdashboard](https://rmarkdown.rstudio.com/flexdashboard/)) for easy server-less sharing in HTML format.
 
-Crosstalk allows [HTML widgets](https://www.htmlwidgets.org/) -- lovely JavaScript visuals acessible in R -- to interact with each other. This means that selecting points in a table will update points in a map, for example. This replicates some functions of [the Shiny package](https://shiny.rstudio.com/) -- a popular R tool for interactive apps -- *without* the need for a server or knowledge of how to program Shiny apps.
+# Crosstalk in action
 
-[My talk](https://matt-dray.github.io/earl18-presentation/#1) describes how I helped policy makers explore schools data by creating a self-service tool incrementally with the [R-Markdown](https://rmarkdown.rstudio.com/)-powered package [Flexdashboard](https://rmarkdown.rstudio.com/flexdashboard/) and Crosstalk for interactivity between the HTML widgets for interactive maps ([Leaflet](https://rstudio.github.io/leaflet/)) and tables ([DT](https://rstudio.github.io/DT/)).
+Below is a verysimple example from [the Crosstalk documentation site](http://rstudio.github.io/crosstalk/using.html). Highlight points in the interactive plot (`d3scatter` package) and 'brush' points with the selection tool (button in upper left) on the interactive map (`leaflet` package) and see how selections in each impact each other. Without Crosstalk, selections in one of these widgets *would not* impact the others.
 
-Here it is:
+```{r echo=FALSE, message=FALSE}
+library(crosstalk)
+library(leaflet)
+library(d3scatter)
+
+shared_quakes <- SharedData$new(quakes[sample(nrow(quakes), 100),])
+
+d3scatter(shared_quakes, ~depth, ~mag, width = "100%", height = 300)
+
+leaflet(shared_quakes, width = "100%", height = 300) %>%
+    addTiles() %>%
+    addMarkers()
+```
+
+Remember all this is happening *in the browser* and *without Shiny*. And all you need to do is give each of your widgets a 'shared data' object. So instead of this:
+
+```{r eval=FALSE}
+data <- readRDS("data/some_data.RDS")  # get data
+datatable(data)  # interactive table
+leaflet(data) %>% addTiles() %>% addMarkers()  # map
+```
+
+We can just add one extra line to create the shared data object and pass that to our widgets instead:
+
+```{r eval=FALSE}
+data <- readRDS("data/some_data.RDS")
+shared <- SharedData$new(data)
+datatable(shared)
+leaflet(shared) %>% addTiles() %>% addMarkers()
+```
+
+# Slides
+
+My task: I had to create an app for our users -- policy makers -- to explore schools data to inform a funding programme. My problem: I didn't have a server for hosting such an app. In other words, [Shiny](https://shiny.rstudio.com/) wasn't really feasible in this case.
+
+Here are the slides:
 
 ```{r echo=FALSE}
 knitr::include_url('https://matt-dray.github.io/earl18-presentation/')
 ```
 
+On GitHub you can find [code for the presentation](https://github.com/matt-dray/earl18-presentation), written in with [the `xaringan` package](https://bookdown.org/yihui/rmarkdown/xaringan.html), and [code for the dummy examples in it](https://github.com/matt-dray/earl18-crosstalk).
+
 # Memestravaganza
 
 Since it's 2018, the only way to publicise such a presentation is to exploit the power of [memes](https://knowyourmeme.com/memes/memes) and social media; the only method for communicating with [millenials](https://eu.usatoday.com/story/money/2017/05/22/avocado-latte-may-just-what-hipster-millennials-dreamed-maybe-not/102002538/) and [younglings](https://i.kym-cdn.com/entries/icons/mobile/000/023/078/youngling.jpg) these days.
 
-But why stop at one meme? Why not a *meme advent calendar* counting down the week in advance of the conference?[^1]
+But why stop at one meme? Why not a *meme advent calendar* counting down the week in advance of the conference?[^2]
 
-I've reproduced them here with a bit more context. If you're on mobile you'll see the rendered tweets. If on desktop, you'll need to click the <pic.twitter.com> links in each one.[^2]
+I've reproduced them here with a bit more context. If you're on mobile you'll see the rendered tweets. If on desktop, you'll need to click the <pic.twitter.com> links in each one.[^3]
 
 ## Day one
 
@@ -57,7 +94,7 @@ Yeah, so I figured that Shiny was the only way to make interactive apps. But I h
 blogdown::shortcode("tweet", "1037597114874912769")
 ```
 
-R users can probably recognise an interactive app made with Shiny[^3]. Probably a [Flexdashboard](https://rmarkdown.rstudio.com/flexdashboard/) is easy to recognise too; these are typically used for non-interactive dashboard displays, but Crosstalk can be used to blur this line by making the elements interact with each other.
+R users can probably recognise an interactive app made with Shiny[^4]. Probably a [Flexdashboard](https://rmarkdown.rstudio.com/flexdashboard/) is easy to recognise too; these are typically used for non-interactive dashboard displays, but Crosstalk can be used to blur this line by making the elements interact with each other.
 
 ## Day three
 
@@ -101,6 +138,7 @@ blogdown::shortcode("tweet", "1039395576352329729")
 
 Turns out I punked you: my talk is called 'Crosstalk: Shiny-like without Shiny' but [you can actually put Shiny in your Crosstalk](http://rstudio.github.io/crosstalk/shiny.html). Why? Your brushing and filtering with Crosstalk can be used to generate Shiny outputs and vice versa. For simplicity, my talk focuses only on Crosstalk. 
 
-[^1]: Answer: because you have better things to do.
-[^2]: I'm not sure why the whole tweet -- include the image -- doesn't render on desktop. I'll investigate.
-[^3]: Yeah, but have you seen [The New Zealand tourism dashboard](https://mbienz.shinyapps.io/tourism_dashboard_prod/)?
+[^1]: Running joke: *Shiny without Shiny? Sounds like a **dull** talk lol.*
+[^2]: Answer: because you have better things to do.
+[^3]: I'm not sure why the whole tweet -- include the image -- doesn't render on desktop. I'll investigate.
+[^4]: Yeah, but have you seen [The New Zealand tourism dashboard](https://mbienz.shinyapps.io/tourism_dashboard_prod/)?

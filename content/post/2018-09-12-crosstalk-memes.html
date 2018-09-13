@@ -14,25 +14,66 @@ tags:
   - presentation
 ---
 
+<script src="/rmarkdown-libs/htmlwidgets/htmlwidgets.js"></script>
+<script src="/rmarkdown-libs/d3/d3.min.js"></script>
+<link href="/rmarkdown-libs/d3scatter/d3scatter.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/d3scatter/d3scatter.js"></script>
+<script src="/rmarkdown-libs/d3scatter-binding/d3scatter.js"></script>
+<script src="/rmarkdown-libs/jquery/jquery.min.js"></script>
+<link href="/rmarkdown-libs/crosstalk/css/crosstalk.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/crosstalk/js/crosstalk.min.js"></script>
+<link href="/rmarkdown-libs/leaflet/leaflet.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/leaflet/leaflet.js"></script>
+<link href="/rmarkdown-libs/leafletfix/leafletfix.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/Proj4Leaflet/proj4-compressed.js"></script>
+<script src="/rmarkdown-libs/Proj4Leaflet/proj4leaflet.js"></script>
+<link href="/rmarkdown-libs/rstudio_leaflet/rstudio_leaflet.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/leaflet-binding/leaflet.js"></script>
+<link href="/rmarkdown-libs/leaflet-easybutton/easy-button.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/leaflet-easybutton/easy-button.js"></script>
+<script src="/rmarkdown-libs/leaflet-easybutton/EasyButton-binding.js"></script>
+<link href="/rmarkdown-libs/leaflet-locationfilter2/locationfilter.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/leaflet-locationfilter2/locationfilter.js"></script>
+<script src="/rmarkdown-libs/leaflet-locationfilter2/locationfilter-bindings.js"></script>
+<link href="/rmarkdown-libs/ionicons/ionicons.min.css" rel="stylesheet" />
 
 
 <p>Matt Dray</p>
 <p><img src='https://raw.githubusercontent.com/matt-dray/earl18-presentation/master/memes/doge.jpg' alt='Doge meme'></p>
 <div id="earl-2018" class="section level1">
 <h1>EARL 2018</h1>
-<p><a href="https://earlconf.com/2018/london/">EARL 2018</a> is a conference for solving business problems with R.</p>
-<p><a href="https://earlconf.com/2018/london/#matt-dray">I’m speaking there</a> about <a href="http://rstudio.github.io/crosstalk/">the Crosstalk package</a> for <a href="https://www.r-project.org/about.html">the R programming language</a>.</p>
-<p>Crosstalk allows <a href="https://www.htmlwidgets.org/">HTML widgets</a> – lovely JavaScript visuals acessible in R – to interact with each other. This means that selecting points in a table will update points in a map, for example. This replicates some functions of <a href="https://shiny.rstudio.com/">the Shiny package</a> – a popular R tool for interactive apps – <em>without</em> the need for a server or knowledge of how to program Shiny apps.</p>
-<p><a href="https://matt-dray.github.io/earl18-presentation/#1">My talk</a> describes how I helped policy makers explore schools data by creating a self-service tool incrementally with the <a href="https://rmarkdown.rstudio.com/">R-Markdown</a>-powered package <a href="https://rmarkdown.rstudio.com/flexdashboard/">Flexdashboard</a> and Crosstalk for interactivity between the HTML widgets for interactive maps (<a href="https://rstudio.github.io/leaflet/">Leaflet</a>) and tables (<a href="https://rstudio.github.io/DT/">DT</a>).</p>
-<p>Here it is:</p>
+<p>I gave a talk called <a href="https://earlconf.com/2018/london/#matt-dray"><em>Crosstalk: Shiny-like without Shiny</em></a><a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> at the <a href="https://earlconf.com/2018/london/">EARL 2018 conference in London</a>.</p>
+<p><a href="http://rstudio.github.io/crosstalk/">The <code>crosstalk</code> package</a> by <a href="https://twitter.com/jcheng?lang=en">Joe Cheng</a> allows <a href="https://www.htmlwidgets.org/">HTML widgets</a> – JavaScript visualisations wrapped in R code – to interact with each other. This can be done inside an <a href="https://rmarkdown.rstudio.com/">R Markdown</a> document (including <a href="https://rmarkdown.rstudio.com/flexdashboard/">Flexdashboard</a>) for easy server-less sharing in HTML format.</p>
+</div>
+<div id="crosstalk-in-action" class="section level1">
+<h1>Crosstalk in action</h1>
+<p>Below is a verysimple example from <a href="http://rstudio.github.io/crosstalk/using.html">the Crosstalk documentation site</a>. Highlight points in the interactive plot (<code>d3scatter</code> package) and ‘brush’ points with the selection tool (button in upper left) on the interactive map (<code>leaflet</code> package) and see how selections in each impact each other. Without Crosstalk, selections in one of these widgets <em>would not</em> impact the others.</p>
+<p><div id="htmlwidget-1" style="width:100%;height:300px;" class="d3scatter html-widget"></div>
+<script type="application/json" data-for="htmlwidget-1">{"x":{"data":{"x":[545,74,128,574,127,55,195,162,579,186,50,614,83,568,57,64,97,625,644,561,560,575,201,82,487,46,218,204,97,68,565,553,500,500,249,51,85,166,304,98,151,93,93,548,69,96,591,329,570,619,510,128,75,80,263,577,77,179,574,626,66,584,103,242,43,586,50,219,50,43,70,546,339,562,154,535,442,48,60,640,243,119,111,280,614,123,615,587,107,206,474,583,539,68,518,492,594,523,565,544],"y":[5.2,4.1,5.1,4.8,5.4,4.8,4.9,4.3,5.1,4.2,5.1,4.2,5.3,4.2,5.3,5.5,4.5,4.5,4.9,4.5,4.2,4.6,4.4,4.4,4.4,4.7,5,5,4.4,4.7,4.2,5.3,4.5,4.7,4.6,4.6,5.3,5.1,4.6,4.5,4.4,5.4,4.4,4.5,4.3,4.3,4.9,4.5,4.1,4.5,4.6,5.2,4.9,4.8,4.7,4.6,4.1,4.4,4,4.1,4.4,4.2,4.3,4.8,5.2,4.5,4.7,4.5,4.6,4.7,5.1,4.3,4.6,5.6,4.5,5.7,5.4,5.3,4.8,4.3,4,4.7,4.8,4,4,4.7,4.7,5.1,4.5,4.5,4.6,4.6,4.1,4.7,5.1,4.5,4.5,4.6,5.3,4.6],"key":["702","595","91","841","757","310","672","455","424","146","759","145","330","939","752","531","803","805","311","279","864","577","487","268","730","248","245","384","147","852","282","249","755","306","12","934","758","714","257","544","417","214","828","878","90","73","395","47","522","762","134","938","983","342","41","811","851","255","937","4","829","631","346","302","844","855","32","931","534","340","580","619","180","297","228","399","313","243","969","171","856","782","818","637","989","408","862","253","458","178","810","102","671","973","624","319","898","189","397","815"]},"color_spec":{"type":"constant","value":"#333333"},"color":null,"x_label":"depth","y_label":"mag","x_lim":null,"y_lim":null,"group":"SharedData74116235"},"evals":[],"jsHooks":[]}</script><div id="htmlwidget-2" style="width:100%;height:300px;" class="leaflet html-widget"></div>
+<script type="application/json" data-for="htmlwidget-2">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addSelect","args":["SharedData74116235"]},{"method":"addTiles","args":["//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false,"attribution":"&copy; <a href=\"http://openstreetmap.org\">OpenStreetMap<\/a> contributors, <a href=\"http://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA<\/a>"}]},{"method":"addMarkers","args":[[-17.64,-21.79,-15.48,-17.99,-17.1,-32.62,-10.78,-20.81,-22.1,-20.1,-12.34,-14.31,-11.41,-20.77,-21.29,-15.77,-23.2,-21.14,-13.05,-22,-20.87,-17.74,-34.4,-18.73,-21.26,-15.5,-16.65,-14.32,-17.8,-13.79,-22.32,-23.36,-24.41,-23.3,-12.26,-20.88,-21.13,-21.44,-16.09,-16.2,-14.43,-20.47,-15.5,-21.91,-15.41,-11.55,-21.04,-26.4,-19.22,-21.18,-23.71,-22.41,-28.22,-27.38,-37.37,-21.85,-15.18,-29.1,-18.14,-17.97,-15.67,-21.46,-27.71,-19.68,-21.6,-17.9,-16.32,-17.63,-16.28,-27.1,-27.28,-18.07,-15.02,-24.57,-16.24,-17.84,-18.6,-14.7,-15.86,-17.82,-18.5,-22.33,-16.21,-19.51,-17.86,-15.36,-21.4,-17.8,-19,-17.42,-25.04,-26.2,-17.8,-24.1,-23.78,-26.16,-22.2,-24.27,-17.72,-18.1],[177.01,185,167.53,181.62,185.9,181.5,166.1,184.7,179.71,184.4,167.43,173.5,166.24,181.16,185.77,167.01,184.8,181.06,169.58,180.52,181.7,181.31,180.5,168.8,181.69,186.9,185.51,167.33,185.17,166.56,180.54,180.01,180.03,179.7,167,185.18,185.6,170.45,184.89,166.8,167.26,185.68,185.3,181.28,186.44,166.2,181.2,181.7,182.54,180.92,180.3,183.99,183.6,181.7,176.78,180.89,185.93,182.1,181.71,181.66,185.23,181.02,182.47,184.14,169.9,181.41,166.74,185.13,166.94,182.18,183.4,181.54,184.24,178.4,185.75,181.3,181.91,166,166.98,181.83,185.4,171.46,186.52,183.97,181.3,167.51,180.78,181.38,185.6,185.16,179.84,178.41,181.32,184.5,180.31,179.5,180.58,179.88,181.42,181.72],null,null,null,{"interactive":true,"draggable":false,"keyboard":true,"title":"","alt":"","zIndexOffset":0,"opacity":1,"riseOnHover":false,"riseOffset":250},null,null,null,null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},{"ctKey":["702","595","91","841","757","310","672","455","424","146","759","145","330","939","752","531","803","805","311","279","864","577","487","268","730","248","245","384","147","852","282","249","755","306","12","934","758","714","257","544","417","214","828","878","90","73","395","47","522","762","134","938","983","342","41","811","851","255","937","4","829","631","346","302","844","855","32","931","534","340","580","619","180","297","228","399","313","243","969","171","856","782","818","637","989","408","862","253","458","178","810","102","671","973","624","319","898","189","397","815"],"ctGroup":"SharedData74116235"}]}],"limits":{"lat":[-37.37,-10.78],"lng":[166,186.9]}},"evals":[],"jsHooks":[]}</script></p>
+<p>Remember all this is happening <em>in the browser</em> and <em>without Shiny</em>. And all you need to do is give each of your widgets a ‘shared data’ object. So instead of this:</p>
+<pre class="r"><code>data &lt;- readRDS(&quot;data/some_data.RDS&quot;)  # get data
+datatable(data)  # interactive table
+leaflet(data) %&gt;% addTiles() %&gt;% addMarkers()  # map</code></pre>
+<p>We can just add one extra line to create the shared data object and pass that to our widgets instead:</p>
+<pre class="r"><code>data &lt;- readRDS(&quot;data/some_data.RDS&quot;)
+shared &lt;- SharedData$new(data)
+datatable(shared)
+leaflet(shared) %&gt;% addTiles() %&gt;% addMarkers()</code></pre>
+</div>
+<div id="slides" class="section level1">
+<h1>Slides</h1>
+<p>My task: I had to create an app for our users – policy makers – to explore schools data to inform a funding programme. My problem: I didn’t have a server for hosting such an app. In other words, <a href="https://shiny.rstudio.com/">Shiny</a> wasn’t really feasible in this case.</p>
+<p>Here are the slides:</p>
 <iframe src="https://matt-dray.github.io/earl18-presentation/" width="672" height="400px">
 </iframe>
+<p>On GitHub you can find <a href="https://github.com/matt-dray/earl18-presentation">code for the presentation</a>, written in with <a href="https://bookdown.org/yihui/rmarkdown/xaringan.html">the <code>xaringan</code> package</a>, and <a href="https://github.com/matt-dray/earl18-crosstalk">code for the dummy examples in it</a>.</p>
 </div>
 <div id="memestravaganza" class="section level1">
 <h1>Memestravaganza</h1>
 <p>Since it’s 2018, the only way to publicise such a presentation is to exploit the power of <a href="https://knowyourmeme.com/memes/memes">memes</a> and social media; the only method for communicating with <a href="https://eu.usatoday.com/story/money/2017/05/22/avocado-latte-may-just-what-hipster-millennials-dreamed-maybe-not/102002538/">millenials</a> and <a href="https://i.kym-cdn.com/entries/icons/mobile/000/023/078/youngling.jpg">younglings</a> these days.</p>
-<p>But why stop at one meme? Why not a <em>meme advent calendar</em> counting down the week in advance of the conference?<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a></p>
-<p>I’ve reproduced them here with a bit more context. If you’re on mobile you’ll see the rendered tweets. If on desktop, you’ll need to click the &lt;pic.twitter.com&gt; links in each one.<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a></p>
+<p>But why stop at one meme? Why not a <em>meme advent calendar</em> counting down the week in advance of the conference?<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a></p>
+<p>I’ve reproduced them here with a bit more context. If you’re on mobile you’ll see the rendered tweets. If on desktop, you’ll need to click the &lt;pic.twitter.com&gt; links in each one.<a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a></p>
 <div id="day-one" class="section level2">
 <h2>Day one</h2>
 {{% tweet "1037226196797415425" %}}
@@ -41,7 +82,7 @@ tags:
 <div id="day-two" class="section level2">
 <h2>Day two</h2>
 {{% tweet "1037597114874912769" %}}
-<p>R users can probably recognise an interactive app made with Shiny<a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a>. Probably a <a href="https://rmarkdown.rstudio.com/flexdashboard/">Flexdashboard</a> is easy to recognise too; these are typically used for non-interactive dashboard displays, but Crosstalk can be used to blur this line by making the elements interact with each other.</p>
+<p>R users can probably recognise an interactive app made with Shiny<a href="#fn4" class="footnoteRef" id="fnref4"><sup>4</sup></a>. Probably a <a href="https://rmarkdown.rstudio.com/flexdashboard/">Flexdashboard</a> is easy to recognise too; these are typically used for non-interactive dashboard displays, but Crosstalk can be used to blur this line by making the elements interact with each other.</p>
 </div>
 <div id="day-three" class="section level2">
 <h2>Day three</h2>
@@ -73,8 +114,9 @@ tags:
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>Answer: because you have better things to do.<a href="#fnref1">↩</a></p></li>
-<li id="fn2"><p>I’m not sure why the whole tweet – include the image – doesn’t render on desktop. I’ll investigate.<a href="#fnref2">↩</a></p></li>
-<li id="fn3"><p>Yeah, but have you seen <a href="https://mbienz.shinyapps.io/tourism_dashboard_prod/">The New Zealand tourism dashboard</a>?<a href="#fnref3">↩</a></p></li>
+<li id="fn1"><p>Running joke: <em>Shiny without Shiny? Sounds like a <strong>dull</strong> talk lol.</em><a href="#fnref1">↩</a></p></li>
+<li id="fn2"><p>Answer: because you have better things to do.<a href="#fnref2">↩</a></p></li>
+<li id="fn3"><p>I’m not sure why the whole tweet – include the image – doesn’t render on desktop. I’ll investigate.<a href="#fnref3">↩</a></p></li>
+<li id="fn4"><p>Yeah, but have you seen <a href="https://mbienz.shinyapps.io/tourism_dashboard_prod/">The New Zealand tourism dashboard</a>?<a href="#fnref4">↩</a></p></li>
 </ol>
 </div>
