@@ -10,23 +10,87 @@ draft: true
 
 Matt Dray
 
-# Disclaimer
-
-I'm colourblind.
-
 # Colour search
 
-Colour search examples:
+Searching images by colour is all the rage:
 
 * [Google Arts & Culture](https://artsexperiments.withgoogle.com/artpalette/colors/a46053-433932-c2ad8f-b5996a-746251)
 * [Designspiration](https://www.designspiration.net/search/saves/?q=%2389ebd7%20%23afff11%20%23e5ff91%20%23ff9775%20%23f38d00)
 * [TinEye Multicolr](https://labs.tineye.com/multicolr/)
 * [Google Advanced Image Search](https://www.google.co.uk/advanced_image_search)
 
+To do this you need to know how much of each colour is in the image.
+
+So let's look at a kind-of-crappy half-baked method in R for achieving this.
+
 # A very simple implementation
 
-1. Read image
-2. Convert RGB to simple-named colour
-3. Get percentage coverage of sime-named colours
-4. User searches for colour name
-5. Images arranged in descending rank by that colour
+The steps go like this:
+
+1. Read in an image
+2. Convert RGB (Red-Green-Blue) values to simple-named colours
+3. Get percentage of image filled by each colour
+4. ???
+5. Profit
+
+# Read image
+
+There's a number of ways to read images into R. We'll use the `readImage()` function from the `OpenImageR` package.
+
+Remember to use `install.packages()` if you haven't installed any of the packages in this post. I'm also assuming that you have a test image, named `test_image.jpg`, in a folder called `img` in your working directory.
+
+```{r eval=FALSE}
+library(OpenImageR)  # load package
+image_in <- readImage("img/test_image.jpg")  # read image
+```
+
+The image has been read into R as an *array*, an object type that can hold data in multiple dimensions.
+
+Our image has three dimensions: a two-dimensional matrix representing the 'pixels' of the image plus [a third dimension for each 'colour channel' of red, green and blue (RGB)](https://en.wikipedia.org/wiki/Channel_(digital_image)).
+
+You can see this when you check the `str`ucture of the image:
+
+```{r eval=FALSE}
+str(image_in)  # check structure
+```
+
+So it's `[matrix rows, matrix columns, colour channels]`. There'll be three colour channels, of course: RGB. The number of rows and columns will depend on how big the image is.
+
+So we could get the values of each colour channel for the top-left nine pixels of the image (a three-by-thre matrix).
+
+```{r eval=FALSE}
+# first three elements of first two dimensions
+# and all the elements of the third dimension
+image_in[1:3, 1:3, ]
+```
+
+For example, a point will be yellow if it has maximum values for red and blue channels and the minimum value in the green channel. [There are online tools for exploring RGB permutations](http://web.stanford.edu/class/cs101/image-rgb-explorer.html).
+
+To prove we can rebuild the image from the array, we can use the `imageShow()` function from `OpenImageR`.
+
+```{r eval=FALSE}
+imageShow(image_in)
+```
+
+# Assign simple colours
+
+You could do k-means clustering to bucket the full colour set into *k* groups, each with a representative RGB value. This is a good approach for simplifying images; you could go from 256 colours to 8, for example. [You can find methods for this online]().
+
+But actually we want to describe the image with *simple* colours, not the average of a cluster. So we could first convert the RGB values in our array to a set of basic colours with recognisable names like 'yellow' and 'black'. Then we just tally them.
+
+```{r eval=FALSE}
+image_melt <- image_in %>% melt()  # why not use gather? becasue we're working with a matrix
+
+image_spread <- image_melt %>% 
+  spread(
+    key = Var3,
+    value = value
+  ) %>% 
+  transmute(
+    red = round(`1` * 255),
+    green = round(`2` * 255),
+    blue = round(`3` * 255)
+  ) %>%
+  rownames_to_column() %>% 
+  as_tibble()
+```
