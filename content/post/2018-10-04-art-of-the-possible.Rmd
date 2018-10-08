@@ -72,19 +72,36 @@ To prove we can rebuild the image from the array, we can use the `imageShow()` f
 imageShow(image_in)
 ```
 
-# Assign simple colours
+# Tidy the data
 
-You could do k-means clustering to bucket the full colour set into *k* groups, each with a representative RGB value. This is a good approach for simplifying images; you could go from 256 colours to 8, for example. [You can find methods for this online]().
-
-But actually we want to describe the image with *simple* colours, not the average of a cluster. So we could first convert the RGB values in our array to a set of basic colours with recognisable names like 'yellow' and 'black'. Then we just tally them.
+We begin by reorganising the array into a dataframe using `melt()` from the `reshape2` package.[^reshape2] This gives us four columns: one for each pixel's x and y value, one for the RGB channel (1 = red, 2 = green, 3 = blue) and one that gives the actual colour value for that channel.
 
 ```{r eval=FALSE}
-image_melt <- image_in %>% melt()  # why not use gather? becasue we're working with a matrix
+library(dplyr)
+library(reshape2)
+
+image_melt <- image_in %>%
+  melt() %>% 
+  rename(
+    y_val = Var1,
+    x_val = Var2,
+    rgb_channel = Var3,
+    rgb_value = value
+  )
+
+head(image_melt)
+```
+
+What we actually want is a dataframe with columns for each of the RGB channels. Since we're working with a dataframe, we can use the `spread()` funciton in the `tidyr` package to set our 'key' as the RGB channel (i.e. the single column from which the levels will become new columns) and the 'value' as the RGB values. We multiply these values by 255 to get the classic 0 to 255 range. 
+
+```{r eval=FALSE}
+library(tidyr)
+library(tibble)
 
 image_spread <- image_melt %>% 
   spread(
-    key = Var3,
-    value = value
+    key = rgb_channel,
+    value = rgb_value
   ) %>% 
   transmute(
     red = round(`1` * 255),
@@ -93,4 +110,20 @@ image_spread <- image_melt %>%
   ) %>%
   rownames_to_column() %>% 
   as_tibble()
+
+head(image_spread)
 ```
+
+So we have a four coloumn dataframe: a column for each RGB channel and a column for arbitrary rownames. We don't need to worry about the x and y values right now because we don't want to rebuild the image, we just want to count the colours. 
+
+
+# Assign simple colours
+
+You could do k-means clustering to bucket the full colour set into *k* groups, each with a representative RGB value. This is a good approach for simplifying images; you could go from 256 colours to 8, for example. [You can find methods for this online]().
+
+But actually we want to describe the image with *simple* colours, not the average of a cluster. So we could first convert the RGB values in our array to a set of basic colours with recognisable names like 'yellow' and 'black'. Then we just tally them.
+
+We can do this for each of our pixels by looking for the nearest-neighbour point in RGB space that describes a predefined 'simple' colour.
+
+
+[^reshape2]: Yeah, `reshape2` has been superseded by `tidyr`, but the latter was built to deal with dataframes specifically. We're working with an array as input. 
