@@ -18,6 +18,7 @@ Searching images by colour is all the rage:
 * [Designspiration](https://www.designspiration.net/search/saves/?q=%2389ebd7%20%23afff11%20%23e5ff91%20%23ff9775%20%23f38d00)
 * [TinEye Multicolr](https://labs.tineye.com/multicolr/)
 * [Google Advanced Image Search](https://www.google.co.uk/advanced_image_search)
+* [Dulux colour match](https://www.dulux.co.uk/en/articles/dulux-visualizer-app)
 
 To do this you need to know how much of each colour is in the image.
 
@@ -116,14 +117,74 @@ head(image_spread)
 
 So we have a four coloumn dataframe: a column for each RGB channel and a column for arbitrary rownames. We don't need to worry about the x and y values right now because we don't want to rebuild the image, we just want to count the colours. 
 
-
 # Assign simple colours
 
 You could do k-means clustering to bucket the full colour set into *k* groups, each with a representative RGB value. This is a good approach for simplifying images; you could go from 256 colours to 8, for example. [You can find methods for this online]().
 
 But actually we want to describe the image with *simple* colours, not the average of a cluster. So we could first convert the RGB values in our array to a set of basic colours with recognisable names like 'yellow' and 'black'. Then we just tally them.
 
-We can do this for each of our pixels by looking for the nearest-neighbour point in RGB space that describes a predefined 'simple' colour.
+We can do this for each of our pixels by looking for the nearest-neighbour point in RGB space that describes a predefined 'simple' colour. 
+
+It's kind of tricky to decide what these colours should be. One approach might be to use 'extreme' colours. For example, 'blue' could be categorised as lowest values for R and G, but highest value of B `[0, 0, 255]`
+
+```{r eval=FALSE}
+simple_colors <- tibble::tribble(
+  ~color, ~red, ~green, ~blue,
+  "aqua",   0,   255, 255,
+  "black",   0,   0,   0,
+  "blue",    0,   0,   255,
+  "fuchsia", 255, 0,   255,
+  "gray",    128, 128, 128,
+  "green",   0,   128, 0,
+  "lime",    0,   255, 0,
+  "red",     128, 0,   0,
+  "navy",    0,   0,   128,
+  "olive",   128, 128, 0,
+  "purple",  128, 0,   128,
+  "red",     255, 0,   0,
+  "silver",  192, 192, 192,
+  "teal",    0,   128, 128,
+  "white",   255, 255, 255,
+  "yellow",  255, 255, 0
+)
+```
+
+We want to find the named point (e.g. yellow is at the point [255, 255, 0]) closest to each pixel and assign it that name.
+
+We can do this by calculating the sum of the squared difference between the pixel value and named-point values for each colour channel. The pixel will be assigned where the calculated value is smallest.
+
+```{r eval=FALSE}
+rgb_image$color_name <- sapply(
+  seq_along(rgb_image$hex),
+  function(i) 
+    simple_colors$color[
+      which.min(
+        (simple_colors$red - rgb_image$red[i])^2 +
+          (simple_colors$green - rgb_image$green[i])^2 +
+          (simple_colors$blue - rgb_image$blue[i])^2
+      )
+      ]
+)
+```
+
+# Sum the colours
+
+And now we just work out the percentage of pixels belonging to each colour.
+
+```{r eval=FALSE}
+image_colours <- image_spread %>% 
+  tabyl(color_name) %>% 
+  arrange(desc(percent))
+
+print(image_colours)
+```
+
+# Session info
+
+```{r}
+xfun::session_info(c("OpenImageR", "dplyr", "reshape2", "tidyr", "tibble", "xfun"), 
+  dependencies = FALSE)
+```
 
 
 [^reshape2]: Yeah, `reshape2` has been superseded by `tidyr`, but the latter was built to deal with dataframes specifically. We're working with an array as input. 
