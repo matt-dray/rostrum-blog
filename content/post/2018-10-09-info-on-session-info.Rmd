@@ -1,5 +1,5 @@
 ---
-title: Info on session_info
+title: R session info info
 author: Matt Dray
 date: '2018-10-09'
 slug: sessioninfo
@@ -9,38 +9,81 @@ tags:
   - devtools
   - sessioninfo
   - xfun
+  - utils
 draft: true
 ---
+
+# What's session info?
+
+'Session info' is just a print-out of some information about your R version, the locale you're running it from and the packages you've attached.
+
+You might get asked for this if someone is diagnosing your R problem. You may also see it at the end of blog posts or reports.
+
+The typical method is to run `sessionInfo()`, but it gives a *lot* of information by default. Other functions have been created to make the output more friendly.
+
+# Why?
+
+I've been using `sessionInfo` in my posts, but read about [Yihui's `session_info()` function in his `xfun` package](https://yihui.name/xfun/) and saw [Mat](https://twitter.com/mammykins_) at [machinegurning.com](https://www.machinegurning.com/rstats/bayes_thinking/) using `session_info()` from `devtools`.
+
+I just want to see the outputs side-by-side to sate my own curiosity, to be honest.
+
+# Load packages
+
+Let's grab some packages from multiple sources to see how they're represented in the output of each session info function.
+
+We'll get some packages from:
+
+* [CRAN](https://cran.r-project.org/)
+* [Bioconductor](https://www.bioconductor.org/install/)
+* [GitHub](http://kbroman.org/pkg_primer/pages/github.html)
 
 ```{r eval=FALSE}
 library("tidyxl")
 
-devtools::install_github("tidyverse/dplyr")
-
 source("https://bioconductor.org/biocLite.R")
 biocLite()
 biocLite(c("GenomicFeatures", "AnnotationDbi"))
+
+devtools::install_github("tidyverse/dplyr")
 ```
 
-# `utils`
+# The functions
+
+## `utils`
+
+From the [documentation for the function](https://www.rdocumentation.org/packages/utils/versions/3.5.1/topics/sessionInfo):
+
+> Print version information about R, the OS and attached or loaded packages.
 
 ```{r}
 utils::sessionInfo()
 ```
 
-# `sessioninfo` package
+## `sessioninfo` package
+
+From [the CRAN page for the package](https://CRAN.R-project.org/package=sessioninfo):
+
+> It is similar to `utils::sessionInfo()`, but includes more information about packages, and where they were installed from.
 
 ```{r}
 sessioninfo::session_info()
 ```
 
-# `devtools` package
+## `devtools` package
+
+From the [documentation for the function](https://www.rdocumentation.org/packages/devtools/versions/1.13.6/topics/session_info):
+
+> This is `sessionInfo()` re-written from scratch to both exclude data that's rarely useful (e.g., the full collate string or base packages loaded) and include stuff you'd like to know (e.g., where a package was installed from).
 
 ```{r}
 devtools::session_info()
 ```
 
-# `xfun` package
+## `xfun` package
+
+From [Yihui Xie's Introduction to `xfun` page](https://yihui.name/xfun/):
+
+>...it is rarely useful to print out the names of base R packages, or information about the matrix products / BLAS / LAPACK. Often times I want additional information in the session information, such as the Pandoc version when rmarkdown is used.
 
 ```{r}
 xfun::session_info()
