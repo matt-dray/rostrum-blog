@@ -17,27 +17,27 @@ Matt Dray
 
 # What's session info?
 
-It's just some details about your working environment like your version of R, the locale it's runnng from and any loaded packages.
+Session info is just some details about your working environment like your version of R, the locale it's running from and any loaded packages.
 
 It gives a snapshot to help people reproduce what you've done or spot any anomalies. You might get asked for this if someone is diagnosing your R problem. You may also see it at the end of blog posts or reports. 
 
-You would typically print this to the console with `sessionInfo()`, but it gives a *lot* of information by default. Other functions have been created to make the output more friendly.
+You would typically print this to the console with the base function `sessionInfo()`, but it gives a *lot* of information by default. Other functions have been created to make the output more friendly.
 
 # Why?
 
-I've been using `sessionInfo` in my posts, but read about [Yihui's `session_info()` function in his `xfun` package](https://yihui.name/xfun/) and saw [Mat](https://twitter.com/mammykins_) at [machinegurning.com](https://www.machinegurning.com/rstats/bayes_thinking/) using `session_info()` from `devtools`.
+I've been using `sessionInfo()` in my posts, but read about [Yihui's `session_info()` function in his `xfun` package](https://yihui.name/xfun/) and saw [Mat](https://twitter.com/mammykins_) at [machinegurning.com](https://www.machinegurning.com/rstats/bayes_thinking/) using `session_info()` from `devtools`.
 
 I just want to see the outputs side-by-side for my own curiosity.
 
 # Load packages
 
-Let's grab some packages from multiple sources to see how they're represented in the output of each function.
+Let's grab some packages from different sources to see how they're represented in the output of each function.
 
 We'll get some packages from:
 
-* [CRAN](https://cran.r-project.org/)
-* [GitHub](http://kbroman.org/pkg_primer/pages/github.html)
-* [Bioconductor](https://www.bioconductor.org/install/)
+* [CRAN](https://cran.r-project.org/) -- the typical source for R packages
+* [GitHub](http://kbroman.org/pkg_primer/pages/github.html) -- for packages in development or that haven't had a release anywhere else
+* [Bioconductor](https://www.bioconductor.org/install/) -- an open-dev project for packages ['for the analysis and comprehension of high-throughput genomic data'](https://www.bioconductor.org/about/)
 
 ```{r warnings=FALSE, error=FALSE, message=FALSE}
 # From CRAN
@@ -69,9 +69,11 @@ From the [documentation for the function](https://www.rdocumentation.org/package
 What do you get? Loads of stuff:
 
 * R version, plaform and OS
-* matrix products, BLAS and LAPACK (linear algebra bits and bobs)
-* locale
-* packages -- attached base packages, other attached and loaded packages via namespace (but not attached) in separate sections with their version numbers and no notation to say where the packages came from (CRAN, GitHub or Bioconductor)
+* matrix products, BLAS and LAPACK
+* locale (where you're running R from)
+* packages -- attached base packages, other attached packages, and loaded packages via namespace (but not attached) in separate sections with their version numbers
+
+Maybe that's too much stuff. Also I don't really know what the BLAS and LAPACK stuff is; something to do with linear algebra. There's also no notation to say where the packages came from (CRAN, GitHub or Bioconductor). But it's pretty human-readable.
 
 ```{r}
 utils::sessionInfo()
@@ -83,11 +85,13 @@ From the [documentation for the function](https://www.rdocumentation.org/package
 
 > This is `sessionInfo()` re-written from scratch to both exclude data that's rarely useful (e.g., the full collate string or base packages loaded) and include stuff you'd like to know (e.g., where a package was installed from).
 
-What do you get? Loads of slightly more useful stuff that's organised sensibly:
+What do you get? You get basically what's in `sessionInfo()`
 
 * sections split into 'session info' and 'packages'
 * version, system, UI, language, locale, timezone and date
 * package names with version number, date and source (CRAN, Bioconductor, Github, local)
+
+It's even more human-readable in the packages section, where the output is in table format and in alphabetical order. In particular, there's a column to tell you where the package came from. For example, see how the `helminthR` package is from `github (ropensci/helminthR@435371d)` and there's an asterisk in the row to show you it' was attached.'s been attached in the session.
 
 ```{r}
 devtools::session_info()
@@ -99,7 +103,7 @@ From [the CRAN page for the package](https://CRAN.R-project.org/package=sessioni
 
 > It is similar to `utils::sessionInfo()`, but includes more information about packages, and where they were installed from.
 
-What do you get? Basically the same as `utils::sessionInfo()`, but the sections are separated by lines rather than hyphens and we have a date and source (CRAN, Github and source and Bioconductor)
+What do you get? Basically the same as `utils::sessionInfo()`. Note that the final column of output -- the `source` column is wrapped below.
 
 ```{r}
 sessioninfo::session_info()
@@ -111,7 +115,7 @@ From [Yihui Xie's Introduction to `xfun` page](https://yihui.name/xfun/):
 
 >...it is rarely useful to print out the names of base R packages, or information about the matrix products / BLAS / LAPACK. Often times I want additional information in the session information, such as the Pandoc version when rmarkdown is used.
 
-What do you get? Basically `utils::sessionInfo()` but no matrixproducts, BLAS or LAPACK info, plus all the packages are listed together with their version numbers. You also can't see where the package came from (CRAN, Github or Bioconductor).
+What do you get? Basically `utils::sessionInfo()` but no matrix products, BLAS or LAPACK info, plus all the packages are listed together with their version numbers. You also can't see where the package came from (CRAN, Github or Bioconductor). It lacks some human-readability compared to the functions in `devtools` and `sessioninfo`, but is clearly enough for Yihui -- his package contains ['miscellaneous functions that [he] use[s] by [him]self from time to time'](https://github.com/yihui/xfun/blob/master/README.md).
 
 ```{r}
 xfun::session_info()
@@ -119,4 +123,4 @@ xfun::session_info()
 
 # Conclusion
 
-Yep, they basically do the same thing with slight differences. Aren't you glad you read this?
+Yep, they basically do the same thing with slight differences. I personally like the idea of having some kind of table-like output for easy readability, so I'll probably go with `devtools` as I often have it loaded anyway.

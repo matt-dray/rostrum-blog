@@ -18,23 +18,23 @@ tags:
 <p><img src ="https://media.giphy.com/media/xUA7aLFXBV7OLv8O5O/giphy.gif"></p>
 <div id="whats-session-info" class="section level1">
 <h1>What’s session info?</h1>
-<p>It’s just some details about your working environment like your version of R, the locale it’s runnng from and any loaded packages.</p>
+<p>Session info is just some details about your working environment like your version of R, the locale it’s running from and any loaded packages.</p>
 <p>It gives a snapshot to help people reproduce what you’ve done or spot any anomalies. You might get asked for this if someone is diagnosing your R problem. You may also see it at the end of blog posts or reports.</p>
-<p>You would typically print this to the console with <code>sessionInfo()</code>, but it gives a <em>lot</em> of information by default. Other functions have been created to make the output more friendly.</p>
+<p>You would typically print this to the console with the base function <code>sessionInfo()</code>, but it gives a <em>lot</em> of information by default. Other functions have been created to make the output more friendly.</p>
 </div>
 <div id="why" class="section level1">
 <h1>Why?</h1>
-<p>I’ve been using <code>sessionInfo</code> in my posts, but read about <a href="https://yihui.name/xfun/">Yihui’s <code>session_info()</code> function in his <code>xfun</code> package</a> and saw <a href="https://twitter.com/mammykins_">Mat</a> at <a href="https://www.machinegurning.com/rstats/bayes_thinking/">machinegurning.com</a> using <code>session_info()</code> from <code>devtools</code>.</p>
+<p>I’ve been using <code>sessionInfo()</code> in my posts, but read about <a href="https://yihui.name/xfun/">Yihui’s <code>session_info()</code> function in his <code>xfun</code> package</a> and saw <a href="https://twitter.com/mammykins_">Mat</a> at <a href="https://www.machinegurning.com/rstats/bayes_thinking/">machinegurning.com</a> using <code>session_info()</code> from <code>devtools</code>.</p>
 <p>I just want to see the outputs side-by-side for my own curiosity.</p>
 </div>
 <div id="load-packages" class="section level1">
 <h1>Load packages</h1>
-<p>Let’s grab some packages from multiple sources to see how they’re represented in the output of each function.</p>
+<p>Let’s grab some packages from different sources to see how they’re represented in the output of each function.</p>
 <p>We’ll get some packages from:</p>
 <ul>
-<li><a href="https://cran.r-project.org/">CRAN</a></li>
-<li><a href="http://kbroman.org/pkg_primer/pages/github.html">GitHub</a></li>
-<li><a href="https://www.bioconductor.org/install/">Bioconductor</a></li>
+<li><a href="https://cran.r-project.org/">CRAN</a> – the typical source for R packages</li>
+<li><a href="http://kbroman.org/pkg_primer/pages/github.html">GitHub</a> – for packages in development or that haven’t had a release anywhere else</li>
+<li><a href="https://www.bioconductor.org/install/">Bioconductor</a> – an open-dev project for packages <a href="https://www.bioconductor.org/about/">‘for the analysis and comprehension of high-throughput genomic data’</a></li>
 </ul>
 <pre class="r"><code># From CRAN
 # install.packages(&quot;package-name&quot;)
@@ -54,7 +54,7 @@ biocLite()
 biocLite(c(&quot;GenomicFeatures&quot;, &quot;AnnotationDbi&quot;))</code></pre>
 <pre><code>## 
 ## The downloaded binary packages are in
-##  /var/folders/y5/ts9sjlt10x1d7qpkgbhy3smh0000gn/T//Rtmpj0BF0e/downloaded_packages</code></pre>
+##  /var/folders/y5/ts9sjlt10x1d7qpkgbhy3smh0000gn/T//RtmpUcoqZE/downloaded_packages</code></pre>
 </div>
 <div id="the-functions" class="section level1">
 <h1>The functions</h1>
@@ -67,10 +67,11 @@ biocLite(c(&quot;GenomicFeatures&quot;, &quot;AnnotationDbi&quot;))</code></pre>
 <p>What do you get? Loads of stuff:</p>
 <ul>
 <li>R version, plaform and OS</li>
-<li>matrix products, BLAS and LAPACK (linear algebra bits and bobs)</li>
-<li>locale</li>
-<li>packages – attached base packages, other attached and loaded packages via namespace (but not attached) in separate sections with their version numbers and no notation to say where the packages came from (CRAN, GitHub or Bioconductor)</li>
+<li>matrix products, BLAS and LAPACK</li>
+<li>locale (where you’re running R from)</li>
+<li>packages – attached base packages, other attached packages, and loaded packages via namespace (but not attached) in separate sections with their version numbers</li>
 </ul>
+<p>Maybe that’s too much stuff. Also I don’t really know what the BLAS and LAPACK stuff is; something to do with linear algebra. There’s also no notation to say where the packages came from (CRAN, GitHub or Bioconductor). But it’s pretty human-readable.</p>
 <pre class="r"><code>utils::sessionInfo()</code></pre>
 <pre><code>## R version 3.5.1 (2018-07-02)
 ## Platform: x86_64-apple-darwin15.6.0 (64-bit)
@@ -119,12 +120,13 @@ biocLite(c(&quot;GenomicFeatures&quot;, &quot;AnnotationDbi&quot;))</code></pre>
 <blockquote>
 <p>This is <code>sessionInfo()</code> re-written from scratch to both exclude data that’s rarely useful (e.g., the full collate string or base packages loaded) and include stuff you’d like to know (e.g., where a package was installed from).</p>
 </blockquote>
-<p>What do you get? Loads of slightly more useful stuff that’s organised sensibly:</p>
+<p>What do you get? You get basically what’s in <code>sessionInfo()</code></p>
 <ul>
 <li>sections split into ‘session info’ and ‘packages’</li>
 <li>version, system, UI, language, locale, timezone and date</li>
 <li>package names with version number, date and source (CRAN, Bioconductor, Github, local)</li>
 </ul>
+<p>It’s even more human-readable in the packages section, where the output is in table format and in alphabetical order. In particular, there’s a column to tell you where the package came from. For example, see how the <code>helminthR</code> package is from <code>github (ropensci/helminthR@435371d)</code> and there’s an asterisk in the row to show you it’ was attached.’s been attached in the session.</p>
 <pre class="r"><code>devtools::session_info()</code></pre>
 <pre><code>## Session info -------------------------------------------------------------</code></pre>
 <pre><code>##  setting  value                       
@@ -134,7 +136,7 @@ biocLite(c(&quot;GenomicFeatures&quot;, &quot;AnnotationDbi&quot;))</code></pre>
 ##  language (EN)                        
 ##  collate  en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2018-10-13</code></pre>
+##  date     2018-10-14</code></pre>
 <pre><code>## Packages -----------------------------------------------------------------</code></pre>
 <pre><code>##  package       * version    date       source                             
 ##  assertthat      0.2.0      2017-04-11 CRAN (R 3.5.0)                     
@@ -219,7 +221,7 @@ biocLite(c(&quot;GenomicFeatures&quot;, &quot;AnnotationDbi&quot;))</code></pre>
 <blockquote>
 <p>It is similar to <code>utils::sessionInfo()</code>, but includes more information about packages, and where they were installed from.</p>
 </blockquote>
-<p>What do you get? Basically the same as <code>utils::sessionInfo()</code>, but the sections are separated by lines rather than hyphens and we have a date and source (CRAN, Github and source and Bioconductor)</p>
+<p>What do you get? Basically the same as <code>utils::sessionInfo()</code>. Note that the final column of output – the <code>source</code> column is wrapped below.</p>
 <pre class="r"><code>sessioninfo::session_info()</code></pre>
 <pre><code>## ─ Session info ──────────────────────────────────────────────────────────
 ##  setting  value                       
@@ -231,7 +233,7 @@ biocLite(c(&quot;GenomicFeatures&quot;, &quot;AnnotationDbi&quot;))</code></pre>
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2018-10-13                  
+##  date     2018-10-14                  
 ## 
 ## ─ Packages ──────────────────────────────────────────────────────────────
 ##  package       * version    date       lib
@@ -383,7 +385,7 @@ biocLite(c(&quot;GenomicFeatures&quot;, &quot;AnnotationDbi&quot;))</code></pre>
 <blockquote>
 <p>…it is rarely useful to print out the names of base R packages, or information about the matrix products / BLAS / LAPACK. Often times I want additional information in the session information, such as the Pandoc version when rmarkdown is used.</p>
 </blockquote>
-<p>What do you get? Basically <code>utils::sessionInfo()</code> but no matrixproducts, BLAS or LAPACK info, plus all the packages are listed together with their version numbers. You also can’t see where the package came from (CRAN, Github or Bioconductor).</p>
+<p>What do you get? Basically <code>utils::sessionInfo()</code> but no matrix products, BLAS or LAPACK info, plus all the packages are listed together with their version numbers. You also can’t see where the package came from (CRAN, Github or Bioconductor). It lacks some human-readability compared to the functions in <code>devtools</code> and <code>sessioninfo</code>, but is clearly enough for Yihui – his package contains <a href="https://github.com/yihui/xfun/blob/master/README.md">‘miscellaneous functions that [he] use[s] by [him]self from time to time’</a>.</p>
 <pre class="r"><code>xfun::session_info()</code></pre>
 <pre><code>## R version 3.5.1 (2018-07-02)
 ## Platform: x86_64-apple-darwin15.6.0 (64-bit)
@@ -432,5 +434,5 @@ biocLite(c(&quot;GenomicFeatures&quot;, &quot;AnnotationDbi&quot;))</code></pre>
 </div>
 <div id="conclusion" class="section level1">
 <h1>Conclusion</h1>
-<p>Yep, they basically do the same thing with slight differences. Aren’t you glad you read this?</p>
+<p>Yep, they basically do the same thing with slight differences. I personally like the idea of having some kind of table-like output for easy readability, so I’ll probably go with <code>devtools</code> as I often have it loaded anyway.</p>
 </div>
