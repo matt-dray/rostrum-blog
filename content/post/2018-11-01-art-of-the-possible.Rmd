@@ -1,11 +1,9 @@
 ---
 title: Art of the Possible
 author: Matt Dray
-date: '2018-10-04'
+date: '2018-11-01'
 slug: art-of-the-possible
-categories: []
-tags: []
-draft: true
+draft: yes
 ---
 
 Matt Dray
@@ -42,7 +40,17 @@ Remember to use `install.packages()` if you haven't installed any of the package
 
 ```{r eval=FALSE}
 library(OpenImageR)  # load package
-image_in <- readImage("img/test_image.jpg")  # read image
+image_in <- readImage("img/test_image.png")  # read image
+imageShow(image_in)  # print image to viewer
+```
+
+```{r echo=FALSE}
+# chunk above not actually read
+# read from local to get it to run
+# chunk not visible to readers
+library(OpenImageR)  # load package
+image_in <- readImage("/Users/matthewdray/Desktop/test_image.jpg")
+imageShow(image_in)
 ```
 
 The image has been read into R as an *array*, an object type that can hold data in multiple dimensions.
@@ -51,15 +59,15 @@ Our image has three dimensions: a two-dimensional matrix representing the 'pixel
 
 You can see this when you check the `str`ucture of the image:
 
-```{r eval=FALSE}
+```{r}
 str(image_in)  # check structure
 ```
 
-So it's `[matrix rows, matrix columns, colour channels]`. There'll be three colour channels, of course: RGB. The number of rows and columns will depend on how big the image is.
+So it's indexed as `[matrix rows, matrix columns, colour channels]`. There'll be three colour channels, of course: RGB. The number of rows and columns will depend on how big the image is.
 
 So we could get the values of each colour channel for the top-left nine pixels of the image (a three-by-thre matrix).
 
-```{r eval=FALSE}
+```{r}
 # first three elements of first two dimensions
 # and all the elements of the third dimension
 image_in[1:3, 1:3, ]
@@ -67,55 +75,49 @@ image_in[1:3, 1:3, ]
 
 For example, a point will be yellow if it has maximum values for red and blue channels and the minimum value in the green channel. [There are online tools for exploring RGB permutations](http://web.stanford.edu/class/cs101/image-rgb-explorer.html).
 
-To prove we can rebuild the image from the array, we can use the `imageShow()` function from `OpenImageR`.
-
-```{r eval=FALSE}
-imageShow(image_in)
-```
-
 # Tidy the data
 
 We begin by reorganising the array into a dataframe using `melt()` from the `reshape2` package.[^reshape2] This gives us four columns: one for each pixel's x and y value, one for the RGB channel (1 = red, 2 = green, 3 = blue) and one that gives the actual colour value for that channel.
 
-```{r eval=FALSE}
-library(dplyr)
-library(reshape2)
+```{r message=FALSE, warning=FALSE}
+library(dplyr)  # for data manipulation
+library(reshape2)  # reformat wide to long
 
 image_melt <- image_in %>%
-  melt() %>% 
-  rename(
+  melt() %>% # long format
+  rename(  # change column names
     y_val = Var1,
     x_val = Var2,
     rgb_channel = Var3,
     rgb_value = value
   )
 
-head(image_melt)
+head(image_melt)  # show first few
 ```
 
 What we actually want is a dataframe with columns for each of the RGB channels. Since we're working with a dataframe, we can use the `spread()` funciton in the `tidyr` package to set our 'key' as the RGB channel (i.e. the single column from which the levels will become new columns) and the 'value' as the RGB values. We multiply these values by 255 to get the classic 0 to 255 range. 
 
-```{r eval=FALSE}
-library(tidyr)
-library(tibble)
+```{r message=FALSE, warning=FALSE}
+library(tidyr)  # to tidy dataframes
+library(tibble)  # nice tables
 
 image_spread <- image_melt %>% 
-  spread(
+  spread(  # wide format
     key = rgb_channel,
     value = rgb_value
   ) %>% 
-  transmute(
+  transmute(  # create and retain cols 
     red = round(`1` * 255),
     green = round(`2` * 255),
     blue = round(`3` * 255)
   ) %>%
-  rownames_to_column() %>% 
-  as_tibble()
+  rownames_to_column() %>% # col to iterate over
+  as_tibble()  # for nice printing
 
-head(image_spread)
+head(image_spread)  # first few rows
 ```
 
-So we have a four coloumn dataframe: a column for each RGB channel and a column for arbitrary rownames. We don't need to worry about the x and y values right now because we don't want to rebuild the image, we just want to count the colours. 
+So we have a four column dataframe: a column for each RGB channel and a column for arbitrary rownames. We don't need to worry about the x and y values right now because we don't want to rebuild the image, we just want to count the colours. 
 
 # Assign simple colours
 
@@ -127,9 +129,9 @@ We can do this for each of our pixels by looking for the nearest-neighbour point
 
 It's kind of tricky to decide what these colours should be. One approach might be to use 'extreme' colours. For example, 'blue' could be categorised as lowest values for R and G, but highest value of B `[0, 0, 255]`
 
-```{r eval=FALSE}
-simple_colors <- tibble::tribble(
-  ~color, ~red, ~green, ~blue,
+```{r}
+simple_colours <- tibble::tribble(
+  ~colour, ~red, ~green, ~blue,
   "aqua",   0,   255, 255,
   "black",   0,   0,   0,
   "blue",    0,   0,   255,
@@ -153,15 +155,15 @@ We want to find the named point (e.g. yellow is at the point [255, 255, 0]) clos
 
 We can do this by calculating the sum of the squared difference between the pixel value and named-point values for each colour channel. The pixel will be assigned where the calculated value is smallest.
 
-```{r eval=FALSE}
-rgb_image$color_name <- sapply(
-  seq_along(rgb_image$hex),
+```{r}
+image_spread$colour_name <- sapply(
+  seq_along(image_spread$rowname),
   function(i) 
-    simple_colors$color[
+    simple_colours$colour[
       which.min(
-        (simple_colors$red - rgb_image$red[i])^2 +
-          (simple_colors$green - rgb_image$green[i])^2 +
-          (simple_colors$blue - rgb_image$blue[i])^2
+        (simple_colours$red - image_spread$red[i])^2 +
+          (simple_colours$green - image_spread$green[i])^2 +
+          (simple_colours$blue - image_spread$blue[i])^2
       )
       ]
 )
@@ -171,9 +173,11 @@ rgb_image$color_name <- sapply(
 
 And now we just work out the percentage of pixels belonging to each colour.
 
-```{r eval=FALSE}
+```{r}
+library(janitor)  # misc tidy functions
+
 image_colours <- image_spread %>% 
-  tabyl(color_name) %>% 
+  tabyl(colour_name) %>% 
   arrange(desc(percent))
 
 print(image_colours)
@@ -182,9 +186,7 @@ print(image_colours)
 # Session info
 
 ```{r}
-xfun::session_info(c("OpenImageR", "dplyr", "reshape2", "tidyr", "tibble", "xfun"), 
-  dependencies = FALSE)
+devtools::session_info()
 ```
 
-
-[^reshape2]: Yeah, `reshape2` has been superseded by `tidyr`, but the latter was built to deal with dataframes specifically. We're working with an array as input. 
+[^reshape2]: Yeah, `reshape2` has been superseded by `tidyr`, but the latter was built to deal with dataframes specifically. We're working with an *array* as input. 
