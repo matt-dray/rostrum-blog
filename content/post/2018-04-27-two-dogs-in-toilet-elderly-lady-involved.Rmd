@@ -166,7 +166,7 @@ As mentioned, one advantage of using `sf` is that sf-class objects use the [tidy
 In the code chunk above I used pipes to pass the `rescue` dataframe to `st_as_sf()` and then to `st_transform()`. You can also use `dplyr` functions like `filter()` on your sf-class object.
 
 ```{r dplyr}
-filtered_sf <- rescue_sf %>%
+filtered_rescue_sf <- rescue_sf %>%
   dplyr::filter(
     AnimalGroupParent %in% c("Dog", "Cat", "Bird"),  # just these animals
     DateTimeOfCall > lubridate::ymd("2017-01-01") &
@@ -178,13 +178,13 @@ We can also use the `st_coordinates()` function to extract the XY (latitude and 
 
 ```{r st_coordinates}
 # extract coordinates into two-column dataframe
-rescue_coords <- as.data.frame(st_coordinates(filtered_sf))
+rescue_coords <- as.data.frame(st_coordinates(filtered_rescue_sf))
 
 # bind these to rescue dataset
-filtered_sf <- dplyr::bind_cols(filtered_sf, rescue_coords)
+filtered_rescue_sf <- dplyr::bind_cols(filtered_rescue_sf, rescue_coords)
 
 # preview
-head(filtered_sf)
+head(filtered_rescue_sf)
 ```
 
 ## Polygons data
@@ -269,24 +269,24 @@ leaflet::leaflet(boroughs_sf) %>%
     )
   ) %>% 
   leaflet::addAwesomeMarkers( # add incident points
-    lng = filtered_sf$X, lat = filtered_sf$Y,
+    lng = filtered_rescue_sf$X, lat = filtered_rescue_sf$Y,
     icon = leaflet::awesomeIcons(
       library = "ion",  # from this icon library
       icon = "ion-android-alert",  # use this icon
       iconColor = "white",  # colour it white
       # colour by animal
       markerColor = case_when(  # different colours for each
-        filtered_sf$AnimalGroupParent == "Dog" ~ "red",
-        filtered_sf$AnimalGroupParent == "Cat" ~ "blue",
-        filtered_sf$AnimalGroupParent == "Bird" ~ "black"
+        filtered_rescue_sf$AnimalGroupParent == "Dog" ~ "red",
+        filtered_rescue_sf$AnimalGroupParent == "Cat" ~ "blue",
+        filtered_rescue_sf$AnimalGroupParent == "Bird" ~ "black"
       )
     ),
     popup = ~paste0(  # display this information on click
-      "<b>Animal</b>: ", filtered_sf$AnimalGroupParent, "<br>",
-      "<b>Incident</b>: ", filtered_sf$FinalDescription, "<br>",
-      "<b>Date</b>: ", filtered_sf$DateTimeOfCall, "<br>",
-      "<b>Borough</b>: ", filtered_sf$Borough, "<br>",
-      "<b>Nominal cost</b>: £", filtered_sf$IncidentNominalCost
+      "<b>Animal</b>: ", filtered_rescue_sf$AnimalGroupParent, "<br>",
+      "<b>Incident</b>: ", filtered_rescue_sf$FinalDescription, "<br>",
+      "<b>Date</b>: ", filtered_rescue_sf$DateTimeOfCall, "<br>",
+      "<b>Borough</b>: ", filtered_rescue_sf$Borough, "<br>",
+      "<b>Nominal cost</b>: £", filtered_rescue_sf$IncidentNominalCost
     )
   )
 ```

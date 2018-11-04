@@ -195,7 +195,7 @@ print(rescue_sf)</code></pre>
 <h3>Tidyverse manipulation</h3>
 <p>As mentioned, one advantage of using <code>sf</code> is that sf-class objects use the <a href="http://r4ds.had.co.nz/tidy-data.html">tidy data</a> paradigm that allows for use of the <a href="https://www.tidyverse.org/">tidyverse</a>. Som eusers may prefer this relative to the ‘Spatial Points Data Frame’ (SPDF) class that is produced by the <code>sp</code> package for points data. SPDFs are an <a href="http://adv-r.had.co.nz/S4.html">S4 class</a>, which means they have ‘slots’ of data, coordinates, etc.</p>
 <p>In the code chunk above I used pipes to pass the <code>rescue</code> dataframe to <code>st_as_sf()</code> and then to <code>st_transform()</code>. You can also use <code>dplyr</code> functions like <code>filter()</code> on your sf-class object.</p>
-<pre class="r"><code>filtered_sf &lt;- rescue_sf %&gt;%
+<pre class="r"><code>filtered_rescue_sf &lt;- rescue_sf %&gt;%
   dplyr::filter(
     AnimalGroupParent %in% c(&quot;Dog&quot;, &quot;Cat&quot;, &quot;Bird&quot;),  # just these animals
     DateTimeOfCall &gt; lubridate::ymd(&quot;2017-01-01&quot;) &amp;
@@ -203,13 +203,13 @@ print(rescue_sf)</code></pre>
   )</code></pre>
 <p>We can also use the <code>st_coordinates()</code> function to extract the XY (latitude and longitude) coordinates from the column containing our <code>sf</code> point geometry. This means we can have separate columns for the latitude and longitude, as well as our list-column.</p>
 <pre class="r"><code># extract coordinates into two-column dataframe
-rescue_coords &lt;- as.data.frame(st_coordinates(filtered_sf))
+rescue_coords &lt;- as.data.frame(st_coordinates(filtered_rescue_sf))
 
 # bind these to rescue dataset
-filtered_sf &lt;- dplyr::bind_cols(filtered_sf, rescue_coords)
+filtered_rescue_sf &lt;- dplyr::bind_cols(filtered_rescue_sf, rescue_coords)
 
 # preview
-head(filtered_sf)</code></pre>
+head(filtered_rescue_sf)</code></pre>
 <pre><code>## Simple feature collection with 6 features and 25 fields
 ## geometry type:  POINT
 ## dimension:      XY
@@ -349,24 +349,24 @@ leaflet::leaflet(boroughs_sf) %&gt;%
     )
   ) %&gt;% 
   leaflet::addAwesomeMarkers( # add incident points
-    lng = filtered_sf$X, lat = filtered_sf$Y,
+    lng = filtered_rescue_sf$X, lat = filtered_rescue_sf$Y,
     icon = leaflet::awesomeIcons(
       library = &quot;ion&quot;,  # from this icon library
       icon = &quot;ion-android-alert&quot;,  # use this icon
       iconColor = &quot;white&quot;,  # colour it white
       # colour by animal
       markerColor = case_when(  # different colours for each
-        filtered_sf$AnimalGroupParent == &quot;Dog&quot; ~ &quot;red&quot;,
-        filtered_sf$AnimalGroupParent == &quot;Cat&quot; ~ &quot;blue&quot;,
-        filtered_sf$AnimalGroupParent == &quot;Bird&quot; ~ &quot;black&quot;
+        filtered_rescue_sf$AnimalGroupParent == &quot;Dog&quot; ~ &quot;red&quot;,
+        filtered_rescue_sf$AnimalGroupParent == &quot;Cat&quot; ~ &quot;blue&quot;,
+        filtered_rescue_sf$AnimalGroupParent == &quot;Bird&quot; ~ &quot;black&quot;
       )
     ),
     popup = ~paste0(  # display this information on click
-      &quot;&lt;b&gt;Animal&lt;/b&gt;: &quot;, filtered_sf$AnimalGroupParent, &quot;&lt;br&gt;&quot;,
-      &quot;&lt;b&gt;Incident&lt;/b&gt;: &quot;, filtered_sf$FinalDescription, &quot;&lt;br&gt;&quot;,
-      &quot;&lt;b&gt;Date&lt;/b&gt;: &quot;, filtered_sf$DateTimeOfCall, &quot;&lt;br&gt;&quot;,
-      &quot;&lt;b&gt;Borough&lt;/b&gt;: &quot;, filtered_sf$Borough, &quot;&lt;br&gt;&quot;,
-      &quot;&lt;b&gt;Nominal cost&lt;/b&gt;: £&quot;, filtered_sf$IncidentNominalCost
+      &quot;&lt;b&gt;Animal&lt;/b&gt;: &quot;, filtered_rescue_sf$AnimalGroupParent, &quot;&lt;br&gt;&quot;,
+      &quot;&lt;b&gt;Incident&lt;/b&gt;: &quot;, filtered_rescue_sf$FinalDescription, &quot;&lt;br&gt;&quot;,
+      &quot;&lt;b&gt;Date&lt;/b&gt;: &quot;, filtered_rescue_sf$DateTimeOfCall, &quot;&lt;br&gt;&quot;,
+      &quot;&lt;b&gt;Borough&lt;/b&gt;: &quot;, filtered_rescue_sf$Borough, &quot;&lt;br&gt;&quot;,
+      &quot;&lt;b&gt;Nominal cost&lt;/b&gt;: £&quot;, filtered_rescue_sf$IncidentNominalCost
     )
   )</code></pre>
 <div id="htmlwidget-2" style="width:672px;height:480px;" class="leaflet html-widget"></div>
