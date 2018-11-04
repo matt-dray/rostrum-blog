@@ -18,16 +18,15 @@ The site is hosted with [Netlify](https://www.netlify.com/).
 
 ### Process
 
-1. `git clone https://github.com/matt-dray/rostrum-blog.git`
+1. From the terminal: `git clone https://github.com/matt-dray/rostrum-blog.git`
 2. Open `rostrum-blog.Rproj` in RStudio
-3. Go to Addins > New Post (assumes `blogdown` is installed)
-4. In the pop-up, complete the title, author, categories and tags (choose from existing ones where possible; the Lithium theme doesn't yet have support for displaying tags and categories in their own pages, but fill this in anyway because we might sort it out in future)
-5. Select 'R Markdown (.Rmd)' radio button
-6. Write your post (add `draft: true` to the YAML while in draft)
-7. For images, go to Addins > Add image (defaults to 100% page width when rendered)
-8. `git commit` and `git push` as required
-9. Go to Addins > Serve site and the site while render to the viewer (view in-browser with the 'Show in new window' button in the viewer menu)
-10. When ready: remove `draft: true` from the YAML; Addins > Serve site; `commit` and `push`
+3. Start a new branch with `git branch new/post-slug` from the RStudio terminal (where `post-slug` is the expected short-name that will go in the URL) and `git checkout new/post-slug` to move the `HEAD` to this branch
+4. On this branch, go to Addins > New Post (assumes `blogdown` is installed)
+5. In the pop-up, complete the title, author, categories and tags (choose from existing ones where possible; the Lithium theme doesn't yet have support for displaying tags and categories in their own pages, but fill this in anyway because we might sort it out in future) and select the 'R Markdown (.Rmd)' radio button
+7. Write your post (for images, go to Addins > Add image)
+10. Go to Addins > Serve site and the site while render to the viewer (view in-browser with the 'Show in new window' button in the viewer menu)
+9. `git commit` and `git push` to `new/post-slug` as required when drafting the post
+11. Perform a pull request
 
 ### Theory
 
