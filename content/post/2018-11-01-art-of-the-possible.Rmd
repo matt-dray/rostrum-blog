@@ -46,7 +46,7 @@ image_in <- readImage("img/test_image.png")  # read image
 imageShow(image_in)  # print image to viewer
 ```
 
-```{r echo=FALSE}
+```{r echo=FALSE, eval=FALSE}
 # chunk above not actually read
 # read from local to get it to run
 # chunk not visible to readers
@@ -61,15 +61,15 @@ Our image has three dimensions: a two-dimensional matrix representing the 'pixel
 
 You can see this when you check the `str`ucture of the image:
 
-```{r}
+```{r eval=FALSE}
 str(image_in)  # check structure
 ```
 
 So it's indexed as `[matrix rows, matrix columns, colour channels]`. There'll be three colour channels, of course: RGB. The number of rows and columns will depend on how big the image is.
 
-So we could get the values of each colour channel for the top-left nine pixels of the image (a three-by-thre matrix).
+So we could get the values of each colour channel for the top-left nine pixels of the image (a three-by-three matrix).
 
-```{r}
+```{r eval=FALSE}
 # first three elements of first two dimensions
 # and all the elements of the third dimension
 image_in[1:3, 1:3, ]
@@ -81,7 +81,7 @@ For example, a point will be yellow if it has maximum values for red and blue ch
 
 We begin by reorganising the array into a dataframe using `melt()` from the `reshape2` package.[^reshape2] This gives us four columns: one for each pixel's x and y value, one for the RGB channel (1 = red, 2 = green, 3 = blue) and one that gives the actual colour value for that channel.
 
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, eval=FALSE}
 library(dplyr)  # for data manipulation
 library(reshape2)  # reformat wide to long
 
@@ -99,7 +99,7 @@ head(image_melt)  # show first few
 
 What we actually want is a dataframe with columns for each of the RGB channels. Since we're working with a dataframe, we can use the `spread()` funciton in the `tidyr` package to set our 'key' as the RGB channel (i.e. the single column from which the levels will become new columns) and the 'value' as the RGB values. We multiply these values by 255 to get the classic 0 to 255 range. 
 
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, eval=FALSE}
 library(tidyr)  # to tidy dataframes
 library(tibble)  # nice tables
 
@@ -131,7 +131,7 @@ We can do this for each of our pixels by looking for the nearest-neighbour point
 
 It's kind of tricky to decide what these colours should be. One approach might be to use 'extreme' colours. For example, 'blue' could be categorised as lowest values for R and G, but highest value of B `[0, 0, 255]`
 
-```{r}
+```{r eval=FALSE}
 simple_colours <- tibble::tribble(
   ~colour, ~red, ~green, ~blue,
   "aqua",   0,   255, 255,
@@ -157,7 +157,7 @@ We want to find the named point (e.g. yellow is at the point [255, 255, 0]) clos
 
 We can do this by calculating the sum of the squared difference between the pixel value and named-point values for each colour channel. The pixel will be assigned where the calculated value is smallest.
 
-```{r}
+```{r eval=FALSE}
 image_spread$colour_name <- sapply(
   seq_along(image_spread$rowname),
   function(i) 
@@ -175,7 +175,7 @@ image_spread$colour_name <- sapply(
 
 And now we just work out the percentage of pixels belonging to each colour.
 
-```{r}
+```{r eval=FALSE}
 library(janitor)  # misc tidy functions
 
 image_colours <- image_spread %>% 
@@ -187,7 +187,7 @@ print(image_colours)
 
 # Session info
 
-```{r}
+```{r eval=FALSE}
 devtools::session_info()
 ```
 
