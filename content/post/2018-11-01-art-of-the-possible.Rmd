@@ -8,9 +8,9 @@ draft: yes
 
 Matt Dray
 
-# Colour search
+# Search by colour
 
-Searching images by colour is all the rage:
+You can search a collection of images by their colour content, ordering them by that colour's dominance in each image. Some examples:
 
 * [Google Arts & Culture](https://artsexperiments.withgoogle.com/artpalette/colors/a46053-433932-c2ad8f-b5996a-746251)
 * [Designspiration](https://www.designspiration.net/search/saves/?q=%2389ebd7%20%23afff11%20%23e5ff91%20%23ff9775%20%23f38d00)
@@ -18,171 +18,122 @@ Searching images by colour is all the rage:
 * [Google Advanced Image Search](https://www.google.co.uk/advanced_image_search)
 * [Dulux colour match](https://www.dulux.co.uk/en/articles/dulux-visualizer-app)
 
-To do this you need to know how much of each colour is in the image.
+ 
+Could we do something similar to this in R?
 
-So let's look at a kind-of-crappy half-baked method in R for achieving this.
+# Quick note on colours
 
-# A very simple implementation
+There are _lots_ of colours. To keep things simple, let's say 'green' instead of olive drab.[^1]
 
-The steps go like this:
+Also I'm colourblind so don't believe anything I say.
+
+# The process
+
+So what we need to do is:
 
 1. Read in an image
-2. Convert RGB (Red-Green-Blue) values to simple-named colours
-3. Get percentage of image filled by each colour
-4. ???
-5. Profit
+2. Map a set of simplified colours to that image
+3. Quantify the colours
 
-# Read image
+# It's a kind of ImageMagick
 
-There's a number of ways to read images into R. We'll use the `readImage()` function from the `OpenImageR` package.
+The `magick` R package is an implementation of [ImageMagick, an open-source software suite whose emphasis is image manipulation from the command line](https://www.imagemagick.org/script/index.php). The flexibility of `magick` can be seen in the [vignette](https://cran.r-project.org/web/packages/magick/vignettes/intro.html).
 
-Remember to use `install.packages()` if you haven't installed any of the packages in this post. I'm also assuming that you have a test image, named `test_image.jpg`, in a folder called `img` in your working directory.
+`magick` was created and is maintained by [Jeroen Ooms](https://twitter.com/opencpu?lang=en), a software engineer and postdoc at [ROpenSci](https://ropensci.org/), a collective that seeks [to develop tools for open and reproducible research](https://ropensci.org/packages/).
 
-We're using [an image of a dandelion from Wikimedia Commons](https://commons.wikimedia.org/wiki/Flowers#/media/File:L%C3%B6wenzahn-JJ5.jpg).
+[ROpenSci hosted recently a worjshop from Ooms about working with images in R](https://ropensci.org/blog/2018/10/24/commcall-nov2018/), which caught my attention.
 
-```{r eval=FALSE}
-library(OpenImageR)  # load package
-image_in <- readImage("img/test_image.png")  # read image
-imageShow(image_in)  # print image to viewer
-```
 
-```{r echo=FALSE, eval=FALSE}
-# chunk above not actually read
-# read from local to get it to run
-# chunk not visible to readers
-library(OpenImageR)  # load package
-image_in <- readImage("/Users/matthewdray/Desktop/test_image.jpg")
-imageShow(image_in)
-```
+```{r}
+# Simplify image colours to prespecified simple colour set
+# Following Jeroen Ooms (https://jeroen.github.io/munster2018/)
 
-The image has been read into R as an *array*, an object type that can hold data in multiple dimensions.
+library(magick)
+library(dplyr)
+library(tibble)
 
-Our image has three dimensions: a two-dimensional matrix representing the 'pixels' of the image plus [a third dimension for each 'colour channel' of red, green and blue (RGB)](https://en.wikipedia.org/wiki/Channel_(digital_image)).
+# read test image
 
-You can see this when you check the `str`ucture of the image:
+# img_path <- "https://upload.wikimedia.org/wikipedia/commons/1/13/Suprematist_Composition_-_Kazimir_Malevich.jpg"
+img_path <- "https://www.mchampetier.com/sitephp/images/hd/9zy_Joan_Miro_oct176.jpg"
 
-```{r eval=FALSE}
-str(image_in)  # check structure
-```
+test_img <- magick::image_read(
+  img_path
+) %>%  # read image as a magick class object
+  image_scale(geometry = c("x250"))  # resize to width of 250px
 
-So it's indexed as `[matrix rows, matrix columns, colour channels]`. There'll be three colour channels, of course: RGB. The number of rows and columns will depend on how big the image is.
+# Generate named vector of 'simple' colours
 
-So we could get the values of each colour channel for the top-left nine pixels of the image (a three-by-three matrix).
+cols_vec <- setNames(
+  c("#000000", "#0000ff", "#008000", "#ff0000", "#ffffff", "#ffff00"),
+  c("black", "blue", "green", "red", "white", "yellow")
+)
 
-```{r eval=FALSE}
-# first three elements of first two dimensions
-# and all the elements of the third dimension
-image_in[1:3, 1:3, ]
-```
+# For each vector element (colour) create a square of that colour
 
-For example, a point will be yellow if it has maximum values for red and blue channels and the minimum value in the green channel. [There are online tools for exploring RGB permutations](http://web.stanford.edu/class/cs101/image-rgb-explorer.html).
-
-# Tidy the data
-
-We begin by reorganising the array into a dataframe using `melt()` from the `reshape2` package.[^reshape2] This gives us four columns: one for each pixel's x and y value, one for the RGB channel (1 = red, 2 = green, 3 = blue) and one that gives the actual colour value for that channel.
-
-```{r message=FALSE, warning=FALSE, eval=FALSE}
-library(dplyr)  # for data manipulation
-library(reshape2)  # reformat wide to long
-
-image_melt <- image_in %>%
-  melt() %>% # long format
-  rename(  # change column names
-    y_val = Var1,
-    x_val = Var2,
-    rgb_channel = Var3,
-    rgb_value = value
+for (i in seq_along(cols_vec)) {
+  fig_name <- paste0(names(cols_vec)[i], "_square")  # create object name
+  assign(
+    fig_name,  # set name
+    image_graph(width = 100, height = 100, res = 300)  # create magick object
   )
+  par(mar = rep(0, 4))  # set plot margins
+  plot.new()  # new graphics frame
+  rect(0, 0, 1, 1, col = cols_vec[i], border = cols_vec[i])  # build rectangle
+  assign(fig_name, magick::image_crop(get(fig_name), "50x50+10+10")) # crop
+  dev.off()  # shut down plotting device
+  rm(i, fig_name)  # clear up
+}
 
-head(image_melt)  # show first few
-```
+# Generate names of the coloure dsquare objects
 
-What we actually want is a dataframe with columns for each of the RGB channels. Since we're working with a dataframe, we can use the `spread()` funciton in the `tidyr` package to set our 'key' as the RGB channel (i.e. the single column from which the levels will become new columns) and the 'value' as the RGB values. We multiply these values by 255 to get the classic 0 to 255 range. 
+col_square <- paste0(names(cols_vec), "_square")
 
-```{r message=FALSE, warning=FALSE, eval=FALSE}
-library(tidyr)  # to tidy dataframes
-library(tibble)  # nice tables
+# Combine magick objects (coloured squares)
 
-image_spread <- image_melt %>% 
-  spread(  # wide format
-    key = rgb_channel,
-    value = rgb_value
+simple_cols <- image_append(c(
+    get(col_square[1]),
+    get(col_square[2]),
+    get(col_square[3]),
+    get(col_square[4]),
+    get(col_square[5]),
+    get(col_square[6])
+  ))
+
+# Map the simple colours to the image
+
+img_mapped <- image_map(test_img, simple_cols)
+
+# Display the original and simplified images side by side
+
+image_append(c(test_img, img_mapped))
+
+# Function to count the colours (adapted from Jeroen Ooms)
+
+count_colors <- function(image) {
+  data <- image_data(image) %>%
+    apply(2:3, paste, collapse = "") %>% 
+    as.vector %>% table() %>%  as.data.frame() %>% 
+    setNames(c("hex", "freq"))
+  data$hex <- paste("#", data$hex, sep="")
+  return(data)
+}
+
+# Dataframe of dominant colours 
+
+col_freq <- img_mapped %>%
+  count_colors() %>%
+  left_join(
+    as_tibble(cols_vec) %>%
+      rownames_to_column() %>%
+      rename(hex = value, name = rowname),
+    by = "hex"
   ) %>% 
-  transmute(  # create and retain cols 
-    red = round(`1` * 255),
-    green = round(`2` * 255),
-    blue = round(`3` * 255)
-  ) %>%
-  rownames_to_column() %>% # col to iterate over
-  as_tibble()  # for nice printing
+  arrange(desc(freq)) %>% 
+  mutate(percent = freq/sum(freq)) %>% 
+  select(name, hex, freq, percent)
 
-head(image_spread)  # first few rows
-```
-
-So we have a four column dataframe: a column for each RGB channel and a column for arbitrary rownames. We don't need to worry about the x and y values right now because we don't want to rebuild the image, we just want to count the colours. 
-
-# Assign simple colours
-
-You could do k-means clustering to bucket the full colour set into *k* groups, each with a representative RGB value. This is a good approach for simplifying images; you could go from 256 colours to 8, for example. [You can find methods for this online]().
-
-But actually we want to describe the image with *simple* colours, not the average of a cluster. So we could first convert the RGB values in our array to a set of basic colours with recognisable names like 'yellow' and 'black'. Then we just tally them.
-
-We can do this for each of our pixels by looking for the nearest-neighbour point in RGB space that describes a predefined 'simple' colour. 
-
-It's kind of tricky to decide what these colours should be. One approach might be to use 'extreme' colours. For example, 'blue' could be categorised as lowest values for R and G, but highest value of B `[0, 0, 255]`
-
-```{r eval=FALSE}
-simple_colours <- tibble::tribble(
-  ~colour, ~red, ~green, ~blue,
-  "aqua",   0,   255, 255,
-  "black",   0,   0,   0,
-  "blue",    0,   0,   255,
-  "fuchsia", 255, 0,   255,
-  "gray",    128, 128, 128,
-  "green",   0,   128, 0,
-  "lime",    0,   255, 0,
-  "red",     128, 0,   0,
-  "navy",    0,   0,   128,
-  "olive",   128, 128, 0,
-  "purple",  128, 0,   128,
-  "red",     255, 0,   0,
-  "silver",  192, 192, 192,
-  "teal",    0,   128, 128,
-  "white",   255, 255, 255,
-  "yellow",  255, 255, 0
-)
-```
-
-We want to find the named point (e.g. yellow is at the point [255, 255, 0]) closest to each pixel and assign it that name.
-
-We can do this by calculating the sum of the squared difference between the pixel value and named-point values for each colour channel. The pixel will be assigned where the calculated value is smallest.
-
-```{r eval=FALSE}
-image_spread$colour_name <- sapply(
-  seq_along(image_spread$rowname),
-  function(i) 
-    simple_colours$colour[
-      which.min(
-        (simple_colours$red - image_spread$red[i])^2 +
-          (simple_colours$green - image_spread$green[i])^2 +
-          (simple_colours$blue - image_spread$blue[i])^2
-      )
-      ]
-)
-```
-
-# Sum the colours
-
-And now we just work out the percentage of pixels belonging to each colour.
-
-```{r eval=FALSE}
-library(janitor)  # misc tidy functions
-
-image_colours <- image_spread %>% 
-  tabyl(colour_name) %>% 
-  arrange(desc(percent))
-
-print(image_colours)
+col_freq
 ```
 
 # Session info
@@ -190,5 +141,4 @@ print(image_colours)
 ```{r eval=FALSE}
 devtools::session_info()
 ```
-
-[^reshape2]: Yeah, `reshape2` has been superseded by `tidyr`, but the latter was built to deal with dataframes specifically. We're working with an *array* as input. 
+[^1]: There are [five named shares of olive drab](http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf) in R.]

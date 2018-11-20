@@ -1,17 +1,17 @@
 ---
-draft: yes
 title: Art of the Possible
 author: Matt Dray
 date: '2018-11-01'
 slug: art-of-the-possible
+draft: yes
 ---
 
 
 
 <p>Matt Dray</p>
-<div id="colour-search" class="section level1">
-<h1>Colour search</h1>
-<p>Searching images by colour is all the rage:</p>
+<div id="search-by-colour" class="section level1">
+<h1>Search by colour</h1>
+<p>You can search a collection of images by their colour content, ordering them by that colour’s dominance in each image. Some examples:</p>
 <ul>
 <li><a href="https://artsexperiments.withgoogle.com/artpalette/colors/a46053-433932-c2ad8f-b5996a-746251">Google Arts &amp; Culture</a></li>
 <li><a href="https://www.designspiration.net/search/saves/?q=%2389ebd7%20%23afff11%20%23e5ff91%20%23ff9775%20%23f38d00">Designspiration</a></li>
@@ -19,124 +19,134 @@ slug: art-of-the-possible
 <li><a href="https://www.google.co.uk/advanced_image_search">Google Advanced Image Search</a></li>
 <li><a href="https://www.dulux.co.uk/en/articles/dulux-visualizer-app">Dulux colour match</a></li>
 </ul>
-<p>To do this you need to know how much of each colour is in the image.</p>
-<p>So let’s look at a kind-of-crappy half-baked method in R for achieving this.</p>
+<p>Could we do something similar to this in R?</p>
 </div>
-<div id="a-very-simple-implementation" class="section level1">
-<h1>A very simple implementation</h1>
-<p>The steps go like this:</p>
+<div id="quick-note-on-colours" class="section level1">
+<h1>Quick note on colours</h1>
+<p>There are <em>lots</em> of colours. To keep things simple, let’s say ‘green’ instead of olive drab.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>Also I’m colourblind so don’t believe anything I say.</p>
+</div>
+<div id="the-process" class="section level1">
+<h1>The process</h1>
+<p>So what we need to do is:</p>
 <ol style="list-style-type: decimal">
 <li>Read in an image</li>
-<li>Convert RGB (Red-Green-Blue) values to simple-named colours</li>
-<li>Get percentage of image filled by each colour</li>
-<li>???</li>
-<li>Profit</li>
+<li>Map a set of simplified colours to that image</li>
+<li>Quantify the colours</li>
 </ol>
 </div>
-<div id="read-image" class="section level1">
-<h1>Read image</h1>
-<p>There’s a number of ways to read images into R. We’ll use the <code>readImage()</code> function from the <code>OpenImageR</code> package.</p>
-<p>Remember to use <code>install.packages()</code> if you haven’t installed any of the packages in this post. I’m also assuming that you have a test image, named <code>test_image.jpg</code>, in a folder called <code>img</code> in your working directory.</p>
-<p>We’re using <a href="https://commons.wikimedia.org/wiki/Flowers#/media/File:L%C3%B6wenzahn-JJ5.jpg">an image of a dandelion from Wikimedia Commons</a>.</p>
-<pre class="r"><code>library(OpenImageR)  # load package
-image_in &lt;- readImage(&quot;img/test_image.png&quot;)  # read image
-imageShow(image_in)  # print image to viewer</code></pre>
-<p>The image has been read into R as an <em>array</em>, an object type that can hold data in multiple dimensions.</p>
-<p>Our image has three dimensions: a two-dimensional matrix representing the ‘pixels’ of the image plus <a href="https://en.wikipedia.org/wiki/Channel_(digital_image)">a third dimension for each ‘colour channel’ of red, green and blue (RGB)</a>.</p>
-<p>You can see this when you check the <code>str</code>ucture of the image:</p>
-<pre class="r"><code>str(image_in)  # check structure</code></pre>
-<p>So it’s indexed as <code>[matrix rows, matrix columns, colour channels]</code>. There’ll be three colour channels, of course: RGB. The number of rows and columns will depend on how big the image is.</p>
-<p>So we could get the values of each colour channel for the top-left nine pixels of the image (a three-by-three matrix).</p>
-<pre class="r"><code># first three elements of first two dimensions
-# and all the elements of the third dimension
-image_in[1:3, 1:3, ]</code></pre>
-<p>For example, a point will be yellow if it has maximum values for red and blue channels and the minimum value in the green channel. <a href="http://web.stanford.edu/class/cs101/image-rgb-explorer.html">There are online tools for exploring RGB permutations</a>.</p>
-</div>
-<div id="tidy-the-data" class="section level1">
-<h1>Tidy the data</h1>
-<p>We begin by reorganising the array into a dataframe using <code>melt()</code> from the <code>reshape2</code> package.<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> This gives us four columns: one for each pixel’s x and y value, one for the RGB channel (1 = red, 2 = green, 3 = blue) and one that gives the actual colour value for that channel.</p>
-<pre class="r"><code>library(dplyr)  # for data manipulation
-library(reshape2)  # reformat wide to long
+<div id="its-a-kind-of-imagemagick" class="section level1">
+<h1>It’s a kind of ImageMagick</h1>
+<p>The <code>magick</code> R package is an implementation of <a href="https://www.imagemagick.org/script/index.php">ImageMagick, an open-source software suite whose emphasis is image manipulation from the command line</a>. The flexibility of <code>magick</code> can be seen in the <a href="https://cran.r-project.org/web/packages/magick/vignettes/intro.html">vignette</a>.</p>
+<p><code>magick</code> was created and is maintained by <a href="https://twitter.com/opencpu?lang=en">Jeroen Ooms</a>, a software engineer and postdoc at <a href="https://ropensci.org/">ROpenSci</a>, a collective that seeks <a href="https://ropensci.org/packages/">to develop tools for open and reproducible research</a>.</p>
+<p><a href="https://ropensci.org/blog/2018/10/24/commcall-nov2018/">ROpenSci hosted recently a worjshop from Ooms about working with images in R</a>, which caught my attention.</p>
+<pre class="r"><code># Simplify image colours to prespecified simple colour set
+# Following Jeroen Ooms (https://jeroen.github.io/munster2018/)
 
-image_melt &lt;- image_in %&gt;%
-  melt() %&gt;% # long format
-  rename(  # change column names
-    y_val = Var1,
-    x_val = Var2,
-    rgb_channel = Var3,
-    rgb_value = value
+library(magick)</code></pre>
+<pre><code>## Linking to ImageMagick 6.9.9.39
+## Enabled features: cairo, fontconfig, freetype, lcms, pango, rsvg, webp
+## Disabled features: fftw, ghostscript, x11</code></pre>
+<pre class="r"><code>library(dplyr)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;dplyr&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     filter, lag</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<pre class="r"><code>library(tibble)
+
+# read test image
+
+# img_path &lt;- &quot;https://upload.wikimedia.org/wikipedia/commons/1/13/Suprematist_Composition_-_Kazimir_Malevich.jpg&quot;
+img_path &lt;- &quot;https://www.mchampetier.com/sitephp/images/hd/9zy_Joan_Miro_oct176.jpg&quot;
+
+test_img &lt;- magick::image_read(
+  img_path
+) %&gt;%  # read image as a magick class object
+  image_scale(geometry = c(&quot;x250&quot;))  # resize to width of 250px
+
+# Generate named vector of &#39;simple&#39; colours
+
+cols_vec &lt;- setNames(
+  c(&quot;#000000&quot;, &quot;#0000ff&quot;, &quot;#008000&quot;, &quot;#ff0000&quot;, &quot;#ffffff&quot;, &quot;#ffff00&quot;),
+  c(&quot;black&quot;, &quot;blue&quot;, &quot;green&quot;, &quot;red&quot;, &quot;white&quot;, &quot;yellow&quot;)
+)
+
+# For each vector element (colour) create a square of that colour
+
+for (i in seq_along(cols_vec)) {
+  fig_name &lt;- paste0(names(cols_vec)[i], &quot;_square&quot;)  # create object name
+  assign(
+    fig_name,  # set name
+    image_graph(width = 100, height = 100, res = 300)  # create magick object
   )
+  par(mar = rep(0, 4))  # set plot margins
+  plot.new()  # new graphics frame
+  rect(0, 0, 1, 1, col = cols_vec[i], border = cols_vec[i])  # build rectangle
+  assign(fig_name, magick::image_crop(get(fig_name), &quot;50x50+10+10&quot;)) # crop
+  dev.off()  # shut down plotting device
+  rm(i, fig_name)  # clear up
+}
 
-head(image_melt)  # show first few</code></pre>
-<p>What we actually want is a dataframe with columns for each of the RGB channels. Since we’re working with a dataframe, we can use the <code>spread()</code> funciton in the <code>tidyr</code> package to set our ‘key’ as the RGB channel (i.e. the single column from which the levels will become new columns) and the ‘value’ as the RGB values. We multiply these values by 255 to get the classic 0 to 255 range.</p>
-<pre class="r"><code>library(tidyr)  # to tidy dataframes
-library(tibble)  # nice tables
+# Generate names of the coloure dsquare objects
 
-image_spread &lt;- image_melt %&gt;% 
-  spread(  # wide format
-    key = rgb_channel,
-    value = rgb_value
+col_square &lt;- paste0(names(cols_vec), &quot;_square&quot;)
+
+# Combine magick objects (coloured squares)
+
+simple_cols &lt;- image_append(c(
+    get(col_square[1]),
+    get(col_square[2]),
+    get(col_square[3]),
+    get(col_square[4]),
+    get(col_square[5]),
+    get(col_square[6])
+  ))
+
+# Map the simple colours to the image
+
+img_mapped &lt;- image_map(test_img, simple_cols)
+
+# Display the original and simplified images side by side
+
+image_append(c(test_img, img_mapped))</code></pre>
+<p><img src="/post/2018-11-01-art-of-the-possible_files/figure-html/unnamed-chunk-1-1.png" width="406" /></p>
+<pre class="r"><code># Function to count the colours (adapted from Jeroen Ooms)
+
+count_colors &lt;- function(image) {
+  data &lt;- image_data(image) %&gt;%
+    apply(2:3, paste, collapse = &quot;&quot;) %&gt;% 
+    as.vector %&gt;% table() %&gt;%  as.data.frame() %&gt;% 
+    setNames(c(&quot;hex&quot;, &quot;freq&quot;))
+  data$hex &lt;- paste(&quot;#&quot;, data$hex, sep=&quot;&quot;)
+  return(data)
+}
+
+# Dataframe of dominant colours 
+
+col_freq &lt;- img_mapped %&gt;%
+  count_colors() %&gt;%
+  left_join(
+    as_tibble(cols_vec) %&gt;%
+      rownames_to_column() %&gt;%
+      rename(hex = value, name = rowname),
+    by = &quot;hex&quot;
   ) %&gt;% 
-  transmute(  # create and retain cols 
-    red = round(`1` * 255),
-    green = round(`2` * 255),
-    blue = round(`3` * 255)
-  ) %&gt;%
-  rownames_to_column() %&gt;% # col to iterate over
-  as_tibble()  # for nice printing
+  arrange(desc(freq)) %&gt;% 
+  mutate(percent = freq/sum(freq)) %&gt;% 
+  select(name, hex, freq, percent)
 
-head(image_spread)  # first few rows</code></pre>
-<p>So we have a four column dataframe: a column for each RGB channel and a column for arbitrary rownames. We don’t need to worry about the x and y values right now because we don’t want to rebuild the image, we just want to count the colours.</p>
-</div>
-<div id="assign-simple-colours" class="section level1">
-<h1>Assign simple colours</h1>
-<p>You could do k-means clustering to bucket the full colour set into <em>k</em> groups, each with a representative RGB value. This is a good approach for simplifying images; you could go from 256 colours to 8, for example. <a href="">You can find methods for this online</a>.</p>
-<p>But actually we want to describe the image with <em>simple</em> colours, not the average of a cluster. So we could first convert the RGB values in our array to a set of basic colours with recognisable names like ‘yellow’ and ‘black’. Then we just tally them.</p>
-<p>We can do this for each of our pixels by looking for the nearest-neighbour point in RGB space that describes a predefined ‘simple’ colour.</p>
-<p>It’s kind of tricky to decide what these colours should be. One approach might be to use ‘extreme’ colours. For example, ‘blue’ could be categorised as lowest values for R and G, but highest value of B <code>[0, 0, 255]</code></p>
-<pre class="r"><code>simple_colours &lt;- tibble::tribble(
-  ~colour, ~red, ~green, ~blue,
-  &quot;aqua&quot;,   0,   255, 255,
-  &quot;black&quot;,   0,   0,   0,
-  &quot;blue&quot;,    0,   0,   255,
-  &quot;fuchsia&quot;, 255, 0,   255,
-  &quot;gray&quot;,    128, 128, 128,
-  &quot;green&quot;,   0,   128, 0,
-  &quot;lime&quot;,    0,   255, 0,
-  &quot;red&quot;,     128, 0,   0,
-  &quot;navy&quot;,    0,   0,   128,
-  &quot;olive&quot;,   128, 128, 0,
-  &quot;purple&quot;,  128, 0,   128,
-  &quot;red&quot;,     255, 0,   0,
-  &quot;silver&quot;,  192, 192, 192,
-  &quot;teal&quot;,    0,   128, 128,
-  &quot;white&quot;,   255, 255, 255,
-  &quot;yellow&quot;,  255, 255, 0
-)</code></pre>
-<p>We want to find the named point (e.g. yellow is at the point [255, 255, 0]) closest to each pixel and assign it that name.</p>
-<p>We can do this by calculating the sum of the squared difference between the pixel value and named-point values for each colour channel. The pixel will be assigned where the calculated value is smallest.</p>
-<pre class="r"><code>image_spread$colour_name &lt;- sapply(
-  seq_along(image_spread$rowname),
-  function(i) 
-    simple_colours$colour[
-      which.min(
-        (simple_colours$red - image_spread$red[i])^2 +
-          (simple_colours$green - image_spread$green[i])^2 +
-          (simple_colours$blue - image_spread$blue[i])^2
-      )
-      ]
-)</code></pre>
-</div>
-<div id="sum-the-colours" class="section level1">
-<h1>Sum the colours</h1>
-<p>And now we just work out the percentage of pixels belonging to each colour.</p>
-<pre class="r"><code>library(janitor)  # misc tidy functions
-
-image_colours &lt;- image_spread %&gt;% 
-  tabyl(colour_name) %&gt;% 
-  arrange(desc(percent))
-
-print(image_colours)</code></pre>
+col_freq</code></pre>
+<pre><code>##     name     hex  freq    percent
+## 1 yellow #ffff00 32974 0.32486700
+## 2  white #ffffff 31232 0.30770443
+## 3    red #ff0000 11645 0.11472906
+## 4  black #000000 11643 0.11470936
+## 5   blue #0000ff  7690 0.07576355
+## 6  green #008000  6316 0.06222660</code></pre>
 </div>
 <div id="session-info" class="section level1">
 <h1>Session info</h1>
@@ -145,6 +155,6 @@ print(image_colours)</code></pre>
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>Yeah, <code>reshape2</code> has been superseded by <code>tidyr</code>, but the latter was built to deal with dataframes specifically. We’re working with an <em>array</em> as input.<a href="#fnref1">↩</a></p></li>
+<li id="fn1"><p>There are <a href="http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf">five named shares of olive drab</a> in R.]<a href="#fnref1" class="footnote-back">↩</a></p></li>
 </ol>
 </div>
