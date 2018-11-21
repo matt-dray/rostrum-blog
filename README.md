@@ -1,6 +1,6 @@
-# rostrum-blog
+<img src="https://raw.githubusercontent.com/matt-dray/stickers/master/output/rostrum_hex.png" alt="Hexagonal sticker with the Rostrum logo on it" width="150" align="right">
 
-<img src="https://raw.githubusercontent.com/matt-dray/stickers/master/output/rostrum_hex.png" alt="Hexagonal sticker with the Rostrum logo on it" width="20%">
+# rostrum-blog
 
 ## What?
 
