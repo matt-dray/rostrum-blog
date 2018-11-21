@@ -1,0 +1,77 @@
+---
+title: Waggle dance with ggbeeswarm and emoGG
+author: Matt Dray
+date: '2018-11-21'
+slug: waggle-dance
+categories:
+  - dataviz
+  - R
+tags:
+  - ggbeeswarm
+  - ggplot2
+  - magick
+  - bees
+  - entomology
+draft: yes
+---
+
+
+
+<pre class="r"><code>library(ggplot2)
+library(emoGG)
+library(ggbeeswarm)
+library(magick)</code></pre>
+<pre><code>## Linking to ImageMagick 6.9.9.39
+## Enabled features: cairo, fontconfig, freetype, lcms, pango, rsvg, webp
+## Disabled features: fftw, ghostscript, x11</code></pre>
+<pre class="r"><code>geom_quasi_emoji &lt;- function (mapping = NULL, data = NULL, width = NULL, varwidth = FALSE, 
+          bandwidth = 0.5, nbins = NULL, method = &quot;quasirandom&quot;, groupOnX = NULL, 
+          dodge.width = 0, stat = &quot;identity&quot;, position = &quot;quasirandom&quot;, 
+          na.rm = FALSE, show.legend = NA, inherit.aes = TRUE, emoji = &quot;1f4l1d&quot;, ...) {
+  
+  img &lt;- emoji_get(emoji)[[1]]
+  
+  position &lt;- position_quasirandom(width = width, varwidth = varwidth, 
+                                   bandwidth = bandwidth, nbins = nbins, method = method, 
+                                   groupOnX = groupOnX, dodge.width = dodge.width)
+  
+  ggplot2::layer(data = data, mapping = mapping, stat = stat, 
+                 geom = emoGG:::GeomEmoji, position = position, show.legend = show.legend, 
+                 inherit.aes = inherit.aes, params = list(na.rm = na.rm, img = img, ...))
+}</code></pre>
+<pre class="r"><code>swarm &lt;- data.frame(
+  &quot;variable&quot; = rep(c(&quot;runif&quot;, &quot;rnorm&quot;), each = 100),
+  &quot;value&quot; = c(runif(100, min = -3, max = 3), rnorm(100))
+)</code></pre>
+<pre class="r"><code>p &lt;- ggplot2::ggplot(swarm, ggplot2::aes(variable, value)) +
+  geom_quasi_emoji(emoji = &quot;1f41d&quot;, method = &quot;pseudorandom&quot;) +
+  theme(panel.background = element_rect(fill = &quot;skyblue&quot;)) +
+  ggtitle(&quot;WAGGLE DANCE&quot;)</code></pre>
+<pre class="r"><code>my_res = 100
+my_width = 400
+my_height = 400
+
+t1 &lt;- image_graph(width = my_width, height = my_height, res = my_res)
+p
+dev.off()</code></pre>
+<pre><code>## quartz_off_screen 
+##                 2</code></pre>
+<pre class="r"><code>t2 &lt;- image_graph(width = my_width, height = my_height, res = my_res)
+p
+dev.off()</code></pre>
+<pre><code>## quartz_off_screen 
+##                 2</code></pre>
+<pre class="r"><code>t3 &lt;- image_graph(width = my_width, height = my_height, res = my_res)
+p
+dev.off()</code></pre>
+<pre><code>## quartz_off_screen 
+##                 2</code></pre>
+<pre class="r"><code>t4 &lt;- image_graph(width = my_width, height = my_height, res = my_res)
+p
+dev.off()</code></pre>
+<pre><code>## quartz_off_screen 
+##                 2</code></pre>
+<pre class="r"><code>waggle_dance &lt;- image_animate(c(t1, t2, t3, t4), fps = 10)
+waggle_dance</code></pre>
+<p><img src="/post/2018-11-21-waggle-dance-with-ggbeeswarm-and-emogg_files/figure-html/animate-1.gif" /><!-- --></p>
+<pre class="r"><code>image_write(waggle_dance, &quot;~/Desktop/waggle_dance.gif&quot;)</code></pre>
