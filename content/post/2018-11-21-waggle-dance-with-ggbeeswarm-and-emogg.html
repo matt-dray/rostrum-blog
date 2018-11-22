@@ -12,28 +12,30 @@ tags:
   - magick
   - bees
   - entomology
-draft: yes
+draft: no
 ---
 
 
 
-<div id="plot-continuos-y-and-categorical-x" class="section level1">
-<h1>Plot continuos Y and categorical X</h1>
-<p>A boxplot lets you show continuous data split by categories, but it hides the data points and doesn’t tell you much about distribution. A violin chart will show the distribution but you still don’t know about the density of data.</p>
-<p>Stripcharts show the data for each category as data points. The points can be layered on top of each other where they take the same Y value and can be stretched arbitrarily along the X axis.</p>
-<p>If you don’t have too much data, or if you sample it, you can stop the data points in a stripchart from overlapping and instead line them up side by side where they take the same value (note that there are several ways to ‘stack’ the points). This is called a ‘beeswarm’.</p>
+<p>Matt Dray (<a href="https://www.twitter.com/mattdray">@mattdray</a>)</p>
+<p><img src="https://media.giphy.com/media/3o6nUNAsHzitru2Aw0/giphy.gif" /></p>
+<div id="how-to-plot-grouped-continuous-data" class="section level1">
+<h1>How to plot grouped continuous data?</h1>
+<p>A <a href="https://en.wikipedia.org/wiki/Box_plot">boxplot</a> lets you show continuous data split by categories, but it hides the data points and doesn’t tell you much about distribution. A <a href="https://en.wikipedia.org/wiki/Violin_plot">violin chart</a> will show the distribution but you still don’t know about the density of data.</p>
+<p><a href="https://www.datamentor.io/r-programming/strip-chart/">Stripcharts</a> show the data for each category as individual points. The points can be layered on top of each other where they take the same Y value and can be stretched arbitrarily along the X axis.</p>
+<p>If you don’t have too much data, or if you sample it, you can stop the data points in a stripchart from overlapping and instead line them up side by side where they take the same Y value. This is called a <a href="http://www.cbs.dtu.dk/~eklund/beeswarm/">‘beeswarm’</a>.</p>
 <p>Why? Probably because the cloud of data you’re plotting looks a bit like a swarm of bees.</p>
 </div>
 <div id="obvious-next-step" class="section level1">
 <h1>Obvious next step</h1>
-<p>We can test this theory by plotting the points as <em>actual bees</em>, lol. Well, <em>emoji</em> bees. Duncan (of <a href="https://nacnudus.github.io/tidyxl/">tidyxl</a> and <a href="https://nacnudus.github.io/unpivotr/">unpivotr</a> fame) did exactly this and tweeted the plot and code.</p>
+<p>We can test this theory by plotting the points as <em>actual bees</em>, <em>lol</em>. Well, <em>emoji</em> bees. Duncan (of <a href="https://nacnudus.github.io/tidyxl/">tidyxl</a> and <a href="https://nacnudus.github.io/unpivotr/">unpivotr</a> fame) did exactly this and tweeted the plot and code.</p>
 {{% tweet "1063147214124580866" %}}
 <p>To summarise, Duncan did this by hacking <a href="https://github.com/dill/emoGG">emojis via <code>emoGG</code></a> into <a href="https://github.com/eclarke/ggbeeswarm"><code>ggbeeswarm</code>’s <code>geom_beeswarm()</code> function</a> to create <code>gg_beeswarm_emoji()</code> (patent pending).</p>
 </div>
 <div id="obvious-next-next-step" class="section level1">
 <h1>Obvious next next step</h1>
-<p>Wouldn’t it be better if the little emoji bees moved around a little bit?</p>
-<p>I cheated a little bit and recoded the <code>geom_quasirandom()</code> function from <code>ggbeeswarm</code> instead of <code>geom_beeswarm()</code>. Why? Beeswarm plots have an inherent order and neatness to them. <em>That is not becoming of a beeswarm</em>. Instead, <code>geom_quasirandom()</code> gives you some ‘random’ jitter each time you plot the data.</p>
+<p>Wouldn’t it be better if the little emoji bees moved around a little bit? Almost like a <a href="https://en.wikipedia.org/wiki/Waggle_dance">waggle dance</a>?</p>
+<p>I cheated a little bit and recoded the <code>geom_quasirandom()</code> function from <code>ggbeeswarm</code> instead of <code>geom_beeswarm()</code>. Why? Beeswarm plots have an inherent ‘neatness’ to them. <em>That is not becoming of a beeswarm</em>. Instead, <code>geom_quasirandom()</code> gives you some ‘random’ jitter each time you plot the data.</p>
 <p>So we can plot the same data several times and stack the images into a gif. One easy way to do this is via <a href="https://cran.r-project.org/web/packages/magick/vignettes/intro.html">the <code>magick</code> package</a>, a re-engineering of <a href="https://www.imagemagick.org/script/index.php">the open-source ImageMagick sute of tools</a> from <a href="https://twitter.com/opencpu">Jeroen Ooms</a> at <a href="https://ropensci.org/">ROpenSci</a>.</p>
 </div>
 <div id="code" class="section level1">
@@ -43,9 +45,6 @@ draft: yes
 library(ggbeeswarm)
 library(emoGG)  # remotes::install_github(&quot;dill/emoGG&quot;)
 library(magick)</code></pre>
-<pre><code>## Linking to ImageMagick 6.9.9.39
-## Enabled features: cairo, fontconfig, freetype, lcms, pango, rsvg, webp
-## Disabled features: fftw, ghostscript, x11</code></pre>
 <p>Recode the <code>geom_quasirandom()</code> to display emoji. <a href="https://twitter.com/nacnudus/status/1063147214124580866">Idea stolen from Duncan’s tweet</a>.</p>
 <pre class="r"><code>geom_quasi_emoji &lt;- function (mapping = NULL, data = NULL, width = NULL, varwidth = FALSE, 
           bandwidth = 0.5, nbins = NULL, method = &quot;quasirandom&quot;, groupOnX = NULL, 
@@ -73,21 +72,12 @@ library(magick)</code></pre>
   theme(panel.background = element_rect(fill = &quot;skyblue&quot;)) +
   ggtitle(&quot;WAGGLE DANCE&quot;)</code></pre>
 <p>Now we can create a few versions of thi plot with different jittering. The plots are magick objects made with <code>image_graph()</code> from <code>magick</code>.</p>
-<pre class="r"><code>my_res = 100
-my_width = 400
-my_height = 400
-time_point &lt;- paste0(&quot;t&quot;, 1:4)
-
-for (i in seq_along(time_point)) {
-  magick_object &lt;- image_graph(width = my_width, height = my_height, res = my_res)
-  assign(time_point[i], magick_object)
-  plot
-  dev.off()
-  rm(magick_object)
-}</code></pre>
-<p>And now <code>image_animate()</code> can be used to combine those magick objects into an animation.</p>
-<pre class="r"><code>waggle_dance &lt;- image_animate(c(t1, t2, t3, t4), fps = 10)
+<p>We can loop through a few plots, each representing a frame in the final gif.</p>
+<p>And now <code>image_animate()</code> can be used to combine those magick objects into a gif.</p>
+<pre class="r"><code>waggle_dance &lt;- image_animate(c(t1, t2, t3, t4))
 waggle_dance</code></pre>
-<p>And we can save this as a gif with <code>image_write()</code>.</p>
-<pre class="r"><code>image_write(waggle_dance, &quot;~/Desktop/waggle_dance.gif&quot;)</code></pre>
+<p><img src="/post/2018-11-21-waggle-dance-with-ggbeeswarm-and-emogg_files/figure-html/animate-1.gif" /><!-- --></p>
+<p>And we can save this with <code>image_write()</code>.</p>
+<pre class="r"><code>image_write(waggle_dance, &quot;waggle_dance.gif&quot;)</code></pre>
+<p>Well done, we got through this without any bee puns.</p>
 </div>
