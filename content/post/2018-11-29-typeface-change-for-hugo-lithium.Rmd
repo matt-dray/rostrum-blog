@@ -16,11 +16,44 @@ The [Lithium theme for Hugo] was built originally by [Jonathan Rutheiser](https:
 
 Sections [2.5.1](https://bookdown.org/yihui/blogdown/templates.html#how-to) and [2.7](https://bookdown.org/yihui/blogdown/static-files.html) of the Blogdown book refer to the ability to change fonts for your site.
 
-The defaulttypefaces for the Hugo Lithium theme are [Lato](https://fonts.google.com/specimen/Lato) (serif) and [Merriweather](https://fonts.google.com/specimen/Merriweather) (sans-serif).
+# Update the CSS
+
+Below is the default `fonts.css` file for the Hugo Lithium theme. The `@font-face {}` sections describe the details of the font you're using: the name of the typeface, its style and weight, and where the files are. The file also specifies the fonts that certain HTML elements that should be styled with (e.g. `body` for body text). 
+
+```{}
+@font-face {
+  font-family: 'Merriweather';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Merriweather'), local('Merriweather-Regular'),
+       url('../fonts/merriweather-v13-latin-regular.woff2') format('woff2'),
+       url('../fonts/merriweather-v13-latin-regular.woff') format('woff');
+}
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Lato Regular'), local('Lato-Regular'),
+       url('../fonts/lato-v11-latin-regular.woff2') format('woff2'),
+       url('../fonts/lato-v11-latin-regular.woff') format('woff');
+}
+body {
+  font-family: 'Merriweather', serif;
+}
+h1, h2, h3, h4, h5, h6, .nav, .article-duration, .archive-item-link, .footer {
+  font-family: 'Lato', sans-serif;
+}
+```
+
+So the two default typefaces for this theme are [Merriweather](https://fonts.google.com/specimen/Merriweather) (sans-serif) and [Lato](https://fonts.google.com/specimen/Lato) (serif). Merriweather is being used for the body text and Lato for basically everything else (e.g. `h1` first level headers).
+
+You actually specify a list of font families for each HTML element. We have two: `font-family: 'Your-Font-Name', serif;`. This instructs the system to display first your font of choice -- `Your-Font-Name` in this case -- and to fall back to the system's default serif font if that fails for whatever reason. There's nothing stopping you from adding several named fonts in preference order and separated by commas.
+
+We'll need to update the CSS file with the specification for our fonts of choice. How do we do that?
 
 # Get typefaces
 
-For this demo, I'm using [Google Fonts](https://fonts.google.com/).
+For this demo, I'm using [Google Fonts](https://fonts.google.com/). I learnt a lot by looking at [Google Web Fonts helper](https://google-webfonts-helper.herokuapp.com/fonts).
 
 Once you're on the specimen page for a given font -- [like this one for Fira Sans](https://fonts.google.com/specimen/Fira+Sans) -- you can click 'SELECT THIS FONT' to add it to a list for later viewing. You can access this list at the bottom right of the page in a drawer that says 'X Families Selected'.
 
@@ -28,12 +61,10 @@ There's some useful information in this drawer. For Fira Sans it has two chunks 
 
 To download the typeface, you can click 'CUSTOMIZE' in the tray to select which elements of the font family you want (light, medium, semi-bold, etc) and then click the download button (downward pointing arrow) in the upper right of the tray. This will download a .zip file containing your typefaces in many file formats.
 
-For the Hugo Lithium theme site, fonts live at the path [`/themes/hugo-lithium-theme/static/fonts/`](https://github.com/matt-dray/rostrum-blog/tree/master/themes/hugo-lithium-theme/static/fonts). There you'll find the files for our two default fonts, Merriweather and Lato. There are two filetypes for each font: `.woff` and `.woff2`. . WOFF stands for [Web Open Font Format](https://developer.mozilla.org/en-US/docs/Web/Guide/WOFF).
+For the Hugo Lithium theme site, fonts live at the path [`/themes/hugo-lithium-theme/static/fonts/`](https://github.com/matt-dray/rostrum-blog/tree/master/themes/hugo-lithium-theme/static/fonts). There you'll find the files for our two default fonts, Merriweather and Lato. There are two filetypes for each font: `.
+` and `.woff2`. WOFF stands for [Web Open Font Format](https://developer.mozilla.org/en-US/docs/Web/Guide/WOFF).
+
+We can get away with [adding only the path to the WOFF files](https://css-tricks.com/snippets/css/using-font-face/).
 
 # Activate fonts
-
-Having downloaded the fonts, you'll need to change two CSS files:
-
-* [fonts.css](https://github.com/matt-dray/rostrum-blog/blob/master/themes/hugo-lithium-theme/static/css/fonts.css)
-* [main.css](https://github.com/matt-dray/rostrum-blog/blob/master/themes/hugo-lithium-theme/static/css/main.css)
 
