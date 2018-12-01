@@ -1,10 +1,14 @@
 ---
-title: "About"
+title: "rostrum.blog"
 ---
 
-<img src="https://raw.githubusercontent.com/matt-dray/stickers/master/output/rostrum_hex.png" alt="Hexagonal sticker with the Rostrum logo on it" width="20%">
 
-Rostrum: a blog mostly about [Pokemon](https://en.wikipedia.org/wiki/Pok%C3%A9mon) and [Dawson's Creek](https://en.wikipedia.org/wiki/Dawson%27s_Creek), usually through the medium of [R](https://www.r-project.org/about.html). Also sometimes some statistics and ecology will creep in here; sorry about that.
+
+<img src="https://raw.githubusercontent.com/matt-dray/stickers/master/output/rostrum_hex.png" alt="Hexagonal sticker with the Rostrum logo on it" width="25%" align="right">
+
+# TL;DR
+
+A blog mostly about [Pokemon](https://en.wikipedia.org/wiki/Pok%C3%A9mon) and [Dawson's Creek](https://en.wikipedia.org/wiki/Dawson%27s_Creek), usually through the medium of [R](https://www.r-project.org/about.html). Also sometimes some statistics and ecology might creep in here; sorry about that.
 
 # Us
 
