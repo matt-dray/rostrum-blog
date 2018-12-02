@@ -1,0 +1,117 @@
+---
+title: Change font-face in Blogdown Lithium theme
+author: Matt Dray
+date: '2018-11-29'
+categories:
+  - R
+tags:
+  - hugo
+  - blogdown
+  - type
+  - font
+slug: fontface-lithium
+draft: no
+---
+
+
+
+<p>Matt Dray (<a href="https://www.twitter.com/mattdray">@mattdray</a>)</p>
+<div class="figure">
+<img src="https://media.giphy.com/media/3Qf8fuRU2JJ1m/giphy.gif" />
+
+</div>
+<div id="blogdown-and-hugo-themes" class="section level1">
+<h1>Blogdown and Hugo themes</h1>
+<p>You can change the default font face for your <a href="https://bookdown.org/yihui/blogdown/">Blogdown blog</a> by downloading new ones from <a href="https://fonts.google.com/">Google Fonts</a> and adjusting some CSS.</p>
+<p>Sections <a href="https://bookdown.org/yihui/blogdown/templates.html#how-to">2.5.1</a> and <a href="https://bookdown.org/yihui/blogdown/static-files.html">2.7</a> of <a href="https://bookdown.org/yihui/blogdown/">the Blogdown book</a> refer to the ability to change fonts for your site. This post explains how to do it for the Lithium theme – the theme being used on this site.</p>
+<p>The <a href="https://themes.gohugo.io/hugo-lithium-theme/">Lithium theme for Hugo</a> was built originally by <a href="https://github.com/jrutheiser">Jonathan Rutheiser</a>. <a href="https://yihui.name/en/about/">Yihui Xie</a> then <a href="https://github.com/yihui/hugo-lithium">tweaked it</a> for use with <a href="https://bookdown.org/yihui/blogdown/">Blogdown</a>. The advice below may still be relevant for other themes.</p>
+</div>
+<div id="the-default-css" class="section level1">
+<h1>The default CSS</h1>
+<p>Below is the default <code>fonts.css</code> file for the Hugo Lithium theme. It sits at the filepath <code>themes/hugo-lithium-theme/static/css/fonts.css</code>.</p>
+<p>The <code>@font-face {}</code> sections describe the details of the font you’re using: the name of the font face, its style and weight, and where the files are. The file also specifies the fonts that certain HTML elements that should be styled with (e.g. <code>body</code> for body text).</p>
+<p>You can <a href="https://themes.gohugo.io/theme/hugo-lithium-theme/">see a demo of these defaults</a>.</p>
+<pre><code>@font-face {
+  font-family: &#39;Merriweather&#39;;
+  font-style: normal;
+  font-weight: 400;
+  src: local(&#39;Merriweather&#39;), local(&#39;Merriweather-Regular&#39;),
+       url(&#39;../fonts/merriweather-v13-latin-regular.woff2&#39;) format(&#39;woff2&#39;),
+       url(&#39;../fonts/merriweather-v13-latin-regular.woff&#39;) format(&#39;woff&#39;);
+}
+@font-face {
+  font-family: &#39;Lato&#39;;
+  font-style: normal;
+  font-weight: 400;
+  src: local(&#39;Lato Regular&#39;), local(&#39;Lato-Regular&#39;),
+       url(&#39;../fonts/lato-v11-latin-regular.woff2&#39;) format(&#39;woff2&#39;),
+       url(&#39;../fonts/lato-v11-latin-regular.woff&#39;) format(&#39;woff&#39;);
+}
+body {
+  font-family: &#39;Merriweather&#39;, serif;
+}
+h1, h2, h3, h4, h5, h6, .nav, .article-duration, .archive-item-link, .footer {
+  font-family: &#39;Lato&#39;, sans-serif;
+}</code></pre>
+<p>So the two default font faces for this theme are <a href="https://fonts.google.com/specimen/Merriweather">Merriweather</a> (sans-serif) and <a href="https://fonts.google.com/specimen/Lato">Lato</a> (serif). Merriweather is being used for the body text and Lato for basically everything else (e.g. <code>h1</code> first level headers).</p>
+<p>You actually specify a list of font families for each HTML element. We have two: <code>font-family: 'Your-Font-Name', serif;</code>. This instructs the system to display first your font of choice – <code>Your-Font-Name</code> in this case – and to fall back to the system’s default serif font if that fails for whatever reason. There’s nothing stopping you from adding several named fonts in preference order and separated by commas.</p>
+<p>So let’s start by getting some new font faces.</p>
+</div>
+<div id="get-font-faces" class="section level1">
+<h1>Get font faces</h1>
+<p>For this demo, I’m using <a href="https://fonts.google.com/">Google Fonts</a>. I learnt a lot by looking at <a href="https://google-webfonts-helper.herokuapp.com/fonts">Google Web Fonts helper</a>.</p>
+<p>Once you’re on the specimen page for a given font – <a href="https://fonts.google.com/specimen/Fira+Sans">like this one for Fira Sans</a> – you can click ‘SELECT THIS FONT’ to add it to a list for later viewing. You can access this list at the bottom right of the page in a drawer that says ‘X Families Selected’. <a href="https://github.com/tonsky/FiraCode">I like Fira Code and use it as my code-editor font-face thanks to its pretty ligatures</a>.</p>
+<div class="figure">
+<img src="/post/2018-11-29-typeface-change-for-hugo-lithium_files/font-family-select-tray.png" />
+
+</div>
+<p>There’s some useful information in this drawer. For example, there are two chunks of CSS under ‘EMBED’: one to help embed the font and one to specify in CSS. You’ll need this information later.</p>
+<p>To download the font face, you can click ‘CUSTOMIZE’ in the tray to select which elements of the font family you want (light, medium, semi-bold, etc) and then click the download button (downward pointing arrow) in the upper right of the tray. This will download a .zip file containing your font faces in many file formats.</p>
+<p>For the Hugo Lithium theme site, fonts live at the path <a href="https://github.com/matt-dray/rostrum-blog/tree/master/themes/hugo-lithium-theme/static/fonts"><code>/themes/hugo-lithium-theme/static/fonts/</code></a>. There you’ll find the files for our two default fonts, Merriweather and Lato. There are two filetypes for each font: <code>.woff</code> and <code>.woff2</code>. WOFF stands for <a href="https://developer.mozilla.org/en-US/docs/Web/Guide/WOFF">Web Open Font Format</a>.</p>
+<p>We can get away with <a href="https://css-tricks.com/snippets/css/using-font-face/">adding only the path to the WOFF files</a>. These can both be interpreted by modern web browsers.</p>
+</div>
+<div id="activate-fonts" class="section level1">
+<h1>Activate fonts</h1>
+<p>So all we need to do now is to change the <code>fonts.css</code> file. There should be an <code>@font-face</code> element for each font we want (you may want more than two). I’ve also added an instruction to display code blocks usingin the monospace font, reduced down to 80 per cent of its size so we can see more of it on screen.</p>
+<pre><code>/* Update font face 1 */
+@font-face {
+  font-family: &#39;Fira Sans&#39;;
+  font-style: normal;
+  font-weight: 400;
+  src: local(&#39;Fira Sans Regular&#39;), local(&#39;FiraSans-Regular&#39;),
+       url(&#39;../fonts/fira-sans-v8-latin-regular.woff2&#39;) format(&#39;woff2&#39;),
+       url(&#39;../fonts/fira-sans-v8-latin-regular.woff&#39;) format(&#39;woff&#39;);
+}
+/* Update font face 2 */
+@font-face {
+  font-family: &#39;Fira Mono&#39;;
+  font-style: normal;
+  font-weight: 400;
+  src: local(&#39;Fira Mono Regular&#39;), local(&#39;FiraMono-Regular&#39;),
+       url(&#39;../fonts/fira-mono-v6-latin-regular.woff2&#39;) format(&#39;woff2&#39;),
+       url(&#39;../fonts/fira-mono-v6-latin-regular.woff&#39;) format(&#39;woff&#39;);
+}
+/* Set all body text to font face 1 */
+body {
+  font-family: &#39;Fira Sans&#39;, sans-serif;
+}
+/* Set other text formats to font face 2 */
+h1, h2, h3, h4, h5, h6, .nav, .article-duration, .archive-item-link, .footer {
+  font-family: &#39;Fira Mono&#39;, monospace;
+}
+/* Set font face for code and shrink it */
+code {
+  font-family: &#39;Fira Mono&#39;, monospace;
+  font-size: 80%;
+}</code></pre>
+</div>
+<div id="result" class="section level1">
+<h1>Result</h1>
+<p>We now have:</p>
+<ul>
+<li>Fira sans as our body text</li>
+<li>Fira mono for our section headers</li>
+<li>Fira mono at 80 per cent size for code chunks</li>
+</ul>
+<p>That’s what you’re looking at now. <em>Nice</em>.</p>
+</div>
