@@ -17,7 +17,7 @@ draft: no
 
 Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
 
-![](https://media.giphy.com/media/Dym2LTuxGJJSw/giphy.gif)
+![Walrus with Rainbow vomit ([via Giphy](https://giphy.com/gifs/rainbow-vomit-walrus-Dym2LTuxGJJSw?utm_source=media-link&utm_medium=landing&utm_campaign=Media%20Links&utm_term=))](https://media.giphy.com/media/Dym2LTuxGJJSw/giphy.gif)
 
 # Colour search
 
@@ -138,7 +138,7 @@ duplo_mapped <- image_map(
 )
 
 # Display the original and simplified images side by side
-image_append(c(duplo, duplo_mapped))
+image_animate(c(duplo, duplo_mapped), fps = 1)
 ```
 
 Great. You can see where the original colours have been replaced by the 'closest' simple colours. Note in particular where the more reflective surfaces are mapped to white than the actual brick colour. This is okay: the brick may be blue, but  we've only defined _one_ shade of blue. If a particular shade is closer to white, then so be it.
@@ -213,45 +213,9 @@ reef_col_freq <- reef_mapped %>%
     `Percent of image` = percent
   )
 
-image_append(c(reef, reef_mapped))
+image_animate(c(reef, reef_mapped), fps = 1)
 
 kable(reef_col_freq)
-```
-
-## Butterfly
-
-[By Uwe H. Friese from Wikimedia Commons, CC BY-SA 3.0.](https://commons.wikimedia.org/wiki/Butterfly#/media/File:Schmetterling_1a_neucc.jpg)
-
-```{r butterfly, echo=FALSE}
-butterfly_path <- "https://upload.wikimedia.org/wikipedia/commons/0/0c/Schmetterling_1a_neucc.jpg"
-
-butterfly <- 
-  image_read(butterfly_path) %>%
-  image_scale(geometry = c("x600"))
-
-butterfly_mapped <- image_map(
-  image = butterfly,  # original image
-  map = simple_cols  # colours to map on
-)
-
-butterfly_col_freq <- butterfly_mapped %>%
-  count_colors() %>%
-  left_join(
-    as_tibble(cols_vec) %>%
-      rownames_to_column() %>%
-      rename(hex = value, name = rowname),
-    by = "hex"
-  ) %>% 
-  arrange(desc(freq)) %>% 
-  mutate(percent = 100*round((freq/sum(freq)), 3)) %>% 
-  select(
-    `Colour name` = name, Hexadecimal = hex, `Frequency of colour` = freq,
-    `Percent of image` = percent
-  )
-
-image_append(c(butterfly, butterfly_mapped))
-
-kable(butterfly_col_freq)
 ```
 
 ## Neon lights in Hong Kong
@@ -285,9 +249,45 @@ neon_col_freq <- neon_mapped %>%
     `Percent of image` = percent
   )
 
-image_append(c(neon, neon_mapped))
+image_animate(c(neon, neon_mapped), fps = 1)
 
 kable(neon_col_freq)
+```
+
+## Ladybird
+
+[By Elena Andreeva from Wikimedia Commons, CC0 1.0.](https://commons.wikimedia.org/wiki/File:Erysimum_Cheiranthoides_(215134987).jpeg)
+
+```{r bfly, echo=FALSE}
+bfly_path <- "https://upload.wikimedia.org/wikipedia/commons/d/d5/Erysimum_Cheiranthoides_%28215134987%29.jpeg"
+
+bfly <- 
+  image_read(bfly_path) %>%
+  image_scale(geometry = c("x600"))
+
+bfly_mapped <- image_map(
+  image = bfly,  # original image
+  map = simple_cols  # colours to map on
+)
+
+bfly_col_freq <- bfly_mapped %>%
+  count_colors() %>%
+  left_join(
+    as_tibble(cols_vec) %>%
+      rownames_to_column() %>%
+      rename(hex = value, name = rowname),
+    by = "hex"
+  ) %>% 
+  arrange(desc(freq)) %>% 
+  mutate(percent = 100*round((freq/sum(freq)), 3)) %>% 
+  select(
+    `Colour name` = name, Hexadecimal = hex, `Frequency of colour` = freq,
+    `Percent of image` = percent
+  )
+
+image_animate(c(bfly, bfly_mapped), fps = 1)
+
+kable(bfly_col_freq)
 ```
 
 # Session info
