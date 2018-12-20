@@ -1,0 +1,129 @@
+---
+title: The NBA Northwest Division with gmapsdistance
+author: Matt Dray
+date: '2018-12-18'
+slug: nba-travel
+categories:
+  - R
+tags:
+  - NBA
+  - gmapsdistance
+  - dplyr
+  - rvest
+  - stringr
+draft: yes
+---
+
+
+
+<p>Matt Dray (<a href="https://www.twitter.com/mattdray">@mattdray</a>)</p>
+<div id="tldr" class="section level1">
+<h1>TL;DR</h1>
+<p>You can query the Google Maps API in R with the <code>gmapsdistance</code> package. I used it to find travel times between NBA teams and learnt that travelling half the width of a continent requires a lot of petrol.</p>
+</div>
+<div id="the-nba" class="section level1">
+<h1>The NBA</h1>
+<p>The USA is quite big.</p>
+<p>So it makes sense that the USA’s National Basketball Association (NBA) organised their teams geographically: two ‘conferences’ – Western and Eastern – with three ‘divisions’ of five teams each. Right?</p>
+<p>Yes, for the Central division of the Eastern Conference. It contains the Chicago Bulls, Cleveland Cavaliers, Detroit Pistons, Indiana Pacers and Milwaukee Bucks – cities clustered by the Great Lakes.</p>
+<p>But also no, not for the Northwest Division of the Western Conference. This stretches from Portland Trail Blazers in the Pacific Northwest to Oklahoma City Thunder, which is actually in the country’s south-central region. Far from clustering, Utah Jazz and Colorado’s Denver Nuggets sit on a line between these two. The fifth team? That’s Minnesota Timberwolves, which by rights should be part of the Central Division</p>
+<p>What does this mean for the travelling basketball fans?</p>
+</div>
+<div id="travel-time-with-gmapsdistance" class="section level1">
+<h1>Travel time with <code>gmapsdistance</code></h1>
+<p>The R package <a href="https://github.com/rodazuero/gmapsdistance"><code>gmapsdistance</code></a> wraps the <a href="https://www.google.co.uk/maps">Google Maps</a> <a href="https://medium.freecodecamp.org/what-is-an-api-in-english-please-b880a3214a82">API</a>. You can use it to query origin and destination points for travel distance (metres) and duration (seconds) for several modes of travel: on foot, by car, by public transport, or by bicycle (for parts of North America only).</p>
+<p>We need an API key for Google Maps. This helps prevent misuse of their service and tracks your access. Your first $300 is free.</p>
+<p>The process is outlined in detail on <a href="https://developers.google.com/maps/documentation/distance-matrix/get-api-key#key">the Google developer pages</a>. <a href="https://cloud.google.com/maps-platform/">Go to the website</a> and follow the instructions.</p>
+<p>Keep this key safe for now; we’ll read it in later.</p>
+</div>
+<div id="get-data" class="section level1">
+<h1>Get data</h1>
+<p>We can use <a href="https://github.com/hadley/rvest">Hadley Wickham’s <code>rvest</code> package</a> to scrape the <a href="https://en.wikipedia.org/wiki/National_Basketball_Association">Wikipedia page for the NBA)</a>, which contains a table of teams and locations.</p>
+<p>We’ll start by setting up our workspace.</p>
+<pre class="r"><code>library(dplyr)  # data manipulation
+library(rvest)  # web scraping
+library(stringr)  # string manipulation</code></pre>
+<p>Then we’ll create objects that define the HTML for the web page and the table we want. The latter is defined using a CSS selector or, as in our case, an xpath. Think of these as ‘addresses’ for HTML content. You can use the ‘inspect’ function in your browser or <a href="https://selectorgadget.com/">the selectorgadget browser extension</a> to get this information.</p>
+<pre class="r"><code># Read the HTML from a specified web URL
+html &lt;- read_html(&quot;https://en.wikipedia.org/wiki/National_Basketball_Association&quot;)
+
+# Use the Scrapy tool or &#39;inspect&#39; in your browser to get the table xpath
+table_xpath &lt;- &#39;//*[@id=&quot;mw-content-text&quot;]/div/table[4]&#39;</code></pre>
+<p>Now we can collect the table and manipulate it.</p>
+<p>We could use the latitude and longitude from this table as our origin and destination points, but the arena name, city and state will be enough. We can create a column in our data in the form <code>arena+city+state</code>, which is the format required by Google Maps.</p>
+<pre class="r"><code>nba_table &lt;-
+  html_nodes(x = html, xpath = table_xpath) %&gt;%  # scrape the HTML
+  html_table(fill = TRUE, header = NA) %&gt;%  # parse as table
+  as.data.frame() %&gt;%  # convert from list
+  filter(Division == &quot;Northwest&quot;) %&gt;%  # NW division only
+  mutate(
+    Search = paste(Arena, City.State),  # combine location details
+    Search = str_replace_all(Search, &quot;,&quot;, &quot;&quot;),  # replace comma with blank
+    Search = str_replace_all(Search, &quot; &quot;, &quot;+&quot;)  # replace space with plus
+  ) %&gt;% 
+  select(Team, Arena, State = City.State, Search)  # columns of interest</code></pre>
+<p>So now we have a simple table of teams, locations and a search string that we’ll pass to <code>gmapsdistance()</code>.</p>
+</div>
+<div id="calculate-distances" class="section level1">
+<h1>Calculate distances</h1>
+<p>The basic arguments to the <code>gmpasdistance()</code> function are the origin and destination (can be an address, postcode or latlong coordinates), the mode of travel (car, public transit, walking) and the return format (shape) of the data (each origin-destination pair per row, or a matrix). We want all possible combinations</p>
+<p>We can make our key available in the package environment by using the <code>set.api.key()</code> function from the <code>gmapsdistance</code> package.</p>
+<pre class="r"><code>library(gmapsdistance)  # install with install.packages() first
+
+# Set the API key
+set.api.key(&quot;YOUR-API-KEY&quot;)</code></pre>
+<p>Now we can query Google Maps with the API key.</p>
+<pre class="r"><code>nba_travel &lt;- 
+  gmapsdistance(
+    key = get.api.key(),  # retrieve API key that we set above
+    origin = nba_table$Search,  # start point of journey
+    destination = nba_table$Search,  # end point of journey
+    mode = &quot;driving&quot;,  # driving time
+    combinations = &quot;all&quot;,  # all possible pairs of locations
+    shape = &quot;long&quot;  # format of output data (origin and destination as cols)
+  )</code></pre>
+</div>
+<div id="output" class="section level1">
+<h1>Output</h1>
+<p>What does the output look like?</p>
+<pre class="r"><code>glimpse(nba_travel)</code></pre>
+<p>It’s a list object with three elements:</p>
+<ol style="list-style-type: decimal">
+<li>Time in seconds</li>
+<li>Distance in metres</li>
+<li>Status of the call – was it successful?</li>
+</ol>
+<p>Each list element has three columns:</p>
+<ul>
+<li><code>or</code> – the origin point</li>
+<li><code>de</code> – the destination point</li>
+<li>one of <code>Time</code>, <code>Distance</code> and <code>Status</code></li>
+</ul>
+<p>Let’s start with <code>Status</code>. Were all the requests actioned?</p>
+<pre class="r"><code>sch_distances$Status  # isolate status element of returned list</code></pre>
+<p>We want the status <code>OK</code>, which indicates that there were no problems and the distances were collected with no errors. The <code>PLACE_NOT_FOUND</code> error is returned in the <code>Status</code> column when Google Maps can’t locate your origin or destination.</p>
+<p>So what were the distances between the locations in metres?</p>
+<pre class="r"><code>sch_distances$Distance  # isolate distance (metres) element of returned list</code></pre>
+<p>And how much time does this translate to, in seconds, when driving between the locations?</p>
+<pre class="r"><code>sch_distances$Time  # isolate time (seconds) element of returned list</code></pre>
+</div>
+<div id="as-a-single-dataframe" class="section level1">
+<h1>As a single dataframe</h1>
+<p>That’s great, but still not super-friendly to use, especially over long distances.</p>
+</div>
+<div id="findings" class="section level1">
+<h1>Findings</h1>
+<p>While we’re at it, we can look arbitrarily at the longest distances.</p>
+<pre class="r"><code>distance_info %&gt;%
+  dplyr::mutate(  # create new columns
+    Kilometres = round(Distance/1000, 1),  # calculate km from m
+    Miles = round(Kilometres * 0.621371, 1)  # convert to miles
+  ) %&gt;% 
+  dplyr::select(  # select columns to rename and retain
+    Origin = establishmentname_or,
+    Destination = establishmentname_de,
+    `Kilometres`,
+    `Miles`
+    ) %&gt;% 
+  dplyr::arrange(desc(Kilometres)) # arrange by longest distance first</code></pre>
+</div>

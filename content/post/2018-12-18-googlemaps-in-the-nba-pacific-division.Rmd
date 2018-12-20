@@ -14,38 +14,45 @@ tags:
 draft: yes
 ---
 
-Matt Dray ([@mattdray](https://www.twitter.com/mattdray))
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+library(gmapsdistance)  # because the chunk it's in is eval=FALSE
+# Remember to do set.api.key("YOUR-API-KEY") before serving the site
+```
+
+Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
+
+# TL;DR
+
+You can query the Google Maps API in R with the `gmapsdistance` package. I used it to find travel times between NBA teams and learnt that travelling half the width of a continent requires a lot of petrol.  
 
 # The NBA
 
 The USA is quite big.
 
-The National Basketball Association (NBA) recognised this and organised their teams geographically: two 'conferences' -- Western and Eastern -- with three divisions of five teams each. 
+So it makes sense that the USA's National Basketball Association (NBA) organised their teams geographically: two 'conferences' -- Western and Eastern -- with three 'divisions' of five teams each. Right?
 
-You'd think that paying _within_ the division would cut journey time between games, but that's not always the truth.
+Yes, for the Central division of the Eastern Conference. It contains the Chicago Bulls, Cleveland Cavaliers, Detroit Pistons, Indiana Pacers and Milwaukee Bucks -- cities clustered by the Great Lakes.
 
-For example, the Central division is (relatively) tightly packed. It contains the Chicago Bulls, Cleveland Cavaliers, Detroit Pistons, Indiana Pacers and Milwaukee Bucks -- cities clustered by the Great Lakes.
+But also no, not for the Northwest Division of the Western Conference. This stretches from Portland Trail Blazers in the Pacific Northwest to Oklahoma City Thunder, which is actually in the country's south-central region. Far from clustering, Utah Jazz and Colorado's Denver Nuggets sit on a line between these two. The fifth team? That's Minnesota Timberwolves, which by rights should be part of the Central Division
 
-Converesely, the Northwest Division of the Western Conference stretches from the Portland Trail Blazers in the Pacific Northwest to Oklahoma City Thunder, with Utah Jazz and Colorado's Denver Nuggets between them. Oh, and Minnesota Timberwolves are also part of the division despite being far closer to the Central division's teams.
-
-What does this mean for the travelling support?
-
+What does this mean for the travelling basketball fans?
 
 # Travel time with `gmapsdistance`
 
 The R package [`gmapsdistance`](https://github.com/rodazuero/gmapsdistance) wraps the [Google Maps](https://www.google.co.uk/maps) [API](https://medium.freecodecamp.org/what-is-an-api-in-english-please-b880a3214a82). You can use it to query origin and destination points for travel distance (metres) and duration (seconds) for several modes of travel: on foot, by car, by public transport, or by bicycle (for parts of North America only).
 
-Before we make use of the Google Maps API we need to obtain a key. The process is outlined in detail on [the Google developer pages](https://developers.google.com/maps/documentation/distance-matrix/get-api-key#key). [Go to the website](https://cloud.google.com/maps-platform/) and follow the instructions.
+We need an API key for Google Maps. This helps prevent misuse of their service and tracks your access. Your first $300 is free.
 
-Why do you need a key? Because Google want to prevent misuse of their service and so they can keep track of your access; you get a certain amount (currently $200) free per month.
+The process is outlined in detail on [the Google developer pages](https://developers.google.com/maps/documentation/distance-matrix/get-api-key#key). [Go to the website](https://cloud.google.com/maps-platform/) and follow the instructions.
 
-You can set the API key with `set.api.key("YOURKEY")` so that the `key = get.api.key()` argument in the `gmapsdistance()` package can fetch it when called.
+Keep this key safe for now; we'll read it in later.
 
 # Get data
 
-We can use [Hadley Wickham's `rvest` package](https://github.com/hadley/rvest) to scrape the [Wikipedia page for the National Basketball Association (NBA)](https://en.wikipedia.org/wiki/National_Basketball_Association), which contains a table of teams and locations. 
+We can use [Hadley Wickham's `rvest` package](https://github.com/hadley/rvest) to scrape the [Wikipedia page for the NBA)](https://en.wikipedia.org/wiki/National_Basketball_Association), which contains a table of teams and locations. 
 
-We'll start by setting up our workspace with some packages.
+We'll start by setting up our workspace.
 
 ```{r load-packages, message=FALSE, warning=FALSE}
 library(dplyr)  # data manipulation
@@ -53,7 +60,7 @@ library(rvest)  # web scraping
 library(stringr)  # string manipulation
 ```
 
-Then we'll create objects that define the HTML for the web page and the table we want. The latter is defined using a CSS selector or, as in our case, an xpath. You can use the 'inspect' function in your browser or [the selectorgadget browser extension](https://selectorgadget.com/) to get this information. 
+Then we'll create objects that define the HTML for the web page and the table we want. The latter is defined using a CSS selector or, as in our case, an xpath. Think of these as 'addresses' for HTML content. You can use the 'inspect' function in your browser or [the selectorgadget browser extension](https://selectorgadget.com/) to get this information. 
 
 ```{r set-scrape-variables}
 # Read the HTML from a specified web URL
@@ -85,27 +92,44 @@ So now we have a simple table of teams, locations and a search string that we'll
 
 # Calculate distances
 
-The basic arguments to the  `gmpasdistance()` function are the origin and destination (can be an address, postcode or latlong coordinates), the mode of travel (car, public transit, walking) and the return format (shape) of the data (each origin-destination pair per row, or a matrix). We want all possible combinations
+The basic arguments to the `gmpasdistance()` function are the origin and destination (can be an address, postcode or latlong coordinates), the mode of travel (car, public transit, walking) and the return format (shape) of the data (each origin-destination pair per row, or a matrix). We want all possible combinations
+
+We can make our key available in the package environment by using the `set.api.key()` function from the `gmapsdistance` package.
+
+```{r set-api-key, eval=FALSE}
+library(gmapsdistance)  # install with install.packages() first
+
+# Set the API key
+set.api.key("YOUR-API-KEY")
+```
+
+Now we can query Google Maps with the API key.
 
 ```{r use-gmapsdistance, cache=TRUE}
-library(gmapsdistance)
-
-nw_nba_travel <- 
+nba_travel <- 
   gmapsdistance(
-    key = get.api.key(),  # call API key
+    key = get.api.key(),  # retrieve API key that we set above
     origin = nba_table$Search,  # start point of journey
     destination = nba_table$Search,  # end point of journey
     mode = "driving",  # driving time
-    combinations = "all",
+    combinations = "all",  # all possible pairs of locations
     shape = "long"  # format of output data (origin and destination as cols)
   )
 ```
 
-The output is a list with three elements:
+# Output
 
-1. Time in seconds (`$Time`)
-2. Distance in metres (`$Distance`)
-3. Status of the call (`$Status`) -- was it successful?
+What does the output look like?
+
+```{r nw_nba_list}
+glimpse(nba_travel)
+```
+
+It's a list object with three elements:
+
+1. Time in seconds
+2. Distance in metres
+3. Status of the call -- was it successful?
 
 Each list element has three columns:
 
@@ -133,32 +157,11 @@ And how much time does this translate to, in seconds, when driving between the l
 sch_distances$Time  # isolate time (seconds) element of returned list
 ```
 
+# As a single dataframe
+
 That's great, but still not super-friendly to use, especially over long distances.
 
-# Manipulate the data
-
-Let's create a more meaningful table for our purposes. Let's say we only care about the distances for now, so we'll focus on that element of the list and join in information about the origin from the Get Information About Schools data
-
-```{r list-to-df, warning=FALSE}
-distance_info <- sch_distances$Distance %>%  # to the distance data...
-  dplyr::left_join(
-    y = select(
-      gias, 
-      establishmentname, postcode  # join these columns from the GIAS data
-      ),   
-    by = c("or" = "postcode")  # match on postcode values (origin)
-  ) %>% 
-  dplyr::left_join(   # now join...
-    y = select(
-      gias,  # from GIAS...
-      establishmentname, postcode  # these columns
-      ),
-    by = c("de" = "postcode"),  # match on postcode values (destination)
-    suffix = c("_or", "_de")  # add col name suffixes for origin/destination
-  )
-
-dplyr::glimpse(distance_info)  # inspect data
-```
+# Findings
 
 While we're at it, we can look arbitrarily at the longest distances.
 
