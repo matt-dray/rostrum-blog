@@ -104,6 +104,21 @@ kable(nba_table)
 
 So now we have a simple table of teams, locations and a search string that we'll pass to `gmapsdistance()`.
 
+First, let's take a look at the locations.
+
+```{r map}
+# library(leaflet)
+# 
+# nba_table %>%
+#   mutate(
+#     Latitude = as.numeric(Latitude),
+#     Longitude = as.numeric(Longitude)
+#   ) %>% 
+#   leaflet() %>%
+#   addProviderTiles(providers$OpenStreetMap) %>% 
+#   addAwesomeMarkers(lng = ~Longitude, lat = ~Latitude)
+```
+
 # Calculate distances
 
 The basic arguments to the `gmpasdistance()` function are the origin and destination (can be an address, postcode or latlong coordinates), the mode of travel (car, public transit, walking) and the return format (shape) of the data (each origin-destination pair per row, or a matrix). We want all possible combinations
@@ -209,9 +224,8 @@ nba_distance %>%
 
 You can do all of the above for travel time as well. I'm going to provide the simple lookup table for thr sake of brevity.
 
-```{r time, warning=FALSE}
-# Package for tidy time handling
-library(lubridate)
+```{r time, warning=FALSE, message=FALSE}
+library(lubridate)  # tidy time handling
 
 # Create easy look-up table for travel time between teams
 nba_travel$Time %>%

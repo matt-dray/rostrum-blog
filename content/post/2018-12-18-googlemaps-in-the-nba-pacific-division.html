@@ -138,6 +138,17 @@ kable(nba_table)</code></pre>
 </tbody>
 </table>
 <p>So now we have a simple table of teams, locations and a search string that we’ll pass to <code>gmapsdistance()</code>.</p>
+<p>First, let’s take a look at the locations.</p>
+<pre class="r"><code># library(leaflet)
+# 
+# nba_table %&gt;%
+#   mutate(
+#     Latitude = as.numeric(Latitude),
+#     Longitude = as.numeric(Longitude)
+#   ) %&gt;% 
+#   leaflet() %&gt;%
+#   addProviderTiles(providers$OpenStreetMap) %&gt;% 
+#   addAwesomeMarkers(lng = ~Longitude, lat = ~Latitude)</code></pre>
 </div>
 <div id="calculate-distances" class="section level1">
 <h1>Calculate distances</h1>
@@ -462,14 +473,9 @@ nba_distance %&gt;%
 <div id="results-travel-time" class="section level1">
 <h1>Results: travel time</h1>
 <p>You can do all of the above for travel time as well. I’m going to provide the simple lookup table for thr sake of brevity.</p>
-<pre class="r"><code># Package for tidy time handling
-library(lubridate)</code></pre>
-<pre><code>## 
-## Attaching package: &#39;lubridate&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:base&#39;:
-## 
-##     date</code></pre>
-<pre class="r"><code># Create easy look-up table for travel time between teams
+<pre class="r"><code>library(lubridate)  # tidy time handling
+
+# Create easy look-up table for travel time between teams
 nba_travel$Time %&gt;%
   left_join(nba_lookup, by = c(&quot;or&quot; = &quot;Search&quot;)) %&gt;% 
   left_join(
