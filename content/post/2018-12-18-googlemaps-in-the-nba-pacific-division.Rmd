@@ -140,37 +140,61 @@ It's a list object with three elements: `Time`, `Distance` and `Status`. Each li
 
 * `or` -- the origin point
 * `de` -- the destination point
-* one of `Time` in seconds, `Distance` in metres or `Status` ('OK')
-
-# Results
+* one of `Time` in seconds, `Distance` in metres or `Status` (whether the request was successful)
 
 All our requests returned 'OK' for `Status` so there were no problems wth fetching the data.
 
-The data is returned in a tidy data frame.
+# Results: travel distance
 
-```{r distance}
-nba_travel$Distance
+## 
+
+The data is returned in a tidy data frame with one row per origin-destination. We can clean this up by matching three-letter team codes[^1] to the data, arranging by distance within origin location and removing rows that provide the distance from each team to themselves (i.e. zero kilometres).
+
+```{r distance-long}
+# Create a mini-lookup of search strings to three-letter team codes
+nba_lookup <- select(nba_table, `Team code`, Search)
+
+# Make table easier to read by joining team codes
+nba_distance <- nba_travel$Distance %>%
+  left_join(nba_lookup, by = c("or" = "Search")) %>% 
+  left_join(
+    nba_lookup, by = c("de" = "Search"), suffix = c(" (or)", " (de)")
+  ) %>% 
+  mutate(Distance = round(Distance/1000, 1)) %>% # m to km
+  select(`Team code (or)`, `Team code (de)`, Distance)
+
+# View table
+nba_distance %>%
+  arrange(`Team code (or)`, desc(Distance)) %>% 
+  filter(Distance != 0)
 ```
 
-We can make these data more useable by making a distance (kilometres) look-up between origin teams (rows) and destination teams (columns).
+## Total distance per team
+
+We can use this to summarise the total distance each team must travel to each of the others.
+
+```{r}
+nba_distance %>% 
+  group_by(`Team code (or)`) %>% 
+  summarise(`Total distance` = sum(Distance)) %>% 
+  arrange(desc(`Total distance`))
+```
+
+## Travel distance lookup
+
+Another way to view this is to 'spread' the data from long to wide format to create a look-up between origin teams (rows) and destination teams (columns).
 
 ```{r distance-lookup, message=FALSE}
 # So we can spread out data into 'wide format'
 library(tidyr)
 
-# Create a mini-lookup of search strings to team codes
-nba_lookup <- select(nba_table, `Team code`, Search)
-
 # Create easy look-up table for travel distances between teams
-nba_travel$Distance %>%
-  left_join(nba_lookup, by = c("or" = "Search")) %>% 
-  left_join(
-    nba_lookup, by = c("de" = "Search"), suffix = c(" (or)", " (de)")
-  ) %>% 
-  mutate(Distance = round(Distance/1000, 1)) %>% 
-  select(`Team code (or)`, `Team code (de)`, Distance) %>% 
-  spread(key = `Team code (de)`, value = Distance)
+nba_distance %>% 
+  spread(key = `Team code (de)`, value = Distance) %>% 
+  rename(Team = `Team code (or)`)
 ```
+
+# Results: travel time
 
 We can do a similar thing for time and print it in hours.
 
@@ -188,3 +212,5 @@ nba_travel$Time %>%
   select(`Team code (or)`, `Team code (de)`, Time) %>% 
   spread(key = `Team code (de)`, value = Time)
 ```
+
+[^1]: Codes: Denver Nuggets (DEN), Minnesota Timberwolves (MIN), Oklahoma City Thunder (OKC), Portland Trail Blazers (POR), Utah Jazz (UTA)

@@ -104,30 +104,54 @@ set.api.key(&quot;YOUR-API-KEY&quot;)</code></pre>
 <ul>
 <li><code>or</code> – the origin point</li>
 <li><code>de</code> – the destination point</li>
-<li>one of <code>Time</code> in seconds, <code>Distance</code> in metres or <code>Status</code> (‘OK’)</li>
+<li>one of <code>Time</code> in seconds, <code>Distance</code> in metres or <code>Status</code> (whether the request was successful)</li>
 </ul>
-</div>
-<div id="results" class="section level1">
-<h1>Results</h1>
 <p>All our requests returned ‘OK’ for <code>Status</code> so there were no problems wth fetching the data.</p>
-<p>The data is returned in a tidy data frame.</p>
-<pre class="r"><code>nba_travel$Distance</code></pre>
-<p>We can make these data more useable by making a distance (kilometres) look-up between origin teams (rows) and destination teams (columns).</p>
-<pre class="r"><code># So we can spread out data into &#39;wide format&#39;
-library(tidyr)
-
-# Create a mini-lookup of search strings to team codes
+</div>
+<div id="results-travel-distance" class="section level1">
+<h1>Results: travel distance</h1>
+<div id="section" class="section level2">
+<h2></h2>
+<p>The data is returned in a tidy data frame with one row per origin-destination. We can clean this up by matching three-letter team codes<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> to the data, arranging by distance within origin location and removing rows that provide the distance from each team to themselves (i.e. zero kilometres).</p>
+<pre class="r"><code># Create a mini-lookup of search strings to three-letter team codes
 nba_lookup &lt;- select(nba_table, `Team code`, Search)
 
-# Create easy look-up table for travel distances between teams
-nba_travel$Distance %&gt;%
+# Make table easier to read by joining team codes
+nba_distance &lt;- nba_travel$Distance %&gt;%
   left_join(nba_lookup, by = c(&quot;or&quot; = &quot;Search&quot;)) %&gt;% 
   left_join(
     nba_lookup, by = c(&quot;de&quot; = &quot;Search&quot;), suffix = c(&quot; (or)&quot;, &quot; (de)&quot;)
   ) %&gt;% 
-  mutate(Distance = round(Distance/1000, 1)) %&gt;% 
-  select(`Team code (or)`, `Team code (de)`, Distance) %&gt;% 
-  spread(key = `Team code (de)`, value = Distance)</code></pre>
+  mutate(Distance = round(Distance/1000, 1)) %&gt;% # m to km
+  select(`Team code (or)`, `Team code (de)`, Distance)
+
+# View table
+nba_distance %&gt;%
+  arrange(`Team code (or)`, desc(Distance)) %&gt;% 
+  filter(Distance != 0)</code></pre>
+</div>
+<div id="total-distance-per-team" class="section level2">
+<h2>Total distance per team</h2>
+<p>We can use this to summarise the total distance each team must travel to each of the others.</p>
+<pre class="r"><code>nba_distance %&gt;% 
+  group_by(`Team code (or)`) %&gt;% 
+  summarise(`Total distance` = sum(Distance)) %&gt;% 
+  arrange(desc(`Total distance`))</code></pre>
+</div>
+<div id="travel-distance-lookup" class="section level2">
+<h2>Travel distance lookup</h2>
+<p>Another way to view this is to ‘spread’ the data from long to wide format to create a look-up between origin teams (rows) and destination teams (columns).</p>
+<pre class="r"><code># So we can spread out data into &#39;wide format&#39;
+library(tidyr)
+
+# Create easy look-up table for travel distances between teams
+nba_distance %&gt;% 
+  spread(key = `Team code (de)`, value = Distance) %&gt;% 
+  rename(Team = `Team code (or)`)</code></pre>
+</div>
+</div>
+<div id="results-travel-time" class="section level1">
+<h1>Results: travel time</h1>
 <p>We can do a similar thing for time and print it in hours.</p>
 <pre class="r"><code># Package for tidy time handling
 library(lubridate)
@@ -141,4 +165,10 @@ nba_travel$Time %&gt;%
   mutate(Time = round(Time/60/60, 1)) %&gt;% 
   select(`Team code (or)`, `Team code (de)`, Time) %&gt;% 
   spread(key = `Team code (de)`, value = Time)</code></pre>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Codes: Denver Nuggets (DEN), Minnesota Timberwolves (MIN), Oklahoma City Thunder (OKC), Portland Trail Blazers (POR), Utah Jazz (UTA)<a href="#fnref1">↩</a></p></li>
+</ol>
 </div>
