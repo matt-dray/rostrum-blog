@@ -15,34 +15,31 @@ draft: yes
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(eval = FALSE)
+knitr::opts_chunk$set(eval=TRUE)
 library(gmapsdistance)  # because the chunk it's in is eval=FALSE
-# Remember to do set.api.key("YOUR-API-KEY") before serving the site
+api_key <- read.table("~/Desktop/api_key.txt")[1, 1]  # stored locally
+set.api.key(api_key)  # set key
 ```
 
 Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
 
 ![Jazz's Stockton to Malone for the dunk ([via Giphy](https://giphy.com/gifs/vintage-basketball-GOIl4CelYNleM))](https://media.giphy.com/media/GOIl4CelYNleM/giphy.gif)
 
-# TL;DR
-
-You can query the Google Maps API in R with the `gmapsdistance` package. I used it to find travel times between NBA teams and learnt that travelling half the width of a continent requires a lot of petrol.  
-
 # The NBA
 
 The USA is quite big.
 
-So it makes sense that the USA's National Basketball Association (NBA) organised their teams geographically: two 'conferences' -- Western and Eastern -- with three 'divisions' of five teams each. Right?
+So it makes sense that the USA's National Basketball Association (NBA) organised their teams geographically: two 'conferences' -- Western and Eastern -- with three 'divisions' of five teams each, right?
 
 Yes, for the Central division of the Eastern Conference. It contains the Chicago Bulls, Cleveland Cavaliers, Detroit Pistons, Indiana Pacers and Milwaukee Bucks -- cities clustered near Lakes Michigan and Erie.
 
-But also no, not for the Northwest Division of the Western Conference. This stretches from Portland Trail Blazers in the Pacific Northwest to Oklahoma City Thunder, which is actually in the country's south-central region. Far from clustering, Utah Jazz and Colorado's Denver Nuggets sit on a line between these two. The fifth team? That's Minnesota Timberwolves, which by rights should be part of the Central Division
+But also no, not for the Northwest Division of the Western Conference. This stretches from Portland Trail Blazers in the Pacific Northwest to Oklahoma City Thunder, which is actually in the country's south-central region. Far from clustering, Utah Jazz and Colorado's Denver Nuggets sit on a line between these two. The fifth team? That's Minnesota Timberwolves, which could be mistaken for part of the Central Division
 
 What does this mean for the travelling basketball fans?
 
 # Travel time with `gmapsdistance`
 
-The R package [`gmapsdistance`](https://github.com/rodazuero/gmapsdistance) wraps the [Google Maps](https://www.google.co.uk/maps) [API](https://medium.freecodecamp.org/what-is-an-api-in-english-please-b880a3214a82). You can use it to query origin and destination points for travel distance (metres) and duration (seconds) for several modes of travel: on foot, by car, by public transport, or by bicycle (for parts of North America only).
+The R package [`gmapsdistance`](https://cran.r-project.org/web/packages/gmapsdistance/index.html) was written by Rodrigo Azuero, Demetrio Rodriguez and David Zarruk. It wraps the [Google Maps](https://www.google.co.uk/maps) [API](https://medium.freecodecamp.org/what-is-an-api-in-english-please-b880a3214a82). You can use it to query origin and destination points for travel distance (metres) and duration (seconds) for several modes of travel: on foot, by car, by public transport, or by bicycle (for parts of North America only).
 
 We need an API key for Google Maps. This helps prevent misuse of their service and tracks your access. Your first $300 is free.
 
@@ -52,14 +49,15 @@ Keep this key safe for now; we'll read it in later.
 
 # Get data
 
-We can use [Hadley Wickham's `rvest` package](https://github.com/hadley/rvest) to scrape the [Wikipedia page for the NBA)](https://en.wikipedia.org/wiki/National_Basketball_Association), which contains a table of teams and locations. 
-
-We'll start by setting up our workspace.
+We can use [Hadley Wickham's `rvest` package](https://github.com/hadley/rvest) to scrape the [Wikipedia page for the NBA)](https://en.wikipedia.org/wiki/National_Basketball_Association), which contains a table of teams and locations.
 
 ```{r load-packages, message=FALSE, warning=FALSE}
 library(dplyr)  # data manipulation
 library(rvest)  # web scraping
 library(stringr)  # string manipulation
+library(knitr)  # to print our tables
+library(tidyr)  # tidying dataframes
+
 ```
 
 Then we'll create objects that define the HTML for the web page and the table we want. The latter is defined using a CSS selector or, as in our case, an xpath. Think of these as 'addresses' for HTML content. You can use the 'inspect' function in your browser or [the selectorgadget browser extension](https://selectorgadget.com/) to get this information. 
@@ -68,7 +66,7 @@ Then we'll create objects that define the HTML for the web page and the table we
 # Read the HTML from a specified web URL
 html <- read_html("https://en.wikipedia.org/wiki/National_Basketball_Association")
 
-# Use the Scrapy tool or 'inspect' in your browser to get the table xpath
+# Use selectorgadget or your browser's 'inspect' mode to get xpath
 table_xpath <- '//*[@id="mw-content-text"]/div/table[4]'
 ```
 
@@ -82,6 +80,9 @@ nba_table <-
   html_table(fill = TRUE, header = NA) %>%  # parse as table
   as.data.frame() %>%  # convert from list
   filter(Division == "Northwest") %>%  # NW division only
+  separate(Coordinates, c("Coords1", "Coords2", "Coords3"), " / ") %>% 
+  separate(Coords3, c("Latitude", "Longitude"), sep = "; ") %>% 
+  separate(Longitude, c("Longitude", "X"), sep = " \\(") %>% 
   mutate(
     Search = paste(Arena, City.State),  # combine location details
     Search = str_replace_all(Search, ",", ""),  # replace comma with blank
@@ -94,9 +95,11 @@ nba_table <-
       Team == "Utah Jazz" ~ "UTA"
     )
   ) %>% 
-  select(Team, `Team code`, Arena, City = City.State, Search)
+  select(
+    Team, `Team code`, Arena, City = City.State, Latitude, Longitude, Search
+  )
 
-nba_table 
+kable(nba_table)
 ```
 
 So now we have a simple table of teams, locations and a search string that we'll pass to `gmapsdistance()`.
@@ -108,9 +111,7 @@ The basic arguments to the `gmpasdistance()` function are the origin and destina
 We can make our key available in the package environment by using the `set.api.key()` function from the `gmapsdistance` package.
 
 ```{r set-api-key, eval=FALSE}
-library(gmapsdistance)  # install with install.packages() first
-
-# Set the API key
+library(gmapsdistance)
 set.api.key("YOUR-API-KEY")
 ```
 
@@ -136,7 +137,7 @@ What does the output look like?
 glimpse(nba_travel)
 ```
 
-It's a list object with three elements: `Time`, `Distance` and `Status`. Each list element is a dataframe with three columns:
+It's a list object with three elements: `Time`, `Distance` and `Status`. Each list element is a dataframe with 25 observations (each team paired with every other) and 3 columns:
 
 * `or` -- the origin point
 * `de` -- the destination point
@@ -146,15 +147,13 @@ All our requests returned 'OK' for `Status` so there were no problems wth fetchi
 
 # Results: travel distance
 
-## 
+The data is returned in a tidy data frame with one row per origin-destination. We can clean this up by matching three-letter team codes to the data, arranging by distance within origin location and removing rows that provide the distance from each team to themselves (i.e. zero kilometres).
 
-The data is returned in a tidy data frame with one row per origin-destination. We can clean this up by matching three-letter team codes[^1] to the data, arranging by distance within origin location and removing rows that provide the distance from each team to themselves (i.e. zero kilometres).
-
-```{r distance-long}
+```{r distance-long, warning=FALSE}
 # Create a mini-lookup of search strings to three-letter team codes
 nba_lookup <- select(nba_table, `Team code`, Search)
 
-# Make table easier to read by joining team codes
+# Make the output table easier to read by joining team codes
 nba_distance <- nba_travel$Distance %>%
   left_join(nba_lookup, by = c("or" = "Search")) %>% 
   left_join(
@@ -166,18 +165,32 @@ nba_distance <- nba_travel$Distance %>%
 # View table
 nba_distance %>%
   arrange(`Team code (or)`, desc(Distance)) %>% 
-  filter(Distance != 0)
+  filter(Distance != 0) %>% 
+  kable()
 ```
 
-## Total distance per team
+# Travel distance summaries
 
-We can use this to summarise the total distance each team must travel to each of the others.
+It's trivial to summarise the furthest travel distance within the Northwest for each team.
 
-```{r}
+```{r furthest-game}
+nba_distance %>% 
+  arrange(`Team code (or)`, desc(Distance)) %>%
+  group_by(`Team code (or)`) %>% 
+  slice(1) %>% 
+  ungroup() %>% 
+  arrange(desc(Distance)) %>% 
+  kable()
+```
+
+Similarly, we can get the total distance each team must travel to each of the others in the Northwest Division.
+
+```{r total-distance}
 nba_distance %>% 
   group_by(`Team code (or)`) %>% 
   summarise(`Total distance` = sum(Distance)) %>% 
-  arrange(desc(`Total distance`))
+  arrange(desc(`Total distance`)) %>% 
+  kable()
 ```
 
 ## Travel distance lookup
@@ -185,20 +198,18 @@ nba_distance %>%
 Another way to view this is to 'spread' the data from long to wide format to create a look-up between origin teams (rows) and destination teams (columns).
 
 ```{r distance-lookup, message=FALSE}
-# So we can spread out data into 'wide format'
-library(tidyr)
-
 # Create easy look-up table for travel distances between teams
 nba_distance %>% 
   spread(key = `Team code (de)`, value = Distance) %>% 
-  rename(Team = `Team code (or)`)
+  rename(Team = `Team code (or)`) %>% 
+  kable()
 ```
 
 # Results: travel time
 
-We can do a similar thing for time and print it in hours.
+You can do all of the above for travel time as well. I'm going to provide the simple lookup table for thr sake of brevity.
 
-```{r time, message=FALSE}
+```{r time, warning=FALSE}
 # Package for tidy time handling
 library(lubridate)
 
@@ -210,7 +221,6 @@ nba_travel$Time %>%
   ) %>% 
   mutate(Time = round(Time/60/60, 1)) %>% 
   select(`Team code (or)`, `Team code (de)`, Time) %>% 
-  spread(key = `Team code (de)`, value = Time)
+  spread(key = `Team code (de)`, value = Time) %>% 
+  kable()
 ```
-
-[^1]: Codes: Denver Nuggets (DEN), Minnesota Timberwolves (MIN), Oklahoma City Thunder (OKC), Portland Trail Blazers (POR), Utah Jazz (UTA)
