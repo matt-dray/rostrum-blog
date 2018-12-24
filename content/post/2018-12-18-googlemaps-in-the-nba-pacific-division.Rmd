@@ -127,15 +127,34 @@ We can map the latitude and longitude to prove we've isolated them correctly.
 ```{r map}
 library(leaflet)  # for interactive maps
 
-nba_table %>%
-  leaflet() %>%
+leaflet(nba_table) %>%
   addProviderTiles(providers$OpenStreetMap) %>%
   addAwesomeMarkers(
     lng = ~Longitude, lat = ~Latitude,
-    # add basketball icons
-    # colour icons by team colours
-  )
-# add stright lines between points?
+    popup = ~paste0(
+      "<b>", nba_table$Team, "</b>",
+      "<br>", nba_table$Arena,
+      "<br>", nba_table$City
+    ),
+    icon = awesomeIcons(
+      library = "ion", icon = "ion-ios-basketball", # add icon
+      markerColor = case_when(
+        nba_table$`Team code` == "DEN" ~ "darkblue",
+        nba_table$`Team code` == "MIN" ~ "darkblue",
+        nba_table$`Team code` == "OKC" ~ "lightblue",
+        nba_table$`Team code` == "POR" ~ "black",
+        nba_table$`Team code` == "UTA" ~ "darkblue"
+      ),
+      iconColor = case_when(
+        nba_table$`Team code` == "DEN" ~ "yellow",
+        nba_table$`Team code` == "MIN" ~ "lightblue",
+        nba_table$`Team code` == "OKC" ~ "orange",
+        nba_table$`Team code` == "POR" ~ "red",
+        nba_table$`Team code` == "UTA" ~ "green"
+      )
+    )
+  )  %>% 
+  addMeasure()
 ```
 
 # Calculate distances

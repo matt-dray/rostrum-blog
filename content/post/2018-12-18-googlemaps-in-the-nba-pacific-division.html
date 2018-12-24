@@ -101,15 +101,34 @@ kable(nba_table)  # print</code></pre>
 <p>We can map the latitude and longitude to prove we’ve isolated them correctly.</p>
 <pre class="r"><code>library(leaflet)  # for interactive maps
 
-nba_table %&gt;%
-  leaflet() %&gt;%
+leaflet(nba_table) %&gt;%
   addProviderTiles(providers$OpenStreetMap) %&gt;%
   addAwesomeMarkers(
     lng = ~Longitude, lat = ~Latitude,
-    # add basketball icons
-    # colour icons by team colours
-  )
-# add stright lines between points?</code></pre>
+    popup = ~paste0(
+      &quot;&lt;b&gt;&quot;, nba_table$Team, &quot;&lt;/b&gt;&quot;,
+      &quot;&lt;br&gt;&quot;, nba_table$Arena,
+      &quot;&lt;br&gt;&quot;, nba_table$City
+    ),
+    icon = awesomeIcons(
+      library = &quot;ion&quot;, icon = &quot;ion-ios-basketball&quot;, # add icon
+      markerColor = case_when(
+        nba_table$`Team code` == &quot;DEN&quot; ~ &quot;darkblue&quot;,
+        nba_table$`Team code` == &quot;MIN&quot; ~ &quot;darkblue&quot;,
+        nba_table$`Team code` == &quot;OKC&quot; ~ &quot;lightblue&quot;,
+        nba_table$`Team code` == &quot;POR&quot; ~ &quot;black&quot;,
+        nba_table$`Team code` == &quot;UTA&quot; ~ &quot;darkblue&quot;
+      ),
+      iconColor = case_when(
+        nba_table$`Team code` == &quot;DEN&quot; ~ &quot;yellow&quot;,
+        nba_table$`Team code` == &quot;MIN&quot; ~ &quot;lightblue&quot;,
+        nba_table$`Team code` == &quot;OKC&quot; ~ &quot;orange&quot;,
+        nba_table$`Team code` == &quot;POR&quot; ~ &quot;red&quot;,
+        nba_table$`Team code` == &quot;UTA&quot; ~ &quot;green&quot;
+      )
+    )
+  )  %&gt;% 
+  addMeasure()</code></pre>
 </div>
 <div id="calculate-distances" class="section level1">
 <h1>Calculate distances</h1>
