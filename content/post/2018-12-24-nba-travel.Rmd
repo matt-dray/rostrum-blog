@@ -6,54 +6,58 @@ slug: nba-travel
 categories:
   - R
 tags:
-  - NBA
+  - nba
   - gmapsdistance
   - dplyr
   - rvest
   - stringr
+  - stringi
+  - leaflet
+  - tidyr
 draft: yes
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(eval=TRUE)
 library(gmapsdistance)  # because the chunk it's in is eval=FALSE
-api_key <- read.table("~/Desktop/api_key.txt")[1, 1]  # stored locally
+api_key <- read.table("~/Desktop/api_key.txt")[1, 1]  # key stored locally
 set.api.key(api_key)  # set key
 ```
 
 Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
 
-![Jazz's Stockton to Malone for the dunk ([via Giphy](https://giphy.com/gifs/vintage-basketball-GOIl4CelYNleM))](https://media.giphy.com/media/GOIl4CelYNleM/giphy.gif)
+![Classic Jazz: Stockton to Malone for the dunk ([via Giphy](https://giphy.com/gifs/vintage-basketball-GOIl4CelYNleM))](https://media.giphy.com/media/GOIl4CelYNleM/giphy.gif)
+
+# TL;DR
+
+The `gmapsdistance` R package lets you query the Google Maps API. I used it to look at travel distances between basketball teams. Surprise: they can be far apart even if they're in the same division.
 
 # The NBA
 
-The USA is quite big.
+The USA is pretty big.
 
-So it makes sense that the USA's National Basketball Association (NBA) organised their teams geographically: two 'conferences' -- Western and Eastern -- with three 'divisions' of five teams each, right?
+So the National Basketball Association (NBA) is separated geographically into Eastern and Western conferences, each with three divisions of five teams. The majority of match-ups are [within the division and conference](https://en.wikipedia.org/wiki/National_Basketball_Association#Regular_season).
 
-Yes, for the Central division of the Eastern Conference. It contains the Chicago Bulls, Cleveland Cavaliers, Detroit Pistons, Indiana Pacers and Milwaukee Bucks -- cities clustered near Lakes Michigan and Erie.
+This is fine for the Central division: teams clustered near Lakes Michigan and Erie.
 
-But also no, not for the Northwest Division of the Western Conference. This stretches from Portland Trail Blazers in the Pacific Northwest to Oklahoma City Thunder, which is actually in the country's south-central region. Far from clustering, Utah Jazz and Colorado's Denver Nuggets sit on a line between these two. The fifth team? That's Minnesota Timberwolves, which could be mistaken for part of the Central Division
+But not for the Northwest division: it stretches from Portland in the Pacific Northwest to Oklahoma City in the centre-south, with Salt Lake City and Denver between. The other team is in Minneapolis; much closer to the Central division. 
 
 ![NBA team locations with states coloured by division (CC BY-SA 2.5, [Wikipedia](https://en.wikipedia.org/wiki/National_Basketball_Association#/media/File:Map_of_USA_and_Canada,_NBA,_zoom.svg))](/post/2018-12-18-googlemaps-in-the-nba-pacific-division_files/nba-map-wiki.png)
 
-What does this mean for the travelling basketball fans?
+That's a lot of travel for fans.
 
 # Google Maps and `gmapsdistance`
 
 If you didn't know, Google Maps is one of many services that calculates journey distances and durations. 
+The R package [`gmapsdistance`](https://CRAN.R-project.org/package=gmapsdistance) was written by Rodrigo Azuero, Demetrio Rodriguez and David Zarruk. It wraps the [Google Maps](https://www.google.co.uk/maps) [Application Programming Interface (API)](https://medium.freecodecamp.org/what-is-an-api-in-english-please-b880a3214a82). You can use it to get travel distance and time for several modes of travel.
 
-The R package [`gmapsdistance`](https://cran.r-project.org/web/packages/gmapsdistance/index.html) was written by Rodrigo Azuero, Demetrio Rodriguez and David Zarruk. It wraps the [Google Maps](https://www.google.co.uk/maps) [API](https://medium.freecodecamp.org/what-is-an-api-in-english-please-b880a3214a82). You can use it to query origin and destination points for travel distance and duration for several modes of travel.
-
-We need an API key for Google Maps. This helps prevent misuse of the service and helps keeps track of your credit. The process is outlined in detail in [the Google developer documentation pages](https://developers.google.com/maps/documentation/distance-matrix/get-api-key#key). [Go to the Google Cloud maps platform pages](https://cloud.google.com/maps-platform/) and follow the instructions. You'll need a Google account to do this.
-
-The key is kept in [your Google Cloud console](https://console.cloud.google.com/).
+You need an API key for Google Maps. This helps prevent misuse of the service and helps keeps track of your credit. The process is outlined in detail in [the Google developer documentation pages](https://developers.google.com/maps/documentation/distance-matrix/get-api-key#key). [Go to the Google Cloud maps platform pages](https://cloud.google.com/maps-platform/) and follow the instructions. You'll need a Google account to do this.
 
 ![Setting up Google Maps platform on Google Cloud](/post/2018-12-18-nba-travel_files/1-select-product.png)
 
 # Get data
 
-Let's use [Hadley Wickham's `rvest` package](https://github.com/hadley/rvest) to scrape the [Wikipedia page for the NBA)](https://en.wikipedia.org/wiki/National_Basketball_Association), which contains a table of teams and locations.
+We can scrape the [NBA Wikipedia page](https://en.wikipedia.org/wiki/National_Basketball_Association) with the [`rvest` package](https://github.com/hadley/rvest) to get a table of teams and locations.
 
 Start by loading `rvest` and some other packages for data manipulation.
 
@@ -65,7 +69,7 @@ library(rvest)  # web scraping
 library(knitr)  # print tables nicely
 ```
 
-Then we'll create objects that define the HTML for the web page and the table we want. The table can be defined by a CSS selector or an xpath; think of these as 'addresses' for HTML content. You can use the 'inspect' function in your browser or [the selectorgadget browser extension](https://selectorgadget.com/) to get this information.
+We can extrac the table with its xpath, which is like an 'address' for HTML content. You can use the 'inspect' function in your browser or [the selectorgadget browser extension](https://selectorgadget.com/) to get this information.
 
 ```{r set-scrape-variables}
 # Read the HTML from a specified web URL
@@ -75,9 +79,7 @@ html <- read_html("https://en.wikipedia.org/wiki/National_Basketball_Association
 table_xpath <- '//*[@id="mw-content-text"]/div/table[4]'
 ```
 
-Now we can collect the table and get the parts we want: team names and locations. We can get the latter as both latitude-longitude coordinates and as text. Text can be parsed by Google Maps if words are separated by the plus symbol: `arena+city+state`.
-
-Steps to do this are annotated in the code below.
+Now we can collect the table and get the parts we want: team names and locations. We can get the latter as both latitude-longitude coordinates and as text. Text can be parsed by Google Maps if words are separated by the plus symbol: `arena+city+state`. Steps to do this are annotated in the code below.
 
 ```{r get-nba-table}
 nba_table <-
@@ -115,12 +117,13 @@ nba_table <-
     Latitude, Longitude, Search
   )
 
-nba_table  # print
+# Print a simple version of the table
+select(nba_table, `Team code`, Latitude, Longitude, Search) %>% kable()
 ```
 
 # Map locations
 
-We can map the latitude and longitude to prove we've isolated them correctly.
+We can map the latitude and longitude for fun.
 
 ```{r map}
 library(leaflet)  # for interactive maps
@@ -144,7 +147,7 @@ leaflet(nba_table) %>%
         nba_table$`Team code` == "POR" ~ "black",
         nba_table$`Team code` == "UTA" ~ "darkblue"
       ),
-      iconColor = case_when(
+      iconColor = case_when(  # see teamcolorcodes.com
         nba_table$`Team code` == "DEN" ~ "#FEC524",
         nba_table$`Team code` == "MIN" ~ "#9EA2A2",
         nba_table$`Team code` == "OKC" ~ "#EF3B24",
@@ -156,16 +159,16 @@ leaflet(nba_table) %>%
   addMeasure()
 ```
 
-# Calculate distances
+# Get travel distances
 
-The basic arguments to the `gmpasdistance()` function are the origin and destination (can be an address, postcode or latlong coordinates), the mode of travel (car, public transit, walking) and the return format (shape) of the data (each origin-destination pair per row, or a matrix). We want all possible combinations
-
-We can make our key available in the package environment by using the `set.api.key()` function from the `gmapsdistance` package.
+We start by making our API key available in the package environment by using the `set.api.key()` function from `gmapsdistance`.
 
 ```{r set-api-key, eval=FALSE}
 library(gmapsdistance)
-set.api.key("YOUR-API-KEY")
+set.api.key("YOUR-API-KEY")  # replace with your key
 ```
+
+The basic arguments to the `gmapsdistance()` function are the origin and destination (can be an address, postcode or latlong coordinates), the mode of travel (car, public transit, walking) and the return format (shape) of the data (each origin-destination pair per row, or a matrix). We want all possible combinations.
 
 Now we can query Google Maps with the API key. I've explained the function arguments in the code comments.
 
@@ -181,9 +184,11 @@ nba_travel <-
   )
 ```
 
-# Output
+I've focused here on driving as the mode of transport. Note that you can also do things like set specific start times and dates, but I've left these out for simplicity.
 
-What does the output look like?
+# Travel distance output
+
+What does the returned data look like?
 
 ```{r nw_nba_list}
 glimpse(nba_travel)
@@ -195,9 +200,9 @@ It's a list object with three elements: `Time`, `Distance` and `Status`. Each li
 * `de` -- the destination point
 * one of `Time` in seconds, `Distance` in metres or `Status` (whether the request was successful)
 
-All our requests returned 'OK' for `Status` so there were no problems wth fetching the data.
+All our requests returned 'OK' for `Status` so there were no problems with fetching the data.
 
-# Results: travel distance
+# Exploring results
 
 The data is returned in a tidy data frame with one row per origin-destination. We can clean this up by matching three-letter team codes to the data, arranging by distance within origin location and removing rows that provide the distance from each team to themselves (i.e. zero kilometres).
 
@@ -209,29 +214,31 @@ nba_lookup <- select(nba_table, `Team code`, Search)
 nba_distance <- nba_travel$Distance %>%
   left_join(nba_lookup, by = c("or" = "Search")) %>% 
   left_join(
-    nba_lookup, by = c("de" = "Search"), suffix = c(" (or)", " (de)")
+    nba_lookup, by = c("de" = "Search"), suffix = c(" (origin)", " (destination)")
   ) %>% 
   mutate(Distance = round(Distance/1000, 1)) %>% # m to km
-  select(`Team code (or)`, `Team code (de)`, Distance)
+  select(`Team code (origin)`, `Team code (destination)`, Distance)
 
 # View table
 nba_distance %>%
-  arrange(`Team code (or)`, desc(Distance)) %>% 
-  filter(Distance != 0) %>% 
+  arrange(`Team code (origin)`, desc(Distance)) %>% 
+  filter(Distance != 0) %>%
+  rename(`Distance (km)` = Distance) %>% 
   kable()
 ```
 
 # Travel distance summaries
 
-It's trivial to summarise the furthest travel distance within the Northwest for each team.
+It's trivial to summarise the furthest travel distance within the Northwest division for each team in that division.
 
 ```{r furthest-game}
 nba_distance %>% 
-  arrange(`Team code (or)`, desc(Distance)) %>%
-  group_by(`Team code (or)`) %>% 
+  arrange(`Team code (origin)`, desc(Distance)) %>%
+  group_by(`Team code (origin)`) %>% 
   slice(1) %>% 
   ungroup() %>% 
   arrange(desc(Distance)) %>% 
+  rename(`Distance (km)` = Distance) %>% 
   kable()
 ```
 
@@ -239,11 +246,13 @@ Similarly, we can get the total distance each team must travel to each of the ot
 
 ```{r total-distance}
 nba_distance %>% 
-  group_by(`Team code (or)`) %>% 
-  summarise(`Total distance` = sum(Distance)) %>% 
-  arrange(desc(`Total distance`)) %>% 
+  group_by(`Team code (origin)`) %>% 
+  summarise(`Total distance (km)` = sum(Distance)) %>% 
+  arrange(desc(`Total distance (km)`)) %>% 
   kable()
 ```
+
+So fans of the Portland Trail Blazers have the furthest total distance to travel to each of the other teams in the Northwest: over 9000 km. That's about teh same distance as London to Johannesburg in a straight line. Bear in mind these totals are only the travel in one direction as well.
 
 ## Travel distance lookup
 
@@ -252,26 +261,39 @@ Another way to view this is to 'spread' the data from long to wide format to cre
 ```{r distance-lookup, message=FALSE}
 # Create easy look-up table for travel distances between teams
 nba_distance %>% 
-  spread(key = `Team code (de)`, value = Distance) %>% 
-  rename(Team = `Team code (or)`) %>% 
+  spread(key = `Team code (destination)`, value = Distance) %>% 
+  rename(`Travel distance (km)` = `Team code (origin)`) %>% 
   kable()
 ```
 
-# Results: travel time
+So Portland Trail Blazers and Oklahoma City Thunder have a driving travel distance of over 3000 km. That's a similar distance as from London to Longyearbyen on Svalbard.
 
-You can do all of the above for travel time as well. I'm going to provide the simple lookup table for thr sake of brevity.
+## Travel time lookup
 
-```{r time, warning=FALSE, message=FALSE}
-library(lubridate)  # tidy time handling
+We can also create a team-to-team lookup for travel time.
 
-# Create easy look-up table for travel time between teams
+```{r time-lookup, warning=FALSE, message=FALSE}
 nba_travel$Time %>%
   left_join(nba_lookup, by = c("or" = "Search")) %>% 
   left_join(
-    nba_lookup, by = c("de" = "Search"), suffix = c(" (or)", " (de)")
+    nba_lookup, by = c("de" = "Search"), suffix = c(" (origin)", " (destination)")
   ) %>% 
-  mutate(Time = round(Time/60/60, 1)) %>% 
-  select(`Team code (or)`, `Team code (de)`, Time) %>% 
-  spread(key = `Team code (de)`, value = Time) %>% 
+  mutate(Time = round(Time/60/60), 1) %>% # s to hrs
+  select(`Team code (origin)`, `Team code (destination)`, Time) %>% 
+  spread(key = `Team code (destination)`, value = Time) %>% 
+  rename(`Travel time (hours)` = `Team code (origin)`) %>% 
   kable()
 ```
+
+So more than half a day's drive for many of the journeys and more than a day's drive between Portland and Oklahoma City.
+
+# Recap
+
+We:
+
+1. [Got an API key](https://cloud.google.com/maps-platform/)
+1. Scraped and wrangled data [with `rvest`](https://CRAN.R-project.org/package=gmapsdistance) and other packages
+1. Mapped it with [the `leaflet` package](https://cran.r-project.org/web/packages/leaflet/index.html)
+1. Queried the Google Maps API [with `gmapsdistance`](https://CRAN.R-project.org/package=gmapsdistance)
+1. Summarised the output
+1. Were impressed by the thought of any of these team's fans actually driving these distances

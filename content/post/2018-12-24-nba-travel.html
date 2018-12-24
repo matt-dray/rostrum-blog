@@ -6,11 +6,14 @@ slug: nba-travel
 categories:
   - R
 tags:
-  - NBA
+  - nba
   - gmapsdistance
   - dplyr
   - rvest
   - stringr
+  - stringi
+  - leaflet
+  - tidyr
 draft: yes
 ---
 
@@ -34,27 +37,29 @@ draft: yes
 
 <p>Matt Dray (<a href="https://www.twitter.com/mattdray">@mattdray</a>)</p>
 <div class="figure">
-<img src="https://media.giphy.com/media/GOIl4CelYNleM/giphy.gif" alt="Jazz’s Stockton to Malone for the dunk (via Giphy)" />
-<p class="caption">Jazz’s Stockton to Malone for the dunk (<a href="https://giphy.com/gifs/vintage-basketball-GOIl4CelYNleM">via Giphy</a>)</p>
+<img src="https://media.giphy.com/media/GOIl4CelYNleM/giphy.gif" alt="Classic Jazz: Stockton to Malone for the dunk (via Giphy)" />
+<p class="caption">Classic Jazz: Stockton to Malone for the dunk (<a href="https://giphy.com/gifs/vintage-basketball-GOIl4CelYNleM">via Giphy</a>)</p>
+</div>
+<div id="tldr" class="section level1">
+<h1>TL;DR</h1>
+<p>The <code>gmapsdistance</code> R package lets you query the Google Maps API. I used it to look at travel distances between basketball teams. Surprise: they can be far apart even if they’re in the same division.</p>
 </div>
 <div id="the-nba" class="section level1">
 <h1>The NBA</h1>
-<p>The USA is quite big.</p>
-<p>So it makes sense that the USA’s National Basketball Association (NBA) organised their teams geographically: two ‘conferences’ – Western and Eastern – with three ‘divisions’ of five teams each, right?</p>
-<p>Yes, for the Central division of the Eastern Conference. It contains the Chicago Bulls, Cleveland Cavaliers, Detroit Pistons, Indiana Pacers and Milwaukee Bucks – cities clustered near Lakes Michigan and Erie.</p>
-<p>But also no, not for the Northwest Division of the Western Conference. This stretches from Portland Trail Blazers in the Pacific Northwest to Oklahoma City Thunder, which is actually in the country’s south-central region. Far from clustering, Utah Jazz and Colorado’s Denver Nuggets sit on a line between these two. The fifth team? That’s Minnesota Timberwolves, which could be mistaken for part of the Central Division</p>
+<p>The USA is pretty big.</p>
+<p>So the National Basketball Association (NBA) is separated geographically into Eastern and Western conferences, each with three divisions of five teams. The majority of match-ups are <a href="https://en.wikipedia.org/wiki/National_Basketball_Association#Regular_season">within the division and conference</a>.</p>
+<p>This is fine for the Central division: teams clustered near Lakes Michigan and Erie.</p>
+<p>But not for the Northwest division: it stretches from Portland in the Pacific Northwest to Oklahoma City in the centre-south, with Salt Lake City and Denver between. The other team is in Minneapolis; much closer to the Central division.</p>
 <div class="figure">
 <img src="/post/2018-12-18-googlemaps-in-the-nba-pacific-division_files/nba-map-wiki.png" alt="NBA team locations with states coloured by division (CC BY-SA 2.5, Wikipedia)" />
 <p class="caption">NBA team locations with states coloured by division (CC BY-SA 2.5, <a href="https://en.wikipedia.org/wiki/National_Basketball_Association#/media/File:Map_of_USA_and_Canada,_NBA,_zoom.svg">Wikipedia</a>)</p>
 </div>
-<p>What does this mean for the travelling basketball fans?</p>
+<p>That’s a lot of travel for fans.</p>
 </div>
 <div id="google-maps-and-gmapsdistance" class="section level1">
 <h1>Google Maps and <code>gmapsdistance</code></h1>
-<p>If you didn’t know, Google Maps is one of many services that calculates journey distances and durations.</p>
-<p>The R package <a href="https://cran.r-project.org/web/packages/gmapsdistance/index.html"><code>gmapsdistance</code></a> was written by Rodrigo Azuero, Demetrio Rodriguez and David Zarruk. It wraps the <a href="https://www.google.co.uk/maps">Google Maps</a> <a href="https://medium.freecodecamp.org/what-is-an-api-in-english-please-b880a3214a82">API</a>. You can use it to query origin and destination points for travel distance and duration for several modes of travel.</p>
-<p>We need an API key for Google Maps. This helps prevent misuse of the service and helps keeps track of your credit. The process is outlined in detail in <a href="https://developers.google.com/maps/documentation/distance-matrix/get-api-key#key">the Google developer documentation pages</a>. <a href="https://cloud.google.com/maps-platform/">Go to the Google Cloud maps platform pages</a> and follow the instructions. You’ll need a Google account to do this.</p>
-<p>The key is kept in <a href="https://console.cloud.google.com/">your Google Cloud console</a>.</p>
+<p>If you didn’t know, Google Maps is one of many services that calculates journey distances and durations. The R package <a href="https://CRAN.R-project.org/package=gmapsdistance"><code>gmapsdistance</code></a> was written by Rodrigo Azuero, Demetrio Rodriguez and David Zarruk. It wraps the <a href="https://www.google.co.uk/maps">Google Maps</a> <a href="https://medium.freecodecamp.org/what-is-an-api-in-english-please-b880a3214a82">Application Programming Interface (API)</a>. You can use it to get travel distance and time for several modes of travel.</p>
+<p>You need an API key for Google Maps. This helps prevent misuse of the service and helps keeps track of your credit. The process is outlined in detail in <a href="https://developers.google.com/maps/documentation/distance-matrix/get-api-key#key">the Google developer documentation pages</a>. <a href="https://cloud.google.com/maps-platform/">Go to the Google Cloud maps platform pages</a> and follow the instructions. You’ll need a Google account to do this.</p>
 <div class="figure">
 <img src="/post/2018-12-18-nba-travel_files/1-select-product.png" alt="Setting up Google Maps platform on Google Cloud" />
 <p class="caption">Setting up Google Maps platform on Google Cloud</p>
@@ -62,21 +67,20 @@ draft: yes
 </div>
 <div id="get-data" class="section level1">
 <h1>Get data</h1>
-<p>Let’s use <a href="https://github.com/hadley/rvest">Hadley Wickham’s <code>rvest</code> package</a> to scrape the <a href="https://en.wikipedia.org/wiki/National_Basketball_Association">Wikipedia page for the NBA)</a>, which contains a table of teams and locations.</p>
+<p>We can scrape the <a href="https://en.wikipedia.org/wiki/National_Basketball_Association">NBA Wikipedia page</a> with the <a href="https://github.com/hadley/rvest"><code>rvest</code> package</a> to get a table of teams and locations.</p>
 <p>Start by loading <code>rvest</code> and some other packages for data manipulation.</p>
 <pre class="r"><code>library(dplyr)  # data manipulation and %&gt;%
 library(tidyr)  # tidying dataframes
 library(stringr); library(stringi)  # string manipulation
 library(rvest)  # web scraping
 library(knitr)  # print tables nicely</code></pre>
-<p>Then we’ll create objects that define the HTML for the web page and the table we want. The table can be defined by a CSS selector or an xpath; think of these as ‘addresses’ for HTML content. You can use the ‘inspect’ function in your browser or <a href="https://selectorgadget.com/">the selectorgadget browser extension</a> to get this information.</p>
+<p>We can extrac the table with its xpath, which is like an ‘address’ for HTML content. You can use the ‘inspect’ function in your browser or <a href="https://selectorgadget.com/">the selectorgadget browser extension</a> to get this information.</p>
 <pre class="r"><code># Read the HTML from a specified web URL
 html &lt;- read_html(&quot;https://en.wikipedia.org/wiki/National_Basketball_Association&quot;)
 
 # Use selectorgadget or your browser&#39;s &#39;inspect&#39; mode to get xpath
 table_xpath &lt;- &#39;//*[@id=&quot;mw-content-text&quot;]/div/table[4]&#39;</code></pre>
-<p>Now we can collect the table and get the parts we want: team names and locations. We can get the latter as both latitude-longitude coordinates and as text. Text can be parsed by Google Maps if words are separated by the plus symbol: <code>arena+city+state</code>.</p>
-<p>Steps to do this are annotated in the code below.</p>
+<p>Now we can collect the table and get the parts we want: team names and locations. We can get the latter as both latitude-longitude coordinates and as text. Text can be parsed by Google Maps if words are separated by the plus symbol: <code>arena+city+state</code>. Steps to do this are annotated in the code below.</p>
 <pre class="r"><code>nba_table &lt;-
   # Read HTML, isolate table, focus on NW
   html_nodes(x = html, xpath = table_xpath) %&gt;%  # scrape the HTML
@@ -112,29 +116,54 @@ table_xpath &lt;- &#39;//*[@id=&quot;mw-content-text&quot;]/div/table[4]&#39;</c
     Latitude, Longitude, Search
   )
 
-nba_table  # print</code></pre>
-<pre><code>##                     Team Team code                   Arena
-## 1         Denver Nuggets       DEN            Pepsi Center
-## 2 Minnesota Timberwolves       MIN           Target Center
-## 3  Oklahoma City Thunder       OKC Chesapeake Energy Arena
-## 4 Portland Trail Blazers       POR             Moda Center
-## 5              Utah Jazz       UTA Vivint Smart Home Arena
-##                      City Latitude  Longitude
-## 1        Denver, Colorado 39.74861 -105.00750
-## 2  Minneapolis, Minnesota 44.97944  -93.27611
-## 3 Oklahoma City, Oklahoma 35.46333  -97.51500
-## 4        Portland, Oregon 45.53167 -122.66667
-## 5    Salt Lake City, Utah 40.76833 -111.90111
-##                                           Search
-## 1                   Pepsi+Center+Denver+Colorado
-## 2            Target+Center+Minneapolis+Minnesota
-## 3 Chesapeake+Energy+Arena+Oklahoma+City+Oklahoma
-## 4                    Moda+Center+Portland+Oregon
-## 5    Vivint+Smart+Home+Arena+Salt+Lake+City+Utah</code></pre>
+# Print a simple version of the table
+select(nba_table, `Team code`, Latitude, Longitude, Search) %&gt;% kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Team code</th>
+<th align="right">Latitude</th>
+<th align="right">Longitude</th>
+<th align="left">Search</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">DEN</td>
+<td align="right">39.74861</td>
+<td align="right">-105.00750</td>
+<td align="left">Pepsi+Center+Denver+Colorado</td>
+</tr>
+<tr class="even">
+<td align="left">MIN</td>
+<td align="right">44.97944</td>
+<td align="right">-93.27611</td>
+<td align="left">Target+Center+Minneapolis+Minnesota</td>
+</tr>
+<tr class="odd">
+<td align="left">OKC</td>
+<td align="right">35.46333</td>
+<td align="right">-97.51500</td>
+<td align="left">Chesapeake+Energy+Arena+Oklahoma+City+Oklahoma</td>
+</tr>
+<tr class="even">
+<td align="left">POR</td>
+<td align="right">45.53167</td>
+<td align="right">-122.66667</td>
+<td align="left">Moda+Center+Portland+Oregon</td>
+</tr>
+<tr class="odd">
+<td align="left">UTA</td>
+<td align="right">40.76833</td>
+<td align="right">-111.90111</td>
+<td align="left">Vivint+Smart+Home+Arena+Salt+Lake+City+Utah</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="map-locations" class="section level1">
 <h1>Map locations</h1>
-<p>We can map the latitude and longitude to prove we’ve isolated them correctly.</p>
+<p>We can map the latitude and longitude for fun.</p>
 <pre class="r"><code>library(leaflet)  # for interactive maps
 
 leaflet(nba_table) %&gt;%
@@ -156,7 +185,7 @@ leaflet(nba_table) %&gt;%
         nba_table$`Team code` == &quot;POR&quot; ~ &quot;black&quot;,
         nba_table$`Team code` == &quot;UTA&quot; ~ &quot;darkblue&quot;
       ),
-      iconColor = case_when(
+      iconColor = case_when(  # see teamcolorcodes.com
         nba_table$`Team code` == &quot;DEN&quot; ~ &quot;#FEC524&quot;,
         nba_table$`Team code` == &quot;MIN&quot; ~ &quot;#9EA2A2&quot;,
         nba_table$`Team code` == &quot;OKC&quot; ~ &quot;#EF3B24&quot;,
@@ -169,12 +198,12 @@ leaflet(nba_table) %&gt;%
 <div id="htmlwidget-1" style="width:672px;height:480px;" class="leaflet html-widget"></div>
 <script type="application/json" data-for="htmlwidget-1">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"fitBounds":[34,-125,46,-90,[]],"calls":[{"method":"addProviderTiles","args":["Stamen.TonerLite",null,null,{"errorTileUrl":"","noWrap":false,"detectRetina":false}]},{"method":"addAwesomeMarkers","args":[[39.748611,44.979444,35.463333,45.531667,40.768333],[-105.0075,-93.276111,-97.515,-122.666667,-111.901111],{"icon":"ion-ios-basketball","markerColor":["darkblue","darkblue","blue","black","darkblue"],"iconColor":["#FEC524","#9EA2A2","#EF3B24","#E03A3E","#00471B"],"spin":false,"squareMarker":false,"iconRotate":0,"font":"monospace","prefix":"ion"},null,null,{"interactive":true,"draggable":false,"keyboard":true,"title":"","alt":"","zIndexOffset":0,"opacity":1,"riseOnHover":false,"riseOffset":250},["<b>Denver Nuggets<\/b><br>Pepsi Center<br>Denver, Colorado","<b>Minnesota Timberwolves<\/b><br>Target Center<br>Minneapolis, Minnesota","<b>Oklahoma City Thunder<\/b><br>Chesapeake Energy Arena<br>Oklahoma City, Oklahoma","<b>Portland Trail Blazers<\/b><br>Moda Center<br>Portland, Oregon","<b>Utah Jazz<\/b><br>Vivint Smart Home Arena<br>Salt Lake City, Utah"],null,null,null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]},{"method":"addMeasure","args":[{"position":"topright","primaryLengthUnit":"feet","primaryAreaUnit":"acres","activeColor":"#ABE67E","completedColor":"#C8F2BE","popupOptions":{"className":"leaflet-measure-resultpopup","autoPanPadding":[10,10]},"captureZIndex":10000,"localization":"en","decPoint":".","thousandsSep":","}]}],"limits":{"lat":[35.463333,45.531667],"lng":[-122.666667,-93.276111]}},"evals":[],"jsHooks":[]}</script>
 </div>
-<div id="calculate-distances" class="section level1">
-<h1>Calculate distances</h1>
-<p>The basic arguments to the <code>gmpasdistance()</code> function are the origin and destination (can be an address, postcode or latlong coordinates), the mode of travel (car, public transit, walking) and the return format (shape) of the data (each origin-destination pair per row, or a matrix). We want all possible combinations</p>
-<p>We can make our key available in the package environment by using the <code>set.api.key()</code> function from the <code>gmapsdistance</code> package.</p>
+<div id="get-travel-distances" class="section level1">
+<h1>Get travel distances</h1>
+<p>We start by making our API key available in the package environment by using the <code>set.api.key()</code> function from <code>gmapsdistance</code>.</p>
 <pre class="r"><code>library(gmapsdistance)
-set.api.key(&quot;YOUR-API-KEY&quot;)</code></pre>
+set.api.key(&quot;YOUR-API-KEY&quot;)  # replace with your key</code></pre>
+<p>The basic arguments to the <code>gmapsdistance()</code> function are the origin and destination (can be an address, postcode or latlong coordinates), the mode of travel (car, public transit, walking) and the return format (shape) of the data (each origin-destination pair per row, or a matrix). We want all possible combinations.</p>
 <p>Now we can query Google Maps with the API key. I’ve explained the function arguments in the code comments.</p>
 <pre class="r"><code>nba_travel &lt;- 
   gmapsdistance(
@@ -185,10 +214,11 @@ set.api.key(&quot;YOUR-API-KEY&quot;)</code></pre>
     mode = &quot;driving&quot;,  # rather than walking, public transport or cycling
     shape = &quot;long&quot;  # one row per location-pair
   )</code></pre>
+<p>I’ve focused here on driving as the mode of transport. Note that you can also do things like set specific start times and dates, but I’ve left these out for simplicity.</p>
 </div>
-<div id="output" class="section level1">
-<h1>Output</h1>
-<p>What does the output look like?</p>
+<div id="travel-distance-output" class="section level1">
+<h1>Travel distance output</h1>
+<p>What does the returned data look like?</p>
 <pre class="r"><code>glimpse(nba_travel)</code></pre>
 <pre><code>## List of 3
 ##  $ Time    :&#39;data.frame&#39;:    25 obs. of  3 variables:
@@ -209,10 +239,10 @@ set.api.key(&quot;YOUR-API-KEY&quot;)</code></pre>
 <li><code>de</code> – the destination point</li>
 <li>one of <code>Time</code> in seconds, <code>Distance</code> in metres or <code>Status</code> (whether the request was successful)</li>
 </ul>
-<p>All our requests returned ‘OK’ for <code>Status</code> so there were no problems wth fetching the data.</p>
+<p>All our requests returned ‘OK’ for <code>Status</code> so there were no problems with fetching the data.</p>
 </div>
-<div id="results-travel-distance" class="section level1">
-<h1>Results: travel distance</h1>
+<div id="exploring-results" class="section level1">
+<h1>Exploring results</h1>
 <p>The data is returned in a tidy data frame with one row per origin-destination. We can clean this up by matching three-letter team codes to the data, arranging by distance within origin location and removing rows that provide the distance from each team to themselves (i.e. zero kilometres).</p>
 <pre class="r"><code># Create a mini-lookup of search strings to three-letter team codes
 nba_lookup &lt;- select(nba_table, `Team code`, Search)
@@ -221,22 +251,23 @@ nba_lookup &lt;- select(nba_table, `Team code`, Search)
 nba_distance &lt;- nba_travel$Distance %&gt;%
   left_join(nba_lookup, by = c(&quot;or&quot; = &quot;Search&quot;)) %&gt;% 
   left_join(
-    nba_lookup, by = c(&quot;de&quot; = &quot;Search&quot;), suffix = c(&quot; (or)&quot;, &quot; (de)&quot;)
+    nba_lookup, by = c(&quot;de&quot; = &quot;Search&quot;), suffix = c(&quot; (origin)&quot;, &quot; (destination)&quot;)
   ) %&gt;% 
   mutate(Distance = round(Distance/1000, 1)) %&gt;% # m to km
-  select(`Team code (or)`, `Team code (de)`, Distance)
+  select(`Team code (origin)`, `Team code (destination)`, Distance)
 
 # View table
 nba_distance %&gt;%
-  arrange(`Team code (or)`, desc(Distance)) %&gt;% 
-  filter(Distance != 0) %&gt;% 
+  arrange(`Team code (origin)`, desc(Distance)) %&gt;% 
+  filter(Distance != 0) %&gt;%
+  rename(`Distance (km)` = Distance) %&gt;% 
   kable()</code></pre>
 <table>
 <thead>
 <tr class="header">
-<th align="left">Team code (or)</th>
-<th align="left">Team code (de)</th>
-<th align="right">Distance</th>
+<th align="left">Team code (origin)</th>
+<th align="left">Team code (destination)</th>
+<th align="right">Distance (km)</th>
 </tr>
 </thead>
 <tbody>
@@ -345,20 +376,21 @@ nba_distance %&gt;%
 </div>
 <div id="travel-distance-summaries" class="section level1">
 <h1>Travel distance summaries</h1>
-<p>It’s trivial to summarise the furthest travel distance within the Northwest for each team.</p>
+<p>It’s trivial to summarise the furthest travel distance within the Northwest division for each team in that division.</p>
 <pre class="r"><code>nba_distance %&gt;% 
-  arrange(`Team code (or)`, desc(Distance)) %&gt;%
-  group_by(`Team code (or)`) %&gt;% 
+  arrange(`Team code (origin)`, desc(Distance)) %&gt;%
+  group_by(`Team code (origin)`) %&gt;% 
   slice(1) %&gt;% 
   ungroup() %&gt;% 
   arrange(desc(Distance)) %&gt;% 
+  rename(`Distance (km)` = Distance) %&gt;% 
   kable()</code></pre>
 <table>
 <thead>
 <tr class="header">
-<th align="left">Team code (or)</th>
-<th align="left">Team code (de)</th>
-<th align="right">Distance</th>
+<th align="left">Team code (origin)</th>
+<th align="left">Team code (destination)</th>
+<th align="right">Distance (km)</th>
 </tr>
 </thead>
 <tbody>
@@ -391,15 +423,15 @@ nba_distance %&gt;%
 </table>
 <p>Similarly, we can get the total distance each team must travel to each of the others in the Northwest Division.</p>
 <pre class="r"><code>nba_distance %&gt;% 
-  group_by(`Team code (or)`) %&gt;% 
-  summarise(`Total distance` = sum(Distance)) %&gt;% 
-  arrange(desc(`Total distance`)) %&gt;% 
+  group_by(`Team code (origin)`) %&gt;% 
+  summarise(`Total distance (km)` = sum(Distance)) %&gt;% 
+  arrange(desc(`Total distance (km)`)) %&gt;% 
   kable()</code></pre>
 <table>
 <thead>
 <tr class="header">
-<th align="left">Team code (or)</th>
-<th align="right">Total distance</th>
+<th align="left">Team code (origin)</th>
+<th align="right">Total distance (km)</th>
 </tr>
 </thead>
 <tbody>
@@ -425,18 +457,19 @@ nba_distance %&gt;%
 </tr>
 </tbody>
 </table>
+<p>So fans of the Portland Trail Blazers have the furthest total distance to travel to each of the other teams in the Northwest: over 9000 km. That’s about teh same distance as London to Johannesburg in a straight line. Bear in mind these totals are only the travel in one direction as well.</p>
 <div id="travel-distance-lookup" class="section level2">
 <h2>Travel distance lookup</h2>
 <p>Another way to view this is to ‘spread’ the data from long to wide format to create a look-up between origin teams (rows) and destination teams (columns).</p>
 <pre class="r"><code># Create easy look-up table for travel distances between teams
 nba_distance %&gt;% 
-  spread(key = `Team code (de)`, value = Distance) %&gt;% 
-  rename(Team = `Team code (or)`) %&gt;% 
+  spread(key = `Team code (destination)`, value = Distance) %&gt;% 
+  rename(`Travel distance (km)` = `Team code (origin)`) %&gt;% 
   kable()</code></pre>
 <table>
 <thead>
 <tr class="header">
-<th align="left">Team</th>
+<th align="left">Travel distance (km)</th>
 <th align="right">DEN</th>
 <th align="right">MIN</th>
 <th align="right">OKC</th>
@@ -487,27 +520,25 @@ nba_distance %&gt;%
 </tr>
 </tbody>
 </table>
+<p>So Portland Trail Blazers and Oklahoma City Thunder have a driving travel distance of over 3000 km. That’s a similar distance as from London to Longyearbyen on Svalbard.</p>
 </div>
-</div>
-<div id="results-travel-time" class="section level1">
-<h1>Results: travel time</h1>
-<p>You can do all of the above for travel time as well. I’m going to provide the simple lookup table for thr sake of brevity.</p>
-<pre class="r"><code>library(lubridate)  # tidy time handling
-
-# Create easy look-up table for travel time between teams
-nba_travel$Time %&gt;%
+<div id="travel-time-lookup" class="section level2">
+<h2>Travel time lookup</h2>
+<p>We can also create a team-to-team lookup for travel time.</p>
+<pre class="r"><code>nba_travel$Time %&gt;%
   left_join(nba_lookup, by = c(&quot;or&quot; = &quot;Search&quot;)) %&gt;% 
   left_join(
-    nba_lookup, by = c(&quot;de&quot; = &quot;Search&quot;), suffix = c(&quot; (or)&quot;, &quot; (de)&quot;)
+    nba_lookup, by = c(&quot;de&quot; = &quot;Search&quot;), suffix = c(&quot; (origin)&quot;, &quot; (destination)&quot;)
   ) %&gt;% 
-  mutate(Time = round(Time/60/60, 1)) %&gt;% 
-  select(`Team code (or)`, `Team code (de)`, Time) %&gt;% 
-  spread(key = `Team code (de)`, value = Time) %&gt;% 
+  mutate(Time = round(Time/60/60), 1) %&gt;% # s to hrs
+  select(`Team code (origin)`, `Team code (destination)`, Time) %&gt;% 
+  spread(key = `Team code (destination)`, value = Time) %&gt;% 
+  rename(`Travel time (hours)` = `Team code (origin)`) %&gt;% 
   kable()</code></pre>
 <table>
 <thead>
 <tr class="header">
-<th align="left">Team code (or)</th>
+<th align="left">Travel time (hours)</th>
 <th align="right">DEN</th>
 <th align="right">MIN</th>
 <th align="right">OKC</th>
@@ -518,44 +549,58 @@ nba_travel$Time %&gt;%
 <tbody>
 <tr class="odd">
 <td align="left">DEN</td>
-<td align="right">0.0</td>
-<td align="right">13.1</td>
-<td align="right">9.5</td>
-<td align="right">18.2</td>
-<td align="right">7.8</td>
+<td align="right">0</td>
+<td align="right">13</td>
+<td align="right">10</td>
+<td align="right">18</td>
+<td align="right">8</td>
 </tr>
 <tr class="even">
 <td align="left">MIN</td>
-<td align="right">13.1</td>
-<td align="right">0.0</td>
-<td align="right">11.5</td>
-<td align="right">25.2</td>
-<td align="right">18.4</td>
+<td align="right">13</td>
+<td align="right">0</td>
+<td align="right">11</td>
+<td align="right">25</td>
+<td align="right">18</td>
 </tr>
 <tr class="odd">
 <td align="left">OKC</td>
-<td align="right">9.6</td>
-<td align="right">11.5</td>
-<td align="right">0.0</td>
-<td align="right">27.5</td>
-<td align="right">17.1</td>
+<td align="right">10</td>
+<td align="right">11</td>
+<td align="right">0</td>
+<td align="right">28</td>
+<td align="right">17</td>
 </tr>
 <tr class="even">
 <td align="left">POR</td>
-<td align="right">18.2</td>
-<td align="right">25.3</td>
-<td align="right">27.5</td>
-<td align="right">0.0</td>
-<td align="right">11.2</td>
+<td align="right">18</td>
+<td align="right">25</td>
+<td align="right">27</td>
+<td align="right">0</td>
+<td align="right">11</td>
 </tr>
 <tr class="odd">
 <td align="left">UTA</td>
-<td align="right">7.8</td>
-<td align="right">18.3</td>
-<td align="right">17.0</td>
-<td align="right">11.2</td>
-<td align="right">0.0</td>
+<td align="right">8</td>
+<td align="right">18</td>
+<td align="right">17</td>
+<td align="right">11</td>
+<td align="right">0</td>
 </tr>
 </tbody>
 </table>
+<p>So more than half a day’s drive for many of the journeys and more than a day’s drive between Portland and Oklahoma City.</p>
+</div>
+</div>
+<div id="recap" class="section level1">
+<h1>Recap</h1>
+<p>We:</p>
+<ol style="list-style-type: decimal">
+<li><a href="https://cloud.google.com/maps-platform/">Got an API key</a></li>
+<li>Scraped and wrangled data <a href="https://CRAN.R-project.org/package=gmapsdistance">with <code>rvest</code></a> and other packages</li>
+<li>Mapped it with <a href="https://cran.r-project.org/web/packages/leaflet/index.html">the <code>leaflet</code> package</a></li>
+<li>Queried the Google Maps API <a href="https://CRAN.R-project.org/package=gmapsdistance">with <code>gmapsdistance</code></a></li>
+<li>Summarised the output</li>
+<li>Were impressed by the thought of any of these team’s fans actually driving these distances</li>
+</ol>
 </div>
