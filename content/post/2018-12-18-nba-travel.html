@@ -14,6 +14,22 @@ tags:
 draft: yes
 ---
 
+<script src="/rmarkdown-libs/htmlwidgets/htmlwidgets.js"></script>
+<script src="/rmarkdown-libs/jquery/jquery.min.js"></script>
+<link href="/rmarkdown-libs/leaflet/leaflet.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/leaflet/leaflet.js"></script>
+<link href="/rmarkdown-libs/leafletfix/leafletfix.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/Proj4Leaflet/proj4-compressed.js"></script>
+<script src="/rmarkdown-libs/Proj4Leaflet/proj4leaflet.js"></script>
+<link href="/rmarkdown-libs/rstudio_leaflet/rstudio_leaflet.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/leaflet-binding/leaflet.js"></script>
+<script src="/rmarkdown-libs/leaflet-providers/leaflet-providers.js"></script>
+<script src="/rmarkdown-libs/leaflet-providers-plugin/leaflet-providers-plugin.js"></script>
+<link href="/rmarkdown-libs/leaflet-awesomemarkers/leaflet.awesome-markers.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/leaflet-awesomemarkers/leaflet.awesome-markers.min.js"></script>
+<link href="/rmarkdown-libs/ionicons/ionicons.min.css" rel="stylesheet" />
+<link href="/rmarkdown-libs/leaflet-measure/leaflet-measure.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/leaflet-measure/leaflet-measure.min.js"></script>
 
 
 <p>Matt Dray (<a href="https://www.twitter.com/mattdray">@mattdray</a>)</p>
@@ -39,7 +55,10 @@ draft: yes
 <p>The R package <a href="https://cran.r-project.org/web/packages/gmapsdistance/index.html"><code>gmapsdistance</code></a> was written by Rodrigo Azuero, Demetrio Rodriguez and David Zarruk. It wraps the <a href="https://www.google.co.uk/maps">Google Maps</a> <a href="https://medium.freecodecamp.org/what-is-an-api-in-english-please-b880a3214a82">API</a>. You can use it to query origin and destination points for travel distance and duration for several modes of travel.</p>
 <p>We need an API key for Google Maps. This helps prevent misuse of the service and helps keeps track of your credit. The process is outlined in detail in <a href="https://developers.google.com/maps/documentation/distance-matrix/get-api-key#key">the Google developer documentation pages</a>. <a href="https://cloud.google.com/maps-platform/">Go to the Google Cloud maps platform pages</a> and follow the instructions. You’ll need a Google account to do this.</p>
 <p>The key is kept in <a href="https://console.cloud.google.com/">your Google Cloud console</a>.</p>
-<p>[INSERT AN IMAGE FROM THE GOOGLE MAPS API SIGN-UP PROCESS]</p>
+<div class="figure">
+<img src="/post/2018-12-18-nba-travel_files/1-select-product.png" alt="Setting up Google Maps platform on Google Cloud" />
+<p class="caption">Setting up Google Maps platform on Google Cloud</p>
+</div>
 </div>
 <div id="get-data" class="section level1">
 <h1>Get data</h1>
@@ -47,7 +66,7 @@ draft: yes
 <p>Start by loading <code>rvest</code> and some other packages for data manipulation.</p>
 <pre class="r"><code>library(dplyr)  # data manipulation and %&gt;%
 library(tidyr)  # tidying dataframes
-library(stringr)  # string manipulation
+library(stringr); library(stringi)  # string manipulation
 library(rvest)  # web scraping
 library(knitr)  # print tables nicely</code></pre>
 <p>Then we’ll create objects that define the HTML for the web page and the table we want. The table can be defined by a CSS selector or an xpath; think of these as ‘addresses’ for HTML content. You can use the ‘inspect’ function in your browser or <a href="https://selectorgadget.com/">the selectorgadget browser extension</a> to get this information.</p>
@@ -56,7 +75,6 @@ html &lt;- read_html(&quot;https://en.wikipedia.org/wiki/National_Basketball_Ass
 
 # Use selectorgadget or your browser&#39;s &#39;inspect&#39; mode to get xpath
 table_xpath &lt;- &#39;//*[@id=&quot;mw-content-text&quot;]/div/table[4]&#39;</code></pre>
-<p>[INSERT BROSWER INSPECT WITH XPATH HIGHLIGHTED]</p>
 <p>Now we can collect the table and get the parts we want: team names and locations. We can get the latter as both latitude-longitude coordinates and as text. Text can be parsed by Google Maps if words are separated by the plus symbol: <code>arena+city+state</code>.</p>
 <p>Steps to do this are annotated in the code below.</p>
 <pre class="r"><code>nba_table &lt;-
@@ -94,7 +112,25 @@ table_xpath &lt;- &#39;//*[@id=&quot;mw-content-text&quot;]/div/table[4]&#39;</c
     Latitude, Longitude, Search
   )
 
-kable(nba_table)  # print</code></pre>
+nba_table  # print</code></pre>
+<pre><code>##                     Team Team code                   Arena
+## 1         Denver Nuggets       DEN            Pepsi Center
+## 2 Minnesota Timberwolves       MIN           Target Center
+## 3  Oklahoma City Thunder       OKC Chesapeake Energy Arena
+## 4 Portland Trail Blazers       POR             Moda Center
+## 5              Utah Jazz       UTA Vivint Smart Home Arena
+##                      City Latitude  Longitude
+## 1        Denver, Colorado 39.74861 -105.00750
+## 2  Minneapolis, Minnesota 44.97944  -93.27611
+## 3 Oklahoma City, Oklahoma 35.46333  -97.51500
+## 4        Portland, Oregon 45.53167 -122.66667
+## 5    Salt Lake City, Utah 40.76833 -111.90111
+##                                           Search
+## 1                   Pepsi+Center+Denver+Colorado
+## 2            Target+Center+Minneapolis+Minnesota
+## 3 Chesapeake+Energy+Arena+Oklahoma+City+Oklahoma
+## 4                    Moda+Center+Portland+Oregon
+## 5    Vivint+Smart+Home+Arena+Salt+Lake+City+Utah</code></pre>
 </div>
 <div id="map-locations" class="section level1">
 <h1>Map locations</h1>
@@ -102,7 +138,8 @@ kable(nba_table)  # print</code></pre>
 <pre class="r"><code>library(leaflet)  # for interactive maps
 
 leaflet(nba_table) %&gt;%
-  addProviderTiles(providers$OpenStreetMap) %&gt;%
+  fitBounds(lng1 = -125, lng2 = -90, lat1 = 34, lat2 = 46) %&gt;% 
+  addProviderTiles(providers$Stamen.TonerLite) %&gt;%
   addAwesomeMarkers(
     lng = ~Longitude, lat = ~Latitude,
     popup = ~paste0(
@@ -115,20 +152,22 @@ leaflet(nba_table) %&gt;%
       markerColor = case_when(
         nba_table$`Team code` == &quot;DEN&quot; ~ &quot;darkblue&quot;,
         nba_table$`Team code` == &quot;MIN&quot; ~ &quot;darkblue&quot;,
-        nba_table$`Team code` == &quot;OKC&quot; ~ &quot;lightblue&quot;,
+        nba_table$`Team code` == &quot;OKC&quot; ~ &quot;blue&quot;,
         nba_table$`Team code` == &quot;POR&quot; ~ &quot;black&quot;,
         nba_table$`Team code` == &quot;UTA&quot; ~ &quot;darkblue&quot;
       ),
       iconColor = case_when(
-        nba_table$`Team code` == &quot;DEN&quot; ~ &quot;yellow&quot;,
-        nba_table$`Team code` == &quot;MIN&quot; ~ &quot;lightblue&quot;,
-        nba_table$`Team code` == &quot;OKC&quot; ~ &quot;orange&quot;,
-        nba_table$`Team code` == &quot;POR&quot; ~ &quot;red&quot;,
-        nba_table$`Team code` == &quot;UTA&quot; ~ &quot;green&quot;
+        nba_table$`Team code` == &quot;DEN&quot; ~ &quot;#FEC524&quot;,
+        nba_table$`Team code` == &quot;MIN&quot; ~ &quot;#9EA2A2&quot;,
+        nba_table$`Team code` == &quot;OKC&quot; ~ &quot;#EF3B24&quot;,
+        nba_table$`Team code` == &quot;POR&quot; ~ &quot;#E03A3E&quot;,
+        nba_table$`Team code` == &quot;UTA&quot; ~ &quot;#00471B&quot;
       )
     )
   ) %&gt;%
   addMeasure()</code></pre>
+<div id="htmlwidget-1" style="width:672px;height:480px;" class="leaflet html-widget"></div>
+<script type="application/json" data-for="htmlwidget-1">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"fitBounds":[34,-125,46,-90,[]],"calls":[{"method":"addProviderTiles","args":["Stamen.TonerLite",null,null,{"errorTileUrl":"","noWrap":false,"detectRetina":false}]},{"method":"addAwesomeMarkers","args":[[39.748611,44.979444,35.463333,45.531667,40.768333],[-105.0075,-93.276111,-97.515,-122.666667,-111.901111],{"icon":"ion-ios-basketball","markerColor":["darkblue","darkblue","blue","black","darkblue"],"iconColor":["#FEC524","#9EA2A2","#EF3B24","#E03A3E","#00471B"],"spin":false,"squareMarker":false,"iconRotate":0,"font":"monospace","prefix":"ion"},null,null,{"interactive":true,"draggable":false,"keyboard":true,"title":"","alt":"","zIndexOffset":0,"opacity":1,"riseOnHover":false,"riseOffset":250},["<b>Denver Nuggets<\/b><br>Pepsi Center<br>Denver, Colorado","<b>Minnesota Timberwolves<\/b><br>Target Center<br>Minneapolis, Minnesota","<b>Oklahoma City Thunder<\/b><br>Chesapeake Energy Arena<br>Oklahoma City, Oklahoma","<b>Portland Trail Blazers<\/b><br>Moda Center<br>Portland, Oregon","<b>Utah Jazz<\/b><br>Vivint Smart Home Arena<br>Salt Lake City, Utah"],null,null,null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]},{"method":"addMeasure","args":[{"position":"topright","primaryLengthUnit":"feet","primaryAreaUnit":"acres","activeColor":"#ABE67E","completedColor":"#C8F2BE","popupOptions":{"className":"leaflet-measure-resultpopup","autoPanPadding":[10,10]},"captureZIndex":10000,"localization":"en","decPoint":".","thousandsSep":","}]}],"limits":{"lat":[35.463333,45.531667],"lng":[-122.666667,-93.276111]}},"evals":[],"jsHooks":[]}</script>
 </div>
 <div id="calculate-distances" class="section level1">
 <h1>Calculate distances</h1>
@@ -151,6 +190,19 @@ set.api.key(&quot;YOUR-API-KEY&quot;)</code></pre>
 <h1>Output</h1>
 <p>What does the output look like?</p>
 <pre class="r"><code>glimpse(nba_travel)</code></pre>
+<pre><code>## List of 3
+##  $ Time    :&#39;data.frame&#39;:    25 obs. of  3 variables:
+##   ..$ or  : Factor w/ 5 levels &quot;Pepsi+Center+Denver+Colorado&quot;,..: 1 2 3 4 5 1 2 3 4 5 ...
+##   ..$ de  : Factor w/ 5 levels &quot;Pepsi+Center+Denver+Colorado&quot;,..: 1 1 1 1 1 2 2 2 2 2 ...
+##   ..$ Time: num [1:25] 0 47277 34477 65601 27969 ...
+##  $ Distance:&#39;data.frame&#39;:    25 obs. of  3 variables:
+##   ..$ or      : Factor w/ 5 levels &quot;Pepsi+Center+Denver+Colorado&quot;,..: 1 2 3 4 5 1 2 3 4 5 ...
+##   ..$ de      : Factor w/ 5 levels &quot;Pepsi+Center+Denver+Colorado&quot;,..: 1 1 1 1 1 2 2 2 2 2 ...
+##   ..$ Distance: num [1:25] 0 1471634 1091108 1997198 835730 ...
+##  $ Status  :&#39;data.frame&#39;:    25 obs. of  3 variables:
+##   ..$ or    : Factor w/ 5 levels &quot;Pepsi+Center+Denver+Colorado&quot;,..: 1 2 3 4 5 1 2 3 4 5 ...
+##   ..$ de    : Factor w/ 5 levels &quot;Pepsi+Center+Denver+Colorado&quot;,..: 1 1 1 1 1 2 2 2 2 2 ...
+##   ..$ status: chr [1:25] &quot;OK&quot; &quot;OK&quot; &quot;OK&quot; &quot;OK&quot; ...</code></pre>
 <p>It’s a list object with three elements: <code>Time</code>, <code>Distance</code> and <code>Status</code>. Each list element is a dataframe with 25 observations (each team paired with every other) and 3 columns:</p>
 <ul>
 <li><code>or</code> – the origin point</li>
@@ -179,6 +231,117 @@ nba_distance %&gt;%
   arrange(`Team code (or)`, desc(Distance)) %&gt;% 
   filter(Distance != 0) %&gt;% 
   kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Team code (or)</th>
+<th align="left">Team code (de)</th>
+<th align="right">Distance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">DEN</td>
+<td align="left">POR</td>
+<td align="right">1996.7</td>
+</tr>
+<tr class="even">
+<td align="left">DEN</td>
+<td align="left">MIN</td>
+<td align="right">1471.4</td>
+</tr>
+<tr class="odd">
+<td align="left">DEN</td>
+<td align="left">OKC</td>
+<td align="right">1090.5</td>
+</tr>
+<tr class="even">
+<td align="left">DEN</td>
+<td align="left">UTA</td>
+<td align="right">836.1</td>
+</tr>
+<tr class="odd">
+<td align="left">MIN</td>
+<td align="left">POR</td>
+<td align="right">2781.2</td>
+</tr>
+<tr class="even">
+<td align="left">MIN</td>
+<td align="left">UTA</td>
+<td align="right">1984.8</td>
+</tr>
+<tr class="odd">
+<td align="left">MIN</td>
+<td align="left">DEN</td>
+<td align="right">1471.6</td>
+</tr>
+<tr class="even">
+<td align="left">MIN</td>
+<td align="left">OKC</td>
+<td align="right">1270.4</td>
+</tr>
+<tr class="odd">
+<td align="left">OKC</td>
+<td align="left">POR</td>
+<td align="right">3072.2</td>
+</tr>
+<tr class="even">
+<td align="left">OKC</td>
+<td align="left">UTA</td>
+<td align="right">1911.6</td>
+</tr>
+<tr class="odd">
+<td align="left">OKC</td>
+<td align="left">MIN</td>
+<td align="right">1266.9</td>
+</tr>
+<tr class="even">
+<td align="left">OKC</td>
+<td align="left">DEN</td>
+<td align="right">1091.1</td>
+</tr>
+<tr class="odd">
+<td align="left">POR</td>
+<td align="left">OKC</td>
+<td align="right">3072.9</td>
+</tr>
+<tr class="even">
+<td align="left">POR</td>
+<td align="left">MIN</td>
+<td align="right">2782.0</td>
+</tr>
+<tr class="odd">
+<td align="left">POR</td>
+<td align="left">DEN</td>
+<td align="right">1997.2</td>
+</tr>
+<tr class="even">
+<td align="left">POR</td>
+<td align="left">UTA</td>
+<td align="right">1230.1</td>
+</tr>
+<tr class="odd">
+<td align="left">UTA</td>
+<td align="left">MIN</td>
+<td align="right">2002.8</td>
+</tr>
+<tr class="even">
+<td align="left">UTA</td>
+<td align="left">OKC</td>
+<td align="right">1911.4</td>
+</tr>
+<tr class="odd">
+<td align="left">UTA</td>
+<td align="left">POR</td>
+<td align="right">1228.9</td>
+</tr>
+<tr class="even">
+<td align="left">UTA</td>
+<td align="left">DEN</td>
+<td align="right">835.7</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="travel-distance-summaries" class="section level1">
 <h1>Travel distance summaries</h1>
@@ -190,12 +353,78 @@ nba_distance %&gt;%
   ungroup() %&gt;% 
   arrange(desc(Distance)) %&gt;% 
   kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Team code (or)</th>
+<th align="left">Team code (de)</th>
+<th align="right">Distance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">POR</td>
+<td align="left">OKC</td>
+<td align="right">3072.9</td>
+</tr>
+<tr class="even">
+<td align="left">OKC</td>
+<td align="left">POR</td>
+<td align="right">3072.2</td>
+</tr>
+<tr class="odd">
+<td align="left">MIN</td>
+<td align="left">POR</td>
+<td align="right">2781.2</td>
+</tr>
+<tr class="even">
+<td align="left">UTA</td>
+<td align="left">MIN</td>
+<td align="right">2002.8</td>
+</tr>
+<tr class="odd">
+<td align="left">DEN</td>
+<td align="left">POR</td>
+<td align="right">1996.7</td>
+</tr>
+</tbody>
+</table>
 <p>Similarly, we can get the total distance each team must travel to each of the others in the Northwest Division.</p>
 <pre class="r"><code>nba_distance %&gt;% 
   group_by(`Team code (or)`) %&gt;% 
   summarise(`Total distance` = sum(Distance)) %&gt;% 
   arrange(desc(`Total distance`)) %&gt;% 
   kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Team code (or)</th>
+<th align="right">Total distance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">POR</td>
+<td align="right">9082.2</td>
+</tr>
+<tr class="even">
+<td align="left">MIN</td>
+<td align="right">7508.0</td>
+</tr>
+<tr class="odd">
+<td align="left">OKC</td>
+<td align="right">7341.8</td>
+</tr>
+<tr class="even">
+<td align="left">UTA</td>
+<td align="right">5978.8</td>
+</tr>
+<tr class="odd">
+<td align="left">DEN</td>
+<td align="right">5394.7</td>
+</tr>
+</tbody>
+</table>
 <div id="travel-distance-lookup" class="section level2">
 <h2>Travel distance lookup</h2>
 <p>Another way to view this is to ‘spread’ the data from long to wide format to create a look-up between origin teams (rows) and destination teams (columns).</p>
@@ -204,6 +433,60 @@ nba_distance %&gt;%
   spread(key = `Team code (de)`, value = Distance) %&gt;% 
   rename(Team = `Team code (or)`) %&gt;% 
   kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Team</th>
+<th align="right">DEN</th>
+<th align="right">MIN</th>
+<th align="right">OKC</th>
+<th align="right">POR</th>
+<th align="right">UTA</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">DEN</td>
+<td align="right">0.0</td>
+<td align="right">1471.4</td>
+<td align="right">1090.5</td>
+<td align="right">1996.7</td>
+<td align="right">836.1</td>
+</tr>
+<tr class="even">
+<td align="left">MIN</td>
+<td align="right">1471.6</td>
+<td align="right">0.0</td>
+<td align="right">1270.4</td>
+<td align="right">2781.2</td>
+<td align="right">1984.8</td>
+</tr>
+<tr class="odd">
+<td align="left">OKC</td>
+<td align="right">1091.1</td>
+<td align="right">1266.9</td>
+<td align="right">0.0</td>
+<td align="right">3072.2</td>
+<td align="right">1911.6</td>
+</tr>
+<tr class="even">
+<td align="left">POR</td>
+<td align="right">1997.2</td>
+<td align="right">2782.0</td>
+<td align="right">3072.9</td>
+<td align="right">0.0</td>
+<td align="right">1230.1</td>
+</tr>
+<tr class="odd">
+<td align="left">UTA</td>
+<td align="right">835.7</td>
+<td align="right">2002.8</td>
+<td align="right">1911.4</td>
+<td align="right">1228.9</td>
+<td align="right">0.0</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div id="results-travel-time" class="section level1">
@@ -221,4 +504,58 @@ nba_travel$Time %&gt;%
   select(`Team code (or)`, `Team code (de)`, Time) %&gt;% 
   spread(key = `Team code (de)`, value = Time) %&gt;% 
   kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Team code (or)</th>
+<th align="right">DEN</th>
+<th align="right">MIN</th>
+<th align="right">OKC</th>
+<th align="right">POR</th>
+<th align="right">UTA</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">DEN</td>
+<td align="right">0.0</td>
+<td align="right">13.1</td>
+<td align="right">9.5</td>
+<td align="right">18.2</td>
+<td align="right">7.8</td>
+</tr>
+<tr class="even">
+<td align="left">MIN</td>
+<td align="right">13.1</td>
+<td align="right">0.0</td>
+<td align="right">11.5</td>
+<td align="right">25.2</td>
+<td align="right">18.4</td>
+</tr>
+<tr class="odd">
+<td align="left">OKC</td>
+<td align="right">9.6</td>
+<td align="right">11.5</td>
+<td align="right">0.0</td>
+<td align="right">27.5</td>
+<td align="right">17.1</td>
+</tr>
+<tr class="even">
+<td align="left">POR</td>
+<td align="right">18.2</td>
+<td align="right">25.3</td>
+<td align="right">27.5</td>
+<td align="right">0.0</td>
+<td align="right">11.2</td>
+</tr>
+<tr class="odd">
+<td align="left">UTA</td>
+<td align="right">7.8</td>
+<td align="right">18.3</td>
+<td align="right">17.0</td>
+<td align="right">11.2</td>
+<td align="right">0.0</td>
+</tr>
+</tbody>
+</table>
 </div>

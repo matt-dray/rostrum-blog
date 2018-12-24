@@ -15,7 +15,7 @@ draft: yes
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(eval=FALSE)
+knitr::opts_chunk$set(eval=TRUE)
 library(gmapsdistance)  # because the chunk it's in is eval=FALSE
 api_key <- read.table("~/Desktop/api_key.txt")[1, 1]  # stored locally
 set.api.key(api_key)  # set key
@@ -49,7 +49,7 @@ We need an API key for Google Maps. This helps prevent misuse of the service and
 
 The key is kept in [your Google Cloud console](https://console.cloud.google.com/).
 
-[INSERT AN IMAGE FROM THE GOOGLE MAPS API SIGN-UP PROCESS]
+![Setting up Google Maps platform on Google Cloud](/post/2018-12-18-nba-travel_files/1-select-product.png)
 
 # Get data
 
@@ -60,7 +60,7 @@ Start by loading `rvest` and some other packages for data manipulation.
 ```{r load-packages, message=FALSE, warning=FALSE}
 library(dplyr)  # data manipulation and %>%
 library(tidyr)  # tidying dataframes
-library(stringr)  # string manipulation
+library(stringr); library(stringi)  # string manipulation
 library(rvest)  # web scraping
 library(knitr)  # print tables nicely
 ```
@@ -74,8 +74,6 @@ html <- read_html("https://en.wikipedia.org/wiki/National_Basketball_Association
 # Use selectorgadget or your browser's 'inspect' mode to get xpath
 table_xpath <- '//*[@id="mw-content-text"]/div/table[4]'
 ```
-
-[INSERT BROSWER INSPECT WITH XPATH HIGHLIGHTED]
 
 Now we can collect the table and get the parts we want: team names and locations. We can get the latter as both latitude-longitude coordinates and as text. Text can be parsed by Google Maps if words are separated by the plus symbol: `arena+city+state`.
 
@@ -117,7 +115,7 @@ nba_table <-
     Latitude, Longitude, Search
   )
 
-kable(nba_table)  # print
+nba_table  # print
 ```
 
 # Map locations
@@ -128,7 +126,8 @@ We can map the latitude and longitude to prove we've isolated them correctly.
 library(leaflet)  # for interactive maps
 
 leaflet(nba_table) %>%
-  addProviderTiles(providers$OpenStreetMap) %>%
+  fitBounds(lng1 = -125, lng2 = -90, lat1 = 34, lat2 = 46) %>% 
+  addProviderTiles(providers$Stamen.TonerLite) %>%
   addAwesomeMarkers(
     lng = ~Longitude, lat = ~Latitude,
     popup = ~paste0(
@@ -141,16 +140,16 @@ leaflet(nba_table) %>%
       markerColor = case_when(
         nba_table$`Team code` == "DEN" ~ "darkblue",
         nba_table$`Team code` == "MIN" ~ "darkblue",
-        nba_table$`Team code` == "OKC" ~ "lightblue",
+        nba_table$`Team code` == "OKC" ~ "blue",
         nba_table$`Team code` == "POR" ~ "black",
         nba_table$`Team code` == "UTA" ~ "darkblue"
       ),
       iconColor = case_when(
-        nba_table$`Team code` == "DEN" ~ "yellow",
-        nba_table$`Team code` == "MIN" ~ "lightblue",
-        nba_table$`Team code` == "OKC" ~ "orange",
-        nba_table$`Team code` == "POR" ~ "red",
-        nba_table$`Team code` == "UTA" ~ "green"
+        nba_table$`Team code` == "DEN" ~ "#FEC524",
+        nba_table$`Team code` == "MIN" ~ "#9EA2A2",
+        nba_table$`Team code` == "OKC" ~ "#EF3B24",
+        nba_table$`Team code` == "POR" ~ "#E03A3E",
+        nba_table$`Team code` == "UTA" ~ "#00471B"
       )
     )
   ) %>%
