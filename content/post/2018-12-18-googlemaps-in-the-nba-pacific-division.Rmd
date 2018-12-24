@@ -15,7 +15,7 @@ draft: yes
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(eval=TRUE)
+knitr::opts_chunk$set(eval=FALSE)
 library(gmapsdistance)  # because the chunk it's in is eval=FALSE
 api_key <- read.table("~/Desktop/api_key.txt")[1, 1]  # stored locally
 set.api.key(api_key)  # set key
@@ -35,32 +35,37 @@ Yes, for the Central division of the Eastern Conference. It contains the Chicago
 
 But also no, not for the Northwest Division of the Western Conference. This stretches from Portland Trail Blazers in the Pacific Northwest to Oklahoma City Thunder, which is actually in the country's south-central region. Far from clustering, Utah Jazz and Colorado's Denver Nuggets sit on a line between these two. The fifth team? That's Minnesota Timberwolves, which could be mistaken for part of the Central Division
 
+![NBA team locations with states coloured by division (CC BY-SA 2.5, [Wikipedia](https://en.wikipedia.org/wiki/National_Basketball_Association#/media/File:Map_of_USA_and_Canada,_NBA,_zoom.svg))](/post/2018-12-18-googlemaps-in-the-nba-pacific-division_files/nba-map-wiki.png)
+
 What does this mean for the travelling basketball fans?
 
-# Travel time with `gmapsdistance`
+# Google Maps and `gmapsdistance`
 
-The R package [`gmapsdistance`](https://cran.r-project.org/web/packages/gmapsdistance/index.html) was written by Rodrigo Azuero, Demetrio Rodriguez and David Zarruk. It wraps the [Google Maps](https://www.google.co.uk/maps) [API](https://medium.freecodecamp.org/what-is-an-api-in-english-please-b880a3214a82). You can use it to query origin and destination points for travel distance (metres) and duration (seconds) for several modes of travel: on foot, by car, by public transport, or by bicycle (for parts of North America only).
+If you didn't know, Google Maps is one of many services that calculates journey distances and durations. 
 
-We need an API key for Google Maps. This helps prevent misuse of their service and tracks your access. Your first $300 is free.
+The R package [`gmapsdistance`](https://cran.r-project.org/web/packages/gmapsdistance/index.html) was written by Rodrigo Azuero, Demetrio Rodriguez and David Zarruk. It wraps the [Google Maps](https://www.google.co.uk/maps) [API](https://medium.freecodecamp.org/what-is-an-api-in-english-please-b880a3214a82). You can use it to query origin and destination points for travel distance and duration for several modes of travel.
 
-The process is outlined in detail on [the Google developer pages](https://developers.google.com/maps/documentation/distance-matrix/get-api-key#key). [Go to the website](https://cloud.google.com/maps-platform/) and follow the instructions.
+We need an API key for Google Maps. This helps prevent misuse of the service and helps keeps track of your credit. The process is outlined in detail in [the Google developer documentation pages](https://developers.google.com/maps/documentation/distance-matrix/get-api-key#key). [Go to the Google Cloud maps platform pages](https://cloud.google.com/maps-platform/) and follow the instructions. You'll need a Google account to do this.
 
-Keep this key safe for now; we'll read it in later.
+The key is kept in [your Google Cloud console](https://console.cloud.google.com/).
+
+[INSERT AN IMAGE FROM THE GOOGLE MAPS API SIGN-UP PROCESS]
 
 # Get data
 
-We can use [Hadley Wickham's `rvest` package](https://github.com/hadley/rvest) to scrape the [Wikipedia page for the NBA)](https://en.wikipedia.org/wiki/National_Basketball_Association), which contains a table of teams and locations.
+Let's use [Hadley Wickham's `rvest` package](https://github.com/hadley/rvest) to scrape the [Wikipedia page for the NBA)](https://en.wikipedia.org/wiki/National_Basketball_Association), which contains a table of teams and locations.
+
+Start by loading `rvest` and some other packages for data manipulation.
 
 ```{r load-packages, message=FALSE, warning=FALSE}
-library(dplyr)  # data manipulation
-library(rvest)  # web scraping
-library(stringr)  # string manipulation
-library(knitr)  # to print our tables
+library(dplyr)  # data manipulation and %>%
 library(tidyr)  # tidying dataframes
-
+library(stringr)  # string manipulation
+library(rvest)  # web scraping
+library(knitr)  # print tables nicely
 ```
 
-Then we'll create objects that define the HTML for the web page and the table we want. The latter is defined using a CSS selector or, as in our case, an xpath. Think of these as 'addresses' for HTML content. You can use the 'inspect' function in your browser or [the selectorgadget browser extension](https://selectorgadget.com/) to get this information. 
+Then we'll create objects that define the HTML for the web page and the table we want. The table can be defined by a CSS selector or an xpath; think of these as 'addresses' for HTML content. You can use the 'inspect' function in your browser or [the selectorgadget browser extension](https://selectorgadget.com/) to get this information.
 
 ```{r set-scrape-variables}
 # Read the HTML from a specified web URL
@@ -70,23 +75,34 @@ html <- read_html("https://en.wikipedia.org/wiki/National_Basketball_Association
 table_xpath <- '//*[@id="mw-content-text"]/div/table[4]'
 ```
 
-Now we can collect the table and manipulate it.
+[INSERT BROSWER INSPECT WITH XPATH HIGHLIGHTED]
 
-We could use the latitude and longitude from this table as our origin and destination points, but the arena name, city and state will be enough. We can create a column in our data in the form `arena+city+state`, which is the format required by Google Maps.
+Now we can collect the table and get the parts we want: team names and locations. We can get the latter as both latitude-longitude coordinates and as text. Text can be parsed by Google Maps if words are separated by the plus symbol: `arena+city+state`.
+
+Steps to do this are annotated in the code below.
 
 ```{r get-nba-table}
 nba_table <-
+  # Read HTML, isolate table, focus on NW
   html_nodes(x = html, xpath = table_xpath) %>%  # scrape the HTML
   html_table(fill = TRUE, header = NA) %>%  # parse as table
   as.data.frame() %>%  # convert from list
   filter(Division == "Northwest") %>%  # NW division only
+  # Isolate the latitude and longitude
   separate(Coordinates, c("Coords1", "Coords2", "Coords3"), " / ") %>% 
   separate(Coords3, c("Latitude", "Longitude"), sep = "; ") %>% 
   separate(Longitude, c("Longitude", "X"), sep = " \\(") %>% 
   mutate(
+    # Make coordinates numeric
+    Latitude = as.numeric(Latitude),  # make numeric
+    Longitude = stri_escape_unicode(Longitude),  # there's a weird character
+    Longitude = str_replace(Longitude, "\\\\ufeff", ""),  # remove it
+    Longitude = as.numeric(Longitude),  # make numeric
+    # Create text search string
     Search = paste(Arena, City.State),  # combine location details
     Search = str_replace_all(Search, ",", ""),  # replace comma with blank
     Search = str_replace_all(Search, " ", "+"),  # replace space with plus
+    # Add three-letter team codes to help simplify outputs
     `Team code` = case_when(
       Team == "Denver Nuggets" ~ "DEN",
       Team == "Minnesota Timberwolves" ~ "MIN",
@@ -95,28 +111,31 @@ nba_table <-
       Team == "Utah Jazz" ~ "UTA"
     )
   ) %>% 
-  select(
-    Team, `Team code`, Arena, City = City.State, Latitude, Longitude, Search
+  select(  # Retain columns of interest only
+    Team, `Team code`,
+    Arena, City = City.State,
+    Latitude, Longitude, Search
   )
 
-kable(nba_table)
+kable(nba_table)  # print
 ```
 
-So now we have a simple table of teams, locations and a search string that we'll pass to `gmapsdistance()`.
+# Map locations
 
-First, let's take a look at the locations.
+We can map the latitude and longitude to prove we've isolated them correctly.
 
 ```{r map}
-# library(leaflet)
-# 
-# nba_table %>%
-#   mutate(
-#     Latitude = as.numeric(Latitude),
-#     Longitude = as.numeric(Longitude)
-#   ) %>% 
-#   leaflet() %>%
-#   addProviderTiles(providers$OpenStreetMap) %>% 
-#   addAwesomeMarkers(lng = ~Longitude, lat = ~Latitude)
+library(leaflet)  # for interactive maps
+
+nba_table %>%
+  leaflet() %>%
+  addProviderTiles(providers$OpenStreetMap) %>%
+  addAwesomeMarkers(
+    lng = ~Longitude, lat = ~Latitude,
+    # add basketball icons
+    # colour icons by team colours
+  )
+# add stright lines between points?
 ```
 
 # Calculate distances

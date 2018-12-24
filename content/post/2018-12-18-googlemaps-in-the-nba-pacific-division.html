@@ -27,43 +27,59 @@ draft: yes
 <p>So it makes sense that the USA’s National Basketball Association (NBA) organised their teams geographically: two ‘conferences’ – Western and Eastern – with three ‘divisions’ of five teams each, right?</p>
 <p>Yes, for the Central division of the Eastern Conference. It contains the Chicago Bulls, Cleveland Cavaliers, Detroit Pistons, Indiana Pacers and Milwaukee Bucks – cities clustered near Lakes Michigan and Erie.</p>
 <p>But also no, not for the Northwest Division of the Western Conference. This stretches from Portland Trail Blazers in the Pacific Northwest to Oklahoma City Thunder, which is actually in the country’s south-central region. Far from clustering, Utah Jazz and Colorado’s Denver Nuggets sit on a line between these two. The fifth team? That’s Minnesota Timberwolves, which could be mistaken for part of the Central Division</p>
+<div class="figure">
+<img src="/post/2018-12-18-googlemaps-in-the-nba-pacific-division_files/nba-map-wiki.png" alt="NBA team locations with states coloured by division (CC BY-SA 2.5, Wikipedia)" />
+<p class="caption">NBA team locations with states coloured by division (CC BY-SA 2.5, <a href="https://en.wikipedia.org/wiki/National_Basketball_Association#/media/File:Map_of_USA_and_Canada,_NBA,_zoom.svg">Wikipedia</a>)</p>
+</div>
 <p>What does this mean for the travelling basketball fans?</p>
 </div>
-<div id="travel-time-with-gmapsdistance" class="section level1">
-<h1>Travel time with <code>gmapsdistance</code></h1>
-<p>The R package <a href="https://cran.r-project.org/web/packages/gmapsdistance/index.html"><code>gmapsdistance</code></a> was written by Rodrigo Azuero, Demetrio Rodriguez and David Zarruk. It wraps the <a href="https://www.google.co.uk/maps">Google Maps</a> <a href="https://medium.freecodecamp.org/what-is-an-api-in-english-please-b880a3214a82">API</a>. You can use it to query origin and destination points for travel distance (metres) and duration (seconds) for several modes of travel: on foot, by car, by public transport, or by bicycle (for parts of North America only).</p>
-<p>We need an API key for Google Maps. This helps prevent misuse of their service and tracks your access. Your first $300 is free.</p>
-<p>The process is outlined in detail on <a href="https://developers.google.com/maps/documentation/distance-matrix/get-api-key#key">the Google developer pages</a>. <a href="https://cloud.google.com/maps-platform/">Go to the website</a> and follow the instructions.</p>
-<p>Keep this key safe for now; we’ll read it in later.</p>
+<div id="google-maps-and-gmapsdistance" class="section level1">
+<h1>Google Maps and <code>gmapsdistance</code></h1>
+<p>If you didn’t know, Google Maps is one of many services that calculates journey distances and durations.</p>
+<p>The R package <a href="https://cran.r-project.org/web/packages/gmapsdistance/index.html"><code>gmapsdistance</code></a> was written by Rodrigo Azuero, Demetrio Rodriguez and David Zarruk. It wraps the <a href="https://www.google.co.uk/maps">Google Maps</a> <a href="https://medium.freecodecamp.org/what-is-an-api-in-english-please-b880a3214a82">API</a>. You can use it to query origin and destination points for travel distance and duration for several modes of travel.</p>
+<p>We need an API key for Google Maps. This helps prevent misuse of the service and helps keeps track of your credit. The process is outlined in detail in <a href="https://developers.google.com/maps/documentation/distance-matrix/get-api-key#key">the Google developer documentation pages</a>. <a href="https://cloud.google.com/maps-platform/">Go to the Google Cloud maps platform pages</a> and follow the instructions. You’ll need a Google account to do this.</p>
+<p>The key is kept in <a href="https://console.cloud.google.com/">your Google Cloud console</a>.</p>
+<p>[INSERT AN IMAGE FROM THE GOOGLE MAPS API SIGN-UP PROCESS]</p>
 </div>
 <div id="get-data" class="section level1">
 <h1>Get data</h1>
-<p>We can use <a href="https://github.com/hadley/rvest">Hadley Wickham’s <code>rvest</code> package</a> to scrape the <a href="https://en.wikipedia.org/wiki/National_Basketball_Association">Wikipedia page for the NBA)</a>, which contains a table of teams and locations.</p>
-<pre class="r"><code>library(dplyr)  # data manipulation
-library(rvest)  # web scraping
+<p>Let’s use <a href="https://github.com/hadley/rvest">Hadley Wickham’s <code>rvest</code> package</a> to scrape the <a href="https://en.wikipedia.org/wiki/National_Basketball_Association">Wikipedia page for the NBA)</a>, which contains a table of teams and locations.</p>
+<p>Start by loading <code>rvest</code> and some other packages for data manipulation.</p>
+<pre class="r"><code>library(dplyr)  # data manipulation and %&gt;%
+library(tidyr)  # tidying dataframes
 library(stringr)  # string manipulation
-library(knitr)  # to print our tables
-library(tidyr)  # tidying dataframes</code></pre>
-<p>Then we’ll create objects that define the HTML for the web page and the table we want. The latter is defined using a CSS selector or, as in our case, an xpath. Think of these as ‘addresses’ for HTML content. You can use the ‘inspect’ function in your browser or <a href="https://selectorgadget.com/">the selectorgadget browser extension</a> to get this information.</p>
+library(rvest)  # web scraping
+library(knitr)  # print tables nicely</code></pre>
+<p>Then we’ll create objects that define the HTML for the web page and the table we want. The table can be defined by a CSS selector or an xpath; think of these as ‘addresses’ for HTML content. You can use the ‘inspect’ function in your browser or <a href="https://selectorgadget.com/">the selectorgadget browser extension</a> to get this information.</p>
 <pre class="r"><code># Read the HTML from a specified web URL
 html &lt;- read_html(&quot;https://en.wikipedia.org/wiki/National_Basketball_Association&quot;)
 
 # Use selectorgadget or your browser&#39;s &#39;inspect&#39; mode to get xpath
 table_xpath &lt;- &#39;//*[@id=&quot;mw-content-text&quot;]/div/table[4]&#39;</code></pre>
-<p>Now we can collect the table and manipulate it.</p>
-<p>We could use the latitude and longitude from this table as our origin and destination points, but the arena name, city and state will be enough. We can create a column in our data in the form <code>arena+city+state</code>, which is the format required by Google Maps.</p>
+<p>[INSERT BROSWER INSPECT WITH XPATH HIGHLIGHTED]</p>
+<p>Now we can collect the table and get the parts we want: team names and locations. We can get the latter as both latitude-longitude coordinates and as text. Text can be parsed by Google Maps if words are separated by the plus symbol: <code>arena+city+state</code>.</p>
+<p>Steps to do this are annotated in the code below.</p>
 <pre class="r"><code>nba_table &lt;-
+  # Read HTML, isolate table, focus on NW
   html_nodes(x = html, xpath = table_xpath) %&gt;%  # scrape the HTML
   html_table(fill = TRUE, header = NA) %&gt;%  # parse as table
   as.data.frame() %&gt;%  # convert from list
   filter(Division == &quot;Northwest&quot;) %&gt;%  # NW division only
+  # Isolate the latitude and longitude
   separate(Coordinates, c(&quot;Coords1&quot;, &quot;Coords2&quot;, &quot;Coords3&quot;), &quot; / &quot;) %&gt;% 
   separate(Coords3, c(&quot;Latitude&quot;, &quot;Longitude&quot;), sep = &quot;; &quot;) %&gt;% 
   separate(Longitude, c(&quot;Longitude&quot;, &quot;X&quot;), sep = &quot; \\(&quot;) %&gt;% 
   mutate(
+    # Make coordinates numeric
+    Latitude = as.numeric(Latitude),  # make numeric
+    Longitude = stri_escape_unicode(Longitude),  # there&#39;s a weird character
+    Longitude = str_replace(Longitude, &quot;\\\\ufeff&quot;, &quot;&quot;),  # remove it
+    Longitude = as.numeric(Longitude),  # make numeric
+    # Create text search string
     Search = paste(Arena, City.State),  # combine location details
     Search = str_replace_all(Search, &quot;,&quot;, &quot;&quot;),  # replace comma with blank
     Search = str_replace_all(Search, &quot; &quot;, &quot;+&quot;),  # replace space with plus
+    # Add three-letter team codes to help simplify outputs
     `Team code` = case_when(
       Team == &quot;Denver Nuggets&quot; ~ &quot;DEN&quot;,
       Team == &quot;Minnesota Timberwolves&quot; ~ &quot;MIN&quot;,
@@ -72,83 +88,28 @@ table_xpath &lt;- &#39;//*[@id=&quot;mw-content-text&quot;]/div/table[4]&#39;</c
       Team == &quot;Utah Jazz&quot; ~ &quot;UTA&quot;
     )
   ) %&gt;% 
-  select(
-    Team, `Team code`, Arena, City = City.State, Latitude, Longitude, Search
+  select(  # Retain columns of interest only
+    Team, `Team code`,
+    Arena, City = City.State,
+    Latitude, Longitude, Search
   )
 
-kable(nba_table)</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="left">Team</th>
-<th align="left">Team code</th>
-<th align="left">Arena</th>
-<th align="left">City</th>
-<th align="left">Latitude</th>
-<th align="left">Longitude</th>
-<th align="left">Search</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">Denver Nuggets</td>
-<td align="left">DEN</td>
-<td align="left">Pepsi Center</td>
-<td align="left">Denver, Colorado</td>
-<td align="left">39.748611</td>
-<td align="left">-105.0075﻿</td>
-<td align="left">Pepsi+Center+Denver+Colorado</td>
-</tr>
-<tr class="even">
-<td align="left">Minnesota Timberwolves</td>
-<td align="left">MIN</td>
-<td align="left">Target Center</td>
-<td align="left">Minneapolis, Minnesota</td>
-<td align="left">44.979444</td>
-<td align="left">-93.276111﻿</td>
-<td align="left">Target+Center+Minneapolis+Minnesota</td>
-</tr>
-<tr class="odd">
-<td align="left">Oklahoma City Thunder</td>
-<td align="left">OKC</td>
-<td align="left">Chesapeake Energy Arena</td>
-<td align="left">Oklahoma City, Oklahoma</td>
-<td align="left">35.463333</td>
-<td align="left">-97.515﻿</td>
-<td align="left">Chesapeake+Energy+Arena+Oklahoma+City+Oklahoma</td>
-</tr>
-<tr class="even">
-<td align="left">Portland Trail Blazers</td>
-<td align="left">POR</td>
-<td align="left">Moda Center</td>
-<td align="left">Portland, Oregon</td>
-<td align="left">45.531667</td>
-<td align="left">-122.666667﻿</td>
-<td align="left">Moda+Center+Portland+Oregon</td>
-</tr>
-<tr class="odd">
-<td align="left">Utah Jazz</td>
-<td align="left">UTA</td>
-<td align="left">Vivint Smart Home Arena</td>
-<td align="left">Salt Lake City, Utah</td>
-<td align="left">40.768333</td>
-<td align="left">-111.901111﻿</td>
-<td align="left">Vivint+Smart+Home+Arena+Salt+Lake+City+Utah</td>
-</tr>
-</tbody>
-</table>
-<p>So now we have a simple table of teams, locations and a search string that we’ll pass to <code>gmapsdistance()</code>.</p>
-<p>First, let’s take a look at the locations.</p>
-<pre class="r"><code># library(leaflet)
-# 
-# nba_table %&gt;%
-#   mutate(
-#     Latitude = as.numeric(Latitude),
-#     Longitude = as.numeric(Longitude)
-#   ) %&gt;% 
-#   leaflet() %&gt;%
-#   addProviderTiles(providers$OpenStreetMap) %&gt;% 
-#   addAwesomeMarkers(lng = ~Longitude, lat = ~Latitude)</code></pre>
+kable(nba_table)  # print</code></pre>
+</div>
+<div id="map-locations" class="section level1">
+<h1>Map locations</h1>
+<p>We can map the latitude and longitude to prove we’ve isolated them correctly.</p>
+<pre class="r"><code>library(leaflet)  # for interactive maps
+
+nba_table %&gt;%
+  leaflet() %&gt;%
+  addProviderTiles(providers$OpenStreetMap) %&gt;%
+  addAwesomeMarkers(
+    lng = ~Longitude, lat = ~Latitude,
+    # add basketball icons
+    # colour icons by team colours
+  )
+# add stright lines between points?</code></pre>
 </div>
 <div id="calculate-distances" class="section level1">
 <h1>Calculate distances</h1>
@@ -171,19 +132,6 @@ set.api.key(&quot;YOUR-API-KEY&quot;)</code></pre>
 <h1>Output</h1>
 <p>What does the output look like?</p>
 <pre class="r"><code>glimpse(nba_travel)</code></pre>
-<pre><code>## List of 3
-##  $ Time    :&#39;data.frame&#39;:    25 obs. of  3 variables:
-##   ..$ or  : Factor w/ 5 levels &quot;Pepsi+Center+Denver+Colorado&quot;,..: 1 2 3 4 5 1 2 3 4 5 ...
-##   ..$ de  : Factor w/ 5 levels &quot;Pepsi+Center+Denver+Colorado&quot;,..: 1 1 1 1 1 2 2 2 2 2 ...
-##   ..$ Time: num [1:25] 0 47272 34477 65601 27969 ...
-##  $ Distance:&#39;data.frame&#39;:    25 obs. of  3 variables:
-##   ..$ or      : Factor w/ 5 levels &quot;Pepsi+Center+Denver+Colorado&quot;,..: 1 2 3 4 5 1 2 3 4 5 ...
-##   ..$ de      : Factor w/ 5 levels &quot;Pepsi+Center+Denver+Colorado&quot;,..: 1 1 1 1 1 2 2 2 2 2 ...
-##   ..$ Distance: num [1:25] 0 1471688 1091108 1997198 835730 ...
-##  $ Status  :&#39;data.frame&#39;:    25 obs. of  3 variables:
-##   ..$ or    : Factor w/ 5 levels &quot;Pepsi+Center+Denver+Colorado&quot;,..: 1 2 3 4 5 1 2 3 4 5 ...
-##   ..$ de    : Factor w/ 5 levels &quot;Pepsi+Center+Denver+Colorado&quot;,..: 1 1 1 1 1 2 2 2 2 2 ...
-##   ..$ status: chr [1:25] &quot;OK&quot; &quot;OK&quot; &quot;OK&quot; &quot;OK&quot; ...</code></pre>
 <p>It’s a list object with three elements: <code>Time</code>, <code>Distance</code> and <code>Status</code>. Each list element is a dataframe with 25 observations (each team paired with every other) and 3 columns:</p>
 <ul>
 <li><code>or</code> – the origin point</li>
@@ -212,117 +160,6 @@ nba_distance %&gt;%
   arrange(`Team code (or)`, desc(Distance)) %&gt;% 
   filter(Distance != 0) %&gt;% 
   kable()</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="left">Team code (or)</th>
-<th align="left">Team code (de)</th>
-<th align="right">Distance</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">DEN</td>
-<td align="left">POR</td>
-<td align="right">1996.7</td>
-</tr>
-<tr class="even">
-<td align="left">DEN</td>
-<td align="left">MIN</td>
-<td align="right">1471.4</td>
-</tr>
-<tr class="odd">
-<td align="left">DEN</td>
-<td align="left">OKC</td>
-<td align="right">1090.5</td>
-</tr>
-<tr class="even">
-<td align="left">DEN</td>
-<td align="left">UTA</td>
-<td align="right">836.1</td>
-</tr>
-<tr class="odd">
-<td align="left">MIN</td>
-<td align="left">POR</td>
-<td align="right">2781.2</td>
-</tr>
-<tr class="even">
-<td align="left">MIN</td>
-<td align="left">UTA</td>
-<td align="right">1984.8</td>
-</tr>
-<tr class="odd">
-<td align="left">MIN</td>
-<td align="left">DEN</td>
-<td align="right">1471.7</td>
-</tr>
-<tr class="even">
-<td align="left">MIN</td>
-<td align="left">OKC</td>
-<td align="right">1270.4</td>
-</tr>
-<tr class="odd">
-<td align="left">OKC</td>
-<td align="left">POR</td>
-<td align="right">3072.2</td>
-</tr>
-<tr class="even">
-<td align="left">OKC</td>
-<td align="left">UTA</td>
-<td align="right">1911.6</td>
-</tr>
-<tr class="odd">
-<td align="left">OKC</td>
-<td align="left">MIN</td>
-<td align="right">1266.9</td>
-</tr>
-<tr class="even">
-<td align="left">OKC</td>
-<td align="left">DEN</td>
-<td align="right">1091.1</td>
-</tr>
-<tr class="odd">
-<td align="left">POR</td>
-<td align="left">OKC</td>
-<td align="right">3072.9</td>
-</tr>
-<tr class="even">
-<td align="left">POR</td>
-<td align="left">MIN</td>
-<td align="right">2782.0</td>
-</tr>
-<tr class="odd">
-<td align="left">POR</td>
-<td align="left">DEN</td>
-<td align="right">1997.2</td>
-</tr>
-<tr class="even">
-<td align="left">POR</td>
-<td align="left">UTA</td>
-<td align="right">1230.1</td>
-</tr>
-<tr class="odd">
-<td align="left">UTA</td>
-<td align="left">MIN</td>
-<td align="right">2002.8</td>
-</tr>
-<tr class="even">
-<td align="left">UTA</td>
-<td align="left">OKC</td>
-<td align="right">1911.4</td>
-</tr>
-<tr class="odd">
-<td align="left">UTA</td>
-<td align="left">POR</td>
-<td align="right">1228.9</td>
-</tr>
-<tr class="even">
-<td align="left">UTA</td>
-<td align="left">DEN</td>
-<td align="right">835.7</td>
-</tr>
-</tbody>
-</table>
 </div>
 <div id="travel-distance-summaries" class="section level1">
 <h1>Travel distance summaries</h1>
@@ -334,78 +171,12 @@ nba_distance %&gt;%
   ungroup() %&gt;% 
   arrange(desc(Distance)) %&gt;% 
   kable()</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="left">Team code (or)</th>
-<th align="left">Team code (de)</th>
-<th align="right">Distance</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">POR</td>
-<td align="left">OKC</td>
-<td align="right">3072.9</td>
-</tr>
-<tr class="even">
-<td align="left">OKC</td>
-<td align="left">POR</td>
-<td align="right">3072.2</td>
-</tr>
-<tr class="odd">
-<td align="left">MIN</td>
-<td align="left">POR</td>
-<td align="right">2781.2</td>
-</tr>
-<tr class="even">
-<td align="left">UTA</td>
-<td align="left">MIN</td>
-<td align="right">2002.8</td>
-</tr>
-<tr class="odd">
-<td align="left">DEN</td>
-<td align="left">POR</td>
-<td align="right">1996.7</td>
-</tr>
-</tbody>
-</table>
 <p>Similarly, we can get the total distance each team must travel to each of the others in the Northwest Division.</p>
 <pre class="r"><code>nba_distance %&gt;% 
   group_by(`Team code (or)`) %&gt;% 
   summarise(`Total distance` = sum(Distance)) %&gt;% 
   arrange(desc(`Total distance`)) %&gt;% 
   kable()</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="left">Team code (or)</th>
-<th align="right">Total distance</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">POR</td>
-<td align="right">9082.2</td>
-</tr>
-<tr class="even">
-<td align="left">MIN</td>
-<td align="right">7508.1</td>
-</tr>
-<tr class="odd">
-<td align="left">OKC</td>
-<td align="right">7341.8</td>
-</tr>
-<tr class="even">
-<td align="left">UTA</td>
-<td align="right">5978.8</td>
-</tr>
-<tr class="odd">
-<td align="left">DEN</td>
-<td align="right">5394.7</td>
-</tr>
-</tbody>
-</table>
 <div id="travel-distance-lookup" class="section level2">
 <h2>Travel distance lookup</h2>
 <p>Another way to view this is to ‘spread’ the data from long to wide format to create a look-up between origin teams (rows) and destination teams (columns).</p>
@@ -414,60 +185,6 @@ nba_distance %&gt;%
   spread(key = `Team code (de)`, value = Distance) %&gt;% 
   rename(Team = `Team code (or)`) %&gt;% 
   kable()</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="left">Team</th>
-<th align="right">DEN</th>
-<th align="right">MIN</th>
-<th align="right">OKC</th>
-<th align="right">POR</th>
-<th align="right">UTA</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">DEN</td>
-<td align="right">0.0</td>
-<td align="right">1471.4</td>
-<td align="right">1090.5</td>
-<td align="right">1996.7</td>
-<td align="right">836.1</td>
-</tr>
-<tr class="even">
-<td align="left">MIN</td>
-<td align="right">1471.7</td>
-<td align="right">0.0</td>
-<td align="right">1270.4</td>
-<td align="right">2781.2</td>
-<td align="right">1984.8</td>
-</tr>
-<tr class="odd">
-<td align="left">OKC</td>
-<td align="right">1091.1</td>
-<td align="right">1266.9</td>
-<td align="right">0.0</td>
-<td align="right">3072.2</td>
-<td align="right">1911.6</td>
-</tr>
-<tr class="even">
-<td align="left">POR</td>
-<td align="right">1997.2</td>
-<td align="right">2782.0</td>
-<td align="right">3072.9</td>
-<td align="right">0.0</td>
-<td align="right">1230.1</td>
-</tr>
-<tr class="odd">
-<td align="left">UTA</td>
-<td align="right">835.7</td>
-<td align="right">2002.8</td>
-<td align="right">1911.4</td>
-<td align="right">1228.9</td>
-<td align="right">0.0</td>
-</tr>
-</tbody>
-</table>
 </div>
 </div>
 <div id="results-travel-time" class="section level1">
@@ -485,58 +202,4 @@ nba_travel$Time %&gt;%
   select(`Team code (or)`, `Team code (de)`, Time) %&gt;% 
   spread(key = `Team code (de)`, value = Time) %&gt;% 
   kable()</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="left">Team code (or)</th>
-<th align="right">DEN</th>
-<th align="right">MIN</th>
-<th align="right">OKC</th>
-<th align="right">POR</th>
-<th align="right">UTA</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">DEN</td>
-<td align="right">0.0</td>
-<td align="right">13.1</td>
-<td align="right">9.5</td>
-<td align="right">18.2</td>
-<td align="right">7.8</td>
-</tr>
-<tr class="even">
-<td align="left">MIN</td>
-<td align="right">13.1</td>
-<td align="right">0.0</td>
-<td align="right">11.5</td>
-<td align="right">25.2</td>
-<td align="right">18.4</td>
-</tr>
-<tr class="odd">
-<td align="left">OKC</td>
-<td align="right">9.6</td>
-<td align="right">11.5</td>
-<td align="right">0.0</td>
-<td align="right">27.5</td>
-<td align="right">17.1</td>
-</tr>
-<tr class="even">
-<td align="left">POR</td>
-<td align="right">18.2</td>
-<td align="right">25.3</td>
-<td align="right">27.5</td>
-<td align="right">0.0</td>
-<td align="right">11.2</td>
-</tr>
-<tr class="odd">
-<td align="left">UTA</td>
-<td align="right">7.8</td>
-<td align="right">18.3</td>
-<td align="right">17.0</td>
-<td align="right">11.2</td>
-<td align="right">0.0</td>
-</tr>
-</tbody>
-</table>
 </div>
