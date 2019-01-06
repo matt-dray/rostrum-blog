@@ -42,23 +42,27 @@ The output from running this line shows the filepath to the .Rprofile and remind
 
 # A frivolous use case 
 
-You could use the .Rprofile to display a little message at startup.
+You could use your R profile to display a little message at startup.
 
 It's four days into 2019 and you may be struggling with those new year resolutions. You're probably going to need a motivational quote.
 
-The following code selects one element at random from a character vector of motivational messages and prints it to the console on startup.
+We can load [the `emo` package](https://github.com/hadley/emo) within the R profile and add emojis to our messages. There's a handy function -- `emo::ji_glue()` -- that allows you to paste text with emojis.
+
+The following code selects one element at random from a set of motivational messages and prints it to the console on startup.
 
 ```{r rprofile-code, eval=FALSE}
+library(emo)  # devtools::install_github("hadley/emo")
+
 cat(
   sample(
     x = c(
-      "Don't let your dreams be dreams!",
-      "Nothing is impossible!",
-      "Be brave!",
-      "Do the thing! Yeah!",
-      "Haters gon' hate!",
-      "Crush your enemies!",
-      "Generic motivational quote!"
+      ji_glue("Don't let your dreams be dreams! :rainbow:"),
+      ji_glue("Nothing is impossible! :raised_hands:"),
+      ji_glue("Be brave! :triumph:"),
+      ji_glue("Do the thing! Yeah! :white_check_mark:"),
+      ji_glue("Haters gon' hate! :tipping_hand_woman:"),
+      ji_glue("Crush your enemies! :fist:"),
+      ji_glue("Generic motivational quote! :clap:")
     ),
     size = 1
   )
@@ -70,6 +74,8 @@ You need a blank line at the end of the file. One will be added for you on save 
 
 # Outcome
 
-![Random messages selected from the .Rprofile on restart](/post/2019-01-04-rprofile-motivate_files/rprofile-restart.png)
+Here's the code in the script window and the result of having restarted R a few times.
+
+![Random messages selected from the .Rprofile on restart](/post/2019-01-04-rprofile-motivate_files/rprofile.png)
 
 Just don't get stuck in a loop of restarting R over and over again so you can see the messages. You might get overmotivated. Or you'll spend so long restarting that you'll have wasted loads of time and will need more motivational quotes to encourage yourself not to do it anymore.

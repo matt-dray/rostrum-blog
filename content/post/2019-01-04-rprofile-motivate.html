@@ -35,25 +35,28 @@ draft: no
 <h1>How to edit your .Rprofile</h1>
 <p>You could navigate to where the .Rprofile file is stored on your machine and edit it, but it’s easier to use the <code>edit_r_profile()</code> function from the <code>usethis</code> package.</p>
 <pre class="r"><code>usethis::edit_r_profile()</code></pre>
-<pre><code>## ● Edit /Users/matthewdray/.Rprofile
+<pre><code>## ● Edit &#39;.Rprofile&#39;
 ## ● Restart R for changes to take effect</code></pre>
 <p>The output from running this line shows the filepath to the .Rprofile and reminds you to restart R to reload the R profile and its newly-saved changes.</p>
 </div>
 <div id="a-frivolous-use-case" class="section level1">
 <h1>A frivolous use case</h1>
-<p>You could use the .Rprofile to display a little message at startup.</p>
+<p>You could use your R profile to display a little message at startup.</p>
 <p>It’s four days into 2019 and you may be struggling with those new year resolutions. You’re probably going to need a motivational quote.</p>
-<p>The following code selects one element at random from a character vector of motivational messages and prints it to the console on startup.</p>
-<pre class="r"><code>cat(
+<p>We can load <a href="https://github.com/hadley/emo">the <code>emo</code> package</a> within the R profile and add emojis to our messages. There’s a handy function – <code>emo::ji_glue()</code> – that allows you to paste text with emojis.</p>
+<p>The following code selects one element at random from a set of motivational messages and prints it to the console on startup.</p>
+<pre class="r"><code>library(emo)  # devtools::install_github(&quot;hadley/emo&quot;)
+
+cat(
   sample(
     x = c(
-      &quot;Don&#39;t let your dreams be dreams!&quot;,
-      &quot;Nothing is impossible!&quot;,
-      &quot;Be brave!&quot;,
-      &quot;Do the thing! Yeah!&quot;,
-      &quot;Haters gon&#39; hate!&quot;,
-      &quot;Crush your enemies!&quot;,
-      &quot;Generic motivational quote!&quot;
+      ji_glue(&quot;Don&#39;t let your dreams be dreams! :rainbow:&quot;),
+      ji_glue(&quot;Nothing is impossible! :raised_hands:&quot;),
+      ji_glue(&quot;Be brave! :triumph:&quot;),
+      ji_glue(&quot;Do the thing! Yeah! :white_check_mark:&quot;),
+      ji_glue(&quot;Haters gon&#39; hate! :tipping_hand_woman:&quot;),
+      ji_glue(&quot;Crush your enemies! :fist:&quot;),
+      ji_glue(&quot;Generic motivational quote! :clap:&quot;)
     ),
     size = 1
   )
@@ -62,8 +65,9 @@ draft: no
 </div>
 <div id="outcome" class="section level1">
 <h1>Outcome</h1>
+<p>Here’s the code in the script window and the result of having restarted R a few times.</p>
 <div class="figure">
-<img src="/post/2019-01-04-rprofile-motivate_files/rprofile-restart.png" alt="Random messages selected from the .Rprofile on restart" />
+<img src="/post/2019-01-04-rprofile-motivate_files/rprofile.png" alt="Random messages selected from the .Rprofile on restart" />
 <p class="caption">Random messages selected from the .Rprofile on restart</p>
 </div>
 <p>Just don’t get stuck in a loop of restarting R over and over again so you can see the messages. You might get overmotivated. Or you’ll spend so long restarting that you’ll have wasted loads of time and will need more motivational quotes to encourage yourself not to do it anymore.</p>
