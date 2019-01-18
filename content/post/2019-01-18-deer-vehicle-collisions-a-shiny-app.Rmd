@@ -1,0 +1,63 @@
+---
+title: 'Deer-vehicle collisions: a Shiny app'
+author: Matt Dray
+date: '2019-01-18'
+slug: deer-collisions
+categories:
+  - dataviz
+  - app
+tags:
+  - shinydashboard
+  - shiny
+  - scotland
+  - deer
+  - vehicles
+  - leaflet
+  - datatable
+draft: no
+---
+
+Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(icon)
+```
+
+![[Roe deer by Marek Szczepanek](https://commons.wikimedia.org/wiki/Capreolus_capreolus#/media/File:Capreolus_capreolus_2_(Marek_Szczepanek).jpg), CC BY-SA 4.0](/post/2019-01-18-deer-vehicle-collisions-a-shiny-app_files/Capreolus_capreolus_2_(Marek_Szczepanek).jpg){width=100%}
+
+# Open data
+
+Deer roam Scotland. So do humans. It's a problem when they meet at high speed.
+
+[The National Deer-Vehicle Collisions Project](http://www.deercollisions.co.uk/), administered by [The Deer Initiative](http://www.thedeerinitiative.co.uk/), has been monitoring data on deer-vehicle collisions in the UK.
+
+The data are open. I found the dataset when skimming through [data.gov.uk](https://data.gov.uk/dataset/838b88d8-7509-435c-9649-90f1881b5ad7/deer-vehicle-collisions) (a classic weekend activity for all the family). It links to the [SNH Natural Spaces site](https://gateway.snh.gov.uk/natural-spaces/dataset.jsp?dsid=DVC) where you can download the data as shapefile, GML or KML under the [Open Government Licence](http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
+
+I couldn't find an interactive visualisation of these data and I don't spend much time working with R Shiny,[^wc-18] so why not.
+
+# A simple Shiny app
+
+I recommend you check out [the full-screen app live at mattdray.shinyapps.io/scot-deer-collisions/](https://mattdray.shinyapps.io/scot-deer-collisions/).
+
+I've embedded a compact version of it below (it'll take a moment to load). Click the `r icon::fa_bars()` for the options menu to start filtering the data.
+
+<iframe src="https://mattdray.shinyapps.io/scot-deer-collisions/" width="100%" height="1000";></iframe>
+
+The [code for the app is available on GitHub](https://github.com/matt-dray/scot-deer-collisions). You can also [download the cleaned data in CSV or RDS format](https://github.com/matt-dray/scot-deer-collisions/tree/master/data).
+
+It was built in R with:
+
+* the [`shinydashboard` package](https://rstudio.github.io/shinydashboard/) for a nice layout and value boxes
+* the [`leaflet` package](https://rstudio.github.io/leaflet/) for the interactive map
+* the [`DT` package](https://rstudio.github.io/DT/) for the interactive datatable
+
+# Limitations
+
+I may update the app in future or take it down entirely. It's hosted for free at [shinyapps.io](http://www.shinyapps.io/), which means that it can only receive a fixed number of visits each month before it becomes unavailable. [The code will continue to exist on GitHub](https://www.github.com/matt-dray/scot-deer-collisions) where you can leave an issue or fork it to make it better.
+
+I limited the filters to year, month and local authority. I could have included deer species and road, but the data are sparse and the formatting wasn't great. I cleaned these variables up a bit and they're available as filterable columns in the interactive table.
+
+There's a large number of points and it doesn't make sense to show them all at once because it slows the app down. There are methods for improving this, but I assume most people will be looking at specific local authorities or roads rather than the country as a whole.
+
+[^wc-18]: But see [this post about a Shiny app](https://www.rostrum.blog/2018/07/17/world-cup-age-app/) I made that that one colleague described as 'very depressing'.
