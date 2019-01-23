@@ -28,7 +28,7 @@ The site is hosted with [Netlify](https://www.netlify.com/).
 9. `git commit` and `git push` to `new/post-slug` as required when drafting the post
 11. Perform a pull request
 
-# Simple process
+### Simple process
 
 Don't create a separate branch. Just add `draft: yes` to the YAML of your post. You can serve site and push commits without this post going live. When ready, change the YAML to `draft: no` and it will go live when the site is served, committed and pushed.
 
