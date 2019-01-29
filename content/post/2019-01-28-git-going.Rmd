@@ -14,18 +14,26 @@ Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
 knitr::opts_chunk$set(eval = FALSE)
 ```
 
+# New Year's R-solution
+
+People shared recently their R goals for 2019 on Twitter (see [Maëlle's post](https://masalmon.eu/2019/01/01/r-goals/)) and some of them referenced the use of Git and GitHub (see [Jason Baik's scraped dataset](https://github.com/jasonbaik94/rstats-2019-goals/blob/master/goals_raw.csv)).  
+
+I figured it would be good to consolidate some of my knowledge and maybe this will be useful for others.
+
 In this post I assume that you:
 
 * want to version control your R project
-* intend to store your version controlled files in the cloud with GitHub
-* want to interact with Git via the command line, rather than a Graphical User Interface
-* are using a Mac and will access the command line via Terminal, or a terminal tab in RStudio
+* intend to store your version-controlled files in the cloud with GitHub
+* want to interact with Git via the command line, rather than with a Graphical User Interface (GUI)
+* are using a Mac and will access the command line via Terminal
 
 # The command line
 
+We're going to write Git commands at the command line, so we need to know what that is and get some experience of working there. We can start by doing some basic interactions like moving between folders and creating files.
+
 ## Access
 
-Open the Terminal application to chat directly to your computer. This is where we can access the **command line**. It looks prety simple, with just some lines of monospaced text. We'll write our instructions at the **prompt**, which is the form `computer-name:current-directory user $`:
+Open the Terminal application to chat directly to your computer. This is where we can access the command line. It looks prety simple, with just some lines of monospaced text. We'll write our instructions at the **prompt**, which is the form `computer-name:current-directory user $`.
 
 ```{bash}
 mac:~ luigi$
@@ -39,7 +47,7 @@ Any instructions you give will affect the current folder you're in. Where are yo
 
 We can prove this by typing `pwd` ('print working directory') at the prompt and hitting the enter key.
 
-```{bash, pwd}
+```
 mac:~ luigi$ pwd
 /Users/luigi
 ```
@@ -48,10 +56,10 @@ mac:~ luigi$ pwd
 
 Let's look around this folder with `ls`, which means 'list the files'.
 
-```{bash, ls}
+```
 mac:~ luigi$ ls
-Applications  Desktop   Desktop
-Downloads     Movies    Music
+Applications  Desktop               Documents
+Downloads     Movies                Music
 Pictures      plumbing-invoice.txt  
 ```
 
@@ -59,14 +67,14 @@ Pictures      plumbing-invoice.txt
 
 We can go one better: we can add *flags* to the command. These are arguments prefixed with a hyphen that change the command's default behaviour. We're going to ask for *all* the files and folders (some are hidden!) with `-a` and also we'll use `-p` to get the folders appended with a forward slash.
 
-```{bash, ls-a-p}
+```
 mac:~ luigi$ ls -a -p
 .
 ..
-.Rprofile
+.
 Applications/
 Desktop/
-Desktop/
+Documents/
 Downloads/
 plumbing-invoice.txt
 Movies/
@@ -74,38 +82,39 @@ Music/
 Pictures/
 ```
 
-So now can see all the files, including the hidden ones. These start with a period -- see [the `.Rprofile` file](https://www.rostrum.blog/2019/01/04/rprofile-motivate/) for example.
+So now can see all the files, including the hidden ones. One example of a hidden file for R is the [`.Rprofile` file](https://www.rostrum.blog/2019/01/04/rprofile-motivate/).
 
 ## Navigation
 
-Knowing what's in our working directory is useful because it helps us navigate. We can switch to another folder with the change directory command `cd`. We don't have to type the full path, just the path relative to where we are. So instead of `/Users/matt/Desktop`, we can just type `Desktop`.
+Knowing what's in our working directory is useful because it helps us navigate. We can switch to another folder with the change directory command `cd`. We don't have to type the full path, just the path relative to where we are. So instead of `/Users/matt/Documents`, we can just type `Documents`.
 
-```{bash, cd}
-mac:~ luigi$ cd Desktop
-mac:Desktop luigi$
+```
+mac:~ luigi$ cd Documents
+mac:Documents luigi$
 ```
 
-See how the prompt changed to say 'Desktop'? This is a handy reference in case we forget where we are. To return to the parent folder (i.e. back where we were), we can use `cd ..` to go up the file structure by one level.
+See how the prompt changed to say 'Documents'? This is a handy reference in case we forget where we are. To return to the parent folder (i.e. back where we were), we can use `cd ..` to go up the file structure by one level.
 
 ## Create a file
 
 Let's create a file in our current working directory with the `touch` command and then convince ourselves it's there by listing the folder contents.
 
-```{bash, touch}
-mac:Desktop luigi$ touch characters.md
-mac:Desktop luigi$ ls
-characters.md
+```
+mac:Documents luigi$ touch important.md
+mac:Documents luigi$ ls -p
+coin-balance/    important.md           plumbing/
+star-locations/  monty-mole-fanfic.txt  moustache-wiggle.gif
 ```
 
 Okay great, but the file is empty. How do we write something in it? Well, you can use `open characters.md` to open the file in your default text editor, but we can also write from _inside Terminal_. Perhaps the simplest way is to use Nano, which you can think of as a text editor built into Terminal.
 
-```{bash, nano-file}
-mac:Desktop luigi$ nano characters.md
 ```
-The prompt will disappear and you'll see a header saying `File: characters.md`. You're now editing this file. Start typing!
+mac:Documents luigi$ nano important.md
+```
+The prompt will disappear and you'll see a header saying `File: characters.md`. You're now editing this file. Start typing. The file extension `.md` means you can write using MarkDown syntax, but you cold just as easily have specified a `.txt`, for example.
 
-```{bash, nano-edit}
-# Luigi's list of pals and not-pals
+```
+# Mushroom Kingdom Top Threes
 
 ## The best
 
@@ -120,40 +129,34 @@ The prompt will disappear and you'll see a header saying `File: characters.md`. 
 3. King Boo
 ```
 
-Notice the options at the bottom screen. We can exit Nano with `^X` (control and X keys). You'll be asked if you want to save, hit `Y` for yes. Then you'll be asked for a `File name to write: characters.md`. You can edit the name or hit enter to confirm.
+Notice the options at the bottom screen. We can exit Nano with `^X` (control and X keys). You'll be asked if you want to save; hit `Y` for yes. Then you'll be asked for a `File name to write: characters.md`. You can edit the name or hit enter to confirm. The content is now saved.
 
+## Move your files
 
-mv <filepath> <filepath>
+```
+mac:Documents luigi$ cd ..
+mac:~ luigi$ mv plumbing-invoice.txt ~/Documents/plumbing
+mac:~ luigi$ cd /Documents/plumbing
+mac:plumbing luigi$ ls
+overalls.jpg  plumbing-invoice.txt  
+```
 
 rm 
 
 # Setup
 
-
-
 git init
-
-
 
 # Clone from GitHub
 
-
-
 git clone <filepath>
-
-
 
 # Add, commit, push
 
-
-
 git status
-
-
+git status .
 
 git log
-
-
 
 git add <filename>
 
@@ -161,38 +164,22 @@ git add .
 
 git reset HEAD~
 
-
-
 git diff <filename>
-
-
 
 git commit -m “<Message>”
 
-
-
 git push origin master
-
-
 
 # Ignore
 
-
-
 .gitignore
 
-
-
 # Branches
-
-
 
 git branch -a
 
 git checkout
 
 git push origin <branch>
-
-
 
 git pull
