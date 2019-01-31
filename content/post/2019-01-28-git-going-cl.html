@@ -1,8 +1,8 @@
 ---
-title: Git going
+title: "Git going: the command line"
 author: Matt Dray
 date: '2019-01-28'
-slug: git-going
+slug: git-going-cl
 categories: []
 tags: []
 draft: yes
@@ -11,76 +11,100 @@ draft: yes
 
 
 <p>Matt Dray (<a href="https://www.twitter.com/mattdray">@mattdray</a>)</p>
+<div class="figure">
+<img src="https://media.giphy.com/media/Cie9cWGeqVYHe/source.gif" alt="You like Luigi – could benumber one (via Giphy)" />
+<p class="caption">You like Luigi – could benumber one (<a href="https://giphy.com/gifs/luigi-Cie9cWGeqVYHe">via Giphy</a>)</p>
+</div>
 <div id="new-years-r-solution" class="section level1">
 <h1>New Year’s R-solution</h1>
-<p>People shared recently their R goals for 2019 on Twitter (see <a href="https://masalmon.eu/2019/01/01/r-goals/">Maëlle’s post</a>) and some of them referenced the use of Git and GitHub (see <a href="https://github.com/jasonbaik94/rstats-2019-goals/blob/master/goals_raw.csv">Jason Baik’s scraped dataset</a>).</p>
-<p>I figured it would be good to consolidate some of my knowledge and maybe this will be useful for others.</p>
-<p>In this post I assume that you:</p>
+<p>People shared recently their R goals for 2019 on Twitter (see <a href="https://masalmon.eu/2019/01/01/r-goals/">Maëlle Salmon’s post</a>). Some of them referenced the use of Git and GitHub (see <a href="https://github.com/jasonbaik94/rstats-2019-goals/blob/master/goals_raw.csv">Jason Baik’s scraped dataset</a>) for version-control of their projects.</p>
+<p>It wasn’t that long ago that I began working with Git and GitHub (<a href="https://github.com/matt-dray">see my history on my GitHub profile</a>). Now seems a good time to record what I learnt and maybe someone else will find it useful, or suggest better approaches.</p>
+<p>I’m splitting this into two posts: one introducing the basics of the command line – a useful first step – and one about a basic Git workflow.</p>
+<p>In these posts I assume that you:</p>
 <ul>
+<li>have little-to-no understanding of the command line and Git commands, but some experience of coding</li>
 <li>want to version control your R project</li>
 <li>intend to store your version-controlled files in the cloud with GitHub</li>
 <li>want to interact with Git via the command line, rather than with a Graphical User Interface (GUI)</li>
-<li>are using a Mac and will access the command line via Terminal</li>
+<li>are using a Mac, writing in bash and will access the command line via Terminal</li>
 </ul>
+<p>These are relatively narrow constraints, but there will likely be some overlap with your particular configuration.</p>
 </div>
 <div id="the-command-line" class="section level1">
 <h1>The command line</h1>
-<p>We’re going to write Git commands at the command line, so we need to know what that is and get some experience of working there. We can start by doing some basic interactions like moving between folders and creating files.</p>
-<div id="access" class="section level2">
-<h2>Access</h2>
-<p>Open the Terminal application to chat directly to your computer. This is where we can access the command line. It looks prety simple, with just some lines of monospaced text. We’ll write our instructions at the <strong>prompt</strong>, which is the form <code>computer-name:current-directory user $</code>.</p>
-<pre class="bash"><code>mac:~ luigi$</code></pre>
-<p>The prompt will appear each time your computer is awaiting an instruction. You just need to write your command after thet <code>$</code> and hit enter.</p>
+<p>Our goal is to start writing Git commands at <strong>the command line</strong>. Before we get to Git, we need to know what the command line is and get some experience of working there.</p>
+<p>You probably interact with your computer primarily via a Graphical User Interface (GUI) composed of windows and visual representations of files and folders, and probably use a mouse to do this.</p>
+<p>But there’s another way: you can write text commands directly to your computer to manipulate files and folders. One benefit is that you can save and re-execute commands in a script, which is much more reproducible than an unkown series of mouse-based interactions.</p>
+<div id="terminal" class="section level2">
+<h2>Terminal</h2>
+<p>Open the Terminal application to chat directly to your computer. You can tap command and spacebar to open Spotlight search to find it.</p>
+<p>Terminal gives us a place to access the command line. It looks prety simple, with just some lines of monospaced text. We’ll write our instructions at the <strong>prompt</strong>, which is the form <code>&lt;computer name&gt;:&lt;current directory&gt; &lt;user&gt;$</code>. For example:</p>
+<pre><code>bros:~ luigi$</code></pre>
+<p>The prompt will appear each time your computer is awaiting an instruction. You just need to write your command after thet <code>$</code> and hit enter. We’ll be writing in our computer’s default scripting langage: <strong>bash</strong>.</p>
 </div>
 <div id="where-are-we" class="section level2">
 <h2>Where are we?</h2>
-<p>Any instructions you give will affect the current folder you’re in. Where are you when you start Terminal? The prompt will show the tilde <code>~</code> in the current-directory part of the prompt. This is shortcut symbol for the <strong>root directory</strong>, which on a Mac will be set to the path <code>/Users/&lt;your-username&gt;</code>.</p>
+<p>The commands we input are going to affect the current folder we’re in, or other files and folders relative to it.</p>
+<p>Where are you when you start Terminal? You always know where you are because of the <code>&lt;current directory&gt;</code> bit of the <code>&lt;computer name&gt;:&lt;current directory&gt; &lt;user&gt;$</code> prompt.</p>
+<p>When you start, the prompt will show the tilde <code>~</code> by default. This is shortcut symbol for your computer’s <strong>root directory</strong>, which on a Mac will be set to the path <code>/Users/&lt;your-username&gt;</code>.</p>
 <p>We can prove this by typing <code>pwd</code> (‘print working directory’) at the prompt and hitting the enter key.</p>
-<pre><code>mac:~ luigi$ pwd
+<pre><code>bros:~ luigi$ pwd
 /Users/luigi</code></pre>
 </div>
-<div id="who-goes-there" class="section level2">
-<h2>Who goes there?</h2>
+<div id="whats-here" class="section level2">
+<h2>What’s here?</h2>
 <p>Let’s look around this folder with <code>ls</code>, which means ‘list the files’.</p>
-<pre><code>mac:~ luigi$ ls
+<pre><code>bros:~ luigi$ ls
 Applications  Desktop               Documents
 Downloads     Movies                Music
 Pictures      plumbing-invoice.txt  </code></pre>
+<p>It holds some folders and a text file. This command is analagous to double-clicking a folder to open it and look inside.</p>
 </div>
 <div id="flags" class="section level2">
 <h2>Flags</h2>
-<p>We can go one better: we can add <em>flags</em> to the command. These are arguments prefixed with a hyphen that change the command’s default behaviour. We’re going to ask for <em>all</em> the files and folders (some are hidden!) with <code>-a</code> and also we’ll use <code>-p</code> to get the folders appended with a forward slash.</p>
-<pre><code>mac:~ luigi$ ls -a -p
+<p>We can go one better: we can add <strong>flags</strong> to the command. These are arguments prefixed with a hyphen that change the command’s default behaviour. We’re going to ask for <em>all</em> the files and folders (some are hidden!) with <code>-a</code> and also we’ll use <code>-p</code> to append the folders with a forward slash to make them more obvious.</p>
+<pre><code>bros:~ luigi$ ls -a -p
 .
 ..
-.
+.luigi-profile
+.gameboy-horror-token
+.poltergust-key
 Applications/
 Desktop/
 Documents/
 Downloads/
-plumbing-invoice.txt
 Movies/
 Music/
-Pictures/</code></pre>
-<p>So now can see all the files, including the hidden ones. One example of a hidden file for R is the <a href="https://www.rostrum.blog/2019/01/04/rprofile-motivate/"><code>.Rprofile</code> file</a>.</p>
+Pictures/
+plumbing-invoice.txt</code></pre>
+<p>So now can see all the files, including the hidden ones. Hidden files are often settings or profiles for various programs, or tokens stored for API access. One example of a hidden file for R is <a href="https://www.rostrum.blog/2019/01/04/rprofile-motivate/">`an .Rprofile</a>.</p>
 </div>
 <div id="navigation" class="section level2">
 <h2>Navigation</h2>
 <p>Knowing what’s in our working directory is useful because it helps us navigate. We can switch to another folder with the change directory command <code>cd</code>. We don’t have to type the full path, just the path relative to where we are. So instead of <code>/Users/matt/Documents</code>, we can just type <code>Documents</code>.</p>
-<pre><code>mac:~ luigi$ cd Documents
-mac:Documents luigi$</code></pre>
+<pre><code>bros:~ luigi$ cd Documents
+bros:Documents luigi$ pwd
+/Users/luigi/Documents</code></pre>
 <p>See how the prompt changed to say ‘Documents’? This is a handy reference in case we forget where we are. To return to the parent folder (i.e. back where we were), we can use <code>cd ..</code> to go up the file structure by one level.</p>
+</div>
+<div id="create-a-folder" class="section level2">
+<h2>Create a folder</h2>
+<p>We can make a new folder with the <code>mkdir</code> command by typing <code>mkdir &lt;folder name&gt;</code> to create a new folder in our current working directory. We can switch to the new folder with <code>cd</code> and can again convince ourselves by looking at the <code>&lt;current directory&gt;</code> bit of the prompt, or by executing <code>pwd</code> to print our working directory.</p>
+<pre><code>bros:Documents luigi$ mkdir important-notes
+bros:Documents luigi$ cd important-notes
+bros:important-notes luigi$ pwd
+/Users/luigi/Documents/important-notes</code></pre>
 </div>
 <div id="create-a-file" class="section level2">
 <h2>Create a file</h2>
 <p>Let’s create a file in our current working directory with the <code>touch</code> command and then convince ourselves it’s there by listing the folder contents.</p>
-<pre><code>mac:Documents luigi$ touch important.md
-mac:Documents luigi$ ls -p
-coin-balance/    important.md           plumbing/
-star-locations/  monty-mole-fanfic.txt  moustache-wiggle.gif</code></pre>
-<p>Okay great, but the file is empty. How do we write something in it? Well, you can use <code>open characters.md</code> to open the file in your default text editor, but we can also write from <em>inside Terminal</em>. Perhaps the simplest way is to use Nano, which you can think of as a text editor built into Terminal.</p>
-<pre><code>mac:Documents luigi$ nano important.md</code></pre>
-<p>The prompt will disappear and you’ll see a header saying <code>File: characters.md</code>. You’re now editing this file. Start typing. The file extension <code>.md</code> means you can write using MarkDown syntax, but you cold just as easily have specified a <code>.txt</code>, for example.</p>
+<pre><code>bros:important-notes luigi$ touch  mushroom-top3.md
+bros:important-notes luigi$ ls -p
+coin-balance/         mushroom-top3.md  monty-mole-fanfic.txt
+moustache-wiggle.gif  plumbing/         star-locations/</code></pre>
+<p>Okay great, but the file is empty. How do we write something in it? Well, you could use <code>open characters.md</code> at the prompt to open the file in your default text editor (TextEdit or something), but we can also write text from <em>within</em> Terminal itself. Perhaps the simplest way is to use the Nano editor, which you can think of as a text editor built into Terminal.</p>
+<pre><code>bros:important-notes luigi$ nano mushroom-top3.md</code></pre>
+<p>The prompt will disappear and you’ll see a header saying <code>File: characters.md</code>. You’re now editing this file with Nano. Start typing. The file extension <code>.md</code> means you can write using Markdown syntax, but you cold just as easily have specified a <code>.txt</code>, for example.</p>
 <pre><code># Mushroom Kingdom Top Threes
 
 ## The best
@@ -98,41 +122,18 @@ star-locations/  monty-mole-fanfic.txt  moustache-wiggle.gif</code></pre>
 </div>
 <div id="move-your-files" class="section level2">
 <h2>Move your files</h2>
-<pre><code>mac:Documents luigi$ cd ..
-mac:~ luigi$ mv plumbing-invoice.txt ~/Documents/plumbing
-mac:~ luigi$ cd /Documents/plumbing
-mac:plumbing luigi$ ls
-overalls.jpg  plumbing-invoice.txt  </code></pre>
-<p>rm</p>
+<p>We appeared to have a rogue file stored in our root directory that should really be in a subfolder of Documents. The command <code>mv</code> allows us to move it. We can do this by specifying the full paths of the file and the folder where it’s going, or we can move to the fodler with the file and simply provde the file name and destination.</p>
+<pre><code>bros:important-notes luigi$ cd ~
+bros:~ luigi$ mv plumbing-invoice.txt ~/Documents/important-notes/plumbing
+bros:~ luigi$ cd /Documents/plumbing/important-notes/plumbing
+bros:plumbing luigi$ ls
+overalls.jpg  plumbing-invoice.txt  tighten-warp-pipes.txt</code></pre>
 </div>
+<div id="delete" class="section level2">
+<h2>Delete</h2>
+<p>While we’re here, we might want to prune our files a bit.</p>
+<pre><code>bros:plumbing luigi$ rm tighten-warp-pipes.txt
+bros:plumbing luigi$ ls
+overalls.jpg  plumbing-invoice.txt</code></pre>
 </div>
-<div id="setup" class="section level1">
-<h1>Setup</h1>
-<p>git init</p>
-</div>
-<div id="clone-from-github" class="section level1">
-<h1>Clone from GitHub</h1>
-<p>git clone <filepath></p>
-</div>
-<div id="add-commit-push" class="section level1">
-<h1>Add, commit, push</h1>
-<p>git status git status .</p>
-<p>git log</p>
-<p>git add <filename></p>
-<p>git add .</p>
-<p>git reset HEAD~</p>
-<p>git diff <filename></p>
-<p>git commit -m “<Message>”</p>
-<p>git push origin master</p>
-</div>
-<div id="ignore" class="section level1">
-<h1>Ignore</h1>
-<p>.gitignore</p>
-</div>
-<div id="branches" class="section level1">
-<h1>Branches</h1>
-<p>git branch -a</p>
-<p>git checkout</p>
-<p>git push origin <branch></p>
-<p>git pull</p>
 </div>

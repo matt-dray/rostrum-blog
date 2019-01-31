@@ -10,118 +10,141 @@ draft: yes
 
 Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
 
+![You like Luigi -- could benumber one ([via Giphy](https://giphy.com/gifs/luigi-Cie9cWGeqVYHe))](https://media.giphy.com/media/Cie9cWGeqVYHe/source.gif)
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(eval = FALSE)
 ```
 
 # New Year's R-solution
 
-People shared recently their R goals for 2019 on Twitter (see [Maëlle's post](https://masalmon.eu/2019/01/01/r-goals/)) and some of them referenced the use of Git and GitHub (see [Jason Baik's scraped dataset](https://github.com/jasonbaik94/rstats-2019-goals/blob/master/goals_raw.csv)).  
+People shared recently their R goals for 2019 on Twitter (see [Maëlle Salmon's post](https://masalmon.eu/2019/01/01/r-goals/)). Some of them referenced the use of Git and GitHub (see [Jason Baik's scraped dataset](https://github.com/jasonbaik94/rstats-2019-goals/blob/master/goals_raw.csv)) for version-control of their projects. 
 
-As a result, I'm going to consolidate some of my knowledge about a simple Git and GitHub workflow. 
+It wasn't that long ago that I began working with Git and GitHub ([see my history on my GitHub profile](https://github.com/matt-dray)). Now seems a good time to record what I learnt and maybe someone else will find it useful, or suggest better approaches.
 
-I'm splitting this into two posts: one introducing the basics of the command line -- a necessary first step -- and one to introduce the basics of Git.
+I'm splitting this into two posts: one introducing the basics of the command line -- a useful first step -- and one about a basic Git workflow.
 
 In these posts I assume that you:
 
+* have little-to-no understanding of the command line and Git commands, but some experience of coding
 * want to version control your R project
 * intend to store your version-controlled files in the cloud with GitHub
 * want to interact with Git via the command line, rather than with a Graphical User Interface (GUI)
 * are using a Mac, writing in bash and will access the command line via Terminal
 
+These are relatively narrow constraints, but there will likely be some overlap with your particular configuration. 
+
 # The command line
 
-We're going to be writing Git commands at **the command line**. Before we get to Git, we need to know what the command line is and get some experience of working there.
+Our goal is to start writing Git commands at **the command line**. Before we get to Git, we need to know what the command line is and get some experience of working there.
 
-Most computer users will interact with their machines using a Graphical User Interface (GUI) composed of windows that they can navigate primarily with the mouse. Files and folders can be created with clicks and moved around by dragging. Classic computer stuff that's been around now for decades.
+You probably interact with your computer primarily via a Graphical User Interface (GUI) composed of windows and visual representations of files and folders, and probably use a mouse to do this.
 
-But there's another way: you can write text commands to your computer directly. One particular benefit is that you can save and re-execute commands in a script, which is much more reproducible than an unkown series of mouse-based interactions with your GUI.
+But there's another way: you can write text commands directly to your computer to manipulate files and folders. One benefit is that you can save and re-execute commands in a script, which is much more reproducible than an unkown series of mouse-based interactions.
 
-The scripting langage used by default is **bash**.
+## Terminal
 
-## Access
+Open the Terminal application to chat directly to your computer. You can tap command and spacebar to open Spotlight search to find it.
 
-Open the Terminal application to chat directly to your computer. You can tap command and spacebar to open Spotlight search if you don't know where it is.
+Terminal gives us a place to access the command line. It looks prety simple, with just some lines of monospaced text. We'll write our instructions at the **prompt**, which is the form `<computer name>:<current directory> <user>$`. For example:
 
-Terminal gives us a place to access the command line. It looks prety simple, with just some lines of monospaced text. We'll write our instructions at the **prompt**, which is the form `<computer name>:<current directory> <user>$`.
-
-```{bash}
-mac:~ luigi$
+```
+bros:~ luigi$
 ```
 
-The prompt will appear each time your computer is awaiting an instruction. You just need to write your command after thet `$` and hit enter.
+The prompt will appear each time your computer is awaiting an instruction. You just need to write your command after thet `$` and hit enter. We'll be writing in our computer's default scripting langage: **bash**.
 
 ## Where are we?
 
-Any instructions you give will affect the current folder you're in. Where are you when you start Terminal? The prompt will show the tilde `~` in the current-directory part of the prompt. This is shortcut symbol for the **root directory**, which on a Mac will be set to the path `/Users/<your-username>`.
+The commands we input are going to affect the current folder we're in, or other files and folders relative to it.
+
+Where are you when you start Terminal? You always know where you are because of the `<current directory>` bit of the `<computer name>:<current directory> <user>$` prompt.
+
+When you start, the prompt will show the tilde `~` by default. This is shortcut symbol for your computer's **root directory**, which on a Mac will be set to the path `/Users/<your-username>`.
 
 We can prove this by typing `pwd` ('print working directory') at the prompt and hitting the enter key.
 
 ```
-mac:~ luigi$ pwd
+bros:~ luigi$ pwd
 /Users/luigi
 ```
 
-## Who goes there?
+## What's here?
 
 Let's look around this folder with `ls`, which means 'list the files'.
 
 ```
-mac:~ luigi$ ls
+bros:~ luigi$ ls
 Applications  Desktop               Documents
 Downloads     Movies                Music
 Pictures      plumbing-invoice.txt  
 ```
 
+It holds some folders and a text file. This command is analagous to double-clicking a folder to open it and look inside.
+
 ## Flags
 
-We can go one better: we can add *flags* to the command. These are arguments prefixed with a hyphen that change the command's default behaviour. We're going to ask for *all* the files and folders (some are hidden!) with `-a` and also we'll use `-p` to get the folders appended with a forward slash.
+We can go one better: we can add **flags** to the command. These are arguments prefixed with a hyphen that change the command's default behaviour. We're going to ask for *all* the files and folders (some are hidden!) with `-a` and also we'll use `-p` to append the folders with a forward slash to make them more obvious.
 
 ```
-mac:~ luigi$ ls -a -p
+bros:~ luigi$ ls -a -p
 .
 ..
-.
+.luigi-profile
+.gameboy-horror-token
+.poltergust-key
 Applications/
 Desktop/
 Documents/
 Downloads/
-plumbing-invoice.txt
 Movies/
 Music/
 Pictures/
+plumbing-invoice.txt
 ```
 
-So now can see all the files, including the hidden ones. One example of a hidden file for R is the [`.Rprofile` file](https://www.rostrum.blog/2019/01/04/rprofile-motivate/).
+So now can see all the files, including the hidden ones. Hidden files are often settings or profiles for various programs, or tokens stored for API access. One example of a hidden file for R is [`an .Rprofile](https://www.rostrum.blog/2019/01/04/rprofile-motivate/).
 
 ## Navigation
 
 Knowing what's in our working directory is useful because it helps us navigate. We can switch to another folder with the change directory command `cd`. We don't have to type the full path, just the path relative to where we are. So instead of `/Users/matt/Documents`, we can just type `Documents`.
 
 ```
-mac:~ luigi$ cd Documents
-mac:Documents luigi$
+bros:~ luigi$ cd Documents
+bros:Documents luigi$ pwd
+/Users/luigi/Documents
 ```
 
 See how the prompt changed to say 'Documents'? This is a handy reference in case we forget where we are. To return to the parent folder (i.e. back where we were), we can use `cd ..` to go up the file structure by one level.
+
+## Create a folder
+
+We can make a new folder with the `mkdir` command by typing `mkdir <folder name>` to create a new folder in our current working directory. We can switch to the new folder with `cd` and can again convince ourselves by looking at the `<current directory>` bit of the prompt, or by executing `pwd` to print our working directory.
+
+```
+bros:Documents luigi$ mkdir important-notes
+bros:Documents luigi$ cd important-notes
+bros:important-notes luigi$ pwd
+/Users/luigi/Documents/important-notes
+```
 
 ## Create a file
 
 Let's create a file in our current working directory with the `touch` command and then convince ourselves it's there by listing the folder contents.
 
 ```
-mac:Documents luigi$ touch important.md
-mac:Documents luigi$ ls -p
-coin-balance/    important.md           plumbing/
-star-locations/  monty-mole-fanfic.txt  moustache-wiggle.gif
+bros:important-notes luigi$ touch  mushroom-top3.md
+bros:important-notes luigi$ ls -p
+coin-balance/         mushroom-top3.md  monty-mole-fanfic.txt
+moustache-wiggle.gif  plumbing/         star-locations/
 ```
 
-Okay great, but the file is empty. How do we write something in it? Well, you can use `open characters.md` to open the file in your default text editor, but we can also write from _inside Terminal_. Perhaps the simplest way is to use Nano, which you can think of as a text editor built into Terminal.
+Okay great, but the file is empty. How do we write something in it? Well, you could use `open characters.md` at the prompt to open the file in your default text editor (TextEdit or something), but we can also write text from _within_ Terminal itself. Perhaps the simplest way is to use the Nano editor, which you can think of as a text editor built into Terminal.
 
 ```
-mac:Documents luigi$ nano important.md
+bros:important-notes luigi$ nano mushroom-top3.md
 ```
-The prompt will disappear and you'll see a header saying `File: characters.md`. You're now editing this file. Start typing. The file extension `.md` means you can write using MarkDown syntax, but you cold just as easily have specified a `.txt`, for example.
+The prompt will disappear and you'll see a header saying `File: characters.md`. You're now editing this file with Nano. Start typing. The file extension `.md` means you can write using Markdown syntax, but you cold just as easily have specified a `.txt`, for example.
 
 ```
 # Mushroom Kingdom Top Threes
@@ -143,18 +166,22 @@ Notice the options at the bottom screen. We can exit Nano with `^X` (control and
 
 ## Move your files
 
+We appeared to have a rogue file stored in our root directory that should really be in a subfolder of Documents. The command `mv` allows us to move it. We can do this by specifying the full paths of the file and the folder where it's going, or we can move to the fodler with the file and simply provde the file name and destination.
+
 ```
-mac:Documents luigi$ cd ..
-mac:~ luigi$ mv plumbing-invoice.txt ~/Documents/plumbing
-mac:~ luigi$ cd /Documents/plumbing
-mac:plumbing luigi$ ls
-overalls.jpg  plumbing-invoice.txt  warp-pipes.txt
+bros:important-notes luigi$ cd ~
+bros:~ luigi$ mv plumbing-invoice.txt ~/Documents/important-notes/plumbing
+bros:~ luigi$ cd /Documents/plumbing/important-notes/plumbing
+bros:plumbing luigi$ ls
+overalls.jpg  plumbing-invoice.txt  tighten-warp-pipes.txt
 ```
 
 ## Delete
 
+While we're here, we might want to prune our files a bit.
+
 ```
-mac:plumbing luigi$ rm warp-pipes.txt
-mac:plumbing luigi$ ls
+bros:plumbing luigi$ rm tighten-warp-pipes.txt
+bros:plumbing luigi$ ls
 overalls.jpg  plumbing-invoice.txt
 ```
