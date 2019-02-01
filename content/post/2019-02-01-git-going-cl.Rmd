@@ -75,7 +75,7 @@ Terminal is a simple application where you type commands and execute them. You'r
 bros:~ luigi$
 ```
 
-The prompt will appear each time your computer is awaiting an instruction. You just need to write your command after thet `$` and hit enter.
+The prompt will appear each time your computer is awaiting an instruction. You just need to write your command after the `$` and hit enter.
 
 ## Where are we?
 
@@ -83,18 +83,20 @@ The commands we input are going to affect the current folder we're in, or other 
 
 Where are you when you start Terminal? The prompt helps you orient yourself: see the `<current directory>` bit of `<computer name>:<current directory> <user>$`.
 
-When you start, the prompt will show the tilde `~` by default. This is shortcut symbol for your 'home' directory, which on a Mac will be set to the path `/Users/<your-username>`.
+When you start, the prompt will show the tilde `~` by default. This is a shortcut symbol for your 'home' directory, which on a Mac will be set to the path `/Users/<your-username>`.
 
-We can prove this by typing `pwd` ('print working directory') at the prompt and hitting the enter key.
+We can prove this by typing `pwd` at the prompt and hitting the enter key.
 
 ```
 bros:~ luigi$ pwd
 /Users/luigi
 ```
 
+This command prints the path for the current working directory. The folder we're working in at any given moment is called 'the working directory'.
+
 ## Look around with `ls`
 
-Let's look around this folder with `ls`, which means 'list the files'.
+We can look at the contents of our current working directory with `ls`, which means 'list the files'.
 
 ```
 bros:~ luigi$ ls
@@ -128,11 +130,11 @@ plumbing-invoice.txt
 
 So now can see all the files, including the hidden ones. Hidden files are often settings or profiles for various programs, or tokens stored for API access. One example of a hidden file for R is [an .Rprofile](https://www.rostrum.blog/2019/01/04/rprofile-motivate/).
 
-You can see a description of the command and the list of available flags useing the `man` command. For example, try `man ls` to learn about the list command. Sometimes the contents of the man file don't fit the screen; keep hitting return unti lthe bottom, or tap `q` to quit.
+You can see a description of the command and the list of available flags using the `man` command. For example, try `man ls` to learn about the list command. Sometimes the contents of the man file don't fit the screen; keep hitting return until the bottom, or tap `q` to quit.
 
 ## Navigation with `cd`
 
-Knowing what's in our working directory is useful because it helps us navigate. We can switch to another folder with the change directory command `cd`. We don't have to type the full path, just the path relative to where we are. So instead of `/Users/matt/Documents`, we can just type `Documents`.
+Knowing what's in our working directory is useful because it helps us navigate. We can switch to another folder with the change directory command `cd`. We don't have to type the full path, just the path relative to where we are. So instead of `/Users/matt/Documents`, we can just type `Documents`. In fact, you can start typing and hit the tab key for autocompletion, assuming there's no conflicts.
 
 ```
 bros:~ luigi$ cd Documents
@@ -142,24 +144,13 @@ bros:Documents luigi$ pwd
 
 See how the prompt changed to say 'Documents'? This is a handy reference in case we forget where we are. To return to the parent folder (i.e. back where we were), we can use `cd ..` to go up the file structure by one level.
 
-## Create a folder with `mkdir`
-
-We can make a new folder with the `mkdir` command by typing `mkdir <folder name>` to create a new folder in our current working directory. We can switch to the new folder with `cd` and can again convince ourselves by looking at the `<current directory>` bit of the prompt, or by executing `pwd` to print our working directory.
-
-```
-bros:Documents luigi$ mkdir important-notes
-bros:Documents luigi$ cd important-notes
-bros:important-notes luigi$ pwd
-/Users/luigi/Documents/important-notes
-```
-
 ## Create/edit a file with `touch`/`nano`
 
 Let's create a file in our current working directory with the `touch` command and then convince ourselves it's there by listing the folder contents.
 
 ```
-bros:important-notes luigi$ touch  mushroom-top3.md
-bros:important-notes luigi$ ls -p
+bros:Documents luigi$ touch  mushroom-top3.md
+bros:Documents luigi$ ls -p
 coin-balance/         mushroom-top3.md  monty-mole-fanfic.txt
 moustache-wiggle.gif  plumbing/         star-locations/
 ```
@@ -169,25 +160,38 @@ Okay great, but the file is empty. How do we write something in it? Well, you co
 ```
 bros:important-notes luigi$ nano mushroom-top3.md
 ```
-The prompt will disappear and you'll see a header saying `File: characters.md`. You're now editing this file with Nano. Start typing. The file extension `.md` means you can write using Markdown syntax, but you cold just as easily have specified a `.txt`, for example.
+The prompt will disappear and you'll see a header saying `File: characters.md`. You're now editing this file with Nano. Start typing. The file extension `.md` means you can write using Markdown syntax, but you cold just as easily have specified a `.txt` text file, for example.
 
 ```
 # Mushroom Kingdom Top Threes
 
 ## The best
-
 1. **Luigi**
 2. Baby Luigi
 3. Daisy
 
 ## The worst
-
 1. Red Luigi
 2. Waluigi
 3. King Boo
 ```
 
-Notice the options at the bottom screen. We can exit Nano with `^X` (control and X keys). You'll be asked if you want to save; hit `Y` for yes. Then you'll be asked for a `File name to write: characters.md`. You can edit the name or hit enter to confirm. The content is now saved.
+Notice the options at the bottom of the window. We can exit Nano with `^X` (control and X keys). You'll be asked if you want to save; hit `Y` for yes. Then you'll be asked for a `File name to write: characters.md`. You can edit the name or hit enter to confirm. The content is now saved.
+
+## Create a folder with mkdir
+
+As well as files, the command `mkdir <folder name>` will create a new folder in our current working directory. We can switch to the new folder with `cd` and can again convince ourselves by looking at the <current directory> bit of the prompt, or by executing pwd to print our working directory.
+
+```
+bros:Documents luigi$ mkdir new-games-starring-luigi
+bros:Documents luigi$ cd 
+bros:new-games-starring-luigi luigi$ pwd
+/Users/luigi/Documents/important-notes
+bros:new-games-starring-luigi luigi$ ls
+bros:new-games-starring-luigi luigi$
+```
+
+Note that `ls` on an empty directory will return nothing.
 
 ## Move your files with `mv`
 
@@ -196,7 +200,7 @@ Let's say we have a rogue text file in our home directory (`~`) that should real
 You can specify this in the form `mv <filepath> <filepath>` to move files to and from any path, or  or navigate with `cd` to the folder containing the file and use the form `mv <file> <filepath>`). The code below does the latter, using `cd` and `ls` to move between folders and show where the file is.
 
 ```
-bros:important-notes luigi$ cd ~
+bros:Documents luigi$ cd ~
 bros:~ luigi$ ls
 Applications  Desktop               Documents
 Downloads     Movies                Music
@@ -225,4 +229,4 @@ overalls.jpg  plumbing-invoice.txt
 
 # Next steps
 
-So we should have enough knowledge now to navigate and manipulate folders. This will be extremely helpful when we start using Git commands at the command line in part two of the 'Git going' series
+So we should have enough knowledge now to navigate and manipulate folders. This will be extremely helpful when we start using Git commands at the command line in part two of the 'Git going' series.
