@@ -1,0 +1,144 @@
+---
+title: Graphing the Relayverse podcasts
+author: Matt Dray
+date: '2019-02-12'
+slug: relayverse
+categories:
+  - dataviz
+  - pop culture
+tags:
+  - tidygraph
+  - ggraph
+  - networks
+  - dplyr
+  - purrr
+  - visNetwork
+draft: yes
+---
+
+
+
+<div id="relay-fm" class="section level1">
+<h1>Relay FM</h1>
+<p>Podcasting.</p>
+<p>Relay FM is.</p>
+<p>Gimlet acquired by Spotify.</p>
+</div>
+<div id="packages" class="section level1">
+<h1>Packages</h1>
+<p>I’m using two ‘suites’ of ‘tidy’ packages in this post: one set for data collection and manipulation, and one set for graph network building, analysis and visualisation.</p>
+<pre class="r"><code># Data collection and manipulation
+library(dplyr)  # data manipulation
+library(rvest)  # for scraping webpages
+library(stringr)  # string manipulation
+library(tidyr)  # tidying dataframes
+library(purrr)  # applying functions over data
+
+# Graph networks
+library(tidygraph)  # set up graph network
+library(ggraph)  # visualise static graphs
+library(visNetwork)  # javascript interactive network</code></pre>
+</div>
+<div id="harvest-data" class="section level1">
+<h1>Harvest data</h1>
+<p>We can scrape a table of podcast titles and authors from <a href="https://en.wikipedia.org/wiki/Relay_FM">the Wikipedia page for Relay FM</a> using the <code>rvest</code> package. The page has two tables: one for current shows and one for retired shows. We can scrape both and combine them. <code>read_html()</code> gets the HTML for the selected page; <code>html_node()</code> identifies which element needs to be scraped; and <code>html_table()</code> interprets the HTML information as a dataframe.</p>
+<pre class="r"><code># Get the HTML for the selected page
+relay_wiki &lt;- read_html(&quot;https://en.wikipedia.org/wiki/Relay_FM&quot;)
+
+# Get the table with current shows
+current &lt;- relay_wiki %&gt;%
+  html_node(xpath = &#39;//*[@id=&quot;mw-content-text&quot;]/div/table[2]&#39;) %&gt;%
+  html_table() %&gt;%
+  filter(
+    !Podcast %in% c(&quot;Members Only&quot;, &#39;Paid &quot;Members Only&quot; Shows&#39;, &quot;B-Sides&quot;)
+  ) %&gt;%
+  mutate(Status = &quot;Current&quot;)  # label rows as current shows
+
+# Get the table with retired shows
+retired &lt;- relay_wiki %&gt;%
+  html_node(xpath = &#39;//*[@id=&quot;mw-content-text&quot;]/div/table[3]&#39;) %&gt;%
+  html_table() %&gt;%
+  select(-`Number of episodes`) %&gt;%
+  mutate(Status = &quot;Retired&quot;)  # label rows as retired shows
+
+# Combine the tablesinto one dataframe
+shows &lt;- bind_rows(current, retired)</code></pre>
+<p>We’ll need to split apart the author names, which have been read in as ‘Mike HurleyCasey Liss’. We can do this by splitting between each lowercase letter followed by an uppercase letter<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>. This leaves us with a list column that we can <code>unnest()</code> to get one row per podcast-host combination. Our datframe is now tidy.</p>
+<pre class="r"><code>shows_clean &lt;- shows %&gt;%
+  mutate(
+    Hosts = str_remove_all(Hosts, &quot; \\(originally\\)&quot;),
+    Hosts = str_split(Hosts, &quot;(?&lt;=[a-z])(?=[A-Z])&quot;)
+  ) %&gt;% 
+  unnest() %&gt;% 
+  select(Podcast, Hosts)</code></pre>
+</div>
+<div id="tidygraph" class="section level1">
+<h1>Tidygraph</h1>
+<p>To produce a network, we need to prepare the data so we have every host combination<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a> within each podcast. This is relatively tricky as things stand, but hinges on the use of the <code>combn()</code> function.</p>
+<p>We’re doing this because we need nodes representing ‘from’ and ‘to’. This has meaning when the graph is directed – there is a flow from one to the other – but the terms are less emaningful for our ‘undirected’ graph. Nodes in our graph are connected simply with no direction.</p>
+<pre class="r"><code>relay_combos &lt;- shows_clean %&gt;% 
+  group_by(Podcast) %&gt;%  # operate within each podcast
+  filter(n() &gt; 1) %&gt;%  # where there&#39;s more than one
+  split(.$Podcast) %&gt;%  # split on podcast
+  map(., 2) %&gt;%
+  map(~combn(.x, m = 2)) %&gt;%   # all pair combiantions
+  map(~t(.x)) %&gt;%  # transpose the matrix
+  map(as_tibble) %&gt;%  # convert to a tibble dataframe
+  bind_rows(.id = &quot;Podcast&quot;) %&gt;%  # list-element name to column
+  select(V1, V2, Podcast)
+
+print(relay_combos)</code></pre>
+<pre><code>## # A tibble: 58 x 3
+##    V1               V2                 Podcast   
+##    &lt;chr&gt;            &lt;chr&gt;              &lt;chr&gt;     
+##  1 Myke Hurley      Casey Liss         Analog(ue)
+##  2 David Sparks     Rose Orchard       Automators
+##  3 Myke Hurley      Matt Alexander     Bionic    
+##  4 Myke Hurley      Matt Alexander     BONANZA   
+##  5 Federico Viticci Fraser Spiers      Canvas    
+##  6 Dan Moren        Mikah Sargent      Clockwise 
+##  7 Federico Viticci Myke Hurley        Connected 
+##  8 Federico Viticci Stephen M. Hackett Connected 
+##  9 Myke Hurley      Stephen M. Hackett Connected 
+## 10 CGP Grey         Myke Hurley        Cortex    
+## # … with 48 more rows</code></pre>
+<p>This gives us a dataframe of all host-pair combinations. This can be turned from a simple dataframe object to a tidygraph object with the <code>as_tbl_graph()</code> function. This class of object contains two dataframes (the nodes and the edges) and some metadata.</p>
+<pre class="r"><code>relay_graph &lt;- as_tbl_graph(relay_combos, directed = FALSE)
+
+print(relay_graph)</code></pre>
+<pre><code>## # A tbl_graph: 38 nodes and 58 edges
+## #
+## # An undirected multigraph with 6 components
+## #
+## # Node Data: 38 x 1 (active)
+##   name            
+##   &lt;chr&gt;           
+## 1 Myke Hurley     
+## 2 David Sparks    
+## 3 Federico Viticci
+## 4 Dan Moren       
+## 5 CGP Grey        
+## 6 Georgia Dow     
+## # … with 32 more rows
+## #
+## # Edge Data: 58 x 3
+##    from    to Podcast   
+##   &lt;int&gt; &lt;int&gt; &lt;chr&gt;     
+## 1     1    24 Analog(ue)
+## 2     2    25 Automators
+## 3     1    26 Bionic    
+## # … with 55 more rows</code></pre>
+</div>
+<div id="descriptive-statistics" class="section level1">
+<h1>Descriptive statistics</h1>
+</div>
+<div id="visualisation" class="section level1">
+<h1>Visualisation</h1>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>The regex <code>(?&lt;=[a-z])(?=[A-Z])</code> says split after but not including (<code>?&lt;=</code>) a lowercase letter (<code>[a-z]</code>), and before but not including (<code>?=</code>) a capital letter (<code>[A-Z]</code>).<a href="#fnref1">↩</a></p></li>
+<li id="fn2"><p>We don’t need all the <em>permutations</em>. ‘Federico Viticci to Stephen M. Hackett’ is the same as ‘Stephen M. Hackett to Federico Viticci’ and we don’t need both.<a href="#fnref2">↩</a></p></li>
+</ol>
+</div>

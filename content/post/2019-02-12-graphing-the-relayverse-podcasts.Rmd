@@ -1,0 +1,119 @@
+---
+title: Graphing the Relayverse podcasts
+author: Matt Dray
+date: '2019-02-12'
+slug: relayverse
+categories:
+  - dataviz
+  - pop culture
+tags:
+  - tidygraph
+  - ggraph
+  - networks
+  - dplyr
+  - purrr
+  - visNetwork
+draft: yes
+---
+
+# Relay FM
+
+Podcasting.
+
+Relay FM is.
+
+Gimlet acquired by Spotify.
+
+# Packages
+
+I'm using two 'suites' of 'tidy' packages in this post: one set for data collection and manipulation, and one set for graph network building, analysis and visualisation.
+
+```{r packages, warning=FALSE, message=FALSE}
+# Data collection and manipulation
+library(dplyr)  # data manipulation
+library(rvest)  # for scraping webpages
+library(stringr)  # string manipulation
+library(tidyr)  # tidying dataframes
+library(purrr)  # applying functions over data
+
+# Graph networks
+library(tidygraph)  # set up graph network
+library(ggraph)  # visualise static graphs
+library(visNetwork)  # javascript interactive network
+```
+
+# Harvest data
+
+We can scrape a table of podcast titles and authors from [the Wikipedia page for Relay FM](https://en.wikipedia.org/wiki/Relay_FM) using the `rvest` package. The page has two tables: one for current shows and one for retired shows. We can scrape both and combine them. `read_html()` gets the HTML for the selected page; `html_node()` identifies which element needs to be scraped; and `html_table()` interprets the HTML information as a dataframe.
+
+```{r scrape}
+# Get the HTML for the selected page
+relay_wiki <- read_html("https://en.wikipedia.org/wiki/Relay_FM")
+
+# Get the table with current shows
+current <- relay_wiki %>%
+  html_node(xpath = '//*[@id="mw-content-text"]/div/table[2]') %>%
+  html_table() %>%
+  filter(
+    !Podcast %in% c("Members Only", 'Paid "Members Only" Shows', "B-Sides")
+  ) %>%
+  mutate(Status = "Current")  # label rows as current shows
+
+# Get the table with retired shows
+retired <- relay_wiki %>%
+  html_node(xpath = '//*[@id="mw-content-text"]/div/table[3]') %>%
+  html_table() %>%
+  select(-`Number of episodes`) %>%
+  mutate(Status = "Retired")  # label rows as retired shows
+
+# Combine the tablesinto one dataframe
+shows <- bind_rows(current, retired)
+```
+
+We'll need to split apart the author names, which have been read in as 'Mike HurleyCasey Liss'. We can do this by splitting between each lowercase letter followed by an uppercase letter[^regex]. This leaves us with a list column that we can `unnest()` to get one row per podcast-host combination. Our datframe is now tidy.
+
+```{r str-split}
+shows_clean <- shows %>%
+  mutate(
+    Hosts = str_remove_all(Hosts, " \\(originally\\)"),
+    Hosts = str_split(Hosts, "(?<=[a-z])(?=[A-Z])")
+  ) %>% 
+  unnest() %>% 
+  select(Podcast, Hosts)
+```
+
+# Tidygraph
+
+To produce a network, we need to prepare the data so we have every host combination[^combo] within each podcast. This is relatively tricky as things stand, but hinges on the use of the `combn()` function.
+
+We're doing this because we need nodes representing 'from' and 'to'. This has meaning when the graph is directed -- there is a flow from one to the other -- but the terms are less emaningful for our 'undirected' graph. Nodes in our graph are connected simply with no direction.
+
+```{r combos}
+relay_combos <- shows_clean %>% 
+  group_by(Podcast) %>%  # operate within each podcast
+  filter(n() > 1) %>%  # where there's more than one
+  split(.$Podcast) %>%  # split on podcast
+  map(., 2) %>%
+  map(~combn(.x, m = 2)) %>%   # all pair combiantions
+  map(~t(.x)) %>%  # transpose the matrix
+  map(as_tibble) %>%  # convert to a tibble dataframe
+  bind_rows(.id = "Podcast") %>%  # list-element name to column
+  select(V1, V2, Podcast)
+
+print(relay_combos)
+```
+
+This gives us a dataframe of all host-pair combinations. This can be turned from a simple dataframe object to a tidygraph object with the `as_tbl_graph()` function. This class of object contains two dataframes (the nodes and the edges) and some metadata.
+
+```{r as-tbl-graph}
+relay_graph <- as_tbl_graph(relay_combos, directed = FALSE)
+
+print(relay_graph)
+```
+
+# Descriptive statistics
+
+# Visualisation
+
+[^regex]: The regex `(?<=[a-z])(?=[A-Z])` says split after but not including (`?<=`) a lowercase letter (`[a-z]`), and before but not including (`?=`) a capital letter (`[A-Z]`).
+[^combo]: We don't need all the _permutations_. 'Federico Viticci to Stephen M. Hackett' is the same as 'Stephen M. Hackett to Federico Viticci' and we don't need both.
