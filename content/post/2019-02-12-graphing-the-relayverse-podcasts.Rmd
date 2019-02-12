@@ -18,15 +18,17 @@ draft: yes
 
 # Relay FM
 
-Podcasting.
+Podcasting has been growing for a number of years now and has become big business. The podcast network Gimlet was acquired by Spotify just last week.
 
-Relay FM is.
+What's a 'podcast network'? A few companies act as a 'stable' for multiple podcasts, which can help pool resources and serve content better.
 
-Gimlet acquired by Spotify.
+[Relay FM](https://www.relay.fm) is a podcast network that focuses largely on tech content. It was started by [Myke Hurley](https//www.relay.fm/people/mykehurley) and [Stephen Hackett](https//www.relay.fm/people/stephenhackett) in 2014.
+
+Many of Relay FM's hosts have hosted more than one podcast on the network. This post is about exploring and visualising this 'Relayverse'.
 
 # Packages
 
-I'm using two 'suites' of 'tidy' packages in this post: one set for data collection and manipulation, and one set for graph network building, analysis and visualisation.
+I'm using two suites of 'tidy' packages in this post: one set for data collection and manipulation, and one set for graph network building, analysis and visualisation.
 
 ```{r packages, warning=FALSE, message=FALSE}
 # Data collection and manipulation
@@ -44,7 +46,7 @@ library(visNetwork)  # javascript interactive network
 
 # Harvest data
 
-We can scrape a table of podcast titles and authors from [the Wikipedia page for Relay FM](https://en.wikipedia.org/wiki/Relay_FM) using the `rvest` package. The page has two tables: one for current shows and one for retired shows. We can scrape both and combine them. `read_html()` gets the HTML for the selected page; `html_node()` identifies which element needs to be scraped; and `html_table()` interprets the HTML information as a dataframe.
+We can use the `rvest` package to scrape podcast details from [the Wikipedia page for Relay FM](https://en.wikipedia.org/wiki/Relay_FM). `read_html()` gets the HTML for the selected page; `html_node()` identifies which element needs to be scraped; and `html_table()` interprets the HTML information as a dataframe.
 
 ```{r scrape}
 # Get the HTML for the selected page
@@ -70,7 +72,7 @@ retired <- relay_wiki %>%
 shows <- bind_rows(current, retired)
 ```
 
-We'll need to split apart the author names, which have been read in as 'Mike HurleyCasey Liss'. We can do this by splitting between each lowercase letter followed by an uppercase letter[^regex]. This leaves us with a list column that we can `unnest()` to get one row per podcast-host combination. Our datframe is now tidy.
+Host names are in the form 'First LastFirst Last'. We can split them apart where a lowercase letter is followed by an uppercase letter[^regex]. This leaves us with a list column that we can `unnest()` to get one row per podcast-host combination. Our datframe is now tidy and ready for Tidygraph.
 
 ```{r str-split}
 shows_clean <- shows %>%
@@ -79,14 +81,14 @@ shows_clean <- shows %>%
     Hosts = str_split(Hosts, "(?<=[a-z])(?=[A-Z])")
   ) %>% 
   unnest() %>% 
-  select(Podcast, Hosts)
+  select(Podcast, Hosts, Status)
 ```
 
 # Tidygraph
 
-To produce a network, we need to prepare the data so we have every host combination[^combo] within each podcast. This is relatively tricky as things stand, but hinges on the use of the `combn()` function.
+Tidygraph was written by Tomas Lin Pedersen.
 
-We're doing this because we need nodes representing 'from' and 'to'. This has meaning when the graph is directed -- there is a flow from one to the other -- but the terms are less emaningful for our 'undirected' graph. Nodes in our graph are connected simply with no direction.
+We need every host combination[^combo] for each podcast, which can be achieved with the `combn()` function. This gives us a pair of points ('nodes' in graph-speak) that can be connected by a line (an 'edge') to indicate their relationship.
 
 ```{r combos}
 relay_combos <- shows_clean %>% 
@@ -103,7 +105,7 @@ relay_combos <- shows_clean %>%
 print(relay_combos)
 ```
 
-This gives us a dataframe of all host-pair combinations. This can be turned from a simple dataframe object to a tidygraph object with the `as_tbl_graph()` function. This class of object contains two dataframes (the nodes and the edges) and some metadata.
+We can turn this dataframe of host-pair combinations into a tidygraph object with the `as_tbl_graph()` function. This class of object contains two dataframes (the nodes and the edges) and some metadata.
 
 ```{r as-tbl-graph}
 relay_graph <- as_tbl_graph(relay_combos, directed = FALSE)
@@ -114,6 +116,36 @@ print(relay_graph)
 # Descriptive statistics
 
 # Visualisation
+
+## Static with `ggraph`
+
+Like `tidygraph`, `ggraph` was written by Tomas Lin Pedersen.
+
+## Interactive with `visNetwork`
+
+I'm going to show how to use the `visNetwork` package, which wraps some JavaScript to allow for interactive networks. The `visNetwork()` takes separate dataframes of edges and nodes, written in specific formats.
+
+```{r visnetwork-prep}
+relay_combos_id <- mutate(relay_combos, id = row_number())
+
+nodes <- shows_clean %>%
+  distinct(Hosts) %>%
+  mutate(id = as.character(row_number())) %>% 
+  rename(label = Hosts) %>% 
+  mutate(title = label)
+
+edges <- left_join(relay_combos, nodes, by = c("V1" = "label")) %>% 
+  left_join(nodes, by = c("V2" = "label")) %>% 
+  mutate(title = Podcast) %>% 
+  select(from = id.x, to = id.y, label = Podcast, title)
+```
+
+Now we can just plug the data into the function.
+
+```{r visnetwork}
+visNetwork(nodes, edges, main = "The Relayverse") %>% 
+  visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE)
+```
 
 [^regex]: The regex `(?<=[a-z])(?=[A-Z])` says split after but not including (`?<=`) a lowercase letter (`[a-z]`), and before but not including (`?=`) a capital letter (`[A-Z]`).
 [^combo]: We don't need all the _permutations_. 'Federico Viticci to Stephen M. Hackett' is the same as 'Stephen M. Hackett to Federico Viticci' and we don't need both.

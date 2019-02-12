@@ -16,17 +16,22 @@ tags:
 draft: yes
 ---
 
+<script src="/rmarkdown-libs/htmlwidgets/htmlwidgets.js"></script>
+<link href="/rmarkdown-libs/vis/vis.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/vis/vis.min.js"></script>
+<script src="/rmarkdown-libs/visNetwork-binding/visNetwork.js"></script>
 
 
 <div id="relay-fm" class="section level1">
 <h1>Relay FM</h1>
-<p>Podcasting.</p>
-<p>Relay FM is.</p>
-<p>Gimlet acquired by Spotify.</p>
+<p>Podcasting has been growing for a number of years now and has become big business. The podcast network Gimlet was acquired by Spotify just last week.</p>
+<p>What’s a ‘podcast network’? A few companies act as a ‘stable’ for multiple podcasts, which can help pool resources and serve content better.</p>
+<p><a href="https://www.relay.fm">Relay FM</a> is a podcast network that focuses largely on tech content. It was started by <a href="https//www.relay.fm/people/mykehurley">Myke Hurley</a> and <a href="https//www.relay.fm/people/stephenhackett">Stephen Hackett</a> in 2014.</p>
+<p>Many of Relay FM’s hosts have hosted more than one podcast on the network. This post is about exploring and visualising this ‘Relayverse’.</p>
 </div>
 <div id="packages" class="section level1">
 <h1>Packages</h1>
-<p>I’m using two ‘suites’ of ‘tidy’ packages in this post: one set for data collection and manipulation, and one set for graph network building, analysis and visualisation.</p>
+<p>I’m using two suites of ‘tidy’ packages in this post: one set for data collection and manipulation, and one set for graph network building, analysis and visualisation.</p>
 <pre class="r"><code># Data collection and manipulation
 library(dplyr)  # data manipulation
 library(rvest)  # for scraping webpages
@@ -41,7 +46,7 @@ library(visNetwork)  # javascript interactive network</code></pre>
 </div>
 <div id="harvest-data" class="section level1">
 <h1>Harvest data</h1>
-<p>We can scrape a table of podcast titles and authors from <a href="https://en.wikipedia.org/wiki/Relay_FM">the Wikipedia page for Relay FM</a> using the <code>rvest</code> package. The page has two tables: one for current shows and one for retired shows. We can scrape both and combine them. <code>read_html()</code> gets the HTML for the selected page; <code>html_node()</code> identifies which element needs to be scraped; and <code>html_table()</code> interprets the HTML information as a dataframe.</p>
+<p>We can use the <code>rvest</code> package to scrape podcast details from <a href="https://en.wikipedia.org/wiki/Relay_FM">the Wikipedia page for Relay FM</a>. <code>read_html()</code> gets the HTML for the selected page; <code>html_node()</code> identifies which element needs to be scraped; and <code>html_table()</code> interprets the HTML information as a dataframe.</p>
 <pre class="r"><code># Get the HTML for the selected page
 relay_wiki &lt;- read_html(&quot;https://en.wikipedia.org/wiki/Relay_FM&quot;)
 
@@ -63,19 +68,19 @@ retired &lt;- relay_wiki %&gt;%
 
 # Combine the tablesinto one dataframe
 shows &lt;- bind_rows(current, retired)</code></pre>
-<p>We’ll need to split apart the author names, which have been read in as ‘Mike HurleyCasey Liss’. We can do this by splitting between each lowercase letter followed by an uppercase letter<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>. This leaves us with a list column that we can <code>unnest()</code> to get one row per podcast-host combination. Our datframe is now tidy.</p>
+<p>Host names are in the form ‘First LastFirst Last’. We can split them apart where a lowercase letter is followed by an uppercase letter<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>. This leaves us with a list column that we can <code>unnest()</code> to get one row per podcast-host combination. Our datframe is now tidy and ready for Tidygraph.</p>
 <pre class="r"><code>shows_clean &lt;- shows %&gt;%
   mutate(
     Hosts = str_remove_all(Hosts, &quot; \\(originally\\)&quot;),
     Hosts = str_split(Hosts, &quot;(?&lt;=[a-z])(?=[A-Z])&quot;)
   ) %&gt;% 
   unnest() %&gt;% 
-  select(Podcast, Hosts)</code></pre>
+  select(Podcast, Hosts, Status)</code></pre>
 </div>
 <div id="tidygraph" class="section level1">
 <h1>Tidygraph</h1>
-<p>To produce a network, we need to prepare the data so we have every host combination<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a> within each podcast. This is relatively tricky as things stand, but hinges on the use of the <code>combn()</code> function.</p>
-<p>We’re doing this because we need nodes representing ‘from’ and ‘to’. This has meaning when the graph is directed – there is a flow from one to the other – but the terms are less emaningful for our ‘undirected’ graph. Nodes in our graph are connected simply with no direction.</p>
+<p>Tidygraph was written by Tomas Lin Pedersen.</p>
+<p>We need every host combination<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a> for each podcast, which can be achieved with the <code>combn()</code> function. This gives us a pair of points (‘nodes’ in graph-speak) that can be connected by a line (an ‘edge’) to indicate their relationship.</p>
 <pre class="r"><code>relay_combos &lt;- shows_clean %&gt;% 
   group_by(Podcast) %&gt;%  # operate within each podcast
   filter(n() &gt; 1) %&gt;%  # where there&#39;s more than one
@@ -102,7 +107,7 @@ print(relay_combos)</code></pre>
 ##  9 Myke Hurley      Stephen M. Hackett Connected 
 ## 10 CGP Grey         Myke Hurley        Cortex    
 ## # … with 48 more rows</code></pre>
-<p>This gives us a dataframe of all host-pair combinations. This can be turned from a simple dataframe object to a tidygraph object with the <code>as_tbl_graph()</code> function. This class of object contains two dataframes (the nodes and the edges) and some metadata.</p>
+<p>We can turn this dataframe of host-pair combinations into a tidygraph object with the <code>as_tbl_graph()</code> function. This class of object contains two dataframes (the nodes and the edges) and some metadata.</p>
 <pre class="r"><code>relay_graph &lt;- as_tbl_graph(relay_combos, directed = FALSE)
 
 print(relay_graph)</code></pre>
@@ -134,6 +139,31 @@ print(relay_graph)</code></pre>
 </div>
 <div id="visualisation" class="section level1">
 <h1>Visualisation</h1>
+<div id="static-with-ggraph" class="section level2">
+<h2>Static with <code>ggraph</code></h2>
+<p>Like <code>tidygraph</code>, <code>ggraph</code> was written by Tomas Lin Pedersen.</p>
+</div>
+<div id="interactive-with-visnetwork" class="section level2">
+<h2>Interactive with <code>visNetwork</code></h2>
+<p>I’m going to show how to use the <code>visNetwork</code> package, which wraps some JavaScript to allow for interactive networks. The <code>visNetwork()</code> takes separate dataframes of edges and nodes, written in specific formats.</p>
+<pre class="r"><code>relay_combos_id &lt;- mutate(relay_combos, id = row_number())
+
+nodes &lt;- shows_clean %&gt;%
+  distinct(Hosts) %&gt;%
+  mutate(id = as.character(row_number())) %&gt;% 
+  rename(label = Hosts) %&gt;% 
+  mutate(title = label)
+
+edges &lt;- left_join(relay_combos, nodes, by = c(&quot;V1&quot; = &quot;label&quot;)) %&gt;% 
+  left_join(nodes, by = c(&quot;V2&quot; = &quot;label&quot;)) %&gt;% 
+  mutate(title = Podcast) %&gt;% 
+  select(from = id.x, to = id.y, label = Podcast, title)</code></pre>
+<p>Now we can just plug the data into the function.</p>
+<pre class="r"><code>visNetwork(nodes, edges, main = &quot;The Relayverse&quot;) %&gt;% 
+  visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE)</code></pre>
+<div id="htmlwidget-1" style="width:672px;height:480px;" class="visNetwork html-widget"></div>
+<script type="application/json" data-for="htmlwidget-1">{"x":{"nodes":{"label":["Myke Hurley","Casey Liss","Federico Viticci","Stephen M. Hackett","Brad Dowdy","Dan Moren","Mikah Sargent","Jason Snell","Matt Alexander","Brianna Wu","Christina Warren","Simone de Rochefort","David Sparks","Katie Floyd","John Siracusa","Merlin Mann","CGP Grey","Andy Ihnatko","Russell Ivanovic","Florence Ion","Marco Arment","Tiffany Arment","Dan Provost","Tom Gerhardt","David Smith","Shahid Kamal Ahmad","Georgia Dow","Steve Lubitz","Jeff Veen","Quinn Rose","Gillian Parker","K Tempest Bradford","Aleen Simms","Alex Cox","Savannah Million","Rose Orchard","Shelly Brisbin","Julia Skott","Maddy Myers","Fraser Spiers"],"id":["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40"],"title":["Myke Hurley","Casey Liss","Federico Viticci","Stephen M. Hackett","Brad Dowdy","Dan Moren","Mikah Sargent","Jason Snell","Matt Alexander","Brianna Wu","Christina Warren","Simone de Rochefort","David Sparks","Katie Floyd","John Siracusa","Merlin Mann","CGP Grey","Andy Ihnatko","Russell Ivanovic","Florence Ion","Marco Arment","Tiffany Arment","Dan Provost","Tom Gerhardt","David Smith","Shahid Kamal Ahmad","Georgia Dow","Steve Lubitz","Jeff Veen","Quinn Rose","Gillian Parker","K Tempest Bradford","Aleen Simms","Alex Cox","Savannah Million","Rose Orchard","Shelly Brisbin","Julia Skott","Maddy Myers","Fraser Spiers"]},"edges":{"from":["1","13","1","1","3","6","3","3","1","17","27","27","27","10","10","28","8","10","10","10","10","27","27","27","39","39","7","8","13","22","18","18","19","30","32","1","4","15","3","3","1","34","10","10","11","4","1","1","1","3","23","23","1","21","25","4","1","3"],"to":["2","36","9","9","40","7","1","4","4","1","10","28","7","28","7","7","13","27","39","7","28","39","7","28","7","28","28","4","14","38","19","20","20","31","33","22","7","16","1","26","26","35","11","12","12","8","5","3","4","4","1","24","24","22","21","1","8","1"],"label":["Analog(ue)","Automators","Bionic","BONANZA","Canvas","Clockwise","Connected","Connected","Connected","Cortex","Disruption","Disruption","Disruption","Disruption","Disruption","Disruption","Free Agents","Isometric","Isometric","Isometric","Isometric","Isometric","Isometric","Isometric","Isometric","Isometric","Isometric","Liftoff","Mac Power Users","Make Do","Material","Material","Material","Mixed Feelings","Originality","Playing for Fun","Query","Reconcilable Differences","Remaster","Remaster","Remaster","Roboism","Rocket","Rocket","Rocket","Subnet","The Pen Addict","The Prompt","The Prompt","The Prompt","Thoroughly Considered","Thoroughly Considered","Thoroughly Considered","Top Four","Under the Radar","Ungeniused","Upgrade","Virtual"],"title":["Analog(ue)","Automators","Bionic","BONANZA","Canvas","Clockwise","Connected","Connected","Connected","Cortex","Disruption","Disruption","Disruption","Disruption","Disruption","Disruption","Free Agents","Isometric","Isometric","Isometric","Isometric","Isometric","Isometric","Isometric","Isometric","Isometric","Isometric","Liftoff","Mac Power Users","Make Do","Material","Material","Material","Mixed Feelings","Originality","Playing for Fun","Query","Reconcilable Differences","Remaster","Remaster","Remaster","Roboism","Rocket","Rocket","Rocket","Subnet","The Pen Addict","The Prompt","The Prompt","The Prompt","Thoroughly Considered","Thoroughly Considered","Thoroughly Considered","Top Four","Under the Radar","Ungeniused","Upgrade","Virtual"]},"nodesToDataframe":true,"edgesToDataframe":true,"options":{"width":"100%","height":"100%","nodes":{"shape":"dot"},"manipulation":{"enabled":false}},"groups":null,"width":null,"height":null,"idselection":{"enabled":true,"style":"width: 150px; height: 26px","useLabels":true,"main":"Select by id"},"byselection":{"enabled":false,"style":"width: 150px; height: 26px","multiple":false,"hideColor":"rgba(200,200,200,0.5)"},"main":{"text":"The Relayverse","style":"font-family:Georgia, Times New Roman, Times, serif;font-weight:bold;font-size:20px;text-align:center;"},"submain":null,"footer":null,"background":"rgba(0, 0, 0, 0)","highlight":{"enabled":true,"hoverNearest":false,"degree":1,"algorithm":"all","hideColor":"rgba(200,200,200,0.5)","labelOnly":true},"collapse":{"enabled":false,"fit":false,"resetHighlight":true,"clusterOptions":null,"keepCoord":true,"labelSuffix":"(cluster)"}},"evals":[],"jsHooks":[]}</script>
+</div>
 </div>
 <div class="footnotes">
 <hr />
