@@ -18,11 +18,11 @@ draft: yes
 
 # Relay FM
 
-Podcasting has been growing for a number of years now and has become big business. The podcast network Gimlet was acquired by Spotify just last week.
+Podcasting is becoming big business. Music-streaming giant [Spotify](https://www.spotify.com/uk/) [acquired](https://investors.spotify.com/financials/press-release-details/2019/Spotify-Announces-Strategic-Acquisitions-to-Accelerate-Growth-in-Podcasting/default.aspx) the podcast network [Gimlet](https://www.gimletmedia.com/) last week for [a reported 200 million dollars](https://www.recode.net/2019/2/1/18207198/spotify-gimlet-podcast-acquisition).
 
-What's a 'podcast network'? A few companies act as a 'stable' for multiple podcasts, which can help pool resources and serve content better.
+Podcast networks act as centrally-managed collectives. This allows creators access to pooled expertise, management and resources while maximising ad revenue. Other examples of popular networks are [The Incomparable](https://www.theincomparable.com/), [5by5](http://5by5.tv/) and [Radiotopia](https://www.radiotopia.fm/).
 
-[Relay FM](https://www.relay.fm) is a podcast network that focuses largely on tech content. It was started by [Myke Hurley](https//www.relay.fm/people/mykehurley) and [Stephen Hackett](https//www.relay.fm/people/stephenhackett) in 2014.
+[Relay FM](https://www.relay.fm) is a network that focuses largely on tech content. It was started by [Myke Hurley](https//www.relay.fm/people/mykehurley) and [Stephen Hackett](https//www.relay.fm/people/stephenhackett) in 2014.
 
 Many of Relay FM's hosts have hosted more than one podcast on the network. This post is about exploring and visualising this 'Relayverse'.
 
@@ -113,8 +113,6 @@ relay_graph <- as_tbl_graph(relay_combos, directed = FALSE)
 print(relay_graph)
 ```
 
-# Descriptive statistics
-
 # Visualisation
 
 ## Static with `ggraph`
@@ -123,28 +121,33 @@ Like `tidygraph`, `ggraph` was written by Tomas Lin Pedersen.
 
 ## Interactive with `visNetwork`
 
-I'm going to show how to use the `visNetwork` package, which wraps some JavaScript to allow for interactive networks. The `visNetwork()` takes separate dataframes of edges and nodes, written in specific formats.
+[The `visNetwork` package](https://datastorm-open.github.io/visNetwork/) wraps some JavaScript to make interactive network graphs. The `visNetwork()` function takes separate dataframes of edges and nodes, written in specific formats.
 
 ```{r visnetwork-prep}
-relay_combos_id <- mutate(relay_combos, id = row_number())
+# We need an ID value
+#relay_combos_id <- mutate(relay_combos, id = as.character(row_number()))
 
-nodes <- shows_clean %>%
-  distinct(Hosts) %>%
-  mutate(id = as.character(row_number())) %>% 
-  rename(label = Hosts) %>% 
-  mutate(title = label)
+# Dataframe of unique nodes with an ID value
+nodes <- shows_clean %>%  # take our podcast-host dataset
+  distinct(Hosts) %>%  # get column of unique hosts
+  arrange(Hosts) %>% 
+  mutate(id = as.character(row_number()), label = Hosts) %>% 
+  select(-Hosts) #%>%  # provides pop up value on viz
+  #mutate(title = label)  # provides pop-up value on viz
 
-edges <- left_join(relay_combos, nodes, by = c("V1" = "label")) %>% 
-  left_join(nodes, by = c("V2" = "label")) %>% 
-  mutate(title = Podcast) %>% 
-  select(from = id.x, to = id.y, label = Podcast, title)
+#
+edges <- relay_combos %>% 
+  left_join(nodes, by = c("V1" = "label")) %>% 
+  left_join(nodes, by = c("V2" = "label")) %>%
+  rename(from = id.x, to = id.y, title = Podcast)
 ```
 
 Now we can just plug the data into the function.
 
 ```{r visnetwork}
 visNetwork(nodes, edges, main = "The Relayverse") %>% 
-  visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE)
+  visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE) %>% 
+  visInteraction(navigationButtons = TRUE)
 ```
 
 [^regex]: The regex `(?<=[a-z])(?=[A-Z])` says split after but not including (`?<=`) a lowercase letter (`[a-z]`), and before but not including (`?=`) a capital letter (`[A-Z]`).
