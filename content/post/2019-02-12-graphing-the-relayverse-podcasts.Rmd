@@ -46,7 +46,7 @@ library(visNetwork)  # javascript interactive network
 
 # Harvest data
 
-We can use the `rvest` package to scrape podcast details from [the Wikipedia page for Relay FM](https://en.wikipedia.org/wiki/Relay_FM). `read_html()` gets the HTML for the selected page; `html_node()` identifies which element needs to be scraped; and `html_table()` interprets the HTML information as a dataframe.
+We can use the `rvest` package by Hadley Wickham to scrape podcast details from [the Wikipedia page for Relay FM](https://en.wikipedia.org/wiki/Relay_FM). `read_html()` gets the HTML for the selected page; `html_node()` identifies which element needs to be scraped[^xpath]; and `html_table()` interprets the HTML information as a dataframe.
 
 ```{r scrape}
 # Get the HTML for the selected page
@@ -72,9 +72,10 @@ retired <- relay_wiki %>%
 shows <- bind_rows(current, retired)
 ```
 
-Host names are in the form 'First LastFirst Last'. We can split them apart where a lowercase letter is followed by an uppercase letter[^regex]. This leaves us with a list column that we can `unnest()` to get one row per podcast-host combination. Our datframe is now tidy and ready for Tidygraph.
+We can split the host names, which are in the form 'First LastFirst Last', using a regular expression that splits the string where a lowercase letter meets an uppercase letter[^regex]. This leaves us with a list column that we can `unnest()` to get one row per podcast-host combination.
 
 ```{r str-split}
+# Clean the host names
 shows_clean <- shows %>%
   mutate(
     Hosts = str_remove_all(Hosts, " \\(originally\\)"),
@@ -82,58 +83,104 @@ shows_clean <- shows %>%
   ) %>% 
   unnest() %>% 
   select(Podcast, Hosts, Status)
+
+# Print a random sample of 10
+sample_n(shows_clean, 10)
 ```
+
+Our dataframe is now tidy and ready for Tidygraph.
 
 # Tidygraph
 
-Tidygraph was written by Tomas Lin Pedersen.
+The [tidygraph package](https://www.data-imaginist.com/2017/introducing-tidygraph/) was created by [Thomas Lin Pedersen](https://twitter.com/thomasp85) and 'is an entry into [the tidyverse](https://www.tidyverse.org/) that provides a tidy framework for all things relational (networks/graphs, trees, etc)'.
 
-We need every host combination[^combo] for each podcast, which can be achieved with the `combn()` function. This gives us a pair of points ('nodes' in graph-speak) that can be connected by a line (an 'edge') to indicate their relationship.
+To use the package, we need every host combination[^combo] for each podcast, which can be achieved with the `combn()` function. This gives us a pair of points ('nodes' in graph-speak) that can be connected by a line (an 'edge') to indicate their relationship.
+
+But a show with one host doesn't have a pair of points, so I'm going to duplicate these rows first. If we don't do this, we can't plot these shows because they won't have a connection between two nodes.
+
+```{r solo}
+# Isolate the shows with one host 
+solo_vec <- shows_clean %>%
+  count(Podcast) %>%
+  filter(n == 1) %>%
+  pull(Podcast)
+
+# Filter the show-host dataframe by solo-hosted podcasts
+solo_df <- filter(shows_clean, Podcast %in% solo_vec)
+```
+
+Now we can bind these rows and get our host combinations. 
 
 ```{r combos}
-relay_combos <- shows_clean %>% 
+# Prepare host combinations per show
+relay_combos <- shows_clean %>%
+  bind_rows(solo_df) %>%  # to duplicate the shows with solo hosts
   group_by(Podcast) %>%  # operate within each podcast
-  filter(n() > 1) %>%  # where there's more than one
   split(.$Podcast) %>%  # split on podcast
-  map(., 2) %>%
+  map(., 2) %>%  # gets vector of hosts per podcast list element
   map(~combn(.x, m = 2)) %>%   # all pair combiantions
   map(~t(.x)) %>%  # transpose the matrix
   map(as_tibble) %>%  # convert to a tibble dataframe
   bind_rows(.id = "Podcast") %>%  # list-element name to column
   select(V1, V2, Podcast)
 
-print(relay_combos)
+sample_n(relay_combos, 10)  # random sample of 10
 ```
 
 We can turn this dataframe of host-pair combinations into a tidygraph object with the `as_tbl_graph()` function. This class of object contains two dataframes (the nodes and the edges) and some metadata.
 
-```{r as-tbl-graph}
-relay_graph <- as_tbl_graph(relay_combos, directed = FALSE)
+We can also use functions from the `tidygraph` package to help calculate various network statistics. For example, the `centrality_degree()` function tells us the nodes with the most connections. We can add this as a column in our node data and use this later to do things like resize nodes depending on their centrality.
 
-print(relay_graph)
+```{r as-tbl-graph}
+relay_graph <- as_tbl_graph(relay_combos, directed = FALSE)%>% 
+  mutate(connections = centrality_degree()) %>%  # number of connections
+  arrange(desc(connections))  # order by number of shows
+
+print(relay_graph)  
 ```
+
+The edges and nodes are now in the same object, but we can manipulate them by using the `activate()` function to switch between manipulating them.
 
 # Visualisation
 
 ## Static with `ggraph`
 
-Like `tidygraph`, `ggraph` was written by Tomas Lin Pedersen.
+[The `ggraph` package](https://www.ggplot2-exts.org/ggraph.html) was also written by Thomas Lin Pedersen and was designed to work seamlessly with `ggplot2` and `tidygraph` objects.
+
+```{r}
+ggraph(relay_graph, layout = "graphopt") + 
+  geom_edge_fan(  # edges between same nodes are separated
+    # aes(label = Podcast),
+    # angle_calc = "along",
+    # label_dodge = unit(2.5, 'mm')
+  ) +
+  #geom_node_text(aes(label = name), repel = TRUE) +
+  geom_node_point(aes(size = connections)) +
+  theme_graph()
+```
+
+# https://www.jessesadler.com/post/network-analysis-with-r/
+```{r}
+ggraph(relay_graph, "linear", circular = TRUE) + 
+  geom_edge_arc() +  # aes(colour = factor(Podcast))
+  geom_node_point(aes(size = connections)) +
+  # geom_node_text(aes(label = name), repel = TRUE) +
+  theme_graph()
+```
+
+
 
 ## Interactive with `visNetwork`
 
-[The `visNetwork` package](https://datastorm-open.github.io/visNetwork/) wraps some JavaScript to make interactive network graphs. The `visNetwork()` function takes separate dataframes of edges and nodes, written in specific formats.
+[The `visNetwork` package](https://datastorm-open.github.io/visNetwork/) wraps some JavaScript to make interactive network graphs. Its `visNetwork()` function takes separate dataframes of edges and nodes that are in [a pre-specified format](https://datastorm-open.github.io/visNetwork/nodes.html), so we won't be able to use our tidygraph obejct for this.
 
 ```{r visnetwork-prep}
-# We need an ID value
-#relay_combos_id <- mutate(relay_combos, id = as.character(row_number()))
-
 # Dataframe of unique nodes with an ID value
 nodes <- shows_clean %>%  # take our podcast-host dataset
   distinct(Hosts) %>%  # get column of unique hosts
-  arrange(Hosts) %>% 
+  arrange(Hosts) %>%  # alphabetical order
   mutate(id = as.character(row_number()), label = Hosts) %>% 
   select(-Hosts) #%>%  # provides pop up value on viz
-  #mutate(title = label)  # provides pop-up value on viz
 
 #
 edges <- relay_combos %>% 
@@ -142,13 +189,18 @@ edges <- relay_combos %>%
   rename(from = id.x, to = id.y, title = Podcast)
 ```
 
-Now we can just plug the data into the function.
+Now we can just plug the data into the `visNetwork()` function and pipe this into some other other functions to set some options.
 
 ```{r visnetwork}
 visNetwork(nodes, edges, main = "The Relayverse") %>% 
-  visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE) %>% 
-  visInteraction(navigationButtons = TRUE)
+  visOptions(
+    highlightNearest = list(hover = TRUE),  # on-hover highlight nearest nodes
+    nodesIdSelection = TRUE  # select node from dropdown
+  ) %>%
+  visInteraction(navigationButtons = TRUE) %>%  # easy-navigation buttons
+  visLayout(randomSeed = 4)  # reproduce the same network each time
 ```
 
+[^xpath]: We're using an xpath here to identify the elements of the page to extract. You can [use SelectorGadget to help you](https://cran.r-project.org/web/packages/rvest/vignettes/selectorgadget.html), or you can [right-click the element and 'Inspect' the code](http://blog.corynissen.com/2015/01/using-rvest-to-scrape-html-table.html).
 [^regex]: The regex `(?<=[a-z])(?=[A-Z])` says split after but not including (`?<=`) a lowercase letter (`[a-z]`), and before but not including (`?=`) a capital letter (`[A-Z]`).
 [^combo]: We don't need all the _permutations_. 'Federico Viticci to Stephen M. Hackett' is the same as 'Stephen M. Hackett to Federico Viticci' and we don't need both.

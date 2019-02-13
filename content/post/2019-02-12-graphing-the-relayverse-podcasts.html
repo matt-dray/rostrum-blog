@@ -46,7 +46,7 @@ library(visNetwork)  # javascript interactive network</code></pre>
 </div>
 <div id="harvest-data" class="section level1">
 <h1>Harvest data</h1>
-<p>We can use the <code>rvest</code> package to scrape podcast details from <a href="https://en.wikipedia.org/wiki/Relay_FM">the Wikipedia page for Relay FM</a>. <code>read_html()</code> gets the HTML for the selected page; <code>html_node()</code> identifies which element needs to be scraped; and <code>html_table()</code> interprets the HTML information as a dataframe.</p>
+<p>We can use the <code>rvest</code> package by Hadley Wickham to scrape podcast details from <a href="https://en.wikipedia.org/wiki/Relay_FM">the Wikipedia page for Relay FM</a>. <code>read_html()</code> gets the HTML for the selected page; <code>html_node()</code> identifies which element needs to be scraped<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>; and <code>html_table()</code> interprets the HTML information as a dataframe.</p>
 <pre class="r"><code># Get the HTML for the selected page
 relay_wiki &lt;- read_html(&quot;https://en.wikipedia.org/wiki/Relay_FM&quot;)
 
@@ -68,109 +68,159 @@ retired &lt;- relay_wiki %&gt;%
 
 # Combine the tablesinto one dataframe
 shows &lt;- bind_rows(current, retired)</code></pre>
-<p>Host names are in the form ‘First LastFirst Last’. We can split them apart where a lowercase letter is followed by an uppercase letter<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>. This leaves us with a list column that we can <code>unnest()</code> to get one row per podcast-host combination. Our datframe is now tidy and ready for Tidygraph.</p>
-<pre class="r"><code>shows_clean &lt;- shows %&gt;%
+<p>We can split the host names, which are in the form ‘First LastFirst Last’, using a regular expression that splits the string where a lowercase letter meets an uppercase letter<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a>. This leaves us with a list column that we can <code>unnest()</code> to get one row per podcast-host combination.</p>
+<pre class="r"><code># Clean the host names
+shows_clean &lt;- shows %&gt;%
   mutate(
     Hosts = str_remove_all(Hosts, &quot; \\(originally\\)&quot;),
     Hosts = str_split(Hosts, &quot;(?&lt;=[a-z])(?=[A-Z])&quot;)
   ) %&gt;% 
   unnest() %&gt;% 
-  select(Podcast, Hosts, Status)</code></pre>
+  select(Podcast, Hosts, Status)
+
+# Print a random sample of 10
+sample_n(shows_clean, 10)</code></pre>
+<pre><code>##       Podcast            Hosts  Status
+## 29   Top Four   Tiffany Arment Current
+## 61    Make Do   Tiffany Arment Current
+## 72    Virtual Federico Viticci Retired
+## 74  Isometric       Brianna Wu Retired
+## 26    Liftoff      Jason Snell Current
+## 24   Material Russell Ivanovic Current
+## 9   Clockwise    Mikah Sargent Current
+## 40 Disruption     Steve Lubitz Current
+## 73    Virtual      Myke Hurley Retired
+## 39 Disruption       Brianna Wu Current</code></pre>
+<p>Our dataframe is now tidy and ready for Tidygraph.</p>
 </div>
 <div id="tidygraph" class="section level1">
 <h1>Tidygraph</h1>
-<p>Tidygraph was written by Tomas Lin Pedersen.</p>
-<p>We need every host combination<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a> for each podcast, which can be achieved with the <code>combn()</code> function. This gives us a pair of points (‘nodes’ in graph-speak) that can be connected by a line (an ‘edge’) to indicate their relationship.</p>
-<pre class="r"><code>relay_combos &lt;- shows_clean %&gt;% 
+<p>The <a href="https://www.data-imaginist.com/2017/introducing-tidygraph/">tidygraph package</a> was created by <a href="https://twitter.com/thomasp85">Thomas Lin Pedersen</a> and ‘is an entry into <a href="https://www.tidyverse.org/">the tidyverse</a> that provides a tidy framework for all things relational (networks/graphs, trees, etc)’.</p>
+<p>To use the package, we need every host combination<a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a> for each podcast, which can be achieved with the <code>combn()</code> function. This gives us a pair of points (‘nodes’ in graph-speak) that can be connected by a line (an ‘edge’) to indicate their relationship.</p>
+<p>But a show with one host doesn’t have a pair of points, so I’m going to duplicate these rows first. If we don’t do this, we can’t plot these shows because they won’t have a connection between two nodes.</p>
+<pre class="r"><code># Isolate the shows with one host 
+solo_vec &lt;- shows_clean %&gt;%
+  count(Podcast) %&gt;%
+  filter(n == 1) %&gt;%
+  pull(Podcast)
+
+# Filter the show-host dataframe by solo-hosted podcasts
+solo_df &lt;- filter(shows_clean, Podcast %in% solo_vec)</code></pre>
+<p>Now we can bind these rows and get our host combinations.</p>
+<pre class="r"><code># Prepare host combinations per show
+relay_combos &lt;- shows_clean %&gt;%
+  bind_rows(solo_df) %&gt;%  # to duplicate the shows with solo hosts
   group_by(Podcast) %&gt;%  # operate within each podcast
-  filter(n() &gt; 1) %&gt;%  # where there&#39;s more than one
   split(.$Podcast) %&gt;%  # split on podcast
-  map(., 2) %&gt;%
+  map(., 2) %&gt;%  # gets vector of hosts per podcast list element
   map(~combn(.x, m = 2)) %&gt;%   # all pair combiantions
   map(~t(.x)) %&gt;%  # transpose the matrix
   map(as_tibble) %&gt;%  # convert to a tibble dataframe
   bind_rows(.id = &quot;Podcast&quot;) %&gt;%  # list-element name to column
   select(V1, V2, Podcast)
 
-print(relay_combos)</code></pre>
-<pre><code>## # A tibble: 58 x 3
-##    V1               V2                 Podcast   
-##    &lt;chr&gt;            &lt;chr&gt;              &lt;chr&gt;     
-##  1 Myke Hurley      Casey Liss         Analog(ue)
-##  2 David Sparks     Rose Orchard       Automators
-##  3 Myke Hurley      Matt Alexander     Bionic    
-##  4 Myke Hurley      Matt Alexander     BONANZA   
-##  5 Federico Viticci Fraser Spiers      Canvas    
-##  6 Dan Moren        Mikah Sargent      Clockwise 
-##  7 Federico Viticci Myke Hurley        Connected 
-##  8 Federico Viticci Stephen M. Hackett Connected 
-##  9 Myke Hurley      Stephen M. Hackett Connected 
-## 10 CGP Grey         Myke Hurley        Cortex    
-## # … with 48 more rows</code></pre>
+sample_n(relay_combos, 10)  # random sample of 10</code></pre>
+<pre><code>## # A tibble: 10 x 3
+##    V1               V2                 Podcast       
+##    &lt;chr&gt;            &lt;chr&gt;              &lt;chr&gt;         
+##  1 Federico Viticci Myke Hurley        Remaster      
+##  2 Myke Hurley      Federico Viticci   The Prompt    
+##  3 Federico Viticci Fraser Spiers      Canvas        
+##  4 Federico Viticci Stephen M. Hackett The Prompt    
+##  5 Georgia Dow      Maddy Myers        Isometric     
+##  6 Steve Lubitz     Mikah Sargent      Disruption    
+##  7 Myke Hurley      Stephen M. Hackett The Prompt    
+##  8 Federico Viticci Myke Hurley        Virtual       
+##  9 CGP Grey         Myke Hurley        Cortex        
+## 10 Quinn Rose       Gillian Parker     Mixed Feelings</code></pre>
 <p>We can turn this dataframe of host-pair combinations into a tidygraph object with the <code>as_tbl_graph()</code> function. This class of object contains two dataframes (the nodes and the edges) and some metadata.</p>
-<pre class="r"><code>relay_graph &lt;- as_tbl_graph(relay_combos, directed = FALSE)
+<p>We can also use functions from the <code>tidygraph</code> package to help calculate various network statistics. For example, the <code>centrality_degree()</code> function tells us the nodes with the most connections. We can add this as a column in our node data and use this later to do things like resize nodes depending on their centrality.</p>
+<pre class="r"><code>relay_graph &lt;- as_tbl_graph(relay_combos, directed = FALSE)%&gt;% 
+  mutate(connections = centrality_degree()) %&gt;%  # number of connections
+  arrange(desc(connections))  # order by number of shows
 
-print(relay_graph)</code></pre>
-<pre><code>## # A tbl_graph: 38 nodes and 58 edges
+print(relay_graph)  </code></pre>
+<pre><code>## # A tbl_graph: 40 nodes and 66 edges
 ## #
-## # An undirected multigraph with 6 components
+## # An undirected multigraph with 8 components
 ## #
-## # Node Data: 38 x 1 (active)
-##   name            
-##   &lt;chr&gt;           
-## 1 Myke Hurley     
-## 2 David Sparks    
-## 3 Federico Viticci
-## 4 Dan Moren       
-## 5 CGP Grey        
-## 6 Georgia Dow     
-## # … with 32 more rows
+## # Node Data: 40 x 2 (active)
+##   name               connections
+##   &lt;chr&gt;                    &lt;dbl&gt;
+## 1 Myke Hurley                 21
+## 2 Stephen M. Hackett          10
+## 3 Brianna Wu                   9
+## 4 Mikah Sargent                9
+## 5 Federico Viticci             8
+## 6 Georgia Dow                  7
+## # … with 34 more rows
 ## #
-## # Edge Data: 58 x 3
+## # Edge Data: 66 x 3
 ##    from    to Podcast   
 ##   &lt;int&gt; &lt;int&gt; &lt;chr&gt;     
-## 1     1    24 Analog(ue)
-## 2     2    25 Automators
-## 3     1    26 Bionic    
-## # … with 55 more rows</code></pre>
+## 1     9     9 Almanac   
+## 2     1    32 Analog(ue)
+## 3    11    33 Automators
+## # … with 63 more rows</code></pre>
+<p>The edges and nodes are now in the same object, but we can manipulate them by using the <code>activate()</code> function to switch between manipulating them.</p>
 </div>
 <div id="visualisation" class="section level1">
 <h1>Visualisation</h1>
 <div id="static-with-ggraph" class="section level2">
 <h2>Static with <code>ggraph</code></h2>
-<p>Like <code>tidygraph</code>, <code>ggraph</code> was written by Tomas Lin Pedersen.</p>
+<p><a href="https://www.ggplot2-exts.org/ggraph.html">The <code>ggraph</code> package</a> was also written by Thomas Lin Pedersen and was designed to work seamlessly with <code>ggplot2</code> and <code>tidygraph</code> objects.</p>
+<pre class="r"><code>ggraph(relay_graph, layout = &quot;graphopt&quot;) + 
+  geom_edge_fan(  # edges between same nodes are separated
+    # aes(label = Podcast),
+    # angle_calc = &quot;along&quot;,
+    # label_dodge = unit(2.5, &#39;mm&#39;)
+  ) +
+  #geom_node_text(aes(label = name), repel = TRUE) +
+  geom_node_point(aes(size = connections)) +
+  theme_graph()</code></pre>
+<p><img src="/post/2019-02-12-graphing-the-relayverse-podcasts_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
 </div>
+</div>
+<div id="httpswww.jessesadler.compostnetwork-analysis-with-r" class="section level1">
+<h1><a href="https://www.jessesadler.com/post/network-analysis-with-r/" class="uri">https://www.jessesadler.com/post/network-analysis-with-r/</a></h1>
+<pre class="r"><code>ggraph(relay_graph, &quot;linear&quot;, circular = TRUE) + 
+  geom_edge_arc() +  # aes(colour = factor(Podcast))
+  geom_node_point(aes(size = connections)) +
+  # geom_node_text(aes(label = name), repel = TRUE) +
+  theme_graph()</code></pre>
+<p><img src="/post/2019-02-12-graphing-the-relayverse-podcasts_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
 <div id="interactive-with-visnetwork" class="section level2">
 <h2>Interactive with <code>visNetwork</code></h2>
-<p><a href="https://datastorm-open.github.io/visNetwork/">The <code>visNetwork</code> package</a> wraps some JavaScript to make interactive network graphs. The <code>visNetwork()</code> function takes separate dataframes of edges and nodes, written in specific formats.</p>
-<pre class="r"><code># We need an ID value
-#relay_combos_id &lt;- mutate(relay_combos, id = as.character(row_number()))
-
-# Dataframe of unique nodes with an ID value
+<p><a href="https://datastorm-open.github.io/visNetwork/">The <code>visNetwork</code> package</a> wraps some JavaScript to make interactive network graphs. Its <code>visNetwork()</code> function takes separate dataframes of edges and nodes that are in <a href="https://datastorm-open.github.io/visNetwork/nodes.html">a pre-specified format</a>, so we won’t be able to use our tidygraph obejct for this.</p>
+<pre class="r"><code># Dataframe of unique nodes with an ID value
 nodes &lt;- shows_clean %&gt;%  # take our podcast-host dataset
   distinct(Hosts) %&gt;%  # get column of unique hosts
-  arrange(Hosts) %&gt;% 
+  arrange(Hosts) %&gt;%  # alphabetical order
   mutate(id = as.character(row_number()), label = Hosts) %&gt;% 
   select(-Hosts) #%&gt;%  # provides pop up value on viz
-  #mutate(title = label)  # provides pop-up value on viz
 
 #
 edges &lt;- relay_combos %&gt;% 
   left_join(nodes, by = c(&quot;V1&quot; = &quot;label&quot;)) %&gt;% 
   left_join(nodes, by = c(&quot;V2&quot; = &quot;label&quot;)) %&gt;%
   rename(from = id.x, to = id.y, title = Podcast)</code></pre>
-<p>Now we can just plug the data into the function.</p>
+<p>Now we can just plug the data into the <code>visNetwork()</code> function and pipe this into some other other functions to set some options.</p>
 <pre class="r"><code>visNetwork(nodes, edges, main = &quot;The Relayverse&quot;) %&gt;% 
-  visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE) %&gt;% 
-  visInteraction(navigationButtons = TRUE)</code></pre>
+  visOptions(
+    highlightNearest = list(hover = TRUE),  # on-hover highlight nearest nodes
+    nodesIdSelection = TRUE  # select node from dropdown
+  ) %&gt;%
+  visInteraction(navigationButtons = TRUE) %&gt;%  # easy-navigation buttons
+  visLayout(randomSeed = 4)  # reproduce the same network each time</code></pre>
 <div id="htmlwidget-1" style="width:672px;height:480px;" class="visNetwork html-widget"></div>
-<script type="application/json" data-for="htmlwidget-1">{"x":{"nodes":{"id":["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40"],"label":["Aleen Simms","Alex Cox","Andy Ihnatko","Brad Dowdy","Brianna Wu","Casey Liss","CGP Grey","Christina Warren","Dan Moren","Dan Provost","David Smith","David Sparks","Federico Viticci","Florence Ion","Fraser Spiers","Georgia Dow","Gillian Parker","Jason Snell","Jeff Veen","John Siracusa","Julia Skott","K Tempest Bradford","Katie Floyd","Maddy Myers","Marco Arment","Matt Alexander","Merlin Mann","Mikah Sargent","Myke Hurley","Quinn Rose","Rose Orchard","Russell Ivanovic","Savannah Million","Shahid Kamal Ahmad","Shelly Brisbin","Simone de Rochefort","Stephen M. Hackett","Steve Lubitz","Tiffany Arment","Tom Gerhardt"]},"edges":{"V1":["Myke Hurley","David Sparks","Myke Hurley","Myke Hurley","Federico Viticci","Dan Moren","Federico Viticci","Federico Viticci","Myke Hurley","CGP Grey","Georgia Dow","Georgia Dow","Georgia Dow","Brianna Wu","Brianna Wu","Steve Lubitz","Jason Snell","Brianna Wu","Brianna Wu","Brianna Wu","Brianna Wu","Georgia Dow","Georgia Dow","Georgia Dow","Maddy Myers","Maddy Myers","Mikah Sargent","Jason Snell","David Sparks","Tiffany Arment","Andy Ihnatko","Andy Ihnatko","Russell Ivanovic","Quinn Rose","K Tempest Bradford","Myke Hurley","Stephen M. Hackett","John Siracusa","Federico Viticci","Federico Viticci","Myke Hurley","Alex Cox","Brianna Wu","Brianna Wu","Christina Warren","Stephen M. Hackett","Myke Hurley","Myke Hurley","Myke Hurley","Federico Viticci","Dan Provost","Dan Provost","Myke Hurley","Marco Arment","David Smith","Stephen M. Hackett","Myke Hurley","Federico Viticci"],"V2":["Casey Liss","Rose Orchard","Matt Alexander","Matt Alexander","Fraser Spiers","Mikah Sargent","Myke Hurley","Stephen M. Hackett","Stephen M. Hackett","Myke Hurley","Brianna Wu","Steve Lubitz","Mikah Sargent","Steve Lubitz","Mikah Sargent","Mikah Sargent","David Sparks","Georgia Dow","Maddy Myers","Mikah Sargent","Steve Lubitz","Maddy Myers","Mikah Sargent","Steve Lubitz","Mikah Sargent","Steve Lubitz","Steve Lubitz","Stephen M. Hackett","Katie Floyd","Julia Skott","Russell Ivanovic","Florence Ion","Florence Ion","Gillian Parker","Aleen Simms","Tiffany Arment","Mikah Sargent","Merlin Mann","Myke Hurley","Shahid Kamal Ahmad","Shahid Kamal Ahmad","Savannah Million","Christina Warren","Simone de Rochefort","Simone de Rochefort","Jason Snell","Brad Dowdy","Federico Viticci","Stephen M. Hackett","Stephen M. Hackett","Myke Hurley","Tom Gerhardt","Tom Gerhardt","Tiffany Arment","Marco Arment","Myke Hurley","Jason Snell","Myke Hurley"],"title":["Analog(ue)","Automators","Bionic","BONANZA","Canvas","Clockwise","Connected","Connected","Connected","Cortex","Disruption","Disruption","Disruption","Disruption","Disruption","Disruption","Free Agents","Isometric","Isometric","Isometric","Isometric","Isometric","Isometric","Isometric","Isometric","Isometric","Isometric","Liftoff","Mac Power Users","Make Do","Material","Material","Material","Mixed Feelings","Originality","Playing for Fun","Query","Reconcilable Differences","Remaster","Remaster","Remaster","Roboism","Rocket","Rocket","Rocket","Subnet","The Pen Addict","The Prompt","The Prompt","The Prompt","Thoroughly Considered","Thoroughly Considered","Thoroughly Considered","Top Four","Under the Radar","Ungeniused","Upgrade","Virtual"],"from":["29","12","29","29","13","9","13","13","29","7","16","16","16","5","5","38","18","5","5","5","5","16","16","16","24","24","28","18","12","39","3","3","32","30","22","29","37","20","13","13","29","2","5","5","8","37","29","29","29","13","10","10","29","25","11","37","29","13"],"to":["6","31","26","26","15","28","29","37","37","29","5","38","28","38","28","28","12","16","24","28","38","24","28","38","28","38","38","37","23","21","32","14","14","17","1","39","28","27","29","34","34","33","8","36","36","18","4","13","37","37","29","40","40","39","25","29","18","29"]},"nodesToDataframe":true,"edgesToDataframe":true,"options":{"width":"100%","height":"100%","nodes":{"shape":"dot"},"manipulation":{"enabled":false},"interaction":{"navigationButtons":true}},"groups":null,"width":null,"height":null,"idselection":{"enabled":true,"style":"width: 150px; height: 26px","useLabels":true,"main":"Select by id"},"byselection":{"enabled":false,"style":"width: 150px; height: 26px","multiple":false,"hideColor":"rgba(200,200,200,0.5)"},"main":{"text":"The Relayverse","style":"font-family:Georgia, Times New Roman, Times, serif;font-weight:bold;font-size:20px;text-align:center;"},"submain":null,"footer":null,"background":"rgba(0, 0, 0, 0)","highlight":{"enabled":true,"hoverNearest":false,"degree":1,"algorithm":"all","hideColor":"rgba(200,200,200,0.5)","labelOnly":true},"collapse":{"enabled":false,"fit":false,"resetHighlight":true,"clusterOptions":null,"keepCoord":true,"labelSuffix":"(cluster)"},"tooltipStay":300,"tooltipStyle":"position: fixed;visibility:hidden;padding: 5px;white-space: nowrap;font-family: verdana;font-size:14px;font-color:#000000;background-color: #f5f4ed;-moz-border-radius: 3px;-webkit-border-radius: 3px;border-radius: 3px;border: 1px solid #808074;box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);"},"evals":[],"jsHooks":[]}</script>
+<script type="application/json" data-for="htmlwidget-1">{"x":{"nodes":{"id":["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40"],"label":["Aleen Simms","Alex Cox","Andy Ihnatko","Brad Dowdy","Brianna Wu","Casey Liss","CGP Grey","Christina Warren","Dan Moren","Dan Provost","David Smith","David Sparks","Federico Viticci","Florence Ion","Fraser Spiers","Georgia Dow","Gillian Parker","Jason Snell","Jeff Veen","John Siracusa","Julia Skott","K Tempest Bradford","Katie Floyd","Maddy Myers","Marco Arment","Matt Alexander","Merlin Mann","Mikah Sargent","Myke Hurley","Quinn Rose","Rose Orchard","Russell Ivanovic","Savannah Million","Shahid Kamal Ahmad","Shelly Brisbin","Simone de Rochefort","Stephen M. Hackett","Steve Lubitz","Tiffany Arment","Tom Gerhardt"]},"edges":{"V1":["Andy Ihnatko","Myke Hurley","David Sparks","Myke Hurley","Myke Hurley","Federico Viticci","Dan Moren","Myke Hurley","Federico Viticci","Federico Viticci","Myke Hurley","CGP Grey","Georgia Dow","Georgia Dow","Georgia Dow","Brianna Wu","Brianna Wu","Steve Lubitz","Jason Snell","Jason Snell","Stephen M. Hackett","Myke Hurley","Brianna Wu","Brianna Wu","Brianna Wu","Brianna Wu","Georgia Dow","Georgia Dow","Georgia Dow","Maddy Myers","Maddy Myers","Mikah Sargent","Aleen Simms","Jason Snell","David Sparks","Tiffany Arment","Andy Ihnatko","Andy Ihnatko","Russell Ivanovic","Quinn Rose","K Tempest Bradford","Shelly Brisbin","Myke Hurley","Jeff Veen","Stephen M. Hackett","John Siracusa","Federico Viticci","Federico Viticci","Myke Hurley","Alex Cox","Brianna Wu","Brianna Wu","Christina Warren","Stephen M. Hackett","Myke Hurley","Myke Hurley","Myke Hurley","Federico Viticci","Dan Provost","Dan Provost","Myke Hurley","Marco Arment","David Smith","Stephen M. Hackett","Myke Hurley","Federico Viticci"],"V2":["Andy Ihnatko","Casey Liss","Rose Orchard","Matt Alexander","Matt Alexander","Fraser Spiers","Mikah Sargent","Myke Hurley","Myke Hurley","Stephen M. Hackett","Stephen M. Hackett","Myke Hurley","Brianna Wu","Steve Lubitz","Mikah Sargent","Steve Lubitz","Mikah Sargent","Mikah Sargent","Jason Snell","David Sparks","Stephen M. Hackett","Myke Hurley","Georgia Dow","Maddy Myers","Mikah Sargent","Steve Lubitz","Maddy Myers","Mikah Sargent","Steve Lubitz","Mikah Sargent","Steve Lubitz","Steve Lubitz","Aleen Simms","Stephen M. Hackett","Katie Floyd","Julia Skott","Russell Ivanovic","Florence Ion","Florence Ion","Gillian Parker","Aleen Simms","Shelly Brisbin","Tiffany Arment","Jeff Veen","Mikah Sargent","Merlin Mann","Myke Hurley","Shahid Kamal Ahmad","Shahid Kamal Ahmad","Savannah Million","Christina Warren","Simone de Rochefort","Simone de Rochefort","Jason Snell","Brad Dowdy","Federico Viticci","Stephen M. Hackett","Stephen M. Hackett","Myke Hurley","Tom Gerhardt","Tom Gerhardt","Tiffany Arment","Marco Arment","Myke Hurley","Jason Snell","Myke Hurley"],"title":["Almanac","Analog(ue)","Automators","Bionic","BONANZA","Canvas","Clockwise","CMD Space","Connected","Connected","Connected","Cortex","Disruption","Disruption","Disruption","Disruption","Disruption","Disruption","Download","Free Agents","Fusion","Inquisitive","Isometric","Isometric","Isometric","Isometric","Isometric","Isometric","Isometric","Isometric","Isometric","Isometric","Less Than or Equal","Liftoff","Mac Power Users","Make Do","Material","Material","Material","Mixed Feelings","Originality","Parallel","Playing for Fun","Presentable","Query","Reconcilable Differences","Remaster","Remaster","Remaster","Roboism","Rocket","Rocket","Rocket","Subnet","The Pen Addict","The Prompt","The Prompt","The Prompt","Thoroughly Considered","Thoroughly Considered","Thoroughly Considered","Top Four","Under the Radar","Ungeniused","Upgrade","Virtual"],"from":["3","29","12","29","29","13","9","29","13","13","29","7","16","16","16","5","5","38","18","18","37","29","5","5","5","5","16","16","16","24","24","28","1","18","12","39","3","3","32","30","22","35","29","19","37","20","13","13","29","2","5","5","8","37","29","29","29","13","10","10","29","25","11","37","29","13"],"to":["3","6","31","26","26","15","28","29","29","37","37","29","5","38","28","38","28","28","18","12","37","29","16","24","28","38","24","28","38","28","38","38","1","37","23","21","32","14","14","17","1","35","39","19","28","27","29","34","34","33","8","36","36","18","4","13","37","37","29","40","40","39","25","29","18","29"]},"nodesToDataframe":true,"edgesToDataframe":true,"options":{"width":"100%","height":"100%","nodes":{"shape":"dot"},"manipulation":{"enabled":false},"interaction":{"hover":true,"navigationButtons":true},"layout":{"randomSeed":4}},"groups":null,"width":null,"height":null,"idselection":{"enabled":true,"style":"width: 150px; height: 26px","useLabels":true,"main":"Select by id"},"byselection":{"enabled":false,"style":"width: 150px; height: 26px","multiple":false,"hideColor":"rgba(200,200,200,0.5)"},"main":{"text":"The Relayverse","style":"font-family:Georgia, Times New Roman, Times, serif;font-weight:bold;font-size:20px;text-align:center;"},"submain":null,"footer":null,"background":"rgba(0, 0, 0, 0)","highlight":{"enabled":false,"hoverNearest":true,"degree":1,"algorithm":"all","hideColor":"rgba(200,200,200,0.5)","labelOnly":true},"collapse":{"enabled":false,"fit":false,"resetHighlight":true,"clusterOptions":null,"keepCoord":true,"labelSuffix":"(cluster)"},"tooltipStay":300,"tooltipStyle":"position: fixed;visibility:hidden;padding: 5px;white-space: nowrap;font-family: verdana;font-size:14px;font-color:#000000;background-color: #f5f4ed;-moz-border-radius: 3px;-webkit-border-radius: 3px;border-radius: 3px;border: 1px solid #808074;box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);"},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>The regex <code>(?&lt;=[a-z])(?=[A-Z])</code> says split after but not including (<code>?&lt;=</code>) a lowercase letter (<code>[a-z]</code>), and before but not including (<code>?=</code>) a capital letter (<code>[A-Z]</code>).<a href="#fnref1">↩</a></p></li>
-<li id="fn2"><p>We don’t need all the <em>permutations</em>. ‘Federico Viticci to Stephen M. Hackett’ is the same as ‘Stephen M. Hackett to Federico Viticci’ and we don’t need both.<a href="#fnref2">↩</a></p></li>
+<li id="fn1"><p>We’re using an xpath here to identify the elements of the page to extract. You can <a href="https://cran.r-project.org/web/packages/rvest/vignettes/selectorgadget.html">use SelectorGadget to help you</a>, or you can <a href="http://blog.corynissen.com/2015/01/using-rvest-to-scrape-html-table.html">right-click the element and ‘Inspect’ the code</a>.<a href="#fnref1">↩</a></p></li>
+<li id="fn2"><p>The regex <code>(?&lt;=[a-z])(?=[A-Z])</code> says split after but not including (<code>?&lt;=</code>) a lowercase letter (<code>[a-z]</code>), and before but not including (<code>?=</code>) a capital letter (<code>[A-Z]</code>).<a href="#fnref2">↩</a></p></li>
+<li id="fn3"><p>We don’t need all the <em>permutations</em>. ‘Federico Viticci to Stephen M. Hackett’ is the same as ‘Stephen M. Hackett to Federico Viticci’ and we don’t need both.<a href="#fnref3">↩</a></p></li>
 </ol>
 </div>
