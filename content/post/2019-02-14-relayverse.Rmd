@@ -18,7 +18,7 @@ draft: no
 
 Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
 
-![The Relay FM host/podcast network, visualised. Scroll to the bottom of this post to try it yourself.](https://media.giphy.com/media/3gMrq5dCgRelOqQKJG/giphy.gif)
+![The Relay FM podcast network, visualised. Scroll to the bottom of this post to try it yourself.](https://media.giphy.com/media/3gMrq5dCgRelOqQKJG/giphy.gif)
 
 # Podcast networks
 
@@ -26,9 +26,9 @@ Podcasting is becoming big business. Music-streaming giant [Spotify](https://www
 
 Other networks include [The Incomparable](https://www.theincomparable.com/), [5by5](http://5by5.tv/) and [Radiotopia](https://www.radiotopia.fm/). Such networks can boost revenue and listener numbers and provide access to expertise, management and resources. 
 
-[Relay FM](https://www.relay.fm) is a network that focuses largely on tech content. It was started by [Myke Hurley](https//www.relay.fm/people/mykehurley) and [Stephen Hackett](https//www.relay.fm/people/stephenhackett) in 2014 and you can find a list of [shows](https://www.relay.fm/shows) and [personnel](https://www.relay.fm/people) on their site. Many of Relay FM's hosts have hosted more than one podcast within the network. What do the relationships between them look like?
+[Relay FM](https://www.relay.fm) is a network that focuses largely on tech content[^relay]. It was started by [Myke Hurley](https//www.relay.fm/people/mykehurley) and [Stephen Hackett](https//www.relay.fm/people/stephenhackett) in 2014 and you can find a list of [shows](https://www.relay.fm/shows) and [personnel](https://www.relay.fm/people) on their site. Many of Relay FM's hosts have hosted more than one podcast within the network. What do the relationships between them look like?
 
-This post is about preparing and visualising the 'Relayverse' using the R packages [`tidygraph` for network data handling](https://www.data-imaginist.com/2017/introducing-tidygraph/) and [`ggraph` for network visualisation](https://www.ggplot2-exts.org/ggraph.html) (both by [Thomas Lin Pedersen](https://twitter.com/thomasp85)), along with [the `visNetwork` package](https://cran.r-project.org/web/packages/visNetwork/vignettes/Introduction-to-visNetwork.html) (from Benoit Thieurmel and Titouan Robert of [Datastorm](http://www.datastorm.fr/), wrapping [Almende BV's `vis.js` library](http://visjs.org)) for interactive visualisation.
+This post is about preparing and visualising this 'Relayverse' using the R packages [`tidygraph` for network data handling](https://www.data-imaginist.com/2017/introducing-tidygraph/) and [`ggraph` for network visualisation](https://www.ggplot2-exts.org/ggraph.html) (both by [Thomas Lin Pedersen](https://twitter.com/thomasp85)), along with [the `visNetwork` package](https://cran.r-project.org/web/packages/visNetwork/vignettes/Introduction-to-visNetwork.html) (from Benoit Thieurmel and Titouan Robert of [Datastorm](http://www.datastorm.fr/), wrapping [Almende BV's `vis.js` library](http://visjs.org)) for interactive visualisation.
 
 Scroll to the bottom to find the interactive tool if you aren't interested in the code.
 
@@ -48,16 +48,16 @@ library(purrr)  # applying functions over data
 library(tidygraph)  # set up graph network
 library(ggraph)  # visualise static graphs
 library(cowplot)  # for plot arrangement
-library(visNetwork)  # javascript interactive network
+library(visNetwork)  # wrapper for javascript interactive viz
 ```
 
 # Harvest data
 
-We can use [the `rvest` package](https://blog.rstudio.com/2014/11/24/rvest-easy-web-scraping-with-r/) by [Hadley Wickham](http://hadley.nz/) to scrape podcast details from [the Wikipedia page for Relay FM](https://en.wikipedia.org/wiki/Relay_FM).
+We can use [the `rvest` package](https://blog.rstudio.com/2014/11/24/rvest-easy-web-scraping-with-r/) by [Hadley Wickham](http://hadley.nz/) to scrape podcast details from [the Wikipedia page for Relay FM](https://en.wikipedia.org/wiki/Relay_FM). There are two separate tables: one for current and one for retired (discontinued) shows. 
 
-![One of our target Wikipedia tables of current Relay FM shows](/post/2019-02-12-graphing-the-relayverse-podcasts_files/relay-wikipedia.png)
+![One of the target Wikipedia tables of current Relay FM shows](/post/2019-02-12-graphing-the-relayverse-podcasts_files/relay-wikipedia.png)
 
-`read_html()` gets the HTML for the selected page; `html_node()` identifies which element needs to be scraped[^xpath]; and `html_table()` interprets the HTML information as a dataframe.
+`read_html()` gets the HTML for the selected page; `html_node()` identifies which element needs to be scraped[^xpath]; and `html_table()` interprets the HTML information as a dataframe. I've removed the show 'B-Sides' because it's clips from other shows.
 
 ```{r scrape}
 # Get the HTML for the selected page
@@ -82,7 +82,9 @@ retired <- relay_wiki %>%
 # Combine the tables into one dataframe
 shows <- bind_rows(current, retired)
 
-head(shows)  # look at first few rows
+# Look at a few random hosts/podcasts from the table
+select(shows, Podcast, Hosts) %>%
+  sample_n(5) %>% knitr::kable()
 ```
 
 Unfortunately the host names are in the form 'First LastFirst Last' so we need a regular expression to split the string where a lowercase letter meets an uppercase letter[^regex]. This leaves us with a list column that we can `unnest()` to get one row per podcast-host combination.
@@ -98,7 +100,7 @@ shows_clean <- shows %>%
   select(Podcast, Hosts, Status)
 
 # Print a random sample of 10
-sample_n(shows_clean, 10)
+sample_n(shows_clean, 10) %>% knitr::kable()
 ```
 
 Our dataframe is now tidy and ready for Tidygraph, but before moving on, we can do things like look at the host with the most active shows.
@@ -125,7 +127,9 @@ shows_clean %>%
 
 # Tidygraph
 
-The [tidygraph package](https://www.data-imaginist.com/2017/introducing-tidygraph/) was created by [Thomas Lin Pedersen](https://twitter.com/thomasp85) and 'is an entry into [the tidyverse](https://www.tidyverse.org/) that provides a tidy framework for all things relational (networks/graphs, trees, etc)'.
+The [tidygraph package](https://www.data-imaginist.com/2017/introducing-tidygraph/) was created by [Thomas Lin Pedersen](https://twitter.com/thomasp85). It is:
+
+>an entry into [the tidyverse](https://www.tidyverse.org/) that provides a tidy framework for all things relational (networks/graphs, trees, etc)
 
 To use the package, we need every host combination[^combo] for each podcast, which can be achieved with the `combn()` function. This gives us a pair of points ('nodes' in graph-speak) that can be connected by a line (an 'edge') to indicate their relationship.
 
@@ -142,7 +146,7 @@ solo_vec <- shows_clean %>%
 solo_df <- filter(shows_clean, Podcast %in% solo_vec)
 ```
 
-Now we can bind these rows and get our host combinations. 
+Now we can bind these rows to the data and then get our host combinations. Big shout out to [William Chase](https://www.williamrchase.com/post/finding-combinations-in-the-tidyverse/) for a solution to getting all combinations of elements within some parent element (e.g. hosts within podcasts).
 
 ```{r combos}
 # Prepare host combinations per show
@@ -164,6 +168,8 @@ We can turn this dataframe of host-pair combinations into a tidygraph object wit
 
 We can also use functions from the `tidygraph` package to help calculate various network statistics. For example, the `centrality_degree()` function tells us the nodes with the most connections. We can add this as a column in our node data and use this later to do things like resize nodes depending on their centrality.
 
+You can manipulate the nodes and edges dataframes in this tidygraph object by using the `activate()` function to switch between them. Currently the node data are active (it says 'active' above the nodes dataframe), so our application of `centrality_degree()` to the network object will affect the node data specifically.
+
 ```{r as-tbl-graph}
 relay_graph <- as_tbl_graph(relay_combos, directed = FALSE)%>% 
   mutate(connections = centrality_degree()) %>%  # number of connections
@@ -172,7 +178,7 @@ relay_graph <- as_tbl_graph(relay_combos, directed = FALSE)%>%
 print(relay_graph)  
 ```
 
-The edges and nodes are now in the same object, but we can manipulate them by using the `activate()` function to switch between manipulating them.
+The edges and nodes are now in the same object. You can see we have a 40 nodes and 66 edges and that the netowrk is undirected (nodes don't 'point' to each other). We also have eight 'components', which are the isolated groups of nodes that connect to each other, but not to other groups.
 
 # Visualisation
 
@@ -221,7 +227,7 @@ This is where interactive network graphs come in handy, as you can zoom, pan and
 
 ## Interactive with `visNetwork`
 
-[The `visNetwork` package](https://datastorm-open.github.io/visNetwork/) wraps [the `vis.js` library](http://visjs.org) to make interactive network graphs. Its `visNetwork()` function takes separate dataframes of edges and nodes that are in [a pre-specified format](https://datastorm-open.github.io/visNetwork/nodes.html), so we won't be able to use our tidygraph obejct for this.
+[The `visNetwork` package](https://datastorm-open.github.io/visNetwork/) wraps [the `vis.js` library](http://visjs.org) to make interactive network graphs. Its `visNetwork()` function takes separate dataframes of edges and nodes that are in [a pre-specified format](https://datastorm-open.github.io/visNetwork/nodes.html), so we won't be able to use our tidygraph object for this.
 
 ```{r visnetwork-prep}
 # Dataframe of unique nodes with an ID value
@@ -269,6 +275,11 @@ You can:
 
 This is a very simple example, but [lots of other `visNetwork` options are available](https://datastorm-open.github.io/visNetwork/). 
 
+# What now?
+
+This was really just an introduction to `tidygraph`, `ggraph` and `visNetwork`. These packages make network analysis a little more consistent and can provide some interesting stats and visuals very quickly. A next step might be to produce a 'network of podcast networks', since Relay FM hosts appear in shows on other networks as well.
+
+[^relay]: Some personal favourites: [Analogue](https://www.relay.fm/analogue), [Cortex](https://www.relay.fm/cortex), [Playing For Fun](https://www.relay.fm/playingforfun), [Reconcilable Differences](https://www.relay.fm/rd), [Top Four](https://www.relay.fm/topfour) and [Connected](https://www.relay.fm/connected).
 [^xpath]: [Try SelectorGadget](https://cran.r-project.org/web/packages/rvest/vignettes/selectorgadget.html) or your [your browser's 'Inspect' tool](http://blog.corynissen.com/2015/01/using-rvest-to-scrape-html-table.html) to help isolate the xpath of the element of interest.
 [^regex]: The regex `(?<=[a-z])(?=[A-Z])` can be interpreted as 'split after but not including (`?<=`) a lowercase letter (`[a-z]`), and before but not including (`?=`) a capital letter (`[A-Z]`)'.
 [^combo]: We want _combinations_, not _permutations_. 'Federico Viticci to Stephen M. Hackett' is the same as 'Stephen M. Hackett to Federico Viticci', for example.

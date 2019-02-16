@@ -24,15 +24,15 @@ draft: no
 
 <p>Matt Dray (<a href="https://www.twitter.com/mattdray">@mattdray</a>)</p>
 <div class="figure">
-<img src="https://media.giphy.com/media/3gMrq5dCgRelOqQKJG/giphy.gif" alt="The Relay FM host/podcast network, visualised. Scroll to the bottom of this post to try it yourself." />
-<p class="caption">The Relay FM host/podcast network, visualised. Scroll to the bottom of this post to try it yourself.</p>
+<img src="https://media.giphy.com/media/3gMrq5dCgRelOqQKJG/giphy.gif" alt="The Relay FM podcast network, visualised. Scroll to the bottom of this post to try it yourself." />
+<p class="caption">The Relay FM podcast network, visualised. Scroll to the bottom of this post to try it yourself.</p>
 </div>
 <div id="podcast-networks" class="section level1">
 <h1>Podcast networks</h1>
 <p>Podcasting is becoming big business. Music-streaming giant <a href="https://www.spotify.com/uk/">Spotify</a> <a href="https://investors.spotify.com/financials/press-release-details/2019/Spotify-Announces-Strategic-Acquisitions-to-Accelerate-Growth-in-Podcasting/default.aspx">just acquired</a> the podcast network <a href="https://www.gimletmedia.com/">Gimlet</a> for <a href="https://www.recode.net/2019/2/1/18207198/spotify-gimlet-podcast-acquisition">a reported $200 million</a>.</p>
 <p>Other networks include <a href="https://www.theincomparable.com/">The Incomparable</a>, <a href="http://5by5.tv/">5by5</a> and <a href="https://www.radiotopia.fm/">Radiotopia</a>. Such networks can boost revenue and listener numbers and provide access to expertise, management and resources.</p>
-<p><a href="https://www.relay.fm">Relay FM</a> is a network that focuses largely on tech content. It was started by <a href="https//www.relay.fm/people/mykehurley">Myke Hurley</a> and <a href="https//www.relay.fm/people/stephenhackett">Stephen Hackett</a> in 2014 and you can find a list of <a href="https://www.relay.fm/shows">shows</a> and <a href="https://www.relay.fm/people">personnel</a> on their site. Many of Relay FM’s hosts have hosted more than one podcast within the network. What do the relationships between them look like?</p>
-<p>This post is about preparing and visualising the ‘Relayverse’ using the R packages <a href="https://www.data-imaginist.com/2017/introducing-tidygraph/"><code>tidygraph</code> for network data handling</a> and <a href="https://www.ggplot2-exts.org/ggraph.html"><code>ggraph</code> for network visualisation</a> (both by <a href="https://twitter.com/thomasp85">Thomas Lin Pedersen</a>), along with <a href="https://cran.r-project.org/web/packages/visNetwork/vignettes/Introduction-to-visNetwork.html">the <code>visNetwork</code> package</a> (from Benoit Thieurmel and Titouan Robert of <a href="http://www.datastorm.fr/">Datastorm</a>, wrapping <a href="http://visjs.org">Almende BV’s <code>vis.js</code> library</a>) for interactive visualisation.</p>
+<p><a href="https://www.relay.fm">Relay FM</a> is a network that focuses largely on tech content<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>. It was started by <a href="https//www.relay.fm/people/mykehurley">Myke Hurley</a> and <a href="https//www.relay.fm/people/stephenhackett">Stephen Hackett</a> in 2014 and you can find a list of <a href="https://www.relay.fm/shows">shows</a> and <a href="https://www.relay.fm/people">personnel</a> on their site. Many of Relay FM’s hosts have hosted more than one podcast within the network. What do the relationships between them look like?</p>
+<p>This post is about preparing and visualising this ‘Relayverse’ using the R packages <a href="https://www.data-imaginist.com/2017/introducing-tidygraph/"><code>tidygraph</code> for network data handling</a> and <a href="https://www.ggplot2-exts.org/ggraph.html"><code>ggraph</code> for network visualisation</a> (both by <a href="https://twitter.com/thomasp85">Thomas Lin Pedersen</a>), along with <a href="https://cran.r-project.org/web/packages/visNetwork/vignettes/Introduction-to-visNetwork.html">the <code>visNetwork</code> package</a> (from Benoit Thieurmel and Titouan Robert of <a href="http://www.datastorm.fr/">Datastorm</a>, wrapping <a href="http://visjs.org">Almende BV’s <code>vis.js</code> library</a>) for interactive visualisation.</p>
 <p>Scroll to the bottom to find the interactive tool if you aren’t interested in the code.</p>
 </div>
 <div id="packages" class="section level1">
@@ -49,16 +49,16 @@ library(purrr)  # applying functions over data
 library(tidygraph)  # set up graph network
 library(ggraph)  # visualise static graphs
 library(cowplot)  # for plot arrangement
-library(visNetwork)  # javascript interactive network</code></pre>
+library(visNetwork)  # wrapper for javascript interactive viz</code></pre>
 </div>
 <div id="harvest-data" class="section level1">
 <h1>Harvest data</h1>
-<p>We can use <a href="https://blog.rstudio.com/2014/11/24/rvest-easy-web-scraping-with-r/">the <code>rvest</code> package</a> by <a href="http://hadley.nz/">Hadley Wickham</a> to scrape podcast details from <a href="https://en.wikipedia.org/wiki/Relay_FM">the Wikipedia page for Relay FM</a>.</p>
+<p>We can use <a href="https://blog.rstudio.com/2014/11/24/rvest-easy-web-scraping-with-r/">the <code>rvest</code> package</a> by <a href="http://hadley.nz/">Hadley Wickham</a> to scrape podcast details from <a href="https://en.wikipedia.org/wiki/Relay_FM">the Wikipedia page for Relay FM</a>. There are two separate tables: one for current and one for retired (discontinued) shows.</p>
 <div class="figure">
-<img src="/post/2019-02-12-graphing-the-relayverse-podcasts_files/relay-wikipedia.png" alt="One of our target Wikipedia tables of current Relay FM shows" />
-<p class="caption">One of our target Wikipedia tables of current Relay FM shows</p>
+<img src="/post/2019-02-12-graphing-the-relayverse-podcasts_files/relay-wikipedia.png" alt="One of the target Wikipedia tables of current Relay FM shows" />
+<p class="caption">One of the target Wikipedia tables of current Relay FM shows</p>
 </div>
-<p><code>read_html()</code> gets the HTML for the selected page; <code>html_node()</code> identifies which element needs to be scraped<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>; and <code>html_table()</code> interprets the HTML information as a dataframe.</p>
+<p><code>read_html()</code> gets the HTML for the selected page; <code>html_node()</code> identifies which element needs to be scraped<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a>; and <code>html_table()</code> interprets the HTML information as a dataframe. I’ve removed the show ‘B-Sides’ because it’s clips from other shows.</p>
 <pre class="r"><code># Get the HTML for the selected page
 relay_wiki &lt;- read_html(&quot;https://en.wikipedia.org/wiki/Relay_FM&quot;)
 
@@ -81,36 +81,46 @@ retired &lt;- relay_wiki %&gt;%
 # Combine the tables into one dataframe
 shows &lt;- bind_rows(current, retired)
 
-head(shows)  # look at first few rows</code></pre>
-<pre><code>##          Podcast                                         Hosts
-## 1     Analog(ue)                         Myke HurleyCasey Liss
-## 2      Connected Federico ViticciMyke HurleyStephen M. Hackett
-## 3 The Pen Addict                         Myke HurleyBrad Dowdy
-## 4      Clockwise                        Dan MorenMikah Sargent
-## 5        Upgrade                        Myke HurleyJason Snell
-## 6        BONANZA                     Myke HurleyMatt Alexander
-##         Launch date
-## 1    18 August 2014
-## 2    18 August 2014
-## 3    18 August 2014
-## 4 17 September 2014
-## 5 17 September 2014
-## 6   4 November 2014
-##                                                                                                                Description
-## 1                                                                        Hosts discuss how electronics affect their lives.
-## 2                                                                        Hosts discuss Apple and the impact of technology.
-## 3                                                                             Discussion of pens, pencils, paper, and ink.
-## 4 A technology discussion show. Each episode is thirty minutes with four hosts each bringing their own topic to the table.
-## 5                          Discussion of companies&#39; influence on technology and how creative work is done with technology.
-## 6       A comedy podcast. The podcast was temporarily called BONANZA: The Wedding Year after host Myke Hurley got married.
-##    Status Retired date
-## 1 Current         &lt;NA&gt;
-## 2 Current         &lt;NA&gt;
-## 3 Current         &lt;NA&gt;
-## 4 Current         &lt;NA&gt;
-## 5 Current         &lt;NA&gt;
-## 6 Current         &lt;NA&gt;</code></pre>
-<p>Unfortunately the host names are in the form ‘First LastFirst Last’ so we need a regular expression to split the string where a lowercase letter meets an uppercase letter<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a>. This leaves us with a list column that we can <code>unnest()</code> to get one row per podcast-host combination.</p>
+# Look at a few random hosts/podcasts from the table
+select(shows, Podcast, Hosts) %&gt;%
+  sample_n(5) %&gt;% knitr::kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th align="left">Podcast</th>
+<th align="left">Hosts</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>12</td>
+<td align="left">Liftoff</td>
+<td align="left">Jason SnellStephen M. Hackett</td>
+</tr>
+<tr class="even">
+<td>5</td>
+<td align="left">Upgrade</td>
+<td align="left">Myke HurleyJason Snell</td>
+</tr>
+<tr class="odd">
+<td>30</td>
+<td align="left">Fusion</td>
+<td align="left">Stephen M. Hackett</td>
+</tr>
+<tr class="even">
+<td>3</td>
+<td align="left">The Pen Addict</td>
+<td align="left">Myke HurleyBrad Dowdy</td>
+</tr>
+<tr class="odd">
+<td>38</td>
+<td align="left">Almanac</td>
+<td align="left">Andy Ihnatko</td>
+</tr>
+</tbody>
+</table>
+<p>Unfortunately the host names are in the form ‘First LastFirst Last’ so we need a regular expression to split the string where a lowercase letter meets an uppercase letter<a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a>. This leaves us with a list column that we can <code>unnest()</code> to get one row per podcast-host combination.</p>
 <pre class="r"><code># Clean the host names
 shows_clean &lt;- shows %&gt;%
   mutate(
@@ -121,18 +131,79 @@ shows_clean &lt;- shows %&gt;%
   select(Podcast, Hosts, Status)
 
 # Print a random sample of 10
-sample_n(shows_clean, 10)</code></pre>
-<pre><code>##        Podcast              Hosts  Status
-## 9    Clockwise      Mikah Sargent Current
-## 82      Canvas   Federico Viticci Retired
-## 13     BONANZA     Matt Alexander Current
-## 66  The Prompt   Federico Viticci Retired
-## 54       Query Stephen M. Hackett Current
-## 74   Isometric         Brianna Wu Retired
-## 75   Isometric        Georgia Dow Retired
-## 42 Presentable          Jeff Veen Current
-## 11     Upgrade        Jason Snell Current
-## 71 Inquisitive        Myke Hurley Retired</code></pre>
+sample_n(shows_clean, 10) %&gt;% knitr::kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th align="left">Podcast</th>
+<th align="left">Hosts</th>
+<th align="left">Status</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>59</td>
+<td align="left">Automators</td>
+<td align="left">Rose Orchard</td>
+<td align="left">Current</td>
+</tr>
+<tr class="even">
+<td>64</td>
+<td align="left">CMD Space</td>
+<td align="left">Myke Hurley</td>
+<td align="left">Retired</td>
+</tr>
+<tr class="odd">
+<td>12</td>
+<td align="left">BONANZA</td>
+<td align="left">Myke Hurley</td>
+<td align="left">Current</td>
+</tr>
+<tr class="even">
+<td>25</td>
+<td align="left">Material</td>
+<td align="left">Florence Ion</td>
+<td align="left">Current</td>
+</tr>
+<tr class="odd">
+<td>38</td>
+<td align="left">Disruption</td>
+<td align="left">Georgia Dow</td>
+<td align="left">Current</td>
+</tr>
+<tr class="even">
+<td>14</td>
+<td align="left">Rocket</td>
+<td align="left">Brianna Wu</td>
+<td align="left">Current</td>
+</tr>
+<tr class="odd">
+<td>77</td>
+<td align="left">Isometric</td>
+<td align="left">Mikah Sargent</td>
+<td align="left">Retired</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td align="left">The Pen Addict</td>
+<td align="left">Myke Hurley</td>
+<td align="left">Current</td>
+</tr>
+<tr class="odd">
+<td>60</td>
+<td align="left">Parallel</td>
+<td align="left">Shelly Brisbin</td>
+<td align="left">Current</td>
+</tr>
+<tr class="even">
+<td>39</td>
+<td align="left">Disruption</td>
+<td align="left">Brianna Wu</td>
+<td align="left">Current</td>
+</tr>
+</tbody>
+</table>
 <p>Our dataframe is now tidy and ready for Tidygraph, but before moving on, we can do things like look at the host with the most active shows.</p>
 <pre class="r"><code>shows_clean %&gt;% 
   filter(Status == &quot;Current&quot;) %&gt;% 
@@ -217,8 +288,11 @@ sample_n(shows_clean, 10)</code></pre>
 </div>
 <div id="tidygraph" class="section level1">
 <h1>Tidygraph</h1>
-<p>The <a href="https://www.data-imaginist.com/2017/introducing-tidygraph/">tidygraph package</a> was created by <a href="https://twitter.com/thomasp85">Thomas Lin Pedersen</a> and ‘is an entry into <a href="https://www.tidyverse.org/">the tidyverse</a> that provides a tidy framework for all things relational (networks/graphs, trees, etc)’.</p>
-<p>To use the package, we need every host combination<a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a> for each podcast, which can be achieved with the <code>combn()</code> function. This gives us a pair of points (‘nodes’ in graph-speak) that can be connected by a line (an ‘edge’) to indicate their relationship.</p>
+<p>The <a href="https://www.data-imaginist.com/2017/introducing-tidygraph/">tidygraph package</a> was created by <a href="https://twitter.com/thomasp85">Thomas Lin Pedersen</a>. It is:</p>
+<blockquote>
+<p>an entry into <a href="https://www.tidyverse.org/">the tidyverse</a> that provides a tidy framework for all things relational (networks/graphs, trees, etc)</p>
+</blockquote>
+<p>To use the package, we need every host combination<a href="#fn4" class="footnoteRef" id="fnref4"><sup>4</sup></a> for each podcast, which can be achieved with the <code>combn()</code> function. This gives us a pair of points (‘nodes’ in graph-speak) that can be connected by a line (an ‘edge’) to indicate their relationship.</p>
 <p>But a show with one host doesn’t have a pair of points, so I’m going to duplicate these rows first. If we don’t do this, we can’t plot these shows because they won’t have a connection between two nodes.</p>
 <pre class="r"><code># Isolate the shows with one host 
 solo_vec &lt;- shows_clean %&gt;%
@@ -228,7 +302,7 @@ solo_vec &lt;- shows_clean %&gt;%
 
 # Filter the show-host dataframe by solo-hosted podcasts
 solo_df &lt;- filter(shows_clean, Podcast %in% solo_vec)</code></pre>
-<p>Now we can bind these rows and get our host combinations.</p>
+<p>Now we can bind these rows to the data and then get our host combinations. Big shout out to <a href="https://www.williamrchase.com/post/finding-combinations-in-the-tidyverse/">William Chase</a> for a solution to getting all combinations of elements within some parent element (e.g. hosts within podcasts).</p>
 <pre class="r"><code># Prepare host combinations per show
 relay_combos &lt;- shows_clean %&gt;%
   bind_rows(solo_df) %&gt;%  # to duplicate the shows with solo hosts
@@ -252,59 +326,60 @@ sample_n(relay_combos, 10) %&gt;% knitr::kable()  # random sample of 10</code></
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">K Tempest Bradford</td>
-<td align="left">Aleen Simms</td>
-<td align="left">Originality</td>
+<td align="left">Federico Viticci</td>
+<td align="left">Stephen M. Hackett</td>
+<td align="left">The Prompt</td>
 </tr>
 <tr class="even">
-<td align="left">Aleen Simms</td>
-<td align="left">Aleen Simms</td>
-<td align="left">Less Than or Equal</td>
-</tr>
-<tr class="odd">
 <td align="left">Brianna Wu</td>
 <td align="left">Mikah Sargent</td>
 <td align="left">Isometric</td>
 </tr>
-<tr class="even">
-<td align="left">CGP Grey</td>
-<td align="left">Myke Hurley</td>
-<td align="left">Cortex</td>
-</tr>
 <tr class="odd">
-<td align="left">Federico Viticci</td>
-<td align="left">Shahid Kamal Ahmad</td>
-<td align="left">Remaster</td>
+<td align="left">Myke Hurley</td>
+<td align="left">Tiffany Arment</td>
+<td align="left">Playing for Fun</td>
 </tr>
 <tr class="even">
-<td align="left">Myke Hurley</td>
+<td align="left">Federico Viticci</td>
 <td align="left">Stephen M. Hackett</td>
 <td align="left">Connected</td>
 </tr>
 <tr class="odd">
-<td align="left">Myke Hurley</td>
-<td align="left">Casey Liss</td>
-<td align="left">Analog(ue)</td>
+<td align="left">Brianna Wu</td>
+<td align="left">Georgia Dow</td>
+<td align="left">Isometric</td>
 </tr>
 <tr class="even">
+<td align="left">Federico Viticci</td>
 <td align="left">Myke Hurley</td>
-<td align="left">Brad Dowdy</td>
-<td align="left">The Pen Addict</td>
+<td align="left">Remaster</td>
 </tr>
 <tr class="odd">
+<td align="left">Brianna Wu</td>
+<td align="left">Mikah Sargent</td>
+<td align="left">Disruption</td>
+</tr>
+<tr class="even">
 <td align="left">Myke Hurley</td>
 <td align="left">Myke Hurley</td>
 <td align="left">Inquisitive</td>
 </tr>
+<tr class="odd">
+<td align="left">Federico Viticci</td>
+<td align="left">Fraser Spiers</td>
+<td align="left">Canvas</td>
+</tr>
 <tr class="even">
-<td align="left">Myke Hurley</td>
-<td align="left">Matt Alexander</td>
-<td align="left">BONANZA</td>
+<td align="left">Jason Snell</td>
+<td align="left">Jason Snell</td>
+<td align="left">Download</td>
 </tr>
 </tbody>
 </table>
 <p>We can turn this dataframe of host-pair combinations into a tidygraph object with the <code>as_tbl_graph()</code> function. This class of object contains two dataframes (the nodes and the edges) and some metadata.</p>
 <p>We can also use functions from the <code>tidygraph</code> package to help calculate various network statistics. For example, the <code>centrality_degree()</code> function tells us the nodes with the most connections. We can add this as a column in our node data and use this later to do things like resize nodes depending on their centrality.</p>
+<p>You can manipulate the nodes and edges dataframes in this tidygraph object by using the <code>activate()</code> function to switch between them. Currently the node data are active (it says ‘active’ above the nodes dataframe), so our application of <code>centrality_degree()</code> to the network object will affect the node data specifically.</p>
 <pre class="r"><code>relay_graph &lt;- as_tbl_graph(relay_combos, directed = FALSE)%&gt;% 
   mutate(connections = centrality_degree()) %&gt;%  # number of connections
   arrange(desc(connections))  # order by number of shows
@@ -332,7 +407,7 @@ print(relay_graph)  </code></pre>
 ## 2     1    32 Analog(ue)
 ## 3    11    33 Automators
 ## # … with 63 more rows</code></pre>
-<p>The edges and nodes are now in the same object, but we can manipulate them by using the <code>activate()</code> function to switch between manipulating them.</p>
+<p>The edges and nodes are now in the same object. You can see we have a 40 nodes and 66 edges and that the netowrk is undirected (nodes don’t ‘point’ to each other). We also have eight ‘components’, which are the isolated groups of nodes that connect to each other, but not to other groups.</p>
 </div>
 <div id="visualisation" class="section level1">
 <h1>Visualisation</h1>
@@ -373,7 +448,7 @@ plot_grid(g1, g2, labels = c(&quot;A&quot;, &quot;B&quot;))</code></pre>
 </div>
 <div id="interactive-with-visnetwork" class="section level2">
 <h2>Interactive with <code>visNetwork</code></h2>
-<p><a href="https://datastorm-open.github.io/visNetwork/">The <code>visNetwork</code> package</a> wraps <a href="http://visjs.org">the <code>vis.js</code> library</a> to make interactive network graphs. Its <code>visNetwork()</code> function takes separate dataframes of edges and nodes that are in <a href="https://datastorm-open.github.io/visNetwork/nodes.html">a pre-specified format</a>, so we won’t be able to use our tidygraph obejct for this.</p>
+<p><a href="https://datastorm-open.github.io/visNetwork/">The <code>visNetwork</code> package</a> wraps <a href="http://visjs.org">the <code>vis.js</code> library</a> to make interactive network graphs. Its <code>visNetwork()</code> function takes separate dataframes of edges and nodes that are in <a href="https://datastorm-open.github.io/visNetwork/nodes.html">a pre-specified format</a>, so we won’t be able to use our tidygraph object for this.</p>
 <pre class="r"><code># Dataframe of unique nodes with an ID value
 nodes &lt;- shows_clean %&gt;%  # take our podcast-host dataset
   distinct(Hosts) %&gt;%  # get column of unique hosts
@@ -414,11 +489,16 @@ edges &lt;- relay_combos %&gt;%
 <p>This is a very simple example, but <a href="https://datastorm-open.github.io/visNetwork/">lots of other <code>visNetwork</code> options are available</a>.</p>
 </div>
 </div>
+<div id="what-now" class="section level1">
+<h1>What now?</h1>
+<p>This was really just an introduction to <code>tidygraph</code>, <code>ggraph</code> and <code>visNetwork</code>. These packages make network analysis a little more consistent and can provide some interesting stats and visuals very quickly. A next step might be to produce a ‘network of podcast networks’, since Relay FM hosts appear in shows on other networks as well.</p>
+</div>
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p><a href="https://cran.r-project.org/web/packages/rvest/vignettes/selectorgadget.html">Try SelectorGadget</a> or your <a href="http://blog.corynissen.com/2015/01/using-rvest-to-scrape-html-table.html">your browser’s ‘Inspect’ tool</a> to help isolate the xpath of the element of interest.<a href="#fnref1">↩</a></p></li>
-<li id="fn2"><p>The regex <code>(?&lt;=[a-z])(?=[A-Z])</code> can be interpreted as ‘split after but not including (<code>?&lt;=</code>) a lowercase letter (<code>[a-z]</code>), and before but not including (<code>?=</code>) a capital letter (<code>[A-Z]</code>)’.<a href="#fnref2">↩</a></p></li>
-<li id="fn3"><p>We want <em>combinations</em>, not <em>permutations</em>. ‘Federico Viticci to Stephen M. Hackett’ is the same as ‘Stephen M. Hackett to Federico Viticci’, for example.<a href="#fnref3">↩</a></p></li>
+<li id="fn1"><p>Some personal favourites: <a href="https://www.relay.fm/analogue">Analogue</a>, <a href="https://www.relay.fm/cortex">Cortex</a>, <a href="https://www.relay.fm/playingforfun">Playing For Fun</a>, <a href="https://www.relay.fm/rd">Reconcilable Differences</a>, <a href="https://www.relay.fm/topfour">Top Four</a> and <a href="https://www.relay.fm/connected">Connected</a>.<a href="#fnref1">↩</a></p></li>
+<li id="fn2"><p><a href="https://cran.r-project.org/web/packages/rvest/vignettes/selectorgadget.html">Try SelectorGadget</a> or your <a href="http://blog.corynissen.com/2015/01/using-rvest-to-scrape-html-table.html">your browser’s ‘Inspect’ tool</a> to help isolate the xpath of the element of interest.<a href="#fnref2">↩</a></p></li>
+<li id="fn3"><p>The regex <code>(?&lt;=[a-z])(?=[A-Z])</code> can be interpreted as ‘split after but not including (<code>?&lt;=</code>) a lowercase letter (<code>[a-z]</code>), and before but not including (<code>?=</code>) a capital letter (<code>[A-Z]</code>)’.<a href="#fnref3">↩</a></p></li>
+<li id="fn4"><p>We want <em>combinations</em>, not <em>permutations</em>. ‘Federico Viticci to Stephen M. Hackett’ is the same as ‘Stephen M. Hackett to Federico Viticci’, for example.<a href="#fnref4">↩</a></p></li>
 </ol>
 </div>
