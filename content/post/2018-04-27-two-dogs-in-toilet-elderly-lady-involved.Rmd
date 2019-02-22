@@ -15,8 +15,6 @@ tags:
   - animals
 ---
 
-<span style="color:lightgray">Matt Dray</span>
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   echo = TRUE,
@@ -26,35 +24,37 @@ knitr::opts_chunk$set(
 )
 ```
 
+Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
+
+![Call the fire brigade. Oh wait, we're fine.](https://media.giphy.com/media/1w7Csq1wWJ1PG/giphy.gif)
+
 # TL;DR
 
-Animals get stuck in weird places. Oh, and the `sf` package in R can be used for coordinate reprojection prior to interactive mapping with `leaflet`.
+Animals get stuck in weird places, just ask [the London Fire Brigade](https://data.london.gov.uk/dataset/animal-rescue-incidents-attended-by-lfb/resource/e6211993-9ea2-4ed4-9378-7344653e9c31). I used [the `sf` package](https://github.com/r-spatial/sf) for handling some animal rescue spatial data prior to [interactive mapping with `leaflet`](https://rstudio.github.io/leaflet/). Scroll to the bottom to see the map.
 
 # The problem
 
-I often work with data that has coordinates; usually a [eastings and northings](https://en.wikipedia.org/wiki/Easting_and_northing). I need to convert these to [latitude](https://en.wikipedia.org/wiki/Latitude) and [longitude](https://en.wikipedia.org/wiki/Longitude) for interactive mapping using the [`leaflet`](https://rstudio.github.io/leaflet/) package in [R](https://www.r-project.org/about.html). What might be an easy way to do this?
+Sometimes I work with [eastings and northings](https://en.wikipedia.org/wiki/Easting_and_northing) coordinate data. It often helps to convert these to [latitude](https://en.wikipedia.org/wiki/Latitude) and [longitude](https://en.wikipedia.org/wiki/Longitude) for interactive mapping using the [`leaflet`](https://rstudio.github.io/leaflet/) package in [R](https://www.r-project.org/about.html).
 
 I'm going to demo the `sf` package, show how to reproject coordinates, work with points and polygon data, make an interactive map with `leaflet` and do a bonus bit of webscraping.
 
-Mostly I wrote this post for my own reference and to learn a bit more about using the `sf` package. Feel free to discuss or suggest anything in the comments.
-
 # Special features
 
-The [`sf` ('special features') package](https://github.com/r-spatial/sf) from [Edzer Pebesma](https://orcid.org/0000-0001-8049-7069) has a series of classes and methods for spatial data. The package is becoming popular because simple feature access is a widely-used multi-platform [ISO standard](https://www.iso.org/standard/40114.html) and the package supports the popular [tidy data](http://r4ds.had.co.nz/tidy-data.html) paradigm and can be integrated with [tidyverse operations](https://www.tidyverse.org/). This and more was [spelled out by Pebesma in a post](https://edzer.github.io/UseR2017/) from [UseR! 2017](https://user2017.brussels/).
+The [`sf` ('simple features') package](https://github.com/r-spatial/sf) from [Edzer Pebesma](https://orcid.org/0000-0001-8049-7069) has a series of classes and methods for spatial data. The package is becoming popular because simple feature access is a widely-used multi-platform [ISO standard](https://www.iso.org/standard/40114.html) and the package supports the popular [tidy data](http://r4ds.had.co.nz/tidy-data.html) paradigm and can be integrated with [tidyverse operations](https://www.tidyverse.org/). This and more was [spelled out by Pebesma in a post](https://edzer.github.io/UseR2017/) from [UseR! 2017](https://user2017.brussels/).
 
-What does this mean for [`sp`](https://cran.r-project.org/web/packages/sp/index.html), the go-to package for spatial analysis in R? Well, its not going anywhere for now. You can get an opinion on whether you [should learn `sf` or `sp` for spatial R programming](http://www.seascapemodels.org/rstats/2018/03/23/should-I-learn-sp-or-sf.html) from Seascape Models (spoiler: `sf`, but maybe both if you can).
+What does this mean for [`sp`](https://cran.r-project.org/web/packages/sp/index.html), the go-to package for spatial analysis in R? Well, its not going anywhere for now. You can get an opinion on whether you [should learn `sf` or `sp` for spatial R programming](http://www.seascapemodels.org/rstats/2018/03/23/should-I-learn-sp-or-sf.html) (spoiler: `sf`, but maybe both if you can).
 
 # Some data
 
 ## Animal rescues
 
-I've got an interesting example dataset that contains eastings and northings: [animal rescue incidents](https://data.london.gov.uk/dataset/animal-rescue-incidents-attended-by-lfb/resource/e6211993-9ea2-4ed4-9378-7344653e9c31) attended by the [London Fire Brigade](https://www.london-fire.gov.uk/incidents/) `r emo::ji("fire_engine")` from the excellent [London Data Store](https://data.london.gov.uk/). In their words:
+I've found an interesting example dataset that contains eastings and northings: [animal rescue incidents](https://data.london.gov.uk/dataset/animal-rescue-incidents-attended-by-lfb/resource/e6211993-9ea2-4ed4-9378-7344653e9c31) attended by the [London Fire Brigade](https://www.london-fire.gov.uk/incidents/) from the excellent [London Data Store](https://data.london.gov.uk/). In their words:
 
 > The London Fire Brigade attends a range of non-fire incidents (which we call 'special services'). These 'special services' include assistance to animals that may be trapped or in distress.
 
-This is pertinent because a pigeon fell down our chimney recently.
+This is close to my heart because a pigeon fell down our chimney recently. After a brave rescue mission (putting on some rubber gloves and contorting my arms through a tiny vent hole) I think I'm now qualified to join an elite search and rescue team.
 
-<img src="/post/2018-04-27-two-dogs-in-toilet-elderly-lady-involved_files/mr-chimney.jpg" alt="The back end of the trapped pigeon visible through a vent hole in our chimeny breast" width="100%">
+![The pigeon chillaxing in the chimney.](/post/2018-04-27-two-dogs-in-toilet-elderly-lady-involved_files/mr-chimney.jpg)
 
 ## Clean the data
 
@@ -66,8 +66,8 @@ library(dplyr)  # data manipulation and pipes (%>%)
 library(janitor)  # cleaning and misc functions
 library(lubridate)  # dealing with dates
 
-# read the csv
-rescue <- readr::read_csv("data/lfb-animal-rescue.csv")
+# read the csv from where you saved it
+rescue <- read_csv("data/lfb-animal-rescue.csv")
 
 # replace rogue '£' with blank
 names(rescue) <- iconv(names(rescue), to = "ASCII", sub = "")
@@ -75,60 +75,50 @@ names(rescue) <- iconv(names(rescue), to = "ASCII", sub = "")
 # more cleaning
 rescue <- rescue %>% 
   rename(IncidentNominalCost = `IncidentNominalCost()`) %>%  # no brackets
-  mutate(DateTimeOfCall = lubridate::ymd_hms(DateTimeOfCall))  # convert type
+  mutate(DateTimeOfCall = ymd_hms(DateTimeOfCall))  # convert type
 
 # preview
 glimpse(rescue) 
 ```
 
-So each row is an 'incident' to which the brigade were called and there are various columns for when, what, and where.
+So each row is an 'incident' to which the brigade were called and there's 5352 of them recorded in teh dataset. There are 25 columns for variables relating to incident, including when it was, what it was and where it was.
 
 ## Explore the data
 
-This post isn't about the dataset, but it's worth having a closer look at it. I've added an interactive table below so you can filter and search for incidents, creatures, locations and the nominal cost of the callout.
+This post isn't about the dataset, but it's worth having a closer look at it. I've added an interactive table below so you can search for incidents, creatures, locations and the nominal cost of the callout.
 
 ```{r datatable, echo=FALSE}
-# interactive table
+library(DT)  # interactive javascript tables
+
+# build interactive table
 rescue %>%
   mutate(  # allows for dropdown on interactive table
     Animal = as.factor(AnimalGroupParent),
     Borough = as.factor(Borough),
     IncidentNominalCost = ifelse(
       test = IncidentNominalCost == "NULL",
-      yes = NA,
-      no = as.numeric(IncidentNominalCost)
+      yes = NA, no = as.numeric(IncidentNominalCost)
     )
   ) %>% 
   select(
-    Incident = FinalDescription,
-    Animal,
-    Borough,
+    Incident = FinalDescription, Animal, Borough,
     `Nominal cost (£)` = IncidentNominalCost
   ) %>% 
-  DT::datatable(
-    filter = "top",
-    rownames = FALSE,
-    options = list(
-      autoWidth = TRUE,
-      pageLength = 5
-    )
-  )
+  datatable(options = list(autoWidth = TRUE, pageLength = 5, dom = "ftp"))
 ```
 <p>
 <p>
 Obviously there are plenty of cats up trees, but there's so much more. Some of the more unique entries are:
 
-> DOG WITH JAW TRAPPED IN MAGAZINE RACK `r paste(emo::ji("dog"), emo::ji("newspaper"))`
+> DOG WITH JAW TRAPPED IN MAGAZINE RACK
 
-> SWAN IN DISTRESS `r paste(emo::ji("duck"), emo::ji("confounded"))`
+> SWAN IN DISTRESS
 
-> FERRET STUCK IN LIFT SHAFT [ferret emoji needed]
+> FERRET STUCK IN LIFT SHAFT
 
 And of course:
 
-> TWO DOGS IN TOILET ELDERLY LADY INVOLVED `r paste(emo::ji("dog2"), emo::ji("poodle"), emo::ji("toilet"), emo::ji("older_woman"))`
-
-Hmmm. `r emo::ji("thinking_face")`
+> TWO DOGS IN TOILET ELDERLY LADY INVOLVED
 
 # Get spatial with `sf`
 
@@ -148,11 +138,11 @@ We can then use the `st_transform()` function to convert our projection system f
 library(sf)
 
 rescue_sf <- rescue %>% 
-  sf::st_as_sf(
+  st_as_sf(
     coords = c("Easting_rounded", "Northing_rounded"),  # columns with coordinates
     crs = 27700  # coordinate reference system code for eastings/northings
   ) %>% 
-  sf::st_transform(crs = 4326)  # the coord ref system code for latlong
+  st_transform(crs = 4326)  # the coord ref system code for latlong
 
 print(rescue_sf)
 ```
@@ -161,16 +151,16 @@ So what happened more specifically? Our eastings and northings were combined wit
 
 ### Tidyverse manipulation
 
-As mentioned, one advantage of using `sf` is that sf-class objects use the [tidy data](http://r4ds.had.co.nz/tidy-data.html) paradigm that allows for use of the [tidyverse](https://www.tidyverse.org/). Som eusers may prefer this relative to the 'Spatial Points Data Frame' (SPDF) class that is produced by the `sp` package for points data. SPDFs are an [S4 class](http://adv-r.had.co.nz/S4.html), which means they have 'slots' of data, coordinates, etc.
+As mentioned, one advantage of using `sf` is that sf-class objects use the [tidy data](http://r4ds.had.co.nz/tidy-data.html) paradigm that allows for use of the [tidyverse](https://www.tidyverse.org/). Some users may prefer this relative to the 'Spatial Points Data Frame' (SPDF) class that is produced by the `sp` package for points data. SPDFs are an [S4 class](http://adv-r.had.co.nz/S4.html), which means they have 'slots' of data, coordinates, etc.
 
 In the code chunk above I used pipes to pass the `rescue` dataframe to `st_as_sf()` and then to `st_transform()`. You can also use `dplyr` functions like `filter()` on your sf-class object.
 
 ```{r dplyr}
 filtered_rescue_sf <- rescue_sf %>%
-  dplyr::filter(
+  filter(
     AnimalGroupParent %in% c("Dog", "Cat", "Bird"),  # just these animals
-    DateTimeOfCall > lubridate::ymd("2017-01-01") &
-      DateTimeOfCall < lubridate::ymd("2017-12-31")  # 2017 only
+    DateTimeOfCall > ymd("2017-01-01") &
+      DateTimeOfCall < ymd("2017-12-31")  # 2017 only
   )
 ```
 
@@ -181,7 +171,7 @@ We can also use the `st_coordinates()` function to extract the XY (latitude and 
 rescue_coords <- as.data.frame(st_coordinates(filtered_rescue_sf))
 
 # bind these to rescue dataset
-filtered_rescue_sf <- dplyr::bind_cols(filtered_rescue_sf, rescue_coords)
+filtered_rescue_sf <- bind_cols(filtered_rescue_sf, rescue_coords)
 
 # preview
 head(filtered_rescue_sf)
@@ -201,13 +191,13 @@ This means our polygon dataset is a tidy dataframe with the polygon information 
 library(geojsonio)  # for working with geojson files
 
 # read geojson from the web (local authorities)
-lad_json <- geojsonio::geojson_read(
+lad_json <- geojson_read(
   x = "https://opendata.arcgis.com/datasets/fab4feab211c4899b602ecfbfbc420a3_4.geojson",
   what = "sp"  # spatial class
 )
 
 # convert to sf
-lad_sf <- sf::st_as_sf(lad_json)
+lad_sf <- st_as_sf(lad_json)
 
 # preview
 head(lad_sf)
@@ -222,18 +212,18 @@ library(rvest)  # scraping webpages
 library(xml2)  # parsing XML
 
 # read the webpage
-wiki <- xml2::read_html("https://en.wikipedia.org/wiki/List_of_London_boroughs")
+wiki <- read_html("https://en.wikipedia.org/wiki/List_of_London_boroughs")
 
 # get borough names
 boroughs <- wiki %>% 
-  rvest::html_nodes(css = "td:nth-child(1) > a") %>%
-  rvest::html_text() %>% 
+  html_nodes(css = "td:nth-child(1) > a") %>%
+  html_text() %>% 
   tolower()
 
 # filter the sf for london boroughs
 boroughs_sf <- lad_sf %>% 
   mutate(lad17nm = tolower(lad17nm)) %>% 
-  dplyr::filter(lad17nm %in% boroughs)
+  filter(lad17nm %in% boroughs)
 
 # preview
 head(boroughs_sf)
@@ -254,9 +244,9 @@ This is a very simple map for now. You can:
 library(leaflet)  # for interactive mapping
 
 # put the map together
-leaflet::leaflet(boroughs_sf) %>% 
-  leaflet::addTiles() %>%
-  leaflet::addPolygons(  # add London borough boundaries
+leaflet(boroughs_sf) %>% 
+  addProviderTiles(providers$Wikimedia) %>%
+  addPolygons(  # add London borough boundaries
     label = ~tools::toTitleCase(lad17nm),  # label on hover
     color = "black",  # boundary colour
     weight = 2,  # boundary thickness
@@ -268,9 +258,9 @@ leaflet::leaflet(boroughs_sf) %>%
       bringToFront = TRUE  # overlay the highglight
     )
   ) %>% 
-  leaflet::addAwesomeMarkers( # add incident points
+  addAwesomeMarkers( # add incident points
     lng = filtered_rescue_sf$X, lat = filtered_rescue_sf$Y,
-    icon = leaflet::awesomeIcons(
+    icon = awesomeIcons(
       library = "ion",  # from this icon library
       icon = "ion-android-alert",  # use this icon
       iconColor = "white",  # colour it white
