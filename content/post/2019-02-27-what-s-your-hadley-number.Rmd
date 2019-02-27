@@ -1,0 +1,67 @@
+---
+title: What’s your Hadley Number?
+author: Matt Dray
+date: '2019-02-27'
+slug: hadley-number
+categories:
+  - coding
+  - dataviz
+  - R
+tags:
+  - tidygraph
+  - ggraph
+  - shiny
+  - kevinbacran
+  - package
+  - networks
+  - graphs
+draft: yes
+---
+
+# TL;DR
+
+I made [the little package {kevinbacran}](https://matt-dray.github.io/kevinbacran/)[^pronounce] to find the network separation between any two authors on [CRAN](https://cran.r-project.org). I used {kevinbacran} in [a Shiny app](https://mattdray.shinyapps.io/hadley-number/) to demonstrate the [Six Degrees of Kevin Bacon](https://en.wikipedia.org/wiki/Six_Degrees_of_Kevin_Bacon). Except it's for CRAN authors. And [Hadley Wickham](http://hadley.nz/) is Kevin Bacon.
+
+# Six degrees
+
+People are connected to each other in networks. What is the average separation of any two people in the network? There's a popular idea of there being [six degrees of separation](https://en.wikipedia.org/wiki/Six_degrees_of_separation).
+
+Instead of separation between any two people, we can measure separation from one fixed person. For example, we can calculate a [Bacon Number](https://en.wikipedia.org/wiki/Six_Degrees_of_Kevin_Bacon) for actors connected to [Kevin Bacon](https://www.imdb.com/name/nm0000102/), 'centre of the entertainment universe'.
+
+It works like this: you have a Bacon Number of zero if you are Kevin Bacon. You have a Bacon Number of one if you were in a film with him. Your number is two if you were in a film with someone who was in a film with Kevin Bacon.
+
+A more classic example is the [Erdős Number](https://en.wikipedia.org/wiki/Erd%C5%91s_number), which expresses the separation of mathematicians from the prolific [Paul Erdős](https://en.wikipedia.org/wiki/Paul_Erd%C5%91s) via published academic papers. And yes, there's [an Erdős-Bacon Number](https://en.wikipedia.org/wiki/Erd%C5%91s%E2%80%93Bacon_number) for actor-mathematicians.[^ebs]
+
+We can extend this approach to any network. One nerdy example is shared authorship on packages published on the [Comprehensive R Archive Network (CRAN)](https://cran.r-project.org), the go-to repository for packages for the R programming language. {kevinbacran} can help you do this.
+
+# The {kevinbacran} package
+
+You can learn about the package on [the {kevinbacran} site](https://matt-dray.github.io/kevinbacran/)[^pkgdown], see [the code on GitHub](https://github.com/matt-dray/kevinbacran) and feel free to [leave an issue](https://github.com/matt-dray/kevinbacran/issues).
+
+The package has only four functions[^fun]:
+
+| Function | Description |
+| ----------- | ----------------------------------------------------------- |
+| `kb_combos()` | Fetch CRAN data, clean author names, get author combos per package, create network graph object |
+| `kb_pair()` | Gets network graph of the shortest distance between two authors from the `kb_combos()` graph |
+| `kb_distance()` | Separation (number of edges) between authors in `kb_pair()` |
+| `kb_plot()` | Returns a {ggraph} plot from the `kb_pair()` object |
+
+The package relies heavily on others, particularly [{cranly}](https://github.com/ikosmidis/cranly) from [Ioannis Kosmidis](http://ikosmidis.com/), [{tidygraph}](https://github.com/thomasp85/tidygraph) and [{ggraph}](https://github.com/thomasp85/ggraph) from [Thomas Lin Pedersen](https://www.data-imaginist.com/), and [{dplyr}](https://dplyr.tidyverse.org/) and [{purrr}](https://purrr.tidyverse.org/) from [Hadley Wickham](http://hadley.nz/), [Lionel Henry](https://twitter.com/_lionelhenry?lang=en), [Romain François](https://twitter.com/romain_francois) and [Kirill Müller](https://twitter.com/krlmlr?lang=en). The code for getting author combinations per package is from [William Chase](https://www.williamrchase.com/), in his excellent blogpost ['Finding Combinations in the Tidyverse'](https://www.williamrchase.com/post/finding-combinations-in-the-tidyverse/).
+
+# The app
+
+We can use the functions mentioned to iterate over a list of all authors to get a network graph and separation value between each of them and a fixed author. We're going to use [Hadley Wickham](http://hadley.nz/) as the target, since he is the most-named author on CRAN, with over 130 packages at the time of writing. This may be largely explained by his involvement in [the tidyverse suite](https://www.tidyverse.org/) and the number of package authors who use these materials.
+
+Here is an embedded version of the Shiny app, but [you can access it in full from its own page on shinyapps.io](https://mattdray.shinyapps.io/hadley-number/). The [code is on GitHub](https://github.com/matt-dray/hadley-number), where you can [leave issues.](https://github.com/matt-dray/hadley-number/issues)
+
+<iframe src="https://mattdray.shinyapps.io/hadley-number/" width="100%" height="1000";></iframe>
+
+# Some stats
+
+
+[^pronounce]: As in Kevin Bacon + CRAN, lol.
+[^fun]: Subject to change.
+[^pkgdown]: Thanks to the marvellous [{pkgdown} package](https://pkgdown.r-lib.org/) from [Hadley Wickham](http://hadley.nz/) and [Jay Hesselberth](https://hesselberthlab.org/).
+[^ebs]: And yes, there's [an Erdős-Bacon-Sabbath Number](http://timeblimp.com/?page_id=195) for mathematician-actor-musicians.
+[^hw]: 

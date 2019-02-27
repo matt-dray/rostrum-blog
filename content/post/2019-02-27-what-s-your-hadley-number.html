@@ -1,0 +1,89 @@
+---
+title: What’s your Hadley Number?
+author: Matt Dray
+date: '2019-02-27'
+slug: hadley-number
+categories:
+  - coding
+  - dataviz
+  - R
+tags:
+  - tidygraph
+  - ggraph
+  - shiny
+  - kevinbacran
+  - package
+  - networks
+  - graphs
+draft: yes
+---
+
+
+
+<div id="tldr" class="section level1">
+<h1>TL;DR</h1>
+<p>I made <a href="https://matt-dray.github.io/kevinbacran/">the little package {kevinbacran}</a><a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> to find the network separation between any two authors on <a href="https://cran.r-project.org">CRAN</a>. I used {kevinbacran} in <a href="https://mattdray.shinyapps.io/hadley-number/">a Shiny app</a> to demonstrate the <a href="https://en.wikipedia.org/wiki/Six_Degrees_of_Kevin_Bacon">Six Degrees of Kevin Bacon</a>. Except it’s for CRAN authors. And <a href="http://hadley.nz/">Hadley Wickham</a> is Kevin Bacon.</p>
+</div>
+<div id="six-degrees" class="section level1">
+<h1>Six degrees</h1>
+<p>People are connected to each other in networks. What is the average separation of any two people in the network? There’s a popular idea of there being <a href="https://en.wikipedia.org/wiki/Six_degrees_of_separation">six degrees of separation</a>.</p>
+<p>Instead of separation between any two people, we can measure separation from one fixed person. For example, we can calculate a <a href="https://en.wikipedia.org/wiki/Six_Degrees_of_Kevin_Bacon">Bacon Number</a> for actors connected to <a href="https://www.imdb.com/name/nm0000102/">Kevin Bacon</a>, ‘centre of the entertainment universe’.</p>
+<p>It works like this: you have a Bacon Number of zero if you are Kevin Bacon. You have a Bacon Number of one if you were in a film with him. Your number is two if you were in a film with someone who was in a film with Kevin Bacon.</p>
+<p>A more classic example is the <a href="https://en.wikipedia.org/wiki/Erd%C5%91s_number">Erdős Number</a>, which expresses the separation of mathematicians from the prolific <a href="https://en.wikipedia.org/wiki/Paul_Erd%C5%91s">Paul Erdős</a> via published academic papers. And yes, there’s <a href="https://en.wikipedia.org/wiki/Erd%C5%91s%E2%80%93Bacon_number">an Erdős-Bacon Number</a> for actor-mathematicians.<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a></p>
+<p>We can extend this approach to any network. One nerdy example is shared authorship on packages published on the <a href="https://cran.r-project.org">Comprehensive R Archive Network (CRAN)</a>, the go-to repository for packages for the R programming language. {kevinbacran} can help you do this.</p>
+</div>
+<div id="the-kevinbacran-package" class="section level1">
+<h1>The {kevinbacran} package</h1>
+<p>You can learn about the package on <a href="https://matt-dray.github.io/kevinbacran/">the {kevinbacran} site</a><a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a>, see <a href="https://github.com/matt-dray/kevinbacran">the code on GitHub</a> and feel free to <a href="https://github.com/matt-dray/kevinbacran/issues">leave an issue</a>.</p>
+<p>The package has only four functions<a href="#fn4" class="footnoteRef" id="fnref4"><sup>4</sup></a>:</p>
+<table>
+<colgroup>
+<col width="16%" />
+<col width="83%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>kb_combos()</code></td>
+<td>Fetch CRAN data, clean author names, get author combos per package, create network graph object</td>
+</tr>
+<tr class="even">
+<td><code>kb_pair()</code></td>
+<td>Gets network graph of the shortest distance between two authors from the <code>kb_combos()</code> graph</td>
+</tr>
+<tr class="odd">
+<td><code>kb_distance()</code></td>
+<td>Separation (number of edges) between authors in <code>kb_pair()</code></td>
+</tr>
+<tr class="even">
+<td><code>kb_plot()</code></td>
+<td>Returns a {ggraph} plot from the <code>kb_pair()</code> object</td>
+</tr>
+</tbody>
+</table>
+<p>The package relies heavily on others, particularly <a href="https://github.com/ikosmidis/cranly">{cranly}</a> from <a href="http://ikosmidis.com/">Ioannis Kosmidis</a>, <a href="https://github.com/thomasp85/tidygraph">{tidygraph}</a> and <a href="https://github.com/thomasp85/ggraph">{ggraph}</a> from <a href="https://www.data-imaginist.com/">Thomas Lin Pedersen</a>, and <a href="https://dplyr.tidyverse.org/">{dplyr}</a> and <a href="https://purrr.tidyverse.org/">{purrr}</a> from <a href="http://hadley.nz/">Hadley Wickham</a>, <a href="https://twitter.com/_lionelhenry?lang=en">Lionel Henry</a>, <a href="https://twitter.com/romain_francois">Romain François</a> and <a href="https://twitter.com/krlmlr?lang=en">Kirill Müller</a>. The code for getting author combinations per package is from <a href="https://www.williamrchase.com/">William Chase</a>, in his excellent blogpost <a href="https://www.williamrchase.com/post/finding-combinations-in-the-tidyverse/">‘Finding Combinations in the Tidyverse’</a>.</p>
+</div>
+<div id="the-app" class="section level1">
+<h1>The app</h1>
+<p>We can use the functions mentioned to iterate over a list of all authors to get a network graph and separation value between each of them and a fixed author. We’re going to use <a href="http://hadley.nz/">Hadley Wickham</a> as the target, since he is the most-named author on CRAN, with over 130 packages at the time of writing. This may be largely explained by his involvement in <a href="https://www.tidyverse.org/">the tidyverse suite</a> and the number of package authors who use these materials.</p>
+<p>Here is an embedded version of the Shiny app, but <a href="https://mattdray.shinyapps.io/hadley-number/">you can access it in full from its own page on shinyapps.io</a>. The <a href="https://github.com/matt-dray/hadley-number">code is on GitHub</a>, where you can <a href="https://github.com/matt-dray/hadley-number/issues">leave issues.</a></p>
+<iframe src="https://mattdray.shinyapps.io/hadley-number/" width="100%" height="1000" ;>
+</iframe>
+</div>
+<div id="some-stats" class="section level1">
+<h1>Some stats</h1>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>As in Kevin Bacon + CRAN, lol.<a href="#fnref1">↩</a></p></li>
+<li id="fn2"><p>And yes, there’s <a href="http://timeblimp.com/?page_id=195">an Erdős-Bacon-Sabbath Number</a> for mathematician-actor-musicians.<a href="#fnref2">↩</a></p></li>
+<li id="fn3"><p>Thanks to the marvellous <a href="https://pkgdown.r-lib.org/">{pkgdown} package</a> from <a href="http://hadley.nz/">Hadley Wickham</a> and <a href="https://hesselberthlab.org/">Jay Hesselberth</a>.<a href="#fnref3">↩</a></p></li>
+<li id="fn4"><p>Subject to change.<a href="#fnref4">↩</a></p></li>
+</ol>
+</div>
