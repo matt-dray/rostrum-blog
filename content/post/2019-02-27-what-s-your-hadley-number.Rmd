@@ -15,12 +15,18 @@ tags:
   - package
   - networks
   - graphs
-draft: yes
+draft: no
 ---
+
+Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
+
+![A Bacon Number of zero and a Bacon Number of one ([via Giphy](https://giphy.com/gifs/paramountmovies-dance-footloose-kevin-bacon-9MIzdatdie174XWJvR))](https://media.giphy.com/media/9MIzdatdie174XWJvR/giphy.gif)
 
 # TL;DR
 
-I made [the little package {kevinbacran}](https://matt-dray.github.io/kevinbacran/)[^pronounce] to find the network separation between any two authors on [CRAN](https://cran.r-project.org). I used {kevinbacran} in [a Shiny app](https://mattdray.shinyapps.io/hadley-number/) to demonstrate the [Six Degrees of Kevin Bacon](https://en.wikipedia.org/wiki/Six_Degrees_of_Kevin_Bacon). Except it's for CRAN authors. And [Hadley Wickham](http://hadley.nz/) is Kevin Bacon.
+I made [a Shiny app](https://mattdray.shinyapps.io/hadley-number/) to demonstrate the [Six Degrees of Kevin Bacon](https://en.wikipedia.org/wiki/Six_Degrees_of_Kevin_Bacon). Except it's for CRAN authors. And [Hadley Wickham](http://hadley.nz/) is Kevin Bacon.
+
+To help do this, I made [the little package {kevinbacran}](https://matt-dray.github.io/kevinbacran/)[^pronounce] to find the network separation between any two authors on [CRAN](https://cran.r-project.org). 
 
 # Six degrees
 
@@ -28,7 +34,7 @@ People are connected to each other in networks. What is the average separation o
 
 Instead of separation between any two people, we can measure separation from one fixed person. For example, we can calculate a [Bacon Number](https://en.wikipedia.org/wiki/Six_Degrees_of_Kevin_Bacon) for actors connected to [Kevin Bacon](https://www.imdb.com/name/nm0000102/), 'centre of the entertainment universe'.
 
-It works like this: you have a Bacon Number of zero if you are Kevin Bacon. You have a Bacon Number of one if you were in a film with him. Your number is two if you were in a film with someone who was in a film with Kevin Bacon.
+It works like this: you have a Bacon Number of zero if you are Kevin Bacon (hi Kevin, thanks for reading my blog). You have a Bacon Number of one if you were in a film with him. Your number is two if you were in a film with someone who was in a film with Kevin Bacon.
 
 A more classic example is the [Erdős Number](https://en.wikipedia.org/wiki/Erd%C5%91s_number), which expresses the separation of mathematicians from the prolific [Paul Erdős](https://en.wikipedia.org/wiki/Paul_Erd%C5%91s) via published academic papers. And yes, there's [an Erdős-Bacon Number](https://en.wikipedia.org/wiki/Erd%C5%91s%E2%80%93Bacon_number) for actor-mathematicians.[^ebs]
 
@@ -37,6 +43,8 @@ We can extend this approach to any network. One nerdy example is shared authorsh
 # The {kevinbacran} package
 
 You can learn about the package on [the {kevinbacran} site](https://matt-dray.github.io/kevinbacran/)[^pkgdown], see [the code on GitHub](https://github.com/matt-dray/kevinbacran) and feel free to [leave an issue](https://github.com/matt-dray/kevinbacran/issues).
+
+It is currently incomplete, potentially unstable, inefficient and untested. It's main purpose was to sate curiosity and provide some helper functions for the Shiny app.
 
 The package has only four functions[^fun]:
 
@@ -51,17 +59,22 @@ The package relies heavily on others, particularly [{cranly}](https://github.com
 
 # The app
 
-We can use the functions mentioned to iterate over a list of all authors to get a network graph and separation value between each of them and a fixed author. We're going to use [Hadley Wickham](http://hadley.nz/) as the target, since he is the most-named author on CRAN, with over 130 packages at the time of writing. This may be largely explained by his involvement in [the tidyverse suite](https://www.tidyverse.org/) and the number of package authors who use these materials.
+We could use the functions mentioned to obtain graphs between all authors and a single named author of our choosing. We're going to use [Hadley Wickham](http://hadley.nz/) as the target, since he is among the most named authors on CRAN. This may be largely explained by his involvement in [the tidyverse suite of packages](https://www.tidyverse.org/) and their use in packages maintained by other authors.
 
-Here is an embedded version of the Shiny app, but [you can access it in full from its own page on shinyapps.io](https://mattdray.shinyapps.io/hadley-number/). The [code is on GitHub](https://github.com/matt-dray/hadley-number), where you can [leave issues.](https://github.com/matt-dray/hadley-number/issues)
+Here is an embedded version of the Shiny app, but [you can access it in full from its own page on shinyapps.io](https://mattdray.shinyapps.io/hadley-number/). Just type an author name and hit go. You'll get the Hadley Number and a graph to represent a shortest path between them.
 
 <iframe src="https://mattdray.shinyapps.io/hadley-number/" width="100%" height="1000";></iframe>
 
-# Some stats
+You may notice:
 
+* that your name is missing (perhaps you're not on CRAN, or a shortest path could not be reached)
+* the author names look weird or the same people are listed under variant names ({cranly} is excellent at cleaning names, but the author field is very unstructured; just ask Duncan Garmonsway[^nacnudus])
+* that some of the labels overlap and are hard to read (try hitting the Go button again)
+
+You are very welcome to use, improve or ignore the code for the app [on GitHub](https://github.com/matt-dray/hadley-number), where you can [leave issues](https://github.com/matt-dray/hadley-number/issues).
 
 [^pronounce]: As in Kevin Bacon + CRAN, lol.
 [^fun]: Subject to change.
 [^pkgdown]: Thanks to the marvellous [{pkgdown} package](https://pkgdown.r-lib.org/) from [Hadley Wickham](http://hadley.nz/) and [Jay Hesselberth](https://hesselberthlab.org/).
 [^ebs]: And yes, there's [an Erdős-Bacon-Sabbath Number](http://timeblimp.com/?page_id=195) for mathematician-actor-musicians.
-[^hw]: 
+[^nacnudus]: A post that [uses a similar approach]((https://nacnudus.github.io/duncangarmonsway/posts/2019-02-08-cran-h-index/)) to getting at author names to calculate an h-index for package authors.

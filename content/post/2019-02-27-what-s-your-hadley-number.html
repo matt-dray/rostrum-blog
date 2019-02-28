@@ -15,26 +15,33 @@ tags:
   - package
   - networks
   - graphs
-draft: yes
+draft: no
 ---
 
 
 
+<p>Matt Dray (<a href="https://www.twitter.com/mattdray">@mattdray</a>)</p>
+<div class="figure">
+<img src="https://media.giphy.com/media/9MIzdatdie174XWJvR/giphy.gif" alt="A Bacon Number of zero and a Bacon Number of one (via Giphy)" />
+<p class="caption">A Bacon Number of zero and a Bacon Number of one (<a href="https://giphy.com/gifs/paramountmovies-dance-footloose-kevin-bacon-9MIzdatdie174XWJvR">via Giphy</a>)</p>
+</div>
 <div id="tldr" class="section level1">
 <h1>TL;DR</h1>
-<p>I made <a href="https://matt-dray.github.io/kevinbacran/">the little package {kevinbacran}</a><a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> to find the network separation between any two authors on <a href="https://cran.r-project.org">CRAN</a>. I used {kevinbacran} in <a href="https://mattdray.shinyapps.io/hadley-number/">a Shiny app</a> to demonstrate the <a href="https://en.wikipedia.org/wiki/Six_Degrees_of_Kevin_Bacon">Six Degrees of Kevin Bacon</a>. Except it’s for CRAN authors. And <a href="http://hadley.nz/">Hadley Wickham</a> is Kevin Bacon.</p>
+<p>I made <a href="https://mattdray.shinyapps.io/hadley-number/">a Shiny app</a> to demonstrate the <a href="https://en.wikipedia.org/wiki/Six_Degrees_of_Kevin_Bacon">Six Degrees of Kevin Bacon</a>. Except it’s for CRAN authors. And <a href="http://hadley.nz/">Hadley Wickham</a> is Kevin Bacon.</p>
+<p>To help do this, I made <a href="https://matt-dray.github.io/kevinbacran/">the little package {kevinbacran}</a><a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> to find the network separation between any two authors on <a href="https://cran.r-project.org">CRAN</a>.</p>
 </div>
 <div id="six-degrees" class="section level1">
 <h1>Six degrees</h1>
 <p>People are connected to each other in networks. What is the average separation of any two people in the network? There’s a popular idea of there being <a href="https://en.wikipedia.org/wiki/Six_degrees_of_separation">six degrees of separation</a>.</p>
 <p>Instead of separation between any two people, we can measure separation from one fixed person. For example, we can calculate a <a href="https://en.wikipedia.org/wiki/Six_Degrees_of_Kevin_Bacon">Bacon Number</a> for actors connected to <a href="https://www.imdb.com/name/nm0000102/">Kevin Bacon</a>, ‘centre of the entertainment universe’.</p>
-<p>It works like this: you have a Bacon Number of zero if you are Kevin Bacon. You have a Bacon Number of one if you were in a film with him. Your number is two if you were in a film with someone who was in a film with Kevin Bacon.</p>
+<p>It works like this: you have a Bacon Number of zero if you are Kevin Bacon (hi Kevin, thanks for reading my blog). You have a Bacon Number of one if you were in a film with him. Your number is two if you were in a film with someone who was in a film with Kevin Bacon.</p>
 <p>A more classic example is the <a href="https://en.wikipedia.org/wiki/Erd%C5%91s_number">Erdős Number</a>, which expresses the separation of mathematicians from the prolific <a href="https://en.wikipedia.org/wiki/Paul_Erd%C5%91s">Paul Erdős</a> via published academic papers. And yes, there’s <a href="https://en.wikipedia.org/wiki/Erd%C5%91s%E2%80%93Bacon_number">an Erdős-Bacon Number</a> for actor-mathematicians.<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a></p>
 <p>We can extend this approach to any network. One nerdy example is shared authorship on packages published on the <a href="https://cran.r-project.org">Comprehensive R Archive Network (CRAN)</a>, the go-to repository for packages for the R programming language. {kevinbacran} can help you do this.</p>
 </div>
 <div id="the-kevinbacran-package" class="section level1">
 <h1>The {kevinbacran} package</h1>
 <p>You can learn about the package on <a href="https://matt-dray.github.io/kevinbacran/">the {kevinbacran} site</a><a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a>, see <a href="https://github.com/matt-dray/kevinbacran">the code on GitHub</a> and feel free to <a href="https://github.com/matt-dray/kevinbacran/issues">leave an issue</a>.</p>
+<p>It is currently incomplete, potentially unstable, inefficient and untested. It’s main purpose was to sate curiosity and provide some helper functions for the Shiny app.</p>
 <p>The package has only four functions<a href="#fn4" class="footnoteRef" id="fnref4"><sup>4</sup></a>:</p>
 <table>
 <colgroup>
@@ -70,13 +77,17 @@ draft: yes
 </div>
 <div id="the-app" class="section level1">
 <h1>The app</h1>
-<p>We can use the functions mentioned to iterate over a list of all authors to get a network graph and separation value between each of them and a fixed author. We’re going to use <a href="http://hadley.nz/">Hadley Wickham</a> as the target, since he is the most-named author on CRAN, with over 130 packages at the time of writing. This may be largely explained by his involvement in <a href="https://www.tidyverse.org/">the tidyverse suite</a> and the number of package authors who use these materials.</p>
-<p>Here is an embedded version of the Shiny app, but <a href="https://mattdray.shinyapps.io/hadley-number/">you can access it in full from its own page on shinyapps.io</a>. The <a href="https://github.com/matt-dray/hadley-number">code is on GitHub</a>, where you can <a href="https://github.com/matt-dray/hadley-number/issues">leave issues.</a></p>
+<p>We could use the functions mentioned to obtain graphs between all authors and a single named author of our choosing. We’re going to use <a href="http://hadley.nz/">Hadley Wickham</a> as the target, since he is among the most named authors on CRAN. This may be largely explained by his involvement in <a href="https://www.tidyverse.org/">the tidyverse suite of packages</a> and their use in packages maintained by other authors.</p>
+<p>Here is an embedded version of the Shiny app, but <a href="https://mattdray.shinyapps.io/hadley-number/">you can access it in full from its own page on shinyapps.io</a>. Just type an author name and hit go. You’ll get the Hadley Number and a graph to represent a shortest path between them.</p>
 <iframe src="https://mattdray.shinyapps.io/hadley-number/" width="100%" height="1000" ;>
 </iframe>
-</div>
-<div id="some-stats" class="section level1">
-<h1>Some stats</h1>
+<p>You may notice:</p>
+<ul>
+<li>that your name is missing (perhaps you’re not on CRAN, or a shortest path could not be reached)</li>
+<li>the author names look weird or the same people are listed under variant names ({cranly} is excellent at cleaning names, but the author field is very unstructured; just ask Duncan Garmonsway<a href="#fn5" class="footnoteRef" id="fnref5"><sup>5</sup></a>)</li>
+<li>that some of the labels overlap and are hard to read (try hitting the Go button again)</li>
+</ul>
+<p>You are very welcome to use, improve or ignore the code for the app <a href="https://github.com/matt-dray/hadley-number">on GitHub</a>, where you can <a href="https://github.com/matt-dray/hadley-number/issues">leave issues</a>.</p>
 </div>
 <div class="footnotes">
 <hr />
@@ -85,5 +96,6 @@ draft: yes
 <li id="fn2"><p>And yes, there’s <a href="http://timeblimp.com/?page_id=195">an Erdős-Bacon-Sabbath Number</a> for mathematician-actor-musicians.<a href="#fnref2">↩</a></p></li>
 <li id="fn3"><p>Thanks to the marvellous <a href="https://pkgdown.r-lib.org/">{pkgdown} package</a> from <a href="http://hadley.nz/">Hadley Wickham</a> and <a href="https://hesselberthlab.org/">Jay Hesselberth</a>.<a href="#fnref3">↩</a></p></li>
 <li id="fn4"><p>Subject to change.<a href="#fnref4">↩</a></p></li>
+<li id="fn5"><p>A post that <a href="(https://nacnudus.github.io/duncangarmonsway/posts/2019-02-08-cran-h-index/)">uses a similar approach</a> to getting at author names to calculate an h-index for package authors.<a href="#fnref5">↩</a></p></li>
 </ol>
 </div>
