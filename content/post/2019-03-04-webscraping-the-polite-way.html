@@ -1,0 +1,284 @@
+---
+title: Webscraping the {polite} way
+author: Matt Dray
+date: '2019-03-04'
+slug: polite-webscrape
+categories:
+  - R
+tags:
+  - polite
+  - rvest
+  - scrape
+  - webscrape
+draft: yes
+---
+
+
+
+<p>Matt Dray (<a href="https://www.twitter.com/mattdray">@mattdray</a>)</p>
+<div class="figure">
+<img src="https://media.giphy.com/media/AYhivsYTeBvYA/giphy.gif" alt="Tea and polite webscraping: certified lovely" />
+<p class="caption">Tea and polite webscraping: certified lovely</p>
+</div>
+<div id="reaping-with-rvest" class="section level2">
+<h2>Reaping with <code>rvest</code></h2>
+<p>Ah, salutations, and welcome to this blogpost about polite webscraping. Please do come in. I’ll take your coat. How are you? Would you like a cup of tea? Oh, I insist!</p>
+<p>Speaking of tea, perhaps you’d care to join me in genial conversaton about it. Where to begin? Let’s draw inspiration from popular posts on <a href="https://www.reddit.com/r/tea/">the Tea subreddit of Reddit</a>. I’ll fetch the post titles using <a href="https://rvest.tidyverse.org/">the {rvest} package</a> from Hadley Wickham and get the correct CSS selector using <a href="https://selectorgadget.com/">SelectorGadget</a> by Andrew Cantino and Kyle Maxwell.</p>
+<pre class="r"><code># Load some packages we need
+library(rvest)  # scrape a site
+library(dplyr)  # data manipulation
+
+# Scrape a specific named page
+scrape &lt;- read_html(&quot;https://www.reddit.com/r/tea&quot;) %&gt;%  # read the page
+  html_nodes(css = &quot;.kCqBrs&quot;) %&gt;%  # read post titles
+  html_text()  # convert to text
+
+print(scrape)</code></pre>
+<pre><code>## [1] &quot;What&#39;s in your cup? Daily discussion, questions and stories - March 04, 2019&quot;             
+## [2] &quot;Marketing Monday! - March 04, 2019&quot;                                                       
+## [3] &quot;It makes the same sound as their treats bag, I feel bad every time I brew it&quot;             
+## [4] &quot;I have kind of an obsession with tea bubbles and was able to catch this guy in a picture.&quot;
+## [5] &quot;Jingdezhen and Dehua Porcelain Production&quot;                                                
+## [6] &quot;Got my new tea cup and saucer in today.&quot;                                                  
+## [7] &quot;Afternoons are for oolong&quot;                                                                
+## [8] &quot;Snow Day Vibes. Drinking Wuyishan Black Tea Today!&quot;</code></pre>
+<p>That’ll provide us with some conversational fodder, wot wot.</p>
+</div>
+<div id="it-costs-nothing-to-be-polite" class="section level2">
+<h2>It costs nothing to be polite</h2>
+<p>Mercy! I failed to doff adequately my cap before entering the website! They must take me for some sort of street urchin.</p>
+<p>Forgive me. Perhaps you’ll allow me to show you a more respectful method via <a href="https://www.github.com/dmi3kno/polite/">the {polite} package</a> in development from the esteemed gentleman <a href="https://twitter.com/dmi3k">Dmytro Perepolkin</a>? An excellent way ‘to promote responsible web etiquette’.</p>
+</div>
+<div id="a-reverential-bow" class="section level2">
+<h2>A reverential bow()</h2>
+<p>Perhaps the website owners don’t want people to keep barging in willy-nilly without so much as a ‘ahoy-hoy’.</p>
+<p>We should identify ourselves and our intent with a humble <code>bow()</code>. We can expect a curt but informative response from the site – via its <a href="http://www.robotstxt.org/robotstxt.html">robots.txt file</a> – that tells us where we can visit and how frequently.</p>
+<pre class="r"><code># remotes::install_github(&quot;dmi3kno/polite&quot;)  # to install
+library(polite)  # respectful webscraping
+
+# Make our intentions known to the website
+reddit_bow &lt;- bow(
+  url = &quot;https://www.reddit.com/&quot;,  # base URL
+  user_agent = &quot;M Dray &lt;https://rostrum.blog&gt;&quot;,  # identify ourselves
+  force = TRUE
+)
+
+print(reddit_bow)</code></pre>
+<pre><code>## &lt;polite session&gt; https://www.reddit.com/
+##      User-agent: M Dray &lt;https://rostrum.blog&gt;
+##      robots.txt: 34 rules are defined for 4 bots
+##     Crawl delay: 5 sec
+##   The path is scrapable for this user-agent</code></pre>
+<p>Super-duper. The (literal) bottom line is that we’re allowed to scrape. The website does have 34 rules<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> to stop unruly behaviour though, and even calls out four very naughty bots that are obviously not very polite. There’s no specific rule about how rapidly we can repeat our visits, so we’re going to use the default five-second delay for maximum respect.</p>
+</div>
+<div id="give-a-nod" class="section level2">
+<h2>Give a nod()</h2>
+<p>Ahem, conversation appears to be wearing a little thin; perhaps I can interest you by widening the remit of our chitchat? Rather than merely iterating though subpages of the same subreddit, we can visit the front pages of a few different subreddits. Let’s celebrate the small failures and triumphs of being British; a classic topic of polite conversation in Britain.</p>
+<p>We’ve already given a <code>bow()</code> and made out intentions clear; a knowing <code>nod()</code> will be sufficient for the next steps. Here’s a little function to <code>nod()</code> to the site each time we iterate over a vector of subreddit names. Our gentlemanly agreement remains intact from our earlier <code>bow()</code>.</p>
+<pre class="r"><code>library(purrr)  # functional programming tools
+library(tidyr)  # tidy-up data structure
+
+get_posts &lt;- function(subreddit_name, bow = reddit_bow){
+  
+  # 1. Agree modification of session path with host
+  session &lt;- nod(
+    bow = bow,
+    path = paste0(&quot;r/&quot;, subreddit_name)
+  )
+  
+  # 2. Scrape the page from the new path
+  scraped_page &lt;- scrape(session)
+  
+  # 3. Extract from xpath on the altered URL
+  node_result &lt;- html_nodes(
+    scraped_page,
+    css = &quot;.kCqBrs&quot;
+  )
+  
+  # 4. Render result as text
+  text_result &lt;- html_text(node_result)
+  
+  # 5. Return the text value
+  return(text_result)
+  
+}</code></pre>
+<p>Smashing. Care to join me in applying this function over a vector of subreddit names? Tally ho.</p>
+<pre class="r"><code># A vector of subreddits to iterate over
+subreddits &lt;- set_names(
+  c(&quot;BritishProblems&quot;, &quot;BritishSuccess&quot;)
+)
+
+# Get top posts for named subreddits
+top_posts &lt;- map_df(
+  subreddits,
+  ~get_posts(.x)
+) %&gt;% 
+  gather(
+    BritishProblems, BritishSuccess,
+    key = subreddit, value = post_text
+  )
+
+knitr::kable(top_posts)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">subreddit</th>
+<th align="left">post_text</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">BritishProblems</td>
+<td align="left">Going into Aldi or Lidl for 1 item and being stuck behind a family of 10, a couple stocking up for the apocalypse, the woman whos baking for 1000 people and the old lady counting change on the only till thats open</td>
+</tr>
+<tr class="even">
+<td align="left">BritishProblems</td>
+<td align="left">Opened my window to fall asleep to the relaxing sound of rainfall outside. The rain promptly ceased fire and was replaced with shagging foxes.</td>
+</tr>
+<tr class="odd">
+<td align="left">BritishProblems</td>
+<td align="left">It costs £30 to fly to Ireland and back but £39 to park at the airport.</td>
+</tr>
+<tr class="even">
+<td align="left">BritishProblems</td>
+<td align="left">The poorly thought-out “Hunt the White Creme Egg” campaign, which has led every dirty-fingernailed child in Britain to molest each befoiled Creme Egg in sequence to expose the chocolatey hue within.</td>
+</tr>
+<tr class="odd">
+<td align="left">BritishProblems</td>
+<td align="left">Biggest British problem of the day is Keith Flint dying.</td>
+</tr>
+<tr class="even">
+<td align="left">BritishProblems</td>
+<td align="left">Pushing the button too early while on an unfamiliar bus route and then having to thank the driver, get off, and walk an extra mile</td>
+</tr>
+<tr class="odd">
+<td align="left">BritishProblems</td>
+<td align="left">Giving my seat on the bus to an old man with a cane, only for him to wink at me and asks me to sit in his lap. :/</td>
+</tr>
+<tr class="even">
+<td align="left">BritishProblems</td>
+<td align="left">Laughing at people on Jeremy Kyle even though you’re sat at home at 11am on a Wednesday</td>
+</tr>
+<tr class="odd">
+<td align="left">BritishSuccess</td>
+<td align="left">[META] New rule: No Politics allowed</td>
+</tr>
+<tr class="even">
+<td align="left">BritishSuccess</td>
+<td align="left">Rush to get my train, the noticeboard and station staff say the train is cancelled. It shows up 1 min late and only stops at half the usual stations. Get in earlier than usual.</td>
+</tr>
+<tr class="odd">
+<td align="left">BritishSuccess</td>
+<td align="left">I was following a safe distance behind a driver today and they seemed to slow down or speed up according to what the speed limit was.</td>
+</tr>
+<tr class="even">
+<td align="left">BritishSuccess</td>
+<td align="left">Called the GP surgery at 16:30, got an appointment with the on call doctor for 17:00, at home with medication and a cup of tea at 17:30.</td>
+</tr>
+<tr class="odd">
+<td align="left">BritishSuccess</td>
+<td align="left">My toddler son loves watching the bin men. They always take the time to wave to him.</td>
+</tr>
+<tr class="even">
+<td align="left">BritishSuccess</td>
+<td align="left">My Virgin train is not 759°C, is not full, I’m facing forwards and it doesn’t smell of Glastonbury portashitters.</td>
+</tr>
+<tr class="odd">
+<td align="left">BritishSuccess</td>
+<td align="left">I sat in NHS walk in centre for 3 hours with 20+ fellow sickys. I spent most of it reading a book on my kindle and popping out for a vape while waiting for my name to be called. Genuinely a most relaxing evening.</td>
+</tr>
+<tr class="even">
+<td align="left">BritishSuccess</td>
+<td align="left">My local, in the Cotswolds for playing The Prodigy all night on the jukebox</td>
+</tr>
+</tbody>
+</table>
+<p>Bravo, what excellent manners we’ve demonstrated. You can also iterate over different query strings – for example if your target website displays information over several subpages – with the <code>params</code> argument of the <code>scrape()</code> function.</p>
+<p>Oh, you have to leave? No, no, you haven’t overstayed your welcome! It was truly marvellous to see you. Don’t forget your brolly, old chap, and don’t forget to print the session info for this post. Pip pip!</p>
+</div>
+<div id="session-info" class="section level1">
+<h1>Session info</h1>
+<pre class="r"><code>devtools::session_info()</code></pre>
+<pre><code>## ─ Session info ──────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 3.5.2 (2018-12-20)
+##  os       macOS High Sierra 10.13.6   
+##  system   x86_64, darwin15.6.0        
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2019-03-04                  
+## 
+## ─ Packages ──────────────────────────────────────────────────────────────
+##  package     * version    date       lib source                         
+##  assertthat    0.2.0      2017-04-11 [1] CRAN (R 3.5.0)                 
+##  backports     1.1.3      2018-12-14 [1] CRAN (R 3.5.0)                 
+##  blogdown      0.8        2018-07-15 [1] CRAN (R 3.5.0)                 
+##  bookdown      0.7        2018-02-18 [1] CRAN (R 3.5.0)                 
+##  callr         3.1.1      2018-12-21 [1] CRAN (R 3.5.0)                 
+##  cli           1.0.1      2018-09-25 [1] CRAN (R 3.5.0)                 
+##  crayon        1.3.4      2017-09-16 [1] CRAN (R 3.5.0)                 
+##  curl          3.3        2019-01-10 [1] CRAN (R 3.5.2)                 
+##  desc          1.2.0      2018-05-01 [1] CRAN (R 3.5.0)                 
+##  devtools      2.0.1      2018-10-26 [1] CRAN (R 3.5.2)                 
+##  digest        0.6.18     2018-10-10 [1] CRAN (R 3.5.0)                 
+##  dplyr       * 0.8.0.1    2019-02-15 [1] CRAN (R 3.5.2)                 
+##  emo         * 0.0.0.9000 2018-11-21 [1] Github (hadley/emo@02a5206)    
+##  evaluate      0.12       2018-10-09 [1] CRAN (R 3.5.0)                 
+##  fs            1.2.6      2018-08-23 [1] CRAN (R 3.5.0)                 
+##  glue          1.3.0.9000 2019-01-25 [1] Github (tidyverse/glue@a1143f7)
+##  here          0.1        2017-05-28 [1] CRAN (R 3.5.0)                 
+##  highr         0.7        2018-06-09 [1] CRAN (R 3.5.0)                 
+##  htmltools     0.3.6      2017-04-28 [1] CRAN (R 3.5.0)                 
+##  httr          1.4.0      2018-12-11 [1] CRAN (R 3.5.0)                 
+##  knitr         1.21       2018-12-10 [1] CRAN (R 3.5.1)                 
+##  lubridate     1.7.4      2018-04-11 [1] CRAN (R 3.5.0)                 
+##  magrittr      1.5        2014-11-22 [1] CRAN (R 3.5.0)                 
+##  memoise       1.1.0      2017-04-21 [1] CRAN (R 3.5.0)                 
+##  mime          0.6        2018-10-05 [1] CRAN (R 3.5.0)                 
+##  pillar        1.3.1      2018-12-15 [1] CRAN (R 3.5.0)                 
+##  pkgbuild      1.0.2      2018-10-16 [1] CRAN (R 3.5.0)                 
+##  pkgconfig     2.0.2      2018-08-16 [1] CRAN (R 3.5.0)                 
+##  pkgload       1.0.2      2018-10-29 [1] CRAN (R 3.5.0)                 
+##  polite      * 0.0.0.9005 2019-02-12 [1] Github (dmi3kno/polite@445bf49)
+##  prettyunits   1.0.2      2015-07-13 [1] CRAN (R 3.5.0)                 
+##  processx      3.2.1      2018-12-05 [1] CRAN (R 3.5.0)                 
+##  ps            1.3.0      2018-12-21 [1] CRAN (R 3.5.0)                 
+##  purrr       * 0.3.0      2019-01-27 [1] CRAN (R 3.5.2)                 
+##  R6            2.4.0      2019-02-14 [1] CRAN (R 3.5.2)                 
+##  ratelimitr    0.4.1      2018-10-07 [1] CRAN (R 3.5.0)                 
+##  Rcpp          1.0.0      2018-11-07 [1] CRAN (R 3.5.0)                 
+##  remotes       2.0.2      2018-10-30 [1] CRAN (R 3.5.0)                 
+##  rlang         0.3.1      2019-01-08 [1] CRAN (R 3.5.2)                 
+##  rmarkdown     1.11       2018-12-08 [1] CRAN (R 3.5.0)                 
+##  robotstxt     0.6.2      2018-07-18 [1] CRAN (R 3.5.0)                 
+##  rprojroot     1.3-2      2018-01-03 [1] CRAN (R 3.5.0)                 
+##  rstudioapi    0.9.0      2019-01-09 [1] CRAN (R 3.5.2)                 
+##  rvest       * 0.3.2      2016-06-17 [1] CRAN (R 3.5.0)                 
+##  selectr       0.4-1      2018-04-06 [1] CRAN (R 3.5.0)                 
+##  sessioninfo   1.1.1      2018-11-05 [1] CRAN (R 3.5.0)                 
+##  spiderbar     0.2.1      2017-11-17 [1] CRAN (R 3.5.0)                 
+##  stringi       1.3.1      2019-02-13 [1] CRAN (R 3.5.2)                 
+##  stringr       1.4.0      2019-02-10 [1] CRAN (R 3.5.2)                 
+##  testthat      2.0.1      2018-10-13 [1] CRAN (R 3.5.0)                 
+##  tibble        2.0.1      2019-01-12 [1] CRAN (R 3.5.2)                 
+##  tidyr       * 0.8.2      2018-10-28 [1] CRAN (R 3.5.0)                 
+##  tidyselect    0.2.5      2018-10-11 [1] CRAN (R 3.5.0)                 
+##  triebeard     0.3.0      2016-08-04 [1] CRAN (R 3.5.0)                 
+##  urltools      1.7.2      2019-02-04 [1] CRAN (R 3.5.2)                 
+##  usethis       1.4.0      2018-08-14 [1] CRAN (R 3.5.0)                 
+##  withr         2.1.2      2018-03-15 [1] CRAN (R 3.5.0)                 
+##  xfun          0.4        2018-10-23 [1] CRAN (R 3.5.0)                 
+##  xml2        * 1.2.0      2018-01-24 [1] CRAN (R 3.5.0)                 
+##  yaml          2.2.0      2018-07-25 [1] CRAN (R 3.5.0)                 
+## 
+## [1] /Library/Frameworks/R.framework/Versions/3.5/Resources/library</code></pre>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>This could be a Reddit meta joke.<a href="#fnref1">↩</a></p></li>
+</ol>
+</div>
