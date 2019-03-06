@@ -1,0 +1,86 @@
+---
+title: Tidyverse quiz
+author: Matt Dray
+date: '2019-03-06'
+slug: tidyverse-quiz
+categories:
+  - R
+tags:
+  - quiz
+  - learnr
+  - tidyverse
+  - pacman
+draft: yes
+---
+
+
+
+<div id="section" class="section level1">
+<h1></h1>
+<p>How many times have you forgotten the package that a particular function belongs to? For example, you know the function you want, but clearly haven’t loaded the library:</p>
+<pre class="r"><code>select(iris, Sepal.Width)</code></pre>
+<pre><code>## Error in select(iris, Sepal.Width) : could not find function &quot;select&quot;</code></pre>
+<p>A trivial problem that you might come across when coding interactively and on the fly<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>, but enough to <a href="">cause Ryan Timpe to tweet his frustration</a>.</p>
+<p>Is there a way to get all the functions of the tidyverse and quiz people about them? in this post I use primarily {tidyverse}, {pacman} and {learnr} to investigate this possibility.</p>
+</div>
+<div id="packages-of-the-tidyverse" class="section level1">
+<h1>Packages of the tidyverse</h1>
+<p>We can get a list of the tidyverse packages by installing the {tidyverse} package, calling it with <code>library()</code> and using the function <code>tidyverse_packages()</code> to produce a character vector of package names.</p>
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre><code>## ── Attaching packages ─────────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
+<pre><code>## ✔ ggplot2 3.1.0       ✔ purrr   0.3.0  
+## ✔ tibble  2.0.1       ✔ dplyr   0.8.0.1
+## ✔ tidyr   0.8.2       ✔ stringr 1.4.0  
+## ✔ readr   1.3.1       ✔ forcats 0.3.0</code></pre>
+<pre><code>## ── Conflicts ────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+## ✖ dplyr::filter() masks stats::filter()
+## ✖ dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>tidyverse_packages()</code></pre>
+<pre><code>##  [1] &quot;broom&quot;       &quot;cli&quot;         &quot;crayon&quot;      &quot;dplyr&quot;       &quot;dbplyr&quot;     
+##  [6] &quot;forcats&quot;     &quot;ggplot2&quot;     &quot;haven&quot;       &quot;hms&quot;         &quot;httr&quot;       
+## [11] &quot;jsonlite&quot;    &quot;lubridate&quot;   &quot;magrittr&quot;    &quot;modelr&quot;      &quot;purrr&quot;      
+## [16] &quot;readr&quot;       &quot;readxl\n(&gt;=&quot; &quot;reprex&quot;      &quot;rlang&quot;       &quot;rstudioapi&quot; 
+## [21] &quot;rvest&quot;       &quot;stringr&quot;     &quot;tibble&quot;      &quot;tidyr&quot;       &quot;xml2&quot;       
+## [26] &quot;tidyverse&quot;</code></pre>
+<p>You can see that calling <code>library(tidyverse)</code> only loads six core packages. We’ll need to install and load the others separately if we want to look at their functions.</p>
+<p>One method for this is to use <a href="">the {pacman} package</a>. The <code>p_load()</code> function both installs and loads named packages. We can supply the character vector from <code>tidyverse_packages()</code> (after fixing the {readxl} string) and set the <code>character.only</code> argument to <code>TRUE</code> to make sure the function doesn’t mistake the object name for a package name and instead reads it as a character vector.</p>
+<pre class="r"><code>library(pacman)
+
+# Make character vector of package names
+tidy_pkg &lt;- tidyverse_packages()
+tidy_pkg &lt;- ifelse(str_detect(tidy_pkg, &quot;readxl&quot;) == TRUE, &quot;readxl&quot;, tidy_pkg)
+
+# Install and load from character vector
+p_load(char = tidy_pkg, character.only = TRUE)</code></pre>
+<p>So now we’ve loaded the core six packages with <code>library(tidyverse)</code> and the remaining ones with <code>p_load()</code>.</p>
+</div>
+<div id="expose-the-functions" class="section level1">
+<h1>Expose the functions</h1>
+<p>While {pacman} is loaded, we can use <code>p_functions()</code> to access a character vector of function names for a given package name<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a>. We can iterate over each package name with {purrr}’s <code>map()</code> function and then <code>unnest()</code> it to generate a tibble of each package-function pair.</p>
+<pre class="r"><code>tidy_fun &lt;- tidy_pkg %&gt;% 
+  enframe(name = NULL, value = &quot;package&quot;) %&gt;% 
+  mutate(functions = map(package, ~p_functions(.x, character.only = TRUE))) %&gt;% 
+  unnest()
+
+sample_n(tidy_fun, 10)  # sample of ten</code></pre>
+<pre><code>## # A tibble: 10 x 2
+##    package    functions                
+##    &lt;chr&gt;      &lt;chr&gt;                    
+##  1 stringr    str_extract_all          
+##  2 rstudioapi jobRunScript             
+##  3 tibble     data_frame               
+##  4 purrr      map                      
+##  5 lubridate  is.duration              
+##  6 httr       upload_file              
+##  7 dplyr      grouped_df               
+##  8 ggplot2    GeomQuantile             
+##  9 stringr    str_view_all             
+## 10 lubridate  .__T__as.period:lubridate</code></pre>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>For previously-installed packages you can start typing the package name and two colons in RStudio to get autofill options. In this scenario you can also search the help pages for the package.<a href="#fnref1">↩</a></p></li>
+<li id="fn2"><p>Base R’s <code>lsf.str()</code> and <code>ls()</code> can also help you here.<a href="#fnref2">↩</a></p></li>
+</ol>
+</div>

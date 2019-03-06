@@ -1,0 +1,72 @@
+---
+title: Tidyverse quiz
+author: Matt Dray
+date: '2019-03-06'
+slug: tidyverse-quiz
+categories:
+  - R
+tags:
+  - quiz
+  - learnr
+  - tidyverse
+  - pacman
+draft: yes
+---
+
+# 
+
+How many times have you forgotten the package that a particular function belongs to? For example, you know the function you want, but clearly haven't loaded the library:
+
+```{r eval=FALSE}
+select(iris, Sepal.Width)
+```
+```
+## Error in select(iris, Sepal.Width) : could not find function "select"
+```
+
+A trivial problem that you might come across when coding interactively and on the fly[^get_fun_pkg], but enough to [cause Ryan Timpe to tweet his frustration]().
+
+Is there a way to get all the functions of the tidyverse and quiz people about them? in this post I use primarily {tidyverse}, {pacman} and {learnr} to investigate this possibility. 
+
+# Packages of the tidyverse
+
+We can get a list of the tidyverse packages by installing the {tidyverse} package, calling it with `library()` and using the function `tidyverse_packages()` to produce a character vector of package names.
+
+```{r}
+library(tidyverse)
+tidyverse_packages()
+```
+
+You can see that calling `library(tidyverse)` only loads six core packages. We'll need to install and load the others separately if we want to look at their functions.
+
+One method for this is to use [the {pacman} package](). The `p_load()` function both installs and loads named packages. We can supply the character vector from `tidyverse_packages()` (after fixing the {readxl} string) and set the `character.only` argument to `TRUE` to make sure the function doesn't mistake the object name for a package name and instead reads it as a character vector. 
+
+```{r}
+library(pacman)
+
+# Make character vector of package names
+tidy_pkg <- tidyverse_packages()
+tidy_pkg <- ifelse(str_detect(tidy_pkg, "readxl") == TRUE, "readxl", tidy_pkg)
+
+# Install and load from character vector
+p_load(char = tidy_pkg, character.only = TRUE)
+```
+
+So now we've loaded the core six packages with `library(tidyverse)` and the remaining ones with `p_load()`.
+
+# Expose the functions
+
+While {pacman} is loaded, we can use `p_functions()` to access a character vector of function names for a given package name[^lsf.str]. We can iterate over each package name with {purrr}'s `map()` function and then `unnest()` it to generate a tibble of each package-function pair.
+
+```{r}
+tidy_fun <- tidy_pkg %>% 
+  enframe(name = NULL, value = "package") %>% 
+  mutate(functions = map(package, ~p_functions(.x, character.only = TRUE))) %>% 
+  unnest()
+
+sample_n(tidy_fun, 10)  # sample of ten
+```
+
+
+[^get_fun_pkg]: For previously-installed packages you can start typing the package name and two colons in RStudio to get autofill options. In this scenario you can also search the help pages for the package.
+[^lsf.str]: Base R's `lsf.str()` and `ls()` can also help you here.
