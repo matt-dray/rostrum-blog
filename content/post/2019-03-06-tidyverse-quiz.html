@@ -15,72 +15,164 @@ draft: yes
 
 
 
-<div id="section" class="section level1">
-<h1></h1>
-<p>How many times have you forgotten the package that a particular function belongs to? For example, you know the function you want, but clearly haven’t loaded the library:</p>
-<pre class="r"><code>select(iris, Sepal.Width)</code></pre>
-<pre><code>## Error in select(iris, Sepal.Width) : could not find function &quot;select&quot;</code></pre>
-<p>A trivial problem that you might come across when coding interactively and on the fly<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>, but enough to <a href="">cause Ryan Timpe to tweet his frustration</a>.</p>
-<p>Is there a way to get all the functions of the tidyverse and quiz people about them? in this post I use primarily {tidyverse}, {pacman} and {learnr} to investigate this possibility.</p>
+<p>Matt Dray (<a href="https://www.twitter.com/mattdray">@mattdray</a>)</p>
+<div class="figure">
+<img src="https://raw.githubusercontent.com/matt-dray/tidyverse-quiz/master/images/tidyverse_quiz.gif" />
+
 </div>
-<div id="packages-of-the-tidyverse" class="section level1">
-<h1>Packages of the tidyverse</h1>
-<p>We can get a list of the tidyverse packages by installing the {tidyverse} package, calling it with <code>library()</code> and using the function <code>tidyverse_packages()</code> to produce a character vector of package names.</p>
+<div id="tldr" class="section level1">
+<h1>TL;DR</h1>
+<p>I made <a href="https://github.com/matt-dray/tidyquiz">{tidyquiz}</a>: a package containing a (niche) multiple-choice quiz to test your ability to match tidyverse functions to their packages. To use it:</p>
+<ol style="list-style-type: decimal">
+<li>Install the package with <code>remotes::install_github(&quot;matt-dray/tidyquiz&quot;)</code></li>
+<li>Call the package with <code>library(tidyquiz)</code></li>
+<li>Run <code>tidyquiz::generate_quiz()</code> to generate a question set and open the quiz in your browser question set (re-run for a new question set)</li>
+</ol>
+</div>
+<div id="the-problem" class="section level1">
+<h1>The problem</h1>
+<p>I saw a (probably) tongue-in-cheek tweet recently from <a href="https://twitter.com/ryantimpe">Ryan Timpe</a>:</p>
+<blockquote class="twitter-tweet" data-lang="en">
+<p lang="en" dir="ltr">
+Hardest part about <a href="https://twitter.com/hashtag/rstats?src=hash&amp;ref_src=twsrc%5Etfw">#rstats</a> package development: remembering which functions are from {dplyr} and which are from {tidyr}.
+</p>
+— Ryan Timpe 🦖📊 (<span class="citation">@ryantimpe</span>) <a href="https://twitter.com/ryantimpe/status/1102666979909996545?ref_src=twsrc%5Etfw">March 4, 2019</a>
+</blockquote>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+<p>Is the purpose of each package in <a href="https://www.tidyverse.org/">the tidyverse</a> clear enough?</p>
+<p>Many users will get around this by running <code>library(tidyverse)</code>, which installs the core set of eight tidyverse packages. You can run <code>select()</code> or <code>gather()</code> after that without having to think about whether they’re part of {dplyr} or {tidyr}.</p>
+<p>This made me wonder how good I was at remembering which functions (or previously unseen functions) belong to which packages in the tidyverse. So naturally I thought it would be a fun diversion to create a quiz.</p>
+</div>
+<div id="package-function-combos" class="section level1">
+<h1>Package-function combos</h1>
+<p>You can see the {tidyverse} package only loads the eight core packages by default.</p>
 <pre class="r"><code>library(tidyverse)</code></pre>
-<pre><code>## ── Attaching packages ─────────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
-<pre><code>## ✔ ggplot2 3.1.0       ✔ purrr   0.3.0  
+<pre><code>## ── Attaching packages ───────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
+<pre><code>## ✔ ggplot2 3.1.0       ✔ purrr   0.3.1  
 ## ✔ tibble  2.0.1       ✔ dplyr   0.8.0.1
-## ✔ tidyr   0.8.2       ✔ stringr 1.4.0  
-## ✔ readr   1.3.1       ✔ forcats 0.3.0</code></pre>
-<pre><code>## ── Conflicts ────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+## ✔ tidyr   0.8.3       ✔ stringr 1.4.0  
+## ✔ readr   1.3.1       ✔ forcats 0.4.0</code></pre>
+<pre><code>## ── Conflicts ──────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()</code></pre>
-<pre class="r"><code>tidyverse_packages()</code></pre>
-<pre><code>##  [1] &quot;broom&quot;       &quot;cli&quot;         &quot;crayon&quot;      &quot;dplyr&quot;       &quot;dbplyr&quot;     
-##  [6] &quot;forcats&quot;     &quot;ggplot2&quot;     &quot;haven&quot;       &quot;hms&quot;         &quot;httr&quot;       
-## [11] &quot;jsonlite&quot;    &quot;lubridate&quot;   &quot;magrittr&quot;    &quot;modelr&quot;      &quot;purrr&quot;      
-## [16] &quot;readr&quot;       &quot;readxl\n(&gt;=&quot; &quot;reprex&quot;      &quot;rlang&quot;       &quot;rstudioapi&quot; 
-## [21] &quot;rvest&quot;       &quot;stringr&quot;     &quot;tibble&quot;      &quot;tidyr&quot;       &quot;xml2&quot;       
+<p>Fortunately there’s a function that provides the names of all the packages within the tidyverse.</p>
+<pre class="r"><code>tidy_pkgs &lt;- tidyverse_packages() %&gt;%  # calls character vector
+  # We can protect ourselves from any rogue characters in this vector
+  str_replace(&quot;\n&quot;, &quot;&quot;) %&gt;%  # remove newline
+  str_replace(&quot;&gt;=&quot;, &quot;&quot;) %&gt;%  # remove greater than or equal to
+  str_replace(&quot;[:punct:]&quot;, &quot;&quot;)  # remove punctuation
+
+tidy_pkgs</code></pre>
+<pre><code>##  [1] &quot;broom&quot;      &quot;cli&quot;        &quot;crayon&quot;     &quot;dplyr&quot;      &quot;dbplyr&quot;    
+##  [6] &quot;forcats&quot;    &quot;ggplot2&quot;    &quot;haven&quot;      &quot;hms&quot;        &quot;httr&quot;      
+## [11] &quot;jsonlite&quot;   &quot;lubridate&quot;  &quot;magrittr&quot;   &quot;modelr&quot;     &quot;purrr&quot;     
+## [16] &quot;readr&quot;      &quot;readxl&quot;     &quot;reprex&quot;     &quot;rlang&quot;      &quot;rstudioapi&quot;
+## [21] &quot;rvest&quot;      &quot;stringr&quot;    &quot;tibble&quot;     &quot;tidyr&quot;      &quot;xml2&quot;      
 ## [26] &quot;tidyverse&quot;</code></pre>
-<p>You can see that calling <code>library(tidyverse)</code> only loads six core packages. We’ll need to install and load the others separately if we want to look at their functions.</p>
-<p>One method for this is to use <a href="">the {pacman} package</a>. The <code>p_load()</code> function both installs and loads named packages. We can supply the character vector from <code>tidyverse_packages()</code> (after fixing the {readxl} string) and set the <code>character.only</code> argument to <code>TRUE</code> to make sure the function doesn’t mistake the object name for a package name and instead reads it as a character vector.</p>
+<p>We can pass this character vector to {pacman}’s <code>p_load()</code> to install and load them all.</p>
 <pre class="r"><code>library(pacman)
 
-# Make character vector of package names
-tidy_pkg &lt;- tidyverse_packages()
-tidy_pkg &lt;- ifelse(str_detect(tidy_pkg, &quot;readxl&quot;) == TRUE, &quot;readxl&quot;, tidy_pkg)
+p_load(
+  char = tidy_pkgs,
+  character.only = TRUE  # read elements of character vector
+)</code></pre>
+<p>Now we can get the functions from each package by mapping over each with {pacman}’s <code>p_functions()</code>.</p>
+<pre class="r"><code>tidy_funs &lt;- tidy_pkgs %&gt;% 
+  enframe(name = NULL, value = &quot;package&quot;) %&gt;%  # make tibble
+  mutate(
+    functions = map(
+      package,  # for each package name...
+      ~p_functions(.x, character.only = TRUE)  # ...get functions
+    )
+  ) %&gt;% 
+  unnest()  # unpack the listcol elements
 
-# Install and load from character vector
-p_load(char = tidy_pkg, character.only = TRUE)</code></pre>
-<p>So now we’ve loaded the core six packages with <code>library(tidyverse)</code> and the remaining ones with <code>p_load()</code>.</p>
-</div>
-<div id="expose-the-functions" class="section level1">
-<h1>Expose the functions</h1>
-<p>While {pacman} is loaded, we can use <code>p_functions()</code> to access a character vector of function names for a given package name<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a>. We can iterate over each package name with {purrr}’s <code>map()</code> function and then <code>unnest()</code> it to generate a tibble of each package-function pair.</p>
-<pre class="r"><code>tidy_fun &lt;- tidy_pkg %&gt;% 
-  enframe(name = NULL, value = &quot;package&quot;) %&gt;% 
-  mutate(functions = map(package, ~p_functions(.x, character.only = TRUE))) %&gt;% 
-  unnest()
-
-sample_n(tidy_fun, 10)  # sample of ten</code></pre>
+sample_n(tidy_funs, 10)  # random sample</code></pre>
 <pre><code>## # A tibble: 10 x 2
-##    package    functions                
-##    &lt;chr&gt;      &lt;chr&gt;                    
-##  1 stringr    str_extract_all          
-##  2 rstudioapi jobRunScript             
-##  3 tibble     data_frame               
-##  4 purrr      map                      
-##  5 lubridate  is.duration              
-##  6 httr       upload_file              
-##  7 dplyr      grouped_df               
-##  8 ggplot2    GeomQuantile             
-##  9 stringr    str_view_all             
-## 10 lubridate  .__T__as.period:lubridate</code></pre>
+##    package   functions             
+##    &lt;chr&gt;     &lt;chr&gt;                 
+##  1 ggplot2   is.ggplot             
+##  2 readr     format_csv            
+##  3 tibble    add_column            
+##  4 ggplot2   scale_y_time          
+##  5 rlang     is_raw                
+##  6 httr      oauth2.0_authorize_url
+##  7 lubridate parse_date_time2      
+##  8 rlang     quo_expr              
+##  9 lubridate hour&lt;-                
+## 10 dplyr     summarise_each</code></pre>
+<p>Now we just need a function name for the subject of the question, the correct answer and three incorrect answers.</p>
+<p>To do this we can:</p>
+<ul>
+<li>sample a row randomly to get a function name and the package it’s from</li>
+<li>sample randomly three other packages that don’t contain that function, ensuring that these are different from each other</li>
+</ul>
+<p>The annotated code below shows a function that does this.</p>
+<pre class="r"><code>get_questions &lt;- function() {
+  
+  # Randomly sample one row of the tidy_funs tibble
+  # Output is a single package-function pair
+  fun_sample &lt;- sample_n(tidy_funs, 1)
+  
+  # Extract just the name of the function
+  fun_name &lt;&lt;- select(fun_sample, functions) %&gt;% pull()
+  
+  # Create lookup of packages that the function is duplicated in
+  # Output is a character vector of packages that the function exists in
+  dup_lookup &lt;- tidy_funs %&gt;% 
+    filter(functions == fun_name) %&gt;% 
+    pull(package)
+  
+  # The correct answer is the one we already isolated
+  ans_correct &lt;&lt;- fun_sample %&gt;% select(package) %&gt;% pull()
+  
+  # Wrong answer 1
+  ans_wrong1 &lt;&lt;- tidy_funs %&gt;%
+    distinct(package) %&gt;%  # get unique packages
+    filter(!package %in% c(dup_lookup)) %&gt;%  # ignore packages containing function
+    sample_n(1) %&gt;%  # choose a remaining package name at random
+    pull()  # to character
+  
+  # Wrong answer 2
+  ans_wrong2 &lt;&lt;- tidy_funs %&gt;%
+    distinct(package) %&gt;%
+    filter(!package %in% c(dup_lookup, ans_wrong1)) %&gt;% # also ignore the first wrong answer
+    sample_n(1) %&gt;%
+    pull()
+  
+  # Wrong answer 3
+  ans_wrong3 &lt;&lt;- tidy_funs %&gt;%
+    distinct(package) %&gt;%
+    filter(!package %in% c(dup_lookup, ans_wrong1, ans_wrong2)) %&gt;%
+    sample_n(1) %&gt;%
+    pull()
+  
+}</code></pre>
+<p>Note the use of a slightly different assignment operator with two heads: <code>&lt;&lt;-</code>. This makes the object available in the global environment outside of the function call. From there, the object can be picked up for use in constructing a question that will be presented to the user.</p>
 </div>
-<div class="footnotes">
-<hr />
-<ol>
-<li id="fn1"><p>For previously-installed packages you can start typing the package name and two colons in RStudio to get autofill options. In this scenario you can also search the help pages for the package.<a href="#fnref1">↩</a></p></li>
-<li id="fn2"><p>Base R’s <code>lsf.str()</code> and <code>ls()</code> can also help you here.<a href="#fnref2">↩</a></p></li>
-</ol>
+<div id="using-learnr" class="section level1">
+<h1>Using {learnr}</h1>
+<p>The <a href="https://rstudio.github.io/learnr/">{learnr} package</a> helps you turn an R Markdown document into an interactive tutorial with a little help from Shiny. You can do things like embed exercises that allow the user to execute code to test their knowledge. It also has a function to create a multiple-choice question, which is exactly what we need.</p>
+<p>Having installed the package and <a href="https://rstudio.github.io/learnr/#getting_started">started a {learnr}-flavoured R Markdown</a> we can create a question inside a code chunk like this:</p>
+<pre><code># Generate question and answer objects using our function
+get_questions()
+
+# Create a {learnr} question using the objects
+quiz(
+  caption = &quot;Question 1&quot;,
+  question(
+    paste0(&quot;The function `&quot;, fun_name, &quot;` is from which tidyverse package?&quot;),
+    answer(paste0(&quot;{&quot;, ans_correct, &quot;}&quot;), correct = TRUE),
+    answer(paste0(&quot;{&quot;, ans_wrong1, &quot;}&quot;)),
+    answer(paste0(&quot;{&quot;, ans_wrong2, &quot;}&quot;)),
+    answer(paste0(&quot;{&quot;, ans_wrong3, &quot;}&quot;)),
+    random_answer_order = TRUE  # answers ordered randomly
+  )
+)</code></pre>
+<p>The output looks like the questions you can see in the gif at the top of this post.</p>
+</div>
+<div id="regenerating-the-quiz" class="section level1">
+<h1>Regenerating the quiz</h1>
+<p>I could have rendered the quiz and hosted it online, but this has a big drawback: the functions and packages named in the questions will have been selected randomly, but they will remain the same forever. There’s no way to easily generate new questions from within {learnr}.</p>
+<p>Instead, I <a href="https://rstudio.github.io/learnr/publishing.html">published the tutorial in a package</a> called <a href="https://github.com/matt-dray/tidyquiz">{tidyquiz}</a>. When you call the package from the library it instructs you to run <code>tidyquiz::generate_quiz()</code> to create and open a quiz in-browser. Running that line again will re-render the document with a new set of randomly-selected questions.</p>
 </div>
