@@ -1,5 +1,5 @@
 ---
-title: Tidyverse quiz
+title: "Quiz: do you know tidyverse functions?"
 author: Matt Dray
 date: '2019-03-06'
 slug: tidyverse-quiz
@@ -26,7 +26,7 @@ draft: yes
 <ol style="list-style-type: decimal">
 <li>Install the package with <code>remotes::install_github(&quot;matt-dray/tidyquiz&quot;)</code></li>
 <li>Call the package with <code>library(tidyquiz)</code></li>
-<li>Run <code>tidyquiz::generate_quiz()</code> to generate a question set and open the quiz in your browser question set (re-run for a new question set)</li>
+<li>Run <code>learnr::run_tutorial(&quot;tidy&quot;, package = &quot;tidyquiz&quot;)</code> to open in your browser</li>
 </ol>
 </div>
 <div id="the-problem" class="section level1">
@@ -41,18 +41,28 @@ Hardest part about <a href="https://twitter.com/hashtag/rstats?src=hash&amp;ref_
 <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 <p>Is the purpose of each package in <a href="https://www.tidyverse.org/">the tidyverse</a> clear enough?</p>
 <p>Many users will get around this by running <code>library(tidyverse)</code>, which installs the core set of eight tidyverse packages. You can run <code>select()</code> or <code>gather()</code> after that without having to think about whether they’re part of {dplyr} or {tidyr}.</p>
-<p>This made me wonder how good I was at remembering which functions (or previously unseen functions) belong to which packages in the tidyverse. So naturally I thought it would be a fun diversion to create a quiz.</p>
+<p>This made me wonder how good I was at remembering which functions (or previously unseen functions) belong to which packages in the tidyverse. So naturally I thought it would be a fun diversion to test myself. i also wanted to see whether functions in the {learnr} package could help me do it.</p>
 </div>
-<div id="package-function-combos" class="section level1">
-<h1>Package-function combos</h1>
+<div id="step-0-the-approach" class="section level1">
+<h1>Step 0: the approach</h1>
+<p>I wanted:</p>
+<ol style="list-style-type: decimal">
+<li>to get all the package-function combos in the tidyverse</li>
+<li>a user to be presented with an interactive question about a tidyverse function</li>
+<li>the ability to generate a new question from within the document</li>
+</ol>
+<p>These are solved by using the functions <code>tidyverse::tidyverse_packages()</code> and <code>pacman::p_functions()</code>; {learnr}’s solution for interactive multiple-choice questions in an R Markdown document; and a dollop of additional Shiny, which can operate in the Shiny-runtime of the R Markdown. The sections below go into this in more detail.</p>
+</div>
+<div id="step-1-package-function-combos" class="section level1">
+<h1>Step 1: package-function combos</h1>
 <p>You can see the {tidyverse} package only loads the eight core packages by default.</p>
 <pre class="r"><code>library(tidyverse)</code></pre>
-<pre><code>## ── Attaching packages ───────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
+<pre><code>## ── Attaching packages ────────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
 <pre><code>## ✔ ggplot2 3.1.0       ✔ purrr   0.3.1  
 ## ✔ tibble  2.0.1       ✔ dplyr   0.8.0.1
 ## ✔ tidyr   0.8.3       ✔ stringr 1.4.0  
 ## ✔ readr   1.3.1       ✔ forcats 0.4.0</code></pre>
-<pre><code>## ── Conflicts ──────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+<pre><code>## ── Conflicts ───────────────────────────────────────────────── tidyverse_conflicts() ──
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()</code></pre>
 <p>Fortunately there’s a function that provides the names of all the packages within the tidyverse.</p>
@@ -85,94 +95,115 @@ p_load(
       ~p_functions(.x, character.only = TRUE)  # ...get functions
     )
   ) %&gt;% 
-  unnest()  # unpack the listcol elements
-
-sample_n(tidy_funs, 10)  # random sample</code></pre>
+  unnest()  # unpack the listcol elements</code></pre>
+<p>Here’s a small sample:</p>
+<pre class="r"><code>sample_n(tidy_funs, 10)  # random sample</code></pre>
 <pre><code>## # A tibble: 10 x 2
-##    package   functions             
-##    &lt;chr&gt;     &lt;chr&gt;                 
-##  1 ggplot2   is.ggplot             
-##  2 readr     format_csv            
-##  3 tibble    add_column            
-##  4 ggplot2   scale_y_time          
-##  5 rlang     is_raw                
-##  6 httr      oauth2.0_authorize_url
-##  7 lubridate parse_date_time2      
-##  8 rlang     quo_expr              
-##  9 lubridate hour&lt;-                
-## 10 dplyr     summarise_each</code></pre>
-<p>Now we just need a function name for the subject of the question, the correct answer and three incorrect answers.</p>
-<p>To do this we can:</p>
-<ul>
-<li>sample a row randomly to get a function name and the package it’s from</li>
-<li>sample randomly three other packages that don’t contain that function, ensuring that these are different from each other</li>
-</ul>
-<p>The annotated code below shows a function that does this.</p>
-<pre class="r"><code>get_questions &lt;- function() {
-  
-  # Randomly sample one row of the tidy_funs tibble
-  # Output is a single package-function pair
-  fun_sample &lt;- sample_n(tidy_funs, 1)
-  
-  # Extract just the name of the function
-  fun_name &lt;&lt;- select(fun_sample, functions) %&gt;% pull()
-  
-  # Create lookup of packages that the function is duplicated in
-  # Output is a character vector of packages that the function exists in
-  dup_lookup &lt;- tidy_funs %&gt;% 
-    filter(functions == fun_name) %&gt;% 
-    pull(package)
-  
-  # The correct answer is the one we already isolated
-  ans_correct &lt;&lt;- fun_sample %&gt;% select(package) %&gt;% pull()
-  
-  # Wrong answer 1
-  ans_wrong1 &lt;&lt;- tidy_funs %&gt;%
-    distinct(package) %&gt;%  # get unique packages
-    filter(!package %in% c(dup_lookup)) %&gt;%  # ignore packages containing function
-    sample_n(1) %&gt;%  # choose a remaining package name at random
-    pull()  # to character
-  
-  # Wrong answer 2
-  ans_wrong2 &lt;&lt;- tidy_funs %&gt;%
-    distinct(package) %&gt;%
-    filter(!package %in% c(dup_lookup, ans_wrong1)) %&gt;% # also ignore the first wrong answer
-    sample_n(1) %&gt;%
-    pull()
-  
-  # Wrong answer 3
-  ans_wrong3 &lt;&lt;- tidy_funs %&gt;%
-    distinct(package) %&gt;%
-    filter(!package %in% c(dup_lookup, ans_wrong1, ans_wrong2)) %&gt;%
-    sample_n(1) %&gt;%
-    pull()
-  
-}</code></pre>
-<p>Note the use of a slightly different assignment operator with two heads: <code>&lt;&lt;-</code>. This makes the object available in the global environment outside of the function call. From there, the object can be picked up for use in constructing a question that will be presented to the user.</p>
-</div>
-<div id="using-learnr" class="section level1">
-<h1>Using {learnr}</h1>
-<p>The <a href="https://rstudio.github.io/learnr/">{learnr} package</a> helps you turn an R Markdown document into an interactive tutorial with a little help from Shiny. You can do things like embed exercises that allow the user to execute code to test their knowledge. It also has a function to create a multiple-choice question, which is exactly what we need.</p>
-<p>Having installed the package and <a href="https://rstudio.github.io/learnr/#getting_started">started a {learnr}-flavoured R Markdown</a> we can create a question inside a code chunk like this:</p>
-<pre><code># Generate question and answer objects using our function
-get_questions()
+##    package   functions                
+##    &lt;chr&gt;     &lt;chr&gt;                    
+##  1 rlang     new_character            
+##  2 ggplot2   coord_cartesian          
+##  3 readr     parse_integer            
+##  4 ggplot2   geom_curve               
+##  5 ggplot2   scale_linetype_continuous
+##  6 readr     show_progress            
+##  7 dplyr     check_dbplyr             
+##  8 rlang     vec_poke_n               
+##  9 httr      stop_for_status          
+## 10 lubridate is.Date</code></pre>
+<p>Out of interest we can look at the packages with the most and fewest functions:</p>
+<pre class="r"><code>most_pkgs &lt;- group_by(tidy_funs, package) %&gt;% count()
 
-# Create a {learnr} question using the objects
-quiz(
+arrange(most_pkgs, desc(n))</code></pre>
+<pre><code>## # A tibble: 26 x 2
+## # Groups:   package [26]
+##    package        n
+##    &lt;chr&gt;      &lt;int&gt;
+##  1 rlang        468
+##  2 ggplot2      456
+##  3 dplyr        258
+##  4 lubridate    212
+##  5 purrr        177
+##  6 dbplyr       112
+##  7 readr        109
+##  8 httr          91
+##  9 rstudioapi    83
+## 10 xml2          66
+## # … with 16 more rows</code></pre>
+<pre class="r"><code>arrange(most_pkgs, n)</code></pre>
+<pre><code>## # A tibble: 26 x 2
+## # Groups:   package [26]
+##    package       n
+##    &lt;chr&gt;     &lt;int&gt;
+##  1 tidyverse     5
+##  2 reprex        6
+##  3 hms           7
+##  4 broom        10
+##  5 readxl       13
+##  6 cli          16
+##  7 jsonlite     22
+##  8 haven        27
+##  9 rvest        29
+## 10 forcats      32
+## # … with 16 more rows</code></pre>
+<p>Great. How we can turn this into an interactive multiple-choice question?</p>
+</div>
+<div id="step-2-interactive-questions-with-learnr" class="section level1">
+<h1>Step 2: interactive questions with {learnr}</h1>
+<p>The <a href="https://rstudio.github.io/learnr/">{learnr} package</a> helps you turn an R Markdown document into an interactive tutorial with a little help from Shiny. You can do things like embed exercises that allow the user to execute code to test their knowledge. It also has a function to create multiple-choice questions, which is exactly what we need.</p>
+<p>Having installed the package and <a href="https://rstudio.github.io/learnr/#getting_started">started a {learnr}-flavoured R Markdown</a> we can create a question inside a code chunk in this form:</p>
+<pre class="r"><code>quiz(
   caption = &quot;Question 1&quot;,
   question(
-    paste0(&quot;The function `&quot;, fun_name, &quot;` is from which tidyverse package?&quot;),
-    answer(paste0(&quot;{&quot;, ans_correct, &quot;}&quot;), correct = TRUE),
-    answer(paste0(&quot;{&quot;, ans_wrong1, &quot;}&quot;)),
-    answer(paste0(&quot;{&quot;, ans_wrong2, &quot;}&quot;)),
-    answer(paste0(&quot;{&quot;, ans_wrong3, &quot;}&quot;)),
+    text = &quot;What is Pokemon #399?&quot;,  # question
+    answer(&quot;Bidoof&quot;), correct = TRUE),  # right answer
+    answer(&quot;Drifloom&quot;),   # wrong
+    answer(&quot;Pyukumuku&quot;),  # wrong
+    answer(&quot;Rayquaza&quot;),   # wrong
     random_answer_order = TRUE  # answers ordered randomly
   )
 )</code></pre>
-<p>The output looks like the questions you can see in the gif at the top of this post.</p>
+<p>Notice that this example is hardcoded. This is fine in a regular tutorial, but in our case we want to replace the subject of the question and the answers whenever we sample a new tidyverse function.</p>
+<p>Since {learnr} operates in a Shiny runtime in our R Markdown file anyway, we can create a Shiny button that a user can click to generate a new question.</p>
 </div>
-<div id="regenerating-the-quiz" class="section level1">
-<h1>Regenerating the quiz</h1>
-<p>I could have rendered the quiz and hosted it online, but this has a big drawback: the functions and packages named in the questions will have been selected randomly, but they will remain the same forever. There’s no way to easily generate new questions from within {learnr}.</p>
-<p>Instead, I <a href="https://rstudio.github.io/learnr/publishing.html">published the tutorial in a package</a> called <a href="https://github.com/matt-dray/tidyquiz">{tidyquiz}</a>. When you call the package from the library it instructs you to run <code>tidyquiz::generate_quiz()</code> to create and open a quiz in-browser. Running that line again will re-render the document with a new set of randomly-selected questions.</p>
+<div id="step-3-generate-questions-with-shiny" class="section level1">
+<h1>Step 3: generate questions with Shiny</h1>
+<p>Rather than generate a random question when a button is pressed, the user inputs a value that will be used in the <code>set.seed()</code> function and presses ‘Go’. This function makes sampling repeatable. In other words, the user will get the same question if they use the same seed. This lets people return to, or share, particularly tricky questions.</p>
+<pre class="r"><code>numericInput(&quot;n&quot;, &quot;Set seed:&quot;, value = 1337)
+actionButton(&quot;goButton&quot;, &quot;Go&quot;)</code></pre>
+<p>We can then ensure that triggering the action button forces rendering of the text that will make up the question and the answers.</p>
+<p>This example is for constructing the question to include the randomly-selected function. We repeat this for the correct answer and for three wrong answers.</p>
+<pre class="r"><code># This takes place in an R Markdown chunk with
+# context=&quot;server&quot; in the chunk options
+
+# Set the reactive element
+fun_name &lt;- eventReactive(
+  input$goButton,  # on input
+  { 
+    set.seed(input$n)  # put the input value in set.seed()
+    fun_sample &lt;- sample_n(tidy_funs, 1)  # sample a package-function combo
+    fun_name &lt;- select(fun_sample, functions) %&gt;% pull()  # just the function
+    return(fun_name)  # return the package value
+  }
+)
+
+# Set the output
+# Generate a question that includes the sampled function name 
+output$fun_name_out &lt;- renderText({
+  paste0(&quot;The function `&quot;, fun_name(), &quot;` is from which tidyverse package?&quot;)
+})</code></pre>
+<p>So rather than the hardcoded example of a multi-choice question in Step 2, we have something like this instead:</p>
+<pre class="r"><code>quiz(
+  caption = &quot;Question &quot;,
+  question(
+    text = as.character(textOutput(&quot;fun_name_out&quot;)),
+    answer(as.character(textOutput(&quot;ans_correct_out&quot;)), correct = TRUE),
+    answer(as.character(textOutput(&quot;ans_wrong1_out&quot;))),
+    answer(as.character(textOutput(&quot;ans_wrong2_out&quot;))),
+    answer(as.character(textOutput(&quot;ans_wrong3_out&quot;))),
+    random_answer_order = TRUE
+  )
+)</code></pre>
+<p>So now the text outputs will be rendered into the quiz question. Since these are reactive, it means they won’t change until the ‘Go’ button is clicked.</p>
+<p>Browse the code <a href="https://github.com/matt-dray/tidyquiz">on GitHub</a> and <a href="https://github.com/matt-dray/tidyquiz/issues">leave an issue</a> with thoughts or suggestions.</p>
 </div>
