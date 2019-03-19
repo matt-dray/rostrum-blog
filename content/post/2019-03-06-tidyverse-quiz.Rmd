@@ -151,29 +151,37 @@ Looks like we'll need a button for users to press to signal that they want a new
 
 # Step 3: generate new questions with Shiny
 
-Since {learnr} operates in a Shiny runtime in our R Markdown file, it's no problem to use Shiny's `actionButton()`. Press it and get a new question.
-
-We could leave it at that, but I thought it would be interesting for the user input [a seed value that could be used to recreate the sampling outputs](http://rfunction.com/archives/62). For example, typing the seed '1066' will present you with the same question every time. This means you can refer a particularly fiendish question to a friend by its seed value. 
+Since {learnr} operates in a Shiny runtime in our R Markdown file, it's no problem to use Shiny's `actionButton()`. 
 
 ```{r, shiny-button, eval=FALSE}
-numericInput("n", "Set seed:", value = 1337)  # user selects a seed
-actionButton("goButton", "Go")  # button
+actionButton("goButton", "Get Question")  # button
 ```
 
-To make this reactive -- so that nothign will happen until the button is pressed -- we can write Shiny server code in an R Markdown chunk by setting `context="server"` in the chunk options.
+You can press the button in the app to generate a new seed base don the current time and date. The seed is then used to randomly select a new question for the user.
 
-What do we do if we want to click the button and generate a quiz question?
+To make this reactive -- so that nothing will happen until the button is pressed -- we can write Shiny server code in an R Markdown chunk by setting `context="server"` in the chunk options. So here's how we get a new seed after clicking:
 
-First, our code needs to sample a row from the full dataframe of package-function combos and isolate the name of the function the user will be quizzed on. This code is within `eventReactive()` and will only trigger when the button has been activated. Second, we use `renderText()` to take the function name and paste it into a string to create our question. 
+```{r reactive-seed, eval=FALSE}
+seed <- eventReactive(
+  input$goButton,
+  {
+    seed_temp <- as.numeric(Sys.time())
+    return(seed_temp)
+  }
+)
+```
+
+Then our code needs to sample a row from the full dataframe of package-function combos and isolate the name of the function the user will be quizzed on. This code is within `eventReactive()` and will only trigger when the button has been activated. Second, we use `renderText()` to take the function name and paste it into a string to create our question. 
 
 ```{r, shiny-reactive, eval=FALSE}
 # Set the reactive element
 fun_name <- eventReactive(
   input$goButton,  # on input
   { 
-    set.seed(input$n)  # put the user's input value into set.seed()
+    seed_val <- seed()  # the newly-generated seed value
+    set.seed(seed_val)  # user-selected value is seed value
     fun_sample <- sample_n(tidy_funs, 1)  # sample a package-function combo
-    fun_name <- select(fun_sample, functions) %>% pull()  # get the function name
+    fun_name <- select(fun_sample, functions) %>% pull()  # just the function name
     return(fun_name)  # return the package value
   }
 )
@@ -185,7 +193,7 @@ output$fun_name_out <- renderText({
 })
 ```
 
-We can repeat this for getting the right answer and alter the code slightly to generate a few wrong answers. A wrong answer is selected randomly from the dataframe of tidyverse functions, but only once the correct answer has been removed. I've also coded it so that any package that has a function with the same name -- a conflict -- will also be removed before a 'wrong' answer is chosen. 
+We can repeat this for getting the right answer and alter the code slightly to generate a few wrong answers. A wrong answer is selected randomly from the dataframe of tidyverse functions, but only once the correct answer and already-selected wrong answers have been removed. I've also coded it so that any package that has a function with the same name -- a conflict -- will also be removed before a 'wrong' answer is chosen. 
 
 So rather than the hardcoded example of a multi-choice question in Step 2, our quiz question code will look like this:
 
@@ -203,7 +211,7 @@ quiz(
 )
 ```
 
-So now the text outputs will be rendered into the quiz question and this won't change until the seed is changed and the 'Go' button is clicked.
+So now the text outputs will be rendered into the quiz question and this won't change until the the 'Get Question' button is clicked.
 
 Actually, that's sort-of a lie. {learnr} remembers how it's users have performed; it saves their progress. To erase this, we need to click 'Start Over' from the menu pane to clear that memory.
 
