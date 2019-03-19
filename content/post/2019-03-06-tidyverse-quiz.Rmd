@@ -19,11 +19,22 @@ Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
 
 # TL;DR
 
-I made [{tidyquiz}](https://github.com/matt-dray/tidyquiz): a very simple package containing a simple (niche) multiple-choice quiz to test your ability to match tidyverse functions to their packages. To use it:
+Can you match the tidyverse function to its package? I used [{learnr}](https://rstudio.github.io/learnr/) to make [{tidyquiz}](https://github.com/matt-dray/tidyquiz) to test you. Run:
 
-1. Install the package with `remotes::install_github("matt-dray/tidyquiz")`
-1. Call the package with `library(tidyquiz)`
-1. Run `learnr::run_tutorial("tidy", package = "tidyquiz")` to open in your browser
+1. `remotes::install_github("matt-dray/tidyquiz")` to install {tidyquiz}
+1. `library(tidyquiz)` to load it
+1. `learnr::run_tutorial("tidy", package = "tidyquiz")` to open in your browser
+
+To use:
+
+1. In your browser, choose a seed to randomise the question and hit 'Go'
+1. Make a selection by clicking an answer and then 'Submit Answer'
+
+To get a new question:
+
+1. Click 'Start Over' in the menu bar
+1. Choose a new seed
+1. Hit 'Go'
 
 # The problem
 
@@ -32,27 +43,35 @@ I saw a (probably) tongue-in-cheek tweet recently from [Ryan Timpe](https://twit
 <blockquote class="twitter-tweet" data-lang="en"><p lang="en" dir="ltr">Hardest part about <a href="https://twitter.com/hashtag/rstats?src=hash&amp;ref_src=twsrc%5Etfw">#rstats</a> package development: remembering which functions are from {dplyr} and which are from {tidyr}.</p>&mdash; Ryan Timpe 🦖📊 (@ryantimpe) <a href="https://twitter.com/ryantimpe/status/1102666979909996545?ref_src=twsrc%5Etfw">March 4, 2019</a></blockquote>
 <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
-Is the purpose of each package in [the tidyverse](https://www.tidyverse.org/) clear enough? Or are they [too arbitrary](https://twitter.com/dnlmc/status/1105973896828866560)? Maybe it doesn't matter if you load {tidyverse}, which in turn loads a bunch of other packages.[^load-all]
+It's easy enough to get out of this pickle, but maybe there's a deeper problem? What if the purpose of each [tidyverse](https://www.tidyverse.org/) isn't clear enough? Is there too much [arbitrary jargon in the tidyverse?](https://twitter.com/dnlmc/status/1105973896828866560)? [^load-all]
 
-This made me wonder how good I am at remembering which functions (or previously unseen functions) belong to which packages. A good chance to play with the {learnr} package.
+Enjoy your existential crisis. Meanwhile, I've made a little quiz to see if you can remember whether `unnest()` is from {dplyr} or {tidyr}[^unnest]. In fact, it's an interactive multi-choice test that presents you a function from the tidyverse and challenges you to select the correct package.
 
 # Step 0: the approach
 
 I wanted:
 
-1. To get a tidy dataframe of all the package-function combos in the tidyverse -- `tidyverse::tidyverse_packages()` does this
-1. A user to be presented with an interactive question about one of these tidyverse functions -- {learnr} does this
-1. The ability to generate a new question from within the document -- a reactive Shiny button does this
+1. To get a tidy dataframe of all the tidyverse package-function combos
+1. A user to be presented with an interactive question about one of these tidyverse functions
+1. The ability to generate a new question from within the document
+1. To share this quiz easily, without a server
+
+Read the rest of this post to see how I tackled these. Spoilers:
+
+1. the `tidyverse_packages()` function from [{tidyverse}](https://cran.r-project.org/web/packages/tidyverse/index.html)
+1. the [{learnr}](https://rstudio.github.io/learnr/) package
+1. an [`actionButton()`](http://shiny.rstudio.com/gallery/actionbutton-demo.html) and Shiny reactivity
+1. you can [put a {learnr} quiz in a package](https://rstudio.github.io/learnr/publishing.html) and call it from there!
 
 # Step 1: package-function combos
 
-You can see the {tidyverse} package only loads the eight core packages by default.
+The {tidyverse} package is a package that loads packages.[^meme] It's a convenient way to load the eight core packages of the tidyverse.
 
 ```{r tidyverse, warning=FALSE}
 library(tidyverse)
 ```
 
-Fortunately there's a function that provides the names of all the packages within the tidyverse.
+But there's more than these core eight. To access a list of functions for each package, we first need to load all the packages. We can get a character vector of them all with `tidyverse_packages()`.
 
 ```{r tidyverse_packages}
 tidy_pkgs <- tidyverse_packages() %>%  # calls character vector
@@ -64,7 +83,7 @@ tidy_pkgs <- tidyverse_packages() %>%  # calls character vector
 tidy_pkgs
 ```
 
-We can pass this character vector to {pacman}'s `p_load()` to install and load them all.
+We can pass this character vector to `p_load()`. This convenient function from [{pacman}]([{pacman}](https://cran.r-project.org/web/packages/pacman/vignettes/Introduction_to_pacman.html) installs and loads them all for us.
 
 ```{r p-load, warning=FALSE}
 library(pacman)
@@ -75,15 +94,15 @@ p_load(
 )
 ```
 
-Now we can get the functions from each package by mapping over each with {pacman}'s `p_functions()`.
+Now we can get the functions from each package by mapping over them with [{purrr}](https://purrr.tidyverse.org/) and {pacman}'s `p_functions()`.
 
 ```{r tidy-funs}
 tidy_funs <- tidy_pkgs %>% 
   enframe(name = NULL, value = "package") %>%  # make tibble
   mutate(
     functions = map(
-      package,  # for each package name...
-      ~p_functions(.x, character.only = TRUE)  # ...get functions
+      package,  # for each package...
+      ~p_functions(.x, character.only = TRUE)  # ...get the functions within
     )
   ) %>% 
   unnest()  # unpack the listcol elements
@@ -97,20 +116,27 @@ sample_n(tidy_funs, 10)  # random sample
 
 Out of interest we can look at the packages with the most and fewest functions:
 
-```{r tidy_funs}
-most_pkgs <- group_by(tidy_funs, package) %>% count()
+```{r top-bottom}
+count(tidy_funs, package, sort = TRUE) %>% slice(1:5)
+count(tidy_funs, package) %>% arrange(n) %>% slice(1:5)
 
-arrange(most_pkgs, desc(n))
-arrange(most_pkgs, n)
 ```
 
-Great. How we can turn this into an interactive multiple-choice question?
+Another source of confusion might be that some functions exist in multiple packages. How many functions?
+
+```{r mask}
+count(tidy_funs, functions, sort = TRUE) %>% filter(n > 1) %>% nrow()
+```
+
+Okay, we have our dataset, so let's get quizzical.
 
 # Step 2: interactive questions with {learnr}
 
-The [{learnr} package](https://rstudio.github.io/learnr/) helps you turn an R Markdown document into an interactive tutorial with a little help from Shiny. You can uae it to embed exercises in an R Markdown document so you can test the reader's knowledge. One option is to create a multiple-choice question, which is exactly what we need.
+The [{learnr} package](https://rstudio.github.io/learnr/) helps you turn an R Markdown document into an interactive tutorial with a little help from Shiny. One option is to create a multiple-choice question, which is exactly what we need.
 
-Having installed the package and [started a {learnr}-flavoured R Markdown](https://rstudio.github.io/learnr/#getting_started)[^learnr-rmd] we can create a multiple-choice question inside a code chunk in this form:
+I should say that {learnr} wasn't really intended for what I've done -- it's better suited to longform tutorials -- but using it means that I didn't have to write the logic for a multi-choice quiz question. Shrug. 
+
+Having installed the package and [started a {learnr}-flavoured R Markdown](https://rstudio.github.io/learnr/#getting_started)[^learnr-rmd] we can create a question inside a code chunk in this form:
 
 ```{r fake-question, eval=FALSE}
 quiz(
@@ -126,20 +152,26 @@ quiz(
 )
 ```
 
-Notice that this example is hardcoded. This is fine in a regular tutorial, but in our case we want to replace the subject of the question and the answers whenever we sample a new tidyverse function.
+But this example is hardcoded. In our case we want to replace the subject of the question and the answers any time we want to be presented with a new question.
 
-Since {learnr} operates in a Shiny runtime in our R Markdown file, we can create a reactive Shiny button that a user can click to generate a new question.
+Looks like we'll need a button for users to press to signal that they want a new question.
 
 # Step 3: generate new questions with Shiny
 
-Rather than generate a random question when a button is pressed, the user inputs a value that will be used in the `set.seed()` function and presses 'Go'. This function makes sampling repeatable. In other words, the user will get the same question if they use the same seed. This lets people return to, or share, particularly tricky questions. The input and button code would look like this:
+Since {learnr} operates in a Shiny runtime in our R Markdown file, it's no problem to use Shiny's `actionButton()`. Press it and get a new question.
+
+We could leave it at that, but I thought it would be interesting for the user input [a seed value that could be used to recreate the sampling outputs](http://rfunction.com/archives/62). For example, typing the seed '8008' will present you with the same question every time. This means you can refer a particularly fiendish question to a friend by its seed value. 
 
 ```{r, shiny-button, eval=FALSE}
-numericInput("n", "Set seed:", value = 1337)
-actionButton("goButton", "Go")
+numericInput("n", "Set seed:", value = 1337)  # user selects a seed
+actionButton("goButton", "Go")  # button
 ```
 
-Then we need to create some Shiny server code within an R Markdown chunk, which we do by setting `context="server"` in the chunk options. This example shows how we might generate the question text. First, it samples a row from the full dataframe of package-function combos and isolates the function name that will be the ubjetc of the question. This code is within `eventReactive()` and will only trigger when the button has been activated. Second, we use `renderText()` to take the function name and paste it into a question. 
+To make this reactive -- so that nothign will happen until the button is pressed -- we can write Shiny server code in an R Markdown chunk by setting `context="server"` in the chunk options.
+
+What do we do if we want to click the button and generate a quiz question?
+
+First, our code needs to sample a row from the full dataframe of package-function combos and isolate the name of the function the user will be quizzed on. This code is within `eventReactive()` and will only trigger when the button has been activated. Second, we use `renderText()` to take the function name and paste it into a string to create our question. 
 
 ```{r, shiny-reactive, eval=FALSE}
 # Set the reactive element
@@ -160,7 +192,7 @@ output$fun_name_out <- renderText({
 })
 ```
 
-We can repeat this for getting the tight answer and some wrong answers. A 'wrong' answer is selected randomly once the correct answer has been removed. I've also coded it so that any package that has a function with the same name -- a conflict -- will also be removed before a 'wrong' answer is chosen. 
+We can repeat this for getting the right answer and alter the code slightly to generate a few wrong answers. A wrong answer is selected randomly from the dataframe of tidyverse functions, but only once the correct answer has been removed. I've also coded it so that any package that has a function with the same name -- a conflict -- will also be removed before a 'wrong' answer is chosen. 
 
 So rather than the hardcoded example of a multi-choice question in Step 2, our quiz question code will look like this:
 
@@ -178,11 +210,19 @@ quiz(
 )
 ```
 
-So now the text outputs will be rendered into the quiz question. Since these are reactive, it means they won't change until the 'Go' button is clicked.
+So now the text outputs will be rendered into the quiz question and this won't change until the seed is changed and the 'Go' button is clicked.
+
+Actually, that's sort-of a lie. {learnr} remembers how it's users have performed; it saves their progress. To erase this, we need to click 'Start Over' from the menu pane to clear that memory.
 
 # Get the code
 
 Browse the code [on GitHub](https://github.com/matt-dray/tidyquiz) and [leave an issue](https://github.com/matt-dray/tidyquiz/issues) with thoughts or suggestions.
 
-[^load-all]: You can run `select()` or `gather()` after this without having to think about whether they're part of {dplyr} or {tidyr}. I prefer personally to load only the packages I need.
+For example, it could definitely be improved if the user got a set of 10 questions that were graded to give a final mark. Maybe I'll implement this one day.
+
+For now, give it a go and let me know if you ever find out if `drop_na()` is in {dplyr} or {tidyr}.[^unnest]
+
+[^load-all]: To get around this, loading {tidyverse} loads the 'core' tidyverse packages at once. You can run `select()` or `gather()` after this without having to think about whether they're part of {dplyr} or {tidyr}.
+[^unnest]: Am I tricking you? Is it actually from neither?
+[^meme]: The meme writes itself. Or rather, [you can do it for me](https://imgflip.com/memegenerator/Yo-Dawg-Heard-You).
 [^learnr-rmd]: After installing {learnr} you can go to new R Markdown > From Template > Interactive Tutorial.
