@@ -50,8 +50,7 @@ Hardest part about <a href="https://twitter.com/hashtag/rstats?src=hash&amp;ref_
 — Ryan Timpe 🦖📊 (<span class="citation">@ryantimpe</span>) <a href="https://twitter.com/ryantimpe/status/1102666979909996545?ref_src=twsrc%5Etfw">March 4, 2019</a>
 </blockquote>
 <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
-<p>It’s easy enough to get out of this pickle, but maybe there’s a deeper problem? What if the purpose of each <a href="https://www.tidyverse.org/">tidyverse</a> isn’t clear enough? Is there too much <a href="https://twitter.com/dnlmc/status/1105973896828866560">arbitrary jargon in the tidyverse?</a>? <a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a></p>
-<p>Enjoy your existential crisis. Meanwhile, I’ve made a little quiz to see if you can remember whether <code>unnest()</code> is from {dplyr} or {tidyr}<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a>. In fact, it’s an interactive multi-choice test that presents you a function from the tidyverse and challenges you to select the correct package.</p>
+<p>It’s easy enough to get out of this pickle, but maybe there’s a deeper problem? What if the purpose of each <a href="https://www.tidyverse.org/">tidyverse</a> isn’t clear enough? Is there too much <a href="https://twitter.com/dnlmc/status/1105973896828866560">arbitrary jargon in the tidyverse?</a>? [Enjoy your existential crisis. Meanwhile, I’ve made a little quiz to see if you can remember whether <code>unnest()</code> is from {dplyr} or {tidyr}[^unnest]. In fact, it’s an interactive multi-choice test that presents you a function from the tidyverse and challenges you to select the correct package.</p>
 </div>
 <div id="step-0-the-approach" class="section level1">
 <h1>Step 0: the approach</h1>
@@ -72,7 +71,7 @@ Hardest part about <a href="https://twitter.com/hashtag/rstats?src=hash&amp;ref_
 </div>
 <div id="step-1-package-function-combos" class="section level1">
 <h1>Step 1: package-function combos</h1>
-<p>The {tidyverse} package is a package that loads packages.<a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a> It’s a convenient way to load the eight core packages of the tidyverse.</p>
+<p>The {tidyverse} package is a package that loads packages.<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> It’s a convenient way to load the eight core packages of the tidyverse.</p>
 <pre class="r"><code>library(tidyverse)</code></pre>
 <pre><code>## ── Attaching packages ──────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
 <pre><code>## ✔ ggplot2 3.1.0       ✔ purrr   0.3.0  
@@ -116,18 +115,18 @@ p_load(
 <p>Here’s a small sample:</p>
 <pre class="r"><code>sample_n(tidy_funs, 10)  # random sample</code></pre>
 <pre><code>## # A tibble: 10 x 2
-##    package functions       
-##    &lt;chr&gt;   &lt;chr&gt;           
-##  1 ggplot2 guides          
-##  2 dbplyr  build_sql       
-##  3 tibble  trunc_mat       
-##  4 readr   write_tsv       
-##  5 dbplyr  base_odbc_scalar
-##  6 httr    guess_media     
-##  7 rlang   inherits_all    
-##  8 crayon  black           
-##  9 xml2    xml_find_lgl    
-## 10 rlang   error_cnd</code></pre>
+##    package    functions         
+##    &lt;chr&gt;      &lt;chr&gt;             
+##  1 purrr      some              
+##  2 rlang      friendly_type     
+##  3 modelr     spread_predictions
+##  4 readr      read_csv_chunked  
+##  5 ggplot2    sym               
+##  6 rstudioapi dictionariesPath  
+##  7 ggplot2    scale_x_datetime  
+##  8 ggplot2    geom_bar          
+##  9 purrr      lmap_if           
+## 10 dbplyr     test_register_con</code></pre>
 <p>Out of interest we can look at the packages with the most and fewest functions:</p>
 <pre class="r"><code>count(tidy_funs, package, sort = TRUE) %&gt;% slice(1:5)</code></pre>
 <pre><code>## # A tibble: 5 x 2
@@ -156,7 +155,7 @@ p_load(
 <h1>Step 2: interactive questions with {learnr}</h1>
 <p>The <a href="https://rstudio.github.io/learnr/">{learnr} package</a> helps you turn an R Markdown document into an interactive tutorial with a little help from Shiny. One option is to create a multiple-choice question, which is exactly what we need.</p>
 <p>I should say that {learnr} wasn’t really intended for what I’ve done – it’s better suited to longform tutorials – but using it means that I didn’t have to write the logic for a multi-choice quiz question. Shrug.</p>
-<p>Having installed the package and <a href="https://rstudio.github.io/learnr/#getting_started">started a {learnr}-flavoured R Markdown</a><a href="#fn4" class="footnoteRef" id="fnref4"><sup>4</sup></a> we can create a question inside a code chunk in this form:</p>
+<p>Having installed the package and <a href="https://rstudio.github.io/learnr/#getting_started">started a {learnr}-flavoured R Markdown</a><a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a> we can create a question inside a code chunk in this form:</p>
 <pre class="r"><code>quiz(
   caption = &quot;Question 1&quot;,
   question(
@@ -216,15 +215,12 @@ output$fun_name_out &lt;- renderText({
 <h1>Get the code</h1>
 <p>Browse the code <a href="https://github.com/matt-dray/tidyquiz">on GitHub</a> and <a href="https://github.com/matt-dray/tidyquiz/issues">leave an issue</a> with thoughts or suggestions.</p>
 <p>For example, it could definitely be improved if the user got a set of 10 questions that were graded to give a final mark. Maybe I’ll implement this one day.</p>
-<p>For now, give it a go and let me know if you ever find out if <code>drop_na()</code> is in {dplyr} or {tidyr}.<a href="#fn5" class="footnoteRef" id="fnref5"><sup>5</sup></a></p>
+<p>For now, give it a go and let me know if you ever find out if <code>drop_na()</code> is in {dplyr} or {tidyr}.[^unnest]</p>
 </div>
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>To get around this, loading {tidyverse} loads the ‘core’ tidyverse packages at once. You can run <code>select()</code> or <code>gather()</code> after this without having to think about whether they’re part of {dplyr} or {tidyr}.<a href="#fnref1">↩</a></p></li>
-<li id="fn2"><p>Am I tricking you? Is it actually from neither?<a href="#fnref2">↩</a></p></li>
-<li id="fn3"><p>The meme writes itself. Or rather, <a href="https://imgflip.com/memegenerator/Yo-Dawg-Heard-You">you can do it for me</a>.<a href="#fnref3">↩</a></p></li>
-<li id="fn4"><p>After installing {learnr} you can go to new R Markdown &gt; From Template &gt; Interactive Tutorial.<a href="#fnref4">↩</a></p></li>
-<li id="fn5"><p>Am I tricking you? Is it actually from neither?<a href="#fnref5">↩</a></p></li>
+<li id="fn1"><p>The meme writes itself. Or rather, <a href="https://imgflip.com/memegenerator/Yo-Dawg-Heard-You">you can do it for me</a>.<a href="#fnref1">↩</a></p></li>
+<li id="fn2"><p>After installing {learnr} you can go to new R Markdown &gt; From Template &gt; Interactive Tutorial.<a href="#fnref2">↩</a></p></li>
 </ol>
 </div>
