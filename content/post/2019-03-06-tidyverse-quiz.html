@@ -53,24 +53,24 @@ Hardest part about <a href="https://twitter.com/hashtag/rstats?src=hash&amp;ref_
 <li>The ability to generate a new question from within the document</li>
 <li>To share this quiz easily, without a server</li>
 </ol>
-<p>Read the rest of this post to see how I tackled these. Spoilers:</p>
+<p>Read the rest of this post to see how I tackled these. Or, you know, spoilers:</p>
 <ol style="list-style-type: decimal">
-<li>the <code>tidyverse_packages()</code> function from <a href="https://cran.r-project.org/web/packages/tidyverse/index.html">{tidyverse}</a></li>
-<li>the <a href="https://rstudio.github.io/learnr/">{learnr}</a> package</li>
-<li>an <a href="http://shiny.rstudio.com/gallery/actionbutton-demo.html"><code>actionButton()</code></a> and Shiny reactivity</li>
-<li>you can <a href="https://rstudio.github.io/learnr/publishing.html">put a {learnr} quiz in a package</a> and call it from there!</li>
+<li>The <code>tidyverse_packages()</code> function from <a href="https://cran.r-project.org/web/packages/tidyverse/index.html">{tidyverse}</a></li>
+<li>The <a href="https://rstudio.github.io/learnr/">{learnr}</a> package</li>
+<li>An <a href="http://shiny.rstudio.com/gallery/actionbutton-demo.html"><code>actionButton()</code></a> and Shiny reactivity</li>
+<li>You can <a href="https://rstudio.github.io/learnr/publishing.html">put a {learnr} quiz in a package</a> and call it from there!</li>
 </ol>
 </div>
 <div id="step-1-package-function-combos" class="section level1">
 <h1>Step 1: package-function combos</h1>
 <p>The {tidyverse} package is a package that loads packages.<a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a> It’s a convenient way to load the eight core packages of the tidyverse.</p>
 <pre class="r"><code>library(tidyverse)</code></pre>
-<pre><code>## ── Attaching packages ──────────────────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
+<pre><code>## ── Attaching packages ──────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
 <pre><code>## ✔ ggplot2 3.1.0       ✔ purrr   0.3.0  
 ## ✔ tibble  2.1.1       ✔ dplyr   0.8.0.1
 ## ✔ tidyr   0.8.3       ✔ stringr 1.4.0  
 ## ✔ readr   1.3.1       ✔ forcats 0.4.0</code></pre>
-<pre><code>## ── Conflicts ─────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+<pre><code>## ── Conflicts ─────────────────────────────────────────────── tidyverse_conflicts() ──
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()</code></pre>
 <p>But there’s more than these core eight. To access a list of functions for each package, we first need to load all the packages. We can get a character vector of them all with <code>tidyverse_packages()</code>.</p>
@@ -87,7 +87,7 @@ tidy_pkgs</code></pre>
 ## [16] &quot;readr&quot;      &quot;readxl&quot;     &quot;reprex&quot;     &quot;rlang&quot;      &quot;rstudioapi&quot;
 ## [21] &quot;rvest&quot;      &quot;stringr&quot;    &quot;tibble&quot;     &quot;tidyr&quot;      &quot;xml2&quot;      
 ## [26] &quot;tidyverse&quot;</code></pre>
-<p>We can pass this character vector to <code>p_load()</code>. This convenient function from [{pacman}](<a href="https://cran.r-project.org/web/packages/pacman/vignettes/Introduction_to_pacman.html">{pacman}</a> installs and loads them all for us.</p>
+<p>We can pass this character vector to <code>p_load()</code>. This convenient function from <a href="https://cran.r-project.org/web/packages/pacman/vignettes/Introduction_to_pacman.html">{pacman}</a> installs and loads them all for us.</p>
 <pre class="r"><code>library(pacman)
 
 p_load(
@@ -109,16 +109,16 @@ p_load(
 <pre><code>## # A tibble: 10 x 2
 ##    package   functions             
 ##    &lt;chr&gt;     &lt;chr&gt;                 
-##  1 dplyr     first                 
-##  2 readr     read_table            
-##  3 readr     date_names            
-##  4 rlang     is_expression         
-##  5 purrr     invoke_map_chr        
-##  6 lubridate .__T__as.difftime:base
-##  7 lubridate %within%              
-##  8 httr      insensitive           
-##  9 readr     parse_logical         
-## 10 dplyr     check_dbplyr</code></pre>
+##  1 ggplot2   standardise_aes_names 
+##  2 lubridate ehours                
+##  3 dplyr     db_begin              
+##  4 forcats   fct_anon              
+##  5 purrr     chuck                 
+##  6 ggplot2   aes_q                 
+##  7 magrittr  is_less_than          
+##  8 xml2      xml_add_child         
+##  9 ggplot2   ggplot_add            
+## 10 ggplot2   scale_colour_gradient2</code></pre>
 <p>Out of interest we can look at the packages with the most and fewest functions:</p>
 <pre class="r"><code>count(tidy_funs, package, sort = TRUE) %&gt;% slice(1:5)</code></pre>
 <pre><code>## # A tibble: 5 x 2
