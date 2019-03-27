@@ -2,6 +2,8 @@
 
 # rostrum-blog
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/ebfbdae4-a903-43e8-9f53-75becd95b42e/deploy-status)](https://app.netlify.com/sites/rostrum/deploys)
+
 ## What?
 
 Hello and welcome to the source files for [rostrum.blog](https://www.rostrum.blog/) by [Matt](https://www.twitter.com/mattdray) and [Adriana](https://twitter.com/adpalma). Learn more about the blog on the [About](https://www.rostrum.blog/about/) page.
