@@ -1,0 +1,144 @@
+---
+title: Fix leaky {dplyr} pipes
+author: Matt Dray
+date: '2019-04-01'
+slug: fix-leaky-dplyr-pipes
+categories:
+  - R
+tags:
+  - dplyr
+  - tidylog
+  - pipecleaner
+  - magrittr
+  - tidyverse
+draft: yes
+---
+
+
+
+<p>Matt Dray (<a href="https://www.twitter.com/mattdray">@mattdray</a>)</p>
+<div id="the-pipe" class="section level1">
+<h1>The pipe</h1>
+<p>The pipe operator, <code>%&gt;%</code>, chains function calls together into ‘pipelines’, which</p>
+<blockquote>
+<p>semantically changes your code in a way that makes it more intuitive to both read and write</p>
+</blockquote>
+<p>The {magrittr} package brought this paradigm to R and has been adopted by the wildly popular packages of the tidyverse. Pipes have changed fundamentally how people interact with the R programming language.</p>
+</div>
+<div id="examples" class="section level1">
+<h1>Examples</h1>
+<p>Let’s look at three approaches to some simple data manipulation using (1) intermediate objects, (2) nested functions and (3) pipelines. The first two I’m ‘classic approaches’. Let’s say I want the mean sepal width of the setosa and versicolor species of iris and round it to one decimal place.</p>
+<p>Since this post is about coding style and not ‘base R versus the tidyverse’, it doesn’t matter what functions I use to actually do the data manipulation. I’m using {dplyr} here to make the comparisons easier and because it loads the pipe operator.</p>
+<pre class="r"><code>suppressPackageStartupMessages(library(dplyr))</code></pre>
+<div id="intermediate-objects" class="section level2">
+<h2>Intermediate objects</h2>
+<p>In the first approach we make a series of intermediate objects, each created using a single function.</p>
+<pre class="r"><code>iris_filter &lt;- filter(iris, Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;))
+iris_group &lt;- group_by(iris_filter, Species)
+iris_mean &lt;- summarise(iris_group, `Mean width` = mean(Sepal.Width))
+iris_mutate &lt;- mutate(iris_mean, `Mean width` = round(`Mean width`, 1))
+print(iris_mutate)</code></pre>
+<pre><code>## # A tibble: 2 x 2
+##   Species    `Mean width`
+##   &lt;fct&gt;             &lt;dbl&gt;
+## 1 setosa              3.4
+## 2 versicolor          2.8</code></pre>
+<p>This seems sensible. You can create and interrogate these objects to make sure they do what you want. But this also makes your environment untidy because you have a bunch of halfway-house objects that may serve no standalone purpose beyond being passed into the next object. It could be tricky to keep track of these objects as they swell in your environment, particularly if they get labelled <code>temp1</code>, <code>temp2</code>, <code>temp3</code>, etc.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+</div>
+<div id="onions" class="section level2">
+<h2>Onions</h2>
+<p>We can do away with all the intermediate steps by nesting the functions inside each other so that functions are applied to the layer below them.</p>
+<pre class="r"><code>iris_onion &lt;-
+  mutate(
+    summarise(
+      group_by(
+        filter(iris, Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;)),
+        Species
+      ),
+      `Mean width` = mean(Sepal.Width)
+    ),
+    `Mean width` = round(`Mean width`, 1)
+  )</code></pre>
+<p>I’ve called this the onion method. Why? Because it’s made up of multiple layers. And it makes you cry a bit to look at it.</p>
+</div>
+<div id="pipes" class="section level2">
+<h2>Pipes</h2>
+<p>With the pipe paradigm, the thing you make on the left-hand side of the pipe is passed to the right until the end. You can chain functions together cleanly in the order that the operations occur.</p>
+<pre class="r"><code>iris_pipe &lt;- iris %&gt;%
+  filter(Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;)) %&gt;% 
+  group_by(Species) %&gt;% 
+  summarise(`Mean width` = mean(Sepal.Width)) %&gt;% 
+  mutate(`Mean width` = round(`Mean width`, 1))
+print(iris_mean)</code></pre>
+<pre><code>## # A tibble: 2 x 2
+##   Species    `Mean width`
+##   &lt;fct&gt;             &lt;dbl&gt;
+## 1 setosa             3.43
+## 2 versicolor         2.77</code></pre>
+<p>This method is more readable than the classic approaches. It doesn’t have to repeat the data object in each call like the intermediate-objects approach and it is far more readable than the onion method.</p>
+<p>So what’s the problem? It’s been suggested that the approach obscures the manipulations and doesn’t allow you to interrogate what’s happening to your dataset after each function call.</p>
+<blockquote class="twitter-tweet" data-lang="en">
+<p lang="en" dir="ltr">
+Method chaining when doing data analysis can be both a good and bad idea depending on when it is done and who is doing it. When first exploring the data, it makes verifying results difficult. Beginners should almost never do it either.
+</p>
+— Ted Petrou (<span class="citation">@TedPetrou</span>) <a href="https://twitter.com/TedPetrou/status/1109519764613787648?ref_src=twsrc%5Etfw">March 23, 2019</a>
+</blockquote>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+<p>I would argue that you should be checking your data object as you program interactively and this shouldn’t be a problem; you don’t just create one bug pipeline all in one go without checking as you add each function. But let’s say I haven’t been checking my code as I build my pipeline. How can I assure myself that each step has impacted the data as I wanted it to?</p>
+</div>
+</div>
+<div id="debug-pipes" class="section level1">
+<h1>Debug pipes</h1>
+<pre class="r"><code>library(tidylog)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;tidylog&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:dplyr&#39;:
+## 
+##     add_count, add_tally, anti_join, count, distinct,
+##     distinct_all, distinct_at, distinct_if, filter, filter_all,
+##     filter_at, filter_if, full_join, group_by, group_by_all,
+##     group_by_at, group_by_if, inner_join, left_join, mutate,
+##     mutate_all, mutate_at, mutate_if, right_join, select,
+##     select_all, select_at, select_if, semi_join, summarise,
+##     summarise_all, summarise_at, summarise_if, summarize,
+##     summarize_all, summarize_at, summarize_if, tally, top_n,
+##     transmute, transmute_all, transmute_at, transmute_if</code></pre>
+<pre><code>## The following object is masked from &#39;package:stats&#39;:
+## 
+##     filter</code></pre>
+<pre class="r"><code>library(tamper)
+library(ViewPipeSteps)</code></pre>
+<div id="tidylog" class="section level2">
+<h2>{tidylog}</h2>
+<p>install.packages(“tidylog”)
+<a href="https://github.com/elbersb/tidylog" class="uri">https://github.com/elbersb/tidylog</a></p>
+</div>
+<div id="pipecleaner" class="section level2">
+<h2>{pipecleaner}</h2>
+<p>devtools::install_github(“alistaire47/pipecleaner”)
+<a href="https://github.com/alistaire47/pipecleaner" class="uri">https://github.com/alistaire47/pipecleaner</a></p>
+</div>
+<div id="magrittr" class="section level2">
+<h2>{magrittr}</h2>
+<p><a href="https://magrittr.tidyverse.org/reference/debug_pipe.html" class="uri">https://magrittr.tidyverse.org/reference/debug_pipe.html</a></p>
+</div>
+<div id="tamper" class="section level2">
+<h2>{tamper}</h2>
+<p>devtools::install_github(“gaborcsardi/tamper”)
+<a href="https://github.com/gaborcsardi/tamper" class="uri">https://github.com/gaborcsardi/tamper</a></p>
+</div>
+<div id="viewpipesteps" class="section level2">
+<h2>{ViewPipeSteps}</h2>
+<p><a href="https://github.com/daranzolin/ViewPipeSteps" class="uri">https://github.com/daranzolin/ViewPipeSteps</a></p>
+</div>
+<div id="bizarro-pipe" class="section level2">
+<h2>Bizarro pipe</h2>
+<p><a href="http://www.win-vector.com/blog/2017/01/using-the-bizarro-pipe-to-debug-magrittr-pipelines-in-r/" class="uri">http://www.win-vector.com/blog/2017/01/using-the-bizarro-pipe-to-debug-magrittr-pipelines-in-r/</a></p>
+</div>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>I’m looking at you, past-Matt!<a href="#fnref1" class="footnote-back">↩</a></p></li>
+</ol>
+</div>

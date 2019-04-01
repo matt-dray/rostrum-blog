@@ -1,0 +1,132 @@
+---
+title: Fix leaky {dplyr} pipes
+author: Matt Dray
+date: '2019-04-01'
+slug: fix-leaky-dplyr-pipes
+categories:
+  - R
+tags:
+  - dplyr
+  - tidylog
+  - pipecleaner
+  - magrittr
+  - tidyverse
+draft: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval=TRUE)
+```
+
+Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
+
+# The pipe
+
+The pipe operator, `%>%`, chains function calls together into 'pipelines', which
+
+>semantically changes your code in a way that makes it more intuitive to both read and write
+
+The {magrittr} package brought this paradigm to R and has been adopted by the wildly popular packages of the tidyverse. Pipes have changed fundamentally how people interact with the R programming language. 
+
+# Examples
+
+Let's look at three approaches to some simple data manipulation using (1) intermediate objects, (2) nested functions and (3) pipelines. The first two I'm 'classic approaches'. Let's say I want the mean sepal width of the setosa and versicolor species of iris and round it to one decimal place.
+
+Since this post is about coding style and not 'base R versus the tidyverse', it doesn't matter what functions I use to actually do the data manipulation. I'm using {dplyr} here to make the comparisons easier and because it loads the pipe operator.
+
+```{r dplyr}
+suppressPackageStartupMessages(library(dplyr))
+```
+
+## Intermediate objects
+
+In the first approach we make a series of intermediate objects, each created using a single function.
+
+```{r intermediate-objects}
+iris_filter <- filter(iris, Species %in% c("setosa", "versicolor"))
+iris_group <- group_by(iris_filter, Species)
+iris_mean <- summarise(iris_group, `Mean width` = mean(Sepal.Width))
+iris_mutate <- mutate(iris_mean, `Mean width` = round(`Mean width`, 1))
+print(iris_mutate)
+```
+
+This seems sensible. You can create and interrogate these objects to make sure they do what you want. But this also makes your environment untidy because you have a bunch of halfway-house objects that may serve no standalone purpose beyond being passed into the next object. It could be tricky to keep track of these objects as they swell in your environment, particularly if they get labelled `temp1`, `temp2`, `temp3`, etc.[^past-matt]
+
+## Onions
+
+We can do away with all the intermediate steps by nesting the functions inside each other so that functions are applied to the layer below them.
+
+```{r onion}
+iris_onion <-
+  mutate(
+    summarise(
+      group_by(
+        filter(iris, Species %in% c("setosa", "versicolor")),
+        Species
+      ),
+      `Mean width` = mean(Sepal.Width)
+    ),
+    `Mean width` = round(`Mean width`, 1)
+  )
+```
+
+I've called this the onion method. Why? Because it's made up of multiple layers. And it makes you cry a bit to look at it.
+
+## Pipes
+
+With the pipe paradigm, the thing you make on the left-hand side of the pipe is passed to the right until the end. You can chain functions together cleanly in the order that the operations occur. 
+
+```{r pipe}
+iris_pipe <- iris %>%
+  filter(Species %in% c("setosa", "versicolor")) %>% 
+  group_by(Species) %>% 
+  summarise(`Mean width` = mean(Sepal.Width)) %>% 
+  mutate(`Mean width` = round(`Mean width`, 1))
+print(iris_mean)
+```
+
+This method is more readable than the classic approaches. It doesn't have to repeat the data object in each call like the intermediate-objects approach and it is far more readable than the onion method.
+
+So what's the problem? It's been suggested that the approach obscures the manipulations and doesn't allow you to interrogate what's happening to your dataset after each function call.
+
+<blockquote class="twitter-tweet" data-lang="en"><p lang="en" dir="ltr">Method chaining when doing data analysis can be both a good and bad idea depending on when it is done and who is doing it. When first exploring the data, it makes verifying results difficult. Beginners should almost never do it either.</p>&mdash; Ted Petrou (@TedPetrou) <a href="https://twitter.com/TedPetrou/status/1109519764613787648?ref_src=twsrc%5Etfw">March 23, 2019</a></blockquote>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+I would argue that you should be checking your data object as you program interactively and this shouldn't be a problem; you don't just create one bug pipeline all in one go without checking as you add each function. But let's say I haven't been checking my code as I build my pipeline. How can I assure myself that each step has impacted the data as I wanted it to?
+
+# Debug pipes
+
+```{r packages}
+library(tidylog)
+library(tamper)
+library(ViewPipeSteps)
+```
+
+## {tidylog}
+
+install.packages("tidylog")
+https://github.com/elbersb/tidylog
+
+## {pipecleaner}
+
+devtools::install_github("alistaire47/pipecleaner")
+https://github.com/alistaire47/pipecleaner
+
+## {magrittr}
+
+https://magrittr.tidyverse.org/reference/debug_pipe.html
+
+## {tamper}
+
+devtools::install_github("gaborcsardi/tamper")
+https://github.com/gaborcsardi/tamper
+
+## {ViewPipeSteps}
+
+https://github.com/daranzolin/ViewPipeSteps
+
+## Bizarro pipe
+
+http://www.win-vector.com/blog/2017/01/using-the-bizarro-pipe-to-debug-magrittr-pipelines-in-r/
+
+[^past-matt]: I'm looking at you, past-Matt!
