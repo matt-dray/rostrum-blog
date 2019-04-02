@@ -14,11 +14,11 @@ tags:
 draft: yes
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(eval=TRUE)
-```
-
 Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
+
+# TL;DR
+
+There are lots of ways to debug a pipe.
 
 # The pipe
 
@@ -38,6 +38,157 @@ Since this post is about coding style and not 'base R versus the tidyverse', it 
 suppressPackageStartupMessages(library(dplyr))
 ```
 
+## Pipes
+
+With the pipe paradigm, the thing you make on the left-hand side of the pipe is passed to the right until the end. You can chain functions together cleanly in the order that the operations occur. 
+
+```{r pipeline-example}
+iris_pipe <- iris %>%
+  filter(Species %in% c("setosa", "versicolor")) %>% 
+  group_by(Species) %>% 
+  summarise(`Mean width` = mean(Sepal.Width)) %>% 
+  mutate(`Mean width` = round(`Mean width`, 1))
+
+iris_pipe
+```
+
+This method is more readable than the classic approaches. It doesn't have to repeat the data object in each call like the intermediate-objects approach and it is far more readable than the onion method.
+
+So what's the problem? It's been suggested that the approach obscures the manipulations and doesn't allow you to interrogate what's happening to your dataset after each function call.
+
+<blockquote class="twitter-tweet" data-lang="en"><p lang="en" dir="ltr">Method chaining when doing data analysis can be both a good and bad idea depending on when it is done and who is doing it. When first exploring the data, it makes verifying results difficult. Beginners should almost never do it either.</p>&mdash; Ted Petrou (@TedPetrou) <a href="https://twitter.com/TedPetrou/status/1109519764613787648?ref_src=twsrc%5Etfw">March 23, 2019</a></blockquote>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+I would argue that you should be checking your data object as you program interactively and this shouldn't be a problem; you don't just create one bug pipeline all in one go without checking as you add each function.
+
+But let's say I haven't been checking my code as I build my pipeline. How can I assure myself that each step has impacted the data as I wanted it to?
+
+# Checking for leaks
+
+## Be sensible
+
+Of course, the simplest answer is to break your pipelines into smaller sensibly-sized objects and inspect them as you go.
+
+How many objects? That depends on what you're doing. Maybe two for our example (1) filtering for species and (2) calculating the mean. In fact, we may want to perform other operations on the filtered data, so it makes sense to keep it in memory.
+
+```{r sensible-pipes}
+filter_step <- filter(iris, Species %in% c("setosa", "versicolor"))
+  
+summarise_step <- filter_step %>% 
+  group_by(Species) %>% 
+  summarise(`Mean width` = mean(Sepal.Width)) %>% 
+  mutate(`Mean width` = round(`Mean width`, 1))
+```
+
+## {tidylog}
+
+[The {tidylog} package](https://github.com/elbersb/tidylog) prints to the console the changes that have happened to your data after each {dplyr} step. This means you can check that each step occurred as expected without having to run one line at a time.
+
+```{r load-tidylog}
+library(dplyr)
+library(tidylog)  # must be loaded after dplyr
+```
+
+You can see from the output that {tidylog} is masking every {dplyr} functions. It's hijacking them so you can get output like the following:
+
+```{r tidylog-example}
+iris_pipe <- iris %>%
+  filter(Species %in% c("setosa", "versicolor")) %>% 
+  group_by(Species) %>% 
+  summarise(`Mean width` = mean(Sepal.Width)) %>% 
+  mutate(`Mean width` = round(`Mean width`, 1))
+```
+
+Note that we haven't yet called the object, but you can see that we're getting output in the form of the messages tidylog is posting in the console.
+
+I'll unload {tidylog} before continuing so it doesn't interfere with the other examples.
+
+```{r tidylog-unload}
+unloadNamespace("tidylog")
+```
+
+
+## {ViewPipeSteps}
+
+[The {ViewPipeSteps} package](https://github.com/daranzolin/ViewPipeSteps) allows you to inspect the data produced with each {dplyr} function call in your pipeline. It's equivalent to running `View()` for each of the steps in your pipeline without actually having to clutter up your script.
+
+This one's an RStudio add-in. You can choose to `print()` to console or `View()` each step in its own tab.
+
+```{r vps-example}
+iris_vps <- iris %>%
+  filter(Species %in% c("setosa", "versicolor")) %>% 
+  group_by(Species) %>% 
+  summarise(`Mean width` = mean(Sepal.Width)) %>% 
+  mutate(`Mean width` = round(`Mean width`, 1))
+```
+
+
+## {magrittr}
+
+https://magrittr.tidyverse.org/reference/debug_pipe.html
+
+```{r magrittr-example}
+library(magrittr)
+
+iris_pipe <- iris %>%
+  filter(Species %in% c("setosa", "versicolor")) %>% 
+  group_by(Species) %>% 
+  summarise(`Mean width` = mean(Sepal.Width)) %>% debug_pipe() %>% 
+  mutate(`Mean width` = round(`Mean width`, 1))
+```
+
+## {pipecleaner}
+
+devtools::install_github("alistaire47/pipecleaner")
+https://github.com/alistaire47/pipecleaner
+
+## {pipes}
+
+devtools::install_github("moodymudskipper/pipes")
+
+```{r pipes-example}
+library(pipes)
+
+iris_pipe <- iris %>%
+  filter(Species %in% c("setosa", "versicolor")) %>% 
+  group_by(Species) %>% 
+  summarise(`Mean width` = mean(Sepal.Width)) %V>%
+  mutate(`Mean width` = round(`Mean width`, 1))
+
+unloadNamespace("pipes")
+```
+
+## {tamper}
+
+devtools::install_github("gaborcsardi/tamper")
+https://github.com/gaborcsardi/tamper
+
+## Bizarro pipe
+
+We can hack our own 'operator' that acts like a pipe and can be run so that we can check what's happening at each step.
+
+It's [a 'Bizarro pipe'](http://www.win-vector.com/blog/2017/01/using-the-bizarro-pipe-to-debug-magrittr-pipelines-in-r/): `->.;`. What it's saying is 'right-assign to a dot and then perform the next operation'.
+
+Things you might be wondering:
+
+* yes, you can use a `->` for assignment
+* yes, you can assign to a `.`, but you'll need to explicitly supply it as the data argumnt to the next function call in your 'Bizarro pipeline'
+* yes, you can use semi-colons in R for run-on code execution (try `head(iris); tail(iris)`)
+
+So what? Well, you can exeute each line in turn and check the output. But wait: an object called `.` is not presented in the global environment. No, unless you check 'Show .Last.value in environment listing' in RStudio's settings. Now when you run the line you'll see the '.Last.value' that's been output.
+
+```{r bizarro-example}
+iris_bizarre <- iris ->.;
+  filter(., Species %in% c("setosa", "versicolor")) ->.;
+  group_by(., Species) ->.;
+  summarise(., `Mean width` = mean(Sepal.Width)) ->.;
+  mutate(., `Mean width` = round(`Mean width`, 1))
+```
+
+# Base R
+
+What was it like in the good old days?
+
 ## Intermediate objects
 
 In the first approach we make a series of intermediate objects, each created using a single function.
@@ -47,10 +198,11 @@ iris_filter <- filter(iris, Species %in% c("setosa", "versicolor"))
 iris_group <- group_by(iris_filter, Species)
 iris_mean <- summarise(iris_group, `Mean width` = mean(Sepal.Width))
 iris_mutate <- mutate(iris_mean, `Mean width` = round(`Mean width`, 1))
-print(iris_mutate)
+
+iris_mutate
 ```
 
-This seems sensible. You can create and interrogate these objects to make sure they do what you want. But this also makes your environment untidy because you have a bunch of halfway-house objects that may serve no standalone purpose beyond being passed into the next object. It could be tricky to keep track of these objects as they swell in your environment, particularly if they get labelled `temp1`, `temp2`, `temp3`, etc.[^past-matt]
+This seems sensible. You can create and interrogate these objects to make sure they do what you want. But this also makes your environment untidy because you have a bunch of halfway-house objects that may serve no standalone purpose beyond being passed into the next object. It could be tricky to keep track of these objects as they swell in your environment, particularly if they get labelled `temp1`, `temp2`, `temp3`, etc.[^past-matt]  
 
 ## Onions
 
@@ -68,65 +220,12 @@ iris_onion <-
     ),
     `Mean width` = round(`Mean width`, 1)
   )
+
+iris_onion
 ```
 
 I've called this the onion method. Why? Because it's made up of multiple layers. And it makes you cry a bit to look at it.
 
-## Pipes
 
-With the pipe paradigm, the thing you make on the left-hand side of the pipe is passed to the right until the end. You can chain functions together cleanly in the order that the operations occur. 
-
-```{r pipe}
-iris_pipe <- iris %>%
-  filter(Species %in% c("setosa", "versicolor")) %>% 
-  group_by(Species) %>% 
-  summarise(`Mean width` = mean(Sepal.Width)) %>% 
-  mutate(`Mean width` = round(`Mean width`, 1))
-print(iris_mean)
-```
-
-This method is more readable than the classic approaches. It doesn't have to repeat the data object in each call like the intermediate-objects approach and it is far more readable than the onion method.
-
-So what's the problem? It's been suggested that the approach obscures the manipulations and doesn't allow you to interrogate what's happening to your dataset after each function call.
-
-<blockquote class="twitter-tweet" data-lang="en"><p lang="en" dir="ltr">Method chaining when doing data analysis can be both a good and bad idea depending on when it is done and who is doing it. When first exploring the data, it makes verifying results difficult. Beginners should almost never do it either.</p>&mdash; Ted Petrou (@TedPetrou) <a href="https://twitter.com/TedPetrou/status/1109519764613787648?ref_src=twsrc%5Etfw">March 23, 2019</a></blockquote>
-<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
-
-I would argue that you should be checking your data object as you program interactively and this shouldn't be a problem; you don't just create one bug pipeline all in one go without checking as you add each function. But let's say I haven't been checking my code as I build my pipeline. How can I assure myself that each step has impacted the data as I wanted it to?
-
-# Debug pipes
-
-```{r packages}
-library(tidylog)
-library(tamper)
-library(ViewPipeSteps)
-```
-
-## {tidylog}
-
-install.packages("tidylog")
-https://github.com/elbersb/tidylog
-
-## {pipecleaner}
-
-devtools::install_github("alistaire47/pipecleaner")
-https://github.com/alistaire47/pipecleaner
-
-## {magrittr}
-
-https://magrittr.tidyverse.org/reference/debug_pipe.html
-
-## {tamper}
-
-devtools::install_github("gaborcsardi/tamper")
-https://github.com/gaborcsardi/tamper
-
-## {ViewPipeSteps}
-
-https://github.com/daranzolin/ViewPipeSteps
-
-## Bizarro pipe
-
-http://www.win-vector.com/blog/2017/01/using-the-bizarro-pipe-to-debug-magrittr-pipelines-in-r/
 
 [^past-matt]: I'm looking at you, past-Matt!
