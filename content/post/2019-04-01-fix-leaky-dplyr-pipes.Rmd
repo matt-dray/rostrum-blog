@@ -16,69 +16,47 @@ draft: yes
 
 Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
 
-# TL;DR
+## C'est un pipe
 
-There are lots of ways to debug a pipe.
+The `%>%` (pipe) operator lets you chain function calls. Stefan Milton Bache made it to 'decrease development time and to improve readability and maintainability of code'.[^vignette]
 
-# The pipe
-
-The pipe operator, `%>%`, chains function calls together into 'pipelines', which
-
->semantically changes your code in a way that makes it more intuitive to both read and write
-
-The {magrittr} package brought this paradigm to R and has been adopted by the wildly popular packages of the tidyverse. Pipes have changed fundamentally how people interact with the R programming language. 
-
-# Examples
-
-Let's look at three approaches to some simple data manipulation using (1) intermediate objects, (2) nested functions and (3) pipelines. The first two I'm 'classic approaches'. Let's say I want the mean sepal width of the setosa and versicolor species of iris and round it to one decimal place.
-
-Since this post is about coding style and not 'base R versus the tidyverse', it doesn't matter what functions I use to actually do the data manipulation. I'm using {dplyr} here to make the comparisons easier and because it loads the pipe operator.
-
-```{r dplyr}
-suppressPackageStartupMessages(library(dplyr))
-```
-
-## Pipes
-
-With the pipe paradigm, the thing you make on the left-hand side of the pipe is passed to the right until the end. You can chain functions together cleanly in the order that the operations occur. 
+Voilà.
 
 ```{r pipeline-example}
+# {dplyr} for data manipulation and to load pipe
+suppressPackageStartupMessages(library(dplyr))
+
+# Get mean sepal width for two iris species
 iris_pipe <- iris %>%
   filter(Species %in% c("setosa", "versicolor")) %>% 
   group_by(Species) %>% 
   summarise(`Mean width` = mean(Sepal.Width)) %>% 
   mutate(`Mean width` = round(`Mean width`, 1))
 
+# Print
 iris_pipe
 ```
 
-This method is more readable than the classic approaches. It doesn't have to repeat the data object in each call like the intermediate-objects approach and it is far more readable than the onion method.
+# Ce n'est pas debuggable?
 
-So what's the problem? It's been suggested that the approach obscures the manipulations and doesn't allow you to interrogate what's happening to your dataset after each function call.
+[Some are critical of this approach](https://twitter.com/TedPetrou/status/1109519764613787648?ref_src=twsrc%5Etfw). Long pipes obscure operations and make debugging hard.
 
-<blockquote class="twitter-tweet" data-lang="en"><p lang="en" dir="ltr">Method chaining when doing data analysis can be both a good and bad idea depending on when it is done and who is doing it. When first exploring the data, it makes verifying results difficult. Beginners should almost never do it either.</p>&mdash; Ted Petrou (@TedPetrou) <a href="https://twitter.com/TedPetrou/status/1109519764613787648?ref_src=twsrc%5Etfw">March 23, 2019</a></blockquote>
-<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+This post summarises some solutions. This table summarises it even more.
 
-I would argue that you should be checking your data object as you program interactively and this shouldn't be a problem; you don't just create one bug pipeline all in one go without checking as you add each function.
 
-But let's say I haven't been checking my code as I build my pipeline. How can I assure myself that each step has impacted the data as I wanted it to?
+| Package             | Shtick                                              | View     | Print    | Debug    |
+| :------------------ | :-------------------------------------------------- | :------- | :------- | :------- |
+| {tidylog}           | Prints human-readble results of each step           | &#10004; | &#10004; | &#10008; |
+| {ViewPipeSteps}     | RStudio addin to reveal changes to data             | &#10004; | &#10004; | &#10008; |
+| {pipecleaner}       | RStudio debug addin; helps 'burst' pipes            | &#10008; | &#10008; | &#10004; |
+| {pipes}             | Operators for special assignment                    | &#10004; | &#10004; | &#10004; |
+| {magrittr}          | `debug_pipe()` function                             | &#10004; | &#10004; | &#10004; |
+| {tamper} (archived) | Stack trace replacement for pipe debugging          | &#10008; | &#10008; | &#10004; |
+| [Bizarro pipe]      | Replace `%>%` with `->.;` and observe `.Last.level` | &#10008; | &#10008; | &#10008; |
 
-# Checking for leaks
+# Fix the leaks
 
-## Be sensible
 
-Of course, the simplest answer is to break your pipelines into smaller sensibly-sized objects and inspect them as you go.
-
-How many objects? That depends on what you're doing. Maybe two for our example (1) filtering for species and (2) calculating the mean. In fact, we may want to perform other operations on the filtered data, so it makes sense to keep it in memory.
-
-```{r sensible-pipes}
-filter_step <- filter(iris, Species %in% c("setosa", "versicolor"))
-  
-summarise_step <- filter_step %>% 
-  group_by(Species) %>% 
-  summarise(`Mean width` = mean(Sepal.Width)) %>% 
-  mutate(`Mean width` = round(`Mean width`, 1))
-```
 
 ## {tidylog}
 
@@ -185,47 +163,82 @@ iris_bizarre <- iris ->.;
   mutate(., `Mean width` = round(`Mean width`, 1))
 ```
 
-# Base R
 
-What was it like in the good old days?
+<!-- ## Be sensible -->
 
-## Intermediate objects
+<!-- Of course, the simplest answer is to break your pipelines into smaller sensibly-sized objects and inspect them as you go. -->
 
-In the first approach we make a series of intermediate objects, each created using a single function.
+<!-- How many objects? That depends on what you're doing. Maybe two for our example (1) filtering for species and (2) calculating the mean. In fact, we may want to perform other operations on the filtered data, so it makes sense to keep it in memory. -->
 
-```{r intermediate-objects}
-iris_filter <- filter(iris, Species %in% c("setosa", "versicolor"))
-iris_group <- group_by(iris_filter, Species)
-iris_mean <- summarise(iris_group, `Mean width` = mean(Sepal.Width))
-iris_mutate <- mutate(iris_mean, `Mean width` = round(`Mean width`, 1))
+<!-- ```{r sensible-pipes} -->
+<!-- filter_step <- filter(iris, Species %in% c("setosa", "versicolor")) -->
 
-iris_mutate
-```
-
-This seems sensible. You can create and interrogate these objects to make sure they do what you want. But this also makes your environment untidy because you have a bunch of halfway-house objects that may serve no standalone purpose beyond being passed into the next object. It could be tricky to keep track of these objects as they swell in your environment, particularly if they get labelled `temp1`, `temp2`, `temp3`, etc.[^past-matt]  
-
-## Onions
-
-We can do away with all the intermediate steps by nesting the functions inside each other so that functions are applied to the layer below them.
-
-```{r onion}
-iris_onion <-
-  mutate(
-    summarise(
-      group_by(
-        filter(iris, Species %in% c("setosa", "versicolor")),
-        Species
-      ),
-      `Mean width` = mean(Sepal.Width)
-    ),
-    `Mean width` = round(`Mean width`, 1)
-  )
-
-iris_onion
-```
-
-I've called this the onion method. Why? Because it's made up of multiple layers. And it makes you cry a bit to look at it.
+<!-- summarise_step <- filter_step %>%  -->
+<!--   group_by(Species) %>%  -->
+<!--   summarise(`Mean width` = mean(Sepal.Width)) %>%  -->
+<!--   mutate(`Mean width` = round(`Mean width`, 1)) -->
+<!-- ``` -->
 
 
+<!-- # Base R -->
 
-[^past-matt]: I'm looking at you, past-Matt!
+<!-- What was it like in the good old days? -->
+
+<!-- ## Intermediate objects -->
+
+<!-- In the first approach we make a series of intermediate objects, each created using a single function. -->
+
+<!-- ```{r intermediate-objects} -->
+<!-- iris_filter <- filter(iris, Species %in% c("setosa", "versicolor")) -->
+<!-- iris_group <- group_by(iris_filter, Species) -->
+<!-- iris_mean <- summarise(iris_group, `Mean width` = mean(Sepal.Width)) -->
+<!-- iris_mutate <- mutate(iris_mean, `Mean width` = round(`Mean width`, 1)) -->
+
+<!-- iris_mutate -->
+<!-- ``` -->
+
+<!-- This seems sensible. You can create and interrogate these objects to make sure they do what you want. But this also makes your environment untidy because you have a bunch of halfway-house objects that may serve no standalone purpose beyond being passed into the next object. It could be tricky to keep track of these objects as they swell in your environment, particularly if they get labelled `temp1`, `temp2`, `temp3`, etc.[^past-matt]   -->
+
+<!-- ## Onions -->
+
+<!-- We can do away with all the intermediate steps by nesting the functions inside each other so that functions are applied to the layer below them. -->
+
+<!-- ```{r onion} -->
+<!-- iris_onion <- -->
+<!--   mutate( -->
+<!--     summarise( -->
+<!--       group_by( -->
+<!--         filter(iris, Species %in% c("setosa", "versicolor")), -->
+<!--         Species -->
+<!--       ), -->
+<!--       `Mean width` = mean(Sepal.Width) -->
+<!--     ), -->
+<!--     `Mean width` = round(`Mean width`, 1) -->
+<!--   ) -->
+
+<!-- iris_onion -->
+<!-- ``` -->
+
+<!-- I've called this the onion method. Why? Because it's made up of multiple layers. And it makes you cry a bit to look at it. -->
+
+
+<!-- # The pipe -->
+
+<!-- The pipe operator, `%>%`, chains function calls together into 'pipelines', which -->
+
+<!-- >semantically changes your code in a way that makes it more intuitive to both read and write -->
+
+<!-- The {magrittr} package brought this paradigm to R and has been adopted by the wildly popular packages of the tidyverse. Pipes have changed fundamentally how people interact with the R programming language.  -->
+
+<!-- # Examples -->
+
+<!-- Let's look at three approaches to some simple data manipulation using (1) intermediate objects, (2) nested functions and (3) pipelines. The first two I'm 'classic approaches'. Let's say I want the mean sepal width of the setosa and versicolor species of iris and round it to one decimal place. -->
+
+<!-- Since this post is about coding style and not 'base R versus the tidyverse', it doesn't matter what functions I use to actually do the data manipulation. I'm using {dplyr} here to make the comparisons easier and because it loads the pipe operator. -->
+
+<!-- ```{r dplyr} -->
+<!-- suppressPackageStartupMessages(library(dplyr)) -->
+<!-- ``` -->
+
+[^vignette]: Or as [the {magrittr} vignette](https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html) puts it: "to make your code smokin' (puff puff)"
+[^past-matt]: I'm looking at you, past-self.
