@@ -14,6 +14,22 @@ tags:
 draft: yes
 ---
 
+---
+title: Fix leaky {dplyr} pipes
+author: Matt Dray
+date: '2019-04-01'
+slug: fix-leaky-dplyr-pipes
+categories:
+  - R
+tags:
+  - dplyr
+  - tidylog
+  - pipecleaner
+  - magrittr
+  - tidyverse
+draft: yes
+---
+
 
 
 <p>Matt Dray (<a href="https://www.twitter.com/mattdray">@mattdray</a>)</p>
@@ -41,7 +57,7 @@ iris_pipe</code></pre>
 </div>
 <div id="ce-nest-pas-debuggable" class="section level1">
 <h1>Ce n’est pas debuggable?</h1>
-<p><a href="https://twitter.com/TedPetrou/status/1109519764613787648?ref_src=twsrc%5Etfw">Some are critical of this approach</a>. Long pipes obscure operations and make debugging hard.</p>
+<p><a href="https://twitter.com/TedPetrou/status/1109519764613787648?ref_src=twsrc%5Etfw">Some are critical of this approach</a>. Long pipes obscure what’s happened to your data and make debugging hard.</p>
 <p>This post summarises some solutions. This table summarises it even more.</p>
 <table>
 <thead>
@@ -106,13 +122,18 @@ iris_pipe</code></pre>
 </tbody>
 </table>
 </div>
+<div id="ce-nest-pas-une-probleme" class="section level1">
+<h1>Ce n’est pas une probleme?</h1>
+<p>To be clear, I think most people create pipes interactively and check their outputs at each step.</p>
+<p>You could also make sensibly-lengthed pipes that reflect a ‘unit’ of wrangling. Perhaps objects for the raw data as read-in, a reshaped version, one with cleaned columns, and another containing the model. You can then interrogate these easily.</p>
+<p>Nevertheless.</p>
+</div>
 <div id="fix-the-leaks" class="section level1">
 <h1>Fix the leaks</h1>
 <div id="tidylog" class="section level2">
 <h2>{tidylog}</h2>
-<p><a href="https://github.com/elbersb/tidylog">The {tidylog} package</a> prints to the console the changes that have happened to your data after each {dplyr} step. This means you can check that each step occurred as expected without having to run one line at a time.</p>
-<pre class="r"><code>library(dplyr)
-library(tidylog)  # must be loaded after dplyr</code></pre>
+<p><a href="https://github.com/elbersb/tidylog">The {tidylog} package</a> prints to the console the changes that have happened to your data after each {dplyr} step. You don’t need to stop and print at every step.</p>
+<pre class="r"><code>library(tidylog)  # must be loaded after dplyr</code></pre>
 <pre><code>## 
 ## Attaching package: &#39;tidylog&#39;</code></pre>
 <pre><code>## The following objects are masked from &#39;package:dplyr&#39;:
@@ -129,50 +150,64 @@ library(tidylog)  # must be loaded after dplyr</code></pre>
 <pre><code>## The following object is masked from &#39;package:stats&#39;:
 ## 
 ##     filter</code></pre>
-<p>You can see from the output that {tidylog} is masking every {dplyr} functions. It’s hijacking them so you can get output like the following:</p>
+<p>You can see {tidylog} masks the {dplyr} functions to print a human-readable summary sentence.</p>
 <pre class="r"><code>iris_pipe &lt;- iris %&gt;%
-  filter(Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;)) %&gt;% 
-  group_by(Species) %&gt;% 
+  filter(Species %in% c(&quot;nope&quot;, &quot;uh-uh&quot;)) %&gt;% 
+  group_by(Sepal.Width) %&gt;% 
   summarise(`Mean width` = mean(Sepal.Width)) %&gt;% 
   mutate(`Mean width` = round(`Mean width`, 1))</code></pre>
-<pre><code>## filter: removed 50 out of 150 rows (33%)</code></pre>
-<pre><code>## group_by: one grouping variable (Species)</code></pre>
-<pre><code>## summarise: now 2 rows and 2 columns, ungrouped</code></pre>
-<pre><code>## mutate: changed 2 values (100%) of &#39;Mean width&#39; (0 new NA)</code></pre>
-<p>Note that we haven’t yet called the object, but you can see that we’re getting output in the form of the messages tidylog is posting in the console.</p>
+<pre><code>## filter: removed all rows (100%)</code></pre>
+<pre><code>## group_by: one grouping variable (Sepal.Width)</code></pre>
+<pre><code>## summarise: now 0 rows and 2 columns, ungrouped</code></pre>
+<pre><code>## mutate: no changes</code></pre>
+<p>Did you spot the error? I filtered for species that don’t exist in the dataset, so I <code>removed all rows (100%)</code> in the first step.</p>
 <p>I’ll unload {tidylog} before continuing so it doesn’t interfere with the other examples.</p>
 <pre class="r"><code>unloadNamespace(&quot;tidylog&quot;)</code></pre>
 </div>
 <div id="viewpipesteps" class="section level2">
 <h2>{ViewPipeSteps}</h2>
-<p><a href="https://github.com/daranzolin/ViewPipeSteps">The {ViewPipeSteps} package</a> allows you to inspect the data produced with each {dplyr} function call in your pipeline. It’s equivalent to running <code>View()</code> for each of the steps in your pipeline without actually having to clutter up your script.</p>
-<p>This one’s an RStudio add-in. You can choose to <code>print()</code> to console or <code>View()</code> each step in its own tab.</p>
-<pre class="r"><code>iris_vps &lt;- iris %&gt;%
-  filter(Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;)) %&gt;% 
-  group_by(Species) %&gt;% 
-  summarise(`Mean width` = mean(Sepal.Width)) %&gt;% 
-  mutate(`Mean width` = round(`Mean width`, 1))</code></pre>
-</div>
-<div id="magrittr" class="section level2">
-<h2>{magrittr}</h2>
-<p><a href="https://magrittr.tidyverse.org/reference/debug_pipe.html" class="uri">https://magrittr.tidyverse.org/reference/debug_pipe.html</a></p>
-<pre class="r"><code>library(magrittr)
-
-iris_pipe &lt;- iris %&gt;%
-  filter(Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;)) %&gt;% 
-  group_by(Species) %&gt;% 
-  summarise(`Mean width` = mean(Sepal.Width)) %&gt;% debug_pipe() %&gt;% 
-  mutate(`Mean width` = round(`Mean width`, 1))</code></pre>
-<pre><code>## Called from: debug_pipe(.)
-## debug: x</code></pre>
+<p><a href="https://github.com/daranzolin/ViewPipeSteps">The {ViewPipeSteps} package</a> is an RStudio add-in. Select ‘View/Print Pipe Chain Steps’ form the add-ins menu.</p>
+<p>Basically it runs <code>View()</code> or <code>print()</code> for each of the steps in your pipeline so you can see the the data. This is different to the summary sentence you get from {tidylog}, for example.</p>
 </div>
 <div id="pipecleaner" class="section level2">
 <h2>{pipecleaner}</h2>
-<p>devtools::install_github(“alistaire47/pipecleaner”)
-<a href="https://github.com/alistaire47/pipecleaner" class="uri">https://github.com/alistaire47/pipecleaner</a></p>
+<p><a href="https://github.com/alistaire47/pipecleaner">The {pipecleaner} package</a> is an RStudio addin. It has the best name. It’s not on CRAN, so install with:</p>
+<pre class="r"><code>devtools::install_github(&quot;alistaire47/pipecleaner&quot;)</code></pre>
+<pre><code>## Skipping install of &#39;pipecleaner&#39; from a github remote, the SHA1 (78e286d8) has not changed since last install.
+##   Use `force = TRUE` to force installation</code></pre>
+<p>You highlight your code and select ‘Debug pipeline’ from the Addins menu. The function does two things: first it ‘bursts’ your pipes (nice analogy) by breaking the pipeline into intermediate objects, one for each function that’s contained within it. The interactive debug menu is then opened so you can execute your code step-by-step, see the results and perform other debug operations.</p>
+<pre class="r"><code># Intact
+iris_pipe &lt;- iris %&gt;%
+  filter(Species %in% c(&quot;nope&quot;, &quot;uh-uh&quot;)) %&gt;% 
+  group_by(Sepal.Width) %&gt;% 
+  summarise(`Mean width` = mean(Sepal.Width)) %&gt;% 
+  mutate(`Mean width` = round(`Mean width`, 1))
+
+# Burst
+dot1 &lt;- filter(iris, Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;))
+dot2 &lt;- group_by(dot1, Species)
+dot3 &lt;- summarise(dot2, `Mean width` = mean(Sepal.Width))
+iris_pipe &lt;- mutate(dot3, `Mean width` = round(`Mean width`,1))</code></pre>
+<p>You can choose ‘Burst pipes’ from the Addins menu without entering debug mode.</p>
+</div>
+<div id="magrittr" class="section level2">
+<h2>{magrittr}</h2>
+<p><a href="https://magrittr.tidyverse.org/reference/debug_pipe.html">The {magrittr} package</a> has its own <code>debug_pipe()</code> function that takes you into debug mode.</p>
+<pre class="r"><code>library(magrittr)
+
+test &lt;- iris %&gt;%
+  filter(Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;)) %&gt;%
+  group_by(Species) %&gt;% 
+  summarise(`Mean width` = mean(Sepal.Width)) %&gt;% 
+  mutate(`Mean width` = round(`Mean width`, 1)) %&gt;% debug_pipe</code></pre>
+<pre><code>## Called from: debug_pipe(.)
+## debug: x</code></pre>
+<!-- TODO: below -->
 </div>
 <div id="pipes" class="section level2">
 <h2>{pipes}</h2>
+<p>There’s a few special operators in the {magrittr} package beyond <code>%&gt;%</code>. For example, the <code>%T&gt;%</code> (tee) operator outputs the original value, not the result of it.</p>
+<p>X developed the {pipes} package to supply a bunch of other <code>%&gt;%</code>-inspired operators.</p>
 <p>devtools::install_github(“moodymudskipper/pipes”)</p>
 <pre class="r"><code>library(pipes)</code></pre>
 <pre><code>## 
@@ -217,17 +252,8 @@ unloadNamespace(&quot;pipes&quot;)</code></pre>
 ##   &lt;fct&gt;             &lt;dbl&gt;
 ## 1 setosa              3.4
 ## 2 versicolor          2.8</code></pre>
-<!-- ## Be sensible -->
-<!-- Of course, the simplest answer is to break your pipelines into smaller sensibly-sized objects and inspect them as you go. -->
-<!-- How many objects? That depends on what you're doing. Maybe two for our example (1) filtering for species and (2) calculating the mean. In fact, we may want to perform other operations on the filtered data, so it makes sense to keep it in memory. -->
-<!-- ```{r sensible-pipes} -->
-<!-- filter_step <- filter(iris, Species %in% c("setosa", "versicolor")) -->
-<!-- summarise_step <- filter_step %>%  -->
-<!--   group_by(Species) %>%  -->
-<!--   summarise(`Mean width` = mean(Sepal.Width)) %>%  -->
-<!--   mutate(`Mean width` = round(`Mean width`, 1)) -->
-<!-- ``` -->
-<!-- # Base R -->
+<p><a href="https://r4ds.had.co.nz/pipes.html" class="uri">https://r4ds.had.co.nz/pipes.html</a></p>
+<!-- # I prefer cigars -->
 <!-- What was it like in the good old days? -->
 <!-- ## Intermediate objects -->
 <!-- In the first approach we make a series of intermediate objects, each created using a single function. -->
