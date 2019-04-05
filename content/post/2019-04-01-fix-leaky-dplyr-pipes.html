@@ -14,22 +14,6 @@ tags:
 draft: yes
 ---
 
----
-title: Fix leaky {dplyr} pipes
-author: Matt Dray
-date: '2019-04-01'
-slug: fix-leaky-dplyr-pipes
-categories:
-  - R
-tags:
-  - dplyr
-  - tidylog
-  - pipecleaner
-  - magrittr
-  - tidyverse
-draft: yes
----
-
 
 
 <p>Matt Dray (<a href="https://www.twitter.com/mattdray">@mattdray</a>)</p>
@@ -63,61 +47,69 @@ iris_pipe</code></pre>
 <thead>
 <tr class="header">
 <th align="left">Package</th>
-<th align="left">Shtick</th>
-<th align="left">View</th>
-<th align="left">Print</th>
-<th align="left">Debug</th>
+<th align="left">Description</th>
+<th align="center">Message</th>
+<th align="center">View</th>
+<th align="center">Print</th>
+<th align="center">Debug</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td align="left">{tidylog}</td>
-<td align="left">Prints human-readble results of each step</td>
-<td align="left">✔</td>
-<td align="left">✔</td>
-<td align="left">✘</td>
+<td align="left">Console-printed description of changes</td>
+<td align="center">✔</td>
+<td align="center">✘</td>
+<td align="center">✘</td>
+<td align="center">✘</td>
 </tr>
 <tr class="even">
 <td align="left">{ViewPipeSteps}</td>
-<td align="left">RStudio addin to reveal changes to data</td>
-<td align="left">✔</td>
-<td align="left">✔</td>
-<td align="left">✘</td>
+<td align="left">RStudio addin: see changes to dataset per step</td>
+<td align="center">✘</td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+<td align="center">✘</td>
 </tr>
 <tr class="odd">
 <td align="left">{pipecleaner}</td>
-<td align="left">RStudio debug addin; helps ‘burst’ pipes</td>
-<td align="left">✘</td>
-<td align="left">✘</td>
-<td align="left">✔</td>
+<td align="left">RStudio addin: ‘burst’ pipes and debug</td>
+<td align="center">✘</td>
+<td align="center">✘</td>
+<td align="center">✘</td>
+<td align="center">✔</td>
 </tr>
 <tr class="even">
 <td align="left">{pipes}</td>
-<td align="left">Operators for special assignment</td>
-<td align="left">✔</td>
-<td align="left">✔</td>
-<td align="left">✔</td>
+<td align="left">Special assignment operators</td>
+<td align="center">✘</td>
+<td align="center">✔</td>
+<td align="center">✔</td>
+<td align="center">✔</td>
 </tr>
 <tr class="odd">
 <td align="left">{magrittr}</td>
 <td align="left"><code>debug_pipe()</code> function</td>
-<td align="left">✔</td>
-<td align="left">✔</td>
-<td align="left">✔</td>
+<td align="center">✘</td>
+<td align="center">✘</td>
+<td align="center">✘</td>
+<td align="center">✔</td>
 </tr>
 <tr class="even">
-<td align="left">{tamper} (archived)</td>
+<td align="left">{tamper}</td>
 <td align="left">Stack trace replacement for pipe debugging</td>
-<td align="left">✘</td>
-<td align="left">✘</td>
-<td align="left">✔</td>
+<td align="center">✔</td>
+<td align="center">✘</td>
+<td align="center">✘</td>
+<td align="center">✔</td>
 </tr>
 <tr class="odd">
-<td align="left"><a href="#bizarro-pipe">Bizarro pipe</a></td>
+<td align="left">Bizarro pipe</td>
 <td align="left">Replace <code>%&gt;%</code> with <code>-&gt;.;</code> and observe <code>.Last.level</code></td>
-<td align="left">✘</td>
-<td align="left">✘</td>
-<td align="left">✘</td>
+<td align="center">✘</td>
+<td align="center">✘</td>
+<td align="center">✘</td>
+<td align="center">✘</td>
 </tr>
 </tbody>
 </table>
@@ -130,6 +122,10 @@ iris_pipe</code></pre>
 </div>
 <div id="fix-the-leaks" class="section level1">
 <h1>Fix the leaks</h1>
+</div>
+<div id="quoi" class="section level1">
+<h1>Quoi?</h1>
+<p>Packages for seeing what happened to your dataset, rather than highlighting where the problem was.</p>
 <div id="tidylog" class="section level2">
 <h2>{tidylog}</h2>
 <p><a href="https://github.com/elbersb/tidylog">The {tidylog} package</a> prints to the console the changes that have happened to your data after each {dplyr} step. You don’t need to stop and print at every step.</p>
@@ -152,7 +148,7 @@ iris_pipe</code></pre>
 ##     filter</code></pre>
 <p>You can see {tidylog} masks the {dplyr} functions to print a human-readable summary sentence.</p>
 <pre class="r"><code>iris_pipe &lt;- iris %&gt;%
-  filter(Species %in% c(&quot;nope&quot;, &quot;uh-uh&quot;)) %&gt;% 
+  filter(Species %in% c(&quot;cycliophora&quot;, &quot;onychophora&quot;)) %&gt;% 
   group_by(Sepal.Width) %&gt;% 
   summarise(`Mean width` = mean(Sepal.Width)) %&gt;% 
   mutate(`Mean width` = round(`Mean width`, 1))</code></pre>
@@ -160,76 +156,14 @@ iris_pipe</code></pre>
 <pre><code>## group_by: one grouping variable (Sepal.Width)</code></pre>
 <pre><code>## summarise: now 0 rows and 2 columns, ungrouped</code></pre>
 <pre><code>## mutate: no changes</code></pre>
-<p>Did you spot the error? I filtered for species that don’t exist in the dataset, so I <code>removed all rows (100%)</code> in the first step.</p>
+<p>Did you spot the error? I filtered for species<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> that don’t exist in the dataset, which was reported as <code>removed all rows (100%)</code> in the first step. That’s a big problem I might have missed if I wasn’t paying attention.</p>
 <p>I’ll unload {tidylog} before continuing so it doesn’t interfere with the other examples.</p>
 <pre class="r"><code>unloadNamespace(&quot;tidylog&quot;)</code></pre>
 </div>
 <div id="viewpipesteps" class="section level2">
 <h2>{ViewPipeSteps}</h2>
 <p><a href="https://github.com/daranzolin/ViewPipeSteps">The {ViewPipeSteps} package</a> is an RStudio add-in. Select ‘View/Print Pipe Chain Steps’ form the add-ins menu.</p>
-<p>Basically it runs <code>View()</code> or <code>print()</code> for each of the steps in your pipeline so you can see the the data. This is different to the summary sentence you get from {tidylog}, for example.</p>
-</div>
-<div id="pipecleaner" class="section level2">
-<h2>{pipecleaner}</h2>
-<p><a href="https://github.com/alistaire47/pipecleaner">The {pipecleaner} package</a> is an RStudio addin. It has the best name. It’s not on CRAN, so install with:</p>
-<pre class="r"><code>devtools::install_github(&quot;alistaire47/pipecleaner&quot;)</code></pre>
-<pre><code>## Skipping install of &#39;pipecleaner&#39; from a github remote, the SHA1 (78e286d8) has not changed since last install.
-##   Use `force = TRUE` to force installation</code></pre>
-<p>You highlight your code and select ‘Debug pipeline’ from the Addins menu. The function does two things: first it ‘bursts’ your pipes (nice analogy) by breaking the pipeline into intermediate objects, one for each function that’s contained within it. The interactive debug menu is then opened so you can execute your code step-by-step, see the results and perform other debug operations.</p>
-<pre class="r"><code># Intact
-iris_pipe &lt;- iris %&gt;%
-  filter(Species %in% c(&quot;nope&quot;, &quot;uh-uh&quot;)) %&gt;% 
-  group_by(Sepal.Width) %&gt;% 
-  summarise(`Mean width` = mean(Sepal.Width)) %&gt;% 
-  mutate(`Mean width` = round(`Mean width`, 1))
-
-# Burst
-dot1 &lt;- filter(iris, Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;))
-dot2 &lt;- group_by(dot1, Species)
-dot3 &lt;- summarise(dot2, `Mean width` = mean(Sepal.Width))
-iris_pipe &lt;- mutate(dot3, `Mean width` = round(`Mean width`,1))</code></pre>
-<p>You can choose ‘Burst pipes’ from the Addins menu without entering debug mode.</p>
-</div>
-<div id="magrittr" class="section level2">
-<h2>{magrittr}</h2>
-<p><a href="https://magrittr.tidyverse.org/reference/debug_pipe.html">The {magrittr} package</a> has its own <code>debug_pipe()</code> function that takes you into debug mode.</p>
-<pre class="r"><code>library(magrittr)
-
-test &lt;- iris %&gt;%
-  filter(Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;)) %&gt;%
-  group_by(Species) %&gt;% 
-  summarise(`Mean width` = mean(Sepal.Width)) %&gt;% 
-  mutate(`Mean width` = round(`Mean width`, 1)) %&gt;% debug_pipe</code></pre>
-<pre><code>## Called from: debug_pipe(.)
-## debug: x</code></pre>
-<!-- TODO: below -->
-</div>
-<div id="pipes" class="section level2">
-<h2>{pipes}</h2>
-<p>There’s a few special operators in the {magrittr} package beyond <code>%&gt;%</code>. For example, the <code>%T&gt;%</code> (tee) operator outputs the original value, not the result of it.</p>
-<p>X developed the {pipes} package to supply a bunch of other <code>%&gt;%</code>-inspired operators.</p>
-<p>devtools::install_github(“moodymudskipper/pipes”)</p>
-<pre class="r"><code>library(pipes)</code></pre>
-<pre><code>## 
-## Attaching package: &#39;pipes&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:magrittr&#39;:
-## 
-##     %&lt;&gt;%, %&gt;%, %$%, %T&gt;%, freduce</code></pre>
-<pre><code>## The following object is masked from &#39;package:dplyr&#39;:
-## 
-##     %&gt;%</code></pre>
-<pre class="r"><code>iris_pipe &lt;- iris %&gt;%
-  filter(Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;)) %&gt;% 
-  group_by(Species) %&gt;% 
-  summarise(`Mean width` = mean(Sepal.Width)) %V&gt;%
-  mutate(`Mean width` = round(`Mean width`, 1))
-
-unloadNamespace(&quot;pipes&quot;)</code></pre>
-</div>
-<div id="tamper" class="section level2">
-<h2>{tamper}</h2>
-<p>devtools::install_github(“gaborcsardi/tamper”)
-<a href="https://github.com/gaborcsardi/tamper" class="uri">https://github.com/gaborcsardi/tamper</a></p>
+<p>Basically it runs <code>View()</code> or <code>print()</code> for each of the steps in your pipeline so you can see the the data. It’s like running <code>View()</code> at the end of each step in your pipeline.</p>
 </div>
 <div id="bizarro-pipe" class="section level2">
 <h2>Bizarro pipe</h2>
@@ -252,6 +186,105 @@ unloadNamespace(&quot;pipes&quot;)</code></pre>
 ##   &lt;fct&gt;             &lt;dbl&gt;
 ## 1 setosa              3.4
 ## 2 versicolor          2.8</code></pre>
+</div>
+</div>
+<div id="ou" class="section level1">
+<h1>Ou?</h1>
+<p>Packages that help highlight where the problem occurred. A few of these take you to the <a href="https://support.rstudio.com/hc/en-us/articles/205612627-Debugging-with-RStudio">interactive debug menu</a> in RStudio, which is worth reading up on.</p>
+<div id="magrittr" class="section level2">
+<h2>{magrittr}</h2>
+<p><a href="https://magrittr.tidyverse.org/reference/debug_pipe.html">The {magrittr} package</a>, the origin for <code>%&gt;%</code>, has its own <code>debug_pipe()</code> function baked in. Chaining it will take you into the interactive debug mode.</p>
+<pre class="r"><code>library(magrittr)
+
+test &lt;- iris %&gt;%
+  filter(Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;)) %&gt;%
+  group_by(Species) %&gt;% 
+  summarise(`Mean width` = mean(Sepal.Width)) %&gt;% 
+  mutate(`Mean width` = round(`Mean width`, 1)) %&gt;% debug_pipe()</code></pre>
+<pre><code>## Called from: debug_pipe(.)
+## debug: x</code></pre>
+</div>
+<div id="pipecleaner" class="section level2">
+<h2>{pipecleaner}</h2>
+<p><a href="https://github.com/alistaire47/pipecleaner">The {pipecleaner} package</a> is an RStudio addin. It has the best name. It’s not on CRAN, so install with:</p>
+<pre class="r"><code>devtools::install_github(&quot;alistaire47/pipecleaner&quot;)</code></pre>
+<pre><code>## Skipping install of &#39;pipecleaner&#39; from a github remote, the SHA1 (78e286d8) has not changed since last install.
+##   Use `force = TRUE` to force installation</code></pre>
+<p>You highlight your code and select ‘Debug pipeline’ from the Addins menu. The function does two things: first it ‘bursts’ your pipes (nice analogy) by breaking the pipeline into intermediate objects, one for each function that’s contained within it. The interactive debug menu is then opened so you can execute your code step-by-step, see the results and perform other debug operations.</p>
+<pre class="r"><code># Install with
+# devtools::install_github(&quot;alistaire47/pipecleaner&quot;)
+
+# Intact, original pipeline
+iris_pipe &lt;- iris %&gt;%
+  filter(Species %in% c(&quot;nope&quot;, &quot;uh-uh&quot;)) %&gt;% 
+  group_by(Sepal.Width) %&gt;% 
+  summarise(`Mean width` = mean(Sepal.Width)) %&gt;% 
+  mutate(`Mean width` = round(`Mean width`, 1))
+
+# After &#39;bursting&#39; with the addin
+dot1 &lt;- filter(iris, Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;))
+dot2 &lt;- group_by(dot1, Species)
+dot3 &lt;- summarise(dot2, `Mean width` = mean(Sepal.Width))
+iris_pipe &lt;- mutate(dot3, `Mean width` = round(`Mean width`,1))</code></pre>
+<p>You can also choose ‘Burst pipes’ from the Addins menu without entering debug mode.</p>
+</div>
+<div id="pipes" class="section level2">
+<h2>{pipes}</h2>
+<p>There’s a few special operators in the {magrittr} package beyond <code>%&gt;%</code>. For example, the <code>%T&gt;%</code> (tee) operator outputs the original value, not the result of it.</p>
+<p>X developed the {pipes} package to supply a bunch of other <code>%&gt;%</code>-inspired operators.</p>
+<p>devtools::install_github(“moodymudskipper/pipes”)</p>
+<pre class="r"><code>library(pipes)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;pipes&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:magrittr&#39;:
+## 
+##     %&lt;&gt;%, %&gt;%, %$%, %T&gt;%, freduce</code></pre>
+<pre><code>## The following object is masked from &#39;package:dplyr&#39;:
+## 
+##     %&gt;%</code></pre>
+<pre class="r"><code>iris_pipe &lt;- iris %&gt;%
+  filter(Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;)) %&gt;% 
+  group_by(Species) %&gt;% 
+  summarise(`Mean width` = mean(Sepal.Width)) %&gt;%
+  mutate(`Mean width` = round(`Mean width`, 1))
+
+unloadNamespace(&quot;pipes&quot;)</code></pre>
+</div>
+<div id="tamper" class="section level2">
+<h2>{tamper}</h2>
+<p>Gábor Csárdi’s <a href="https://github.com/gaborcsardi/tamper">{tamper} package</a> makes pipe debugging easier with a simple, informative interface. The package is currently available but is archived.</p>
+<p>You set the error argument of the options to <code>tamper</code> once installed and loaded. From now on {tamper} will override the default stack trace report you get when an error is found. The stack trace can be a little beguiling.</p>
+<p>Instead, {tamper} prints your pipeline in the console and highlights the problematic line with an arrow. Typing ‘0’ will exit the {tamper} report; ‘1’ switches you back to the stack trace; ‘2’ will enter debug mode.</p>
+<p>This is friendly for beginners especially, since the {tamper} output is more readable. You can always retrieve the stack trace and debug menu as well.</p>
+<pre class="r"><code>devtools::install_github(&quot;gaborcsardi/tamper&quot;)  # not on CRAN
+library(tamper)
+
+options(error = tamper::tamper)  # set error option to tamper
+
+iris %&gt;%
+  filter(Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;)) %&gt;% 
+  group_by(Species) %&gt;% 
+  summarise(`Mean width` = mean(Sepal.Girth)) %&gt;%  # error here!
+  mutate(`Mean width` = round(`Mean width`, 1))</code></pre>
+<pre class="r"><code># &gt; iris_pipe &lt;- iris %&gt;%
+# +   filter(Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;)) %&gt;% 
+# +   group_by(Species) %&gt;% 
+# +   summarise(`Mean width` = mean(Sepal.Girth)) %&gt;%
+# +   mutate(`Mean width` = round(`Mean width`, 1))
+# Error in mean(Sepal.Girth) : object &#39;Sepal.Girth&#39; not found
+# 
+# Enter 0 to exit or choose: 
+# 
+# 1:    Switch mode
+# 2:    Take me to the error
+# 
+# 3:    iris %&gt;%
+# 4: -&gt;   filter(., Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;)) %&gt;%
+# 5:      group_by(., Species) %&gt;%
+# 6:      summarise(., `Mean width` = mean(Sepal.Girth)) %&gt;%
+# 7:      mutate(., `Mean width` = round(`Mean width`, 1)) 
+# 
+# Selection: </code></pre>
 <p><a href="https://r4ds.had.co.nz/pipes.html" class="uri">https://r4ds.had.co.nz/pipes.html</a></p>
 <!-- # I prefer cigars -->
 <!-- What was it like in the good old days? -->
@@ -298,5 +331,7 @@ unloadNamespace(&quot;pipes&quot;)</code></pre>
 <hr />
 <ol>
 <li id="fn1"><p>Or as <a href="https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html">the {magrittr} vignette</a> puts it: “to make your code smokin’ (puff puff)”<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn2"><p>Welcome to Biology Geek Corner. Cycliophora is a phylum of animals containing just one species that lives exclusively on lobster lips. Onychophora is the velvet worm phylum that contains wee beasties that spray slime, have little adorable claws and are, surprise, velvety (one species is named ‘totoro’ becuase of it’s similarity to My Neighbout Totoro’s Catbus).
+<!-- [^past-matt]: I'm looking at you, past-self. --><a href="#fnref2" class="footnote-back">↩</a></p></li>
 </ol>
 </div>
