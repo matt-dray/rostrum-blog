@@ -18,9 +18,7 @@ Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
 
 ## C'est un pipe
 
-The `%>%` (pipe) operator lets you chain function calls. Stefan Milton Bache made it to 'decrease development time and to improve readability and maintainability of code'.[^vignette]
-
-Voilà.
+The `%>%` (pipe) operator lets you chain function calls. Stefan Milton Bache made it to 'decrease development time and to improve readability and maintainability of code'.[^vignette] Voilà:
 
 ```{r pipeline-example}
 # {dplyr} for data manipulation and to load pipe
@@ -39,36 +37,47 @@ iris_pipe
 
 # Ce n'est pas debuggable?
 
-[Some are critical of this approach](https://twitter.com/TedPetrou/status/1109519764613787648?ref_src=twsrc%5Etfw). Long pipes obscure what's happened to your data and make debugging hard.
+[Some are critical of this approach](https://twitter.com/TedPetrou/status/1109519764613787648?ref_src=twsrc%5Etfw). Long pipes obscure what's happened to your data and make debugging hard. This post summarises some solutions.
 
-This post summarises some solutions. This table summarises it even more.
+This table summarises it even more.
 
 
 | Package         | Description                                         | Message  | View     | Print    | Debug    |
 | :---------------| :-------------------------------------------------- | :------: | :------: | :------: | :------: |
 | {tidylog}       | Console-printed description of changes              | &#10004; | &#10008; | &#10008; | &#10008; |
 | {ViewPipeSteps} | RStudio addin: see changes to dataset per step      | &#10008; | &#10004; | &#10004; | &#10008; |
-| {pipecleaner}   | RStudio addin: 'burst' pipes and debug              | &#10008; | &#10008; | &#10008; | &#10004; |
-| {pipes}         | Special assignment operators                        | &#10008; | &#10004; | &#10004; | &#10004; |
-| {magrittr}      | `debug_pipe()` function                             | &#10008; | &#10008; | &#10008; | &#10004; |
 | {tamper}        | Stack trace replacement for pipe debugging          | &#10004; | &#10008; | &#10008; | &#10004; |
+| {pipecleaner}   | RStudio addin: 'burst' pipes and debug              | &#10008; | &#10008; | &#10008; | &#10004; |
+| {magrittr}      | `debug_pipe()` function                             | &#10008; | &#10008; | &#10008; | &#10004; |
+| {pipes}         | Special assignment operators                        | &#10008; | &#10004; | &#10004; | &#10004; |
 | Bizarro pipe    | Replace `%>%` with `->.;` and observe `.Last.level` | &#10008; | &#10008; | &#10008; | &#10008; |
 
 # Ce n'est pas une probleme?
 
-To be clear, I think most people create pipes interactively and check their outputs at each step.
+I think most people create pipes interactively and check their outputs at each step.
 
 You could also make sensibly-lengthed pipes that reflect a 'unit' of wrangling. Perhaps objects for the raw data as read-in, a reshaped version, one with cleaned columns, and another containing the model. You can then interrogate these easily.
 
-Nevertheless.
+Hadley Wickham discusses this in [the pipes chapter of the R for Data Science book](https://r4ds.had.co.nz/pipes.html). 
 
-# Fix the leaks
+Nevertheless there are some options to help. I've split these into three categories (click to jump):
 
-# Quoi?
+1. [Summary inspection](#summary-inspection)
+    a. [{tidylog}](#tidylog)
+    b. [{ViewPipeSteps}](#viewpipesteps)
+1. [Debug mode](#debug-mode)
+    a. [{tamper}](#tamper)
+    b. [{pipecleaner}](#pipecleaner)
+    c. [{magrittr}](#magrittr)
+1. Operator hacking](#operator-hacking)
+    a. [{pipes}](#pipes)
+    b. [Bizarro pipe](#bizarro-pipe)
+
+# 1. Summary inspection {#summary-inspection}
 
 Packages for seeing what happened to your dataset, rather than highlighting where the problem was.
 
-## {tidylog}
+## 1a. {tidylog} {#tidylog}
 
 [The {tidylog} package](https://github.com/elbersb/tidylog) prints to the console the changes that have happened to your data after each {dplyr} step. You don't need to stop and print at every step.
 
@@ -94,104 +103,17 @@ I'll unload {tidylog} before continuing so it doesn't interfere with the other e
 unloadNamespace("tidylog")
 ```
 
-## {ViewPipeSteps}
+## 1b. {ViewPipeSteps} {#viewpipesteps}
 
 [The {ViewPipeSteps} package](https://github.com/daranzolin/ViewPipeSteps) is an RStudio add-in. Select 'View/Print Pipe Chain Steps' form the add-ins menu.
 
-Basically it runs `View()` or `print()` for each of the steps in your pipeline so you can see the the data. It's like running `View()` at the end of each step in your pipeline. 
+Basically it runs `View()` or `print()` for each of the steps in your pipeline so you can see the the data. It's like running `View()` at the end of each step in your pipeline.
 
-## Bizarro pipe
-
-We can hack our own 'operator' that acts like a pipe and can be run so that we can check what's happening at each step.
-
-It's [a 'Bizarro pipe'](http://www.win-vector.com/blog/2017/01/using-the-bizarro-pipe-to-debug-magrittr-pipelines-in-r/): `->.;`. What it's saying is 'right-assign to a dot and then perform the next operation'.
-
-Things you might be wondering:
-
-* yes, you can use a `->` for assignment
-* yes, you can assign to a `.`, but you'll need to explicitly supply it as the data argumnt to the next function call in your 'Bizarro pipeline'
-* yes, you can use semi-colons in R for run-on code execution (try `head(iris); tail(iris)`)
-
-So what? Well, you can exeute each line in turn and check the output. But wait: an object called `.` is not presented in the global environment. No, unless you check 'Show .Last.value in environment listing' in RStudio's settings. Now when you run the line you'll see the '.Last.value' that's been output.
-
-```{r bizarro-example}
-iris_bizarre <- iris ->.;
-  filter(., Species %in% c("setosa", "versicolor")) ->.;
-  group_by(., Species) ->.;
-  summarise(., `Mean width` = mean(Sepal.Width)) ->.;
-  mutate(., `Mean width` = round(`Mean width`, 1))
-```
-
-# Ou?
+# 2. Debug mode {#debug mode}
 
 Packages that help highlight where the problem occurred. A few of these take you to the [interactive debug menu](https://support.rstudio.com/hc/en-us/articles/205612627-Debugging-with-RStudio) in RStudio, which is worth reading up on.
 
-
-## {magrittr}
-
-[The {magrittr} package](https://magrittr.tidyverse.org/reference/debug_pipe.html), the origin for `%>%`, has its own `debug_pipe()` function baked in. Chaining it will take you into the interactive debug mode.
-
-```{r magrittr-example}
-library(magrittr)
-
-test <- iris %>%
-  filter(Species %in% c("setosa", "versicolor")) %>%
-  group_by(Species) %>% 
-  summarise(`Mean width` = mean(Sepal.Width)) %>% 
-  mutate(`Mean width` = round(`Mean width`, 1)) %>% debug_pipe()
-```
-
-## {pipecleaner}
-
-[The {pipecleaner} package](https://github.com/alistaire47/pipecleaner) is an RStudio addin. It has the best name. It's not on CRAN, so install with:
-
-```{r install-pipecleaner}
-devtools::install_github("alistaire47/pipecleaner")
-```
-
-You highlight your code and select 'Debug pipeline' from the Addins menu. The function does two things: first it 'bursts' your pipes (nice analogy) by breaking the pipeline into intermediate objects, one for each function that's contained within it. The interactive debug menu is then opened so you can execute your code step-by-step, see the results and perform other debug operations.
-
-```{r burst-pipe}
-# Install with
-# devtools::install_github("alistaire47/pipecleaner")
-
-# Intact, original pipeline
-iris_pipe <- iris %>%
-  filter(Species %in% c("nope", "uh-uh")) %>% 
-  group_by(Sepal.Width) %>% 
-  summarise(`Mean width` = mean(Sepal.Width)) %>% 
-  mutate(`Mean width` = round(`Mean width`, 1))
-
-# After 'bursting' with the addin
-dot1 <- filter(iris, Species %in% c("setosa", "versicolor"))
-dot2 <- group_by(dot1, Species)
-dot3 <- summarise(dot2, `Mean width` = mean(Sepal.Width))
-iris_pipe <- mutate(dot3, `Mean width` = round(`Mean width`,1))
-```
-
-You can also choose 'Burst pipes' from the Addins menu without entering debug mode. 
-
-## {pipes}
-
-There's a few special operators in the {magrittr} package beyond `%>%`. For example, the `%T>%` (tee) operator outputs the original value, not the result of it.
-
-X developed the {pipes} package to supply a bunch of other `%>%`-inspired operators.
-
-devtools::install_github("moodymudskipper/pipes")
-
-```{r pipes-example}
-library(pipes)
-
-iris_pipe <- iris %>%
-  filter(Species %in% c("setosa", "versicolor")) %>% 
-  group_by(Species) %>% 
-  summarise(`Mean width` = mean(Sepal.Width)) %>%
-  mutate(`Mean width` = round(`Mean width`, 1))
-
-unloadNamespace("pipes")
-```
-
-## {tamper}
+## 2a. {tamper} {#tamper}
 
 Gábor Csárdi's [{tamper} package](https://github.com/gaborcsardi/tamper) makes pipe debugging easier with a simple, informative interface. The package is currently available but is archived.
 
@@ -236,11 +158,94 @@ iris %>%
 # Selection: 
 ```
 
+## 2b. {pipecleaner} {#pipecleaner}
+
+[The {pipecleaner} package](https://github.com/alistaire47/pipecleaner) is an RStudio addin. It has the best name.
+
+You highlight your code and select 'Debug pipeline' from the Addins menu. The function does two things: first it 'bursts' your pipes (nice analogy) by breaking the pipeline into intermediate objects, one for each function that's contained within it. The interactive debug menu is then opened so you can execute your code step-by-step, see the results and perform other debug operations.
+
+```{r burst-pipe, eval=FALSE}
+# Install with
+# devtools::install_github("alistaire47/pipecleaner")
+
+# Intact, original pipeline
+iris_pipe <- iris %>%
+  filter(Species %in% c("nope", "uh-uh")) %>% 
+  group_by(Sepal.Width) %>% 
+  summarise(`Mean width` = mean(Sepal.Width)) %>% 
+  mutate(`Mean width` = round(`Mean width`, 1))
+
+# After 'bursting' with the addin
+dot1 <- filter(iris, Species %in% c("setosa", "versicolor"))
+dot2 <- group_by(dot1, Species)
+dot3 <- summarise(dot2, `Mean width` = mean(Sepal.Width))
+iris_pipe <- mutate(dot3, `Mean width` = round(`Mean width`,1))
+```
+
+You can also choose 'Burst pipes' from the Addins menu without entering debug mode. 
+
+## 2c. {magrittr} {#magrittr}
+
+[The {magrittr} package](https://magrittr.tidyverse.org/reference/debug_pipe.html), the origin for `%>%`, has its own `debug_pipe()` function baked in. Chaining it will take you into the interactive debug mode.
+
+```{r magrittr-example, eval=FALSE}
+library(magrittr)
+
+test <- iris %>%
+  filter(Species %in% c("setosa", "versicolor")) %>%
+  group_by(Species) %>% 
+  summarise(`Mean width` = mean(Sepal.Width)) %>% 
+  mutate(`Mean width` = round(`Mean width`, 1)) %>% debug_pipe()
+```
+
+# 3. Operator hacking
+
+## 3a. {pipes} {#pipes}
+
+There's a few special operators in the {magrittr} package beyond `%>%`. For example, the `%T>%` (tee) operator outputs the original value, not the result of it.
+
+X developed the {pipes} package to supply a bunch of other `%>%`-inspired operators.
+
+devtools::install_github("moodymudskipper/pipes")
+
+```{r pipes-example}
+# Not on CRAN so install from GitHUb
+devtools::install_github("moodymudskipper/pipes")
+library(pipes)
+
+iris_pipe <- iris %>%
+  filter(Species %in% c("setosa", "versicolor")) %>% 
+  group_by(Species) %>% 
+  summarise(`Mean width` = mean(Sepal.Width)) %>%
+  mutate(`Mean width` = round(`Mean width`, 1))
+
+unloadNamespace("pipes")
+```
+
+## 3b. Bizarro pipe {#bizarro-pipe}
+
+Leftifled: We can hack our own 'operator' that acts like a pipe and can be run so that we can check what's happening at each step.
+
+It's [a 'Bizarro pipe'](http://www.win-vector.com/blog/2017/01/using-the-bizarro-pipe-to-debug-magrittr-pipelines-in-r/): `->.;`. What it's saying is 'right-assign to a dot and then perform the next operation'.
+
+Things you might be wondering:
+
+* yes, you can use a `->` for assignment to the right
+* yes, you can assign to a `.`, but you'll need to explicitly supply it as the data argumnt to the next function call in your Bizarro pipeline
+* yes, you can use semi-colons in R for run-on code execution (try `head(iris); tail(iris)`)
+
+So what? Well, you can exeute each line in turn and check the output. But wait: an object called `.` is not presented in the global environment. No, unless you check 'Show .Last.value in environment listing' in RStudio's settings. Now when you run the line you'll see the '.Last.value' that's been output.
+
+```{r bizarro-example}
+iris_bizarre <- iris ->.;
+  filter(., Species %in% c("setosa", "versicolor")) ->.;
+  group_by(., Species) ->.;
+  summarise(., `Mean width` = mean(Sepal.Width)) ->.;
+  mutate(., `Mean width` = round(`Mean width`, 1))
+```
 
 
 
-
-https://r4ds.had.co.nz/pipes.html
 
 
 <!-- # I prefer cigars -->

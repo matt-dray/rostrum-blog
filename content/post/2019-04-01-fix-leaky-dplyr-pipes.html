@@ -19,8 +19,7 @@ draft: yes
 <p>Matt Dray (<a href="https://www.twitter.com/mattdray">@mattdray</a>)</p>
 <div id="cest-un-pipe" class="section level2">
 <h2>C’est un pipe</h2>
-<p>The <code>%&gt;%</code> (pipe) operator lets you chain function calls. Stefan Milton Bache made it to ‘decrease development time and to improve readability and maintainability of code’.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
-<p>Voilà.</p>
+<p>The <code>%&gt;%</code> (pipe) operator lets you chain function calls. Stefan Milton Bache made it to ‘decrease development time and to improve readability and maintainability of code’.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> Voilà:</p>
 <pre class="r"><code># {dplyr} for data manipulation and to load pipe
 suppressPackageStartupMessages(library(dplyr))
 
@@ -41,8 +40,8 @@ iris_pipe</code></pre>
 </div>
 <div id="ce-nest-pas-debuggable" class="section level1">
 <h1>Ce n’est pas debuggable?</h1>
-<p><a href="https://twitter.com/TedPetrou/status/1109519764613787648?ref_src=twsrc%5Etfw">Some are critical of this approach</a>. Long pipes obscure what’s happened to your data and make debugging hard.</p>
-<p>This post summarises some solutions. This table summarises it even more.</p>
+<p><a href="https://twitter.com/TedPetrou/status/1109519764613787648?ref_src=twsrc%5Etfw">Some are critical of this approach</a>. Long pipes obscure what’s happened to your data and make debugging hard. This post summarises some solutions.</p>
+<p>This table summarises it even more.</p>
 <table>
 <thead>
 <tr class="header">
@@ -72,19 +71,19 @@ iris_pipe</code></pre>
 <td align="center">✘</td>
 </tr>
 <tr class="odd">
-<td align="left">{pipecleaner}</td>
-<td align="left">RStudio addin: ‘burst’ pipes and debug</td>
-<td align="center">✘</td>
+<td align="left">{tamper}</td>
+<td align="left">Stack trace replacement for pipe debugging</td>
+<td align="center">✔</td>
 <td align="center">✘</td>
 <td align="center">✘</td>
 <td align="center">✔</td>
 </tr>
 <tr class="even">
-<td align="left">{pipes}</td>
-<td align="left">Special assignment operators</td>
+<td align="left">{pipecleaner}</td>
+<td align="left">RStudio addin: ‘burst’ pipes and debug</td>
 <td align="center">✘</td>
-<td align="center">✔</td>
-<td align="center">✔</td>
+<td align="center">✘</td>
+<td align="center">✘</td>
 <td align="center">✔</td>
 </tr>
 <tr class="odd">
@@ -96,11 +95,11 @@ iris_pipe</code></pre>
 <td align="center">✔</td>
 </tr>
 <tr class="even">
-<td align="left">{tamper}</td>
-<td align="left">Stack trace replacement for pipe debugging</td>
+<td align="left">{pipes}</td>
+<td align="left">Special assignment operators</td>
+<td align="center">✘</td>
 <td align="center">✔</td>
-<td align="center">✘</td>
-<td align="center">✘</td>
+<td align="center">✔</td>
 <td align="center">✔</td>
 </tr>
 <tr class="odd">
@@ -116,18 +115,34 @@ iris_pipe</code></pre>
 </div>
 <div id="ce-nest-pas-une-probleme" class="section level1">
 <h1>Ce n’est pas une probleme?</h1>
-<p>To be clear, I think most people create pipes interactively and check their outputs at each step.</p>
+<p>I think most people create pipes interactively and check their outputs at each step.</p>
 <p>You could also make sensibly-lengthed pipes that reflect a ‘unit’ of wrangling. Perhaps objects for the raw data as read-in, a reshaped version, one with cleaned columns, and another containing the model. You can then interrogate these easily.</p>
-<p>Nevertheless.</p>
+<p>Hadley Wickham discusses this in <a href="https://r4ds.had.co.nz/pipes.html">the pipes chapter of the R for Data Science book</a>.</p>
+<p>Nevertheless there are some options to help. I’ve split these into three categories (click to jump):</p>
+<ol style="list-style-type: decimal">
+<li><a href="#summary-inspection">Summary inspection</a>
+<ol style="list-style-type: lower-alpha">
+<li><a href="#tidylog">{tidylog}</a></li>
+<li><a href="#viewpipesteps">{ViewPipeSteps}</a></li>
+</ol></li>
+<li><a href="#debug-mode">Debug mode</a>
+<ol style="list-style-type: lower-alpha">
+<li><a href="#tamper">{tamper}</a></li>
+<li><a href="#pipecleaner">{pipecleaner}</a></li>
+<li><a href="#magrittr">{magrittr}</a></li>
+</ol></li>
+<li>Operator hacking](#operator-hacking)
+<ol style="list-style-type: lower-alpha">
+<li><a href="#pipes">{pipes}</a></li>
+<li><a href="#bizarro-pipe">Bizarro pipe</a></li>
+</ol></li>
+</ol>
 </div>
-<div id="fix-the-leaks" class="section level1">
-<h1>Fix the leaks</h1>
-</div>
-<div id="quoi" class="section level1">
-<h1>Quoi?</h1>
+<div id="summary-inspection" class="section level1">
+<h1>1. Summary inspection</h1>
 <p>Packages for seeing what happened to your dataset, rather than highlighting where the problem was.</p>
 <div id="tidylog" class="section level2">
-<h2>{tidylog}</h2>
+<h2>1a. {tidylog}</h2>
 <p><a href="https://github.com/elbersb/tidylog">The {tidylog} package</a> prints to the console the changes that have happened to your data after each {dplyr} step. You don’t need to stop and print at every step.</p>
 <pre class="r"><code>library(tidylog)  # must be loaded after dplyr</code></pre>
 <pre><code>## 
@@ -161,97 +176,16 @@ iris_pipe</code></pre>
 <pre class="r"><code>unloadNamespace(&quot;tidylog&quot;)</code></pre>
 </div>
 <div id="viewpipesteps" class="section level2">
-<h2>{ViewPipeSteps}</h2>
+<h2>1b. {ViewPipeSteps}</h2>
 <p><a href="https://github.com/daranzolin/ViewPipeSteps">The {ViewPipeSteps} package</a> is an RStudio add-in. Select ‘View/Print Pipe Chain Steps’ form the add-ins menu.</p>
 <p>Basically it runs <code>View()</code> or <code>print()</code> for each of the steps in your pipeline so you can see the the data. It’s like running <code>View()</code> at the end of each step in your pipeline.</p>
 </div>
-<div id="bizarro-pipe" class="section level2">
-<h2>Bizarro pipe</h2>
-<p>We can hack our own ‘operator’ that acts like a pipe and can be run so that we can check what’s happening at each step.</p>
-<p>It’s <a href="http://www.win-vector.com/blog/2017/01/using-the-bizarro-pipe-to-debug-magrittr-pipelines-in-r/">a ‘Bizarro pipe’</a>: <code>-&gt;.;</code>. What it’s saying is ‘right-assign to a dot and then perform the next operation’.</p>
-<p>Things you might be wondering:</p>
-<ul>
-<li>yes, you can use a <code>-&gt;</code> for assignment</li>
-<li>yes, you can assign to a <code>.</code>, but you’ll need to explicitly supply it as the data argumnt to the next function call in your ‘Bizarro pipeline’</li>
-<li>yes, you can use semi-colons in R for run-on code execution (try <code>head(iris); tail(iris)</code>)</li>
-</ul>
-<p>So what? Well, you can exeute each line in turn and check the output. But wait: an object called <code>.</code> is not presented in the global environment. No, unless you check ‘Show .Last.value in environment listing’ in RStudio’s settings. Now when you run the line you’ll see the ‘.Last.value’ that’s been output.</p>
-<pre class="r"><code>iris_bizarre &lt;- iris -&gt;.;
-  filter(., Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;)) -&gt;.;
-  group_by(., Species) -&gt;.;
-  summarise(., `Mean width` = mean(Sepal.Width)) -&gt;.;
-  mutate(., `Mean width` = round(`Mean width`, 1))</code></pre>
-<pre><code>## # A tibble: 2 x 2
-##   Species    `Mean width`
-##   &lt;fct&gt;             &lt;dbl&gt;
-## 1 setosa              3.4
-## 2 versicolor          2.8</code></pre>
 </div>
-</div>
-<div id="ou" class="section level1">
-<h1>Ou?</h1>
+<div id="debug-mode-debug-mode" class="section level1">
+<h1>2. Debug mode {#debug mode}</h1>
 <p>Packages that help highlight where the problem occurred. A few of these take you to the <a href="https://support.rstudio.com/hc/en-us/articles/205612627-Debugging-with-RStudio">interactive debug menu</a> in RStudio, which is worth reading up on.</p>
-<div id="magrittr" class="section level2">
-<h2>{magrittr}</h2>
-<p><a href="https://magrittr.tidyverse.org/reference/debug_pipe.html">The {magrittr} package</a>, the origin for <code>%&gt;%</code>, has its own <code>debug_pipe()</code> function baked in. Chaining it will take you into the interactive debug mode.</p>
-<pre class="r"><code>library(magrittr)
-
-test &lt;- iris %&gt;%
-  filter(Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;)) %&gt;%
-  group_by(Species) %&gt;% 
-  summarise(`Mean width` = mean(Sepal.Width)) %&gt;% 
-  mutate(`Mean width` = round(`Mean width`, 1)) %&gt;% debug_pipe()</code></pre>
-<pre><code>## Called from: debug_pipe(.)
-## debug: x</code></pre>
-</div>
-<div id="pipecleaner" class="section level2">
-<h2>{pipecleaner}</h2>
-<p><a href="https://github.com/alistaire47/pipecleaner">The {pipecleaner} package</a> is an RStudio addin. It has the best name. It’s not on CRAN, so install with:</p>
-<pre class="r"><code>devtools::install_github(&quot;alistaire47/pipecleaner&quot;)</code></pre>
-<pre><code>## Skipping install of &#39;pipecleaner&#39; from a github remote, the SHA1 (78e286d8) has not changed since last install.
-##   Use `force = TRUE` to force installation</code></pre>
-<p>You highlight your code and select ‘Debug pipeline’ from the Addins menu. The function does two things: first it ‘bursts’ your pipes (nice analogy) by breaking the pipeline into intermediate objects, one for each function that’s contained within it. The interactive debug menu is then opened so you can execute your code step-by-step, see the results and perform other debug operations.</p>
-<pre class="r"><code># Install with
-# devtools::install_github(&quot;alistaire47/pipecleaner&quot;)
-
-# Intact, original pipeline
-iris_pipe &lt;- iris %&gt;%
-  filter(Species %in% c(&quot;nope&quot;, &quot;uh-uh&quot;)) %&gt;% 
-  group_by(Sepal.Width) %&gt;% 
-  summarise(`Mean width` = mean(Sepal.Width)) %&gt;% 
-  mutate(`Mean width` = round(`Mean width`, 1))
-
-# After &#39;bursting&#39; with the addin
-dot1 &lt;- filter(iris, Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;))
-dot2 &lt;- group_by(dot1, Species)
-dot3 &lt;- summarise(dot2, `Mean width` = mean(Sepal.Width))
-iris_pipe &lt;- mutate(dot3, `Mean width` = round(`Mean width`,1))</code></pre>
-<p>You can also choose ‘Burst pipes’ from the Addins menu without entering debug mode.</p>
-</div>
-<div id="pipes" class="section level2">
-<h2>{pipes}</h2>
-<p>There’s a few special operators in the {magrittr} package beyond <code>%&gt;%</code>. For example, the <code>%T&gt;%</code> (tee) operator outputs the original value, not the result of it.</p>
-<p>X developed the {pipes} package to supply a bunch of other <code>%&gt;%</code>-inspired operators.</p>
-<p>devtools::install_github(“moodymudskipper/pipes”)</p>
-<pre class="r"><code>library(pipes)</code></pre>
-<pre><code>## 
-## Attaching package: &#39;pipes&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:magrittr&#39;:
-## 
-##     %&lt;&gt;%, %&gt;%, %$%, %T&gt;%, freduce</code></pre>
-<pre><code>## The following object is masked from &#39;package:dplyr&#39;:
-## 
-##     %&gt;%</code></pre>
-<pre class="r"><code>iris_pipe &lt;- iris %&gt;%
-  filter(Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;)) %&gt;% 
-  group_by(Species) %&gt;% 
-  summarise(`Mean width` = mean(Sepal.Width)) %&gt;%
-  mutate(`Mean width` = round(`Mean width`, 1))
-
-unloadNamespace(&quot;pipes&quot;)</code></pre>
-</div>
 <div id="tamper" class="section level2">
-<h2>{tamper}</h2>
+<h2>2a. {tamper}</h2>
 <p>Gábor Csárdi’s <a href="https://github.com/gaborcsardi/tamper">{tamper} package</a> makes pipe debugging easier with a simple, informative interface. The package is currently available but is archived.</p>
 <p>You set the error argument of the options to <code>tamper</code> once installed and loaded. From now on {tamper} will override the default stack trace report you get when an error is found. The stack trace can be a little beguiling.</p>
 <p>Instead, {tamper} prints your pipeline in the console and highlights the problematic line with an arrow. Typing ‘0’ will exit the {tamper} report; ‘1’ switches you back to the stack trace; ‘2’ will enter debug mode.</p>
@@ -285,7 +219,86 @@ iris %&gt;%
 # 7:      mutate(., `Mean width` = round(`Mean width`, 1)) 
 # 
 # Selection: </code></pre>
-<p><a href="https://r4ds.had.co.nz/pipes.html" class="uri">https://r4ds.had.co.nz/pipes.html</a></p>
+</div>
+<div id="pipecleaner" class="section level2">
+<h2>2b. {pipecleaner}</h2>
+<p><a href="https://github.com/alistaire47/pipecleaner">The {pipecleaner} package</a> is an RStudio addin. It has the best name.</p>
+<p>You highlight your code and select ‘Debug pipeline’ from the Addins menu. The function does two things: first it ‘bursts’ your pipes (nice analogy) by breaking the pipeline into intermediate objects, one for each function that’s contained within it. The interactive debug menu is then opened so you can execute your code step-by-step, see the results and perform other debug operations.</p>
+<pre class="r"><code># Install with
+# devtools::install_github(&quot;alistaire47/pipecleaner&quot;)
+
+# Intact, original pipeline
+iris_pipe &lt;- iris %&gt;%
+  filter(Species %in% c(&quot;nope&quot;, &quot;uh-uh&quot;)) %&gt;% 
+  group_by(Sepal.Width) %&gt;% 
+  summarise(`Mean width` = mean(Sepal.Width)) %&gt;% 
+  mutate(`Mean width` = round(`Mean width`, 1))
+
+# After &#39;bursting&#39; with the addin
+dot1 &lt;- filter(iris, Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;))
+dot2 &lt;- group_by(dot1, Species)
+dot3 &lt;- summarise(dot2, `Mean width` = mean(Sepal.Width))
+iris_pipe &lt;- mutate(dot3, `Mean width` = round(`Mean width`,1))</code></pre>
+<p>You can also choose ‘Burst pipes’ from the Addins menu without entering debug mode.</p>
+</div>
+<div id="magrittr" class="section level2">
+<h2>2c. {magrittr}</h2>
+<p><a href="https://magrittr.tidyverse.org/reference/debug_pipe.html">The {magrittr} package</a>, the origin for <code>%&gt;%</code>, has its own <code>debug_pipe()</code> function baked in. Chaining it will take you into the interactive debug mode.</p>
+<pre class="r"><code>library(magrittr)
+
+test &lt;- iris %&gt;%
+  filter(Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;)) %&gt;%
+  group_by(Species) %&gt;% 
+  summarise(`Mean width` = mean(Sepal.Width)) %&gt;% 
+  mutate(`Mean width` = round(`Mean width`, 1)) %&gt;% debug_pipe()</code></pre>
+</div>
+</div>
+<div id="operator-hacking" class="section level1">
+<h1>3. Operator hacking</h1>
+<div id="pipes" class="section level2">
+<h2>3a. {pipes}</h2>
+<p>There’s a few special operators in the {magrittr} package beyond <code>%&gt;%</code>. For example, the <code>%T&gt;%</code> (tee) operator outputs the original value, not the result of it.</p>
+<p>X developed the {pipes} package to supply a bunch of other <code>%&gt;%</code>-inspired operators.</p>
+<p>devtools::install_github(“moodymudskipper/pipes”)</p>
+<pre class="r"><code># Not on CRAN so install from GitHUb
+devtools::install_github(&quot;moodymudskipper/pipes&quot;)</code></pre>
+<pre><code>## Skipping install of &#39;pipes&#39; from a github remote, the SHA1 (14fead06) has not changed since last install.
+##   Use `force = TRUE` to force installation</code></pre>
+<pre class="r"><code>library(pipes)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;pipes&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:dplyr&#39;:
+## 
+##     %&gt;%</code></pre>
+<pre class="r"><code>iris_pipe &lt;- iris %&gt;%
+  filter(Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;)) %&gt;% 
+  group_by(Species) %&gt;% 
+  summarise(`Mean width` = mean(Sepal.Width)) %&gt;%
+  mutate(`Mean width` = round(`Mean width`, 1))
+
+unloadNamespace(&quot;pipes&quot;)</code></pre>
+</div>
+<div id="bizarro-pipe" class="section level2">
+<h2>3b. Bizarro pipe</h2>
+<p>Leftifled: We can hack our own ‘operator’ that acts like a pipe and can be run so that we can check what’s happening at each step.</p>
+<p>It’s <a href="http://www.win-vector.com/blog/2017/01/using-the-bizarro-pipe-to-debug-magrittr-pipelines-in-r/">a ‘Bizarro pipe’</a>: <code>-&gt;.;</code>. What it’s saying is ‘right-assign to a dot and then perform the next operation’.</p>
+<p>Things you might be wondering:</p>
+<ul>
+<li>yes, you can use a <code>-&gt;</code> for assignment to the right</li>
+<li>yes, you can assign to a <code>.</code>, but you’ll need to explicitly supply it as the data argumnt to the next function call in your Bizarro pipeline</li>
+<li>yes, you can use semi-colons in R for run-on code execution (try <code>head(iris); tail(iris)</code>)</li>
+</ul>
+<p>So what? Well, you can exeute each line in turn and check the output. But wait: an object called <code>.</code> is not presented in the global environment. No, unless you check ‘Show .Last.value in environment listing’ in RStudio’s settings. Now when you run the line you’ll see the ‘.Last.value’ that’s been output.</p>
+<pre class="r"><code>iris_bizarre &lt;- iris -&gt;.;
+  filter(., Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;)) -&gt;.;
+  group_by(., Species) -&gt;.;
+  summarise(., `Mean width` = mean(Sepal.Width)) -&gt;.;
+  mutate(., `Mean width` = round(`Mean width`, 1))</code></pre>
+<pre><code>## # A tibble: 2 x 2
+##   Species    `Mean width`
+##   &lt;fct&gt;             &lt;dbl&gt;
+## 1 setosa              3.4
+## 2 versicolor          2.8</code></pre>
 <!-- # I prefer cigars -->
 <!-- What was it like in the good old days? -->
 <!-- ## Intermediate objects -->
