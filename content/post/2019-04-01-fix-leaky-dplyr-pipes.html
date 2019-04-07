@@ -108,6 +108,14 @@ iris_pipe</code></pre>
 <td align="center">✔</td>
 </tr>
 <tr class="even">
+<td align="left"><code>debug()</code></td>
+<td align="left">R’s good old <code>debug()</code> function</td>
+<td align="center">✘</td>
+<td align="center">✘</td>
+<td align="center">✘</td>
+<td align="center">✔</td>
+</tr>
+<tr class="odd">
 <td align="left">{pipes}</td>
 <td align="left">Special assignment operators</td>
 <td align="center">✘</td>
@@ -115,7 +123,7 @@ iris_pipe</code></pre>
 <td align="center">✔</td>
 <td align="center">✔</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">Bizarro pipe</td>
 <td align="left">Replace <code>%&gt;%</code> with <code>-&gt;.;</code> and observe <code>.Last.level</code></td>
 <td align="center">✘</td>
@@ -142,6 +150,7 @@ iris_pipe</code></pre>
 <li><a href="#tamper">{tamper}</a></li>
 <li><a href="#pipecleaner">{pipecleaner}</a></li>
 <li><a href="#magrittr">{magrittr}</a></li>
+<li><a href="#debug-fun"><code>debug()</code></a></li>
 </ol></li>
 <li><a href="#operator-hacking">Operator hacking</a>
 <ol style="list-style-type: lower-alpha">
@@ -263,15 +272,31 @@ iris_pipe &lt;- mutate(dot3, `Mean width` = round(`Mean width`,1))</code></pre>
 </div>
 <div id="magrittr" class="section level3">
 <h3>2c. {magrittr}</h3>
-<p>Surprise: <a href="https://magrittr.tidyverse.org/reference/debug_pipe.html">the {magrittr} package</a> itself has the function <code>debug_pipe()</code> to take you directly to the debug menu from a pipeline.</p>
+<p>Surprise: <a href="https://magrittr.tidyverse.org/reference/debug_pipe.html">the {magrittr} package</a> itself has the function <code>debug_pipe()</code> to let you see what’s being passed into the next function.</p>
 <pre class="r"><code>library(magrittr)
 
-test &lt;- iris %&gt;%
+iris_magrittr &lt;- iris %&gt;%
   filter(Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;)) %&gt;%
   group_by(Species) %&gt;% 
-  summarise(`Mean width` = mean(Sepal.Width)) %&gt;% 
-  mutate(`Mean width` = round(`Mean width`, 1)) %&gt;% debug_pipe()</code></pre>
+  summarise(`Mean width` = mean(Sepal.Width)) %&gt;%
+  debug_pipe() %&gt;% 
+  mutate(`Mean width` = round(`Mean width`, 1))</code></pre>
 <p>Not much to say about this one, but worth mentioning because <code>%&gt;%</code> gets re-exported in other packages – <a href="https://usethis.r-lib.org/reference/use_pipe.html">check out <code>usethis::use_pipe()</code></a> – but <code>debug_pipe()</code> doesn’t.</p>
+</div>
+<div id="debug-fun" class="section level3">
+<h3>2d. <code>debug()</code></h3>
+<p>You can simply use R’s <code>debug()</code> function, as <a href="https://community.rstudio.com/t/whats-currently-the-recommended-way-to-debug-pipe-chains/14724/3?u=matt">pointed out by Nathan Werth</a>.</p>
+<p>You can do this for a given function in the pipeline:</p>
+<pre class="r"><code>debug(summarise)
+
+iris_magrittr &lt;- iris %&gt;%
+  filter(Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;)) %&gt;%
+  group_by(Species) %&gt;% 
+  summarise(`Mean width` = mean(Sepal.Width)) %&gt;%
+  mutate(`Mean width` = round(`Mean width`, 1))
+  
+undebug(summarise)</code></pre>
+<p>Or you can even debug each step by setting up <code>debug(`%&gt;%`)</code>, since the pipe is itself a function, after all.</p>
 </div>
 </div>
 <div id="operator-hacking" class="section level2">

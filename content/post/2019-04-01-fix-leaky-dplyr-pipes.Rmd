@@ -62,6 +62,7 @@ This table summarises it even more:
 | {tamper}        | Stack trace replacement for pipe debugging          | &#10004; | &#10008; | &#10008;  | &#10004; |
 | {pipecleaner}   | RStudio addin: 'burst' pipes and debug              | &#10008; | &#10008; | &#10008;  | &#10004; |
 | {magrittr}      | `debug_pipe()` function                             | &#10008; | &#10008; | &#10008;  | &#10004; |
+| `debug()`       | R's good old `debug()` function                     | &#10008; | &#10008; | &#10008;  | &#10004; |
 | {pipes}         | Special assignment operators                        | &#10008; | &#10004; | &#10004;  | &#10004; |
 | Bizarro pipe    | Replace `%>%` with `->.;` and observe `.Last.level` | &#10008; | &#10008; | &#10008;  | &#10008; |
 
@@ -80,6 +81,7 @@ I've gathered some solutions into three categories (click to jump):
     a. [{tamper}](#tamper)
     b. [{pipecleaner}](#pipecleaner)
     c. [{magrittr}](#magrittr)
+    d. [`debug()`](#debug-fun)
 1. [Operator hacking](#operator-hacking)
     a. [{pipes}](#pipes)
     b. [Bizarro pipe](#bizarro-pipe)
@@ -210,19 +212,40 @@ So effectively it steps through each new object to report back errors. But it le
 
 ### 2c. {magrittr} {#magrittr}
 
-Surprise: [the {magrittr} package](https://magrittr.tidyverse.org/reference/debug_pipe.html) itself has the function `debug_pipe()` to take you directly to the debug menu from a pipeline.
+Surprise: [the {magrittr} package](https://magrittr.tidyverse.org/reference/debug_pipe.html) itself has the function `debug_pipe()` to let you see what's being passed into the next function.
 
 ```{r magrittr-example, eval=FALSE}
 library(magrittr)
 
-test <- iris %>%
+iris_magrittr <- iris %>%
   filter(Species %in% c("setosa", "versicolor")) %>%
   group_by(Species) %>% 
-  summarise(`Mean width` = mean(Sepal.Width)) %>% 
-  mutate(`Mean width` = round(`Mean width`, 1)) %>% debug_pipe()
+  summarise(`Mean width` = mean(Sepal.Width)) %>%
+  debug_pipe() %>% 
+  mutate(`Mean width` = round(`Mean width`, 1))
 ```
 
 Not much to say about this one, but worth mentioning because `%>%` gets re-exported in other packages -- [check out `usethis::use_pipe()`](https://usethis.r-lib.org/reference/use_pipe.html) -- but `debug_pipe()` doesn't.
+
+### 2d. `debug()` {#debug-fun}
+
+You can simply use R's `debug()` function, as [pointed out by Nathan Werth](https://community.rstudio.com/t/whats-currently-the-recommended-way-to-debug-pipe-chains/14724/3?u=matt).
+
+You can do this for a given function in the pipeline:
+
+```{r debug-base, eval=FALSE}
+debug(summarise)
+
+iris_magrittr <- iris %>%
+  filter(Species %in% c("setosa", "versicolor")) %>%
+  group_by(Species) %>% 
+  summarise(`Mean width` = mean(Sepal.Width)) %>%
+  mutate(`Mean width` = round(`Mean width`, 1))
+  
+undebug(summarise)
+```
+
+Or you can even debug each step by setting up ```debug(`%>%`)```, since the pipe is itself a function, after all.
 
 ## 3. Operator hacking
 
