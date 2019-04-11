@@ -8,42 +8,67 @@ tags: []
 draft: yes
 ---
 
-```
-library(tidyRSS)
-library(dplyr)
-library(stringr)
-library(ggplot2)
-library(rvest)
-library(lubridate)
-library(plotly)
+rostrum.blog is a year old `r emo::ji("tada")`
 
-html <- read_html("https://rostrum.blog/") 
+There’s been a post every two weeks, though not at consistent intervals:
 
-title <- html %>% 
-  html_nodes(".archive-item-link") %>% 
+<details><summary>Click for code</summary>
+```{r message=FALSE}
+posts <- readRDS("~/Desktop/posts.RDS")
+
+# Load packages
+library(dplyr)  # data manipulation
+library(rvest)  # web scrape
+library(stringr)  # string manipulation
+library(lubridate)  # deal with dates
+library(ggplot2)  # plots
+library(plotly)  # interactive plots
+
+# Scrape the rostrum.blog home page
+html <- read_html("https://rostrum.blog/")
+
+# Extract the post titles
+title <- html %>%
+  html_nodes(".archive-item-link") %>%
   html_text()
 
-date <- html %>% 
-  html_nodes(".archive-item-date") %>% 
-  html_text() %>% 
+# Extract the post dates
+date <- html %>%
+  html_nodes(".archive-item-date") %>%
+  html_text() %>%
   str_replace_all("\n|[:space:]", "")
 
-
+# Dataframe of titles and dates
 posts <- tibble(title = title, date = date)
 
+# Create plot object
 p <- posts %>%
-  mutate(date = ymd(date), count = 1) %>% 
+  mutate(
+    date = ymd(date),  # to space out the points by date
+    count = 1  # dummy to indicate a post was made
+  ) %>% 
   ggplot(aes(x = date, y = count)) +
   geom_point() +
-  theme_void() +
-  theme(
-    axis.title.y = element_blank(),
-    axis.title.x = element_blank(),
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank(),
-    panel.grid = element_blank()
-  )
+  theme_void() +  # strip plot elements
+  theme(panel.grid = element_blank())  # to stop plotly rendering grid
 
-ggplotly(p)
-
+# Pass the plot object to plotly (actually performed outside this ccode chunk)
+# ggplotly(p)
 ```
+</details>
+
+```{r echo=FALSE, fig.height=2}
+# Pass the plot object to plotly
+ggplotly(p)
+```
+How long does it take to write a post here?
+
+This massively varies.
+
+I’ve written most posts on my commute.
+
+As a proxy for time taken on a post, I’m going to look at the commit history on the rostrum.blog repo from the first commit of each post to its publication date (as recorded in the RSS record). But the process rarely stops there, so I’ll look at any post-publication corrections (spellings, etc).
+
+[There's not much point looking at the quantity of commits or their size, since these can vary wildly and aren't great indicators of anything.] 
+
+[I’m going to judge effort by total lines created. That’s not the best measure. There’s effort in thinking and formulating and drawing diagrams that isn’t included. Some posts were about things I’d made; things that also took effort and time that isn’t captured here.]
