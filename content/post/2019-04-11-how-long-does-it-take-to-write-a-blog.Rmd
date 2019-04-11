@@ -10,12 +10,10 @@ draft: yes
 
 rostrum.blog is a year old `r emo::ji("tada")`
 
-There’s been a post every two weeks, though not at consistent intervals:
+There’s been more than a post every two weeks.
 
 <details><summary>Click for code</summary>
 ```{r message=FALSE}
-posts <- readRDS("~/Desktop/posts.RDS")
-
 # Load packages
 library(dplyr)  # data manipulation
 library(rvest)  # web scrape
@@ -23,6 +21,7 @@ library(stringr)  # string manipulation
 library(lubridate)  # deal with dates
 library(ggplot2)  # plots
 library(plotly)  # interactive plots
+library(glue)
 
 # Scrape the rostrum.blog home page
 html <- read_html("https://rostrum.blog/")
@@ -47,7 +46,7 @@ p <- posts %>%
     date = ymd(date),  # to space out the points by date
     count = 1  # dummy to indicate a post was made
   ) %>% 
-  ggplot(aes(x = date, y = count)) +
+  ggplot(aes(x = date, y = count, label = title)) +
   geom_point() +
   theme_void() +  # strip plot elements
   theme(panel.grid = element_blank())  # to stop plotly rendering grid
@@ -59,7 +58,7 @@ p <- posts %>%
 
 ```{r echo=FALSE, fig.height=2}
 # Pass the plot object to plotly
-ggplotly(p)
+ggplotly(p, tooltip = c("date", "title"))
 ```
 How long does it take to write a post here?
 
@@ -72,3 +71,43 @@ As a proxy for time taken on a post, I’m going to look at the commit history o
 [There's not much point looking at the quantity of commits or their size, since these can vary wildly and aren't great indicators of anything.] 
 
 [I’m going to judge effort by total lines created. That’s not the best measure. There’s effort in thinking and formulating and drawing diagrams that isn’t included. Some posts were about things I’d made; things that also took effort and time that isn’t captured here.]
+
+```{r}
+url <- "https://github.com/matt-dray/rostrum-blog/tree/master/content/post"
+nodes <-  ".js-navigation-item~ .js-navigation-item+ .js-navigation-item .js-navigation-open"
+
+rmd_html <- read_html(url) %>% 
+  html_nodes(nodes) %>% 
+  html_text()
+
+rmd_files <- rmd_html %>% 
+  as_tibble() %>%
+  rename(rmd_filename = value) %>% 
+  filter(str_detect(rmd_html, ".Rmd")) %>% 
+  mutate(rmd_filepath = glue("https://github.com/matt-dray/rostrum-blog/commits/master/content/post/{rmd_filename}"))
+```
+
+
+
+history in the form
+https://github.com/matt-dray/rostrum-blog/commits/master/content/post/file-name.Rmd
+date
+relative-time
+
+```{r}
+library(purrr)
+
+urls <- rmd_files$rmd_filepath
+
+# map(
+#   urls,
+#   read_html
+# )
+
+
+read_html(rmd_files[[1, 2]]) %>% 
+  html_nodes("relative-time") %>% 
+  html_text() %>% 
+  mdy()
+```
+

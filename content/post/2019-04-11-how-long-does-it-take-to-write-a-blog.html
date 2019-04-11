@@ -19,18 +19,17 @@ draft: yes
 
 
 <p>rostrum.blog is a year old 🎉</p>
-<p>There’s been a post every two weeks, though not at consistent intervals:</p>
+<p>There’s been more than a post every two weeks.</p>
 <details>
 <p><summary>Click for code</summary></p>
-<pre class="r"><code>posts &lt;- readRDS(&quot;~/Desktop/posts.RDS&quot;)
-
-# Load packages
+<pre class="r"><code># Load packages
 library(dplyr)  # data manipulation
 library(rvest)  # web scrape
 library(stringr)  # string manipulation
 library(lubridate)  # deal with dates
 library(ggplot2)  # plots
 library(plotly)  # interactive plots
+library(glue)
 
 # Scrape the rostrum.blog home page
 html &lt;- read_html(&quot;https://rostrum.blog/&quot;)
@@ -55,7 +54,7 @@ p &lt;- posts %&gt;%
     date = ymd(date),  # to space out the points by date
     count = 1  # dummy to indicate a post was made
   ) %&gt;% 
-  ggplot(aes(x = date, y = count)) +
+  ggplot(aes(x = date, y = count, label = title)) +
   geom_point() +
   theme_void() +  # strip plot elements
   theme(panel.grid = element_blank())  # to stop plotly rendering grid
@@ -64,10 +63,48 @@ p &lt;- posts %&gt;%
 # ggplotly(p)</code></pre>
 </details>
 <p><div id="htmlwidget-1" style="width:672px;height:192px;" class="plotly html-widget"></div>
-<script type="application/json" data-for="htmlwidget-1">{"x":{"data":[{"x":[17993,17973,17959,17954,17941,17928,17914,17900,17889,17864,17860,17856,17839,17817,17798,17786,17738,17729,17724,17712,17708,17687,17676,17670,17663,17648,17635],"y":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"text":["date: 2019-04-07<br />count: 1","date: 2019-03-18<br />count: 1","date: 2019-03-04<br />count: 1","date: 2019-02-27<br />count: 1","date: 2019-02-14<br />count: 1","date: 2019-02-01<br />count: 1","date: 2019-01-18<br />count: 1","date: 2019-01-04<br />count: 1","date: 2018-12-24<br />count: 1","date: 2018-11-29<br />count: 1","date: 2018-11-25<br />count: 1","date: 2018-11-21<br />count: 1","date: 2018-11-04<br />count: 1","date: 2018-10-13<br />count: 1","date: 2018-09-24<br />count: 1","date: 2018-09-12<br />count: 1","date: 2018-07-26<br />count: 1","date: 2018-07-17<br />count: 1","date: 2018-07-12<br />count: 1","date: 2018-06-30<br />count: 1","date: 2018-06-26<br />count: 1","date: 2018-06-05<br />count: 1","date: 2018-05-25<br />count: 1","date: 2018-05-19<br />count: 1","date: 2018-05-12<br />count: 1","date: 2018-04-27<br />count: 1","date: 2018-04-14<br />count: 1"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(0,0,0,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(0,0,0,1)"}},"hoveron":"points","showlegend":false,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null}],"layout":{"margin":{"t":16,"r":0,"b":0,"l":0},"font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187},"xaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[17617.1,18010.9],"tickmode":"array","ticktext":["Apr 2018","Jul 2018","Oct 2018","Jan 2019","Apr 2019"],"tickvals":[17622,17713,17805,17897,17987],"categoryorder":"array","categoryarray":["Apr 2018","Jul 2018","Oct 2018","Jan 2019","Apr 2019"],"nticks":null,"ticks":"outside","tickcolor":null,"ticklen":0,"tickwidth":0,"showticklabels":false,"tickfont":{"color":null,"family":null,"size":0},"tickangle":-0,"showline":true,"linecolor":null,"linewidth":0,"showgrid":false,"gridcolor":null,"gridwidth":0,"zeroline":false,"anchor":"y","title":"","titlefont":{"color":null,"family":null,"size":0},"hoverformat":".2f"},"yaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[0.95,1.05],"tickmode":"array","ticktext":["0.950","0.975","1.000","1.025","1.050"],"tickvals":[0.95,0.975,1,1.025,1.05],"categoryorder":"array","categoryarray":["0.950","0.975","1.000","1.025","1.050"],"nticks":null,"ticks":"outside","tickcolor":null,"ticklen":0,"tickwidth":0,"showticklabels":false,"tickfont":{"color":null,"family":null,"size":0},"tickangle":-0,"showline":true,"linecolor":null,"linewidth":0,"showgrid":false,"gridcolor":null,"gridwidth":0,"zeroline":false,"anchor":"x","title":"","titlefont":{"color":null,"family":null,"size":0},"hoverformat":".2f"},"shapes":[{"type":"rect","fillcolor":null,"line":{"color":null,"width":0,"linetype":[]},"yref":"paper","xref":"paper","x0":0,"x1":1,"y0":0,"y1":1}],"showlegend":false,"legend":{"bgcolor":null,"bordercolor":null,"borderwidth":0,"font":{"color":"rgba(0,0,0,1)","family":"","size":11.689497716895}},"hovermode":"closest","barmode":"relative"},"config":{"doubleClick":"reset","modeBarButtonsToAdd":[{"name":"Collaborate","icon":{"width":1000,"ascent":500,"descent":-50,"path":"M487 375c7-10 9-23 5-36l-79-259c-3-12-11-23-22-31-11-8-22-12-35-12l-263 0c-15 0-29 5-43 15-13 10-23 23-28 37-5 13-5 25-1 37 0 0 0 3 1 7 1 5 1 8 1 11 0 2 0 4-1 6 0 3-1 5-1 6 1 2 2 4 3 6 1 2 2 4 4 6 2 3 4 5 5 7 5 7 9 16 13 26 4 10 7 19 9 26 0 2 0 5 0 9-1 4-1 6 0 8 0 2 2 5 4 8 3 3 5 5 5 7 4 6 8 15 12 26 4 11 7 19 7 26 1 1 0 4 0 9-1 4-1 7 0 8 1 2 3 5 6 8 4 4 6 6 6 7 4 5 8 13 13 24 4 11 7 20 7 28 1 1 0 4 0 7-1 3-1 6-1 7 0 2 1 4 3 6 1 1 3 4 5 6 2 3 3 5 5 6 1 2 3 5 4 9 2 3 3 7 5 10 1 3 2 6 4 10 2 4 4 7 6 9 2 3 4 5 7 7 3 2 7 3 11 3 3 0 8 0 13-1l0-1c7 2 12 2 14 2l218 0c14 0 25-5 32-16 8-10 10-23 6-37l-79-259c-7-22-13-37-20-43-7-7-19-10-37-10l-248 0c-5 0-9-2-11-5-2-3-2-7 0-12 4-13 18-20 41-20l264 0c5 0 10 2 16 5 5 3 8 6 10 11l85 282c2 5 2 10 2 17 7-3 13-7 17-13z m-304 0c-1-3-1-5 0-7 1-1 3-2 6-2l174 0c2 0 4 1 7 2 2 2 4 4 5 7l6 18c0 3 0 5-1 7-1 1-3 2-6 2l-173 0c-3 0-5-1-8-2-2-2-4-4-4-7z m-24-73c-1-3-1-5 0-7 2-2 3-2 6-2l174 0c2 0 5 0 7 2 3 2 4 4 5 7l6 18c1 2 0 5-1 6-1 2-3 3-5 3l-174 0c-3 0-5-1-7-3-3-1-4-4-5-6z"},"click":"function(gd) { \n        // is this being viewed in RStudio?\n        if (location.search == '?viewer_pane=1') {\n          alert('To learn about plotly for collaboration, visit:\\n https://cpsievert.github.io/plotly_book/plot-ly-for-collaboration.html');\n        } else {\n          window.open('https://cpsievert.github.io/plotly_book/plot-ly-for-collaboration.html', '_blank');\n        }\n      }"}],"cloud":false},"source":"A","attrs":{"1adc5223e9ed":{"x":{},"y":{},"type":"scatter"}},"cur_data":"1adc5223e9ed","visdat":{"1adc5223e9ed":["function (y) ","x"]},"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"base_url":"https://plot.ly"},"evals":["config.modeBarButtonsToAdd.0.click"],"jsHooks":[]}</script>
+<script type="application/json" data-for="htmlwidget-1">{"x":{"data":[{"x":[17993,17973,17959,17954,17941,17928,17914,17900,17889,17864,17860,17856,17839,17817,17798,17786,17738,17729,17724,17712,17708,17687,17676,17670,17663,17648,17635],"y":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"text":["date: 2019-04-07<br />title: Fix leaky pipes in R","date: 2019-03-18<br />title: A tidyverse functions quiz with {learnr}","date: 2019-03-04<br />title: Webscraping the {polite} way","date: 2019-02-27<br />title: What’s your Hadley Number?","date: 2019-02-14<br />title: Graphing the Relayverse of podcasts","date: 2019-02-01<br />title: Git going: the command line","date: 2019-01-18<br />title: Deer-vehicle collisions: a Shiny app","date: 2019-01-04<br />title: Motivate yourself with an .Rprofile","date: 2018-12-24<br />title: The NBA Northwest Division with gmapsdistance","date: 2018-11-29<br />title: Blogdown: change Lithium theme font-face","date: 2018-11-25<br />title: Quantify colour with magick","date: 2018-11-21<br />title: Waggle dance with ggbeeswarm and emoGG","date: 2018-11-04<br />title: R training featuring Pokemon","date: 2018-10-13<br />title: R session info info","date: 2018-09-24<br />title: Knitting Club: R Markdown for beginners","date: 2018-09-12<br />title: EARL 2018: Crosstalk in memes","date: 2018-07-26<br />title: Engifification in R with gifski","date: 2018-07-17<br />title: Footballers are younger than you","date: 2018-07-12<br />title: How accessible is my post about accessibility?","date: 2018-06-30<br />title: Markov-chaining my PhD thesis","date: 2018-06-26<br />title: Mail merge in 2018 with R","date: 2018-06-05<br />title: Tid-ye-text with geniusr","date: 2018-05-25<br />title: Cloudy with a chance of pie","date: 2018-05-19<br />title: Pokeballs in Super Smash Bros","date: 2018-05-12<br />title: Accessibility workshop at #Sprint18","date: 2018-04-27<br />title: TWO DOGS IN TOILET ELDERLY LADY INVOLVED","date: 2018-04-14<br />title: R Trek: exploring stardates"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(0,0,0,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(0,0,0,1)"}},"hoveron":"points","showlegend":false,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null}],"layout":{"margin":{"t":16,"r":0,"b":0,"l":0},"font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187},"xaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[17617.1,18010.9],"tickmode":"array","ticktext":["Apr 2018","Jul 2018","Oct 2018","Jan 2019","Apr 2019"],"tickvals":[17622,17713,17805,17897,17987],"categoryorder":"array","categoryarray":["Apr 2018","Jul 2018","Oct 2018","Jan 2019","Apr 2019"],"nticks":null,"ticks":"outside","tickcolor":null,"ticklen":0,"tickwidth":0,"showticklabels":false,"tickfont":{"color":null,"family":null,"size":0},"tickangle":-0,"showline":true,"linecolor":null,"linewidth":0,"showgrid":false,"gridcolor":null,"gridwidth":0,"zeroline":false,"anchor":"y","title":"","titlefont":{"color":null,"family":null,"size":0},"hoverformat":".2f"},"yaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[0.95,1.05],"tickmode":"array","ticktext":["0.950","0.975","1.000","1.025","1.050"],"tickvals":[0.95,0.975,1,1.025,1.05],"categoryorder":"array","categoryarray":["0.950","0.975","1.000","1.025","1.050"],"nticks":null,"ticks":"outside","tickcolor":null,"ticklen":0,"tickwidth":0,"showticklabels":false,"tickfont":{"color":null,"family":null,"size":0},"tickangle":-0,"showline":true,"linecolor":null,"linewidth":0,"showgrid":false,"gridcolor":null,"gridwidth":0,"zeroline":false,"anchor":"x","title":"","titlefont":{"color":null,"family":null,"size":0},"hoverformat":".2f"},"shapes":[{"type":"rect","fillcolor":null,"line":{"color":null,"width":0,"linetype":[]},"yref":"paper","xref":"paper","x0":0,"x1":1,"y0":0,"y1":1}],"showlegend":false,"legend":{"bgcolor":null,"bordercolor":null,"borderwidth":0,"font":{"color":"rgba(0,0,0,1)","family":"","size":11.689497716895}},"hovermode":"closest","barmode":"relative"},"config":{"doubleClick":"reset","modeBarButtonsToAdd":[{"name":"Collaborate","icon":{"width":1000,"ascent":500,"descent":-50,"path":"M487 375c7-10 9-23 5-36l-79-259c-3-12-11-23-22-31-11-8-22-12-35-12l-263 0c-15 0-29 5-43 15-13 10-23 23-28 37-5 13-5 25-1 37 0 0 0 3 1 7 1 5 1 8 1 11 0 2 0 4-1 6 0 3-1 5-1 6 1 2 2 4 3 6 1 2 2 4 4 6 2 3 4 5 5 7 5 7 9 16 13 26 4 10 7 19 9 26 0 2 0 5 0 9-1 4-1 6 0 8 0 2 2 5 4 8 3 3 5 5 5 7 4 6 8 15 12 26 4 11 7 19 7 26 1 1 0 4 0 9-1 4-1 7 0 8 1 2 3 5 6 8 4 4 6 6 6 7 4 5 8 13 13 24 4 11 7 20 7 28 1 1 0 4 0 7-1 3-1 6-1 7 0 2 1 4 3 6 1 1 3 4 5 6 2 3 3 5 5 6 1 2 3 5 4 9 2 3 3 7 5 10 1 3 2 6 4 10 2 4 4 7 6 9 2 3 4 5 7 7 3 2 7 3 11 3 3 0 8 0 13-1l0-1c7 2 12 2 14 2l218 0c14 0 25-5 32-16 8-10 10-23 6-37l-79-259c-7-22-13-37-20-43-7-7-19-10-37-10l-248 0c-5 0-9-2-11-5-2-3-2-7 0-12 4-13 18-20 41-20l264 0c5 0 10 2 16 5 5 3 8 6 10 11l85 282c2 5 2 10 2 17 7-3 13-7 17-13z m-304 0c-1-3-1-5 0-7 1-1 3-2 6-2l174 0c2 0 4 1 7 2 2 2 4 4 5 7l6 18c0 3 0 5-1 7-1 1-3 2-6 2l-173 0c-3 0-5-1-8-2-2-2-4-4-4-7z m-24-73c-1-3-1-5 0-7 2-2 3-2 6-2l174 0c2 0 5 0 7 2 3 2 4 4 5 7l6 18c1 2 0 5-1 6-1 2-3 3-5 3l-174 0c-3 0-5-1-7-3-3-1-4-4-5-6z"},"click":"function(gd) { \n        // is this being viewed in RStudio?\n        if (location.search == '?viewer_pane=1') {\n          alert('To learn about plotly for collaboration, visit:\\n https://cpsievert.github.io/plotly_book/plot-ly-for-collaboration.html');\n        } else {\n          window.open('https://cpsievert.github.io/plotly_book/plot-ly-for-collaboration.html', '_blank');\n        }\n      }"}],"cloud":false},"source":"A","attrs":{"239866c4c128":{"x":{},"y":{},"label":{},"type":"scatter"}},"cur_data":"239866c4c128","visdat":{"239866c4c128":["function (y) ","x"]},"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"base_url":"https://plot.ly"},"evals":["config.modeBarButtonsToAdd.0.click"],"jsHooks":[]}</script>
 How long does it take to write a post here?</p>
 <p>This massively varies.</p>
 <p>I’ve written most posts on my commute.</p>
 <p>As a proxy for time taken on a post, I’m going to look at the commit history on the rostrum.blog repo from the first commit of each post to its publication date (as recorded in the RSS record). But the process rarely stops there, so I’ll look at any post-publication corrections (spellings, etc).</p>
 <p>[There’s not much point looking at the quantity of commits or their size, since these can vary wildly and aren’t great indicators of anything.]</p>
 <p>[I’m going to judge effort by total lines created. That’s not the best measure. There’s effort in thinking and formulating and drawing diagrams that isn’t included. Some posts were about things I’d made; things that also took effort and time that isn’t captured here.]</p>
+<pre class="r"><code>url &lt;- &quot;https://github.com/matt-dray/rostrum-blog/tree/master/content/post&quot;
+nodes &lt;-  &quot;.js-navigation-item~ .js-navigation-item+ .js-navigation-item .js-navigation-open&quot;
+
+rmd_html &lt;- read_html(url) %&gt;% 
+  html_nodes(nodes) %&gt;% 
+  html_text()
+
+rmd_files &lt;- rmd_html %&gt;% 
+  as_tibble() %&gt;%
+  rename(rmd_filename = value) %&gt;% 
+  filter(str_detect(rmd_html, &quot;.Rmd&quot;)) %&gt;% 
+  mutate(rmd_filepath = glue(&quot;https://github.com/matt-dray/rostrum-blog/commits/master/content/post/{rmd_filename}&quot;))</code></pre>
+<pre><code>## Warning: Calling `as_tibble()` on a vector is discouraged, because the behavior is likely to change in the future. Use `tibble::enframe(name = NULL)` instead.
+## This warning is displayed once per session.</code></pre>
+<p>history in the form
+<a href="https://github.com/matt-dray/rostrum-blog/commits/master/content/post/file-name.Rmd" class="uri">https://github.com/matt-dray/rostrum-blog/commits/master/content/post/file-name.Rmd</a>
+date
+relative-time</p>
+<pre class="r"><code>library(purrr)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;purrr&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:rvest&#39;:
+## 
+##     pluck</code></pre>
+<pre class="r"><code>urls &lt;- rmd_files$rmd_filepath
+
+# map(
+#   urls,
+#   read_html
+# )
+
+
+read_html(rmd_files[[1, 2]]) %&gt;% 
+  html_nodes(&quot;relative-time&quot;) %&gt;% 
+  html_text() %&gt;% 
+  mdy()</code></pre>
+<pre><code>## [1] &quot;2018-05-12&quot; &quot;2018-05-02&quot; &quot;2018-04-15&quot; &quot;2018-04-15&quot; &quot;2018-04-14&quot;
+## [6] &quot;2018-04-14&quot; &quot;2018-04-14&quot; &quot;2018-04-14&quot; &quot;2018-04-14&quot;</code></pre>
