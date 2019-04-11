@@ -1,0 +1,49 @@
+---
+title: How long does it take to write a blog
+author: Matt Dray
+date: '2019-04-11'
+slug: blog-writing
+categories: []
+tags: []
+draft: yes
+---
+
+
+
+<pre><code>library(tidyRSS)
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(rvest)
+library(lubridate)
+library(plotly)
+
+html &lt;- read_html(&quot;https://rostrum.blog/&quot;) 
+
+title &lt;- html %&gt;% 
+  html_nodes(&quot;.archive-item-link&quot;) %&gt;% 
+  html_text()
+
+date &lt;- html %&gt;% 
+  html_nodes(&quot;.archive-item-date&quot;) %&gt;% 
+  html_text() %&gt;% 
+  str_replace_all(&quot;\n|[:space:]&quot;, &quot;&quot;)
+
+
+posts &lt;- tibble(title = title, date = date)
+
+p &lt;- posts %&gt;%
+  mutate(date = ymd(date), count = 1) %&gt;% 
+  ggplot(aes(x = date, y = count)) +
+  geom_point() +
+  theme_void() +
+  theme(
+    axis.title.y = element_blank(),
+    axis.title.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    panel.grid = element_blank()
+  )
+
+ggplotly(p)
+</code></pre>
