@@ -21,7 +21,6 @@ library(stringr)  # string manipulation
 library(lubridate)  # deal with dates
 library(ggplot2)  # plots
 library(plotly)  # interactive plots
-library(glue)
 
 # Scrape the rostrum.blog home page
 html <- read_html("https://rostrum.blog/")
@@ -47,7 +46,7 @@ p <- posts %>%
     count = 1  # dummy to indicate a post was made
   ) %>% 
   ggplot(aes(x = date, y = count, label = title)) +
-  geom_point() +
+  geom_point(color = "#1D8016") +
   theme_void() +  # strip plot elements
   theme(panel.grid = element_blank())  # to stop plotly rendering grid
 
@@ -73,41 +72,51 @@ As a proxy for time taken on a post, I’m going to look at the commit history o
 [I’m going to judge effort by total lines created. That’s not the best measure. There’s effort in thinking and formulating and drawing diagrams that isn’t included. Some posts were about things I’d made; things that also took effort and time that isn’t captured here.]
 
 ```{r}
+library(tibble)
+
 url <- "https://github.com/matt-dray/rostrum-blog/tree/master/content/post"
-nodes <-  ".js-navigation-item~ .js-navigation-item+ .js-navigation-item .js-navigation-open"
+nodes <- ".js-navigation-item~ .js-navigation-item+ .js-navigation-item .js-navigation-open"
 
 rmd_html <- read_html(url) %>% 
   html_nodes(nodes) %>% 
   html_text()
 
 rmd_files <- rmd_html %>% 
-  as_tibble() %>%
+  enframe(name = NULL) %>%
   rename(rmd_filename = value) %>% 
   filter(str_detect(rmd_html, ".Rmd")) %>% 
-  mutate(rmd_filepath = glue("https://github.com/matt-dray/rostrum-blog/commits/master/content/post/{rmd_filename}"))
+  mutate(rmd_filepath = paste0("https://github.com/matt-dray/rostrum-blog/commits/master/content/post/", rmd_filename))
+
+rmd_files[1:5, 1]
 ```
 
 
 
-history in the form
-https://github.com/matt-dray/rostrum-blog/commits/master/content/post/file-name.Rmd
-date
-relative-time
-
 ```{r}
 library(purrr)
+library(lubridate)
+library(tidyr)
 
-urls <- rmd_files$rmd_filepath
+urls <- select(rmd_files, rmd_filepath) %>%
+  slice(-nrow(.)) %>% 
+  pull()
 
-# map(
-#   urls,
-#   read_html
-# )
+names <- select(rmd_files, rmd_filename) %>%
+  slice(-nrow(.)) %>% 
+  pull()
 
+read <- map(urls, read_html) %>%
+  set_names(names)
 
-read_html(rmd_files[[1, 2]]) %>% 
-  html_nodes("relative-time") %>% 
-  html_text() %>% 
-  mdy()
+nodes <- map(read, html_nodes, "relative-time")
+
+dates <- map(nodes, html_text)
+
+commits <- enframe(dates) %>%
+  unnest(value) %>%
+  distinct(name, value) %>%
+  mutate(value = mdy(value))
+
+commits
 ```
 
