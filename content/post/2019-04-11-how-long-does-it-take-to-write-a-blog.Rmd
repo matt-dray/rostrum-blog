@@ -1,18 +1,20 @@
 ---
-title: How long does it take to write a blog
+title: A year of rostrum.blog
 author: Matt Dray
 date: '2019-04-11'
-slug: blog-writing
+slug: one-year
 categories: []
 tags: []
 draft: yes
 ---
 
-rostrum.blog is a year old `r emo::ji("tada")`
+Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
 
-There’s been more than a post every two weeks.
+# rostrum.blog is a year old `r emo::ji("tada")`
 
-<details><summary>Click for code</summary>
+27 posts, about once every two weeks.
+
+<details><summary>Code</summary>
 ```{r message=FALSE}
 # Load packages
 library(dplyr)  # data manipulation
@@ -37,86 +39,29 @@ date <- html %>%
   str_replace_all("\n|[:space:]", "")
 
 # Dataframe of titles and dates
-posts <- tibble(title = title, date = date)
+posts <- tibble(title = title, publish_date = date) %>% 
+  mutate(publish_date = ymd(date)) %>% 
+  arrange(publish_date)
 
 # Create plot object
 p <- posts %>%
-  mutate(
-    date = ymd(date),  # to space out the points by date
-    count = 1  # dummy to indicate a post was made
-  ) %>% 
-  ggplot(aes(x = date, y = count, label = title)) +
+  mutate(count = 1) %>%   # dummy to indicate a post was made
+  ggplot(aes(x = publish_date, y = count, label = title)) +
   geom_point(color = "#1D8016") +
   theme_void() +  # strip plot elements
   theme(panel.grid = element_blank())  # to stop plotly rendering grid
 
-# Pass the plot object to plotly (actually performed outside this ccode chunk)
-# ggplotly(p)
+# Pass the plot object to plotly (actually performed outside this code chunk)
+# ggplotly(p, tooltip = c("publish_date", "title")) %>%
+#   config(displayModeBar = F)
+
+# Print session info
+xfun::session_info()
 ```
 </details>
 
-```{r echo=FALSE, fig.height=2}
+```{r echo=FALSE, fig.height=0.5}
 # Pass the plot object to plotly
-ggplotly(p, tooltip = c("date", "title"))
+ggplotly(p, tooltip = c("publish_date", "title")) %>%
+  config(displayModeBar = F)
 ```
-How long does it take to write a post here?
-
-This massively varies.
-
-I’ve written most posts on my commute.
-
-As a proxy for time taken on a post, I’m going to look at the commit history on the rostrum.blog repo from the first commit of each post to its publication date (as recorded in the RSS record). But the process rarely stops there, so I’ll look at any post-publication corrections (spellings, etc).
-
-[There's not much point looking at the quantity of commits or their size, since these can vary wildly and aren't great indicators of anything.] 
-
-[I’m going to judge effort by total lines created. That’s not the best measure. There’s effort in thinking and formulating and drawing diagrams that isn’t included. Some posts were about things I’d made; things that also took effort and time that isn’t captured here.]
-
-```{r}
-library(tibble)
-
-url <- "https://github.com/matt-dray/rostrum-blog/tree/master/content/post"
-nodes <- ".js-navigation-item~ .js-navigation-item+ .js-navigation-item .js-navigation-open"
-
-rmd_html <- read_html(url) %>% 
-  html_nodes(nodes) %>% 
-  html_text()
-
-rmd_files <- rmd_html %>% 
-  enframe(name = NULL) %>%
-  rename(rmd_filename = value) %>% 
-  filter(str_detect(rmd_html, ".Rmd")) %>% 
-  mutate(rmd_filepath = paste0("https://github.com/matt-dray/rostrum-blog/commits/master/content/post/", rmd_filename))
-
-rmd_files[1:5, 1]
-```
-
-
-
-```{r}
-library(purrr)
-library(lubridate)
-library(tidyr)
-
-urls <- select(rmd_files, rmd_filepath) %>%
-  slice(-nrow(.)) %>% 
-  pull()
-
-names <- select(rmd_files, rmd_filename) %>%
-  slice(-nrow(.)) %>% 
-  pull()
-
-read <- map(urls, read_html) %>%
-  set_names(names)
-
-nodes <- map(read, html_nodes, "relative-time")
-
-dates <- map(nodes, html_text)
-
-commits <- enframe(dates) %>%
-  unnest(value) %>%
-  distinct(name, value) %>%
-  mutate(value = mdy(value))
-
-commits
-```
-
