@@ -19,7 +19,7 @@ tags:
 knitr::opts_chunk$set(echo = TRUE, warnings = FALSE, message = FALSE, error = FALSE, eval = TRUE)
 ```
 
-<span style="color:lightgray">Matt Dray</span>
+Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
 
 <img src="https://media.giphy.com/media/2TOlr2Cams64M/giphy.gif" alt="Super Smash Bros for N64" width="100%">
 
@@ -49,14 +49,14 @@ library(dplyr)  # data manipulation
 library(readr)  # reading files
 
 # read data from github 
-balls <- readr::read_csv(
+balls <- read_csv(
   "https://raw.githubusercontent.com/matt-dray/draytasets/master/ssb_pokeballs.csv"
 ) %>% 
-  dplyr::mutate(pokemon = tools::toTitleCase(pokemon))  # start names with caps
+  mutate(pokemon = tools::toTitleCase(pokemon))  # start names with caps
 
 # preview 25 random observations
-dplyr::sample_n(balls, 25) %>%  # sample of 25
-  dplyr::pull()  # column to vector
+sample_n(balls, 25) %>%  # sample of 25
+  pull()  # column to vector
 ```
 
 # Frequency
@@ -66,11 +66,13 @@ dplyr::sample_n(balls, 25) %>%  # sample of 25
 We can make use of the `tabyl()` function from the `janitor` package.
 
 ```{r}
+library(janitor)
+
 balls_summary <- balls %>%
-  janitor::tabyl(pokemon) %>% 
-  dplyr::arrange(desc(n)) %>% 
-  dplyr::mutate(percent = round(percent * 100, 1)) %>% 
-  dplyr::rename(Pokemon = pokemon, Count = n, Percent = percent)
+  tabyl(pokemon) %>% 
+  arrange(desc(n)) %>% 
+  mutate(percent = round(percent * 100, 1)) %>% 
+  rename(Pokemon = pokemon, Count = n, Percent = percent)
   
 knitr::kable(balls_summary)
 ```
@@ -85,8 +87,8 @@ library(Rokemon)  # poke-themed package
 
 balls %>% 
   group_by(pokemon) %>% 
-  dplyr::count() %>% 
-  Rokemon::gghealth("pokemon", "n") +
+  count() %>% 
+  gghealth("pokemon", "n") +
   labs(
     x = "", y = "Count",
     title = "Pokeball release frequencies",
@@ -106,13 +108,14 @@ Bear in mind that this is only based on a sample of `r nrow(balls)` so far . I'l
 
 ![Special edition Nintendo 64 playing Super Smash Bros](/post/2018-05-19-pokeballs-in-super-smash-bros_files/n64.JPG){width=100%}
 
-<!-- <img src="static/post/2018-05-19-pokeballs-in-super-smash-bros_files/n64.JPG" alt="Special edition N64 playing Super Smash Bros" width="100%"> -->
-
 # R session information
 
-```{r sessionInfo}
+<details><summary>Session info</summary>
+```{r session-info, echo=FALSE}
+paste("Last updated", Sys.Date())
 sessionInfo()
 ```
+</details>
 
 [^1]: I recommend you watch [the indie documentary on YouTube about the rise of SSB Melee tournaments](https://www.youtube.com/watch?v=NSf2mgkRm7Q&list=PLoUHkRwnRH-IXbZfwlgiEN8eXmoj6DtKM).
 [^2]: Also check out the `geom_pokemon()` function in the `ggimage` package by [Guangchuang Yu](https://guangchuangyu.github.io/), which [plots points as Pokemon sprites](https://cran.r-project.org/web/packages/ggimage/vignettes/ggimage.html).
