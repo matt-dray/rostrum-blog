@@ -74,18 +74,18 @@ names(rescue) <- iconv(names(rescue), to = "ASCII", sub = "")
 
 # more cleaning
 rescue <- rescue %>% 
-  rename(IncidentNominalCost = `IncidentNominalCost()`) %>%  # no brackets
+  rename(IncidentNotionalCost = `IncidentNominalCost()`) %>%  # no brackets
   mutate(DateTimeOfCall = ymd_hms(DateTimeOfCall))  # convert type
 
 # preview
 glimpse(rescue) 
 ```
 
-So each row is an 'incident' to which the brigade were called and there's 5352 of them recorded in teh dataset. There are 25 columns for variables relating to incident, including when it was, what it was and where it was.
+So each row is an 'incident' to which the brigade were called and there's 5352 of them recorded in the dataset. There are 25 columns for variables relating to incident, including when it was, what it was and where it was.
 
 ## Explore the data
 
-This post isn't about the dataset, but it's worth having a closer look at it. I've added an interactive table below so you can search for incidents, creatures, locations and the nominal cost of the callout.
+This post isn't about the dataset, but it's worth having a closer look at it. I've added an interactive table below so you can search for incidents, creatures, locations and the notional cost of the callout.
 
 ```{r datatable, echo=FALSE}
 library(DT)  # interactive javascript tables
@@ -95,14 +95,14 @@ rescue %>%
   mutate(  # allows for dropdown on interactive table
     Animal = as.factor(AnimalGroupParent),
     Borough = as.factor(Borough),
-    IncidentNominalCost = ifelse(
-      test = IncidentNominalCost == "NULL",
-      yes = NA, no = as.numeric(IncidentNominalCost)
+    IncidentNotionalCost = ifelse(
+      test = IncidentNotionalCost == "NULL",
+      yes = NA, no = as.numeric(IncidentNotionalCost)
     )
   ) %>% 
   select(
     Incident = FinalDescription, Animal, Borough,
-    `Nominal cost (£)` = IncidentNominalCost
+    `Notional cost (£)` = IncidentNotionalCost
   ) %>% 
   datatable(options = list(autoWidth = TRUE, pageLength = 5, dom = "ftp"))
 ```
@@ -124,7 +124,7 @@ And of course:
 
 ## Points data
 
-Each incident in aour data is a point in space with an X and Y coordinate. It's currently eastings and northings, but we want to transform it to latitude and longitude.
+Each incident in our data is a point in space with an X and Y coordinate. It's currently eastings and northings, but we want to transform it to latitude and longitude.
 
 ### 'sf' class and reprojection
 
@@ -276,7 +276,7 @@ leaflet(boroughs_sf) %>%
       "<b>Incident</b>: ", filtered_rescue_sf$FinalDescription, "<br>",
       "<b>Date</b>: ", filtered_rescue_sf$DateTimeOfCall, "<br>",
       "<b>Borough</b>: ", filtered_rescue_sf$Borough, "<br>",
-      "<b>Nominal cost</b>: £", filtered_rescue_sf$IncidentNominalCost
+      "<b>Notional cost</b>: £", filtered_rescue_sf$IncidentNotionalCost
     )
   )
 ```
@@ -296,6 +296,9 @@ My main advice? Keep an eye on your pets. _And consider covering your chimney_.
 
 # R session information
 
-```{r sessionInfo}
+<details><summary>Session info</summary>
+```{r session-info, echo=FALSE}
+paste("Last updated", Sys.Date())
 sessionInfo()
 ```
+</details>
