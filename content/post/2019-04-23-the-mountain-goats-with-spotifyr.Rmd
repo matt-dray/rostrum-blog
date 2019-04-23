@@ -1,0 +1,50 @@
+---
+title: The Mountain Goats with {spotifyr}
+author: Matt Dray
+date: '2019-04-23'
+slug: mountain-goats
+categories:
+  - R
+  - pop culture
+tags:
+  - spotifyr
+  - the mountain goats
+  - music
+---
+
+```{r message=FALSE}
+library(dplyr)
+library(spotifyr)
+access_token <- get_spotify_access_token()
+```
+
+```{r}
+# goat <- get_discography("the mountain goats")
+beths <- get_discography("the beths")
+beths_sub <- beths %>% 
+  select(
+    album_name, album_release_year,
+    track_name, track_number, track_n,
+    danceability, energy, valence, tempo, duration_ms,
+    loudness, speechiness, acousticness, instrumentalness, liveness
+  ) %>%
+slice(1:10) %>% ungroup()
+```
+
+```{r}
+names(beths_sub)
+```
+
+```{r}
+beths_sub %>% 
+  arrange(desc(danceability)) %>% 
+  select(track_name, danceability)
+```
+
+```{r}
+library(ggplot2)
+
+beths_sub %>% 
+  ggplot(aes(x = track_n, y = tempo)) +
+  geom_line()
+```
