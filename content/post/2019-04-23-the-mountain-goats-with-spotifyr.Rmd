@@ -15,36 +15,38 @@ tags:
 ```{r message=FALSE}
 library(dplyr)
 library(spotifyr)
+library(lubridate)
 access_token <- get_spotify_access_token()
 ```
 
+# Get albums
+
 ```{r}
-# goat <- get_discography("the mountain goats")
-beths <- get_discography("the beths")
-beths_sub <- beths %>% 
-  select(
-    album_name, album_release_year,
-    track_name, track_number, track_n,
-    danceability, energy, valence, tempo, duration_ms,
-    loudness, speechiness, acousticness, instrumentalness, liveness
-  ) %>%
-slice(1:10) %>% ungroup()
+goat_albums <- get_artist_albums(
+  id = "3hyGGjxu73JuzBa757H6R5",
+  include_groups = "album",
+  limit = 25,
+  market = "GB"
+) %>% 
+  select(id, name, release_date) %>% 
+  filter(name != "Goths (Deluxe Version)") %>% 
+  mutate(release_date = substr(release_date, 1, 4))
+
+# dedupe_album_names(
+#   df = goat_albums,
+#   album_name_col = "name",
+#   album_release_year_col = "release_date"
+# )
+
+goat_albums
 ```
 
-```{r}
-names(beths_sub)
-```
+# Get album songs
 
 ```{r}
-beths_sub %>% 
-  arrange(desc(danceability)) %>% 
-  select(track_name, danceability)
-```
-
-```{r}
-library(ggplot2)
-
-beths_sub %>% 
-  ggplot(aes(x = track_n, y = tempo)) +
-  geom_line()
+tracks <- purrr::map_df(goat_albums$id, get_album_tracks)
+get_track_audio_features(tracks$id[1:100])
+get_track_audio_features(tracks$id[101:200])
+get_track_audio_features(tracks$id[201:300])
+get_track_audio_features(tracks$id[301:312])
 ```
