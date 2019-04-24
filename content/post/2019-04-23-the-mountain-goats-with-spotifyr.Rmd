@@ -12,41 +12,90 @@ tags:
   - music
 ---
 
+# Prepare the workspace
+
 ```{r message=FALSE}
-library(dplyr)
 library(spotifyr)
-library(lubridate)
+library(dplyr)
+library(purrr)
+```
+
+You need to sign up for a Spotify developer account and add your client ID and client secret to the environment. This is passed to each of the functions of {spotifyr} to let us access the Spotify API.
+
+```{r}
 access_token <- get_spotify_access_token()
 ```
 
 # Get albums
 
+The `get_artist_albums()` function takes an artist ID and fetches the albums for that artist.
+
+The Mountain Goats can be identified by the URI `spotify:artist:3hyGGjxu73JuzBa757H6R5`, where the 22-character value is the artist ID used by {spotifyr}.
+
+I've provided the `market` argument to restrict the albums to those released in only one area. This means we won't get multiple returns for the same album that was released in more than one area.
+
+We do still end up with the same album appearing more than once, but this is because a deluxe version is included. We could use the `dedupe_album_names()` function to remove doubles, but the function also removes things labeled as 'deluxe', 'reissue', etc. Instead I've simply filtered out 'Goths (Deluxe Version)'.
+
 ```{r}
 goat_albums <- get_artist_albums(
-  id = "3hyGGjxu73JuzBa757H6R5",
-  include_groups = "album",
-  limit = 25,
-  market = "GB"
+  id = "3hyGGjxu73JuzBa757H6R5",  # from the artist URI
+  include_groups = "album",  # albums only, not singles
+  limit = 25,  # return a max of 25
+  market = "GB"  # only the ones released in this market
 ) %>% 
-  select(id, name, release_date) %>% 
-  filter(name != "Goths (Deluxe Version)") %>% 
-  mutate(release_date = substr(release_date, 1, 4))
-
-# dedupe_album_names(
-#   df = goat_albums,
-#   album_name_col = "name",
-#   album_release_year_col = "release_date"
-# )
+  select(album_id = id, name, release_date) %>%  # columns of focus
+  filter(name != "Goths (Deluxe Version)") %>%  # remove dupe album
+  mutate(release_date = substr(release_date, 1, 4))  # extract year
 
 goat_albums
 ```
 
-# Get album songs
+# Get album tracks
+
+We can iterate over the album IDs using {purrr} to fetch the tracks from each. `map_df()` returns the results in a tibble.
 
 ```{r}
-tracks <- purrr::map_df(goat_albums$id, get_album_tracks)
-get_track_audio_features(tracks$id[1:100])
-get_track_audio_features(tracks$id[101:200])
-get_track_audio_features(tracks$id[201:300])
-get_track_audio_features(tracks$id[301:312])
+
+### THIS RETURNS 'ID', WHICH IS TRACK ID. DOES IT ALSO RETURN ALBUM ID? ###
+### IF NOT, WILL HAVE TO INCLUDE .names (?) IN map_df SO .x IS PASSED AS THE ALBUM NAME ###
+
+goat_tracks <- map_df(goat_albums$id, get_album_tracks) %>%
+  select(track_id = id, name)  # only need the track ID and name
+
+sample_n(goat_tracks, 5)
 ```
+
+# Get audio features
+
+We have albums and tracks, but the Spotify API also returns 'audio features'. This includes things like time signature, key and tempo, but also some more exotic things like 'speechiness', 'actousticness' and 'danceability'.
+
+```{r}
+# We can only fetch 100 at a time, but there are >300 tracks
+audio1 <- get_track_audio_features(tracks$id[1:100])
+audio2 <- get_track_audio_features(tracks$id[101:200])
+audio3 <- get_track_audio_features(tracks$id[201:300])
+audio4 <- get_track_audio_features(tracks$id[301:312])
+
+# Bind the data together
+goat_features <- bind_rows(audio1, audio2, audio3, audio4) %>% 
+  select(
+    track_id = id, everything(),
+    -uri, -track_href, -analysis_url
+  )
+
+names(goat_features)
+
+sample_n(goat_features, 5)
+```
+
+# Join everything together
+
+TWe've collected three datasets: albums, tracks and audio features. We can join them all by the ID values.
+
+```{r}
+# Join tracks to albums by album ID
+# Join features to tracks by track ID
+goats_data <- right_join(goat_albums, goat_tracks, by = "album_id") %>% 
+  left_join(goat_features, by = "track_id")
+```
+
