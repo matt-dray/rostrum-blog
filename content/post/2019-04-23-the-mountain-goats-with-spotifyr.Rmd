@@ -43,8 +43,8 @@ goat_albums <- get_artist_albums(
   limit = 25,  # return a max of 25
   market = "GB"  # only the ones released in this market
 ) %>% 
-  select(album_id = id, name, release_date) %>%  # columns of focus
-  filter(name != "Goths (Deluxe Version)") %>%  # remove dupe album
+  select(album_id = id, album_name = name, release_date) %>%  # columns of focus
+  filter(album_name != "Goths (Deluxe Version)") %>%  # remove dupe album
   mutate(release_date = substr(release_date, 1, 4))  # extract year
 
 goat_albums
@@ -59,8 +59,14 @@ We can iterate over the album IDs using {purrr} to fetch the tracks from each. `
 ### THIS RETURNS 'ID', WHICH IS TRACK ID. DOES IT ALSO RETURN ALBUM ID? ###
 ### IF NOT, WILL HAVE TO INCLUDE .names (?) IN map_df SO .x IS PASSED AS THE ALBUM NAME ###
 
-goat_tracks <- map_df(goat_albums$id, get_album_tracks) %>%
-  select(track_id = id, name)  # only need the track ID and name
+named_album_id <- set_names(goat_albums$album_id, goat_albums$album_id)
+
+goat_tracks <- map_df(
+  .x = named_album_id,
+  .f = get_album_tracks,
+  .id = "album_id"
+) %>%
+  select(album_id, track_id = id, track_name = name)  # simplify dataframe
 
 sample_n(goat_tracks, 5)
 ```
@@ -90,7 +96,7 @@ sample_n(goat_features, 5)
 
 # Join everything together
 
-TWe've collected three datasets: albums, tracks and audio features. We can join them all by the ID values.
+We've collected three datasets: albums, tracks and audio features. We can join them all by the ID values.
 
 ```{r}
 # Join tracks to albums by album ID
