@@ -18,6 +18,7 @@ tags:
 library(spotifyr)
 library(dplyr)
 library(purrr)
+library(tidyr)
 ```
 
 You need to sign up for a Spotify developer account and add your client ID and client secret to the environment. This is passed to each of the functions of {spotifyr} to let us access the Spotify API.
@@ -41,7 +42,7 @@ goat_albums <- get_artist_albums(
   id = "3hyGGjxu73JuzBa757H6R5",  # from the artist URI
   include_groups = "album",  # albums only, not singles
   limit = 25,  # return a max of 25
-  market = "GB"  # only the ones released in this market
+  market = "US"  # only the ones released in this market
 ) %>% 
   select(album_id = id, album_name = name, release_date) %>%  # columns of focus
   filter(album_name != "Goths (Deluxe Version)") %>%  # remove dupe album
@@ -55,10 +56,6 @@ goat_albums
 We can iterate over the album IDs using {purrr} to fetch the tracks from each. `map_df()` returns the results in a tibble.
 
 ```{r}
-
-### THIS RETURNS 'ID', WHICH IS TRACK ID. DOES IT ALSO RETURN ALBUM ID? ###
-### IF NOT, WILL HAVE TO INCLUDE .names (?) IN map_df SO .x IS PASSED AS THE ALBUM NAME ###
-
 named_album_id <- set_names(goat_albums$album_id, goat_albums$album_id)
 
 goat_tracks <- map_df(
@@ -77,10 +74,10 @@ We have albums and tracks, but the Spotify API also returns 'audio features'. Th
 
 ```{r}
 # We can only fetch 100 at a time, but there are >300 tracks
-audio1 <- get_track_audio_features(tracks$id[1:100])
-audio2 <- get_track_audio_features(tracks$id[101:200])
-audio3 <- get_track_audio_features(tracks$id[201:300])
-audio4 <- get_track_audio_features(tracks$id[301:312])
+audio1 <- get_track_audio_features(goat_tracks$track_id[1:100])
+audio2 <- get_track_audio_features(goat_tracks$track_id[101:200])
+audio3 <- get_track_audio_features(goat_tracks$track_id[201:300])
+audio4 <- get_track_audio_features(goat_tracks$track_id[301:312])
 
 # Bind the data together
 goat_features <- bind_rows(audio1, audio2, audio3, audio4) %>% 
@@ -90,18 +87,71 @@ goat_features <- bind_rows(audio1, audio2, audio3, audio4) %>%
   )
 
 names(goat_features)
+```
 
+And here's a few examples
+
+```{r}
 sample_n(goat_features, 5)
 ```
 
 # Join everything together
 
-We've collected three datasets: albums, tracks and audio features. We can join them all by the ID values.
+We've collected three datasets: albums, tracks and audio features. We can join them all by ID values.
 
 ```{r}
 # Join tracks to albums by album ID
 # Join features to tracks by track ID
-goats_data <- right_join(goat_albums, goat_tracks, by = "album_id") %>% 
+goat_disco <- right_join(goat_albums, goat_tracks, by = "album_id") %>% 
   left_join(goat_features, by = "track_id")
+
+goat_disco
+```
+
+# Visuals
+
+```{r}
+library(ggplot2)
+library(plotly)
+
+p <- goat_disco %>% 
+  ggplot(aes(x = danceability, y = valence, colour = album_name, group = track_name)) +
+  geom_point() +
+  scale_color_grey()
+ggplotly(p)
+
+goat_numeric %>% select(danceability, energy, valence, speechiness, acousticness, instrumentalness, tempo) %>% plot()
+```
+
+```{r}
+p2 <- goat_disco %>% 
+  ggplot(aes(x = album_name, y = valence, group = track_name)) +
+  #geom_point() +
+  geom_boxplot() +
+  scale_color_grey() +
+  coord_flip()
+ggplotly(p2)
+```
+
+# Clusters
+
+```{r}
+goat_numeric <- select(
+  goats_disco,
+  
+  #-album_id, -album_name, -release_date, -track_id, -track_name, -type
+) 
+goat_cluster <- kmeans(goat_numeric, centers = 3)
+
+summary(goat_cluster)
+
+library(broom)
+
+augment(goat_cluster, goat_numeric)
+
+
+clust <- bind_cols(goat_disco, enframe(goat_cluster$cluster)) %>% rename(cluster = value)
+
+ggplot(, aes())
 ```
 
