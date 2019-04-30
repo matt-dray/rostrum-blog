@@ -1,0 +1,128 @@
+---
+title: The Mountain Goats with {spotifyr}
+author: Matt Dray
+date: '2019-04-23'
+slug: mountain-goats
+categories:
+  - R
+  - pop culture
+tags:
+  - spotifyr
+  - the mountain goats
+  - music
+draft: yes
+---
+
+
+
+<div id="prepare-the-workspace" class="section level1">
+<h1>Prepare the workspace</h1>
+<pre class="r"><code>library(spotifyr)
+library(dplyr)
+library(purrr)
+library(tidyr)</code></pre>
+<p>You need to sign up for a Spotify developer account and add your client ID and client secret to the environment. This is passed to each of the functions of {spotifyr} to let us access the Spotify API.</p>
+<pre class="r"><code>access_token &lt;- get_spotify_access_token()</code></pre>
+</div>
+<div id="get-albums" class="section level1">
+<h1>Get albums</h1>
+<p>The <code>get_artist_albums()</code> function takes an artist ID and fetches the albums for that artist.</p>
+<p>The Mountain Goats can be identified by the URI <code>spotify:artist:3hyGGjxu73JuzBa757H6R5</code>, where the 22-character value is the artist ID used by {spotifyr}.</p>
+<p>I’ve provided the <code>market</code> argument to restrict the albums to those released in only one area. This means we won’t get multiple returns for the same album that was released in more than one area.</p>
+<p>We do still end up with the same album appearing more than once, but this is because a deluxe version is included. We could use the <code>dedupe_album_names()</code> function to remove doubles, but the function also removes things labeled as ‘deluxe’, ‘reissue’, etc. Instead I’ve simply filtered out ‘Goths (Deluxe Version)’.</p>
+<pre class="r"><code>goat_albums &lt;- get_artist_albums(
+  id = &quot;3hyGGjxu73JuzBa757H6R5&quot;,  # from the artist URI
+  include_groups = &quot;album&quot;,  # albums only, not singles
+  limit = 25,  # return a max of 25
+  market = &quot;US&quot;  # only the ones released in this market
+) %&gt;% 
+  select(album_id = id, album_name = name, release_date) %&gt;%  # columns of focus
+  filter(album_name != &quot;Goths (Deluxe Version)&quot;) %&gt;%  # remove dupe album
+  mutate(release_date = substr(release_date, 1, 4))  # extract year
+
+goat_albums</code></pre>
+</div>
+<div id="get-album-tracks" class="section level1">
+<h1>Get album tracks</h1>
+<p>We can iterate over the album IDs using {purrr} to fetch the tracks from each. <code>map_df()</code> returns the results in a tibble.</p>
+<pre class="r"><code>named_album_id &lt;- set_names(goat_albums$album_id, goat_albums$album_id)
+
+goat_tracks &lt;- map_df(
+  .x = named_album_id,
+  .f = get_album_tracks,
+  .id = &quot;album_id&quot;
+) %&gt;%
+  select(album_id, track_id = id, track_name = name)  # simplify dataframe
+
+sample_n(goat_tracks, 5)</code></pre>
+</div>
+<div id="get-audio-features" class="section level1">
+<h1>Get audio features</h1>
+<p>We have albums and tracks, but the Spotify API also returns ‘audio features’. This includes things like time signature, key and tempo, but also some more exotic things like ‘speechiness’, ‘actousticness’ and ‘danceability’.</p>
+<pre class="r"><code># We can only fetch 100 at a time, but there are &gt;300 tracks
+audio1 &lt;- get_track_audio_features(goat_tracks$track_id[1:100])
+audio2 &lt;- get_track_audio_features(goat_tracks$track_id[101:200])
+audio3 &lt;- get_track_audio_features(goat_tracks$track_id[201:300])
+audio4 &lt;- get_track_audio_features(goat_tracks$track_id[301:312])
+
+# Bind the data together
+goat_features &lt;- bind_rows(audio1, audio2, audio3, audio4) %&gt;% 
+  select(
+    track_id = id, everything(),
+    -uri, -track_href, -analysis_url
+  )
+
+names(goat_features)</code></pre>
+<p>And here’s a few examples</p>
+<pre class="r"><code>sample_n(goat_features, 5)</code></pre>
+</div>
+<div id="join-everything-together" class="section level1">
+<h1>Join everything together</h1>
+<p>We’ve collected three datasets: albums, tracks and audio features. We can join them all by ID values.</p>
+<pre class="r"><code># Join tracks to albums by album ID
+# Join features to tracks by track ID
+goat_disco &lt;- right_join(goat_albums, goat_tracks, by = &quot;album_id&quot;) %&gt;% 
+  left_join(goat_features, by = &quot;track_id&quot;)
+
+goat_disco</code></pre>
+</div>
+<div id="visuals" class="section level1">
+<h1>Visuals</h1>
+<pre class="r"><code>library(ggplot2)
+library(plotly)
+
+p &lt;- goat_disco %&gt;% 
+  ggplot(aes(x = danceability, y = valence, colour = album_name, group = track_name)) +
+  geom_point() +
+  scale_color_grey()
+ggplotly(p)
+
+goat_numeric %&gt;% select(danceability, energy, valence, speechiness, acousticness, instrumentalness, tempo) %&gt;% plot()</code></pre>
+<pre class="r"><code>p2 &lt;- goat_disco %&gt;% 
+  ggplot(aes(x = album_name, y = valence, group = track_name)) +
+  #geom_point() +
+  geom_boxplot() +
+  scale_color_grey() +
+  coord_flip()
+ggplotly(p2)</code></pre>
+</div>
+<div id="clusters" class="section level1">
+<h1>Clusters</h1>
+<pre class="r"><code>goat_numeric &lt;- select(
+  goats_disco,
+  
+  #-album_id, -album_name, -release_date, -track_id, -track_name, -type
+) 
+goat_cluster &lt;- kmeans(goat_numeric, centers = 3)
+
+summary(goat_cluster)
+
+library(broom)
+
+augment(goat_cluster, goat_numeric)
+
+
+clust &lt;- bind_cols(goat_disco, enframe(goat_cluster$cluster)) %&gt;% rename(cluster = value)
+
+ggplot(, aes())</code></pre>
+</div>

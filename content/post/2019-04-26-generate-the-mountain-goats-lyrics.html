@@ -25,15 +25,12 @@ draft: no
 <img src="https://media.giphy.com/media/3BZMxpu9VV6w7TnVdm/giphy.gif" alt="John Darnielle with the green-scaled slipcase for In League with Dragons" />
 <p class="caption">John Darnielle with the green-scaled slipcase for In League with Dragons</p>
 </div>
-<div id="section" class="section level1">
-<h1></h1>
 <p><a href="https://en.wikipedia.org/wiki/The_Mountain_Goats">The Mountain Goats</a> released <a href="https://www.metacritic.com/music/in-league-with-dragons/the-mountain-goats"><em>In League with Dragons</em></a> today, their <a href="http://www.mountain-goats.com/discography/">seventeenth studio album</a>.</p>
 <p><a href="https://en.wikipedia.org/wiki/John_Darnielle">John Darnielle</a> has written a lot of words across the Mountain Goat’s <a href="https://en.wikipedia.org/wiki/The_Mountain_Goats_discography">back catalogue</a>. His lyrics are poetic and descriptive, covering fictional and autobiographical themes that include susbtance abuse, professional wrestling and cadaver-sniffing dogs.</p>
 <p>Can we generate new Mountain Goats lyrics given this rich text dataset? This is a short post to do exactly that using the {spotifyr}, {genius} and {markovifyR} packages for R.</p>
 <p>Hit play below while reading to generate the right mood.</p>
 <iframe src="https://open.spotify.com/embed/track/0R9CW6XBPlNLEoz8E4IIi6" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media">
 </iframe>
-</div>
 <div id="get-lyrics" class="section level1">
 <h1>Get lyrics</h1>
 <p><a href="https://www.rcharlie.com/spotifyr/">The {spotifyr} package</a><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> pulls artist and album information from the music streaming service <a href="https://www.spotify.com">Spotify</a>, along with some interesting audio features like ‘danceability’ and ‘acousticness’. It also fetches lyrics from <a href="https://genius.com/">Genius</a> via <a href="https://github.com/josiahparry/genius">the {genius} package</a><a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>.</p>
@@ -61,13 +58,13 @@ goat_disco &lt;- goat_discography %&gt;%
 sample_n(goat_disco, 5) %&gt;%
   select(album_name, track_name, energy)  # a sample</code></pre>
 <pre><code>## # A tibble: 5 x 3
-##   album_name                         track_name                      energy
-##   &lt;chr&gt;                              &lt;chr&gt;                            &lt;dbl&gt;
-## 1 Heretic Pride                      Michael Myers Resplendent        0.281
-## 2 Protein Source Of The Future... N… Duke Ellington                   0.49 
-## 3 Heretic Pride                      Marduk T-Shirt Men&#39;s Room Inci…  0.171
-## 4 Heretic Pride                      Tianchi Lake                     0.157
-## 5 Tallahassee                        See America Right                0.821</code></pre>
+##   album_name                           track_name                 energy
+##   &lt;chr&gt;                                &lt;chr&gt;                       &lt;dbl&gt;
+## 1 Bitter Melon Farm                    Star Dusting                0.437
+## 2 Transcendental Youth                 Counterfeit Florida Plates  0.714
+## 3 Protein Source Of The Future... Now! Going To Malibu             0.803
+## 4 Full Force Galesburg                 Minnesota                   0.452
+## 5 In League with Dragons               Younger                     0.586</code></pre>
 <p>I’ll be saving this dataframe for some other analysis, but for now we’ll need only the lyrics. The lyrics are stored in a list-column as a separate tibble (data frame) per song.</p>
 <pre class="r"><code>library(tidyr)  # for unnest()
 
@@ -80,23 +77,23 @@ goat_lyrics &lt;- goat_disco %&gt;%
   pull(lyric)  # convert column to character vector
 
 sample(goat_lyrics, 10)  # a sample</code></pre>
-<pre><code>##  [1] &quot;Waiting for the other shoe to drop in Tampa Bay&quot;            
-##  [2] &quot;When you said your name out loud&quot;                           
-##  [3] &quot;And a thousand dead friends can&#39;t stop me&quot;                  
-##  [4] &quot;And twitch&quot;                                                 
-##  [5] &quot;Thank you for the candy&quot;                                    
-##  [6] &quot;And when the nurse comes in to change my sheets and clothes&quot;
-##  [7] &quot;Can&#39;t you see the door&#39;s burning?&quot;                          
-##  [8] &quot;The suffocated splendor&quot;                                    
-##  [9] &quot;But I couldn&#39;t remember, I honestly could not remember&quot;     
-## [10] &quot;Things will shortly get completely out of hand&quot;</code></pre>
+<pre><code>##  [1] &quot;I try to remember to write in the diary&quot;                         
+##  [2] &quot;Feel bad about the things we do along the way&quot;                   
+##  [3] &quot;I was a red dot blinking on a screen up overhead&quot;                
+##  [4] &quot;Been waiting such a long time now, my number&#39;s finally coming up&quot;
+##  [5] &quot;Drunk on the spirit and high on fumes&quot;                           
+##  [6] &quot;To piss off the dumb few that forgave us&quot;                        
+##  [7] &quot;Save yourselves&quot;                                                 
+##  [8] &quot;Two of the renegades carrying firewood, a third with a lightbulb&quot;
+##  [9] &quot;Garden Grove&quot;                                                    
+## [10] &quot;But the devil is in the details&quot;</code></pre>
 </div>
 <div id="generate-lyrics" class="section level1">
 <h1>Generate lyrics</h1>
 <p>We can use a Markov chain to generate new lyrics based on our dataset. Basically, it will predict the next word from the current one based on the likelihood from our input dataset. You can <a href="https://hackernoon.com/from-what-is-a-markov-model-to-here-is-how-markov-models-work-1ac5f4629b71">read more about this principle elsewhere</a>.</p>
 <p><a href="https://github.com/abresler/markovifyR">The {markovifyR} package</a><a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> is a wrapper for <a href="https://github.com/jsvine/markovify">the Python package <code>markovify</code></a>, which ‘is a simple, extensible Markov chain generator’. You can install <code>markovify</code> at the command line via R’s <code>system()</code> function. {furrr} is also needed.</p>
 <pre class="r"><code># system(&quot;pip install markovify&quot;)
-library(markovifyR)  # install.packages(&quot;markovifyR&quot;)
+library(markovifyR)  # remotes::install_github(&quot;abresler/markovifyR&quot;)
 library(furrr)  # install.packages(&quot;furrr&quot;)</code></pre>
 <p>Now we can generate the model given all the lyrics.</p>
 <pre class="r"><code>markov_model &lt;- generate_markovify_model(
@@ -116,56 +113,56 @@ library(furrr)  # install.packages(&quot;furrr&quot;)</code></pre>
   only_distinct = TRUE,
   return_message = TRUE
 )</code></pre>
-<pre><code>## goat_speak: You and I know that in one day
-## goat_speak: I hope the junkyard a few blocks from here to get beneath my skin is warming up now
-## goat_speak: Tried to think like a dark cloud full of wet rain
-## goat_speak: Except for the punchline
-## goat_speak: You&#39;ve stepped back from the same time
-## goat_speak: While I mouth my silent curses at you, I used to know you, I love you anymore
-## goat_speak: And no one screams cause it&#39;s just about
-## goat_speak: Watched him tearing through the clean, clean windows
-## goat_speak: Then we couldn&#39;t hear my stage directions
-## goat_speak: Here we come to life
-## goat_speak: Even when I should not
-## goat_speak: And there&#39;s honeysuckle on the front row
-## goat_speak: And if I saw the whole wide world
-## goat_speak: Was coming right along
-## goat_speak: Why don&#39;t you worry
-## goat_speak: Hope it never rains here
-## goat_speak: Snuck out to dry
-## goat_speak: And it was real inviting
-## goat_speak: Long life to see the snow
-## goat_speak: You must be cold outside
-## goat_speak: Safe behind the Chinese rifle sounded in the firmament
-## goat_speak: Lead a long time ago
-## goat_speak: Nowhere to run out sometime
-## goat_speak: Looking up at a liquor store
-## goat_speak: But I could feel your smile burning through
-## goat_speak: Swing low sweet sweet sweet sweet sweet sweet sweet sweet chariot
-## goat_speak: And the fog has lifted
-## goat_speak: Try not to think good thoughts
-## goat_speak: I can see you come my way
-## goat_speak: And in their numbers
-## goat_speak: There&#39;s more like me where I am coming home
-## goat_speak: You said that in California the waves break on the west coast
-## goat_speak: You put on your face with that apricot scrub again
-## goat_speak: Learn to love you twice
-## goat_speak: We keep up the doors
-## goat_speak: And it was warm on my own skin but I never come off now
-## goat_speak: Show up in the drain
-## goat_speak: I will find a little
-## goat_speak: From the entrance to the Broadway Bridge
-## goat_speak: And the sun&#39;s coming up quickly above the strange, white plain
-## goat_speak: And I don&#39;t even come out
-## goat_speak: Stick to the ballpark
-## goat_speak: Give her some hungry reggae
-## goat_speak: And I saw the last best thing I&#39;ve done something worse
-## goat_speak: A year or so ago I worked down at all
-## goat_speak: Ghosts of my stereo
-## goat_speak: It all came back from the killing floor
-## goat_speak: Maybe hold you I know what I must
-## goat_speak: It&#39;s like I&#39;ve got very little money left
-## goat_speak: Not sure what I&#39;m gonna bake you a drink in years</code></pre>
+<pre><code>## goat_speak: Shower room full of promise and potential
+## goat_speak: On the floor again
+## goat_speak: The singer&#39;s locked up in the room fill with steam
+## goat_speak: To tell the cameras
+## goat_speak: Your hair was dark and there is nobody driving
+## goat_speak: You&#39;ll be maybe lunging for the fever to break my fall
+## goat_speak: Deep in my teeth into your handbag and puled out a place to go
+## goat_speak: The color of the night came on, you burst into song
+## goat_speak: Feel like the rhythm of the death-dealing physician
+## goat_speak: As the windows down
+## goat_speak: And I know you see is what you will be saved
+## goat_speak: Don&#39;t feel like I&#39;m gonna take this rabbit into Malibu
+## goat_speak: Children in the desert sand
+## goat_speak: I saw something dark and then remember you
+## goat_speak: The wind from the hands of children
+## goat_speak: The wind behind us like ribbons
+## goat_speak: Let&#39;s go to Maine right now headed silent down the sails tonight
+## goat_speak: You come into the Grand Am
+## goat_speak: Orphans in the black walnut tree
+## goat_speak: To the rooms with the windows on the dunes
+## goat_speak: You were looking at you
+## goat_speak: When we meet again?
+## goat_speak: Perfectly aware of where our love in clear perspective
+## goat_speak: Preacher in the rafters
+## goat_speak: Heading to the concrete walls in shadow
+## goat_speak: They were on Cherry Red I think I&#39;ll stay here
+## goat_speak: There&#39;s champagne on the wind come through his teeth
+## goat_speak: Try not to lose you
+## goat_speak: I fear for my safety, you can see that you&#39;re wearing a wire
+## goat_speak: All the way home from the Hunan Province
+## goat_speak: Let&#39;s go where everybody knows
+## goat_speak: I throw up in the rain falling from the world, I may not ever get the call
+## goat_speak: Though we may kiss no more after me
+## goat_speak: You had sugar on your hair behind your head someday
+## goat_speak: I heard you saying anyway
+## goat_speak: When you eased down the Hertzsprung-Russell diagram
+## goat_speak: To an afternoon I spent in jail again
+## goat_speak: Got out of the refrigerator
+## goat_speak: The wind blew through your body breathing on mine
+## goat_speak: We had hot caramel sticking to her skin
+## goat_speak: See the rain, feel the new found, rich brown, deep, wet ground
+## goat_speak: From all away across the bruised earth
+## goat_speak: When I got real cold
+## goat_speak: Like a desperate strength
+## goat_speak: Try not to open up your eyes
+## goat_speak: Pull down my throat, fresh blood in our throats
+## goat_speak: What it is that I&#39;m aware of where I stand
+## goat_speak: When I get the call
+## goat_speak: But none of your hair
+## goat_speak: Wheels were spitting out sparks, scraping at the stars and knew the secrets within them</code></pre>
 <p>Mountain Goats fans will probably recognise a few familiar patterns in the text that emerges.</p>
 <p>I ran this function a few times and here a few outputs that made me laugh (or think):</p>
 <ul>
@@ -195,10 +192,10 @@ library(furrr)  # install.packages(&quot;furrr&quot;)</code></pre>
   only_distinct = TRUE,
   return_message = TRUE
 )</code></pre>
-<pre><code>## goat_lyric: I know you see him, you&#39;ll know
-## goat_lyric: And I start to gather outside
-## goat_lyric: But one of us said a word I say it, but I don&#39;t know when
-## goat_lyric: So tie down the line</code></pre>
+<pre><code>## goat_lyric: I looked toward the same effect on a shiny black plastic tray
+## goat_lyric: And the world back on
+## goat_lyric: But when you were standing in the dining room
+## goat_lyric: So this is what the point is</code></pre>
 <p>…or not.</p>
 <p>I think John Darnielle probably remains the best generator of Mountain Goats lyrics for now.</p>
 </div>
@@ -214,7 +211,7 @@ library(furrr)  # install.packages(&quot;furrr&quot;)</code></pre>
 </ul>
 <details>
 <p><summary>Session info</summary></p>
-<pre><code>## [1] &quot;Last updated 2019-04-26&quot;</code></pre>
+<pre><code>## [1] &quot;Last updated 2019-04-30&quot;</code></pre>
 <pre><code>## R version 3.5.2 (2018-12-20)
 ## Platform: x86_64-apple-darwin15.6.0 (64-bit)
 ## Running under: macOS High Sierra 10.13.6
