@@ -1,7 +1,7 @@
 ---
 title: Markov-chaining my PhD thesis II
 author: Matt Dray
-date: '2019-04-29'
+date: '2019-04-30'
 slug: markov-chain-phd-2
 categories:
   - R
@@ -9,16 +9,16 @@ categories:
 tags:
   - phd
   - markov chain
-draft: yes
+draft: no
 ---
 
 Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
 
-I posted about using [a Markov chain](https://hackernoon.com/from-what-is-a-markov-model-to-here-is-how-markov-models-work-1ac5f4629b71) to generate sentences using [my PhD thesis](https://orca.cf.ac.uk/68365/) as input. I also posted about [the {markovifyR} package}(https://github.com/abresler/markovifyR) for [generating lyrics by The Mountain Goats](https://www.rostrum.blog/2019/04/25/gen-tmg-lyrics/).
+[I posted a while back](https://www.rostrum.blog/2018/06/30/markov-chain-phd/) about using [a Markov chain](https://hackernoon.com/from-what-is-a-markov-model-to-here-is-how-markov-models-work-1ac5f4629b71) to generate sentences using [my PhD thesis](https://orca.cf.ac.uk/68365/) as input. I also posted about [the {markovifyR} package](https://github.com/abresler/markovifyR) for [generating lyrics by The Mountain Goats](https://www.rostrum.blog/2019/04/25/gen-tmg-lyrics/).
 
-So now I'm revisting the PhD post using {markovifyR} for my own amusement.
+This is a quick update to that original post, but this time I'm using {markovifyR}.
 
-The PhD text is available from my {dray} package. I'll remove the blank lines and ignore the preamble and references section.
+The PhD text is available from my {dray} package. I'll remove the blank lines and ignore the preamble and references section. As a reminder, the thesis is about the decomposition of tree litter that's been exposed to environmental stressors like elevated carbon dioxide levels and acidified streams.
 
 ```{r}
 library(dray)  # remotes::install_github("matt-dray/dray")
@@ -27,14 +27,18 @@ phd_text <- phd[nchar(phd) > 0]  # remove blank lines
 phd_text <- phd[27:376]  # ignore preamble and references
 ```
 
-Now to prepare the workspace, build the model and generate some sentences.
+Now to prepare the workspace. {markovifyR} is a wrapper of the `markovify` Python module; you need to install `markovify` with a call to `system()` and then also ensure you've installed {markovifyR} from GitHub and also th dependency {furrr}.
 
-```{r}
+```{r message=FALSE}
 # Prepare the workspace
 # system("pip install markovify")
 library(markovifyR)  # remotes::install_github("abresler/markovifyR")
 library(furrr)  # install.packages("furrr")
+```
 
+The function `generate_markovify_model()` builds the model and `markovify_text()` generate some sentences based on that model.
+
+```{r}
 # Build model
 markov_model <- generate_markovify_model(
   input_text = phd,
@@ -55,18 +59,28 @@ phd_speak <- markovify_text(
 )
 ```
 
-Some classics:
+I ran this a few times and picked some favourites (my comments in square brackets):
 
-* Detritivorous macroinvertebrate species used to overcome this issue in future, where no material is used to hold them together.
-This reduced decomposition rate in the University’s Open Access repository and for inter-library loan, and for inter-library loan, and for inter-library loans.
-* Litter was produced under artificial conditions.
-* Bonferroni-adjusted critical significance levels were compared by pairwise PERMANOVA.
-* A GLMM was also affected by growth condition, to be made available to outside organisations.
-* Canadian Journal of the laboratory in a randomly-ordered 3 × 3 grid.
-* I am grateful for the choice test.
-* This thesis is the total nitrogen content of the North American Benthological Society.
-* In general, litter chemical composition and decomposition.
-* This simplicity has allowed for broad underlying principles to be linked to litter chemical composition differently depending on whether it was exposed to a labeled 0.5 m steel rod.
-* My parents have never wavered in their responses, suggesting that caution has to be available online in the CEF.
-* Deciduous woodlands are dependent on the parent tree.
-* After falling as litter, elevated-CO2 leaves are maintained after falling as litter.
+* In general, litter chemical composition and decomposition. [This is the ultimate summary of my thesis.]
+* Bonferroni-adjusted critical significance levels were compared by pairwise PERMANOVA. [That sure sounds like statistics!]
+* Detritivorous macroinvertebrate species used to overcome this issue in future, where no material is used to hold them together. [That's the basis for a sci-fi movie, surely?]
+* A GLMM was also affected by growth condition, to be made available to outside organisations. [Not technically wrong: a variable affected a model, that model has been made available. Just sounds weird.]
+* Canadian Journal of the laboratory in a randomly-ordered 3 × 3 grid. [That is one niche academic journal.]
+* I am grateful for the choice test. [I designed and ran it, so I have only myself to thank.]
+* This thesis is the total nitrogen content of the North American Benthological Society. [I'm sure the NABS has more nitrogen in its possession.]
+* This simplicity has allowed for broad underlying principles to be linked to litter chemical composition differently depending on whether it was exposed to a labeled 0.5 m steel rod. [Holy smokes, who knew that the steel rods were the deciding factor? Were they radioactive or something?]
+* My parents have never wavered in their responses, suggesting that caution has to be available online in the CEF. [It seems the Controlled Environment Facility (CEF) cannot control for the effect of parental input; best to provide some guidance on what to do if parental influence is strong.]
+* This reduced decomposition rate in the University’s Open Access repository and for inter-library loan, and for inter-library loan, and for inter-library loans. [Ah good, slower-decomposing books will last longer; apparently this is important for inter-library loans? ]
+* Deciduous woodlands are dependent on the parent tree. [Yes, all deciduous woodlands have one central master tree from which all the others are descended.]
+* Currently there is a key ecosystem process in temperate deciduous woodlands and streams. [Yes, but what is it? I must know!]
+
+Once again, simply copy and paste several of these sentences into your own thesis. The benefit is that you won't have to grow any trees in a high carbon-dioxide atmosphere; you won't have to spend months packing leaves into tiny bags; you won't have to attach those bags to tens of IKEA cutlery holders and dunk them in frozen streams in mid-Wales; you won't have to grind those leaves into a suspicious-looking powder and transport them cross-country for chemical analyses; you won't have to imprison any insects against their will.
+
+Good luck at your viva!
+
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+paste("Last updated", Sys.Date())
+xfun::session_info()
+```
+</details>
