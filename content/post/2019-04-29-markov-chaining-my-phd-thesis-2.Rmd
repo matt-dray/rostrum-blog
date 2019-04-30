@@ -1,0 +1,72 @@
+---
+title: Markov-chaining my PhD thesis II
+author: Matt Dray
+date: '2019-04-29'
+slug: markov-chain-phd-2
+categories:
+  - R
+  - text analysis
+tags:
+  - phd
+  - markov chain
+draft: yes
+---
+
+Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
+
+I posted about using [a Markov chain](https://hackernoon.com/from-what-is-a-markov-model-to-here-is-how-markov-models-work-1ac5f4629b71) to generate sentences using [my PhD thesis](https://orca.cf.ac.uk/68365/) as input. I also posted about [the {markovifyR} package}(https://github.com/abresler/markovifyR) for [generating lyrics by The Mountain Goats](https://www.rostrum.blog/2019/04/25/gen-tmg-lyrics/).
+
+So now I'm revisting the PhD post using {markovifyR} for my own amusement.
+
+The PhD text is available from my {dray} package. I'll remove the blank lines and ignore the preamble and references section.
+
+```{r}
+library(dray)  # remotes::install_github("matt-dray/dray")
+phd_text <- dray::phd  # get data
+phd_text <- phd[nchar(phd) > 0]  # remove blank lines
+phd_text <- phd[27:376]  # ignore preamble and references
+```
+
+Now to prepare the workspace, build the model and generate some sentences.
+
+```{r}
+# Prepare the workspace
+# system("pip install markovify")
+library(markovifyR)  # remotes::install_github("abresler/markovifyR")
+library(furrr)  # install.packages("furrr")
+
+# Build model
+markov_model <- generate_markovify_model(
+  input_text = phd,
+  markov_state_size = 2L,
+  max_overlap_total = 25,
+  max_overlap_ratio = 0.7
+)
+
+# Generate lines
+phd_speak <- markovify_text(
+  markov_model = markov_model,
+  maximum_sentence_length = NULL,
+  output_column_name = 'phd_speak',
+  count = 50,
+  tries = 100,
+  only_distinct = TRUE,
+  return_message = TRUE
+)
+```
+
+Some classics:
+
+* Detritivorous macroinvertebrate species used to overcome this issue in future, where no material is used to hold them together.
+This reduced decomposition rate in the University’s Open Access repository and for inter-library loan, and for inter-library loan, and for inter-library loans.
+* Litter was produced under artificial conditions.
+* Bonferroni-adjusted critical significance levels were compared by pairwise PERMANOVA.
+* A GLMM was also affected by growth condition, to be made available to outside organisations.
+* Canadian Journal of the laboratory in a randomly-ordered 3 × 3 grid.
+* I am grateful for the choice test.
+* This thesis is the total nitrogen content of the North American Benthological Society.
+* In general, litter chemical composition and decomposition.
+* This simplicity has allowed for broad underlying principles to be linked to litter chemical composition differently depending on whether it was exposed to a labeled 0.5 m steel rod.
+* My parents have never wavered in their responses, suggesting that caution has to be available online in the CEF.
+* Deciduous woodlands are dependent on the parent tree.
+* After falling as litter, elevated-CO2 leaves are maintained after falling as litter.
