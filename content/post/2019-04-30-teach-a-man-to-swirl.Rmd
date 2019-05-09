@@ -14,117 +14,104 @@ draft: yes
 
 Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
 
-# TL;DR
+# tl;dr
 
 1. [{swirl}](https://swirlstats.com/) lets people learn R from within R.
 1. [{swirlify}](http://swirlstats.com/swirlify/) is a package to help write Swirl courses
-1. Make a Swirl course -- I've begun [Tidyswirl](https://github.com/matt-dray/tidyswirl) for learning about the packages of [the tidyverse](https://www.tidyverse.org/)
+1. Make a Swirl course -- I've begun [Tidyswirl](https://github.com/matt-dray/tidyswirl) for teaching [tidyverse](https://www.tidyverse.org/) packages
 
 # Swirl
 
-The {swirl} package lets you learn R interactively from within R itself. Swirl prints information and questions in the console and users type back their response. Learners can install new courses -- contributed by the community -- to learn about new things.
+The {swirl} package lets you learn R interactively from within R itself.
 
-This form of learning can be beneficial. Lessons actively involve the learner and make sure they can demonstrate an understanding about what they've learnt.
+Swirl prints questions in the console and users have to answer correctly before they can move on. 
 
-You can find out more about Swirl from their [website]() and [CRAN page]() and see some contributed packages on the [Swirl Course Network]().
+To begin, install and load the package then follow the instructions that Swirl gives you.
 
-To begin:
-
-```{r eval=FALSE}
+```{r, install-swirl, eval=FALSE}
 install.packages("swirl")
 library(swirl)
-install_course("Course Name Here")
 swirl()
 ```
 
-[gif of running swirl]
+Full instructions are on Swirl's [website]().
 
-# Swirlify
+New courses can be downloaded from the [Swirl Course Network](), but can also be sourced from GitHub or a zip file, for example.
 
-This post is about contributing new courses that anyone can download.
+I like Swirl. It's active, self-paced and extensible. But this post isn't about using Swirl, it's about creating new Swirl courses.
 
-The fish is Swirl. Teaching people to fish is Swirlify. Teaching people to teach people to fish is this post.
+# Teach others to teach
 
-Swirl suffers because its library of courses is relatively small. More people need to make materials and share them.
+Swirl is a fish. Teaching people to fish is Swirlify. Teaching people to teach people to fish is this post.
 
-Sean Kross and Nick Carchedi made this much easier with [the {swirlify} package](https://CRAN.R-project.org/package=swirlify).
+Swirl suffers because its library of courses is relatively small. More people need to make materials and share them. This shouldn't be a problem for the thriving R community.
 
-[Overview for course creators](https://swirlstats.com/instructors.html) and [there's a website with the full swirlify guidance](http://swirlstats.com/swirlify/)
+## Swirlify
 
-{swirlify} contains a number of handy functions for generating template files to create new courses and lessons
+Sean Kross and Nick Carchedi have created [the {swirlify} package](https://CRAN.R-project.org/package=swirlify) to make course creation easy.
 
-There's even a Shiny app built in to Swirlify to make this process easier. From the app you select a question type (multi-choice, etc) and provide text to go with it. Swirlify then generates the question's YAML code and adds it to the lesson file. You can save and demo the lesson using buttons within the app.
+[Full Swirlify guidance](http://swirlstats.com/swirlify/) is available. This post covers the basics to get you started.
 
-Start new course/lesson. Add to lesson.yaml directly or indirectly via the Shiny app. Use the initLesson.R for startup objects. Test with <function>. Demo with <function>. Contribute by hosting on GitHub, DropBox or Google Drive; store as a zip file; share as a .swc file. Supply it to the Swirl Course Network.
+## Simple workflow
+
+Let's create a new course about insects where each lesson is about a different order. To start:
+
+```{r, new-lesson, eval=FALSE}
+new_lesson(course_name = "Course", lesson_name = "Lesson 1")
+```
+
+These folders and template files get created:
+
+```
+Home
+└── Course
+    └── Lesson_1
+        ├── customTests.R
+        ├── dependson.txt
+        ├── initLesson.R
+        └── lesson.yaml
+```
+
+Lesson content goes in `lesson.yaml`. This is the only file we care about right now. But we don't have to touch it. Begin content creation with:
+
+```{r, swirlify, eval=FALSE}
+swirlify()
+```
+
+The Shiny app GUI will open. On the left is where you create new questions. On the right you can see the lesson file itself.
+
+To build a question:
+
+1. Choose a question type from the dropdown menu
+1. Fill in the text boxes ('Make Answer Test from Correct Answer' will help you by autofilling 'Answer Tests' from 'Correct Answer')
+1. Click 'Add Question'
+1. Click 'Save Lesson'
+1. optional: click 'Demo Lesson' to try it out
+
+Rinse and repeat until you've finished the lesson.
+
+To create the next lesson, use the code above, but change the `lesson_name` argument to the name of the new lesson.
+
+## Share it
+
+There are several ways to share it.
+
+## Minimal extra info
+
+* Different question types
+* 'Message' questions should be used to provide information -- they're statements rather than questions
+* Answer tests
+* YAML
+* Auto-test your course
 
 # Tidyswirl
 
-I made the course to test out Swirl, but the content might actually be useful for people. I might not create more lessons, but you are free to contribute new ones.
+I've started a Swirl course that might be useful. It's called Tidyswirl and the goal is to have a lesson that introduces each core package of [the tidyverse](https://www.tidyverse.org/).
 
-```{r eval=FALSE}
+Please feel free to contribute new courses or raise issues.
+
+To install the course so you can use it in Swirl:
+
+```{r, install-tidyswirl, eval=FALSE}
 install_course_github("matt-dray", "tidyswirl")
 ```
-
-
-
-
-<!-- https://www.reddit.com/r/dataisbeautiful/comments/3mp9r7/im_hadley_wickham_chief_scientist_at_rstudio_and/cvh6vo8 -->
-
-<!-- # Learning options -->
-
-<!-- You can learn R in a number of ways. For example: in-person or online training courses; blogposts and walkthroughs via your favourite search engine; or books. -->
-
-<!-- These are fine, but training courses can be pricey and are often one-offs; online courses often use a proprietary coding interfaces; you won't get a consistent learning experience by Googling around; and what even is a book? -->
-
-<!-- There's a free option that's community driven and lets people learn in their R environment of choice (RStudio, Vim, etc). It's called Swirl. -->
-
-<!-- # Swirl -->
-
-<!-- [Swirl](https://swirlstats.com/) is an initative to help people learn R interactively from within R itself. [The {swirl} package](https://CRAN.R-project.org/package=swirl) was created by Sean Kross, Nick Carchedi, Bill Bauer and Gina Grdina. -->
-
-<!-- Swirl serves its material to you via the console. Information is printed and your knowledge is tested with questions. Questions might require you to type some code or answer a multiple-choice question. You may be asked to interact with objects that are provided to your environment. You respond by typing directly into the console. -->
-
-<!-- The lesson advances when your answer is correct, but you'll receive a hint if you answer incorrectly. You can always `skip()` the question to have the correct answer printed. -->
-
-<!-- You can also pause the lesson with `play()` and resume with `nxt()` in case you want to try something out. Swirl will ignore anything you type in this period. -->
-
-<!-- Swirl materials are composed of lessons grouped into courses. You can extend the list of courses by downloading from the [Swirl Course Network](http://swirlstats.com/scn/), but anyone can distribute a Swirl course via URL, GitHub, DropBox or Google Drive, which have their own `install_course_*()` function variants. -->
-
-<!-- To begin: -->
-
-<!-- ```{r eval=FALSE} -->
-<!-- install.packages("swirl") -->
-<!-- library(swirl) -->
-<!-- install_course("Course Name Here") -->
-<!-- swirl() -->
-<!-- ``` -->
-
-<!-- You can see options by typing `info()`, return to the menu with `main()`, or exit with `bye()`. -->
-
-<!-- Full instructions on how to use Swirl are available from [the Swirl website](https://swirlstats.com/students.html). -->
-
-<!-- # Swirlify -->
-
-<!-- Swirl suffers because its library of courses is relatively small. More people need to make materials and share them. -->
-
-<!-- Sean Kross and Nick Carchedi made this much easier with [the {swirlify} package](https://CRAN.R-project.org/package=swirlify). -->
-
-<!-- [Overview for course creators](https://swirlstats.com/instructors.html) and [there's a website with the full swirlify guidance](http://swirlstats.com/swirlify/) -->
-
-<!-- {swirlify} contains a number of handy functions for generating template files to create new courses and lessons -->
-
-<!-- There's even a Shiny app built in to Swirlify to make this process easier. From the app you select a question type (multi-choice, etc) and provide text to go with it. Swirlify then generates the question's YAML code and adds it to the lesson file. You can save and demo the lesson using buttons within the app. -->
-
-
-<!-- * The fish: R -->
-<!-- * Give a person a fish: expect people to just know how R works -->
-<!-- * Teach a person to fish: {swirl} is a way to learn about R from within R. -->
-<!-- * Teach people to teach people to to fish: {swirlify} is a way to create materials for {swirl}. -->
-
-<!-- # Tidyswirl -->
-
-<!-- I made the course to test out Swirl, but the content might actually be useful for people. I might not create more lessons, but you are free to contribute new ones. -->
-
-<!-- ```{r eval=FALSE} -->
-<!-- install_course_github("matt-dray", "tidyswirl") -->
-<!-- ``` -->
