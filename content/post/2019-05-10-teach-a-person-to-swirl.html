@@ -1,0 +1,102 @@
+---
+title: Teach a person to Swirl
+author: Matt Dray
+date: '2019-05-10'
+slug: swirlify
+categories:
+  - R
+  - teaching
+tags:
+  - swirl
+  - swirlify
+draft: no
+---
+
+
+
+<p>Matt Dray (<a href="https://www.twitter.com/mattdray">@mattdray</a>)</p>
+<p><img src="/post/2019-05-10-teach-a-person-to-swirl_files/tidyswirl.JPG" width="300" height="300" /></p>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>Teaching people how to create tools that teach other people seems an efficient way to maximise impact.</p>
+<ul>
+<li><a href="https://swirlstats.com/">{swirl}</a> lets people learn R from within R</li>
+<li><a href="http://swirlstats.com/swirlify/">{swirlify}</a> is a package to help write Swirl courses</li>
+<li>This post explains how to start a Swirl course</li>
+<li>For example, I’ve begun <a href="https://github.com/matt-dray/tidyswirl">Tidyswirl</a> for teaching <a href="https://www.tidyverse.org/">tidyverse</a> packages</li>
+</ul>
+</div>
+<div id="swirl" class="section level1">
+<h1>Swirl</h1>
+<p><a href="https://swirlstats.com/">Swirl</a> is a platform that:</p>
+<blockquote>
+<p>teaches you R programming and data science interactively, at your own pace, and right in the R console!</p>
+</blockquote>
+<p>Learning is active and understanding is checked throughout. Learners can move at their own pace and download additional courses to learn about new things. And it’s free.</p>
+<p>To begin, install and load Swirl then follow the instructions printed in the console.</p>
+<pre class="r"><code>install.packages(&quot;swirl&quot;)
+library(swirl)
+swirl()</code></pre>
+<div class="figure">
+<img src="/post/2019-05-10-teach-a-person-to-swirl_files/swirl-console.png" alt="Loading and starting Swirl from the console" />
+<p class="caption">Loading and starting Swirl from the console</p>
+</div>
+<p>You can learn about new things by downloading various community-contributed Swirl courses. This post is about how you can quickly create and distribute a new course yourself.</p>
+</div>
+<div id="swirlify" class="section level1">
+<h1>Swirlify</h1>
+<p>Sean Kross and Nick Carchedi have created <a href="https://CRAN.R-project.org/package=swirlify">the {swirlify} package</a> to make course creation easy. This post covers a simple workflow to get you started, but <a href="http://swirlstats.com/swirlify/">full Swirlify guidance</a> is available.</p>
+<p>Create a new lesson (‘Lesson 1’), which also creates a new course (‘Course’) if it doesn’t exist.</p>
+<pre class="r"><code>library(swirl)  # install.packages(&quot;swirl&quot;)
+library(swirlify)  # install.packages(&quot;swirlify&quot;)
+new_lesson(course_name = &quot;Course&quot;, lesson_name = &quot;Lesson 1&quot;)</code></pre>
+<p>The following folder structure is generated:</p>
+<pre><code>Working directory/
+└── Course/
+    └── Lesson_1/
+        ├── customTests.R
+        ├── dependson.txt
+        ├── initLesson.R
+        └── lesson.yaml</code></pre>
+<p>The <code>lesson.yaml</code> file is basically a text file where the question script is stored in a particular format. You can modify this file directly, but let’s open it for editing in the built-in Swirlify Shiny app instead:</p>
+<pre class="r"><code>swirlify()</code></pre>
+<p>The app will open the current working lesson – Lesson 1 – in a new window. On the left is where you create new questions. On the right you can see the lesson file itself. Note the ‘Help’ tab, which tells you about the types of questions you can make.</p>
+<div class="figure">
+<img src="/post/2019-05-10-teach-a-person-to-swirl_files/swirl-shiny.png" alt="The Swirlify Shiny app provides a GUI for writing lessons" />
+<p class="caption">The Swirlify Shiny app provides a GUI for writing lessons</p>
+</div>
+<p>To build a question:</p>
+<ol style="list-style-type: decimal">
+<li>Choose a question type from the dropdown menu (e.g. command questions, multiple choice, or just informational messages)</li>
+<li>Fill in the text boxes</li>
+<li>Click ‘Save Lesson’</li>
+<li>Run <code>test_lesson()</code> to look for errors</li>
+<li>Click ‘Demo Lesson’ to try it out</li>
+</ol>
+<p>Continue adding questions until the lesson is complete. Then:</p>
+<ol style="list-style-type: decimal">
+<li>Run <code>add_to_manifest()</code> to add the lesson to the <code>MANIFEST</code> file (it’ll be created in the course directory if it doesn’t already exist). Lessons in here are recognised as part of the course in the declared order.</li>
+<li>Use <code>new_lesson()</code> to create a new one, remembering to change the <code>lesson_name</code> argument.</li>
+</ol>
+<p>Clearly the process of course building is more nuanced than outlined here, but you can learn more from the documentation on the <a href="http://swirlstats.com/swirlify/index.html">Swirlify</a> site and <a href="https://cran.r-project.org/web/packages/swirlify/swirlify.pdf">reference manual</a>.</p>
+<p>Congratulations. You’re ready to share your course.</p>
+<div id="share" class="section level2">
+<h2>Share</h2>
+<p>There are <a href="http://swirlstats.com/swirlify/sharing.html">several ways to share your course</a>. It’s easiest for learners to use Swirl’s <code>swirl::install_course_*()</code> functions to install courses from:</p>
+<ul>
+<li>a GitHub repo</li>
+<li>a zip file stored on DropBox, Google Drive, or some URL</li>
+<li>a course folder – zipped or not – downloaded locally on their machine</li>
+</ul>
+<p>You can also compress your course to a single <code>.swc</code> file with <code>compress_course()</code> and raise a pull request for it to be hosted on the <a href="http://swirlstats.com/scn/">Swirl Course Network</a>. It can be downloaded from there with <code>install_course()</code>.</p>
+<p>Swirl is strengthened by having a greater number and range of courses.</p>
+</div>
+</div>
+<div id="tidyswirl" class="section level1">
+<h1>Tidyswirl</h1>
+<p>I’ve started <a href="https://github.com/matt-dray/tidyswirl">a Swirl course called Tidyswirl</a>. The goal is to introduce each core package of <a href="https://www.tidyverse.org/">the tidyverse</a>. It currently has draft lessons for <a href="https://tidyr.tidyverse.org/">{tidyr}</a> and <a href="https://tibble.tidyverse.org/">{tibble}</a>.</p>
+<p>Tidyswirl is currently on GitHub. To install:</p>
+<pre class="r"><code>install_course_github(&quot;matt-dray&quot;, &quot;tidyswirl&quot;)</code></pre>
+<p>Please feel free to <a href="https://github.com/matt-dray/tidyswirl/blob/master/CONTRIBUTING.md">contribute new courses or raise issues</a>.</p>
+<p>Or begin your own course.</p>
+</div>
