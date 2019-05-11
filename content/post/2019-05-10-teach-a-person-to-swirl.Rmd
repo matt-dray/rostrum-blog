@@ -49,6 +49,8 @@ You can learn about new things by downloading various community-contributed Swir
 
 Sean Kross and Nick Carchedi have created [the {swirlify} package](https://CRAN.R-project.org/package=swirlify) to make course creation easy. This post covers a simple workflow to get you started, but [full Swirlify guidance](http://swirlstats.com/swirlify/) is available. 
 
+## Get up and running
+
 Create a new lesson ('Lesson 1'), which also creates a new course ('Course') if it doesn't exist. 
 
 ```{r, new-lesson, eval=FALSE}
@@ -94,13 +96,89 @@ Continue adding questions until the lesson is complete. Then:
 1. Run `add_to_manifest()` to add the lesson to the `MANIFEST` file (it'll be created in the course directory if it doesn't already exist). Lessons in here are recognised as part of the course in the declared order.
 1. Use `new_lesson()` to create a new one, remembering to change the `lesson_name` argument.
 
-Clearly the process of course building is more nuanced than outlined here, but you can learn more from the documentation on the [Swirlify](http://swirlstats.com/swirlify/index.html) site and [reference manual](https://cran.r-project.org/web/packages/swirlify/swirlify.pdf).
+## Extra knowledge
+
+Clearly the process of course building is more nuanced than outlined above, but you can learn more from the documentation on the [Swirlify](http://swirlstats.com/swirlify/index.html) site and [reference manual](https://cran.r-project.org/web/packages/swirlify/swirlify.pdf).
+
+In partcular, See the [course structure](http://swirlstats.com/swirlify/structure.html) and [writing lessons](http://swirlstats.com/swirlify/writing.html) pages of the Swirlify guidance.
+
+I think there are three things to investigate further: lesson file structure, correct answers and lesson startup.
+
+### Lesson file structure
+
+The lesson file is written in [YAML](https://en.wikipedia.org/wiki/YAML), which is basically a special form of plain text. Questions appear as separate blocks of text that start with a hyphen and a question type (class) declaration, followed by further arguments on new indented lines.
+
+The first block is always `Class: meta` and provides basic information about the file, like your name and the lesson name. Another simple one is `Class: text` to which you supply only one more argument, the `Output`, which is text to display to the user.
+
+```
+- Class: text
+  Output: Did I mention chocolate hobnobs are great?
+```
+
+There are actually three ways to add questions:
+
+1. In the Shiny app, as outlined earlier in this post.
+1. By using the `wq_*()` family of functions to add questions to the active lesson -- `wq_message(output = "Text here")` adds informative text, for example.
+1. By writing directly into the YAML file.
+
+There's more on questions classes and how to write them [in the Swirlify guidance](http://swirlstats.com/swirlify/writing.html#types-of-questions).
+
+## Correct answers
+
+How are answers enoded and checked in `lesson.yaml`? Consider the YAML for this question:
+
+```
+- Class: cmd_question
+  Output: Use mean() to calculate the mean of the numbers 1 to 5.
+  CorrectAnswer: mean(1:5)
+  AnswerTests: omnitest(correctExpr='mean(1:5'))
+  Hint: Use the form x:y to provide numbers to mean().
+```
+
+So `CorrectAnswer` is where you provide the correct answer (!). This line will be run if the user chooses to `skip()` the question. `AnswerTests` is, however, what the user's input will actually be evaluated against. It uses the `omnitest` function to compare the correct expression (`correctExpr`) to the user's answer.
+
+But often there's more than one way to answer. The `any_of_exprs()` function should be used in this case.
+
+```
+- Class: cmd_question
+  Output: Use mean() to calculate the mean of the numbers 1 to 5.
+  CorrectAnswer: mean(1:5)
+  AnswerTests: any_of_exprs('mean(1:5)', 'mean(c(1, 2, 3, 4, 5))')
+  Hint: You can use the form x:y or c(x, y) to provide numbers to mean().
+```
+
+There's more on answer testing [in the Swirlify guidance](http://swirlstats.com/swirlify/writing.html#answer-testing), including how to write custom answer tests.
+
+## Lesson startup
+
+Anything in the `initLesson.R` file will be run when the lesson is loaded. You can create objects and refer to them in your questions. For example, you could add a data frame:
+
+```{r}
+biscuits <- data.frame(
+  name = c("Chocolate hobnob", "Digestive", "Custard cream"),
+  rating = c(10, 5, 7) 
+)
+```
+
+You could then ask in `lesson.yaml` something like:
+
+```
+- Class: cmd_question
+  Output: Use index notation to subset for biscuits rated over 5.
+  CorrectAnswer: biscuits[biscuits$rating > 5, ]
+  AnswerTests: omnitest(correctExpr='biscuits[, biscuits$rating > 5]')
+  Hint: Remember the format datframe[rows, columns].
+```
+
+The dataframe was loaded on startup, so the user can interact with it to answer the question.
+
+You can also add datasets to the lesson folder and read them into the user's environment via the `initLesson.R` file. See the Swirlify [guidance on including data](http://swirlstats.com/swirlify/structure.html#including-data) for more information.
+
+## Share your course
 
 Congratulations. You're ready to share your course.
 
-## Share
-
-There are [several ways to share your course](http://swirlstats.com/swirlify/sharing.html). It's easiest for learners to use Swirl's `swirl::install_course_*()` functions to install courses from:
+There are [several ways to do this](http://swirlstats.com/swirlify/sharing.html). It's easiest for learners to use Swirl's `swirl::install_course_*()` functions to install courses from:
 
 * a GitHub repo
 * a zip file stored on DropBox, Google Drive, or some URL
@@ -112,7 +190,7 @@ Swirl is strengthened by having a greater number and range of courses.
 
 # Tidyswirl
 
-I've started [a Swirl course called Tidyswirl](https://github.com/matt-dray/tidyswirl). The goal is to introduce each core package of [the tidyverse](https://www.tidyverse.org/). It currently has draft lessons for [{tidyr}](https://tidyr.tidyverse.org/) and [{tibble}](https://tibble.tidyverse.org/).
+To minimise hypocrisy, I've started [a Swirl course called Tidyswirl](https://github.com/matt-dray/tidyswirl). The goal is to introduce each core package of [the tidyverse](https://www.tidyverse.org/). It currently has draft lessons for [{tidyr}](https://tidyr.tidyverse.org/) and [{tibble}](https://tibble.tidyverse.org/).
 
 Tidyswirl is currently on GitHub. To install:
 
@@ -122,4 +200,6 @@ install_course_github("matt-dray", "tidyswirl")
 
 Please feel free to [contribute new lessons or raise issues](https://github.com/matt-dray/tidyswirl/blob/master/CONTRIBUTING.md).
 
-Or begin your own course.
+# Plea
+
+The R community is large and friendly. Swirl helps people learn. It would be great to see more courses being made.
