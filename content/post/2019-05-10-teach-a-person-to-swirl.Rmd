@@ -31,9 +31,9 @@ Teach people to create tools that teach other people. That seems an efficient wa
 
 >teaches you R programming and data science interactively, at your own pace, and right in the R console!
 
-Learning is active and understanding is checked throughout. Learners can move at their own pace and download additional courses to learn about new things. And it's free.
+Learning with Swirl is active and your understanding is checked throughout. You can move at your own pace and download additional courses to learn about new things. And it's free.
 
-To begin, install and load Swirl then follow the instructions printed in the console.
+Install and load Swirl to begin and then follow the instructions printed in the console.
 
 ```{r, install-swirl, eval=FALSE}
 install.packages("swirl")
@@ -43,7 +43,7 @@ swirl()
 
 ![Loading and starting Swirl from the console](/post/2019-05-10-teach-a-person-to-swirl_files/swirl-console.png)
 
-You can learn about new things by downloading various community-contributed Swirl courses. This post is about how you can quickly create and distribute a new course yourself.
+You'll be given a list of courses to install, but you can also download them from elsewhere. This post is about how you can quickly create and distribute such a course.
 
 # Swirlify
 
@@ -51,7 +51,7 @@ Sean Kross and Nick Carchedi have created [the {swirlify} package](https://CRAN.
 
 ## Get up and running
 
-Create a new lesson ('Lesson 1'), which also creates a new course ('Course') if it doesn't exist. 
+Create a new lesson folder (‘Lesson 1’), which will be autopopulated with template files for your lesson. This will also create a new parent course folder (‘Course’) if it doesn’t already exist.
 
 ```{r, new-lesson, eval=FALSE}
 library(swirl)  # install.packages("swirl")
@@ -71,49 +71,52 @@ Working directory/
         └── lesson.yaml
 ```
 
-The `lesson.yaml` file is basically a text file where each question is stored as text. Users advance through each of these questions in the lesson. You can open the file for editing in the built-in Swirlify Shiny app instead:
+The `lesson.yaml` file is the most important one. It's basically a text file where each question is stored as text. Users advance through each of these questions when they run the lesson. 
+
+The lesson file can be edited directly, but we'll focus on the built-in Swirlify Shiny app for simplicity:
 
 ```{r, swirlify, eval=FALSE}
 swirlify(course_name = "Course", lesson_name = "Lesson 1")
 ```
 
-
-
-The app will open the current working lesson -- Lesson 1 -- in a new browser window. On the left is where you create new questions. On the right you can see the lesson file itself. 
+The app will open the named lesson from the named course in a new browser window. On the left is where you create new questions. On the right you can see the `lesson.yaml` file itself. 
 
 ![The Swirlify Shiny app provides a GUI for writing lessons](/post/2019-05-10-teach-a-person-to-swirl_files/swirl-shiny.png)
 
 Note the 'Help' tab, which tells you about the types of questions you can make, or you can see the [Swirlify guidance](http://swirlstats.com/swirlify/writing.html#types_of_questions)). Basically the question types are:
 
-* 'message' for informational text
+* 'message' for informational text (not for questions per se)
 * 'command' for answers that require simple R expressions as answers
-* 'numerical' and 'text' for answers that are words or numbers
+* 'numerical' and 'text' for answers that are numbers or words
 * 'multiple choice' for multiple choice (as in the figure above)
-* 'figure' and 'video' for referring to media (video can take a user to any URL)
+* 'figure' and 'video' for referring to media ('video' can take a user to any URL)
 * 'script' for longer R expressions that requires you to write custom answer tests (this is more advanced)
 
 To build a question:
 
-1. Choose a question type from the dropdown menu
-1. Fill in the text boxes
+1. Choose a question type from the dropdown menu on the left
+1. Fill in the text boxes (note that the answer tests box is completed for you if you type into the correct answer box and then press the 'Make Answer Test from Correct Answer' button)
+1. Click the 'Add Question' button see the question added to the file (on the right hand side)
 1. Click 'Save Lesson'
 1. Run `test_lesson()` to look for errors
 1. Click 'Demo Lesson' to try it out
 
-You can add objects, like data frames, to the learner's environment when they start your course. Do this by adding R code to `initLesson.R`. This can include loading data files, which you should store within the lesson folder. 
+You can also add objects, like data frames, to the learner's environment when they start your course. Do this by adding R code to `initLesson.R`. This can include loading data files, which you should store within the lesson folder. 
 
 Continue adding questions until the lesson is complete. Then:
 
 1. Run `add_to_manifest()` to add the lesson to the `MANIFEST` file (it'll be created in the course directory if it doesn't already exist). Lessons in here are recognised as part of the course in the declared order.
 1. Use `new_lesson()` to create a new one, remembering to change the `lesson_name` argument.
 
+When your lessons are completed, you're ready to share your course. Jump now to the [share your course](#share) section or first learn some extra knowledge about [lesson file structure](#structure), [correct answers](#correct) or [lesson startup](#startup) below.
+
 ## Extra knowledge
 
-Clearly the process of course building is more nuanced than outlined above, but you can learn more from the documentation on the [Swirlify](http://swirlstats.com/swirlify/index.html) site and [reference manual](https://cran.r-project.org/web/packages/swirlify/swirlify.pdf). In partcular, See the [course structure](http://swirlstats.com/swirlify/structure.html) and [writing lessons](http://swirlstats.com/swirlify/writing.html) pages of the Swirlify guidance.
+Clearly the process of course building is more nuanced than outlined above, but you can learn more from the documentation on the [Swirlify](http://swirlstats.com/swirlify/index.html) site and [reference manual](https://cran.r-project.org/web/packages/swirlify/swirlify.pdf). In particular, See the [course structure](http://swirlstats.com/swirlify/structure.html) and [writing lessons](http://swirlstats.com/swirlify/writing.html) pages of the Swirlify guidance.
 
 I'll touch on three things here: lesson file structure, correct answers and lesson startup.
 
-### Lesson file structure
+### Lesson file structure {#structure}
 
 The lesson file is written in [YAML](https://en.wikipedia.org/wiki/YAML), which is basically a special form of plain text. Questions appear as separate blocks of text that start with a hyphen and a question type (class) declaration, followed by further arguments on new indented lines.
 
@@ -132,7 +135,7 @@ There are actually three ways to add questions:
 
 There's more on questions classes and how to write them [in the Swirlify guidance](http://swirlstats.com/swirlify/writing.html#types-of-questions).
 
-## Correct answers
+## Correct answers {#correct}
 
 How are answers enoded and checked in `lesson.yaml`? Consider the YAML for this question:
 
@@ -158,7 +161,7 @@ But often there's more than one way to answer. The `any_of_exprs()` function sho
 
 There's more on answer testing [in the Swirlify guidance](http://swirlstats.com/swirlify/writing.html#answer-testing), including how to write custom answer tests.
 
-## Lesson startup
+## Lesson startup {#startup}
 
 Anything in the `initLesson.R` file will be run when the lesson is loaded. You can create objects and refer to them in your questions. For example, you could add a data frame:
 
@@ -176,14 +179,14 @@ You could then ask in `lesson.yaml` something like:
   Output: Use index notation to subset for biscuits rated over 5.
   CorrectAnswer: biscuits[biscuits$rating > 5, ]
   AnswerTests: omnitest(correctExpr='biscuits[, biscuits$rating > 5]')
-  Hint: Remember the format datframe[rows, columns].
+  Hint: Remember the indexing format dataframe[rows, columns].
 ```
 
 The dataframe was loaded on startup, so the user can interact with it to answer the question.
 
 You can also add datasets to the lesson folder and read them into the user's environment via the `initLesson.R` file. See the Swirlify [guidance on including data](http://swirlstats.com/swirlify/structure.html#including-data) for more information.
 
-## Share your course
+## Share your course {#share}
 
 Congratulations. You're ready to share your course.
 
@@ -201,7 +204,7 @@ Swirl is strengthened by having a greater number and range of courses.
 
 To minimise hypocrisy, I've started [a Swirl course called Tidyswirl](https://github.com/matt-dray/tidyswirl). The goal is to introduce each core package of [the tidyverse](https://www.tidyverse.org/). It currently has draft lessons for [{tidyr}](https://tidyr.tidyverse.org/) and [{tibble}](https://tibble.tidyverse.org/).
 
-Tidyswirl is currently in development on GitHub. To install:
+Tidyswirl is currently in development on GitHub. To install and try it out in Swirl:
 
 ```{r, install-tidyswirl, eval=FALSE}
 install_course_github("matt-dray", "tidyswirl")

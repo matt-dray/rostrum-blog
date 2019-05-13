@@ -32,8 +32,8 @@ draft: no
 <blockquote>
 <p>teaches you R programming and data science interactively, at your own pace, and right in the R console!</p>
 </blockquote>
-<p>Learning is active and understanding is checked throughout. Learners can move at their own pace and download additional courses to learn about new things. And it’s free.</p>
-<p>To begin, install and load Swirl then follow the instructions printed in the console.</p>
+<p>Learning with Swirl is active and your understanding is checked throughout. You can move at your own pace and download additional courses to learn about new things. And it’s free.</p>
+<p>Install and load Swirl to begin and then follow the instructions printed in the console.</p>
 <pre class="r"><code>install.packages(&quot;swirl&quot;)
 library(swirl)
 swirl()</code></pre>
@@ -41,14 +41,14 @@ swirl()</code></pre>
 <img src="/post/2019-05-10-teach-a-person-to-swirl_files/swirl-console.png" alt="Loading and starting Swirl from the console" />
 <p class="caption">Loading and starting Swirl from the console</p>
 </div>
-<p>You can learn about new things by downloading various community-contributed Swirl courses. This post is about how you can quickly create and distribute a new course yourself.</p>
+<p>You’ll be given a list of courses to install, but you can also download them from elsewhere. This post is about how you can quickly create and distribute such a course.</p>
 </div>
 <div id="swirlify" class="section level1">
 <h1>Swirlify</h1>
 <p>Sean Kross and Nick Carchedi have created <a href="https://CRAN.R-project.org/package=swirlify">the {swirlify} package</a> to make course creation easy. This post covers a simple workflow to get you started, but <a href="http://swirlstats.com/swirlify/">full Swirlify guidance</a> is available.</p>
 <div id="get-up-and-running" class="section level2">
 <h2>Get up and running</h2>
-<p>Create a new lesson (‘Lesson 1’), which also creates a new course (‘Course’) if it doesn’t exist.</p>
+<p>Create a new lesson folder (‘Lesson 1’), which will be autopopulated with template files for your lesson. This will also create a new parent course folder (‘Course’) if it doesn’t already exist.</p>
 <pre class="r"><code>library(swirl)  # install.packages(&quot;swirl&quot;)
 library(swirlify)  # install.packages(&quot;swirlify&quot;)
 new_lesson(course_name = &quot;Course&quot;, lesson_name = &quot;Lesson 1&quot;)</code></pre>
@@ -60,42 +60,45 @@ new_lesson(course_name = &quot;Course&quot;, lesson_name = &quot;Lesson 1&quot;)
         ├── dependson.txt
         ├── initLesson.R
         └── lesson.yaml</code></pre>
-<p>The <code>lesson.yaml</code> file is basically a text file where each question is stored as text. Users advance through each of these questions in the lesson. You can open the file for editing in the built-in Swirlify Shiny app instead:</p>
+<p>The <code>lesson.yaml</code> file is the most important one. It’s basically a text file where each question is stored as text. Users advance through each of these questions when they run the lesson.</p>
+<p>The lesson file can be edited directly, but we’ll focus on the built-in Swirlify Shiny app for simplicity:</p>
 <pre class="r"><code>swirlify(course_name = &quot;Course&quot;, lesson_name = &quot;Lesson 1&quot;)</code></pre>
-<p>The app will open the current working lesson – Lesson 1 – in a new browser window. On the left is where you create new questions. On the right you can see the lesson file itself.</p>
+<p>The app will open the named lesson from the named course in a new browser window. On the left is where you create new questions. On the right you can see the <code>lesson.yaml</code> file itself.</p>
 <div class="figure">
 <img src="/post/2019-05-10-teach-a-person-to-swirl_files/swirl-shiny.png" alt="The Swirlify Shiny app provides a GUI for writing lessons" />
 <p class="caption">The Swirlify Shiny app provides a GUI for writing lessons</p>
 </div>
 <p>Note the ‘Help’ tab, which tells you about the types of questions you can make, or you can see the <a href="http://swirlstats.com/swirlify/writing.html#types_of_questions">Swirlify guidance</a>). Basically the question types are:</p>
 <ul>
-<li>‘message’ for informational text</li>
+<li>‘message’ for informational text (not for questions per se)</li>
 <li>‘command’ for answers that require simple R expressions as answers</li>
-<li>‘numerical’ and ‘text’ for answers that are words or numbers</li>
+<li>‘numerical’ and ‘text’ for answers that are numbers or words</li>
 <li>‘multiple choice’ for multiple choice (as in the figure above)</li>
-<li>‘figure’ and ‘video’ for referring to media (video can take a user to any URL)</li>
+<li>‘figure’ and ‘video’ for referring to media (‘video’ can take a user to any URL)</li>
 <li>‘script’ for longer R expressions that requires you to write custom answer tests (this is more advanced)</li>
 </ul>
 <p>To build a question:</p>
 <ol style="list-style-type: decimal">
-<li>Choose a question type from the dropdown menu</li>
-<li>Fill in the text boxes</li>
+<li>Choose a question type from the dropdown menu on the left</li>
+<li>Fill in the text boxes (note that the answer tests box is completed for you if you type into the correct answer box and then press the ‘Make Answer Test from Correct Answer’ button)</li>
+<li>Click the ‘Add Question’ button see the question added to the file (on the right hand side)</li>
 <li>Click ‘Save Lesson’</li>
 <li>Run <code>test_lesson()</code> to look for errors</li>
 <li>Click ‘Demo Lesson’ to try it out</li>
 </ol>
-<p>You can add objects, like data frames, to the learner’s environment when they start your course. Do this by adding R code to <code>initLesson.R</code>. This can include loading data files, which you should store within the lesson folder.</p>
+<p>You can also add objects, like data frames, to the learner’s environment when they start your course. Do this by adding R code to <code>initLesson.R</code>. This can include loading data files, which you should store within the lesson folder.</p>
 <p>Continue adding questions until the lesson is complete. Then:</p>
 <ol style="list-style-type: decimal">
 <li>Run <code>add_to_manifest()</code> to add the lesson to the <code>MANIFEST</code> file (it’ll be created in the course directory if it doesn’t already exist). Lessons in here are recognised as part of the course in the declared order.</li>
 <li>Use <code>new_lesson()</code> to create a new one, remembering to change the <code>lesson_name</code> argument.</li>
 </ol>
+<p>When your lessons are completed, you’re ready to share your course. Jump now to the <a href="#share">share your course</a> section or first learn some extra knowledge about <a href="#structure">lesson file structure</a>, <a href="#correct">correct answers</a> or <a href="#startup">lesson startup</a> below.</p>
 </div>
 <div id="extra-knowledge" class="section level2">
 <h2>Extra knowledge</h2>
-<p>Clearly the process of course building is more nuanced than outlined above, but you can learn more from the documentation on the <a href="http://swirlstats.com/swirlify/index.html">Swirlify</a> site and <a href="https://cran.r-project.org/web/packages/swirlify/swirlify.pdf">reference manual</a>. In partcular, See the <a href="http://swirlstats.com/swirlify/structure.html">course structure</a> and <a href="http://swirlstats.com/swirlify/writing.html">writing lessons</a> pages of the Swirlify guidance.</p>
+<p>Clearly the process of course building is more nuanced than outlined above, but you can learn more from the documentation on the <a href="http://swirlstats.com/swirlify/index.html">Swirlify</a> site and <a href="https://cran.r-project.org/web/packages/swirlify/swirlify.pdf">reference manual</a>. In particular, See the <a href="http://swirlstats.com/swirlify/structure.html">course structure</a> and <a href="http://swirlstats.com/swirlify/writing.html">writing lessons</a> pages of the Swirlify guidance.</p>
 <p>I’ll touch on three things here: lesson file structure, correct answers and lesson startup.</p>
-<div id="lesson-file-structure" class="section level3">
+<div id="structure" class="section level3">
 <h3>Lesson file structure</h3>
 <p>The lesson file is written in <a href="https://en.wikipedia.org/wiki/YAML">YAML</a>, which is basically a special form of plain text. Questions appear as separate blocks of text that start with a hyphen and a question type (class) declaration, followed by further arguments on new indented lines.</p>
 <p>The first block is always <code>Class: meta</code> and provides basic information about the file, like your name and the lesson name. Another simple one is <code>Class: text</code> to which you supply only one more argument, the <code>Output</code>, which is text to display to the user.</p>
@@ -110,7 +113,7 @@ new_lesson(course_name = &quot;Course&quot;, lesson_name = &quot;Lesson 1&quot;)
 <p>There’s more on questions classes and how to write them <a href="http://swirlstats.com/swirlify/writing.html#types-of-questions">in the Swirlify guidance</a>.</p>
 </div>
 </div>
-<div id="correct-answers" class="section level2">
+<div id="correct" class="section level2">
 <h2>Correct answers</h2>
 <p>How are answers enoded and checked in <code>lesson.yaml</code>? Consider the YAML for this question:</p>
 <pre><code>- Class: cmd_question
@@ -127,7 +130,7 @@ new_lesson(course_name = &quot;Course&quot;, lesson_name = &quot;Lesson 1&quot;)
   Hint: You can use the form x:y or c(x, y) to provide numbers to mean().</code></pre>
 <p>There’s more on answer testing <a href="http://swirlstats.com/swirlify/writing.html#answer-testing">in the Swirlify guidance</a>, including how to write custom answer tests.</p>
 </div>
-<div id="lesson-startup" class="section level2">
+<div id="startup" class="section level2">
 <h2>Lesson startup</h2>
 <p>Anything in the <code>initLesson.R</code> file will be run when the lesson is loaded. You can create objects and refer to them in your questions. For example, you could add a data frame:</p>
 <pre class="r"><code>biscuits &lt;- data.frame(
@@ -139,11 +142,11 @@ new_lesson(course_name = &quot;Course&quot;, lesson_name = &quot;Lesson 1&quot;)
   Output: Use index notation to subset for biscuits rated over 5.
   CorrectAnswer: biscuits[biscuits$rating &gt; 5, ]
   AnswerTests: omnitest(correctExpr=&#39;biscuits[, biscuits$rating &gt; 5]&#39;)
-  Hint: Remember the format datframe[rows, columns].</code></pre>
+  Hint: Remember the indexing format dataframe[rows, columns].</code></pre>
 <p>The dataframe was loaded on startup, so the user can interact with it to answer the question.</p>
 <p>You can also add datasets to the lesson folder and read them into the user’s environment via the <code>initLesson.R</code> file. See the Swirlify <a href="http://swirlstats.com/swirlify/structure.html#including-data">guidance on including data</a> for more information.</p>
 </div>
-<div id="share-your-course" class="section level2">
+<div id="share" class="section level2">
 <h2>Share your course</h2>
 <p>Congratulations. You’re ready to share your course.</p>
 <p>There are <a href="http://swirlstats.com/swirlify/sharing.html">several ways to do this</a>. It’s easiest for learners to use Swirl’s <code>swirl::install_course_*()</code> functions to install courses from:</p>
@@ -159,7 +162,7 @@ new_lesson(course_name = &quot;Course&quot;, lesson_name = &quot;Lesson 1&quot;)
 <div id="tidyswirl" class="section level1">
 <h1>Tidyswirl</h1>
 <p>To minimise hypocrisy, I’ve started <a href="https://github.com/matt-dray/tidyswirl">a Swirl course called Tidyswirl</a>. The goal is to introduce each core package of <a href="https://www.tidyverse.org/">the tidyverse</a>. It currently has draft lessons for <a href="https://tidyr.tidyverse.org/">{tidyr}</a> and <a href="https://tibble.tidyverse.org/">{tibble}</a>.</p>
-<p>Tidyswirl is currently in development on GitHub. To install:</p>
+<p>Tidyswirl is currently in development on GitHub. To install and try it out in Swirl:</p>
 <pre class="r"><code>install_course_github(&quot;matt-dray&quot;, &quot;tidyswirl&quot;)</code></pre>
 <p>Please feel free to <a href="https://github.com/matt-dray/tidyswirl/blob/master/CONTRIBUTING.md">contribute new lessons or raise issues</a>.</p>
 </div>
