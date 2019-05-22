@@ -1,7 +1,7 @@
 ---
 title: Package a Xaringan template
 author: Matt Dray
-date: '2019-05-19'
+date: '2019-05-22'
 slug: xaringan-template
 categories:
   - R
@@ -13,52 +13,64 @@ tags:
 draft: yes
 ---
 
+Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
+
 ![](https://raw.githubusercontent.com/matt-dray/gdstheme/master/img/20190514-template.gif)
 
 # Xaringan
 
-[The {xaringan}] package](https://slides.yihui.name/xaringan/) by [Yihui Xie](https://yihui.name/) implements [remark.js](https://github.com/gnab/remark) in [R Markdown](https://bookdown.org/yihui/rmarkdown/) so you can create presentations. [Here's why he made it](https://yihui.name/en/2017/08/why-xaringan-remark-js/).
+[The {xaringan} package](https://slides.yihui.name/xaringan/) by [Yihui Xie](https://yihui.name/) implements [remark.js](https://github.com/gnab/remark) in [R Markdown](https://bookdown.org/yihui/rmarkdown/) so you can create reproducible presentations. [Here's why he made it](https://yihui.name/en/2017/08/why-xaringan-remark-js/).
 
 Yihui has [encouraged people to submit](https://yihui.name/en/2017/10/xaringan-themes/) their styles to the {xaringan} package. For example, the [RLadies theme](https://alison.rbind.io/post/r-ladies-slides/) is now built in.
 
-# My theme
+This post is about delivering a theme, including a template, as a package.
 
-My organisation uses a Google Slides template with pre-set styles. R outputs have to be copy-pasted in. This isn't very reproducible.
+# Creating a theme
 
-The obvious answer is to approximate the theme in R by creating:
+My organisation uses a Google Slides template with pre-set styles. Any R outputs have to be copy-pasted in, which isn't very reproducible.
 
-* CSS style files
-* an R Markdown Xaringan template
-* a package to distribute the styles and template
+The obvious answer was to approximate the theme with Xaringan by creating some CSS style files and an R Markdown template. I've done this and put it in [a GitHub repo](). This post outlines the approach.
 
-This means that any R outputs in the slides can be changed and re-rendered easily.
+The output only has to be good enough to fool my colleagues, so it can definitely be improved.
 
-## My style
+## Do it in style
 
-You specify your styles in one or more files written in CSS. Typically for Xaringan this would be a `theme.css` for the document styles and `theme-fonts.css` to set the fonts. You refer to these CSS files from the YAML header of your R Markdown file. The style is enacted when you render the R Markdown. 
+You specify style in one or more CSS files. Typically for Xaringan you'd create two files:
 
-My organisation's theme has three basic types of slide -- title/end, heading and text -- that differ in font size, colour and presence of a footer, for example. I specified all this by tweaking the [basic Xaringan CSS files].
+* `theme.css` for the general document styles, like defining the background colour of a particular slide class
+* `theme-fonts.css` to set the fonts, which can for example be different for the body and script
 
-You can see the full content of my CSS files in [the GitHub repo](), but this is the CSS for the [class]() that styles text the slides, for example:
+You reference these files in the YAML header of your Xaringan R Markdown and the style is enacted when you render it.
+
+I tweaked the [default Xaringan CSS files](https://github.com/yihui/xaringan/tree/master/inst/rmarkdown/templates/xaringan/resources) to create the slide [classes](https://www.w3schools.com/cssref/sel_class.asp) I wanted. I overwrote the `.remark-slide-content` class for regular text slides and created `title-slide` and `heading-slide` classes too.
+
+You can see the full content of these CSS files in [the GitHub repo](https://github.com/matt-dray/gdstheme/tree/master/inst/rmarkdown/templates/gdstheme/skeleton).
+
+As an example, here is the CSS class that styles a heading slide:
 
 ```
-.remark-slide-content {
-  background-color: #ebebeb;         /* grey background */
-  color: #000;                       /* black text */
-  border-bottom: 50px solid #2372b6; /* blue bottom border */
-  font-size: 40px;                   /* regular text size */
-  padding: 0 60px 0 60px;            /* space on top, left, right, bottom*/
+.heading-slide {
+  background-color: #2372b6;  /* blue background */
+  color: #fff;                /* white text*/
+  text-shadow: 0 0 0;         /* no text shadow */
+  border-bottom: 0;           /* no border */
+  font-size: 90px;            /* large text size */
+  font-weight: bold;          /* headings are bold */
 }
 ```
 
-As well as classes, I've specified some additional [tags] for minor modifications that can be specified by the user:
+As well as specifying classes, I've added some additional [tags](https://www.w3schools.com/tags/tag_style.asp) for minor modifications that can be specified by the user:
 
 ```
-.black { color: #000000; }   /* white text for heading slides */
-.bold { font-weight: bold; } /* bolden name on title/end slides */
+.black { color: #000; }      /* black text for heading slides */
+.bold { font-weight: bold; } /* embolden name on title/end slides */
 ```
 
-The CSS file for fonts is much simpler. My organisation uses the proprietary Helvetica for its body type. Specifying the system's `sans-serif` font on a Mac results in Helvetica and will prduce the close-enough Arial on Windows machines. For the monospace font I've chosen Fira Mono, which I think is more readable than system `monospace` defaults.
+The CSS file for fonts is much simpler; it just imports and declares fonts.
+
+My organisation uses the proprietary Helvetica for its body type. Specifying the system's `sans-serif` font on a Mac results in Helvetica and will produce the close-enough Arial on Windows machines. For the monospace font -- used for displaying script -- I've chosen Fira Mono, which I think is more readable than the default system `monospace`.
+
+The file starts by importing the fonts from Google Fonts and then declares them in CSS. I wrote a little about how to do this [in another post]().
 
 ```
 @import url('https://fonts.googleapis.com/css?family=Roboto');
@@ -68,17 +80,13 @@ body { font-family: sans-serif, 'Roboto'; }
 .remark-code, .remark-inline-code { font-family: 'Fira Mono', monospace; }
 ```
 
-The style is not the only important part of recreating my organisation's presentations -- I also need to create an R Markdown template to demonstrate a restricted set of accepted slide designs. The design philosophy is very important, so I want the styles and template to be used together.
+## Lay down a template
 
-## My template
+The style is not the only important part of recreating my organisation's presentations -- I also need to create an R Markdown template to demonstrate a restricted set of accepted slide designs. The design philosophy is important to the organisation.
 
-The template R Markdown file isn't special, it's just a regular R Markdown file with content that explains what each slide looks like and what it should contain. 
+The template itself is just a pre-filled R Markdown that shows the approved slide types and some example content. For example, the first slide of my organisation's template doesn't actually contain a 'title'. Instead it's an introduction slide that contains the speaker's name, job, affiliation and Twitter handle.
 
-For example, the first slide of my organisation's template doesn't actually contain a 'title'. Instead it's an introduction slide that contains the speaker's name, job, affiliation and Twitter handle.
-
-The user may not know to set `class: title-slide` and add `seal: false` in the YAML to overrides the creation of a default title slide. This is a good example of why the template si so useful.
-
-So the top of the template looks like this:
+The user may not know to set `class: title-slide` and add `seal: false` in the YAML to override the creation of a default title slide. This is instead specified for the user in the template:
 
 ```
 ---
@@ -91,10 +99,9 @@ output:
       highlightStyle: github
       highlightLines: true
       countIncrementalSlides: false
-      # ratio: "16:9"  # not ready yet
 ---
 
-class: title-slide
+class: title-slide, middle
 
 .bold[Firstname Surname]
 
@@ -104,35 +111,32 @@ Government Digital Service
 
 @username
 
-???
-
-* `seal:false` is set in the YAML to override a YAML-generated title page
-* The format of this page shouldn't be changed
-* The department's logo is normmaly shown in the upper left
-* @username is intended as your Twitter handle
-
 ---
 ```
 
-The first part is the specific YAML I want to enforce and below it is the opening slide in the correct style. Note also the use of the bold tag that was defined in the CSS earlier in the post.
+The top half of the code is the YAML that provides metadata for the R Markdown file. Note the reference to the CSS files and `seal: false` as mentioned. 
 
+The bottom half is the pre-filled opening slide with the speaker's details; the user needs only to modify the text to suit them. Note the use of the `title-slide` class and the `middle` class for vertical alignment. There's also the `.bold[]` tag mentioned ealier in this post.
 
-## Package
+## Deliver a package
 
 So how can the CSS and RMarkdown template be delivered to people in one bundle? In a package of course.
 
 You need a specific repo structure to provide your template. This is all explained in the [Document Templates](https://bookdown.org/yihui/rmarkdown/document-templates.html) chapter of the '[R Markdown: a Definitive Guide](https://bookdown.org/yihui/rmarkdown/)' book by [Yihui Xie](https://yihui.name/), [JJ Allaire](https://github.com/jjallaire) and [Garrett Grolemund](https://twitter.com/StatGarrett).
 
-You need to create the folowing folder structure:
+At the very least, your repo will need to contain the path `inst/rmarkdown/templates/themename/skeleton/`, which will typically contain three files to create a styled Xaringan presentation:
 
-```
-[insert folder hierarchy]
-```
+* `theme.css` for the slide styles
+* `theme-fonts.css` for the font face specifications
+* `skeleton.Rmd` for the template you created
 
-Where `skeleton.Rmd` is your R Markdown template and the two CSS files are the styles and fonts that make up the theme. The template uses some local stock imagery stored in the `img` folder, but this isn't completely necessary. 
+I've also included an `img/` folder to hold stock images I've used in the template, but this isn't strictly necesary.
 
+A user can now install the package and get access to your styles and template.
 
 # How to use
+
+You've written your code and packaged it, so how do you actually use it?
 
 You can install the package with:
 
