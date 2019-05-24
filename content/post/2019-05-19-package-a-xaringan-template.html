@@ -1,7 +1,7 @@
 ---
 title: Package a Xaringan template
 author: Matt Dray
-date: '2019-05-22'
+date: '2019-05-24'
 slug: xaringan-template
 categories:
   - R
@@ -10,35 +10,43 @@ tags:
   - xaringan
   - rmarkdown
   - template
-draft: yes
+draft: no
 ---
 
 
 
 <p>Matt Dray (<a href="https://www.twitter.com/mattdray">@mattdray</a>)</p>
-<p><img src="https://raw.githubusercontent.com/matt-dray/gdstheme/master/img/20190514-template.gif" /></p>
-<div id="xaringan" class="section level1">
-<h1>Xaringan</h1>
-<p><a href="https://slides.yihui.name/xaringan/">The {xaringan} package</a> by <a href="https://yihui.name/">Yihui Xie</a> implements <a href="https://github.com/gnab/remark">remark.js</a> in <a href="https://bookdown.org/yihui/rmarkdown/">R Markdown</a> so you can create reproducible presentations. <a href="https://yihui.name/en/2017/08/why-xaringan-remark-js/">Here’s why he made it</a>.</p>
-<p>Yihui has <a href="https://yihui.name/en/2017/10/xaringan-themes/">encouraged people to submit</a> their styles to the {xaringan} package. For example, the <a href="https://alison.rbind.io/post/r-ladies-slides/">RLadies theme</a> is now built in.</p>
-<p>This post is about delivering a theme, including a template, as a package.</p>
+<div id="a-remarkable-ninja" class="section level1">
+<h1>A remarkable ninja</h1>
+<p><a href="https://slides.yihui.name/xaringan/">The {xaringan} package</a> by <a href="https://yihui.name/">Yihui Xie</a> implements <a href="https://github.com/gnab/remark">remark.js</a><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> in <a href="https://bookdown.org/yihui/rmarkdown/">R Markdown</a> so you can create exciting presentations that contain reproducible R content.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>Yihui has <a href="https://yihui.name/en/2017/10/xaringan-themes/">encouraged people to submit styles</a> – like the <a href="https://alison.rbind.io/post/r-ladies-slides/">RLadies theme</a> – to enrich Xaringan.</p>
+<p>This post is about a specific theme I recreated for Xaringan and shared in the <a href="https://github.com/matt-dray/gdstheme">{gdstheme}</a> package along with an R Markdown template.</p>
 </div>
-<div id="creating-a-theme" class="section level1">
-<h1>Creating a theme</h1>
-<p>My organisation uses a Google Slides template with pre-set styles. Any R outputs have to be copy-pasted in, which isn’t very reproducible.</p>
-<p>The obvious answer was to approximate the theme with Xaringan by creating some CSS style files and an R Markdown template. I’ve done this and put it in <a href="">a GitHub repo</a>. This post outlines the approach.</p>
-<p>The output only has to be good enough to fool my colleagues, so it can definitely be improved.</p>
-<div id="do-it-in-style" class="section level2">
+<div id="create-a-theme" class="section level1">
+<h1>Create a theme</h1>
+<p><a href="https://www.gov.uk/government/organisations/government-digital-service/about">The organisation I work for</a> uses a Google Slides template with pre-set styles and slide layouts. The template was <a href="https://gds.blog.gov.uk/2016/04/07/giving-clear-presentations/">designed with a particular philosophy in mind</a>.</p>
+<p>The downside is that any R outputs have to be copy-pasted in, which isn’t very reproducible.</p>
+<p>To overcome this, I recreated their theme for Xaringan in three steps (click to jump):</p>
+<ol style="list-style-type: decimal">
+<li><a href="#css">Create styles with CSS</a></li>
+<li><a href="#rmd">Make an R Markdown template</a></li>
+<li><a href="#pkg">Put these into an R package</a></li>
+</ol>
+<div id="css" class="section level2">
 <h2>Do it in style</h2>
-<p>You specify style in one or more CSS files. Typically for Xaringan you’d create two files:</p>
+<p>CSS lets you define the style of HTML documents, which is the default output for Xaringan.</p>
+<p>For Xaringan you’ll typically need two CSS files:</p>
 <ul>
-<li><code>theme.css</code> for the general document styles, like defining the background colour of a particular slide class</li>
-<li><code>theme-fonts.css</code> to set the fonts, which can for example be different for the body and script</li>
+<li><code>theme.css</code> to define the style for each broad slide <a href="https://www.w3schools.com/cssref/sel_class.asp">class</a> (e.g. a heading-slide class) and for general things like table design and hyperlink colours</li>
+<li><code>theme-fonts.css</code> to set the typefaces, which you can define separately for the body text, headers, etc</li>
 </ul>
-<p>You reference these files in the YAML header of your Xaringan R Markdown and the style is enacted when you render it.</p>
-<p>I tweaked the <a href="https://github.com/yihui/xaringan/tree/master/inst/rmarkdown/templates/xaringan/resources">default Xaringan CSS files</a> to create the slide <a href="https://www.w3schools.com/cssref/sel_class.asp">classes</a> I wanted. I overwrote the <code>.remark-slide-content</code> class for regular text slides and created <code>title-slide</code> and <code>heading-slide</code> classes too.</p>
-<p>You can see the full content of these CSS files in <a href="https://github.com/matt-dray/gdstheme/tree/master/inst/rmarkdown/templates/gdstheme/skeleton">the GitHub repo</a>.</p>
-<p>As an example, here is the CSS class that styles a heading slide:</p>
+<p>You reference these files in the YAML header of your Xaringan R Markdown and the style is enacted when you render it to HTML.</p>
+<p>I tweaked the <a href="https://github.com/yihui/xaringan/tree/master/inst/rmarkdown/templates/xaringan/resources">default Xaringan CSS files</a> to create my own, which you can see in the <a href="https://github.com/matt-dray/gdstheme/tree/master/inst/rmarkdown/templates/gdstheme/skeleton">the GitHub repo</a>.</p>
+<p>You can check out <a href="https://github.com/yihui/xaringan/wiki">the Xaringan wiki</a> for help and ideas.</p>
+<div id="get-to-class" class="section level3">
+<h3>Get to class</h3>
+<p>I overwrote the default <code>.remark-slide-content</code> class for regular text slides. In other words, failing to specify a class in your Xaringan slide will result in a text slide by default. I also created <code>title-slide</code> and <code>heading-slide</code> classes.</p>
+<p>Here’s the CSS for defining and styling the <code>heading-slide</code> class:</p>
 <pre><code>.heading-slide {
   background-color: #2372b6;  /* blue background */
   color: #fff;                /* white text*/
@@ -47,23 +55,34 @@ draft: yes
   font-size: 90px;            /* large text size */
   font-weight: bold;          /* headings are bold */
 }</code></pre>
-<p>As well as specifying classes, I’ve added some additional <a href="https://www.w3schools.com/tags/tag_style.asp">tags</a> for minor modifications that can be specified by the user:</p>
+<p>Specifying <code>class: heading-slide</code> in the R Markdown for a Xaringan slide will overwrite the default styles to give you a ‘heading’ slide instead.</p>
+</div>
+<div id="tag-team" class="section level3">
+<h3>Tag team</h3>
+<p>As well as specifying classes, I’ve added some additional CSS <a href="https://www.w3schools.com/tags/tag_style.asp">tags</a> that can be used for some minor text modifications:</p>
 <pre><code>.black { color: #000; }      /* black text for heading slides */
 .bold { font-weight: bold; } /* embolden name on title/end slides */</code></pre>
-<p>The CSS file for fonts is much simpler; it just imports and declares fonts.</p>
-<p>My organisation uses the proprietary Helvetica for its body type. Specifying the system’s <code>sans-serif</code> font on a Mac results in Helvetica and will produce the close-enough Arial on Windows machines. For the monospace font – used for displaying script – I’ve chosen Fira Mono, which I think is more readable than the default system <code>monospace</code>.</p>
-<p>The file starts by importing the fonts from Google Fonts and then declares them in CSS. I wrote a little about how to do this <a href="">in another post</a>.</p>
+<p>These can be used to define different styling for a small part of a slide class. For example, the regular body text of the title slide can be emboldened with <code>.bold[Firstname Lastname]</code> in the R Markdown template.</p>
+</div>
+<div id="face-the-font" class="section level3">
+<h3>Face the font</h3>
+<p>The <code>fonts.css</code> is much simpler; it just imports and declares fonts.</p>
+<p>My organisation uses the proprietary Helvetica for its body type. Fortunately the default system sans-serif is Helvetica on a Mac and the close-enough Arial on Windows machines.</p>
+<p>For the monospace font – used for displaying script – I’ve chosen Fira Mono, which I think is more readable than the default system monospace.</p>
+<p>The <code>fonts.css</code> file starts by importing from <a href="https://fonts.google.com/">Google Fonts</a> and then describes where they’ll be used. The order of dictates which font will be shown first and then which will be next if there’s a problem.</p>
 <pre><code>@import url(&#39;https://fonts.googleapis.com/css?family=Roboto&#39;);
 @import url(&#39;https://fonts.googleapis.com/css?family=Fira+Mono&#39;);
 
 body { font-family: sans-serif, &#39;Roboto&#39;; }
 .remark-code, .remark-inline-code { font-family: &#39;Fira Mono&#39;, monospace; }</code></pre>
+<p>I’ve written a bit before about <a href="https://www.rostrum.blog/2018/11/29/fontface-lithium/">how to access Google Fonts for Blogdown’s Lithium theme</a>.</p>
 </div>
-<div id="lay-down-a-template" class="section level2">
+</div>
+<div id="rmd" class="section level2">
 <h2>Lay down a template</h2>
 <p>The style is not the only important part of recreating my organisation’s presentations – I also need to create an R Markdown template to demonstrate a restricted set of accepted slide designs. The design philosophy is important to the organisation.</p>
 <p>The template itself is just a pre-filled R Markdown that shows the approved slide types and some example content. For example, the first slide of my organisation’s template doesn’t actually contain a ‘title’. Instead it’s an introduction slide that contains the speaker’s name, job, affiliation and Twitter handle.</p>
-<p>The user may not know to set <code>class: title-slide</code> and add <code>seal: false</code> in the YAML to override the creation of a default title slide. This is instead specified for the user in the template:</p>
+<p>For example, the user may not know to set <code>class: title-slide</code> and add <code>seal: false</code> in the YAML to override the creation of a default title slide. This is instead pre-specified for the user in the template:</p>
 <pre><code>---
 output:
   xaringan::moon_reader:
@@ -88,28 +107,45 @@ Government Digital Service
 
 ---</code></pre>
 <p>The top half of the code is the YAML that provides metadata for the R Markdown file. Note the reference to the CSS files and <code>seal: false</code> as mentioned.</p>
-<p>The bottom half is the pre-filled opening slide with the speaker’s details; the user needs only to modify the text to suit them. Note the use of the <code>title-slide</code> class and the <code>middle</code> class for vertical alignment. There’s also the <code>.bold[]</code> tag mentioned ealier in this post.</p>
+<p>The bottom half is the pre-filled opening slide with the speaker’s details; the user needs only to modify the filler text. Note the use of the <code>title-slide</code> class and the <code>middle</code> class for vertical alignment. There’s also the <code>.bold[]</code> tag mentioned earlier in this post.</p>
 </div>
-<div id="deliver-a-package" class="section level2">
-<h2>Deliver a package</h2>
-<p>So how can the CSS and RMarkdown template be delivered to people in one bundle? In a package of course.</p>
+<div id="pkg" class="section level2">
+<h2>Deliver your package</h2>
+<p>So how can the CSS and R Markdown template be delivered to people in one bundle? In a package of course.</p>
 <p>You need a specific repo structure to provide your template. This is all explained in the <a href="https://bookdown.org/yihui/rmarkdown/document-templates.html">Document Templates</a> chapter of the ‘<a href="https://bookdown.org/yihui/rmarkdown/">R Markdown: a Definitive Guide</a>’ book by <a href="https://yihui.name/">Yihui Xie</a>, <a href="https://github.com/jjallaire">JJ Allaire</a> and <a href="https://twitter.com/StatGarrett">Garrett Grolemund</a>.</p>
-<p>At the very least, your repo will need to contain the path <code>inst/rmarkdown/templates/themename/skeleton/</code>, which will typically contain three files to create a styled Xaringan presentation:</p>
+<p>At the very least, your repo will need to contain the path <code>inst/rmarkdown/templates/your-theme/skeleton/</code>, which will typically contain three files:</p>
 <ul>
 <li><code>theme.css</code> for the slide styles</li>
 <li><code>theme-fonts.css</code> for the font face specifications</li>
 <li><code>skeleton.Rmd</code> for the template you created</li>
 </ul>
-<p>I’ve also included an <code>img/</code> folder to hold stock images I’ve used in the template, but this isn’t strictly necesary.</p>
+<p>I’ve also included an <code>img/</code> folder to hold stock images I’ve used in the template, but this isn’t strictly necessary.</p>
+<p>You’ll also need a <code>template.yaml</code> file one level up in <code>inst/rmarkdown/templates/your-theme/</code>. This contains information about the template so users know which one they’re selecting. For example:</p>
+<pre><code>name: &quot;Organisation X template&quot;
+description: Internal slide style for Organisation X
+create_dir: false</code></pre>
 <p>A user can now install the package and get access to your styles and template.</p>
 </div>
-</div>
-<div id="how-to-use" class="section level1">
-<h1>How to use</h1>
+<div id="show-the-thing" class="section level2">
+<h2>Show the thing</h2>
 <p>You’ve written your code and packaged it, so how do you actually use it?</p>
-<p>You can install the package with:</p>
-<pre class="r"><code>remotes::install_github(&quot;matt-dray/gdstheme&quot;)</code></pre>
-<p>After installation the template will appear in the ‘from template’ section of the new RMarkdown window. Selecting it will open the RMarkdown template.</p>
+<p>If hosted on GitHub, <a href="https://github.com/matt-dray/gdstheme">like my package</a>, you can install it with:</p>
+<pre class="r"><code># install.packages(&quot;remotes&quot;)
+remotes::install_github(&quot;matt-dray/gdstheme&quot;)</code></pre>
+<p>After installation the template will appear in the ‘from template’ section of the new R Markdown window. Selecting it will open the R Markdown template.</p>
 <p><img src="https://raw.githubusercontent.com/matt-dray/gdstheme/master/img/new-rmd.png" /></p>
-<p>When you knit this file, {knitr} looks to the CSS files referenced in the YAML to render the style provided.</p>
+<p>The CSS files referenced in the YAML are used to render the style provided when you knit the document.</p>
+</div>
+</div>
+<div id="all-hands-on-deck" class="section level1">
+<h1>All hands on deck</h1>
+<p>My package is a success if the outputs are reproducible and can fool my colleagues. There’s definitely improvements that can be made, but the number of users for this package is very small and it’s probably not worth the effort for now. Feel free to <a href="https://github.com/matt-dray/gdstheme">make a pull request</a> to make it better.</p>
+<p>Consider creating your own theme and <a href="https://yihui.name/en/2017/10/xaringan-themes/">submitting it to Xaringan</a> so that more possibilities are available out of the box. Also take a look at <a href="https://www.garrickadenbuie.com/">Garrick Aden-Buie</a>’s helpful <a href="https://www.garrickadenbuie.com/project/xaringanthemer/">{xaringanthemer}</a> package for a simple way to tweak styles.</p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Yihui has <a href="https://yihui.name/en/2017/08/why-xaringan-remark-js/">commented on why he loves remark.js</a>.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn2"><p>You can learn more about the basics of Xaringan from <a href="https://apreshill.github.io/data-vis-labs-2018/slides/06-slides_xaringan.html#1">Alison Hill’s excellent slideshow</a>.<a href="#fnref2" class="footnote-back">↩</a></p></li>
+</ol>
 </div>
