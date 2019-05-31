@@ -1,0 +1,140 @@
+---
+title: Make a {brickr} soccer player
+author: Matt Dray
+date: '2019-05-31'
+slug: brickr-soccer
+categories:
+  - R
+  - dataviz
+  - pop culture
+tags:
+  - brickr
+draft: yes
+---
+
+# Virtual Lego
+
+[{brickr}](https://github.com/ryantimpe/brickr) is a fun package by [Ryan Timpe](http://www.ryantimpe.com/) that lets you build 2D mosaics and 3D models with Lego-like virtual bricks,[^timpe] with a little help from [Tyler Morgan Wall](https://www.tylermw.com/)'s [{rayshader}](https://github.com/tylermorganwall/rayshader) package.
+
+<blockquote class="twitter-tweet" data-lang="en-gb"><p lang="en" dir="ltr">Build 3D LEGO models &amp; mosaics in <a href="https://twitter.com/hashtag/rstats?src=hash&amp;ref_src=twsrc%5Etfw">#rstats</a>! {brickr} is now on GitHub. More examples, How-To&#39;s, and vignettes coming soon. Can&#39;t wait to see what you all build! <a href="https://t.co/vBK0A70PTl">https://t.co/vBK0A70PTl</a> <a href="https://t.co/5kXRGta4jx">pic.twitter.com/5kXRGta4jx</a></p>&mdash; Ryan Timpe 📊 (@ryantimpe) <a href="https://twitter.com/ryantimpe/status/1106572408918605824?ref_src=twsrc%5Etfw">15 March 2019</a></blockquote>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+
+You can get started with the [brickr toybox](https://github.com/ryantimpe/brickr_toybox), which lets you arrange bricks in a spreadsheet that {brickr} can turn into a 3D model.
+
+# `create_brickr_player()`
+
+I've written a function called `create_brickr_player()` that lets you build a soccer player and select the brick colours for the shirt, socks, and much more. It's an exercise in being able to create the same model but change the brick colours with minimum fuss. 
+
+The (completely untested) function lives in my package of misc functions, {dray}, which can be installed it from GitHub. 
+
+```{r message=FALSE}
+# Load packages
+library(dray)  # remotes::install_github("matt-dray/dray")
+library(brickr)  # install.packages("brickr")
+library(dplyr)  # install.packages("dplyr")
+```
+
+The function is simple. It helps you create a dataframe that specifies the location and colour of individual bricks on successive 2D planes to build up a 3D model.
+
+This data frame is a plan that can be interpreted by {brickr} and transformed into a special list that can be rendered in 3D space.
+
+Here's what happens when you use the function with default arguments. 
+
+```{r}
+player_plan <- create_brickr_player()
+player_plan  # preview the object
+```
+
+Each layer of bricks gets a separate value in the `Level` column. 
+
+The x-dimension is represented by the rows of the data frame and the y-dimension by the numbered columns.
+
+Every non-zero number represents a brick and each value represents a different colour. 
+
+For example, layer A has dimensions of 3 x 5 where 4 spots will be filled with a brick. Each of these has the value '2', which encodes the colour black. Layer B, meanwhile, has a couple of bricks with value '7', which is bright red.
+
+How do you know which numbers encode which colours? You can access the list from the `lego_colors` data frame in the {brickr} package.
+
+```{r}
+select(lego_colors, brickrID, Color, hex)  # colour codes
+```
+
+So '1' is white, '2' is black and so on. Timpe selected this set of colours to match the colours available from Lego sets. 
+
+## Build
+
+To actually build the model, pass the data frame to a couple of {brickr} functions.
+
+The first is `bricks_from_table()` that converts the data frame to a list containing several elements that define the required bricks and colours. 
+
+```{r}
+# Convert plan to list with brick types and colours
+player_bricks <- player_plan %>%
+  bricks_from_table()
+
+names(player_bricks)  # see the element names
+```
+
+As a side note, you can use `display_pieces()` to find out the set of pieces you'll need to recreate the model in real life!
+
+```{r}
+display_pieces(player_bricks)
+```
+
+Pass the list object to the `display_bricks()` function to get the plan rendered into 3D. This opens a new device window and the model will be built up layer by layer. When complete, you can use your mouse to click and drag the object to look at at from all directions.
+
+```{r eval=FALSE}
+display_bricks(player_bricks)  # opens separate window
+```
+
+![A gif of a 3D Lego model of an Arsenal soccer player](/post/2019-05-31-make-a-brickr-soccer-player_files/arsenal.gif)
+
+So the default set builds up to make a player that has red socks with white trim, white shorts, and a red shirt with white sleeves. An Arsenal player, of course.[^arsenal]
+
+## Arguments
+
+To change the colour of the player's shirt you just need to change all the bricks associated with the shirt. This could be tedious by hand, so `create_brickr_player()` has an argument to do exactly this. Set `shirt_body_col` to '6' to make it bright blue, for example.
+
+You can change more than the shirt colour. Here's the current set of arguments:
+
+* `shirt_body_col` and `shirt_sleeve_col`
+* `shorts_col`
+* `sock_col` and `sock_trim_col`
+* `boot_col`
+* `hair_col` and `skin_col`
+
+So you could create a Manchester City player with the following:
+
+```{r eval=FALSE}
+# Build player plan with certain colours
+man_city <- create_brickr_player(
+  hair_col = 2,           # Black
+  skin_col = 39,          # Dark brown
+  boot_col = 7,           # Bright red
+  shirt_body_col = 13,    # Light royal blue
+  shirt_sleeve_col = 13,  # Light royal blue
+  shorts_col = 1,         # White
+  sock_col = 27,          # Earth blue
+  sock_trim_col = 27      # Earth blue
+)
+
+# Convert plan to list and render it
+man_city %>%
+  bricks_from_table() %>%
+  display_bricks()
+```
+
+![A gif of a 3D Lego model of Man City soccer player Raheem Sterling](/post/2019-05-31-make-a-brickr-soccer-player_files/raheem.gif)
+
+In fact, this is a faithful rendering of the 2019 Premier League winner, FA Cup winner, League Cup winner, PFA Team of the Year inductee, PFA Young Player of the Year and FWA Footballer of the Year [Raheem Sterling](https://en.wikipedia.org/wiki/Raheem_Sterling). Obviously.
+
+# Now what?
+
+Hopefully this is useful for anyone who wants to create the same {brickr} model in multiple colours. I realise that might be a niche audience.
+
+The obvious next step would be to allow for features of the plan to change. You could set an argument for `player_height` and add or remove layers from the plan to make the final model taller or shorter. You could have multiple hairstyles. You could 
+
+
+[^timpe]: Not an official product, but Timpe actually now works at Lego.
+[^arsenal]: Why Arsenal? Mostly to demonstrate that sleeves can be a different colour to the shirt body, but also because [they just got binned 4-1 by Chelsea in the Europa League final](https://en.wikipedia.org/wiki/2019_UEFA_Europa_League_Final) and I feel sorry for them. 
