@@ -12,6 +12,11 @@ tags:
 draft: no
 ---
 
+```{r setup, include=FALSE}
+library(knitr)
+library(kableExtra)
+```
+
 # Virtual Lego
 
 [{brickr}](https://github.com/ryantimpe/brickr) is a fun package by [Ryan Timpe](http://www.ryantimpe.com/) that lets you build 2D mosaics and 3D models with Lego-like virtual bricks,[^timpe] with a little help from [Tyler Morgan Wall](https://www.tylermw.com/)'s [{rayshader}](https://github.com/tylermorganwall/rayshader) package.
@@ -68,8 +73,13 @@ select(lego_colors, brickrID, Color, hex)  # colour codes
 
 <details><summary>Click for full brick colour codes</summary>
 ```{r echo=FALSE}
-select(lego_colors, brickrID, Color, hex) %>% 
-  as.data.frame()
+lego_colors %>% 
+  mutate(
+    hex = cell_spec(hex, "html", background = factor(brickrID, lego_colors$brickrID, lego_colors$hex))
+  ) %>% 
+  select(`Colour ID` = brickrID, Colour = Color, `Hex code` = hex) %>% 
+  kable(format = "html", escape = FALSE) %>%
+  kable_styling("striped", full_width = TRUE)
 ```
 </details>
 
@@ -142,11 +152,13 @@ man_city %>%
 
 In fact, this is a faithful rendering of the 2019 Premier League winner, FA Cup winner, League Cup winner, PFA Team of the Year inductee, PFA Young Player of the Year and FWA Footballer of the Year [Raheem Sterling](https://en.wikipedia.org/wiki/Raheem_Sterling). Obviously.
 
+I've added a couple more to [a GitHub Gist](https://gist.github.com/matt-dray/b075e1f2cb5da93a656b6e6e70990c44). Feel free to add more.
+
 # Extra-time
 
 Hopefully this is useful for anyone who wants to create the same {brickr} model in multiple colours. I realise that might be a niche audience.
 
-The obvious next step would be to allow for features of the plan to change. For example, you could set an argument for `player_height` and add or remove layers from the plan to make the final model taller or shorter. Or maybe have multiple hairstyles.
+The obvious next step would be to allow for features of the plan to change. For example, you could set an argument for `player_height` and add or remove layers from the plan to make the final model taller or shorter. Or maybe different shirt types could be specified, like `horizontal_stripe = TRUE`.
 
 Pull requests always welcome!
 
