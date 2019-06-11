@@ -1,5 +1,5 @@
 ---
-title: A repo template for R analyses
+title: A GitHub repo template for R
 author: Matt Dray
 date: '2019-06-11'
 slug: r-repo-template
@@ -9,41 +9,45 @@ tags:
   - template
   - github
   - repo
-draft: yes
+draft: no
 ---
 
-!['Use this template' green button](/post/2019-06-11-a-repo-template-for-r-analysis_files/use-this.png)
+<img src="/post/2019-06-11-a-repo-template-for-r-analysis_files/use-this.png" alt="The green 'use this template' button used to copy a repository template">
 
-# Repo templates
+# Sharing is caring
 
-GitHub has introduced [repository templates](https://github.blog/2019-06-06-generate-new-repositories-with-repository-templates/?utm_campaign=1559837005&utm_medium=social&utm_source=twitter&utm_content=1559837005) to make it easier to share frequently-used repo structures and boilerplate code. You can copy a whole repo as many times as you like, unlike forks.
+GitHub has introduced [repository templates](https://github.blog/2019-06-06-generate-new-repositories-with-repository-templates/) to make it easier to share frequently-used repo structures and boilerplate code. You can copy a whole repo as many times as you like, unlike forks.
 
-# A repo for R analysis
+Following a template can help keep your work organised and encourage consistency within and between projects. I can see this being useful for [sharing optimal workflows across boundaries like government departments](https://ukgovdatascience.github.io/rap-website/).
 
-[I've made an extremely lightweight repo template](https://github.com/matt-dray/r-analysis-template/) to make it easier to start a very simple R analysis project. It's opinionated, but others may find it useful.
+# Tada
+
+[I've made a lightweight repo template](https://github.com/matt-dray/r-analysis-template/) to make it easier for me to start very simple analysis projects with R.
+
+It's [opinionated](https://stackoverflow.com/questions/802050/what-is-opinionated-software), but others may find it useful.
+
+<img src="/post/2019-06-11-a-repo-template-for-r-analysis_files/repo.png" alt="Screenshot of GitHub showing the contents of the repository template">
 
 To use it, either:
 
 1. [Go to the repo](https://github.com/matt-dray/r-analysis-template/) and click the green 'use this template button'
-1. [Append the repo URL with '/generate'](https://github.com/matt-dray/r-analysis-template/generate) to go straight to the repo copying page
+1. [Append the repo URL with '/generate'](https://github.com/matt-dray/r-analysis-template/generate/) to go straight to the repo copying page
 
-![A GitHub page for creating a repository from the template](/post/2019-06-11-a-repo-template-for-r-analysis_files/copy-repo.png)
+The screen looks like when you create a new repo from scratch, but it mentions that 'the new repository will start with the same files and folders' as the template repo. Add a name and description for the repo copy and hit the 'create repository from template' button.
 
-Much of the sentiment for this sort of repo structure has been described in detail elsewhere, including by [Richard Fitzjohn](https://nicercode.github.io/blog/2013-04-05-projects/) and [Joris Muller](http://blog.jom.link/implementation_basic_reproductible_workflow.html).
+<img src="/post/2019-06-11-a-repo-template-for-r-analysis_files/copy-repo.png" alt="Screenshot of the GitHub page for creating a repository from the template">
 
-# Alternatives
+That's it.
 
-Another excellent way of starting this kind of repo is via a package, like [{starters}](https://github.com/lockedata/starters). The `create_analysis_project()` sets up a project folder for you with various arguments to add certain folders and setup things like dependency management, git and continuous integration.
+# Basic template structure
 
-Another option is to set up your analysis as a package and use Jenny Bryan and Hadley Wickham's [{usethis}](https://usethis.r-lib.org/) to add what you need.
-
-# Basic structure
+Much of the sentiment for creating this sort of folder structure has been described in detail elsewhere, including by [Richard Fitzjohn](https://nicercode.github.io/blog/2013-04-05-projects/) and [Joris Muller](http://blog.jom.link/implementation_basic_reproductible_workflow.html).
 
 In short, the root has:
 
-* executable R files, separated into sensible units of analysis
+* executable R files, separated into 'sensible' units of analysis ('read', 'tidy', etc)
 * an R Project file (`.Rproj`)
-* .gitignore template (includes `.DS_Store`!)
+* a .gitignore for R, with `.DS_Store` added
 * a `README.md` to summarise the project as a whole
 
 There are folders for:
@@ -53,42 +57,34 @@ There are folders for:
 * report source and output files (`doc/`)
 * external files (`ext/`), such as pre-trained models
 
+Of course, these can be added to, removed or renamed as required.
+
+# Bulk it up
+
 It's not enough to have structure alone. There are plenty of guides for code and file creation. For example:
 
 * files should be named appropriately ([advice from Jenny Bryan](https://speakerdeck.com/jennybc/how-to-name-files))
-* code should be consistent and follow a style guide (e.g. [the tidyverse style guide](https://style.tidyverse.org/)), or perhaps a linter should be used (e.g. [{lintr}](https://github.com/jimhester/lintr))
-* READMEs are provided throughout, but documentation should continue in the analysis files themselves, with copious use of comments
+* code should be consistent and follow a style guide (e.g. [the tidyverse style guide](https://style.tidyverse.org/)), which is made easier with a linter, like [{lintr}](https://github.com/jimhester/lintr)
+* READMEs are provided throughout, but documentation should continue in the analysis files themselves, with sensible comments throughout
 
-Here's roughly what it will look like:
+The repo template focuses primarily on folder structure. It misses out some additional tools, including some that need a bit of further setup. You should think about including them anyway. For example:
 
-```
-r-analysis-template/
-├── R
-|   ├── functions.R
-|   ├── more-functions.R
-|   └── README.md
-├── data
-|   ├── raw-data.csv
-|   ├── more-raw-data.xlsx
-|   └── README.md
-├── doc
-|   ├── rmarkdown-report.Rmd
-|   ├── rmarkdown-report.pdf
-|   ├── rmarkdown-report.html
-|   └── README.md
-├── ext
-|   ├── .csv
-|   └── README.md
-├── output
-|   ├── cleaned-data.rds
-|   ├── model-object.rds
-|   ├── some-plot.png
-|   └── README.md
-├── .gitignore
-├── 10_read.R
-├── 20_tidy.R
-├── 30_model.R
-├── LICENSE
-├── README.md
-└── .Rproj
-```
+* some form of dependency management, like [{renv}](https://github.com/rstudio/renv)
+* continuous integration, like [Travis CI](https://travis-ci.org/)
+* a [makefile](https://en.wikipedia.org/wiki/Makefile), integration with [{drake}](https://ropensci.github.io/drake/), or similar
+* [Docker](https://www.docker.com/)
+* much much more
+
+There's a certain amount of personal preference in the tools and techniques for these things and it's probably best left to the user.
+
+Let me know what you think is missing or what you would add.
+
+# Alternatives
+
+Copying a repo template might not be optimal for you, but you can generate the structure for an analytical project in other ways.
+
+One example is the [{starters}](https://github.com/lockedata/starters) package from [Locke Data](https://itsalocke.com/), which can be installed with `remotes::install_github("lockedata/starters")`. The `create_analysis_project()` function sets up a project folder for you with various arguments to add certain folders and setup things like dependency management, git and continuous integration.
+
+Another option is to set up your analysis as a package, as [outlined by Thomas J Leeper](https://thomasleeper.com/2016/11/analysis-as-package/), for example. Jenny Bryan and Hadley Wickham's [{usethis}](https://usethis.r-lib.org/) package provides lots of functions to help you create a package and add things to it, like `create_project()` and `use_git()`.
+
+I like these two options more than the template, to be honest. The template is really for quick, simple analysis; mostly for my own purposes.
