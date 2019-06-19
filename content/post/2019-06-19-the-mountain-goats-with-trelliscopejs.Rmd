@@ -1,0 +1,84 @@
+---
+title: The Mountain Goats with {trelliscopejs}
+author: Matt Dray
+date: '2019-06-19'
+slug: goat-scope
+categories:
+  - R
+  - dataviz
+tags:
+  - trelliscopejs
+  - trelliscope
+  - small multiples
+draft: yes
+---
+
+```{r}
+library(trelliscopejs)
+library(dplyr)
+library(readr)
+library(tidyr)
+
+raw_goat <- read_rds("~/Desktop/goat_discography.RDS") %>% 
+  ungroup()
+
+# filter to get only US releases and select minimal data frame
+small_goat <- raw_goat %>% 
+  unnest(available_markets) %>%
+  filter(available_markets == "US") %>% 
+  select(
+    track_name,
+    album_name,
+    track_n,
+    album_release_year,
+    danceability,
+    energy,
+    speechiness,
+    acousticness,
+    instrumentalness,
+    liveness,
+    valence
+  ) %>%
+  arrange(desc(album_release_year), album_name, track_n)
+
+goat_pics <- raw_goat %>%
+  unnest(album_images) %>% 
+  select(album_name, url) %>% 
+  distinct(album_name, .keep_all = TRUE)
+
+small_goat_pics <- left_join(
+  x = small_goat,
+  y = goat_pics,
+  by = "album_name"
+)
+
+# long_goat <- small_goat_pics %>% 
+#   gather(
+#     key = "feature",
+#     value = "value",
+#     -track_name, -album_name, -track_n, -album_release_year, -url
+#   )
+```
+```{r eval=FALSE}
+small_goat_pics %>% 
+  mutate(panel = img_panel(url)) %>%
+  rename(
+    Track = track_name,
+    Album = album_name,
+    `Track #` = track_n,
+    Year = album_release_year
+  ) %>%
+  rename_all(tools::toTitleCase) %>% 
+  trelliscope(
+    name = "The Mountain Goats discography",
+    desc = "Explore the Mountain Goats backcatalogue and filter by Spotify metrics like danceability and acousticness",
+    nrow = 2, ncol = 5,
+    state = list(labels = c("Track", "Album", "Track #", "Year"))
+  )
+```
+
+```{r}
+knitr::include_url('https://rostrum.blog/output/goat-scope')
+
+```
+

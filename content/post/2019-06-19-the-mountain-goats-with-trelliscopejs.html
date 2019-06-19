@@ -1,0 +1,87 @@
+---
+title: The Mountain Goats with {trelliscopejs}
+author: Matt Dray
+date: '2019-06-19'
+slug: goat-scope
+categories:
+  - R
+  - dataviz
+tags:
+  - trelliscopejs
+  - trelliscope
+  - small multiples
+draft: yes
+---
+
+
+
+<pre class="r"><code>library(trelliscopejs)
+library(dplyr)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;dplyr&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     filter, lag</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<pre class="r"><code>library(readr)
+library(tidyr)
+
+raw_goat &lt;- read_rds(&quot;~/Desktop/goat_discography.RDS&quot;) %&gt;% 
+  ungroup()
+
+# filter to get only US releases and select minimal data frame
+small_goat &lt;- raw_goat %&gt;% 
+  unnest(available_markets) %&gt;%
+  filter(available_markets == &quot;US&quot;) %&gt;% 
+  select(
+    track_name,
+    album_name,
+    track_n,
+    album_release_year,
+    danceability,
+    energy,
+    speechiness,
+    acousticness,
+    instrumentalness,
+    liveness,
+    valence
+  ) %&gt;%
+  arrange(desc(album_release_year), album_name, track_n)
+
+goat_pics &lt;- raw_goat %&gt;%
+  unnest(album_images) %&gt;% 
+  select(album_name, url) %&gt;% 
+  distinct(album_name, .keep_all = TRUE)
+
+small_goat_pics &lt;- left_join(
+  x = small_goat,
+  y = goat_pics,
+  by = &quot;album_name&quot;
+)
+
+# long_goat &lt;- small_goat_pics %&gt;% 
+#   gather(
+#     key = &quot;feature&quot;,
+#     value = &quot;value&quot;,
+#     -track_name, -album_name, -track_n, -album_release_year, -url
+#   )</code></pre>
+<pre class="r"><code>small_goat_pics %&gt;% 
+  mutate(panel = img_panel(url)) %&gt;%
+  rename(
+    Track = track_name,
+    Album = album_name,
+    `Track #` = track_n,
+    Year = album_release_year
+  ) %&gt;%
+  rename_all(tools::toTitleCase) %&gt;% 
+  trelliscope(
+    name = &quot;The Mountain Goats discography&quot;,
+    desc = &quot;Explore the Mountain Goats backcatalogue and filter by Spotify metrics like danceability and acousticness&quot;,
+    nrow = 2, ncol = 5,
+    state = list(labels = c(&quot;Track&quot;, &quot;Album&quot;, &quot;Track #&quot;, &quot;Year&quot;))
+  )</code></pre>
+<pre class="r"><code>knitr::include_url(&#39;https://rostrum.blog/output/goat-scope&#39;)</code></pre>
+<iframe src="https://rostrum.blog/output/goat-scope" width="672" height="400px">
+</iframe>
