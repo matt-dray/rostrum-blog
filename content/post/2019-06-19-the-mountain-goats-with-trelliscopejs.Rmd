@@ -13,73 +13,138 @@ tags:
 draft: yes
 ---
 
-```{r}
+
+# Small multiples
+
+The [{trelliscopejs}]() package by [Ryan Hafen]() harnesses the power of his [trelliscope.js]() JavaScript library for R.
+
+What does it do? It provides an interactive interface for organising and exploring visualisations of small mulitples.
+
+What's a 'small multiple'? Rather than overplotting data for multiple levels of some variable, you can facet by them and display the outputs side by side for easy comparison.
+
+Ryan has written [guidance]() and provided examples in posts using data on [x](), [Pokemon]() and [Instagram]().[^education] His package is relatively simple to use and does a lot of legwork for you to provide a nice interface to your data. 
+
+# Goat discography
+
+In a previous post I used the {spotifyr}, {genius} and {markovifyR} packages to generate new lyrics for the band The Mountain Goats.
+
+The data from Spotify is interesting. It has musical information like key and tempo, but also audio features like 'danceability' and 'acousticness' scaled from 0 to 1. We also got links to album art in that dataset.
+
+I'm going to use these data in this post to provide a Trelliscope example.  
+
+# Ready the data
+
+We'll load {trelliscopejs} and some [tidyverse packages]() to help us out.
+
+```{r packages, warnings=FALSE, message=FALSE}
 library(trelliscopejs)
-library(dplyr)
-library(readr)
-library(tidyr)
+library(dplyr)  # manipulate data
+library(readr)  # read data
+library(tidyr) # get data into tidy form
+```
 
-raw_goat <- read_rds("~/Desktop/goat_discography.RDS") %>% 
-  ungroup()
+## Get data and simplify
 
-# filter to get only US releases and select minimal data frame
+You can follow the instructions in the previous post to get the data. I'm going to load those data from an RDS file on my machine.
+
+```{r read-data}
+raw_goat <- read_rds("~/Desktop/goat_discography.RDS")
+dim(raw_goat)
+```
+
+It's a pretty large data set, so let's simplify.
+
+```{r}
 small_goat <- raw_goat %>% 
-  unnest(available_markets) %>%
-  filter(available_markets == "US") %>% 
+  unnest(available_markets) %>%  # unnest character vector
+  filter(available_markets == "US") %>%  # releases from one country only
   select(
-    track_name,
-    album_name,
-    track_n,
-    album_release_year,
-    danceability,
-    energy,
-    speechiness,
-    acousticness,
-    instrumentalness,
-    liveness,
-    valence
+    track_name, album_name, track_n, album_release_year,  # track detail
+    danceability, energy, speechiness, acousticness,  # audio features
+    instrumentalness, liveness, valence  # audio features
   ) %>%
-  arrange(desc(album_release_year), album_name, track_n)
+  arrange(energy)  # order by 'energy' audio feature
 
+glimpse(small_goat)
+```
+
+## Album artwork
+
+Unnesting the `available_markets` character vector removed the `album_image` variable, which is a nested dataframe with URLs to different-sized album artwork. We can grab unique album image URLs and join them back to our dataset.
+
+```{r image-unnest}
 goat_pics <- raw_goat %>%
-  unnest(album_images) %>% 
-  select(album_name, url) %>% 
-  distinct(album_name, .keep_all = TRUE)
+  unnest(album_images) %>%  # unnest dataframe fo URLs
+  filter(width == 640) %>%  # just the largest images
+  select(album_name, url) %>%  # simplify dataset
+  distinct(album_name, .keep_all = TRUE)  # one unique entry per album
 
+glimpse(goat_pics)
+```
+
+And now to join the album image URLs back to our simplified dataset.
+
+```{r join}
 small_goat_pics <- left_join(
   x = small_goat,
   y = goat_pics,
   by = "album_name"
 )
 
-# long_goat <- small_goat_pics %>% 
-#   gather(
-#     key = "feature",
-#     value = "value",
-#     -track_name, -album_name, -track_n, -album_release_year, -url
-#   )
+glimpse(small_goat_pics)
 ```
-```{r eval=FALSE}
-small_goat_pics %>% 
-  mutate(panel = img_panel(url)) %>%
+
+So the album artwork URL has been added to the `url` column.
+
+## Prep for Trelliscope
+
+This gives us a nice tidy dataframe, but I'm going to make a couple more changes to prepare the data for Trelliscope. First, I need to use the `img_panel()` function to declare that the album images should be the thing being visualised. Then I can rename the variables to make them look nicer when displayed.
+
+```{r panel}
+prepared_goat <- small_goat_pics %>% 
+  mutate(panel = img_panel(url)) %>%  # identify as viz for panel
+  rename_all(tools::toTitleCase) %>%  # first letter capitalised
   rename(
-    Track = track_name,
-    Album = album_name,
-    `Track #` = track_n,
-    Year = album_release_year
-  ) %>%
-  rename_all(tools::toTitleCase) %>% 
-  trelliscope(
-    name = "The Mountain Goats discography",
-    desc = "Explore the Mountain Goats backcatalogue and filter by Spotify metrics like danceability and acousticness",
-    nrow = 2, ncol = 5,
-    state = list(labels = c("Track", "Album", "Track #", "Year"))
-  )
+    Track = Track_name,
+    Album = Album_name,
+    `Track #` = Track_n,
+    Year = Album_release_year
+  ) %>% 
+  select(-Url)  # discard unneeded variable
 ```
 
-```{r}
+# Generate Trelliscope
+
+Now we're ready. The call to `trelliscope()` takes the dataset and then a bunch of other arguments like a title and subtitle and the default state for the number of rows and columns of panels and the default data to show on the panel under the visualisation.
+
+```{r eval=FALSE}
+trelliscope(
+  prepared_goat,
+  name = "The Mountain Goats discography",
+  desc = "Explore the Mountain Goats backcatalogue and filter by Spotify metrics like danceability and acousticness",
+  nrow = 2, ncol = 5,  # arrangement of panels
+  state = list(labels = c("Track", "Album", "Track #", "Year", "Energy"))  # display on panels
+)
+```
+
+I've embedded here the output, but [you can click here to open full screen](https://www.rostrum.blog/output/goat_scope/).
+
+```{r include-url, echo=FALSE}
 knitr::include_url("https://www.rostrum.blog/output/goat_scope/")
-
 ```
 
-[Click here to open full screen in a new window](https://www.rostrum.blog/output/goat_scope/)
+Explore the data by altering the defaults in the grid, labels, filter and sort buttons in the left-hand navigation panel. Cycle through the panels with the arrows in the upper right.
+
+# Bonus content! 
+
+## Energy
+
+By default, the panels in this trelliscope are ordered by the 'energy' of a track; most energetic first. The top track for energy is one of my favourites: 'Choked Out' from 'Beat the Champ'. Here's a Spotify snippet.
+
+<iframe src="https://open.spotify.com/embed/track/6VAOhkoZypZtGFgrnIGr48" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+
+## Host your trelliscope
+
+Use the argument `path = "/tmp/goat-scope"` in the `trelliscope()` functino to save the files for your trelliscope to the temporary folder. You can then host the folder's contents somewhere. I put mine in the `static/` directory of this site's structure so it's hosted on its own page at https://www.rostrum.blog/output/goat_scope/.
+
+[^education]: I also once explored the use of [Trelliscope for UK education data]() and have been meaning to write about it ever since.
