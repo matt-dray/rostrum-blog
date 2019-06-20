@@ -59,10 +59,11 @@ small_goat <- raw_goat %>%
   filter(available_markets == "US") %>%  # releases from one country only
   select(
     track_name, album_name, track_n, album_release_year,  # track detail
+    duration_ms, key_mode, time_signature, # musical info
     danceability, energy, speechiness, acousticness,  # audio features
-    instrumentalness, liveness, valence  # audio features
+    instrumentalness, liveness, valence, loudness  # audio features
   ) %>%
-  arrange(energy)  # order by 'energy' audio feature
+  arrange(desc(energy))  # order by 'energy' audio feature
 
 glimpse(small_goat)
 ```
@@ -109,7 +110,10 @@ prepared_goat <- small_goat_pics %>%
     Track = Track_name,
     Album = Album_name,
     `Track #` = Track_n,
-    Year = Album_release_year
+    Year = Album_release_year,
+    `Duration (ms)` = Duration_ms,
+    `Key mode` = Key_mode,
+    `Time sig` = Time_signature
   ) %>% 
   select(-Url)  # discard unneeded variable
 ```
@@ -122,10 +126,11 @@ Now we're ready. The call to `trelliscope()` takes the data set and then a bunch
 trelliscope(
   prepared_goat,
   name = "The Mountain Goats discography",
-  desc = "Explore the Mountain Goats backcatalogue and filter by Spotify metrics like danceability and acousticness",
+  desc = "Explore the Mountain Goats backcatalogue and filter and sort by audio features",
+  md_desc = "[The Mountain Goats](http://www.mountain-goats.com/) are a band. Data were collected from [Genius](https://genius.com/) and [Spotify](https://www.spotify.com/) APIs using the [{genius}](https://github.com/josiahparry/genius) and [{spotifyr}](https://www.rcharlie.com/spotifyr/) R packages, respectively.",
   nrow = 2, ncol = 5,  # arrangement of panels
-  state = list(labels = c("Track", "Album", "Track #", "Year", "Energy"))  # display on panels
-)
+  state = list(labels = c("Track", "Album", "Track #", "Year", "Energy")),  # display on panels
+  )
 ```
 
 I've embedded here the output, but [you can click here to open full screen](https://www.rostrum.blog/output/goat_scope/).
@@ -134,7 +139,7 @@ I've embedded here the output, but [you can click here to open full screen](http
 knitr::include_url("https://www.rostrum.blog/output/goat_scope/")
 ```
 
-Explore the data by altering the defaults in the grid, labels, filter and sort buttons in the left-hand navigation panel. Cycle through the panels with the arrows in the upper right. Hit the 'i' button in the upper right to get more information on trelliscope and its shortcuts.
+Explore the data by altering the defaults in the grid, labels, filter and sort buttons in the left-hand navigation panel. Cycle through the panels with the arrows in the upper right. Hit the '?' button in the upper right to get more information on trelliscope and its shortcuts.
 
 # Bonus content! 
 
@@ -146,7 +151,7 @@ I've ordered the panels of this trelliscope by the 'energy' of a track; most ene
 
 ## Host your trelliscope
 
-Use the argument `path = "/tmp/goat-scope"` in the `trelliscope()` function to save the files for your trelliscope to the temporary folder (I learnt this from [a GitHub issue](https://github.com/hafen/trelliscopejs/issues/24#issuecomment-276883861)). You can then host the folder's contents somewhere. I put mine in the `static/` directory of this site's structure so it's hosted on its own page at https://www.rostrum.blog/output/goat_scope/ (see [Tim Mastny's post](https://timmastny.rbind.io/blog/embed-slides-knitr-blogdown/)).
+Use the argument `path = "~/Desktop/goat-scope"` in the `trelliscope()` function to save the files (I learnt this from [a GitHub issue](https://github.com/hafen/trelliscopejs/issues/24#issuecomment-276883861)). You can then host the folder's contents somewhere. I put mine in the `static/` directory of this site's structure so it's hosted on its own page at https://www.rostrum.blog/output/goat_scope/ (see [Tim Mastny's post](https://timmastny.rbind.io/blog/embed-slides-knitr-blogdown/)).
 
 [^education]: I also once explored the use of [Trelliscope for UK education data](https://matt-dray.github.io/stem-trelliscope/) and have been meaning to write about it ever since.
 [^verb]: Definitely a real verb.
