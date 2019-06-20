@@ -1,7 +1,7 @@
 ---
 title: The Mountain Goats with {trelliscopejs}
 author: Matt Dray
-date: '2019-06-19'
+date: '2019-06-20'
 slug: goat-scope
 categories:
   - R
@@ -10,11 +10,17 @@ tags:
   - trelliscopejs
   - trelliscope
   - small multiples
-draft: yes
+draft: no
 ---
 
 
 
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I used <a href="https://hafen.github.io/trelliscopejs/">{trelliscopejs}</a> to make an interactive display for <a href="http://www.mountain-goats.com/">The Mountain Goats</a> discography. You can interact with it below or <a href="https://www.rostrum.blog/output/goat-scope/" target="_blank">click here to open full screen</a>.</p>
+<iframe src="https://www.rostrum.blog/output/goat-scope/" width="672" height="400px">
+</iframe>
+</div>
 <div id="small-multiples" class="section level1">
 <h1>Small multiples</h1>
 <p>The <a href="https://hafen.github.io/trelliscopejs/">{trelliscopejs}</a> R package by <a href="https://ryanhafen.com/">Ryan Hafen</a> harnesses the power of his <a href="https://github.com/hafen/trelliscopejs-lib">trelliscopejs-lib</a> JavaScript library.</p>
@@ -47,25 +53,30 @@ length(raw_goat)</code></pre>
   filter(available_markets == &quot;US&quot;) %&gt;%  # releases from one country only
   select(
     track_name, album_name, track_n, album_release_year,  # track detail
+    duration_ms, key_mode, time_signature, # musical info
     danceability, energy, speechiness, acousticness,  # audio features
-    instrumentalness, liveness, valence  # audio features
+    instrumentalness, liveness, valence, loudness  # audio features
   ) %&gt;%
-  arrange(energy)  # order by &#39;energy&#39; audio feature
+  arrange(desc(energy))  # order by &#39;energy&#39; audio feature
 
 glimpse(small_goat)</code></pre>
 <pre><code>## Observations: 313
-## Variables: 11
-## $ track_name         &lt;chr&gt; &quot;Whole Wide World&quot;, &quot;Have To Explode&quot;, &quot;Talla…
-## $ album_name         &lt;chr&gt; &quot;Sweden&quot;, &quot;Tallahassee&quot;, &quot;Tallahassee&quot;, &quot;The …
-## $ track_n            &lt;int&gt; 6, 11, 1, 10, 12, 10, 1, 6, 4, 7, 9, 8, 9, 11…
-## $ album_release_year &lt;dbl&gt; 1995, 2002, 2002, 2009, 2009, 2002, 2009, 200…
-## $ danceability       &lt;dbl&gt; 0.649, 0.634, 0.585, 0.470, 0.374, 0.713, 0.7…
-## $ energy             &lt;dbl&gt; 0.0335, 0.0498, 0.0535, 0.0669, 0.0669, 0.069…
-## $ speechiness        &lt;dbl&gt; 0.0698, 0.0543, 0.0423, 0.0557, 0.0374, 0.045…
-## $ acousticness       &lt;dbl&gt; 0.894, 0.886, 0.903, 0.930, 0.971, 0.944, 0.6…
-## $ instrumentalness   &lt;dbl&gt; 8.77e-01, 6.51e-02, 4.72e-02, 1.36e-03, 3.26e…
-## $ liveness           &lt;dbl&gt; 0.0905, 0.1110, 0.1110, 0.0996, 0.0938, 0.107…
-## $ valence            &lt;dbl&gt; 0.2860, 0.2860, 0.1360, 0.2230, 0.0909, 0.209…</code></pre>
+## Variables: 15
+## $ track_name         &lt;chr&gt; &quot;Choked Out&quot;, &quot;Pure Intentions&quot;, &quot;If You See …
+## $ album_name         &lt;chr&gt; &quot;Beat the Champ&quot;, &quot;Bitter Melon Farm&quot;, &quot;Get L…
+## $ track_n            &lt;int&gt; 5, 18, 10, 16, 14, 20, 17, 8, 21, 4, 2, 13, 3…
+## $ album_release_year &lt;dbl&gt; 2015, 2002, 2006, 2011, 1996, 2012, 2002, 200…
+## $ duration_ms        &lt;int&gt; 102653, 134333, 118013, 167120, 234600, 16584…
+## $ key_mode           &lt;chr&gt; &quot;D major&quot;, &quot;A major&quot;, &quot;C major&quot;, &quot;B minor&quot;, &quot;…
+## $ time_signature     &lt;int&gt; 4, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, …
+## $ danceability       &lt;dbl&gt; 0.565, 0.648, 0.566, 0.422, 0.281, 0.681, 0.5…
+## $ energy             &lt;dbl&gt; 0.951, 0.934, 0.927, 0.903, 0.899, 0.895, 0.8…
+## $ speechiness        &lt;dbl&gt; 0.0808, 0.0989, 0.0642, 0.0682, 0.0526, 0.025…
+## $ acousticness       &lt;dbl&gt; 0.000239, 0.646000, 0.002930, 0.000620, 0.262…
+## $ instrumentalness   &lt;dbl&gt; 2.78e-05, 2.14e-01, 8.52e-01, 1.01e-02, 2.72e…
+## $ liveness           &lt;dbl&gt; 0.1320, 0.3890, 0.1990, 0.3420, 0.2080, 0.139…
+## $ valence            &lt;dbl&gt; 0.726, 0.424, 0.324, 0.860, 0.350, 0.970, 0.5…
+## $ loudness           &lt;dbl&gt; -3.970, -15.557, -8.047, -8.562, -9.177, -6.9…</code></pre>
 <p>Note that I’ve ordered by ‘energy’. The trelliscope output being created will be sorted in this variable.</p>
 </div>
 <div id="album-artwork" class="section level2">
@@ -91,19 +102,23 @@ glimpse(goat_pics)</code></pre>
 
 glimpse(small_goat_pics)</code></pre>
 <pre><code>## Observations: 313
-## Variables: 12
-## $ track_name         &lt;chr&gt; &quot;Whole Wide World&quot;, &quot;Have To Explode&quot;, &quot;Talla…
-## $ album_name         &lt;chr&gt; &quot;Sweden&quot;, &quot;Tallahassee&quot;, &quot;Tallahassee&quot;, &quot;The …
-## $ track_n            &lt;int&gt; 6, 11, 1, 10, 12, 10, 1, 6, 4, 7, 9, 8, 9, 11…
-## $ album_release_year &lt;dbl&gt; 1995, 2002, 2002, 2009, 2009, 2002, 2009, 200…
-## $ danceability       &lt;dbl&gt; 0.649, 0.634, 0.585, 0.470, 0.374, 0.713, 0.7…
-## $ energy             &lt;dbl&gt; 0.0335, 0.0498, 0.0535, 0.0669, 0.0669, 0.069…
-## $ speechiness        &lt;dbl&gt; 0.0698, 0.0543, 0.0423, 0.0557, 0.0374, 0.045…
-## $ acousticness       &lt;dbl&gt; 0.894, 0.886, 0.903, 0.930, 0.971, 0.944, 0.6…
-## $ instrumentalness   &lt;dbl&gt; 8.77e-01, 6.51e-02, 4.72e-02, 1.36e-03, 3.26e…
-## $ liveness           &lt;dbl&gt; 0.0905, 0.1110, 0.1110, 0.0996, 0.0938, 0.107…
-## $ valence            &lt;dbl&gt; 0.2860, 0.2860, 0.1360, 0.2230, 0.0909, 0.209…
-## $ url                &lt;chr&gt; &quot;https://i.scdn.co/image/ee95286d8fc0c80802ed…</code></pre>
+## Variables: 16
+## $ track_name         &lt;chr&gt; &quot;Choked Out&quot;, &quot;Pure Intentions&quot;, &quot;If You See …
+## $ album_name         &lt;chr&gt; &quot;Beat the Champ&quot;, &quot;Bitter Melon Farm&quot;, &quot;Get L…
+## $ track_n            &lt;int&gt; 5, 18, 10, 16, 14, 20, 17, 8, 21, 4, 2, 13, 3…
+## $ album_release_year &lt;dbl&gt; 2015, 2002, 2006, 2011, 1996, 2012, 2002, 200…
+## $ duration_ms        &lt;int&gt; 102653, 134333, 118013, 167120, 234600, 16584…
+## $ key_mode           &lt;chr&gt; &quot;D major&quot;, &quot;A major&quot;, &quot;C major&quot;, &quot;B minor&quot;, &quot;…
+## $ time_signature     &lt;int&gt; 4, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, …
+## $ danceability       &lt;dbl&gt; 0.565, 0.648, 0.566, 0.422, 0.281, 0.681, 0.5…
+## $ energy             &lt;dbl&gt; 0.951, 0.934, 0.927, 0.903, 0.899, 0.895, 0.8…
+## $ speechiness        &lt;dbl&gt; 0.0808, 0.0989, 0.0642, 0.0682, 0.0526, 0.025…
+## $ acousticness       &lt;dbl&gt; 0.000239, 0.646000, 0.002930, 0.000620, 0.262…
+## $ instrumentalness   &lt;dbl&gt; 2.78e-05, 2.14e-01, 8.52e-01, 1.01e-02, 2.72e…
+## $ liveness           &lt;dbl&gt; 0.1320, 0.3890, 0.1990, 0.3420, 0.2080, 0.139…
+## $ valence            &lt;dbl&gt; 0.726, 0.424, 0.324, 0.860, 0.350, 0.970, 0.5…
+## $ loudness           &lt;dbl&gt; -3.970, -15.557, -8.047, -8.562, -9.177, -6.9…
+## $ url                &lt;chr&gt; &quot;https://i.scdn.co/image/ecf370a7190fa0673b0a…</code></pre>
 <p>So the album artwork URL has been added to the <code>url</code> column.</p>
 </div>
 <div id="prep-for-trelliscope" class="section level2">
@@ -116,7 +131,10 @@ glimpse(small_goat_pics)</code></pre>
     Track = Track_name,
     Album = Album_name,
     `Track #` = Track_n,
-    Year = Album_release_year
+    Year = Album_release_year,
+    `Duration (ms)` = Duration_ms,
+    `Key mode` = Key_mode,
+    `Time sig` = Time_signature
   ) %&gt;% 
   select(-Url)  # discard unneeded variable</code></pre>
 </div>
@@ -127,14 +145,15 @@ glimpse(small_goat_pics)</code></pre>
 <pre class="r"><code>trelliscope(
   prepared_goat,
   name = &quot;The Mountain Goats discography&quot;,
-  desc = &quot;Explore the Mountain Goats backcatalogue and filter by Spotify metrics like danceability and acousticness&quot;,
+  desc = &quot;Explore the Mountain Goats backcatalogue and filter and sort by audio features&quot;,
+  md_desc = &quot;[The Mountain Goats](http://www.mountain-goats.com/) are a band. Data were collected from [Genius](https://genius.com/) and [Spotify](https://www.spotify.com/) APIs using the [{genius}](https://github.com/josiahparry/genius) and [{spotifyr}](https://www.rcharlie.com/spotifyr/) R packages, respectively.&quot;,
   nrow = 2, ncol = 5,  # arrangement of panels
-  state = list(labels = c(&quot;Track&quot;, &quot;Album&quot;, &quot;Track #&quot;, &quot;Year&quot;, &quot;Energy&quot;))  # display on panels
-)</code></pre>
-<p>I’ve embedded here the output, but <a href="https://www.rostrum.blog/output/goat_scope/">you can click here to open full screen</a>.</p>
-<iframe src="https://www.rostrum.blog/output/goat_scope/" width="672" height="400px">
+  state = list(labels = c(&quot;Track&quot;, &quot;Album&quot;, &quot;Track #&quot;, &quot;Year&quot;, &quot;Energy&quot;)),  # display on panels
+  )</code></pre>
+<p>I’ve embedded here the output, but <a href="https://www.rostrum.blog/output/goat-scope/">you can click here to open full screen</a>.</p>
+<iframe src="https://www.rostrum.blog/output/goat-scope/" width="672" height="400px">
 </iframe>
-<p>Explore the data by altering the defaults in the grid, labels, filter and sort buttons in the left-hand navigation panel. Cycle through the panels with the arrows in the upper right. Hit the ‘i’ button in the upper right to get more information on trelliscope and its shortcuts.</p>
+<p>Explore the data by altering the defaults in the grid, labels, filter and sort buttons in the left-hand navigation panel. Cycle through the panels with the arrows in the upper right. Hit the ‘?’ button in the upper right to get more information on trelliscope and its shortcuts.</p>
 </div>
 <div id="bonus-content" class="section level1">
 <h1>Bonus content!</h1>
@@ -146,7 +165,65 @@ glimpse(small_goat_pics)</code></pre>
 </div>
 <div id="host-your-trelliscope" class="section level2">
 <h2>Host your trelliscope</h2>
-<p>Use the argument <code>path = "/tmp/goat-scope"</code> in the <code>trelliscope()</code> function to save the files for your trelliscope to the temporary folder (I learnt this from <a href="https://github.com/hafen/trelliscopejs/issues/24#issuecomment-276883861">a GitHub issue</a>). You can then host the folder’s contents somewhere. I put mine in the <code>static/</code> directory of this site’s structure so it’s hosted on its own page at <a href="https://www.rostrum.blog/output/goat_scope/" class="uri">https://www.rostrum.blog/output/goat_scope/</a> (see <a href="https://timmastny.rbind.io/blog/embed-slides-knitr-blogdown/">Tim Mastny’s post</a>).</p>
+<p>Use the argument <code>path = "~/Desktop/goat-scope"</code> in the <code>trelliscope()</code> function to save the files (I learnt this from <a href="https://github.com/hafen/trelliscopejs/issues/24#issuecomment-276883861">a GitHub issue</a>). You can then host the folder’s contents somewhere. I put mine in the <code>static/</code> directory of this site’s structure so it’s hosted on its own page at <a href="https://www.rostrum.blog/output/goat_scope/" class="uri">https://www.rostrum.blog/output/goat_scope/</a> (see <a href="https://timmastny.rbind.io/blog/embed-slides-knitr-blogdown/">Tim Mastny’s post</a>).</p>
+<hr />
+<details>
+<p><summary>Session info</summary></p>
+<pre><code>## [1] &quot;Last updated 2019-06-20&quot;</code></pre>
+<pre><code>## R version 3.5.2 (2018-12-20)
+## Platform: x86_64-apple-darwin15.6.0 (64-bit)
+## Running under: macOS High Sierra 10.13.6
+## 
+## Locale: en_GB.UTF-8 / en_GB.UTF-8 / en_GB.UTF-8 / C / en_GB.UTF-8 / en_GB.UTF-8
+## 
+## Package version:
+##   assertthat_0.2.1        autocogs_0.1.2         
+##   backports_1.1.4         base64enc_0.1-3        
+##   BH_1.69.0.1             blogdown_0.11          
+##   bookdown_0.9            broom_0.5.2            
+##   callr_3.2.0             checkmate_1.9.1        
+##   cli_1.1.0               clipr_0.6.0            
+##   colorspace_1.4-1        compiler_3.5.2         
+##   crayon_1.3.4            digest_0.6.19          
+##   diptest_0.75.7          DistributionUtils_0.6-0
+##   dplyr_0.8.1             emo_0.0.0.9000         
+##   evaluate_0.14           fansi_0.4.0            
+##   generics_0.0.2          ggplot2_3.1.1          
+##   glue_1.3.1              graphics_3.5.2         
+##   grDevices_3.5.2         grid_3.5.2             
+##   gtable_0.3.0            hexbin_1.27.2          
+##   highr_0.8               hms_0.4.2              
+##   htmltools_0.3.6         htmlwidgets_1.3        
+##   httpuv_1.5.1            jsonlite_1.6           
+##   knitr_1.23              labeling_0.3           
+##   later_0.8.0             lattice_0.20.38        
+##   lazyeval_0.2.2          lubridate_1.7.4        
+##   magrittr_1.5            markdown_1.0           
+##   MASS_7.3.51.1           Matrix_1.2.16          
+##   mclust_5.4.1            methods_3.5.2          
+##   mgcv_1.8.27             mime_0.7               
+##   moments_0.14            munsell_0.5.0          
+##   nlme_3.1.137            pillar_1.4.1           
+##   pkgconfig_2.0.2         plogr_0.2.0            
+##   plyr_1.8.4              prettyunits_1.0.2      
+##   processx_3.3.1          progress_1.2.2         
+##   promises_1.0.1          ps_1.3.0               
+##   purrr_0.3.2             R6_2.4.0               
+##   RColorBrewer_1.1.2      Rcpp_1.0.1             
+##   readr_1.3.1             reshape2_1.4.3         
+##   rlang_0.3.4             rmarkdown_1.13         
+##   rstudioapi_0.10         scales_1.0.0           
+##   servr_0.13              splines_3.5.2          
+##   stats_3.5.2             stringi_1.4.3          
+##   stringr_1.4.0           tibble_2.1.3           
+##   tidyr_0.8.3             tidyselect_0.2.5       
+##   tinytex_0.13            tools_3.5.2            
+##   trelliscopejs_0.1.18    utf8_1.1.4             
+##   utils_3.5.2             vctrs_0.1.0            
+##   viridisLite_0.3.0       webshot_0.5.1          
+##   withr_2.1.2             xfun_0.7               
+##   yaml_2.2.0              zeallot_0.1.0</code></pre>
+</details>
 </div>
 </div>
 <div class="footnotes">
