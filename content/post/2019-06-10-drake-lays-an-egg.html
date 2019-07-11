@@ -24,15 +24,19 @@ draft: yes
 <p>RAP does away with the tangled webs of spreadsheets, copy-pasting errors and infernal <code>publication_FINAL-v2_md-comments_FINAL.docx</code> file naming.</p>
 <p>Instead, RAP encourages a script-based workflow that’s beefed up with stuff like version control, dependency management and automated testing.</p>
 </div>
+<div id="make-it" class="section level1">
+<h1>Make it</h1>
+<p>Projects can become complicated with multiple inputs, script files and outputs.</p>
+<p>Sometimes you need to re-run your code if you’ve made a change. With a makefile, you only run the parts that have changed plus anything downstream that depends on those parts.</p>
+<p>You can get around this with a <a href="https://en.wikipedia.org/wiki/Makefile">‘makefile’</a>. In short, you record each step of your analysis in a ‘recipe’ and the dependencies between each step are recorded.</p>
+<p>Now you don’t have to re-run the entire analysis if a change is made. Only the things that need to be re-run will be re-run. This saves compute time and means you don’t have to remember any dependencies yourself.</p>
+</div>
 <div id="bake-a-drake-make-cake" class="section level1">
 <h1>Bake a {drake} make cake</h1>
-<p>One step along the RAP journey could be to use a <a href="https://en.wikipedia.org/wiki/Makefile">‘makefile’</a>. This is a plain-text recipe file that codifies the order of script execution and minimises the need to re-run the entire code base during development.</p>
-<p><a href="https://github.com/ropensci/drake">{drake}</a> is a package by <a href="https://wlandau.github.io/">Will Landau</a> that lets you create make files with a distinct R flavour.</p>
-<p>In brief, you prepare a ‘plan’ file that calls functions to perform you analysis and create your output. It’s a bit like a cake recipe.</p>
-<p>Sometimes you need to re-run your code if you’ve made a change. {drake} only runs the parts that have changed plus anything downstream that depends on those parts.</p>
-<p>This saves compute time and means you don’t have to remember any dependencies yourself.</p>
-<p>{drake} even visualises a dependency network diagram for you so you can understand these relationships and what has changed following any modifications of the code.</p>
-<p>There’s some helpful material out there for learning more about {drake}.</p>
+<p><a href="https://github.com/ropensci/drake">{drake}</a> is a package by <a href="https://wlandau.github.io/">Will Landau</a> that lets you create makefiles using R syntax. Drake == Dataframes in R for Make.</p>
+<p>In brief, you prepare a ‘plan’ file that records all the functions to be run. Running the plan for the first time will run all the steps of the analysis. Nothing will happen if you try to run it a second time because everything is up to date. If you make a small change to your code and then re-run the plan, then only the parts of the code impacted by that change are re-run.</p>
+<p>{drake} provides a helpful dependency network diagram so you can understand these relationships and what has changed following any modifications of the code.</p>
+<p>There’s some helpful material out there for learning more about {drake}:</p>
 <ul>
 <li><a href="https://ropenscilabs.github.io/drake-manual/">User Manual</a></li>
 <li><a href="https://ropensci.github.io/drake/">Documentation</a></li>
@@ -42,14 +46,21 @@ draft: yes
 </div>
 <div id="drake-it-to-make-it" class="section level1">
 <h1>{drake} it to make it</h1>
-<p>What might an example of {drake}</p>
+<p>I’ve made a very simple {drake} demo for an imaginary RAP project.</p>
 <ul>
 <li><a href="https://github.com/matt-dray/drake-egg-rap">GitHub</a></li>
 <li><a href="https://matt-dray.github.io/drake-egg-rap/">Example HTML output</a></li>
 </ul>
 <div id="eggsample" class="section level2">
 <h2>Eggsample</h2>
-<p>There is a <a href="https://www.statisticsauthority.gov.uk/osr/list-of-national-statistics/">National Statistics</a> <a href="https://www.gov.uk/government/statistics/egg-statistics">publication that tracks egg production</a>.</p>
+<p>There is a <a href="https://www.gov.uk/government/statistics/egg-statistics">statistical publication that tracks UK egg production</a>. As far as I know, it’s not currently created using a RAP process. It’s a prime candidate though:</p>
+<ul>
+<li>the content has remained pretty consistent over time, so little manual change would be required to the report template</li>
+<li>it’s produced quarterly, so total time savings could be high</li>
+<li>it’s badged as <a href="https://www.statisticsauthority.gov.uk/osr/list-of-national-statistics/">National Statistics</a> and must therefore uphold certain quality standards</li>
+<li>there was an error in calculating year-on-year change in May this year (click ‘+ show all updates’ on <a href="https://www.gov.uk/government/statistics/egg-statistics">the egg statistics page</a>, which is exactly the type of thing that RAP is designed to help reduce</li>
+</ul>
+<p>Here I’ll show how to recreate a small part of the publication using {drake}.</p>
 </div>
 <div id="folder-structure" class="section level2">
 <h2>Folder structure</h2>

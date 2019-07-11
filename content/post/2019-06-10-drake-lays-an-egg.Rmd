@@ -24,21 +24,25 @@ RAP does away with the tangled webs of spreadsheets, copy-pasting errors and inf
 
 Instead, RAP encourages a script-based workflow that's beefed up with stuff like version control, dependency management and automated testing.
 
+# Make it
+
+Projects can become complicated with multiple inputs, script files and outputs.
+
+Sometimes you need to re-run your code if you've made a change. With a makefile, you only run the parts that have changed plus anything downstream that depends on those parts.
+
+You can get around this with a ['makefile'](https://en.wikipedia.org/wiki/Makefile). In short, you record each step of your analysis in a 'recipe' and the dependencies between each step are recorded.
+
+Now you don't have to re-run the entire analysis if a change is made. Only the things that need to be re-run will be re-run. This saves compute time and means you don't have to remember any dependencies yourself.
+
 # Bake a {drake} make cake
 
-One step along the RAP journey could be to use a ['makefile'](https://en.wikipedia.org/wiki/Makefile). This is a plain-text recipe file that codifies the order of script execution and minimises the need to re-run the entire code base during development.
+[{drake}](https://github.com/ropensci/drake) is a package by [Will Landau](https://wlandau.github.io/) that lets you create makefiles using R syntax. Drake == Dataframes in R for Make.
 
-[{drake}](https://github.com/ropensci/drake) is a package by [Will Landau](https://wlandau.github.io/) that lets you create make files with a distinct R flavour.
+In brief, you prepare a 'plan' file that records all the functions to be run. Running the plan for the first time will run all the steps of the analysis. Nothing will happen if you try to run it a second time because everything is up to date. If you make a small change to your code and then re-run the plan, then only the parts of the code impacted by that change are re-run.
 
-In brief, you prepare a 'plan' file that calls functions to perform you analysis and create your output. It's a bit like a cake recipe.
+{drake} provides a helpful dependency network diagram so you can understand these relationships and what has changed following any modifications of the code.
 
-Sometimes you need to re-run your code if you've made a change. {drake} only runs the parts that have changed plus anything downstream that depends on those parts.
-
-This saves compute time and means you don't have to remember any dependencies yourself.
-
-{drake} even visualises a dependency network diagram for you so you can understand these relationships and what has changed following any modifications of the code.
-
-There's some helpful material out there for learning more about {drake}.
+There's some helpful material out there for learning more about {drake}:
 
 * [User Manual](https://ropenscilabs.github.io/drake-manual/)
 * [Documentation](https://ropensci.github.io/drake/)
@@ -47,14 +51,21 @@ There's some helpful material out there for learning more about {drake}.
 
 # {drake} it to make it
 
-What might an example of {drake}
+I've made a very simple {drake} demo for an imaginary RAP project.
 
 * [GitHub](https://github.com/matt-dray/drake-egg-rap)
 * [Example HTML output](https://matt-dray.github.io/drake-egg-rap/)
 
 ## Eggsample
 
-There is a [National Statistics](https://www.statisticsauthority.gov.uk/osr/list-of-national-statistics/) [publication that tracks egg production](https://www.gov.uk/government/statistics/egg-statistics).
+There is a [statistical publication that tracks UK egg production](https://www.gov.uk/government/statistics/egg-statistics). As far as I know, it's not currently created using a RAP process. It's a prime candidate though:
+
+* the content has remained pretty consistent over time, so little manual change would be required to the report template
+* it's produced quarterly, so total time savings could be high 
+* it's badged as [National Statistics](https://www.statisticsauthority.gov.uk/osr/list-of-national-statistics/) and must therefore uphold certain quality standards
+* there was an error in calculating year-on-year change in May this year (click '+ show all updates' on [the egg statistics page](https://www.gov.uk/government/statistics/egg-statistics), which is exactly the type of thing that RAP is designed to help reduce
+
+Here I'll show how to recreate a small part of the publication using {drake}.
 
 ## Folder structure
 
