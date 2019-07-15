@@ -16,15 +16,15 @@ tags:
 draft: yes
 ---
 
-# Take the RAP
+# RAP
 
 [Reproducible Analytical Pipelines](https://ukgovdatascience.github.io/rap-website/) (RAP) is an approach to generating [UK government's statistical reports](https://www.gov.uk/search/research-and-statistics) that improves reproducibility, minimises errors and speeds up production.
 
 RAP does away with the tangled webs of spreadsheets, copy-pasting errors and infernal `publication_FINAL-v2_md-comments_FINAL.docx` file naming. Instead, RAP encourages a script-based workflow that's beefed up with stuff like version control, dependency management and automated testing.
 
-# Make it
+# Make
 
-Projects can become complicated with multiple inputs, script files and outputs.
+RAP projects, or any project, can become complicated with multiple inputs, script files and outputs.
 
 Sometimes you need to re-run your code if you've made a change. Can you remember which specific bits of your script need to be re-run as a result? Or will you re-run the entire thing all over again?
 
@@ -32,13 +32,11 @@ You can get around this with a ['makefile'](https://en.wikipedia.org/wiki/Makefi
 
 With a makefile, only the things that need to be re-run will be re-run. This saves compute time and means you don't have to remember any dependencies yourself.
 
-# Bake a {drake} make cake
+# {drake} it to make it
 
-[{drake}](https://github.com/ropensci/drake) is a package by [Will Landau](https://wlandau.github.io/) that lets you create makefiles using R syntax. 'Drake' is shorthand for 'Dataframes in R for Make' since your recipe of commands is converted to an R-friendly data frame.
+[{drake}](https://github.com/ropensci/drake) is a package by [Will Landau](https://wlandau.github.io/) that lets you create makefiles using R syntax.
 
-How do you use {drake}? You prepare a 'plan' file that records all the functions to be run. Running the plan for the first time will run all the steps of the analysis. Nothing will happen if you try to run it a second time because everything is up to date. If you make a small change to your code and then re-run the plan, then only the parts of the code impacted by that change are re-run.
-
-{drake} provides a helpful dependency network diagram so you can understand these relationships and what has changed following any modifications of the code.
+With {drake} you prepare a 'plan' script written in R that records all the functions to be executed. You then 'make' the plan to run all the steps of the analysis.
 
 There's some helpful material out there for learning more about {drake}:
 
@@ -47,35 +45,51 @@ There's some helpful material out there for learning more about {drake}:
 * [Cheat sheet](https://github.com/krlmlr/drake-sib-zurich/blob/master/cheat-sheet.pdf) by Kirill Müller
 * [Drake for workflow happiness](https://aedobbyn.github.io/nyc-fires/index.html#1) slides by [Amanda Dobbyn](https://dobb.ae/)
 
-# {drake} it to make it
+# Eggsample
 
-I've made a very simple {drake} demo for an imaginary RAP project.
+I've made a very simple {drake} demo for an imaginary RAP project. Here I'll show how to recreate a very small part of a [statistical publication that tracks UK egg production](https://www.gov.uk/government/statistics/egg-statistics)[^egg] using {drake}.
 
-* [GitHub](https://github.com/matt-dray/drake-egg-rap)
-* [Example HTML output](https://matt-dray.github.io/drake-egg-rap/)
-
-## Eggsample
-
-There is a [statistical publication that tracks UK egg production](https://www.gov.uk/government/statistics/egg-statistics). As far as I know, it's not currently created using a RAP process. It's a prime candidate though:
-
-* the content has remained pretty consistent over time, so little manual change would be required to the report template
-* it's produced quarterly, so total time savings could be high 
-* it's badged as [National Statistics](https://www.statisticsauthority.gov.uk/osr/list-of-national-statistics/) and must therefore uphold certain quality standards
-* there was an error in calculating year-on-year change in May this year (click '+ show all updates' on [the egg statistics page](https://www.gov.uk/government/statistics/egg-statistics), which is exactly the type of thing that RAP is designed to help reduce
-
-Here I'll show how to recreate a small part of the publication -- a plot and some supporting commentary -- using {drake}.
+The code is on [GitHub](https://github.com/matt-dray/drake-egg-rap), along with an [HTML version of the demo report](https://matt-dray.github.io/drake-egg-rap/egg-report.html).
 
 ## A cunning plan
 
-There are three important files you must create:
+The repo contains [an R scripts folder](https://github.com/matt-dray/drake-egg-rap/tree/master/R) with three simple but important files:
 
-* `functions.R` contains the functions that we're going to use to produce our outputs
-* `packages.R` is just a bunch of calls to library to ensure we've got access to all the functions we need
-* `plan.R` is the recipe document that brings everything together
+1. [`packages.R`](https://github.com/matt-dray/drake-egg-rap/blob/master/R/packages.R) loads the packages we need using calls to `library()`
+1. [`functions.R`](https://github.com/matt-dray/drake-egg-rap/blob/master/R/functions.R) contains bespoke functions
+1. [`plan.R`](https://github.com/matt-dray/drake-egg-rap/blob/master/R/plan.R) is the recipe document that brings everything together
 
-You begin yoru analysis by using `source("filepath/file.R")` to run each of these scripts. You'll notice that the `plan.R` script generates a 'plan' object. It's a data frame with two columns: 'target' and 'command'. This is basically a list of instructions, where each row is a step: to the named target (e.g. a data frame) apply the named command (a function).
+The first two don't need much more explaining. The `plan.R` file is a little different but is straightforward. It contains a call to `drake::drake_plan()`, to which you pass the functions that make up your analysis:
 
-It's worth looking a little closer at the `plan.R` script. It consists of a call to `drake::drake_plan()`, inside which we perform each step of the analysis, calling package functions and sourced functions from `functions.R` as required. In our example we're only doing four things, so the plan object will be a data frame with four rows of instructions:
+```{r eval=FALSE}
+plan <- drake_plan(
+  
+  raw_data = read_ods(
+    path = "data/eggs-packers-02may19a.ods",
+    sheet = "Packers_Annual",
+    skip = 8
+  ),
+  
+  data = clean_data(raw_data),
+  
+  plot = create_plot(data),
+  
+  report = rmarkdown::render(
+    knitr_in("egg-report.Rmd"),
+    output_file = file_out("docs/egg-report.html"),
+    quiet = TRUE
+  )
+
+)
+```
+
+## Straight from the source
+
+There is [a simple file called `make.R` in the root](https://github.com/matt-dray/drake-egg-rap/blob/master/make.R) that reads each of .R script files using the `source()` function. The first two scripts simply load the packages and functions we need, while `source(plan.R)` generates a data frame[^df] called 'plan'.
+
+This data frame has 'target' and 'command' columns and multiple rows. It's like an instruction booklet that can be read 'for each function we specified in the `plan.R` file, apply the named command to the named target'.
+
+So [in my example](https://github.com/matt-dray/drake-egg-rap/blob/master/R/plan.R) there are four instructions:
 
 1. Read the raw data (target) with `readODS::read_ods()` (command)
 1. Clean the data (target) with our `clean_data()` function (command)
@@ -84,19 +98,24 @@ It's worth looking a little closer at the `plan.R` script. It consists of a call
 
 ## Enact the plan
 
-Having sourced all the required files, you can then run the `make()` function on the 'plan' object. This runs the instructions provided by each row of the plan. Your report will pop into existence as a result and any created objects will be stored in a cache.
+Now you can run the `make()` function on the 'plan' object, which will run the list of instructions in the plan.
 
-Re-running the plan now does... nothing. There's no point re-running everything if nothing's changed!
+The report will pop into existence and any created objects will be stored in a cache in a folder called '.drake', which is hidden from the user.
 
-{drake} provides a nice interactive visualisation of the dependencies and highlights which targets have changed (if any), and therefore which downstream dependencies will be impacted as a result.
+Of course, re-running the plan again does... nothing. No code needs to be re-executed if nothing's changed! {drake} will identify changes for you and re-execute only the dependent parts. 
 
-For example, if a single data point changes then the dependency graph will show that the plot and the report will be impacted, since they're downstream of the data.
-
-In other words, {drake} identified a change and re-executed only the dependent parts. Any unaffected code is not re-run and {drake} simply pulls these objects from the cache.It's already gone through the effort of creating them once, so there's no need to create them again.
+If, for example, a single data point changes, then the the plot and the report will be recreated, since they're downstream of the data. Targets that aren't impacted by the change won't be re-run, since {drake} can just refer to the cache.
 
 Incidentally, you can pull objects from the cache using the `loadd()` and `readd()` functions. For example, the R Markdown report in my example simply calls the plot object from the cache using `readd()`. This can help keep the R Markdown file less cluttered and more readable.
+
+## Visualise
+
+To help with this, {drake} provides a nice interactive visualisation of the dependencies and highlights which targets have changed (if any), and therefore which downstream dependencies will be impacted as a result.
 
 # Going further
 
 * complicated projects
 * high performance computing
+
+[^egg]: This publication could be a good candidate for RAP: content remains fairly similar between quarterly releases and it's required to meet high standards of quality because it's badged as [National Statistics](https://www.statisticsauthority.gov.uk/osr/list-of-national-statistics/).
+[^df]: It actually has multiple classes: `drake_plan`, `tbl_df`, `tbl` and `data.frame`.

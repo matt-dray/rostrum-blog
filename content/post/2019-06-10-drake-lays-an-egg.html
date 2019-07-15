@@ -18,23 +18,22 @@ draft: yes
 
 
 
-<div id="take-the-rap" class="section level1">
-<h1>Take the RAP</h1>
+<div id="rap" class="section level1">
+<h1>RAP</h1>
 <p><a href="https://ukgovdatascience.github.io/rap-website/">Reproducible Analytical Pipelines</a> (RAP) is an approach to generating <a href="https://www.gov.uk/search/research-and-statistics">UK government’s statistical reports</a> that improves reproducibility, minimises errors and speeds up production.</p>
 <p>RAP does away with the tangled webs of spreadsheets, copy-pasting errors and infernal <code>publication_FINAL-v2_md-comments_FINAL.docx</code> file naming. Instead, RAP encourages a script-based workflow that’s beefed up with stuff like version control, dependency management and automated testing.</p>
 </div>
-<div id="make-it" class="section level1">
-<h1>Make it</h1>
-<p>Projects can become complicated with multiple inputs, script files and outputs.</p>
+<div id="make" class="section level1">
+<h1>Make</h1>
+<p>RAP projects, or any project, can become complicated with multiple inputs, script files and outputs.</p>
 <p>Sometimes you need to re-run your code if you’ve made a change. Can you remember which specific bits of your script need to be re-run as a result? Or will you re-run the entire thing all over again?</p>
 <p>You can get around this with a <a href="https://en.wikipedia.org/wiki/Makefile">‘makefile’</a>. In short, you record each step of your analysis in a recipe-like file and the dependencies between each step are recorded.</p>
 <p>With a makefile, only the things that need to be re-run will be re-run. This saves compute time and means you don’t have to remember any dependencies yourself.</p>
 </div>
-<div id="bake-a-drake-make-cake" class="section level1">
-<h1>Bake a {drake} make cake</h1>
-<p><a href="https://github.com/ropensci/drake">{drake}</a> is a package by <a href="https://wlandau.github.io/">Will Landau</a> that lets you create makefiles using R syntax. ‘Drake’ is shorthand for ‘Dataframes in R for Make’ since your recipe of commands is converted to an R-friendly data frame.</p>
-<p>How do you use {drake}? You prepare a ‘plan’ file that records all the functions to be run. Running the plan for the first time will run all the steps of the analysis. Nothing will happen if you try to run it a second time because everything is up to date. If you make a small change to your code and then re-run the plan, then only the parts of the code impacted by that change are re-run.</p>
-<p>{drake} provides a helpful dependency network diagram so you can understand these relationships and what has changed following any modifications of the code.</p>
+<div id="drake-it-to-make-it" class="section level1">
+<h1>{drake} it to make it</h1>
+<p><a href="https://github.com/ropensci/drake">{drake}</a> is a package by <a href="https://wlandau.github.io/">Will Landau</a> that lets you create makefiles using R syntax.</p>
+<p>With {drake} you prepare a ‘plan’ script written in R that records all the functions to be executed. You then ‘make’ the plan to run all the steps of the analysis.</p>
 <p>There’s some helpful material out there for learning more about {drake}:</p>
 <ul>
 <li><a href="https://ropenscilabs.github.io/drake-manual/">User Manual</a></li>
@@ -43,34 +42,44 @@ draft: yes
 <li><a href="https://aedobbyn.github.io/nyc-fires/index.html#1">Drake for workflow happiness</a> slides by <a href="https://dobb.ae/">Amanda Dobbyn</a></li>
 </ul>
 </div>
-<div id="drake-it-to-make-it" class="section level1">
-<h1>{drake} it to make it</h1>
-<p>I’ve made a very simple {drake} demo for an imaginary RAP project.</p>
-<ul>
-<li><a href="https://github.com/matt-dray/drake-egg-rap">GitHub</a></li>
-<li><a href="https://matt-dray.github.io/drake-egg-rap/">Example HTML output</a></li>
-</ul>
-<div id="eggsample" class="section level2">
-<h2>Eggsample</h2>
-<p>There is a <a href="https://www.gov.uk/government/statistics/egg-statistics">statistical publication that tracks UK egg production</a>. As far as I know, it’s not currently created using a RAP process. It’s a prime candidate though:</p>
-<ul>
-<li>the content has remained pretty consistent over time, so little manual change would be required to the report template</li>
-<li>it’s produced quarterly, so total time savings could be high</li>
-<li>it’s badged as <a href="https://www.statisticsauthority.gov.uk/osr/list-of-national-statistics/">National Statistics</a> and must therefore uphold certain quality standards</li>
-<li>there was an error in calculating year-on-year change in May this year (click ‘+ show all updates’ on <a href="https://www.gov.uk/government/statistics/egg-statistics">the egg statistics page</a>, which is exactly the type of thing that RAP is designed to help reduce</li>
-</ul>
-<p>Here I’ll show how to recreate a small part of the publication – a plot and some supporting commentary – using {drake}.</p>
-</div>
+<div id="eggsample" class="section level1">
+<h1>Eggsample</h1>
+<p>I’ve made a very simple {drake} demo for an imaginary RAP project. Here I’ll show how to recreate a very small part of a <a href="https://www.gov.uk/government/statistics/egg-statistics">statistical publication that tracks UK egg production</a><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> using {drake}.</p>
+<p>The code is on <a href="https://github.com/matt-dray/drake-egg-rap">GitHub</a>, along with an <a href="https://matt-dray.github.io/drake-egg-rap/egg-report.html">HTML version of the demo report</a>.</p>
 <div id="a-cunning-plan" class="section level2">
 <h2>A cunning plan</h2>
-<p>There are three important files you must create:</p>
-<ul>
-<li><code>functions.R</code> contains the functions that we’re going to use to produce our outputs</li>
-<li><code>packages.R</code> is just a bunch of calls to library to ensure we’ve got access to all the functions we need</li>
-<li><code>plan.R</code> is the recipe document that brings everything together</li>
-</ul>
-<p>You begin yoru analysis by using <code>source("filepath/file.R")</code> to run each of these scripts. You’ll notice that the <code>plan.R</code> script generates a ‘plan’ object. It’s a data frame with two columns: ‘target’ and ‘command’. This is basically a list of instructions, where each row is a step: to the named target (e.g. a data frame) apply the named command (a function).</p>
-<p>It’s worth looking a little closer at the <code>plan.R</code> script. It consists of a call to <code>drake::drake_plan()</code>, inside which we perform each step of the analysis, calling package functions and sourced functions from <code>functions.R</code> as required. In our example we’re only doing four things, so the plan object will be a data frame with four rows of instructions:</p>
+<p>The repo contains <a href="https://github.com/matt-dray/drake-egg-rap/tree/master/R">an R scripts folder</a> with three simple but important files:</p>
+<ol style="list-style-type: decimal">
+<li><a href="https://github.com/matt-dray/drake-egg-rap/blob/master/R/packages.R"><code>packages.R</code></a> loads the packages we need using calls to <code>library()</code></li>
+<li><a href="https://github.com/matt-dray/drake-egg-rap/blob/master/R/functions.R"><code>functions.R</code></a> contains bespoke functions</li>
+<li><a href="https://github.com/matt-dray/drake-egg-rap/blob/master/R/plan.R"><code>plan.R</code></a> is the recipe document that brings everything together</li>
+</ol>
+<p>The first two don’t need much more explaining. The <code>plan.R</code> file is a little different but is straightforward. It contains a call to <code>drake::drake_plan()</code>, to which you pass the functions that make up your analysis:</p>
+<pre class="r"><code>plan &lt;- drake_plan(
+  
+  raw_data = read_ods(
+    path = &quot;data/eggs-packers-02may19a.ods&quot;,
+    sheet = &quot;Packers_Annual&quot;,
+    skip = 8
+  ),
+  
+  data = clean_data(raw_data),
+  
+  plot = create_plot(data),
+  
+  report = rmarkdown::render(
+    knitr_in(&quot;egg-report.Rmd&quot;),
+    output_file = file_out(&quot;docs/egg-report.html&quot;),
+    quiet = TRUE
+  )
+
+)</code></pre>
+</div>
+<div id="straight-from-the-source" class="section level2">
+<h2>Straight from the source</h2>
+<p>There is <a href="https://github.com/matt-dray/drake-egg-rap/blob/master/make.R">a simple file called <code>make.R</code> in the root</a> that reads each of .R script files using the <code>source()</code> function. The first two scripts simply load the packages and functions we need, while <code>source(plan.R)</code> generates a data frame<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> called ‘plan’.</p>
+<p>This data frame has ‘target’ and ‘command’ columns and multiple rows. It’s like an instruction booklet that can be read ‘for each function we specified in the <code>plan.R</code> file, apply the named command to the named target’.</p>
+<p>So <a href="https://github.com/matt-dray/drake-egg-rap/blob/master/R/plan.R">in my example</a> there are four instructions:</p>
 <ol style="list-style-type: decimal">
 <li>Read the raw data (target) with <code>readODS::read_ods()</code> (command)</li>
 <li>Clean the data (target) with our <code>clean_data()</code> function (command)</li>
@@ -80,12 +89,15 @@ draft: yes
 </div>
 <div id="enact-the-plan" class="section level2">
 <h2>Enact the plan</h2>
-<p>Having sourced all the required files, you can then run the <code>make()</code> function on the ‘plan’ object. This runs the instructions provided by each row of the plan. Your report will pop into existence as a result and any created objects will be stored in a cache.</p>
-<p>Re-running the plan now does… nothing. There’s no point re-running everything if nothing’s changed!</p>
-<p>{drake} provides a nice interactive visualisation of the dependencies and highlights which targets have changed (if any), and therefore which downstream dependencies will be impacted as a result.</p>
-<p>For example, if a single data point changes then the dependency graph will show that the plot and the report will be impacted, since they’re downstream of the data.</p>
-<p>In other words, {drake} identified a change and re-executed only the dependent parts. Any unaffected code is not re-run and {drake} simply pulls these objects from the cache.It’s already gone through the effort of creating them once, so there’s no need to create them again.</p>
+<p>Now you can run the <code>make()</code> function on the ‘plan’ object, which will run the list of instructions in the plan.</p>
+<p>The report will pop into existence and any created objects will be stored in a cache in a folder called ‘.drake’, which is hidden from the user.</p>
+<p>Of course, re-running the plan again does… nothing. No code needs to be re-executed if nothing’s changed! {drake} will identify changes for you and re-execute only the dependent parts.</p>
+<p>If, for example, a single data point changes, then the the plot and the report will be recreated, since they’re downstream of the data. Targets that aren’t impacted by the change won’t be re-run, since {drake} can just refer to the cache.</p>
 <p>Incidentally, you can pull objects from the cache using the <code>loadd()</code> and <code>readd()</code> functions. For example, the R Markdown report in my example simply calls the plot object from the cache using <code>readd()</code>. This can help keep the R Markdown file less cluttered and more readable.</p>
+</div>
+<div id="visualise" class="section level2">
+<h2>Visualise</h2>
+<p>To help with this, {drake} provides a nice interactive visualisation of the dependencies and highlights which targets have changed (if any), and therefore which downstream dependencies will be impacted as a result.</p>
 </div>
 </div>
 <div id="going-further" class="section level1">
@@ -94,4 +106,11 @@ draft: yes
 <li>complicated projects</li>
 <li>high performance computing</li>
 </ul>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>This publication could be a good candidate for RAP: content remains fairly similar between quarterly releases and it’s required to meet high standards of quality because it’s badged as <a href="https://www.statisticsauthority.gov.uk/osr/list-of-national-statistics/">National Statistics</a>.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn2"><p>It actually has multiple classes: <code>drake_plan</code>, <code>tbl_df</code>, <code>tbl</code> and <code>data.frame</code>.<a href="#fnref2" class="footnote-back">↩</a></p></li>
+</ol>
 </div>
