@@ -20,21 +20,20 @@ draft: yes
 
 <div id="take-the-rap" class="section level1">
 <h1>Take the RAP</h1>
-<p><a href="https://ukgovdatascience.github.io/rap-website/">Reproducible Analytical Pipelines</a> (RAP) is an approach to generating <a href="https://www.gov.uk/search/research-and-statistics">the UK government’s official statistics</a> that improves reproducibility, minimises errors and speeds up production.</p>
-<p>RAP does away with the tangled webs of spreadsheets, copy-pasting errors and infernal <code>publication_FINAL-v2_md-comments_FINAL.docx</code> file naming.</p>
-<p>Instead, RAP encourages a script-based workflow that’s beefed up with stuff like version control, dependency management and automated testing.</p>
+<p><a href="https://ukgovdatascience.github.io/rap-website/">Reproducible Analytical Pipelines</a> (RAP) is an approach to generating <a href="https://www.gov.uk/search/research-and-statistics">UK government’s statistical reports</a> that improves reproducibility, minimises errors and speeds up production.</p>
+<p>RAP does away with the tangled webs of spreadsheets, copy-pasting errors and infernal <code>publication_FINAL-v2_md-comments_FINAL.docx</code> file naming. Instead, RAP encourages a script-based workflow that’s beefed up with stuff like version control, dependency management and automated testing.</p>
 </div>
 <div id="make-it" class="section level1">
 <h1>Make it</h1>
 <p>Projects can become complicated with multiple inputs, script files and outputs.</p>
-<p>Sometimes you need to re-run your code if you’ve made a change. With a makefile, you only run the parts that have changed plus anything downstream that depends on those parts.</p>
-<p>You can get around this with a <a href="https://en.wikipedia.org/wiki/Makefile">‘makefile’</a>. In short, you record each step of your analysis in a ‘recipe’ and the dependencies between each step are recorded.</p>
-<p>Now you don’t have to re-run the entire analysis if a change is made. Only the things that need to be re-run will be re-run. This saves compute time and means you don’t have to remember any dependencies yourself.</p>
+<p>Sometimes you need to re-run your code if you’ve made a change. Can you remember which specific bits of your script need to be re-run as a result? Or will you re-run the entire thing all over again?</p>
+<p>You can get around this with a <a href="https://en.wikipedia.org/wiki/Makefile">‘makefile’</a>. In short, you record each step of your analysis in a recipe-like file and the dependencies between each step are recorded.</p>
+<p>With a makefile, only the things that need to be re-run will be re-run. This saves compute time and means you don’t have to remember any dependencies yourself.</p>
 </div>
 <div id="bake-a-drake-make-cake" class="section level1">
 <h1>Bake a {drake} make cake</h1>
-<p><a href="https://github.com/ropensci/drake">{drake}</a> is a package by <a href="https://wlandau.github.io/">Will Landau</a> that lets you create makefiles using R syntax. Drake == Dataframes in R for Make.</p>
-<p>In brief, you prepare a ‘plan’ file that records all the functions to be run. Running the plan for the first time will run all the steps of the analysis. Nothing will happen if you try to run it a second time because everything is up to date. If you make a small change to your code and then re-run the plan, then only the parts of the code impacted by that change are re-run.</p>
+<p><a href="https://github.com/ropensci/drake">{drake}</a> is a package by <a href="https://wlandau.github.io/">Will Landau</a> that lets you create makefiles using R syntax. ‘Drake’ is shorthand for ‘Dataframes in R for Make’ since your recipe of commands is converted to an R-friendly data frame.</p>
+<p>How do you use {drake}? You prepare a ‘plan’ file that records all the functions to be run. Running the plan for the first time will run all the steps of the analysis. Nothing will happen if you try to run it a second time because everything is up to date. If you make a small change to your code and then re-run the plan, then only the parts of the code impacted by that change are re-run.</p>
 <p>{drake} provides a helpful dependency network diagram so you can understand these relationships and what has changed following any modifications of the code.</p>
 <p>There’s some helpful material out there for learning more about {drake}:</p>
 <ul>
@@ -60,12 +59,39 @@ draft: yes
 <li>it’s badged as <a href="https://www.statisticsauthority.gov.uk/osr/list-of-national-statistics/">National Statistics</a> and must therefore uphold certain quality standards</li>
 <li>there was an error in calculating year-on-year change in May this year (click ‘+ show all updates’ on <a href="https://www.gov.uk/government/statistics/egg-statistics">the egg statistics page</a>, which is exactly the type of thing that RAP is designed to help reduce</li>
 </ul>
-<p>Here I’ll show how to recreate a small part of the publication using {drake}.</p>
+<p>Here I’ll show how to recreate a small part of the publication – a plot and some supporting commentary – using {drake}.</p>
 </div>
-<div id="folder-structure" class="section level2">
-<h2>Folder structure</h2>
+<div id="a-cunning-plan" class="section level2">
+<h2>A cunning plan</h2>
+<p>There are three important files you must create:</p>
+<ul>
+<li><code>functions.R</code> contains the functions that we’re going to use to produce our outputs</li>
+<li><code>packages.R</code> is just a bunch of calls to library to ensure we’ve got access to all the functions we need</li>
+<li><code>plan.R</code> is the recipe document that brings everything together</li>
+</ul>
+<p>You begin yoru analysis by using <code>source("filepath/file.R")</code> to run each of these scripts. You’ll notice that the <code>plan.R</code> script generates a ‘plan’ object. It’s a data frame with two columns: ‘target’ and ‘command’. This is basically a list of instructions, where each row is a step: to the named target (e.g. a data frame) apply the named command (a function).</p>
+<p>It’s worth looking a little closer at the <code>plan.R</code> script. It consists of a call to <code>drake::drake_plan()</code>, inside which we perform each step of the analysis, calling package functions and sourced functions from <code>functions.R</code> as required. In our example we’re only doing four things, so the plan object will be a data frame with four rows of instructions:</p>
+<ol style="list-style-type: decimal">
+<li>Read the raw data (target) with <code>readODS::read_ods()</code> (command)</li>
+<li>Clean the data (target) with our <code>clean_data()</code> function (command)</li>
+<li>Plot the data (target) with our <code>plot_data()</code> function (command)</li>
+<li>Create an R Markdown report (target) with <code>rmarkdown::render()</code> (command)</li>
+</ol>
 </div>
-<div id="a-very-cunning-plan" class="section level2">
-<h2>A very cunning plan</h2>
+<div id="enact-the-plan" class="section level2">
+<h2>Enact the plan</h2>
+<p>Having sourced all the required files, you can then run the <code>make()</code> function on the ‘plan’ object. This runs the instructions provided by each row of the plan. Your report will pop into existence as a result and any created objects will be stored in a cache.</p>
+<p>Re-running the plan now does… nothing. There’s no point re-running everything if nothing’s changed!</p>
+<p>{drake} provides a nice interactive visualisation of the dependencies and highlights which targets have changed (if any), and therefore which downstream dependencies will be impacted as a result.</p>
+<p>For example, if a single data point changes then the dependency graph will show that the plot and the report will be impacted, since they’re downstream of the data.</p>
+<p>In other words, {drake} identified a change and re-executed only the dependent parts. Any unaffected code is not re-run and {drake} simply pulls these objects from the cache.It’s already gone through the effort of creating them once, so there’s no need to create them again.</p>
+<p>Incidentally, you can pull objects from the cache using the <code>loadd()</code> and <code>readd()</code> functions. For example, the R Markdown report in my example simply calls the plot object from the cache using <code>readd()</code>. This can help keep the R Markdown file less cluttered and more readable.</p>
 </div>
+</div>
+<div id="going-further" class="section level1">
+<h1>Going further</h1>
+<ul>
+<li>complicated projects</li>
+<li>high performance computing</li>
+</ul>
 </div>

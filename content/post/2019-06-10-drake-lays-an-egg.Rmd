@@ -18,27 +18,25 @@ draft: yes
 
 # Take the RAP
 
-[Reproducible Analytical Pipelines](https://ukgovdatascience.github.io/rap-website/) (RAP) is an approach to generating [the UK government's official statistics](https://www.gov.uk/search/research-and-statistics) that improves reproducibility, minimises errors and speeds up production.
+[Reproducible Analytical Pipelines](https://ukgovdatascience.github.io/rap-website/) (RAP) is an approach to generating [UK government's statistical reports](https://www.gov.uk/search/research-and-statistics) that improves reproducibility, minimises errors and speeds up production.
 
-RAP does away with the tangled webs of spreadsheets, copy-pasting errors and infernal `publication_FINAL-v2_md-comments_FINAL.docx` file naming.
-
-Instead, RAP encourages a script-based workflow that's beefed up with stuff like version control, dependency management and automated testing.
+RAP does away with the tangled webs of spreadsheets, copy-pasting errors and infernal `publication_FINAL-v2_md-comments_FINAL.docx` file naming. Instead, RAP encourages a script-based workflow that's beefed up with stuff like version control, dependency management and automated testing.
 
 # Make it
 
 Projects can become complicated with multiple inputs, script files and outputs.
 
-Sometimes you need to re-run your code if you've made a change. With a makefile, you only run the parts that have changed plus anything downstream that depends on those parts.
+Sometimes you need to re-run your code if you've made a change. Can you remember which specific bits of your script need to be re-run as a result? Or will you re-run the entire thing all over again?
 
-You can get around this with a ['makefile'](https://en.wikipedia.org/wiki/Makefile). In short, you record each step of your analysis in a 'recipe' and the dependencies between each step are recorded.
+You can get around this with a ['makefile'](https://en.wikipedia.org/wiki/Makefile). In short, you record each step of your analysis in a recipe-like file and the dependencies between each step are recorded.
 
-Now you don't have to re-run the entire analysis if a change is made. Only the things that need to be re-run will be re-run. This saves compute time and means you don't have to remember any dependencies yourself.
+With a makefile, only the things that need to be re-run will be re-run. This saves compute time and means you don't have to remember any dependencies yourself.
 
 # Bake a {drake} make cake
 
-[{drake}](https://github.com/ropensci/drake) is a package by [Will Landau](https://wlandau.github.io/) that lets you create makefiles using R syntax. Drake == Dataframes in R for Make.
+[{drake}](https://github.com/ropensci/drake) is a package by [Will Landau](https://wlandau.github.io/) that lets you create makefiles using R syntax. 'Drake' is shorthand for 'Dataframes in R for Make' since your recipe of commands is converted to an R-friendly data frame.
 
-In brief, you prepare a 'plan' file that records all the functions to be run. Running the plan for the first time will run all the steps of the analysis. Nothing will happen if you try to run it a second time because everything is up to date. If you make a small change to your code and then re-run the plan, then only the parts of the code impacted by that change are re-run.
+How do you use {drake}? You prepare a 'plan' file that records all the functions to be run. Running the plan for the first time will run all the steps of the analysis. Nothing will happen if you try to run it a second time because everything is up to date. If you make a small change to your code and then re-run the plan, then only the parts of the code impacted by that change are re-run.
 
 {drake} provides a helpful dependency network diagram so you can understand these relationships and what has changed following any modifications of the code.
 
@@ -65,10 +63,40 @@ There is a [statistical publication that tracks UK egg production](https://www.g
 * it's badged as [National Statistics](https://www.statisticsauthority.gov.uk/osr/list-of-national-statistics/) and must therefore uphold certain quality standards
 * there was an error in calculating year-on-year change in May this year (click '+ show all updates' on [the egg statistics page](https://www.gov.uk/government/statistics/egg-statistics), which is exactly the type of thing that RAP is designed to help reduce
 
-Here I'll show how to recreate a small part of the publication using {drake}.
+Here I'll show how to recreate a small part of the publication -- a plot and some supporting commentary -- using {drake}.
 
-## Folder structure
+## A cunning plan
 
-## A very cunning plan
+There are three important files you must create:
 
-[^natstats]: In the UK, National Statistics are a special form of statistical publication that are considered to be of importance and have met certain standards.
+* `functions.R` contains the functions that we're going to use to produce our outputs
+* `packages.R` is just a bunch of calls to library to ensure we've got access to all the functions we need
+* `plan.R` is the recipe document that brings everything together
+
+You begin yoru analysis by using `source("filepath/file.R")` to run each of these scripts. You'll notice that the `plan.R` script generates a 'plan' object. It's a data frame with two columns: 'target' and 'command'. This is basically a list of instructions, where each row is a step: to the named target (e.g. a data frame) apply the named command (a function).
+
+It's worth looking a little closer at the `plan.R` script. It consists of a call to `drake::drake_plan()`, inside which we perform each step of the analysis, calling package functions and sourced functions from `functions.R` as required. In our example we're only doing four things, so the plan object will be a data frame with four rows of instructions:
+
+1. Read the raw data (target) with `readODS::read_ods()` (command)
+1. Clean the data (target) with our `clean_data()` function (command)
+1. Plot the data (target) with our `plot_data()` function (command)
+1. Create an R Markdown report (target) with `rmarkdown::render()` (command)
+
+## Enact the plan
+
+Having sourced all the required files, you can then run the `make()` function on the 'plan' object. This runs the instructions provided by each row of the plan. Your report will pop into existence as a result and any created objects will be stored in a cache.
+
+Re-running the plan now does... nothing. There's no point re-running everything if nothing's changed!
+
+{drake} provides a nice interactive visualisation of the dependencies and highlights which targets have changed (if any), and therefore which downstream dependencies will be impacted as a result.
+
+For example, if a single data point changes then the dependency graph will show that the plot and the report will be impacted, since they're downstream of the data.
+
+In other words, {drake} identified a change and re-executed only the dependent parts. Any unaffected code is not re-run and {drake} simply pulls these objects from the cache.It's already gone through the effort of creating them once, so there's no need to create them again.
+
+Incidentally, you can pull objects from the cache using the `loadd()` and `readd()` functions. For example, the R Markdown report in my example simply calls the plot object from the cache using `readd()`. This can help keep the R Markdown file less cluttered and more readable.
+
+# Going further
+
+* complicated projects
+* high performance computing
