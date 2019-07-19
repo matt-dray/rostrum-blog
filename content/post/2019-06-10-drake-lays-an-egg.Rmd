@@ -16,6 +16,8 @@ tags:
 draft: yes
 ---
 
+# tl;dr
+
 # RAP
 
 [Reproducible Analytical Pipelines](https://ukgovdatascience.github.io/rap-website/) (RAP) is an approach to generating [UK government's statistical reports](https://www.gov.uk/search/research-and-statistics) that improves reproducibility, minimises errors and speeds up production.
@@ -34,7 +36,7 @@ Now when something changes, only the impacted steps will be re-executed. This sa
 
 # {drake} it to make it
 
-[{drake}](https://github.com/ropensci/drake) is a package by [Will Landau](https://wlandau.github.io/) that lets you create makefiles using R syntax.
+[{drake}](https://github.com/ropensci/drake) is a package by [Will Landau](https://wlandau.github.io/) that lets you have all the benefits of makefiles with R syntax.
 
 With {drake} you prepare a 'plan' script written in R that records all the functions to be executed. You then 'make' the plan to run all the steps of the analysis.
 
@@ -83,56 +85,57 @@ plan <- drake_plan(
 )
 ```
 
+
 ## Straight from the source
 
-There is [a simple file called `make.R` in the root](https://github.com/matt-dray/drake-egg-rap/blob/master/make.R) that reads each of .R script files using the `source()` function. The first two scripts simply load the packages and functions we need, while `source(plan.R)` generates a data frame[^df] called 'plan'.
+There is [a simple file called `make.R` in the root](https://github.com/matt-dray/drake-egg-rap/blob/master/make.R) that reads each of the .R script files using the `source()` function. The first two scripts simply load the packages and functions we need, while `source(plan.R)` generates a data frame[^df] called 'plan'.
 
-This data frame has 'target' and 'command' columns and multiple rows. It's like an instruction booklet that can be read 'for each function we specified in the `plan.R` file, apply the named command to the named target'.
+The plan data frame has 'target' and 'command' columns and multiple rows. It acts like instruction booklet that can be read 'for each function we specified in the `plan.R` file, apply the named command to the named target'.
 
-So [in my example](https://github.com/matt-dray/drake-egg-rap/blob/master/R/plan.R) there are four instructions:
+So [in my simple example plan](https://github.com/matt-dray/drake-egg-rap/blob/master/R/plan.R) there are four instructions:
 
 1. Read the raw data (target) with `readODS::read_ods()` (command)
 1. Clean the data (target) with our `clean_data()` function (command)
 1. Plot the data (target) with our `plot_data()` function (command)
 1. Create an R Markdown report (target) with `rmarkdown::render()` (command)
 
-## Enact the plan
+The plan is executed with `make(plan)`. This runs all the instructions and outputs an HTML report, since the last step of the plan was to render an R Markdown file.
 
-Now you can run the `make()` function on the 'plan' object, which will run the list of instructions in the plan.
-
-The report will pop into existence and any created objects will be stored in a cache in a folder called '.drake', which is hidden from the user.
-
-Of course, re-running the plan again does... nothing. No code needs to be re-executed if nothing's changed! {drake} will identify changes for you and re-execute only the dependent parts. 
-
-If, for example, a single data point changes, then the the plot and the report will be recreated, since they're downstream of the data. Targets that aren't impacted by the change won't be re-run, since {drake} can just refer to the cache.
-
-Incidentally, you can pull objects from the cache using the `loadd()` and `readd()` functions. For example, the R Markdown report in my example simply calls the plot object from the cache using `readd()`. This can help keep the R Markdown file less cluttered and more readable.
+Great, our {drake} pipeline is successful.
 
 ## Visualise
 
-To help with this, {drake} provides a nice interactive visualisation of the dependencies and highlights which targets have changed (if any), and therefore which downstream dependencies will be impacted as a result.
+{drake} provides some visual methods for inspecting the dependencies between targets. For example, it uses {visNetwork} to create an interactive graph.
 
-First you generate 'config' file: a list object that contains lots of configuration information for your plan. 
+{drake} provides some possibilities for visualising the dependencies between targets and highlights which are up to date.
+
+First you generate 'config' file: a list object that contains lots of configuration information for your plan. One element is an igraph object that helps construct graphs from your workflow.
 
 ```{r eval=FALSE}
 egg_config <- drake_config(plan)
 ```
 
-For example, `egg_config$cache_path` contains the filepath for where the cache is.
-
-A number of {drake} functions can take the config object and do something with the information inside it. In our case, we're going to pass the config to `vis_drake_graph()`, which builds an interactive dependency graph.
+A number of {drake} functions can take the config object and do something with the information inside it. In our case, we're going to pass the config to `vis_drake_graph()`, which builds an interactive dependency graph based on {visNetwork}.
 
 ```{r eval=FALSE}
 vis_drake_graph(egg_config)
 ```
 
-[INSERT GRAPH]
+[The interactive output](https://matt-dray.github.io/drake-egg-rap/dependency-graph.html) is handy for seeing dependencies at a glance. It's shape-coded to show the target type (object, function, file) and colour-coded to show whether everything is up-to-date.
 
-This is handy for seeing dependencies at a glance. It's shape-coded to show the target type (object, function, file) and colour-coded to show whether everything is up-to-date.
+## Making a change
 
-So if we change something in our analysis and re-view the graph without updating anything, we'll see that the colour of the dependent steps has changed.
+Of course, re-running the plan again does... nothing. No code needs to be re-executed if nothing's changed! Remember that {drake} will identify changes for you and re-execute only the dependent parts. 
 
-[INSERT GRAPH]
+However, if a single data point or line of code changes, then the the downstream targets -- the plot and the report -- will be out of sync. You can check this with `outdated(egg_config)`.
+
+If we [take another look at the visualisation now](https://matt-dray.github.io/drake-egg-rap/dependency-graph-outdated.html), we can see that certain targets have been recoloured to show that they're out of date.
+
+Re-running the plan will cause these targets to be regenerated. Targets that aren't impacted by the change won't be re-run.
+
+Where are the targets stored that didn't need to be recreated? Turns out that {drake} creates a `.drake/` folder to caches these objects and grabs then when needed. 
+
+Items can be pulled from this cache by the user with the the `loadd()` and `readd()` functions. For example, the R Markdown report in my example simply calls the rendered plot object from the cache using `readd()`. This can help keep the R Markdown file less cluttered and more readable.
 
 # Going further
 
