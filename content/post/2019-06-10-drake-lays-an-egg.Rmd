@@ -18,70 +18,80 @@ draft: yes
 
 # tl;dr
 
-The [{drake}](https://github.com/ropensci/drake) package remembers file interdependecies in your analysis and identifies what gets outdated so you don't have to. It only re-runs the parts of your analysis that need to be re-run.
+The [{drake}](https://github.com/ropensci/drake) package records file interdependecies in your analysis. When files are changed, {drake} only re-runs the parts of your analysis that need to be re-run.
 
-# Make
+# Make it to make it
 
 Analysis projects can become complicated as multiple inputs, script files and outputs build up.
 
-You need to re-run code if any changes are made. Can you remember exactly which bits of code need to be re-run? Or will you have to re-run everything from scratch? The latter is especially tedious in a large project.
+You'll need to re-run your code if any file edits are made. Can you remember exactly which scripts need to be re-executed? Or will you have to re-run the entire project from scratch? This is especially tedious in a large project.
 
 A ['makefile'](https://en.wikipedia.org/wiki/Makefile) can help you. In short, it's a text file in which you write each step of your analysis in a recipe-like format. Dependencies between data, code and outputs are recorded.
 
-Now when something changes, only the impacted steps will be re-executed. This saves compute time and means you don't have to remember any dependencies yourself.
+Now when something changes, only the affected file and those downstream from it will be re-executed. This saves compute time and means you don't have to remember any dependencies yourself.
 
 # {drake} it to make it
 
-[{drake}](https://github.com/ropensci/drake) is a package by [Will Landau](https://wlandau.github.io/) that lets you have all the benefits of makefiles, but with R syntax. It's part of [rOpenSci](https://ropensci.org/), which seeks to make tools for scientific computing more open.
+[{drake}](https://github.com/ropensci/drake) is a package by [Will Landau](https://wlandau.github.io/) that gives you makefiles with R syntax. The project is part of [rOpenSci](https://ropensci.org/), which seeks to make tools for scientific computing more open.
 
-With {drake} you prepare a R script 'plan' that records all the functions to be executed. You then 'make' the plan to run all the steps of the analysis.
+With {drake} you prepare a R script 'plan' that records all the functions to be executed. You then 'make' the plan to build the project from scratch or tore-run the outdated steps.
 
-This post contains a very simple example, but there's lots of helpful material to dig further into {drake}:
+This post contains a very simple example of {drake} in action, but there's so much more to it. Fortunately, there's lots of resources:
 
 * [user manual](https://ropenscilabs.github.io/drake-manual/)
 * [documentation](https://ropensci.github.io/drake/)
 * [cheat sheet](https://github.com/krlmlr/drake-sib-zurich/blob/master/cheat-sheet.pdf) by [Kirill Müller](https://twitter.com/krlmlr)
-* ['drake for workflow happiness'](https://aedobbyn.github.io/nyc-fires/index.html#1) slides by [Amanda Dobbyn](https://dobb.ae/)
+* ['drake for workflow happiness'](https://aedobbyn.github.io/nyc-fires/index.html#1) slides by [Amanda Dobbyn](https://dobb.ae/) -- which really embraces the [Drake meme]()
 
 # Eggsample
 
-I think there's potential for using {drake} in [Reproducible Analytical Pipelines](https://ukgovdatascience.github.io/rap-website/) (RAP). RAP is a wholly code-based method for generating [statistical reports in the UK government](https://www.gov.uk/search/research-and-statistics) to improve things like reproducibility, automation, error minimisation and speed of production.
+Why do I care about {drake}?
 
-RAP projects can be large and things can change during development, so {drake} could be a good fit.
+I think there's potential for using it in [Reproducible Analytical Pipelines](https://ukgovdatascience.github.io/rap-website/) (RAP). RAP is a wholly code-based method for generating [statistical reports in the UK government](https://www.gov.uk/search/research-and-statistics) to improve reproducibility and automation, while minimising errors and speeding-up production. RAP projects can be large and things can change during development, so {drake} could be a good fit.
 
 I've made a very simple {drake} demo for an imaginary RAP project. The demo recreates a very small part of a [statistical publication that tracks UK egg production](https://www.gov.uk/government/statistics/egg-statistics)[^egg].
 
 The code is on [GitHub](https://github.com/matt-dray/drake-egg-rap), along with an [HTML version of the demo report](https://matt-dray.github.io/drake-egg-rap/egg-report.html). The rest of this post describes the contents of the repo.
 
-## A cunning plan
+I've broken my explanation into five steps below:
 
-The [repo](https://github.com/matt-dray/drake-egg-rap) contains [a folder](https://github.com/matt-dray/drake-egg-rap/tree/master/R) with three simple but important scripts[^scripts]:
+1. [Prepare R scripts](#prep)
+2. [Load the scripts](#source)
+3. [Visualise](#viz)
+4. [Make the plan](#make)
+5. [Make a change](#change)
 
-1. [`packages.R`](https://github.com/matt-dray/drake-egg-rap/blob/master/R/packages.R) loads the packages we need for analysis using calls to `library()`
-1. [`functions.R`](https://github.com/matt-dray/drake-egg-rap/blob/master/R/functions.R) contains bespoke functions
-1. [`plan.R`](https://github.com/matt-dray/drake-egg-rap/blob/master/R/plan.R) is the recipe document that brings everything together
+## 1. Prepare the scripts {#prep}
 
-The `plan.R` file needs a little more explanation. It contains `drake::drake_plan()`, inside which you pass the functions that make up your analysis. Our example plan is very simple, with only four functions:
+The [demo repo](https://github.com/matt-dray/drake-egg-rap) contains [a folder](https://github.com/matt-dray/drake-egg-rap/tree/master/R) with three simple scripts[^scripts] that contain the code needed for our analysis. 
+
+1. [`packages.R`](https://github.com/matt-dray/drake-egg-rap/blob/master/R/packages.R) loads the packages we need for our analysis with `library()`
+1. [`functions.R`](https://github.com/matt-dray/drake-egg-rap/blob/master/R/functions.R) contains our own custom functions
+1. [`plan.R`](https://github.com/matt-dray/drake-egg-rap/blob/master/R/plan.R) is where all the steps of the analysis are written
+
+These are all thigs you'll find in a regular R analysis project.
+
+The `plan.R` file needs a little more explanation. It contains the `drake_plan()` function, to which you pass the functions that make up your analysis. Our example plan is very simple, with only four functions:
 
 ```{r eval=FALSE}
-plan <- drake_plan(
+egg_plan <- drake_plan(  # Create a drake_plan object called egg_plan
   
-  # read the datset
+  # 1. Read the dataset
   raw_data = read_ods(
     path = "data/eggs-packers-02may19a.ods",
     sheet = "Packers_Annual",
     skip = 8
   ),  # separate each function with a comma
   
-  # Prepare the data with a bespoke function
+  # 2. Prepare the data with a bespoke function
   # from the functions.R file
   data = clean_data(raw_data),
   
-  # Generate a plot using a bespoke function
+  # 3. Generate a plot using a bespoke function
   # from the functions.R file
   plot = create_plot(data),
   
-  # Finally, render the R Markdown report
+  # 4. Finally, render the R Markdown report
   # drake::knitr_in() marks the .Rmd file as a dependency
   # drake::file_out() marks the .HTML as an output
   report = rmarkdown::render(
@@ -95,24 +105,22 @@ plan <- drake_plan(
 
 You can put the functions in any order; {drake} takes care of the dependencies and works out which order in which to run them.
 
-## Making it happen
-
 So now we've got everything we need: our packages, functions and the plan. How do we execute the plan? We can use a [a small file called `make.R`](https://github.com/matt-dray/drake-egg-rap/blob/master/make.R) that brings everything together. 
 
-### 1. Source the files
+## 2. Load the scripts {#source}
 
-First, it uses the `source()` function on each .R script.
+`make.R` starts with calls to `source()` each R script:
 
 ```{r eval=FALSE}
-source(packages.R)  # load packages
-source(functions.R)  # load bespoke functions
+source(packages.R)  # load the packages
+source(functions.R)  # load the bespoke functions
 source(plan.R)  # load the plan
 ```
 
-Running the plan file creates a data frame object[^df] It has columns called 'target' and 'command' and a row for each function in our analysis:
+Sourcing the plan file means that the `drake_plan()` function inside is run, with the output being a data frame object[^df] called `egg_plan` in our example. It has columns called 'target' and 'command' and a row for each function in our analysis:
 
 ```{r eval=FALSE}
-plan
+egg_plan
 ```
 ```{r eval=FALSE}
 # A tibble: 4 x 2
@@ -133,12 +141,12 @@ The plan object acts like an instruction booklet, which can be read 'to each tar
 
 Before we execute this plan, we can take a look at what a dependency graph of these targets looks like.
 
-### 2. Visualise (optional)
+## 3. Visualise {#viz}
 
-Having created the `plan` object in the last step, we must now create a 'config' object: a list that contains lots of information about your plan. One element is an [igraph](https://igraph.org/) object that helps construct graphs from your workflow.
+Having created the `egg_plan` object, we can extract information about it to a configuration ('config') list object. One element of the config is, for example, an [igraph](https://igraph.org/) object that helps construct graphs from your workflow.
 
 ```{r eval=FALSE}
-egg_config <- drake_config(plan)
+egg_config <- drake_config(egg_plan)
 ```
 
 A number of {drake} functions can take the config object and do something with the information inside it. In our case, we're going to pass the config to `vis_drake_graph()`, which builds an interactive dependency graph based on {visNetwork}.
@@ -149,15 +157,19 @@ vis_drake_graph(egg_config)
 
 [The interactive output](https://matt-dray.github.io/drake-egg-rap/dependency-graph.html) is handy for seeing dependencies at a glance. It's shape-coded to show the target type (object, function, file) and colour-coded to show whether everything is up-to-date. At the moment it tells us that nothing is outdated; since we haven't actually run the plan yet.
 
-### 3. Execute the plan
+## 4. Make the plan {#make}
 
-Running the plan is as simple as using  `make(plan)`.
+Running the plan is as simple as:
 
-This runs all the instructions laid out in the `plan` object. In our case, this outputs an HTML report, since the last step of the plan was to render an R Markdown file.
+```{r eval=FALSE}
+make(plan)
+```
+
+This runs all the instructions laid out in the `plan` object; all the commands are run on the corresponding targets. In our case, this outputs an HTML report, since the last step of the plan was to render an R Markdown file.
 
 Of course, re-running the plan straight away again does... nothing. No code needs to be re-executed if nothing's changed! Remember that {drake} will identify changes for you and re-execute only the dependent parts.
 
-### 4. Making a change
+## 5. Make a change {#change}
 
 So if anything at all changes in our data or code then the downstream targets will be out of sync. Let's pretend we've changed a line of code in the `create_plot()` function, perhaps to alter its title. What do you think will happen?
 
