@@ -18,10 +18,11 @@ draft: yes
 
 
 
+<p><img src='/post/2019-07-22-can-drake-rap_files/duck-emojipedia.png' alt="Male duck (drake) emoji from emojipedia.org with caption saying 'yes'."></p>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>The <a href="https://github.com/ropensci/drake">{drake}</a> package records file interdependecies in your analysis. When files are changed, {drake} only re-runs the parts of your analysis that need to be re-run. This saves time and reduces error.</p>
-<p>I think {drake} has potential for <a href="https://ukgovdatascience.github.io/rap-website/">Reproducible Analytical Pipelines (RAP)</a>, an automated approach to producing UK government statistics that minimises error and speeds production.</p>
+<p>The <a href="https://github.com/ropensci/drake">{drake}</a> package records file interdependecies in your analysis. When files are changed, {drake} only re-runs the parts that need to be re-run. This saves time and reduces error.</p>
+<p>This could be useful for <a href="https://ukgovdatascience.github.io/rap-website/">Reproducible Analytical Pipelines (RAP)</a>, an automated approach to producing UK government statistics that minimises error and speeds production.</p>
 </div>
 <div id="make-it-to-make-it" class="section level1">
 <h1>Make it to make it</h1>
@@ -38,19 +39,17 @@ draft: yes
 <li><a href="https://ropenscilabs.github.io/drake-manual/">user manual</a></li>
 <li><a href="https://ropensci.github.io/drake/">documentation</a></li>
 <li><a href="https://github.com/krlmlr/drake-sib-zurich/blob/master/cheat-sheet.pdf">cheat sheet</a> by <a href="https://twitter.com/krlmlr">Kirill Müller</a></li>
-<li><a href="https://aedobbyn.github.io/nyc-fires/index.html#1">‘drake for workflow happiness’</a> slides by <a href="https://dobb.ae/">Amanda Dobbyn</a> – which really embraces the <a href="">Drake meme</a></li>
+<li><a href="https://aedobbyn.github.io/nyc-fires/index.html#1">‘drake for workflow happiness’</a> slides by <a href="https://dobb.ae/">Amanda Dobbyn</a> – which embraces the <a href="https://imgflip.com/memegenerator/91998305/Drake-Blank">Drake meme</a></li>
 </ul>
 </div>
 <div id="demo-drake-lays-an-egg" class="section level1">
 <h1>Demo: {drake} lays an egg</h1>
 <p>I think there’s potential for {drake} in <a href="https://ukgovdatascience.github.io/rap-website/">Reproducible Analytical Pipelines (RAP)</a>: a wholly code-based method for producing <a href="https://www.gov.uk/search/research-and-statistics">the UK government’s statistical reports</a> that improves reproducibility and automation, minimises errors and speeds-up production.</p>
 <p>I’ve made a very simple {drake} demo for an imaginary RAP project. The demo recreates a very small part of a <a href="https://www.gov.uk/government/statistics/egg-statistics">statistical publication that tracks UK egg production</a><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>.</p>
-<p>The demo code is on <a href="https://github.com/matt-dray/drake-egg-rap">GitHub</a>, along with an <a href="https://matt-dray.github.io/drake-egg-rap/egg-report.html">HTML version of the demo report</a>. Here’s a screenshot:</p>
-<div class="figure">
-<img src="/post/2019-07-22-can-drake-rap_files/demo-report-page.png" alt="The demo report" />
-<p class="caption">The demo report</p>
-</div>
-<p>The rest of ths post explains the steps in the demo:</p>
+<p><a href="https://github.com/matt-dray/drake-egg-rap">The demo code is on GitHub</a> and <a href="https://matt-dray.github.io/drake-egg-rap/egg-report.html">the demo report has also been published to the web</a>. Here’s a screenshot of the demo:</p>
+<p><img src='/post/2019-07-22-can-drake-rap_files/demo-report-page-short.png' alt="A screenshot of the top section of the demo report, with the title 'UK egg statistics' and sections for 'background' and 'throughput'. The top of a chart tracking egg production is visible."></p>
+<p>Big shout-out to <a href="https://www.twitter.com/nacnudus">Duncan Garmonsway</a> for <a href="https://github.com/ukgovdatascience/govdown/">the {govdown} package</a> that recreates the style of <a href="https://www.gov.uk/">GOV.UK</a> – the website of the UK government – in R Markdown.</p>
+<p>The rest of this post explains the steps in the demo:</p>
 <ol style="list-style-type: decimal">
 <li><a href="#prep">Prepare R scripts</a></li>
 <li><a href="#source">Load the scripts</a></li>
@@ -129,37 +128,40 @@ source(plan.R)       # load the plan</code></pre>
 <p>A number of {drake} functions can take the config object and do something with the information inside it. In our case, we’re going to pass the config to <code>vis_drake_graph()</code>, which builds an interactive dependency graph using {visNetwork}.</p>
 <pre class="r"><code>vis_drake_graph(egg_config)</code></pre>
 <p>This generates an interactive output <a href="https://matt-dray.github.io/drake-egg-rap/dependency-graph.html">(see it here)</a>. Here’s a screenshot:</p>
-<p><img src="/post/2019-07-22-can-drake-rap_files/dependency-static.png" /></p>
-<p>The visualisation is shape-coded by target type (e.g. functions are triangles) and colour-coded to show whether everything is up-to-date (e.g. green if it is). Arrows show the file dependencies (e.g. both the <code>clean_data</code> fcuntion and <code>raw_data</code> file come together to produce the <code>data</code> object).</p>
+<p><img src='/post/2019-07-22-can-drake-rap_files/dependency-static.png' alt='A screenshot of the interactive dependency graph showing the relationship between objects, files and functions in the analysis.'></p>
+<p>The visualisation is shape-coded by target type (e.g. functions are triangles) and colour-coded to show whether everything is up-to-date (e.g. green if it is). Arrows show the file dependencies (e.g. both the <code>clean_data</code> function and <code>raw_data</code> file come together to produce the <code>data</code> object).</p>
 </div>
 <div id="make" class="section level2">
 <h2>4. Make the plan</h2>
-<p>Having satisfied that the plan looks correct, running the plan is as simple as:</p>
+<p>Having satisfied yourself that the plan looks correct, running the plan is as simple as:</p>
 <pre class="r"><code>make(plan)</code></pre>
-<p>This runs all the instructions laid out in the <code>plan</code> object. All the commands are run on the corresponding targets.</p>
-<p>Where do the outputs go? In our case, we specifically asked for the HTML report – generated from the R Markdown file – to be written to the <code>docs/</code> folder. The other objects are cached in a <code>.drake/</code> folder so they can be retrieved without needing to be re-created.</p>
-<p>So, re-running the plan straight away again does… nothing. No code needs to be re-executed if nothing’s changed! The outputs, and the cache in <code>.drake/</code>, are fully up to date.</p>
+<p>This executes all the instructions laid out in the <code>plan</code> object and our HTML report pops out at the end.</p>
+<p>Of course, re-running the plan straight away again does… nothing. No code needs to be re-executed if nothing’s changed!</p>
+<div id="side-note-the-cache" class="section level3">
+<h3>Side note: the cache</h3>
+<p>Turns out that {drake} is storing all the intermediate objects that were created when making your plan. They’re cached in a hidden <code>.drake/</code> folder so they can be retrieved without needing to be re-created.</p>
+<p>This means you can use the <code>.drake/</code> cache to supply objects to an R Markdown file, which is achieved by either <code>readd()</code>ing or <code>loadd()</code>ing them. For example, <a href="https://github.com/matt-dray/drake-egg-rap/blob/master/egg-report.Rmd">the plot in the demo R Markdown file was called with <code>loadd(plot)</code></a>.</p>
+</div>
 </div>
 <div id="change" class="section level2">
 <h2>5. Make a change</h2>
 <p>If anything changes in our data or code then the downstream targets will be out of sync. Let’s pretend we’ve changed a line of code in the <code>create_plot()</code> function, perhaps to alter its title. What do you think will happen?</p>
 <p>Well, {drake} knows there’s been a change. You can check this by running <code>outdated(egg_config)</code>, which prints the name of the altered file plus the other files impacted by it.</p>
 <p>We can see this by recreating the dependency graph <a href="https://matt-dray.github.io/drake-egg-rap/dependency-graph-outdated.html">(see it here)</a>: the <code>plot</code> target is outdated, as are the targets downstream that depend on it (<code>report</code> and the <code>egg-report.html</code> file). This is indicated by them being coloured black. Here’s a static version:</p>
-<p><img src="/post/2019-07-22-can-drake-rap_files/dependency-outdated-static.png" /></p>
+<p>&lt;img src=‘/post/2019-07-22-can-drake-rap_files/dependency-outdated-static.png’ alt=‘A screenshot of the interactive dependency graph showing that outdated items (the plot and report) are now coloured black. The other items aren’t black because they’re not impacted by the change to the plot function.’&gt;</p>
 <p>So now we can see the real power of {drake}, as re-running the plan now will regenerate only the outdated files.</p>
-<p>Where are the targets stored that didn’t need to be recreated? Turns out that {drake} creates a <code>.drake/</code> folder to caches these objects and grabs then when needed.</p>
-<p>Items can be pulled from this cache by the user with the the <code>loadd()</code> and <code>readd()</code> functions. For example, the R Markdown report in my example simply calls the rendered plot object from the cache using <code>readd()</code>. This can help keep the R Markdown file less cluttered and more readable.</p>
 </div>
 </div>
 <div id="in-review" class="section level1">
 <h1>In review</h1>
-<p>This post has shown how {drake}:</p>
+<p>At it’s simplest, you create a <code>plan.R</code> and you <code>make()</code> it.</p>
+<p>Hopefully you’ve seen how {drake}:</p>
 <ul>
 <li>remembers the dependencies between the files of your analysis</li>
 <li>only re-runs what needs to be re-run</li>
 </ul>
 <p>I think this alone can help build the reliability and trustworthiness of published statistical reports.</p>
-<p>Of course, this shoul dbe considered the starting point, since <a href="https://ropenscilabs.github.io/drake-manual/">{drake} does a lot more</a>.</p>
+<p>Of course, this is a very simple use of {drake} and should act as a starting point. <a href="https://ropenscilabs.github.io/drake-manual/">{drake} does a lot more</a>, like high-performance computing and memory management, that may also come in useful for RAP.</p>
 </div>
 <div class="footnotes">
 <hr />
