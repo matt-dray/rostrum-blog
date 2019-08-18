@@ -1,0 +1,145 @@
+---
+title: 'Git going: basics'
+author: Matt Dray
+date: '2019-08-17'
+slug: git-going-basics
+categories:
+  - R
+  - teaching
+  - coding
+tags:
+  - git
+  - bash
+  - terminal
+  - version control
+  - github
+draft: yes
+---
+
+
+
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>This post is a basic introduction to git. Here are some commonly-used commands:</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Command</th>
+<th align="left">Short explanation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code>git init</code></td>
+<td align="left"><strong>Init</strong>iate git in a folder</td>
+</tr>
+<tr class="even">
+<td align="left"><code>git status</code></td>
+<td align="left">Show changes and whether they’re staged</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>git add &lt;file&gt;</code></td>
+<td align="left">Stage changes ready for committing</td>
+</tr>
+<tr class="even">
+<td align="left"><code>git commit -m &quot;&lt;message&gt;&quot;</code></td>
+<td align="left"><strong>Init</strong>iate git in a folder</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>git checkout -b &lt;new branch&gt;</code></td>
+<td align="left"><strong>Init</strong>iate git in a folder</td>
+</tr>
+<tr class="even">
+<td align="left"><code>git branch</code></td>
+<td align="left"><strong>Init</strong>iate git in a folder</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="git" class="section level1">
+<h1>git?</h1>
+<p>What’s git? In short, it’s a version control system that lets you track file changes, record why changes were made, and revert to a past state if something goes wrong.</p>
+<p>Have you ever made changes to your code that stop it from working, except you have no idea why? git can help you revert to an older state.</p>
+<p>Our goal in this post is to start from the beginning: we’ll simply put a project folder under version control using git.</p>
+<p>git is used at the command line – the place where you type requests directly to your computer. You may want to <a href="https://www.rostrum.blog/2019/02/01/git-going-cl/">see my earlier post for how to interact with the command line</a> before you continue.</p>
+</div>
+<div id="step-by-step" class="section level1">
+<h1>Step-by-step</h1>
+<p>There’s some things you need to do to set up git and then use it for your project. I’ve summarised them here and you can click to go to each section.</p>
+<p>The one-time task:</p>
+<ul>
+<li><a href="#install">Install git</a></li>
+</ul>
+<p>Project set-up tasks:</p>
+<ol style="list-style-type: decimal">
+<li><a href="#folder">Create your project folder</a></li>
+<li><a href="#init">Initiate git</a></li>
+<li><a href="#gitignore">Create a .gitignore file</a></li>
+</ol>
+<p>The git project workflow (you’ll repeat these steps as you develop your project):</p>
+<ol style="list-style-type: decimal">
+<li><a href="#work">Work on your files</a></li>
+<li><a href="#status">Check file status</a></li>
+<li><a href="#add">Add changes</a></li>
+<li><a href="#commit">Commit changes</a></li>
+</ol>
+<p>Don’t worry if these terms don’t make sense yet; they’re explained in more depth in each section.</p>
+<div id="install" class="section level2">
+<h2>Install git</h2>
+<p>To use git you need <a href="https://git-scm.com/downloads">to download the installer for your operating system from the git website</a> and install it.</p>
+<p>You can check the version number of your git installation to check if its been installed correctly.</p>
+<p>Open the program you use to access the command line (e.g. Terminal on a Mac, or Bash on Windows) and type <code>git --version</code>.</p>
+<p>If it’s installed, you should get a response saying something like <code>git version 2.23.0</code>.</p>
+<p>Aside: note that all git commands start with <code>git</code>, which tells the computer that</p>
+</div>
+<div id="project-set-up" class="section level2">
+<h2>Project set-up</h2>
+<p>The following subsections are the things you do to set up your project and activate git.</p>
+<div id="folder" class="section level3">
+<h3>Create your project folder</h3>
+<p>In <a href="https://www.rostrum.blog/2019/02/01/git-going-cl/">part one of this ‘git going’ series</a> you learnt how to navigate your computer’s filesystem from the command line. We’ll be using that knowledge here.</p>
+<p>At the command line:</p>
+<ol style="list-style-type: decimal">
+<li>Navigate with <code>cd</code> to where you want your project folder to be (e.g. <code>cd ~/Documents</code>)</li>
+<li>Create the project folder with <code>mkdir</code> (e.g. <code>mkdir project</code>)</li>
+<li>Navigate into this folder with <code>cd</code> (e.g. <code>cd project</code>)</li>
+<li>You can check if you’re in the right place with <code>pwd</code> to print the working directory</li>
+</ol>
+<p>You could also create a new folder by pointing and clicking; just make sure you navigate to the folder at the command line</p>
+</div>
+<div id="init" class="section level3">
+<h3>Initiate git</h3>
+<p>So we have our empty project folder, but it’s not yet under version control. How can we make git aware of this folder and start tracking changes?</p>
+<p>Type <code>git init</code> to initiate git in the project folder. You’ll get something like <code>Initialized empty Git repository in /Users/luigi/Documents/project/.git/</code> if it was successful.</p>
+<p>What did this do? Run <code>ls -a</code> to list all the files in the folder. You’ll see there’s now a hidden <code>.git</code> folder (files preceded with a period aren’t visible by default). It’s hidden because it’s going to run in the background and you can forget about it for now.</p>
+<p>Note that you don’t have to create a new folder from scratch</p>
+</div>
+<div id="gitignore" class="section level3">
+<h3>Create a .gitignore file</h3>
+<p>There are files that you may not want to commit. This might include sensitive files, large data sets or language-specific artefacts.</p>
+<p>You can leave instructions in a special ‘gitignore’ file that tells git not to worry about recording certain things You could start by <a href="https://github.com/github/gitignore">using a template</a> and add what you need to it.</p>
+<p>Take a closer look at <a href="https://github.com/github/gitignore/blob/master/R.gitignore">the template for R</a>, for example. The first thing is <code>.Rhistory</code> – a log of all the commands you’ve typed – which you probably don’t need to have tracked.</p>
+<p>You could add things like <code>filename.csv</code> to ignore specific datasets, or <code>*.csv</code> to ignore all CSV files. Mac users will also want to add <code>.DS_Store</code>, which is <a href="https://en.wikipedia.org/wiki/.DS_Store">a kind of Mac-specific metadata file</a>.</p>
+</div>
+</div>
+<div id="git-project-workflow" class="section level2">
+<h2>git project workflow</h2>
+<p>So we’ve created our project folder and added a <code>.gitignore</code> file.</p>
+<p>When to commit?</p>
+<div id="work" class="section level3">
+<h3>work on your files</h3>
+</div>
+<div id="status" class="section level3">
+<h3>git status</h3>
+</div>
+<div id="add" class="section level3">
+<h3>git add</h3>
+<p>Dangers of using <code>.</code> to add everything.</p>
+</div>
+<div id="commit" class="section level3">
+<h3>git commit</h3>
+<p>The <code>-m</code> flag</p>
+<p>Writing a good commit</p>
+</div>
+</div>
+</div>
