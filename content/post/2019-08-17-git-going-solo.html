@@ -1,5 +1,5 @@
 ---
-title: 'Git going: basics'
+title: 'Git going: Git and GitHub'
 author: Matt Dray
 date: '2019-08-17'
 slug: git-going-basics
@@ -15,8 +15,10 @@ tags:
 draft: yes
 ---
 
+<link href="/rmarkdown-libs/font-awesome/css/fontawesome-all.min.css" rel="stylesheet" />
 
 
+<p><i class="fab  fa-git "></i> + <i class="fab  fa-github "></i></p>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
 <p>This post is a basic, non-comprehensive, practical introduction to Git and GitHub, with a focus on Mac users working on a solo project. Here’s a quick reference for some commonly-used Git commands:</p>
@@ -41,7 +43,7 @@ draft: yes
 <td align="left">Confirm the changes to be committed</td>
 </tr>
 <tr class="even">
-<td align="left"><code>git commit -m &quot;&lt;message&gt;&quot;</code></td>
+<td align="left"><code>git commit -m "&lt;message&gt;"</code></td>
 <td align="left">Commit the changes with an explanation</td>
 </tr>
 <tr class="odd">
@@ -53,7 +55,7 @@ draft: yes
 </div>
 <div id="git-and-github" class="section level1">
 <h1>Git and GitHub</h1>
-<p>Git is a version control system that lets you track file changes on your computer, record why changes were made and lets you revert to a past state if something goes wrong.</p>
+<p>Git is a version control system that tracks file changes on your computer, records why they were made and lets you revert to a past state if something goes wrong.</p>
 <p>GitHub is a website where you can store your code and Git history remotely on the web<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>. It acts as a back-up for your work and its versions; lets you explore your code in your browser in a more visual and interactive way; lets other people see your code in the open and use it themselves; lets you record issues and to-do items; and much, much more.</p>
 <p>Our goal in this post is to put a project folder under version control with Git and then upload it to GitHub. I assume you’re a beginner and are, for now, working alone on a project.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
 <p>We’ll be using the command line to do all of this. This is the place where you write code to tell your computer what to do, which you can access via software like <a href="https://en.wikipedia.org/wiki/Terminal_(macOS)">‘Terminal’ on a Mac</a>. You may want to <a href="https://www.rostrum.blog/2019/02/01/git-going-cl/">see my earlier post for how to get basic stuff done with the command line</a> before you continue.</p>
@@ -84,9 +86,13 @@ draft: yes
 <h2>One-time tasks</h2>
 <div id="install" class="section level3">
 <h3>Install Git</h3>
-<p><a href="https://git-scm.com/downloads">Download it from the Git website</a> and install.</p>
-<p>You can check if Git is installed by typing <code>git --version</code> at the command line. You should get a response saying something like <code>git version 2.23.0</code>.</p>
-<p>Note that Git is not an app; there’s not an icon for it on your computer. It’s a bunch of functions installed for use via the command line, with each command preceded with the word <code>git</code>.</p>
+<p>You can check if Git is installed by typing <code>git --version</code> at the command line. If you get a response like <code>git version 2.23.0</code>, then it’s already installed.</p>
+<p>If not, you can <a href="https://git-scm.com/downloads">download it from the Git website</a> and install it.</p>
+<p>Note that Git is not an ‘app’; there’s not an icon for it on your computer. It’s a bunch of functions installed for use via the command line, with each command preceded with the word <code>git</code>.</p>
+<p>Now you need to shake hands with Git so it remembers who you are. You do this by altering some configuration files liek so:</p>
+<pre><code>git config --global user.name &#39;&lt;Your Name&gt;&#39;
+git config --global user.email &#39;&lt;youremail@address.com&gt;&#39;
+git config --global --list</code></pre>
 </div>
 <div id="github-account" class="section level3">
 <h3>Create a GitHub account</h3>
@@ -94,7 +100,7 @@ draft: yes
 <p>To make one, go to the <a href="https://github.com/">GitHub website</a> and click ‘Sign-up for GitHub’. You’ll need to provide a username (think hard about this), email address and password.</p>
 <p>When prompted for a subscription level, choose ‘free subscription’. You’ll be able to do everything you need to do with this type of account; a premium account is more suitable for teams.</p>
 <p>You’ll be sent an automated email to verify your email address. Click the button in the email to confirm.</p>
-<p>You don’t need ot do anything else right now. Just make sure your GitHub profile page accessible at <code>github.com/yourusername</code>.</p>
+<p>You don’t need to do anything else right now. Just make sure your GitHub profile page accessible at <code>github.com/yourusername</code>.</p>
 </div>
 </div>
 <div id="project-setup" class="section level2">
@@ -106,9 +112,9 @@ draft: yes
 <p>In <a href="https://www.rostrum.blog/2019/02/01/git-going-cl/">part one of this ‘Git going’ series</a> you learnt how to navigate your computer’s filesystem from the command line. We’ll be using that knowledge here, so you may want to revisit.</p>
 <p>At the command line:</p>
 <ol style="list-style-type: decimal">
-<li>Provide to <code>cd</code> the filepath where you want your project folder to be created (e.g. <code>cd ~/Documents</code>)</li>
-<li>Create the project folder with <code>mkdir</code> (e.g. <code>mkdir project-name</code>)</li>
-<li>Enter this new folder with <code>cd</code> (e.g. <code>cd project-name</code>)</li>
+<li>Provide to <code>cd</code> the filepath where you want your project folder to be created (e.g. <code>cd ~/Documents</code>)</li>
+<li>Create the project folder with <code>mkdir</code> (e.g. <code>mkdir project-name</code>)</li>
+<li>Enter this new folder with <code>cd</code> (e.g. <code>cd project-name</code>)</li>
 <li>Run <code>pwd</code> to print your working directory, which should be your newly-created project folder (subsequent Git commands will therefore be applied to this folder, which is what we want)</li>
 </ol>
 <p>You could also create a new folder by pointing and clicking; just make sure you navigate to the folder at the command line</p>
@@ -131,28 +137,65 @@ draft: yes
 </div>
 <div id="git-github-workflow" class="section level2">
 <h2>The Git/GitHub workflow</h2>
-<p>The basic steps are to:</p>
-<ul>
-<li>make changes to your work</li>
-<li>‘stage’ the changes (earmark the files to be recorded)</li>
-<li>‘commit’ the changes (confirms the files and explains why with a short message)</li>
-<li>‘push’ the changes (send a record of the changes to GitHub)</li>
-</ul>
-<p>You can think of this like sending a carbon copy letter</p>
+<p>Your basic workflow will look like this:</p>
+<ol style="list-style-type: decimal">
+<li>Work on your files as usual</li>
+<li>from the command line, run <code>git status</code> to check which files have been changed</li>
+<li><code>git add &lt;filename&gt;</code> to ‘stage’ changes</li>
+<li><code>git commit -m "Message"</code> to confirm the additions and record why the chnages were made</li>
+<li><code>git push origin master</code> to send a record of the changes to GitHub</li>
+</ol>
+<p>Read more about each of these in the section below</p>
 <p>When to commit?</p>
 <div id="work" class="section level3">
 <h3>Work on your files</h3>
 <p>Develop your code as usual.</p>
-<p>When you’ve reached a sensible point at which to create a ‘snapshot’ of your work.</p>
+<p>When you decide you want to capture the changes you can move into the next stages of the workflow.</p>
+<p>When should you do this? There’s no rules, but it’s probably good to .</p>
 </div>
 <div id="status" class="section level3">
 <h3>Check file status</h3>
 <p>Type <code>git status</code> to see the files that have been created or modified.</p>
+<p>You’ll get output like:</p>
+<pre class="sh"><code>On branch master
+Your branch is up to date with &#39;origin/master&#39;.
+
+Changes not staged for commit:
+  (use &quot;git add &lt;file&gt;...&quot; to update what will be committed)
+  (use &quot;git checkout -- &lt;file&gt;...&quot; to discard changes in working directory)
+
+        created:    data/data.csv
+        modified:   analysis.R
+        modified:   readme.txt
+
+no changes added to commit (use &quot;git add&quot; and/or &quot;git commit -a&quot;)</code></pre>
+<p>You can see on the indented lines the files that are new or have been changed since last time. All the files will be new the first time you run this process, of course.</p>
 <p>Note that any files that are in your .gitignore will not appear here. They’ve been ignored, of course.</p>
 </div>
 <div id="add" class="section level3">
 <h3>Add changes</h3>
-<p>Dangers of using <code>.</code> to add everything.</p>
+<p>Now you need to earmark the files whose changes you want to record. This process is called staging.</p>
+<p>There’s a handy reminder in the output of <code>git status</code> that tells you what to do next: <code>use "git add &lt;file&gt;..." to update what will be committed</code>. In other words, you can type something like the following (making sure to type the filename as it appeared in <code>git status</code>):</p>
+<pre class="sh"><code>git add readme.txt analysis.R</code></pre>
+<p>You won’t get any output, so how do we know this worked? Type <code>git status</code> again.</p>
+<pre class="sh"><code>On branch master
+Your branch is up to date with &#39;origin/master&#39;.
+
+Changes to be committed:
+  (use &quot;git reset HEAD &lt;file&gt;...&quot; to unstage)
+
+        modified:   readme.txt
+        modified:   analysis.R
+
+Changes not staged for commit:
+  (use &quot;git add &lt;file&gt;...&quot; to update what will be committed)
+  (use &quot;git checkout -- &lt;file&gt;...&quot; to discard changes in working directory)
+
+        created:    data/data.csv
+</code></pre>
+<p>So now you can see that the file we added is under ‘changes to be committed’, while the file we didn’t add remains under ‘changes not staged for commit’.</p>
+<p>A shortcut is to type <code>git add .</code>, where the period means ‘everything’. Be careful when you do this – you don’t want to end up adding things you didn’t mean to.</p>
+<p>If you made a mistake and want to remove files from the stage, you can type <code>git reset HEAD &lt;filename&gt;</code>. You don’t need to remember this because its written in the output.</p>
 </div>
 <div id="commit" class="section level3">
 <h3>Commit changes</h3>

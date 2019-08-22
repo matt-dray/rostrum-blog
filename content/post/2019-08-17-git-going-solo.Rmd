@@ -1,5 +1,5 @@
 ---
-title: 'Git going: basics'
+title: 'Git going: Git and GitHub'
 author: Matt Dray
 date: '2019-08-17'
 slug: git-going-basics
@@ -15,22 +15,24 @@ tags:
 draft: yes
 ---
 
+`r icon::fa_git()` + `r icon::fa_github()`
+
 # tl;dr
 
 This post is a basic, non-comprehensive, practical introduction to Git and GitHub, with a focus on Mac users working on a solo project. Here's a quick reference for some commonly-used Git commands:
 
-| Command   | Short explanation                   |
-| :-------- | :---------------------------------- |
-| `git init` | Put a folder under version control with Git |
-| `git status` | Show changes |
-| `git add <file>` | Confirm the changes to be committed |
-| `git commit -m "<message>"` | Commit the changes with an explanation |
-| `git push origin master` | Send your commits to GitHub |
+| Command                     | Short explanation                           |
+| :-------------------------- | :------------------------------------------ |
+| `git init`                  | Put a folder under version control with Git |
+| `git status`                | Show changes                                |
+| `git add <file>`            | Confirm the changes to be committed         |
+| `git commit -m "<message>"` | Commit the changes with an explanation      |
+| `git push origin master`    | Send your commits to GitHub                 |
 
 
 # Git and GitHub
 
-Git is a version control system that lets you track file changes on your computer, record why changes were made and lets you revert to a past state if something goes wrong.
+Git is a version control system that tracks file changes on your computer, records why they were made and lets you revert to a past state if something goes wrong.
 
 GitHub is a website where you can store your code and Git history remotely on the web[^remotes]. It acts as a back-up for your work and its versions; lets you explore your code in your browser in a more visual and interactive way; lets other people see your code in the open and use it themselves; lets you record issues and to-do items; and much, much more.
 
@@ -65,11 +67,19 @@ The steps below summarise what you need to do to set up and use Git and GitHub. 
 
 ### Install Git {#install}
 
-[Download it from the Git website](https://git-scm.com/downloads) and install.
+You can check if Git is installed by typing `git --version` at the command line. If you get a response like `git version 2.23.0`, then it's already installed.
 
-You can check if Git is installed by typing `git --version` at the command line. You should get a response saying something like `git version 2.23.0`.
+If not, you can [download it from the Git website](https://git-scm.com/downloads) and install it.
 
-Note that Git is not an app; there's not an icon for it on your computer. It's a bunch of functions installed for use via the command line, with each command preceded with the word `git`.
+Note that Git is not an 'app'; there's not an icon for it on your computer. It's a bunch of functions installed for use via the command line, with each command preceded with the word `git`.
+
+Now you need to shake hands with Git so it remembers who you are. You do this by altering some configuration files liek so:
+
+```
+git config --global user.name '<Your Name>'
+git config --global user.email '<youremail@address.com>'
+git config --global --list
+```
 
 ### Create a GitHub account {#github-account}
 
@@ -81,7 +91,7 @@ When prompted for a subscription level, choose 'free subscription'. You'll be ab
 
 You'll be sent an automated email to verify your email address. Click the button in the email to confirm.
 
-You don't need ot do anything else right now. Just make sure your GitHub profile page accessible at `github.com/yourusername`.
+You don't need to do anything else right now. Just make sure your GitHub profile page accessible at `github.com/yourusername`.
 
 ## Project set-up {#project-setup}
 
@@ -126,15 +136,15 @@ You could add things like `filename.csv` to ignore a specific dataset, or `*.csv
 
 ## The Git/GitHub workflow {#git-github-workflow}
 
-The basic steps are to:
+Your basic workflow will look like this:
 
-* make changes to your work
-* 'stage' the changes (earmark the files to be recorded)
-* 'commit' the changes (confirms the files and explains why with a short message)
-* 'push' the changes (send a record of the changes to GitHub)
+1. Work on your files as usual
+1. from the command line, run `git status` to check which files have been changed
+1. `git add <filename>` to 'stage' changes
+1. `git commit -m "Message"` to confirm the additions and record why the chnages were made
+1. `git push origin master` to send a record of the changes to GitHub
 
-You can think of this like sending a carbon copy letter
-
+Read more about each of these in the section below
 
 When to commit?
 
@@ -142,17 +152,71 @@ When to commit?
 
 Develop your code as usual.
 
-When you've reached a sensible point at which to create a 'snapshot' of your work.
+When you decide you want to capture the changes you can move into the next stages of the workflow.
+
+When should you do this? There's no rules, but it's probably good to .
+
 
 ### Check file status {#status}
 
 Type `git status` to see the files that have been created or modified.
 
+You'll get output like:
+
+```{sh eval=FALSE}
+On branch master
+Your branch is up to date with 'origin/master'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git checkout -- <file>..." to discard changes in working directory)
+
+        created:    data/data.csv
+        modified:   analysis.R
+        modified:   readme.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")
+```
+
+You can see on the indented lines the files that are new or have been changed since last time. All the files will be new the first time you run this process, of course.
+
 Note that any files that are in your .gitignore will not appear here. They've been ignored, of course.
 
 ### Add changes {#add}
 
-Dangers of using `.` to add everything.
+Now you need to earmark the files whose changes you want to record. This process is called staging.
+
+There's a handy reminder in the output of `git status` that tells you what to do next: `use "git add <file>..." to update what will be committed`. In other words, you can type something like the following (making sure to type the filename as it appeared in `git status`):
+
+```{sh eval=FALSE}
+git add readme.txt analysis.R
+```
+
+You won't get any output, so how do we know this worked? Type `git status` again.
+
+```{sh eval=FALSE}
+On branch master
+Your branch is up to date with 'origin/master'.
+
+Changes to be committed:
+  (use "git reset HEAD <file>..." to unstage)
+
+        modified:   readme.txt
+        modified:   analysis.R
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git checkout -- <file>..." to discard changes in working directory)
+
+        created:    data/data.csv
+
+```
+
+So now you can see that the file we added is under 'changes to be committed', while the file we didn't add remains under 'changes not staged for commit'.
+
+A shortcut is to type `git add .`, where the period means 'everything'. Be careful when you do this -- you don't want to end up adding things you didn't mean to.
+
+If you made a mistake and want to remove files from the stage, you can type `git reset HEAD <filename>`. You don't need to remember this because its written in the output.
 
 ### Commit changes {#commit}
 
