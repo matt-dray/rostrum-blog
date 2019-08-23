@@ -124,11 +124,11 @@ source(plan.R)       # load the plan</code></pre>
 <li>Plot the data (target) with the custom <code>plot_data()</code> function (command)</li>
 <li>Create an R Markdown report (target) with <code>rmarkdown::render()</code> (command)</li>
 </ol>
-<p>So we have the instructions stored in an object. We can (optionally) produce a dependency graph of these targets to get an idea of the relationships between the elements of the analysis.</p>
+<p>So we have the instructions stored in an object. Now we can (optionally) produce a dependency graph of these targets to get an idea of the relationships between the elements of the analysis.</p>
 </div>
 <div id="viz" class="section level2">
 <h2>3. Visualise</h2>
-<p>First we can extract information about the <code>egg_plan</code> to a configuration (‘config’) list object with <code>drake_config()</code>. One element of the config is, for example, an <a href="https://igraph.org/">igraph</a> object that helps construct graphs from your workflow.</p>
+<p>The first step to create the visual is to extract information about the <code>egg_plan</code> in a configuration (‘config’) list object. One element of the config is, for example, an <a href="https://igraph.org/">igraph</a> object that helps construct graphs from your workflow. The function to get this is <code>drake_config()</code>.</p>
 <pre class="r"><code>egg_config &lt;- drake_config(egg_plan)</code></pre>
 <p>A number of {drake} functions can take the config object and do something with the information inside it. In our case, we’re going to pass the config to <code>vis_drake_graph()</code>, which builds an interactive dependency graph using {visNetwork}.</p>
 <pre class="r"><code>vis_drake_graph(egg_config)</code></pre>
@@ -150,8 +150,8 @@ source(plan.R)       # load the plan</code></pre>
 </div>
 <div id="change" class="section level2">
 <h2>5. Make a change</h2>
-<p>If anything changes in our data or code then the downstream targets will be out of sync. Let’s pretend we’ve changed a line of code in the <code>create_plot()</code> function, perhaps to alter its title. What do you think will happen?</p>
-<p>Well, {drake} knows there’s been a change. You can check this by running <code>outdated(egg_config)</code>, which prints the name of the altered file plus the other files impacted by it.</p>
+<p>If anything changes in our data or code then the downstream targets will be out of sync. Let’s pretend we’ve changed a line of code in the <code>create_plot()</code> function, which could be something is superficial as altering its title. What do you think will happen?</p>
+<p>Well, {drake} knows there’s been a change. You can check this by running <code>source(&quot;R/functions.R&quot;)</code> in <code>make.R</code> again and then run <code>outdated(egg_config)</code>. This prints the name of the altered file plus the other files impacted by it.</p>
 <p>We can see this by recreating the dependency graph <a href="https://matt-dray.github.io/drake-egg-rap/dependency-graph-outdated.html">(see it here)</a>: the <code>plot</code> target is outdated, as are the targets downstream that depend on it (<code>report</code> and the <code>egg-report.html</code> file). This is indicated by them being coloured black. Here’s a static version:</p>
 <p><img src='/post/2019-07-22-can-drake-rap_files/dependency-outdated-static.png' alt="A screenshot of the interactive dependency graph showing that outdated items (the plot and report) are now coloured black. The other items aren't black because they're not impacted by the change to the plot function."></p>
 <p>So now we can see the real power of {drake}, as re-running the plan now will regenerate only the outdated files.</p>

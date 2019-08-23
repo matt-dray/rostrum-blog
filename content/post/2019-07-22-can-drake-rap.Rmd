@@ -147,11 +147,11 @@ The plan object acts like an instruction booklet, which can be read 'to each tar
 1. Plot the data (target) with the custom `plot_data()` function (command)
 1. Create an R Markdown report (target) with `rmarkdown::render()` (command)
 
-So we have the instructions stored in an object. We can (optionally) produce a dependency graph of these targets to get an idea of the relationships between the elements of the analysis.
+So we have the instructions stored in an object. Now we can (optionally) produce a dependency graph of these targets to get an idea of the relationships between the elements of the analysis.
 
 ## 3. Visualise {#viz}
 
-First we can extract information about the `egg_plan` to a configuration ('config') list object with `drake_config()`. One element of the config is, for example, an [igraph](https://igraph.org/) object that helps construct graphs from your workflow.
+The first step to create the visual is to extract information about the `egg_plan` in a configuration ('config') list object. One element of the config is, for example, an [igraph](https://igraph.org/) object that helps construct graphs from your workflow. The function to get this is `drake_config()`.
 
 ```{r eval=FALSE}
 egg_config <- drake_config(egg_plan)
@@ -189,9 +189,9 @@ This means you can use the `.drake/` cache to supply objects to an R Markdown fi
 
 ## 5. Make a change {#change}
 
-If anything changes in our data or code then the downstream targets will be out of sync. Let's pretend we've changed a line of code in the `create_plot()` function, perhaps to alter its title. What do you think will happen?
+If anything changes in our data or code then the downstream targets will be out of sync. Let's pretend we've changed a line of code in the `create_plot()` function, which could be something is superficial as altering its title. What do you think will happen?
 
-Well, {drake} knows there's been a change. You can check this by running `outdated(egg_config)`, which prints the name of the altered file plus the other files impacted by it.
+Well, {drake} knows there's been a change. You can check this by running `source("R/functions.R")` in `make.R` again and then run `outdated(egg_config)`. This prints the name of the altered file plus the other files impacted by it.
 
 We can see this by recreating the dependency graph [(see it here)](https://matt-dray.github.io/drake-egg-rap/dependency-graph-outdated.html): the `plot` target is outdated, as are the targets downstream that depend on it (`report` and the `egg-report.html` file). This is indicated by them being coloured black. Here's a static version:
 
