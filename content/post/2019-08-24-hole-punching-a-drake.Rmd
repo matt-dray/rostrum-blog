@@ -1,0 +1,56 @@
+---
+title: Holepunch a {drake}
+author: Matt Dray
+date: '2019-08-25'
+slug: holepunch-drake
+categories:
+  - R
+  - teaching
+tags:
+  - drake
+  - binder
+draft: no
+---
+
+![](/post/2019-08-24-hole-punching-a-drake_files/drake-meme.jpg){width=400px}
+
+# tl;dr
+
+[Binder](https://mybinder.org/) lets people explore your GitHub-based R code in a live, browser-based instance of RStudio -- for free. Set-up for R projects is quick with [{holepunch}]((https://karthik.github.io/holepunch/)).
+
+I've used {holepunch} on [my {drake} demo repo](https://github.com/matt-dray/drake-egg-rap). Click the 'launch binder' badge in the repo's README.
+
+# Icing on the {drake}
+
+[I wrote](https://www.rostrum.blog/2019/07/23/can-drake-rap/) about how [Will Landau](https://twitter.com/wmlandau)'s excellent [{drake} package](https://ropensci.github.io/drake/) could be used to minimise errors and speed up the production of statistical reports by the UK government. I put a demo of this [in a GitHub repo](https://github.com/matt-dray/drake-egg-rap).
+
+There are two things I'd like:
+
+1. To improve trust further, citizens should be able to quickly open and explore the code behind a statistical report in the environment that the analyst was actually working in, with the correct R version and package dependencies.
+1. When I'm demonstrating the {drake} example, everyone in the room should have access to the same, consistent environment. This will minimise technical issues and ensure the code is being run in the intended environment.
+
+Turns out that these issues can be solved with Binder.
+
+# In a Bind(er)
+
+[Binder](https://mybinder.org/) is an open source project that makes it easier to share and explore the code from a GitHub repository.
+
+The repo owner specifies an environment (e.g. R version and package dependencies) and people can click a badge in the README to launch the code in a live instance of RStudio. Magic.
+
+![The README for the drake-egg-rap repo showing the Binder badge](/post/2019-08-24-hole-punching-a-drake_files/binder-badge.png){width=300px}
+
+This can really help when teaching, in particular. In fact, Will Landau used it for his [{learndrake} course-in-a-package](https://github.com/wlandau/learndrake) repo.
+
+# {holepunch}-drunk
+
+But wait: [Karthik Ram](http://inundata.org/) has made [the {holepunch} package](https://karthik.github.io/holepunch/) so that R users can set up Binder for their repo in a few lines of code.
+
+Do read the docs, but after `install.packages(holepunch)` and `library(holepunch)`:
+
+1. `write_compendium_description()` to create a DESCRIPTION file listing the repo's dependencies ([just like what you need for an R package](http://r-pkgs.had.co.nz/description.html))
+1. `write_dockerfile()` to set up a [dockerfile](https://docs.docker.com/get-started/part2/) (from [The Rocker Project](https://www.rocker-project.org/)) that installs RStudio and an R version of your choice
+1. `generate_badge()` to get some code for a 'launch binder' badge that you can copy-paste to your repo's README
+
+Then you can push the changes to GitHub and the 'launch binder' badge will appear your README. Clicking this will generate an RStudio instance with specifications as per the DESCRIPTION and dockerfile.
+
+![RStudio in the browser—launched from Binder—showing all the files associated with the drake-egg-rap repo](/post/2019-08-24-hole-punching-a-drake_files/rstudio-browser-demo.png)
