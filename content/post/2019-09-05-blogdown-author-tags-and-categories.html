@@ -1,0 +1,152 @@
+---
+title: '{blogdown}: add metadata to Lithium-themed posts'
+author: Matt Dray
+date: '2019-09-06'
+categories:
+  - blog-meta
+  - code
+tags:
+  - blogdown
+  - hugo
+  - lithium
+  - yihui
+slug: lithium-metadata
+draft: no
+---
+
+
+
+<div class="figure">
+<img src="http://giphygifs.s3.amazonaws.com/media/P5hY56fZNy0og/giphy.gif" alt="Modifying lithium metal with heat (via Giphy)" />
+<p class="caption">Modifying lithium metal with heat (via <a href="https://giphy.com/gifs/fire-chemical-reaction-P5hY56fZNy0og">Giphy</a>)</p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>Add author name, categories and tags to the posts of your Lithium-themed {blogdown} site. Might work for other themes.</p>
+</div>
+<div id="lithium" class="section level1">
+<h1>Lithium</h1>
+<p>This blog is generated using <a href="https://yihui.name/">Yihui Xie</a>’s <a href="https://bookdown.org/yihui/blogdown/">{blogdown}</a>, which is built on <a href="https://gohugo.io/">the Hugo framework</a>.</p>
+<p>A number of site-wide themes have been ported for use with {blogdown}. This site uses the clean and simple <a href="https://themes.gohugo.io/hugo-lithium-theme/">Lithium theme</a> by <a href="https://github.com/jrutheiser">Jonathan Rutheiser</a>, modified <a href="https://github.com/yihui/hugo-lithium">for {blogdown}</a> by <a href="https://yihui.name/">Yihui</a>.</p>
+<p>The Lithium template doesn’t display author names, categories and tags by default. I’ve been adding author names manually and the number of posts is large enough now that exploring categories and tags is worthwhile. I think this will be helpful without ruining the theme’s simplicty.</p>
+<p>I initially found it tricky to add these bits of metadata to each post, so I’m recording it here.</p>
+</div>
+<div id="yaml" class="section level1">
+<h1>YAML</h1>
+<p>Metadata for your post can be added via the {blogdown} addin for RStudio, or you can amend your post’s YAML header directly. The information can then be extracted and presented on the front-end. For example, for this post:</p>
+<pre><code>---
+title: &#39;{blogdown}: add metadata to Lithium-themed posts&#39;
+author: Matt Dray
+date: &#39;2019-09-06&#39;
+categories:
+  - blog-meta
+  - code
+tags:
+  - blogdown
+  - hugo
+  - lithium
+  - yihui
+slug: lithium-metadata
+---</code></pre>
+<p>You need to make sure the <code>author</code>, <code>categories</code> and <code>tags</code> elements are completed before they can be extracted and displayed on your posts.</p>
+<p>You need to know how to translate the YAML element name to the parameter name that’s used in the theme’s template files. And what file to update. Tricky.</p>
+<div id="whats-missing-where" class="section level2">
+<h2>What’s missing where?</h2>
+<p>The basics of what I needed to do was all laid out in the excellent <a href="https://bookdown.org/yihui/blogdown/">blogdown: Creating Websites with R Markdown</a> book by <a href="https://yihui.name/">Yihui</a>, <a href="https://amber.rbind.io/">Amber Thomas</a>, <a href="https://alison.rbind.io/">Alison Presmanes Hill</a>.</p>
+<p>The file describing how the YAML elements are incoporated into the post is on this path: <code>themes/hugo-lithium-theme/layouts/_default/single.html</code> (<a href="https://github.com/yihui/hugo-lithium/blob/master/layouts/_default/single.html">see the default template</a>).</p>
+<p>It’s an HTML file, so has lots of things like <code>&lt;h1 class="article-title"&gt;</code>. This is pretty classic HTML that declares a top-level header and a class that can be styled with CSS.</p>
+<p>But what we really care about are a bunch of things like <code>{{ .Title }}</code>. The bit that’s <a href="https://twitter.com/JennyBryan/status/1144817727665631232?s=20">embraced</a> in double-curly brackets is the parameter that’s pulled from our YAML.</p>
+<p>So <code>&lt;h1 class="article-title"&gt;{{ .Title }}&lt;/h1&gt;</code> will return the title of the post as an HTML header that will be styled as the <code>article-title</code> class.</p>
+</div>
+<div id="modifications" class="section level2">
+<h2>Modifications</h2>
+<p>I hadn’t added the author name in the past because I wasn’t sure what the right parameter was. I found it in <a href="https://bookdown.org/yihui/blogdown/templates.html#a-minimal-example">section 2.5.2 of the blogdown book</a>: <code>.Params.author</code>.</p>
+<p>This meant I could arrange some metadata at the top of my posts in the form <code>Firstname Lastname / DD Mon YYY / X min read</code> with <code>{{ .Params.author }} / {{ .Date.Format "02 Jan 2006" }} / {{ .ReadingTime }} min read</code>.</p>
+<p>Displaying categories and tags is trickier. It’s not just about finding the right parameters, but also involves looping through the categories and tags specified in each post’s YAML. I found the answer in <a href="https://bookdown.org/yihui/blogdown/">section 2.5.2 of the blogdown book</a>, under the bullet ‘Display categories and tags in a post if provided in its YAML’. It looks like this:</p>
+<pre><code>&lt;p class=&quot;terms&quot;&gt;
+  {{ range $i := (slice &quot;categories&quot; &quot;tags&quot;) }}
+  {{ with ($.Param $i) }}
+  {{ $i | title }}:
+  {{ range $k := . }}
+  &lt;a href=&#39;{{ relURL (print &quot;/&quot; $i &quot;/&quot; $k | urlize) }}&#39;&gt;{{$k}}&lt;/a&gt;
+  {{ end }}
+  {{ end }}
+  {{ end }}
+&lt;/p&gt;</code></pre>
+<p>I slid this into my <code>single.html</code> file with some trial and error, using a <code>&lt;br&gt;</code> linebreak tag to split the categories and tags onto two separate lines.</p>
+</div>
+</div>
+<div id="side-by-side" class="section level1">
+<h1>Side by side</h1>
+<div id="the-default" class="section level2">
+<h2>The default</h2>
+<p><img src='/post/2019-09-05-blogdown-author-tags-and-categories_files/lithium-default.png' alt='A default Lithium-themed post with filler text, showing the date under the title and the reading time in a box in the upper right.'></p>
+<p>The default output for a Lithium-themed post is produced with the following <code>single.html</code> file:</p>
+<pre><code>{{ partial &quot;header.html&quot; . }}
+
+&lt;main class=&quot;content&quot; role=&quot;main&quot;&gt;
+
+  &lt;article class=&quot;article&quot;&gt;
+    {{ if eq .Section &quot;post&quot; }}
+    &lt;span class=&quot;article-duration&quot;&gt;{{ .ReadingTime }} min read&lt;/span&gt;
+    {{ end }}
+
+    &lt;h1 class=&quot;article-title&quot;&gt;{{ .Title }}&lt;/h1&gt;
+
+    {{ if eq .Section &quot;post&quot; }}
+    &lt;span class=&quot;article-date&quot;&gt;{{ .Date.Format &quot;2006-01-02&quot; }}&lt;/span&gt;
+    {{ end }}
+
+    &lt;div class=&quot;article-content&quot;&gt;
+      {{ .Content }}
+    &lt;/div&gt;
+  &lt;/article&gt;
+
+  {{ partial &quot;disqus.html&quot; .}}
+
+&lt;/main&gt;
+
+{{ partial &quot;footer.html&quot; . }}</code></pre>
+</div>
+<div id="modified" class="section level2">
+<h2>Modified</h2>
+<p>This is what the metadata section look like when this post was published. Things may change in future.</p>
+<p><img src='/post/2019-09-05-blogdown-author-tags-and-categories_files/lithium-rostrum.png' alt='A post showing the modified Lithium theme on this blog, with the author, date, reading time, categories and tags under the title.'></p>
+<p>My modifications to the Lithium theme are produced with the following <code>single.html</code> file:</p>
+<pre><code>{{ partial &quot;header.html&quot; . }}
+
+&lt;main class=&quot;content&quot; role=&quot;main&quot;&gt;
+
+    &lt;h1 class=&quot;article-title&quot;&gt;{{ .Title }}&lt;/h1&gt;
+
+    {{ if eq .Section &quot;post&quot; }}
+    &lt;span class=&quot;article-meta&quot;&gt;
+      {{ .Params.author }} / {{ .Date.Format &quot;02 Jan 2006&quot; }} / {{ .ReadingTime }} min read &lt;br&gt;
+      {{ range $i := (slice &quot;categories&quot; &quot;tags&quot;) }}
+      {{ with ($.Param $i) }}
+      {{ $i | title }}:
+      {{ range $k := . }}
+      &lt;a href=&#39;{{ relURL (print &quot;/&quot; $i &quot;/&quot; $k | urlize) }}&#39;&gt;{{ $k }}&lt;/a&gt;
+      {{ end }}&lt;br&gt;
+      {{ end }}
+      {{ end }}&lt;br&gt;
+    &lt;/span&gt;
+    
+    {{ end }}
+    
+    &lt;div class=&quot;article-content&quot;&gt;
+      {{ .Content }}
+    &lt;/div&gt;
+
+  {{ partial &quot;disqus.html&quot; .}}
+
+&lt;/main&gt;
+
+{{ partial &quot;footer.html&quot; . }}</code></pre>
+<p>Note that I created the new class <code>article-meta</code> to control the styles for this metadata block.</p>
+</div>
+</div>
+<div id="improvements" class="section level1">
+<h1>Improvements</h1>
+<p>Let me know if this is worth optimising. Like I say: it was trial and error, really.</p>
+</div>
