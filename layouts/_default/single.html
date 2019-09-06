@@ -1,0 +1,30 @@
+{{ partial "header.html" . }}
+
+<main class="content" role="main">
+
+    <h1 class="article-title">{{ .Title }}</h1>
+
+    {{ if eq .Section "post" }}
+    <span class="article-meta">
+      {{ .Params.author }} / {{ .Date.Format "02 Jan 2006" }} / {{ .ReadingTime }} min read <br>
+      {{ range $i := (slice "categories" "tags") }}
+      {{ with ($.Param $i) }}
+      {{ $i | title }}:
+      {{ range $k := . }}
+      <a href='{{ relURL (print "/" $i "/" $k | urlize) }}'>{{ $k }}</a>
+      {{ end }}<br>
+      {{ end }}
+      {{ end }}<br>
+    </span>
+    
+    {{ end }}
+    
+    <div class="article-content">
+      {{ .Content }}
+    </div>
+
+  {{ partial "disqus.html" .}}
+
+</main>
+
+{{ partial "footer.html" . }}
