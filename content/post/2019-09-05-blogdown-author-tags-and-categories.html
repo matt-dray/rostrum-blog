@@ -7,9 +7,10 @@ categories:
   - code
 tags:
   - blogdown
+  - html
   - hugo
-  - lithium
   - yihui
+  - yaml
 slug: lithium-metadata
 draft: no
 ---
@@ -28,12 +29,13 @@ draft: no
 <h1>Lithium</h1>
 <p>This blog is generated using <a href="https://yihui.name/">Yihui Xie</a>’s <a href="https://bookdown.org/yihui/blogdown/">{blogdown}</a>, which is built on <a href="https://gohugo.io/">the Hugo framework</a>.</p>
 <p>A number of site-wide themes have been ported for use with {blogdown}. This site uses the clean and simple <a href="https://themes.gohugo.io/hugo-lithium-theme/">Lithium theme</a> by <a href="https://github.com/jrutheiser">Jonathan Rutheiser</a>, modified <a href="https://github.com/yihui/hugo-lithium">for {blogdown}</a> by <a href="https://yihui.name/">Yihui</a>.</p>
-<p>The Lithium template doesn’t display author names, categories and tags by default. I’ve been adding author names manually and the number of posts is large enough now that exploring categories and tags is worthwhile. I think this will be helpful without ruining the theme’s simplicty.</p>
+<p>The Lithium template doesn’t display author names, categories and tags by default. I’ve been adding author names manually and the number of posts is large enough now that exploring categories and tags is worthwhile.</p>
 <p>I initially found it tricky to add these bits of metadata to each post, so I’m recording it here.</p>
 </div>
 <div id="yaml" class="section level1">
 <h1>YAML</h1>
-<p>Metadata for your post can be added via the {blogdown} addin for RStudio, or you can amend your post’s YAML header directly. The information can then be extracted and presented on the front-end. For example, for this post:</p>
+<p>You provide metadata for your posts in the <a href="https://en.wikipedia.org/wiki/YAML">YAML</a> header (YAML is just some human-readable code often used for configuration). The information can then be extracted and presented on the front-end. The ‘Update Metadata’ option from the {blogdown} RStudio addin is useful for making changes to the YAML.</p>
+<p>Here’s the YAML for the post you’re reading currently:</p>
 <pre><code>---
 title: &#39;{blogdown}: add metadata to Lithium-themed posts&#39;
 author: Matt Dray
@@ -49,20 +51,20 @@ tags:
 slug: lithium-metadata
 ---</code></pre>
 <p>You need to make sure the <code>author</code>, <code>categories</code> and <code>tags</code> elements are completed before they can be extracted and displayed on your posts.</p>
-<p>You need to know how to translate the YAML element name to the parameter name that’s used in the theme’s template files. And what file to update. Tricky.</p>
+<p>You need to update the files that specify the layout of your site, but where are they? And how do you translate these YAML elements into parameters that are understood in those files?</p>
 <div id="whats-missing-where" class="section level2">
 <h2>What’s missing where?</h2>
-<p>The basics of what I needed to do was all laid out in the excellent <a href="https://bookdown.org/yihui/blogdown/">blogdown: Creating Websites with R Markdown</a> book by <a href="https://yihui.name/">Yihui</a>, <a href="https://amber.rbind.io/">Amber Thomas</a>, <a href="https://alison.rbind.io/">Alison Presmanes Hill</a>.</p>
-<p>The file describing how the YAML elements are incoporated into the post is on this path: <code>themes/hugo-lithium-theme/layouts/_default/single.html</code> (<a href="https://github.com/yihui/hugo-lithium/blob/master/layouts/_default/single.html">see the default template</a>).</p>
+<p>The basics of what you need to do is all laid out in the excellent <a href="https://bookdown.org/yihui/blogdown/">blogdown: Creating Websites with R Markdown</a> book by <a href="https://yihui.name/">Yihui</a>, <a href="https://amber.rbind.io/">Amber Thomas</a>, <a href="https://alison.rbind.io/">Alison Hill</a>.</p>
+<p>The file describing the layout of your posts—the one you need to edit—is on this path: <code>layouts/_default/single.html</code> (<a href="https://github.com/yihui/hugo-lithium/blob/master/layouts/_default/single.html">see the default template</a>).</p>
 <p>It’s an HTML file, so has lots of things like <code>&lt;h1 class="article-title"&gt;</code>. This is pretty classic HTML that declares a top-level header and a class that can be styled with CSS.</p>
-<p>But what we really care about are a bunch of things like <code>{{ .Title }}</code>. The bit that’s <a href="https://twitter.com/JennyBryan/status/1144817727665631232?s=20">embraced</a> in double-curly brackets is the parameter that’s pulled from our YAML.</p>
+<p>But what we really care about are the things that look like <code>{{ .Title }}</code>. The parameter names <a href="https://twitter.com/JennyBryan/status/1144817727665631232?s=20">embraced</a> in double-curly brackets refer to our YAML elements, but they don’t necessarily have the same name (<code>title</code> in YAML and <code>.Title</code> here, for example).</p>
 <p>So <code>&lt;h1 class="article-title"&gt;{{ .Title }}&lt;/h1&gt;</code> will return the title of the post as an HTML header that will be styled as the <code>article-title</code> class.</p>
 </div>
 <div id="modifications" class="section level2">
 <h2>Modifications</h2>
-<p>I hadn’t added the author name in the past because I wasn’t sure what the right parameter was. I found it in <a href="https://bookdown.org/yihui/blogdown/templates.html#a-minimal-example">section 2.5.2 of the blogdown book</a>: <code>.Params.author</code>.</p>
-<p>This meant I could arrange some metadata at the top of my posts in the form <code>Firstname Lastname / DD Mon YYY / X min read</code> with <code>{{ .Params.author }} / {{ .Date.Format "02 Jan 2006" }} / {{ .ReadingTime }} min read</code>.</p>
-<p>Displaying categories and tags is trickier. It’s not just about finding the right parameters, but also involves looping through the categories and tags specified in each post’s YAML. I found the answer in <a href="https://bookdown.org/yihui/blogdown/">section 2.5.2 of the blogdown book</a>, under the bullet ‘Display categories and tags in a post if provided in its YAML’. It looks like this:</p>
+<p>I hadn’t added the author name in the past because I wasn’t sure what the right parameter was. I found it in <a href="https://bookdown.org/yihui/blogdown/templates.html#a-minimal-example">section 2.5.1 of the blogdown book</a>: <code>.Params.author</code>.</p>
+<p>This meant I could arrange some metadata at the top of my posts in the form <code>Firstname Lastname / DD Mon YYY / X min read</code> with the line <code>{{ .Params.author }} / {{ .Date.Format "02 Jan 2006" }} / {{ .ReadingTime }} min read</code> to get what I wanted.</p>
+<p>Displaying categories and tags is trickier. It’s not just about finding the right parameters, but also involves looping through the categories and tags specified in each post’s YAML. Fortunately, the code is provided in <a href="https://bookdown.org/yihui/blogdown/">section 2.5.2 of the blogdown book</a>, under the bullet ‘Display categories and tags in a post if provided in its YAML’. It looks like this:</p>
 <pre><code>&lt;p class=&quot;terms&quot;&gt;
   {{ range $i := (slice &quot;categories&quot; &quot;tags&quot;) }}
   {{ with ($.Param $i) }}
@@ -110,9 +112,9 @@ slug: lithium-metadata
 </div>
 <div id="modified" class="section level2">
 <h2>Modified</h2>
-<p>This is what the metadata section look like when this post was published. Things may change in future.</p>
+<p>Below is what the updated posts look like. Note that I’ve also updated the styles and fonts as well as the layout. You can <a href="https://www.rostrum.blog/2018/11/29/fontface-lithium/">read a previous post about how to update the typeface</a>.</p>
 <p><img src='/post/2019-09-05-blogdown-author-tags-and-categories_files/lithium-rostrum.png' alt='A post showing the modified Lithium theme on this blog, with the author, date, reading time, categories and tags under the title.'></p>
-<p>My modifications to the Lithium theme are produced with the following <code>single.html</code> file:</p>
+<p>My modifications to the Lithium layout in the <code>layouts/_default/single.html</code> file:</p>
 <pre><code>{{ partial &quot;header.html&quot; . }}
 
 &lt;main class=&quot;content&quot; role=&quot;main&quot;&gt;
@@ -149,4 +151,5 @@ slug: lithium-metadata
 <div id="improvements" class="section level1">
 <h1>Improvements</h1>
 <p>Let me know if this is worth optimising. Like I say: it was trial and error, really.</p>
+<p>Thanks to <a href="https://twitter.com/ma_salmon/status/1169934050838138880?s=20">Maëlle Salmon for pointing out the correct filepath</a> at which to edit the <code>single.html</code> file. I also recommend you <a href="https://twitter.com/apreshill/status/1078494406301212672?s=20">check out Alison Hill’s tweet reminder</a> of which Blogdown folders you should and shouldn’t modify within.</p>
 </div>
