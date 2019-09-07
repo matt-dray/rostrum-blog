@@ -1,23 +1,27 @@
 ---
-title: Teach a person to Swirl
+title: Teach a person to {swirl}
 author: Matt Dray
 date: '2019-05-10'
-slug: swirlify
 categories:
-  - R
+  - code
   - teaching
+  - tutorial
 tags:
   - swirl
   - swirlify
+  - tidyswirl
+  - yaml
+slug: swirlify
 draft: no
 ---
 
 
 
-<p>Matt Dray (<a href="https://www.twitter.com/mattdray">@mattdray</a>)</p>
 <div class="figure">
-<img src="https://media.giphy.com/media/LJpWh180LBOF2/giphy.gif" alt="A machine makes lots of cookie swirls, a metaphor for how many Swirl courses you’ll make with Swirlify (via Giphy)" />
-<p class="caption">A machine makes lots of cookie swirls, a metaphor for how many Swirl courses you’ll make with Swirlify (via <a href="https://giphy.com/gifs/cookie-swirl-depositor-LJpWh180LBOF2">Giphy</a>)</p>
+<img src="https://media.giphy.com/media/LJpWh180LBOF2/giphy.gif" alt="A robot creates multiple cookie swirls on a conveyor belt.">
+<p class="caption">
+A metaphor for all the {swirl} courses you’ll make (via <a href="https://giphy.com/gifs/cookie-swirl-depositor-LJpWh180LBOF2">Giphy</a>)
+</p>
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
@@ -40,10 +44,8 @@ draft: no
 <pre class="r"><code>install.packages(&quot;swirl&quot;)
 library(swirl)
 swirl()</code></pre>
-<div class="figure">
-<img src="/post/2019-05-10-teach-a-person-to-swirl_files/swirl-startup-console.png" alt="Swirl being loaded and run from the console" />
-<p class="caption">Swirl being loaded and run from the console</p>
-</div>
+<p>Here’s what the first few lines of interaction with Swirl look like.</p>
+<p><img src="/post/2019-05-10-teach-a-person-to-swirl_files/swirl-startup-console.png" alt="The R console showing input to Swirl and some responses, like Swirl asks 'What shall I call you?' and 'Matt' has been input."></p>
 <p>You’ll be given a list of courses to install, but you can also download them from elsewhere. This post is about how you can quickly create and distribute such a course.</p>
 </div>
 <div id="swirlify" class="section level1">
@@ -67,10 +69,7 @@ new_lesson(course_name = &quot;New Course&quot;, lesson_name = &quot;Lesson 1&qu
 <p>The lesson file can be edited directly, but we’ll focus on the built-in Swirlify Shiny app for simplicity:</p>
 <pre class="r"><code>swirlify(course_name = &quot;New Course&quot;, lesson_name = &quot;Lesson 1&quot;)</code></pre>
 <p>The app will open the named lesson from the named course in a new browser window. On the left is where you create new questions. On the right you can see the <code>lesson.yaml</code> file itself.</p>
-<div class="figure">
-<img src="/post/2019-05-10-teach-a-person-to-swirl_files/swirlify-start.png" alt="The Swirlify Shiny app provides a GUI for writing lessons" />
-<p class="caption">The Swirlify Shiny app provides a GUI for writing lessons</p>
-</div>
+<p><img src="/post/2019-05-10-teach-a-person-to-swirl_files/swirlify-start.png" alt="The Swirlify Shiny GUI for writing lessons, showing a dropdown box for the lesson type, a box for writing output, the YAML code for the lesson so far, and buttons for saving and demoing the code."></p>
 <p>Note the ‘Help’ tab, which tells you about the types of questions you can make, or you can see the <a href="http://swirlstats.com/swirlify/writing.html#types_of_questions">Swirlify guidance</a>). Basically the question types are:</p>
 <ul>
 <li>‘message’ for informational text (not for questions per se)</li>
@@ -89,10 +88,7 @@ new_lesson(course_name = &quot;New Course&quot;, lesson_name = &quot;Lesson 1&qu
 <li>Run <code>test_lesson()</code> to look for errors</li>
 <li>Click ‘Demo Lesson’ to try it out</li>
 </ol>
-<div class="figure">
-<img src="https://media.giphy.com/media/TKMV1MbB5z1iw0SbeM/giphy.gif" alt="Create a question, generate the answer test and add it to the lesson" />
-<p class="caption">Create a question, generate the answer test and add it to the lesson</p>
-</div>
+<p><img src="https://media.giphy.com/media/TKMV1MbB5z1iw0SbeM/giphy.gif" alt="A gif showing the process of creating a question with Swirlify's Shiny GUI, adding it to the YAML for the lesson and then saving it."></p>
 <p>Continue adding questions until the lesson is complete. Then:</p>
 <ol style="list-style-type: decimal">
 <li>Run <code>add_to_manifest()</code> to add the lesson to the <code>MANIFEST</code> file (it’ll be created in the course directory if it doesn’t already exist). Lessons in here are recognised as part of the course in the declared order.</li>
@@ -117,7 +113,7 @@ new_lesson(course_name = &quot;New Course&quot;, lesson_name = &quot;Lesson 1&qu
 <div id="extra-knowledge" class="section level2">
 <h2>Extra knowledge</h2>
 <p>Clearly the process of course building is more nuanced than outlined above, but you can learn more from the documentation on the <a href="http://swirlstats.com/swirlify/index.html">Swirlify</a> site and <a href="https://cran.r-project.org/web/packages/swirlify/swirlify.pdf">reference manual</a>. In particular, See the <a href="http://swirlstats.com/swirlify/structure.html">course structure</a> and <a href="http://swirlstats.com/swirlify/writing.html">writing lessons</a> pages of the Swirlify guidance.</p>
-<p>I’ll touch on three things here: lesson file structure, correct answers and lesson startup.</p>
+<p>I’ll touch on three things here: lesson file structure, correct answers and lesson start-up.</p>
 <div id="structure" class="section level3">
 <h3>Lesson file structure</h3>
 <p>The lesson file is written in <a href="https://en.wikipedia.org/wiki/YAML">YAML</a>, which is basically a special form of plain text. Questions appear as separate blocks of text that start with a hyphen and a question type (class) declaration, followed by further arguments on new indented lines.</p>
@@ -134,7 +130,7 @@ new_lesson(course_name = &quot;New Course&quot;, lesson_name = &quot;Lesson 1&qu
 </div>
 <div id="correct" class="section level3">
 <h3>Correct answers</h3>
-<p>How are answers enoded and checked in <code>lesson.yaml</code>? Consider the YAML for this question:</p>
+<p>How are answers encoded and checked in <code>lesson.yaml</code>? Consider the YAML for this question:</p>
 <pre><code>- Class: cmd_question
   Output: Use mean() to calculate the mean of the numbers 1 to 5.
   CorrectAnswer: mean(1:5)
@@ -150,7 +146,7 @@ new_lesson(course_name = &quot;New Course&quot;, lesson_name = &quot;Lesson 1&qu
 <p>There’s more on answer testing <a href="http://swirlstats.com/swirlify/writing.html#answer-testing">in the Swirlify guidance</a>, including how to write custom answer tests.</p>
 </div>
 <div id="startup" class="section level3">
-<h3>Lesson startup</h3>
+<h3>Lesson start-up</h3>
 <p>Anything in the <code>initLesson.R</code> file will be run when the lesson is loaded. You can create objects and refer to them in your questions. For example, you could add a data frame:</p>
 <pre class="r"><code>biscuits &lt;- data.frame(
   name = c(&quot;Chocolate hobnob&quot;, &quot;Digestive&quot;, &quot;Custard cream&quot;),
@@ -162,8 +158,8 @@ new_lesson(course_name = &quot;New Course&quot;, lesson_name = &quot;Lesson 1&qu
   CorrectAnswer: biscuits[biscuits$rating &gt; 5, ]
   AnswerTests: omnitest(correctExpr=&#39;biscuits[, biscuits$rating &gt; 5]&#39;)
   Hint: Remember the indexing format dataframe[rows, columns].</code></pre>
-<p>The dataframe was loaded on startup, so the user can interact with it to answer the question.</p>
-<p>You can also add datasets to the lesson folder and read them into the user’s environment via the <code>initLesson.R</code> file. See the Swirlify <a href="http://swirlstats.com/swirlify/structure.html#including-data">guidance on including data</a> for more information.</p>
+<p>The data frame was loaded on start-up, so the user can interact with it to answer the question.</p>
+<p>You can also add data sets to the lesson folder and read them into the user’s environment via the <code>initLesson.R</code> file. See the Swirlify <a href="http://swirlstats.com/swirlify/structure.html#including-data">guidance on including data</a> for more information.</p>
 </div>
 </div>
 <div id="share" class="section level2">
@@ -173,7 +169,7 @@ new_lesson(course_name = &quot;New Course&quot;, lesson_name = &quot;Lesson 1&qu
 <ul>
 <li>a GitHub repo</li>
 <li>a zip file stored on DropBox, Google Drive, or some URL</li>
-<li>a course folder – zipped or not – downloaded locally on their machine</li>
+<li>a course folder—zipped or not—-downloaded locally on their machine</li>
 </ul>
 <p>You can also compress your course to a single <code>.swc</code> file with <code>compress_course()</code> and raise a pull request for it to be hosted on the <a href="http://swirlstats.com/scn/">Swirl Course Network</a>. It can be downloaded from there with <code>install_course()</code>.</p>
 <p>Swirl is strengthened by having a greater number and range of courses.</p>
@@ -181,16 +177,12 @@ new_lesson(course_name = &quot;New Course&quot;, lesson_name = &quot;Lesson 1&qu
 </div>
 <div id="tidyswirl" class="section level1">
 <h1>Tidyswirl</h1>
-<div class="figure">
-<img src="/post/2019-05-10-teach-a-person-to-swirl_files/tidyswirl.JPG" alt="A mockup hex sticker for Tidyswirl that look suspiciously simimlar to the tidyverse sticker" width="200" height="200" />
-<p class="caption">A mockup hex sticker for Tidyswirl that look suspiciously simimlar to the tidyverse sticker</p>
-</div>
-<p>To minimise hypocrisy, I’ve started <a href="https://github.com/matt-dray/tidyswirl">a Swirl course called Tidyswirl</a>. The goal is to introduce each core package of <a href="https://www.tidyverse.org/">the tidyverse</a>. It currently has draft lessons for <a href="https://tidyr.tidyverse.org/">{tidyr}</a> and <a href="https://tibble.tidyverse.org/">{tibble}</a>.</p>
+<p><img src="/post/2019-05-10-teach-a-person-to-swirl_files/tidyswirl.JPG" alt="A post-it note with a crudely-drawn hex sticker that says 'Tidyswirl' across the centre, with small differently-coloured swirl shapes in the remaining space." width=220 height=200/></p>
 <p>Tidyswirl is currently in development on GitHub. To install and try it out in Swirl:</p>
 <pre class="r"><code>install_course_github(&quot;matt-dray&quot;, &quot;tidyswirl&quot;)</code></pre>
 <p>Please feel free to <a href="https://github.com/matt-dray/tidyswirl/blob/master/CONTRIBUTING.md">contribute new lessons or raise issues</a>.</p>
 </div>
 <div id="plea" class="section level1">
 <h1>Plea</h1>
-<p>The R community is large and friendly. Swirl helps people learn. It would be great to see more courses being made. Consider making one to teach your colleagues about common R tasks in yoru department, for example.</p>
+<p>The R community is large and friendly. Swirl helps people learn. It would be great to see more courses being made. Consider making one to teach your colleagues about common R tasks in your department, for example.</p>
 </div>
