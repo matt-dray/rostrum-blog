@@ -1,23 +1,21 @@
 ---
-title: 'Can {drake} RAP?'
+title: Can {drake} RAP?
 author: Matt Dray
 date: '2019-07-23'
-slug: can-drake-rap
 categories:
-  - R
+  - code
+  - tutorial
 tags:
-  - reproducibility
   - drake
-  - eggs
-  - rap
-  - reproducible analytical pipelines
   - make
-  - makefile
+  - r
+  - reproducibility
+slug: can-drake-rap
 ---
 
 
 
-<p><img src='/post/2019-07-22-can-drake-rap_files/duck-emojipedia.png' alt="Male duck (drake) emoji from emojipedia.org with caption saying 'yes'."></p>
+<p><img src='/post/2019-07-22-can-drake-rap_files/hall-of-fame.jpeg' alt="Six images: a male duck, Sir Francis Drake, Drake from the Drake & Josh TV show, Nathan Drake from the Uncharted video games, Drake the musical artist, and the hex sticker for the drake package." width=400></p>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
 <p>The <a href="https://github.com/ropensci/drake">{drake}</a> package records file interdependecies in your analysis. When files are changed, {drake} only re-runs the parts that need to be re-run. This saves time and reduces error.</p>
@@ -133,7 +131,7 @@ source(plan.R)       # load the plan</code></pre>
 <p>A number of {drake} functions can take the config object and do something with the information inside it. In our case, we’re going to pass the config to <code>vis_drake_graph()</code>, which builds an interactive dependency graph using {visNetwork}.</p>
 <pre class="r"><code>vis_drake_graph(egg_config)</code></pre>
 <p>This generates an interactive output <a href="https://matt-dray.github.io/drake-egg-rap/dependency-graph.html">(see it here)</a>. Here’s a screenshot:</p>
-<p><img src='/post/2019-07-22-can-drake-rap_files/dependency-static.png' alt='A screenshot of the interactive dependency graph showing the relationship between objects, files and functions in the analysis.'></p>
+<p><img src='/post/2019-07-22-can-drake-rap_files/dependency-static.png' alt='A screenshot of the interactive dependency graph showing the relationship between objects, files and functions in the analysis represented by different shapes and colours.'></p>
 <p>The visualisation is shape-coded by target type (e.g. functions are triangles) and colour-coded to show whether everything is up-to-date (e.g. green if it is). Arrows show the file dependencies (e.g. both the <code>clean_data</code> function and <code>raw_data</code> file come together to produce the <code>data</code> object).</p>
 </div>
 <div id="make" class="section level2">
@@ -151,7 +149,7 @@ source(plan.R)       # load the plan</code></pre>
 <div id="change" class="section level2">
 <h2>5. Make a change</h2>
 <p>If anything changes in our data or code then the downstream targets will be out of sync. Let’s pretend we’ve changed a line of code in the <code>create_plot()</code> function, which could be something is superficial as altering its title. What do you think will happen?</p>
-<p>Well, {drake} knows there’s been a change. You can check this by running <code>source(&quot;R/functions.R&quot;)</code> in <code>make.R</code> again and then run <code>outdated(egg_config)</code>. This prints the name of the altered file plus the other files impacted by it.</p>
+<p>Well, {drake} knows there’s been a change. You can check this by running <code>source("R/functions.R")</code> in <code>make.R</code> again and then run <code>outdated(egg_config)</code>. This prints the name of the altered file plus the other files impacted by it.</p>
 <p>We can see this by recreating the dependency graph <a href="https://matt-dray.github.io/drake-egg-rap/dependency-graph-outdated.html">(see it here)</a>: the <code>plot</code> target is outdated, as are the targets downstream that depend on it (<code>report</code> and the <code>egg-report.html</code> file). This is indicated by them being coloured black. Here’s a static version:</p>
 <p><img src='/post/2019-07-22-can-drake-rap_files/dependency-outdated-static.png' alt="A screenshot of the interactive dependency graph showing that outdated items (the plot and report) are now coloured black. The other items aren't black because they're not impacted by the change to the plot function."></p>
 <p>So now we can see the real power of {drake}, as re-running the plan now will regenerate only the outdated files.</p>
