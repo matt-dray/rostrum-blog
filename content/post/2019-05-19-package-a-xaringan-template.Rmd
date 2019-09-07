@@ -1,31 +1,36 @@
 ---
-title: Package a Xaringan template
+title: Package a {xaringan} template
 author: Matt Dray
 date: '2019-05-24'
-slug: xaringan-template
 categories:
-  - R
+  - code
+  - package
+  - tutorial
 tags:
-  - presentation
-  - xaringan
-  - rmarkdown
+  - css
+  - gdstheme
+  - r markdown
+  - slides
   - template
+  - xaringan
+  - yaml
+slug: xaringan-template
 draft: no
 ---
 
-![The {gdstheme} Xaringan template when rendered](/post/2019-05-19-package-a-xaringan-template_files/gdstheme-template.gif)
+<img src="/post/2019-05-19-package-a-xaringan-template_files/gdstheme-template.gif" alt="A gif that cycles through the slides that make up the gdstheme xaringan template, including heading slides, text slides and annotated image slides.">
 
 # A remarkable ninja
 
 [The {xaringan} package](https://slides.yihui.name/xaringan/) by [Yihui Xie](https://yihui.name/) implements [remark.js](https://github.com/gnab/remark)[^remark] in [R Markdown](https://bookdown.org/yihui/rmarkdown/) so you can create exciting presentations that contain reproducible R content.[^howto]
 
-Yihui has [encouraged people to submit styles](https://yihui.name/en/2017/10/xaringan-themes/) -- like the [RLadies theme](https://alison.rbind.io/post/r-ladies-slides/) -- to enrich Xaringan.
+Yihui has [encouraged people to submit styles](https://yihui.name/en/2017/10/xaringan-themes/)---like the [RLadies theme](https://alison.rbind.io/post/r-ladies-slides/)---to enrich {xaringan}.
 
-This post is about a specific theme I recreated for Xaringan and shared in the [{gdstheme}](https://github.com/matt-dray/gdstheme) package along with an R Markdown template.
+This post is about a specific theme I recreated for {xaringan} and shared in the [{gdstheme}](https://github.com/matt-dray/gdstheme) package along with an R Markdown template.
 
-You can [see a live demo of it](https://matt-dray.github.io/gdstheme/#1).
+Click on the slides embedded below and cycle through with your arrow keys, or [you can open them fullscreen in a dedicated browser tab](https://matt-dray.github.io/gdstheme/#1).
 
-`r knitr::include_url("https://matt-dray.github.io/gdstheme/")`
+<iframe src="https://matt-dray.github.io/gdstheme/" width="500" height="375" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
 
 # Create a theme
 
@@ -33,7 +38,7 @@ You can [see a live demo of it](https://matt-dray.github.io/gdstheme/#1).
 
 The downside is that any R outputs have to be copy-pasted in, which isn't very reproducible.
 
-To overcome this, I recreated their theme for Xaringan in three steps (click to jump):
+To overcome this, I recreated their theme for {xaringan} in three steps (click to jump):
 
 1. [Create styles with CSS](#css)
 1. [Make an R Markdown template](#rmd)
@@ -41,22 +46,22 @@ To overcome this, I recreated their theme for Xaringan in three steps (click to 
 
 ## Do it in style {#css}
 
-CSS lets you define the style of HTML documents, which is the default output for Xaringan. 
+CSS lets you define the style of HTML documents, which is the default output for {xaringan}. 
 
-For Xaringan you'll typically need two CSS files:
+For {xaringan} you'll typically need two CSS files:
 
 * `theme.css` to define the style for each broad slide [class](https://www.w3schools.com/cssref/sel_class.asp) (e.g. a heading-slide class) and for general things like table design and hyperlink colours
 * `theme-fonts.css` to set the typefaces, which you can define separately for the body text, headers, etc
 
-You reference these files in the YAML header of your Xaringan R Markdown and the style is enacted when you render it to HTML.
+You reference these files in the YAML header of your {xaringan} R Markdown and the style is enacted when you render it to HTML.
 
-I tweaked the [default Xaringan CSS files](https://github.com/yihui/xaringan/tree/master/inst/rmarkdown/templates/xaringan/resources) to create my own, which you can see in the [the GitHub repo](https://github.com/matt-dray/gdstheme/tree/master/inst/rmarkdown/templates/gdstheme/skeleton).
+I tweaked the [default {xaringan} CSS files](https://github.com/yihui/xaringan/tree/master/inst/rmarkdown/templates/xaringan/resources) to create my own, which you can see in the [the GitHub repo](https://github.com/matt-dray/gdstheme/tree/master/inst/rmarkdown/templates/gdstheme/skeleton).
 
-You can check out [the Xaringan wiki](https://github.com/yihui/xaringan/wiki) for help and ideas.
+You can check out [the {xaringan} wiki](https://github.com/yihui/xaringan/wiki) for help and ideas.
 
 ### Get to class
 
-I overwrote the default `.remark-slide-content` class for regular text slides. In other words, failing to specify a class in your Xaringan slide will result in a text slide by default. I also created `title-slide` and `heading-slide` classes.
+I overwrote the default `.remark-slide-content` class for regular text slides. In other words, failing to specify a class in your {xaringan} slide will result in a text slide by default. I also created `title-slide` and `heading-slide` classes.
 
 Here's the CSS for defining and styling the very simple `heading-slide` class:
 
@@ -73,9 +78,9 @@ Here's the CSS for defining and styling the very simple `heading-slide` class:
 
 And here's how it looks:
 
-![The heading slide has bold text on a blue background](/post/2019-05-19-package-a-xaringan-template_files/heading-slide.png)
+<img src="/post/2019-05-19-package-a-xaringan-template_files/heading-slide.png" alt="The heading slide, which is blue with large white overlaid text reading 'this is a heading slide'.">
 
-You use it by specifying `class: heading-slide` in the R Markdown for a Xaringan slide. You also ass the `middle` class to make the text vertically centred. This will overwrite the default styles to give you the 'heading' slide instead.
+You use it by specifying `class: heading-slide` in the R Markdown for a {xaringan} slide. You also ass the `middle` class to make the text vertically centred. This will overwrite the default styles to give you the 'heading' slide instead.
 
 ### Tag team
 
@@ -88,18 +93,18 @@ As well as specifying classes, I've added some additional CSS [tags](https://www
 
 These can be used to define different styling for a small part of a slide class. For example, the `.black` tag is intended for use on heading slides so the default white text can be made darker to contrast with light-coloured backgrounds.
 
-![A heading-class slide using the black tag for better text-image contrast](/post/2019-05-19-package-a-xaringan-template_files/heading-image-slide.png)
+<img src="/post/2019-05-19-package-a-xaringan-template_files/heading-image-slide.png" alt="The image heading slide, which has a background image of some documents with large black overlaid text reading 'this is an image heading slide'.">
 
 ### Face the font
 
 The `fonts.css` is much simpler; it just imports and declares fonts. These can be the default system fonts or can be imported from [Google Fonts](https://fonts.google.com/)
 
-![Google Fonts page showing some monospace fonts to choose from](/post/2019-05-19-package-a-xaringan-template_files/monospace.png)
+<img src="/post/2019-05-19-package-a-xaringan-template_files/monospace.png" alt="Google Fonts web page showing a line of code rendered in some different monospace fonts so they can be compared.">
 
 
 My organisation uses the proprietary Helvetica for its body type. Fortunately the default system sans-serif is Helvetica on a Mac and the close-enough Arial on Windows machines.
 
-For the monospace font -- used for displaying script -- I've chosen Fira Mono, which I think is more readable than the default system monospace.
+For the monospace font---used for displaying script---I've chosen Fira Mono, which I think is more readable than the default system monospace.
 
 The `fonts.css` file starts by importing from [Google Fonts](https://fonts.google.com/) and then describes where they'll be used. The order of dictates which font will be shown first and then which will be next if there's a problem. 
 
@@ -115,7 +120,7 @@ I've written a bit before about [how to access Google Fonts for Blogdown's Lithi
 
 ## Lay down a template {#rmd}
 
-The style is not the only important part of recreating my organisation's presentations -- I also need to create an R Markdown template to demonstrate a restricted set of accepted slide designs. The design philosophy is important to the organisation.
+The style is not the only important part of recreating my organisation's presentations. I also need to create an R Markdown template to demonstrate a restricted set of accepted slide designs. The design philosophy is important to the organisation.
 
 The template itself is just a pre-filled R Markdown that shows the approved slide types and some example content. For example, the first slide of my organisation's template doesn't actually contain a 'title'. Instead it's an introduction slide that contains the speaker's name, job, affiliation and Twitter handle.
 
@@ -188,7 +193,7 @@ remotes::install_github("matt-dray/gdstheme")
 
 After installation the template will appear in the 'from template' section of the new R Markdown window. Selecting it will open the R Markdown template.
 
-![](https://raw.githubusercontent.com/matt-dray/gdstheme/master/img/new-rmd.png)
+<img src="https://raw.githubusercontent.com/matt-dray/gdstheme/master/img/new-rmd.png" alt="The 'New R Markdown' window with the 'From Template' option selected and 'Slide template for GDS' highlighted in the 'Template' section.">
 
 The CSS files referenced in the YAML are used to render the style provided when you knit the document.
 
@@ -196,7 +201,7 @@ The CSS files referenced in the YAML are used to render the style provided when 
 
 My package is a success if the outputs are reproducible and can fool my colleagues. There's definitely improvements that can be made, but the number of users for this package is very small and it's probably not worth the effort for now. Feel free to [make a pull request](https://github.com/matt-dray/gdstheme) to make it better.
 
-Consider creating your own theme and [submitting it to Xaringan](https://yihui.name/en/2017/10/xaringan-themes/) so that more possibilities are available out of the box. Also take a look at [Garrick Aden-Buie](https://www.garrickadenbuie.com/)'s helpful [{xaringanthemer}](https://www.garrickadenbuie.com/project/xaringanthemer/) package for a simple way to tweak styles.
+Consider creating your own theme and [submitting it to {xaringan}](https://yihui.name/en/2017/10/xaringan-themes/) so that more possibilities are available out of the box. Also take a look at [Garrick Aden-Buie](https://www.garrickadenbuie.com/)'s helpful [{xaringanthemer}](https://www.garrickadenbuie.com/project/xaringanthemer/) package for a simple way to tweak styles.
 
 [^remark]: Yihui has [commented on why he loves remark.js](https://yihui.name/en/2017/08/why-xaringan-remark-js/).
-[^howto]: You can learn more about the basics of Xaringan from [Alison Hill's excellent  slideshow](https://apreshill.github.io/data-vis-labs-2018/slides/06-slides_xaringan.html#1).
+[^howto]: You can learn more about the basics of {xaringan} from [Alison Hill's excellent  slideshow](https://apreshill.github.io/data-vis-labs-2018/slides/06-slides_xaringan.html#1).
