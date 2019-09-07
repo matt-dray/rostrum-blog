@@ -2,20 +2,28 @@
 title: The Mountain Goats with {trelliscopejs}
 author: Matt Dray
 date: '2019-06-20'
-slug: goat-scope
 categories:
-  - R
-  - dataviz
+  - code
+  - tutorial
+  - app
 tags:
-  - trelliscopejs
+  - dataviz
+  - music
+  - spotifyr
+  - the mountain goats
   - trelliscope
-  - small multiples
+  - trelliscopejs
+slug: goat-scope
 draft: no
 ---
 
+<img src="/post/2019-06-19-the-mountain-goats-with-trelliscopejs_files/trelliscope.png" alt="Screenshot of the trelliscope showing a grid of 10 songs by The Mountain Goats with their album art. There are buttons to let you filter, sort and other things.">
+
 # tl;dr
 
-I used [{trelliscopejs}](https://hafen.github.io/trelliscopejs/) to make an interactive display for [The Mountain Goats](http://www.mountain-goats.com/) discography. You can interact with it below or [click here to open full screen](https://www.rostrum.blog/output/goat-scope/){target="_blank"}.
+I used [{trelliscopejs}](https://hafen.github.io/trelliscopejs/) to make an interactive 'small multiples' display for [The Mountain Goats](http://www.mountain-goats.com/) discography.
+
+You can interact with an embedded veresion below or [click here to open full screen](https://www.rostrum.blog/output/goat-scope/){target="_blank"}.
 
 ```{r include-url-tldr, echo=FALSE}
 knitr::include_url("https://www.rostrum.blog/output/goat-scope/")
@@ -52,10 +60,17 @@ library(tidyr) # get data into tidy form
 
 ## Get data and simplify
 
-You can follow the instructions [in the previous post](https://www.rostrum.blog/2019/04/25/gen-tmg-lyrics/#get-lyrics) to get the data. I'm going to load those data from an [RDS file](https://www.r-bloggers.com/remember-to-use-the-rds-format/) on my machine.
+You can follow the instructions [in the previous post](https://www.rostrum.blog/2019/04/25/gen-tmg-lyrics/#get-lyrics) to get the data. I'm going to load those data from a pre-prepared [RDS file](https://www.r-bloggers.com/remember-to-use-the-rds-format/).
 
 ```{r read-data}
-raw_goat <- read_rds("~/Desktop/goat_discography.RDS")
+# First to download the file
+download.file(
+  "https://www.rostrum.blog/datasets/goat_discography.RDS",  # data hosted here
+  "~/Documents/goat_discography.RDS"  # where to put file locally
+  )
+
+# Read the file from local source and check number of columns
+raw_goat <- read_rds("~/Documents/goat_discography.RDS")
 length(raw_goat)
 ```
 
@@ -141,7 +156,7 @@ trelliscope(
   )
 ```
 
-I've embedded here the output, but [you can click here to open full screen](https://www.rostrum.blog/output/goat-scope/).
+I've embedded the trelliscope below, but I recommend you [click here to open it full screen](https://www.rostrum.blog/output/goat-scope/).
 
 ```{r include-url, echo=FALSE}
 knitr::include_url("https://www.rostrum.blog/output/goat-scope/")
@@ -149,17 +164,15 @@ knitr::include_url("https://www.rostrum.blog/output/goat-scope/")
 
 Explore the data by altering the defaults in the grid, labels, filter and sort buttons in the left-hand navigation panel. Cycle through the panels with the arrows in the upper right. Hit the '?' button in the upper right to get more information on trelliscope and its shortcuts.
 
-# Bonus content! 
+## Host your trelliscope
+
+Use the argument `path = "<file path to save to>"` in the `trelliscope()` function to save the files (I learnt this from [a GitHub issue](https://github.com/hafen/trelliscopejs/issues/24#issuecomment-276883861)). You can then host the folder's contents somewhere. I put mine in the `static/` directory of this site's structure so it's hosted on its own page at https://www.rostrum.blog/output/goat_scope/ (see [Tim Mastny's post](https://timmastny.rbind.io/blog/embed-slides-knitr-blogdown/)).
 
 ## Energy
 
-I've ordered the panels of this trelliscope by the 'energy' of a track; most energetic first. The top track for energy is one of my favourites: 'Choked Out' from 'Beat the Champ'. Here's a Spotify snippet.
+I've ordered the panels of the trelliscope by the 'energy' of the tracks; most energetic first. The top track for energy is one of my favourites: 'Choked Out' from 'Beat the Champ'. Here's an embedded Spotify snippet.
 
 <iframe src="https://open.spotify.com/embed/track/6VAOhkoZypZtGFgrnIGr48" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
-
-## Host your trelliscope
-
-Use the argument `path = "~/Desktop/goat-scope"` in the `trelliscope()` function to save the files (I learnt this from [a GitHub issue](https://github.com/hafen/trelliscopejs/issues/24#issuecomment-276883861)). You can then host the folder's contents somewhere. I put mine in the `static/` directory of this site's structure so it's hosted on its own page at https://www.rostrum.blog/output/goat_scope/ (see [Tim Mastny's post](https://timmastny.rbind.io/blog/embed-slides-knitr-blogdown/)).
 
 ---
 
