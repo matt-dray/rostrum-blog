@@ -2,19 +2,22 @@
 title: Holepunch a {drake}
 author: Matt Dray
 date: '2019-08-25'
-slug: holepunch-drake
 categories:
-  - R
-  - teaching
+  - code
+  - tutorial
 tags:
-  - drake
   - binder
+  - docker
+  - drake
+  - reproducibility
+  - rstudio
+slug: holepunch-drake
 draft: no
 ---
 
 
 
-<p><img src="/post/2019-08-24-hole-punching-a-drake_files/drake-meme.jpg" width="400" /></p>
+<p><img src = "/post/2019-08-24-hole-punching-a-drake_files/drake-meme.jpg" width=400 alt="A Drake meme, where Drake, the musician, reacts negatively to GitHub's 'clone or download' button and positively to the 'launch binder' repo badge."></p>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
 <p><a href="https://mybinder.org/">Binder</a> lets people explore your GitHub-based R code in a live, browser-based instance of RStudio – for free. Set-up for R projects is quick with <a href="(https://karthik.github.io/holepunch/)">{holepunch}</a>.</p>
@@ -28,17 +31,25 @@ draft: no
 <li>To improve trust further, citizens should be able to quickly open and explore the code behind a statistical report in the environment that the analyst was actually working in, with the correct R version and package dependencies.</li>
 <li>When I’m demonstrating the {drake} example, everyone in the room should have access to the same, consistent environment. This will minimise technical issues and ensure the code is being run in the intended environment.</li>
 </ol>
-<p>Turns out that these issues can be solved with <a href="https://mybinder.org/">Binder</a>.</p>
+<p>Turns out that these issues can be solved with <a href="https://mybinder.org/">Binder</a>. Point 1 is addressed by adding a special badge to your README. This helps solve Point 2, proven by Landau in his <a href="https://github.com/wlandau/learndrake">{learndrake} course-in-a-package</a> repo.</p>
+<p>But what is Binder?</p>
 </div>
 <div id="in-a-binder" class="section level1">
 <h1>In a Bind(er)</h1>
 <p><a href="https://mybinder.org/">Binder</a> is an open source project that makes it easier to share and explore the code from a GitHub repository.</p>
 <p>The repo owner specifies an environment (e.g. R version and package dependencies) and people can click a badge in the README to launch the code in a live instance of RStudio. Magic.</p>
-<div class="figure">
-<img src="/post/2019-08-24-hole-punching-a-drake_files/binder-badge.png" alt="The README for the drake-egg-rap repo showing the Binder badge" width="300" />
-<p class="caption">The README for the drake-egg-rap repo showing the Binder badge</p>
-</div>
-<p>This can really help when teaching, in particular. In fact, Will Landau used it for his <a href="https://github.com/wlandau/learndrake">{learndrake} course-in-a-package</a> repo.</p>
+<p>Here’s what the Binder badge looks like in the README:</p>
+<p><img src="/post/2019-08-24-hole-punching-a-drake_files/binder-badge.png" alt="The README for the drake-egg-rap repo showing the Binder badge."></p>
+<p>Click it to launch the Binder loading page:</p>
+<p><img src="/post/2019-08-24-hole-punching-a-drake_files/binder-load.png" alt="The Binder launch page saying 'starting repository' with the name of GitHub repository."></p>
+<p>That results in RStudio being launched in the browser with all the folders and files from the repo:</p>
+<p><img src="/post/2019-08-24-hole-punching-a-drake_files/rstudio-browser.png" alt="RStudio in a browser window, showing R's start-up text in the console pane and the contents of the home folder in the files pane."></p>
+<p>Some caveats:</p>
+<ul>
+<li>This may not take a short time to load. You may need to retry the build or try a different browser if it fails to load at all.</li>
+<li>It may not be available for free forever.</li>
+<li>There’s a maximum repo size of a couple of gigabytes.</li>
+</ul>
 </div>
 <div id="holepunch-drunk" class="section level1">
 <h1>{holepunch}-drunk</h1>
@@ -49,10 +60,7 @@ draft: no
 <li><code>write_dockerfile()</code> to set up a <a href="https://docs.docker.com/get-started/part2/">dockerfile</a> (from <a href="https://www.rocker-project.org/">The Rocker Project</a>) that installs RStudio and an R version of your choice</li>
 <li><code>generate_badge()</code> to get some code for a ‘launch binder’ badge that you can copy-paste to your repo’s README</li>
 </ol>
-<p>Then you can push the changes to GitHub and the ‘launch binder’ badge will appear your README. Clicking this will generate an RStudio instance with specifications as per the DESCRIPTION and dockerfile.</p>
-<p>Note that you may need to retry the build or try a different browser if it doesn’t work first time.</p>
-<div class="figure">
-<img src="/post/2019-08-24-hole-punching-a-drake_files/rstudio-browser-demo.png" alt="RStudio in the browser—launched from Binder—showing all the files associated with the drake-egg-rap repo" />
-<p class="caption">RStudio in the browser—launched from Binder—showing all the files associated with the drake-egg-rap repo</p>
-</div>
+<p>Then you can push the changes to GitHub and the ‘launch binder’ badge will appear your README. Clicking it generates an RStudio instance with the specifications as per the DESCRIPTION and dockerfile.</p>
+<p>So not many steps to achieve something this cool!</p>
+<p>Read <a href="https://kbroman.org/">Karl Broman</a>’s <a href="https://kbroman.org/blog/2019/02/18/omg_binder/">blog post</a> for another view from an R user and check out Karthik Ram’s rstudio::conf 2019 talk (<a href="https://github.com/karthik/rstudio2019">see the slides</a> or <a href="https://resources.rstudio.com/rstudio-conf-2019/a-guide-to-modern-reproducible-data-science-with-r">watch the video</a>).</p>
 </div>
