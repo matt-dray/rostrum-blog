@@ -2,27 +2,48 @@
 title: Markov-chaining my PhD thesis II
 author: Matt Dray
 date: '2019-04-30'
-slug: markov-chain-phd-2
 categories:
-  - R
-  - text analysis
+  - code
+  - tutorial
 tags:
-  - phd
+  - furrr
   - markov chain
+  - markovifyR
+  - phd
+  - text
+slug: markov-chain-phd-2
 draft: no
 ---
 
 
 
-<p>Matt Dray (<a href="https://www.twitter.com/mattdray">@mattdray</a>)</p>
+<div class="figure">
+<img src="/post/2019-04-29-markov-chaining-my-phd-thesis-2_files/leaf-ash.jpg" alt="An overhead view of many circular vessels in a grid pattern that hold leaf fragments.">
+<p class="caption">
+This is science, I promise.
+</p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>A Markov chain perfectly summarises <a href="https://orca.cf.ac.uk/68365/">my entire PhD thesis</a>:</p>
+<blockquote>
+<p>In general, litter chemical composition and decomposition.</p>
+</blockquote>
+</div>
+<div id="markovifyr" class="section level1">
+<h1>{markovifyR}</h1>
 <p><a href="https://www.rostrum.blog/2018/06/30/markov-chain-phd/">I posted a while back</a> about using <a href="https://hackernoon.com/from-what-is-a-markov-model-to-here-is-how-markov-models-work-1ac5f4629b71">a Markov chain</a> to generate sentences using <a href="https://orca.cf.ac.uk/68365/">my PhD thesis</a> as input. I also posted about <a href="https://github.com/abresler/markovifyR">the {markovifyR} package</a> for <a href="https://www.rostrum.blog/2019/04/25/gen-tmg-lyrics/">generating lyrics by The Mountain Goats</a>.</p>
 <p>This is a quick update to that original post, but this time I’m using {markovifyR}.</p>
+</div>
+<div id="some-code" class="section level1">
+<h1>Some code</h1>
 <p>The PhD text is available from my {dray} package. I’ll remove the blank lines and ignore the preamble and references section. As a reminder, the thesis is about the decomposition of tree litter that’s been exposed to environmental stressors like elevated carbon dioxide levels and acidified streams.</p>
-<pre class="r"><code>library(dray)  # remotes::install_github(&quot;matt-dray/dray&quot;)
-phd_text &lt;- dray::phd  # get data
+<pre class="r"><code>library(dray)  # remotes::install_github(&quot;matt-dray/dray&quot;)</code></pre>
+<pre><code>## Still D-R-A-Y</code></pre>
+<pre class="r"><code>phd_text &lt;- dray::phd  # get data
 phd_text &lt;- phd[nchar(phd) &gt; 0]  # remove blank lines
 phd_text &lt;- phd[27:376]  # ignore preamble and references</code></pre>
-<p>Now to prepare the workspace. {markovifyR} is a wrapper of the <code>markovify</code> Python module; you need to install <code>markovify</code> with a call to <code>system()</code> and then also ensure you’ve installed {markovifyR} from GitHub and also th dependency {furrr}.</p>
+<p>Now to prepare the work space. {markovifyR} is a wrapper of the <code>markovify</code> Python module; you need to install <code>markovify</code> with a call to <code>system()</code> and then also ensure you’ve installed {markovifyR} from GitHub and also the dependency {furrr}.</p>
 <pre class="r"><code># Prepare the workspace
 # system(&quot;pip install markovify&quot;)
 library(markovifyR)  # remotes::install_github(&quot;abresler/markovifyR&quot;)
@@ -42,80 +63,128 @@ phd_speak &lt;- markovify_text(
   maximum_sentence_length = NULL,
   output_column_name = &#39;phd_speak&#39;,
   count = 50,
-  tries = 100,
+  tries = 50,
   only_distinct = TRUE,
   return_message = TRUE
 )</code></pre>
-<pre><code>## phd_speak: Taxon richness and diversity of terrestrial and aquatic ecosystems, allowing for a better understanding at several spatial scales.
-## phd_speak: All individuals were adults, apart from larval Odontocerum albicorne showed a feeding preference in the no-choice test using two-way ANOVA.
-## phd_speak: Princeton University Press, Cambridge.
-## phd_speak: The study of rotting detritus is not for the studies reported in Chapter 3 microbial conditioning was shown to affect leaf litter consumption by terrestrial and aquatic habitats: effects at the forest scale.
-## phd_speak: Journal of the studies reported in this thesis considered decay rates in both terrestrial and aquatic locations could affect the chemical composition of ambient- and elevated-CO2 litters.
-## phd_speak: Chapter 7 synthesises the findings of the Linnean Society, 91, 83–94.
-## phd_speak: Invertebrate species composition may also help explain the reduced decomposition rates and suppressed acid-sensitive families of Plecoptera, the major colonists of litter chemical composition, but little is known to affect plants physically.
-## phd_speak: This study aimed to understand how changes to atmospheric composition has the potential for algal colonisation of leaf Dry Mass
-## phd_speak: Bulletin of the no-choice test, the main and interactive effects of elevated CO2.
-## phd_speak: This simplicity has allowed for broad underlying principles to be made available to outside organisations.
-## phd_speak: For example, more work is required on the habitat: nitrogen increased and C/N ratio was reduced through time in all experiments, but different experimental conditions varied in their responses, suggesting that caution has to be taken when extrapolating general trends from single-species studies.
-## phd_speak: This could cause increased retention of SWD in terrestrial and aquatic invertebrate detritivores was species-specific.
-## phd_speak: A GLMM was also fitted to the use of loosely bound leaf packs could be disrupted by atmospheric CO2 reduced litter palatability to macroinvertebrate detritivores with consequences for ecological interactions in both terrestrial and aquatic organisms.
-## phd_speak: Biological Reviews of the experiments.
-## phd_speak: Journal of Ecology, Evolution, and Systematics, 17, 567–594.
-## phd_speak: Most species did not result in major differences in chemical composition of litter decay.
-## phd_speak: Pollutants dissolved in rainwater – particularly sulphur and nitrogen concentrations and greater C/N ratios.
-## phd_speak: In turn, foliar chemistry is affected, changing the chemical composition differently depending on whether it was exposed to terrestrial and aquatic organisms.
-## phd_speak: To investigate these effects, twigs of Betula pendula were produced for collection at each time period.
-## phd_speak: This work has not been submitted in substance for any degree or other award.
-## phd_speak: Relatively little work on the mesh of the North American Benthological Society, 21, 16–27.
-## phd_speak: 1000 ppm in the choice and no-choice tests.
-## phd_speak: A meta-analytic review of the litter layer.
-## phd_speak: Multiple stressor effects including greenhouse gases, urban pollution can increase it.
-## phd_speak: Trees were propagated from 16 March–29 October 2011 from in situ silver birch trees.
-## phd_speak: In contrast to this material also seemed to be used for chemical analyses.
-## phd_speak: Discs were replenished when at least in the aquatic experiment, 48 twig bags of each study site and secured with 0.5 m steel rod.
-## phd_speak: The use of macroinvertebrates of the North American Benthological Society, 16, 750–759.
-## phd_speak: It will therefore be important to understand how this will affect litter quality and breakdown, but not sufficiently to affect invertebrate feeding in Chapter 5, but the direction of response, only that there is a major source of energy for headwater streams of contrasting pH.
-## phd_speak: Twig chemical composition and decomposition of organic matter.
-## phd_speak: It will therefore be important to understand how changes to litter chemical composition and its subsequent decomposition.
-## phd_speak: This could cause increased retention of SWD may be more important than effects of initial chemical values, and stored at room temperature prior to experimentation.
-## phd_speak: Gulis, V., Rosemond, A.D., Reice, S.R., Elwood, J.W.
-## phd_speak: Effect of CO2 treatment on twig chemical composition and the total nitrogen content of the atmosphere.
-## phd_speak: This thesis is the result of the Cambridge Philosophical Society, 88, 327–348.
-## phd_speak: Pairs of contrasting pH.
-## phd_speak: Threads allocated to 0 and 28 days of exposure, and their effects on invertebrate assemblages.
-## phd_speak: Litter decomposition promotes carbon and nutrients to the experiments to allow for gut clearance.
-## phd_speak: For the aquatic study and those from 2012 were used to encase the leaves, but rather a thread is used to better mimic natural situations.
-## phd_speak: NMDS then iteratively assigns samples to a woodland floor for 0, 28, 56 and 112 days.
-## phd_speak: These results suggest that ongoing atmospheric changes could impact litter chemistry, affecting invertebrate feeding in Chapter 5, but the direction of these changes on consumer organisms.
-## phd_speak: During litter breakdown, environmental stressors had variable effects on the functioning of both terrestrial and aquatic ecosystems, and can inform mitigation strategies.
-## phd_speak: Thesis submitted for the choice test, consuming more ambient- than elevated-CO2 birch discs, but there are still knowledge gaps to be released and subsequently cycled, which supports food webs from the water.
-## phd_speak: Invertebrate feeding responses to alder were highly idiosyncratic in the choice test, leaf palatability affected invertebrate feeding, but this was dependent on the chemical composition of litter from the bottom-up.
-## phd_speak: The trees used in this study suggest that the parameter was removed during model minimisation; the GC × T interaction was removed during model minimisation.
-## phd_speak: Only one tree and one invertebrate species from different habitats is essential if we are to predict the response of litter decomposition in deciduous temperate forests and adjacent streams.
-## phd_speak: Canhoto, C. &amp; Coomes, D.A.
-## phd_speak: Further work is required to understand how this linkage might be affected by CO2 treatment on mass loss, although invertebrate diversity and richness generally fell through time in the terrestrial study.
-## phd_speak: Literature review: The effects of multiple, potentially interacting, stressors on this substrate.
-## phd_speak: Chapter 7 synthesises the findings expand on our current understanding of how humans may mitigate or cope with future perturbations to ecosystem service provision.</code></pre>
-<p>I ran this a few times and picked some favourites (my comments in square brackets):</p>
-<ul>
-<li>In general, litter chemical composition and decomposition. [This is the ultimate summary of my thesis.]</li>
-<li>Bonferroni-adjusted critical significance levels were compared by pairwise PERMANOVA. [That sure sounds like statistics!]</li>
-<li>Detritivorous macroinvertebrate species used to overcome this issue in future, where no material is used to hold them together. [That’s the basis for a sci-fi movie, surely?]</li>
-<li>A GLMM was also affected by growth condition, to be made available to outside organisations. [Not technically wrong: a variable affected a model, that model has been made available. Just sounds weird.]</li>
-<li>Canadian Journal of the laboratory in a randomly-ordered 3 × 3 grid. [That is one niche academic journal.]</li>
-<li>I am grateful for the choice test. [I designed and ran it, so I have only myself to thank.]</li>
-<li>This thesis is the total nitrogen content of the North American Benthological Society. [I’m sure the NABS has more nitrogen in its possession.]</li>
-<li>This simplicity has allowed for broad underlying principles to be linked to litter chemical composition differently depending on whether it was exposed to a labeled 0.5 m steel rod. [Holy smokes, who knew that the steel rods were the deciding factor? Were they radioactive or something?]</li>
-<li>My parents have never wavered in their responses, suggesting that caution has to be available online in the CEF. [It seems the Controlled Environment Facility (CEF) cannot control for the effect of parental input; best to provide some guidance on what to do if parental influence is strong.]</li>
-<li>This reduced decomposition rate in the University’s Open Access repository and for inter-library loan, and for inter-library loan, and for inter-library loans. [Ah good, slower-decomposing books will last longer; apparently this is important for inter-library loans? ]</li>
-<li>Deciduous woodlands are dependent on the parent tree. [Yes, all deciduous woodlands have one central master tree from which all the others are descended.]</li>
-<li>Currently there is a key ecosystem process in temperate deciduous woodlands and streams. [Yes, but what is it? I must know!]</li>
-</ul>
+<pre><code>## phd_speak: This includes a lack of response in chemical composition, mass loss and invertebrate assemblages, providing poor support for Hypothesis 1a.
+## phd_speak: This study set out to examine the effects of elevated CO2 on tree litter decay will respond to this expectation, compensatory feeding response is elicited when isopods are presented with material of known mass and composition, while being easy to produce and inexpensive.
+## phd_speak: Litter chemical composition and the other half contained one disc of each study site and secured with 0.5 m steel rods along 10 m reaches in each experiment, ten microcosms were set up to the storage and cycling of carbon and nitrogen values were used to correct for multiple comparisons.
+## phd_speak: The process of SWD in terrestrial and aquatic environments is that of stream exposure, with no differences after 60, 90 and 120 days.
+## phd_speak: To assess mass loss in the study.
+## phd_speak: Litter chemical composition and how this linkage might be affected by the mesh material and by tight packing of litter, limiting photosynthetic activity within the bags.
+## phd_speak: The New Phytologist, 159, 153–165.
+## phd_speak: Four of these environmental variables, so future studies should include a greater extent than for ambient- and elevated-CO2 litters, despite the perceived lower quality of ambient-CO2 litter lost more mass than elevated-CO2 litter, while ambient- and elevated-CO2 litters only.
+## phd_speak: The New Phytologist, 164, 347–355.
+## phd_speak: Shredders appeared to interact with the effects of atmospheric conditions, but the nature of the requirements for the degree of Doctor of Philosophy
+## phd_speak: McClaugherty, C.A., Pastor, J. &amp; Lamorte, R.L.
+## phd_speak: Chapter 2 reviews the literature regarding decomposition of elevated-CO2 twigs, with 26% mass lost in the University’s Open Access repository and for inter-library loans after expiry of a bar on access previously approved bar on access previously approved by the Academic Standards &amp; Quality Committee.
+## phd_speak: The decay coefficient, k, was calculated as the use of macroinvertebrates of the Royal Society B, 273, 1–9.
+## phd_speak: It will therefore be important to understand how ecosystems may be more important than effects of urban pollution had a greater influence on litter decay to the proportion of mass had been consumed.
+## phd_speak: Responses may vary along gradients of these processes up-to-date, as ongoing climate change processes.
+## phd_speak: Urban litter had lower carbon and nutrient storage of temperate forests and headwater streams, urban litter had lower carbon and nitrogen concentrations were compared by pairwise PERMANOVA.
+## phd_speak: Decay proceeded at a comparable rate to other Betula species, although there were no formal comparisons of the North American Benthological Society, 16, 750–759.
+## phd_speak: Overall, these results show how elevated atmospheric CO2 will have variable effects on this process.
+## phd_speak: This simplicity has allowed for broad underlying principles to be available online in the cycling of carbon and nutrient storage of temperate forests and streams.
+## phd_speak: Identifying the mechanisms governing such ecosystem variation in functional responses to this material as a fixed effect and rod number nested within stream identity as the process of SWD in woodland ecosystems could be affected by acidity.
+## phd_speak: Regardless of breakdown habitat, rural litter after 14 days.
+## phd_speak: The Science of the microcosms contained one ambient-CO2 disc and the terrestrial study.
+## phd_speak: This study has shown that changing growth conditions than ambient and elevated CO2 and stream pH; there was little effect of CO2 treatment and invertebrate assemblages were apparent.
+## phd_speak: This is likely to affect the process of litter from leaves grown under elevated CO2 on tree litter chemical composition and breakdown, and that acidity remains a threat to stream functioning despite some signs of recovery.
+## phd_speak: Graça, M.A.S., Cressa, C. &amp; Cairns, J.F.
+## phd_speak: A version of this approach must be addressed to achieve a greater ability to predict the consequences of elevated CO2.
+## phd_speak: Although there has been altered by the number of species, providing limited scope for identifying the responses among organisms.
+## phd_speak: The effect of atmospheric CO2 on litter
+## phd_speak: Biological Reviews of the litter from the no-choice test: Gammarus pulex and O. albicorne consumed more elevated-CO2 than ambient-CO2 leaf litter mass loss.
+## phd_speak: Little biofilm activity was recorded on leaf chemical composition to elevated CO2, as found for both Q. cerris L. and Q. pubescens Willd.
+## phd_speak: Stream acidification has consistently been shown to affect leaf litter was largely unaffected by CO2 treatment: elevated-CO2 twigs in both aquatic and terrestrial ecosystems under elevated CO2.
+## phd_speak: Nine threads were produced for collection at each of three blocks placed 20 m apart on a temperate deciduous woodlands.
+## phd_speak: 5.4.1 Litter chemical composition of leaf litter chemical composition and breakdown, but not sufficiently to affect leaf litter by increasing lignin concentrations, providing some support for Hypothesis 3a.
+## phd_speak: The New Phytologist, 195, 699–706.
+## phd_speak: Wallace, J.B., Eggert, S.L., Wallace, J.B., Eggert, S.L., Meyer, J.L.
+## phd_speak: Freshwater Biology, 4, 43–54.
+## phd_speak: Controls for the choice test, one disc of each chemical variable was not always predictable based on environmental conditions.
+## phd_speak: For example, it is important to explore effects of CO2 treatment on feeding responses of each CO2 treatment was pinned to the proportion of mass remaining at the end of the American Benthological Society, 23, 189–197.
+## phd_speak: These findings suggest that ongoing atmospheric changes could impact litter chemistry, mass loss and invertebrate community composition, nor were invertebrate abundance, richness and diversity were generally higher in elevated- than ambient-CO2 twigs on a small number of organisms of a community-level effect may also be due to reduced biotic activity.
+## phd_speak: This resulted in faster release of these changes on consumer organisms.
+## phd_speak: Urban litter had greater diversity than rural litter, while CO2 treatment and stream acidification.
+## phd_speak: Following invertebrate extraction, litter samples were individually immersed in liquid nitrogen and phosphorus concentration, lignin concentration and higher C/N ratio of ambient- and elevated-CO2 litters did not show a preference for ambient-CO2 litter.
+## phd_speak: 5.3 Materials and methods
+## phd_speak: The mean C/N ratio decreasing.
+## phd_speak: Microbial Ecology, 1, 85–93.
+## phd_speak: Little work has been conducted on the effects of growth condition, but only after 112 days when urban litter decaying faster but supporting similar invertebrate communities.
+## phd_speak: I hereby give consent for my thesis, if accepted, to be available online in the circumneutral than the effects of atmospheric pollution on litter quality and decomposition are affected by environmental changes and subsequent alterations to woody debris in temperate forests
+## phd_speak: Twig chemical composition and breakdown, and that local habitat conditions could also aggregate in streams, creating anoxic conditions and nutritional quality.
+## phd_speak: Hieber, M. &amp; Graça, M.A.S.
+## phd_speak: The decay coefficient, k, was calculated as the remaining ash-free dry mass of litter from leaves grown under elevated CO2.</code></pre>
+<p>I haven’t spent much time tweaking <a href="https://rdrr.io/github/abresler/markovifyR/man/generate_markovify_model.html">the arguments in <code>generate_markovify_model()</code></a>, but the results are pretty amusing anyway.</p>
+</div>
+<div id="robo-thesis" class="section level1">
+<h1>Robo-thesis</h1>
+<p>I ran this a few times and picked some favourites.</p>
+<table>
+<colgroup>
+<col width="42%" />
+<col width="57%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Output</th>
+<th align="left">Hot take</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><em>In general, litter chemical composition and decomposition.</em></td>
+<td align="left">This is the ultimate summary of my thesis.</td>
+</tr>
+<tr class="even">
+<td align="left"><em>This thesis is the total nitrogen content of the North American Benthological Society.</em></td>
+<td align="left">I’m sure the NABS has more nitrogen in its possession.</td>
+</tr>
+<tr class="odd">
+<td align="left"><em>This simplicity has allowed for broad underlying principles to be linked to litter chemical composition differently depending on whether it was exposed to a labeled 0.5 m steel rod.</em></td>
+<td align="left">Holy smokes, who knew that the steel rods were the deciding factor? Were they radioactive or something?</td>
+</tr>
+<tr class="even">
+<td align="left"><em>Deciduous woodlands are dependent on the parent tree.</em></td>
+<td align="left">Yes, all deciduous woodlands have one central master tree from which all the others are descended.</td>
+</tr>
+<tr class="odd">
+<td align="left"><em>Currently there is a key ecosystem process in temperate deciduous woodlands and streams.</em></td>
+<td align="left">Yes, but what is it? I must know!</td>
+</tr>
+<tr class="even">
+<td align="left"><em>Canadian Journal of the laboratory in a randomly-ordered 3 × 3 grid.</em></td>
+<td align="left">That is one niche academic journal.</td>
+</tr>
+<tr class="odd">
+<td align="left"><em>I am grateful for the choice test.</em></td>
+<td align="left">I designed and ran it, so I have only myself to thank.</td>
+</tr>
+<tr class="even">
+<td align="left"><em>My parents have never wavered in their responses, suggesting that caution has to be available online in the CEF.</em></td>
+<td align="left">It seems the Controlled Environment Facility (CEF) cannot control for the effect of parental input; best to provide some guidance on what to do if parental influence is strong.</td>
+</tr>
+<tr class="odd">
+<td align="left"><em>Bonferroni-adjusted critical significance levels were compared by pairwise PERMANOVA.</em></td>
+<td align="left">That sure sounds like statistics!</td>
+</tr>
+<tr class="even">
+<td align="left"><em>This reduced decomposition rate in the University’s Open Access repository and for inter-library loan, and for inter-library loan, and for inter-library loans.</em></td>
+<td align="left">Ah good, slower-decomposing books will last longer; apparently this is important for inter-library loans?</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="very-science-much-thesis" class="section level1">
+<h1>Very science, much thesis</h1>
 <p>Once again, simply copy and paste several of these sentences into your own thesis. The benefit is that you won’t have to grow any trees in a high carbon-dioxide atmosphere; you won’t have to spend months packing leaves into tiny bags; you won’t have to attach those bags to tens of IKEA cutlery holders and dunk them in frozen streams in mid-Wales; you won’t have to grind those leaves into a suspicious-looking powder and transport them cross-country for chemical analyses; you won’t have to imprison any insects against their will.</p>
 <p>Good luck at your viva!</p>
+<hr />
 <details>
 <p><summary>Session info</summary></p>
-<pre><code>## [1] &quot;Last updated 2019-04-30&quot;</code></pre>
+<pre><code>## [1] &quot;Last updated 2019-09-08&quot;</code></pre>
 <pre><code>## R version 3.5.2 (2018-12-20)
 ## Platform: x86_64-apple-darwin15.6.0 (64-bit)
 ## Running under: macOS High Sierra 10.13.6
@@ -123,26 +192,28 @@ phd_speak &lt;- markovify_text(
 ## Locale: en_GB.UTF-8 / en_GB.UTF-8 / en_GB.UTF-8 / C / en_GB.UTF-8 / en_GB.UTF-8
 ## 
 ## Package version:
-##   assertthat_0.2.0   base64enc_0.1.3    BH_1.69.0.1       
-##   blogdown_0.11      bookdown_0.9       cli_1.1.0         
-##   codetools_0.2-16   compiler_3.5.2     crayon_1.3.4      
-##   digest_0.6.18      dplyr_0.8.0.1      dray_0.0.0.9000   
-##   emo_0.0.0.9000     evaluate_0.13      fansi_0.4.0       
-##   furrr_0.1.0        future_1.12.0      gifski_0.8.6      
-##   globals_0.12.4     glue_1.3.0.9000    graphics_3.5.2    
+##   assertthat_0.2.1   backports_1.1.4    base64enc_0.1.3   
+##   BH_1.69.0.1        blogdown_0.11      bookdown_0.9      
+##   cli_1.1.0          codetools_0.2-16   compiler_3.5.2    
+##   crayon_1.3.4       digest_0.6.19      dplyr_0.8.1       
+##   dray_0.0.0.9000    evaluate_0.14      fansi_0.4.0       
+##   furrr_0.1.0        future_1.13.0      gifski_0.8.6      
+##   globals_0.12.4     glue_1.3.1         graphics_3.5.2    
 ##   grDevices_3.5.2    grid_3.5.2         highr_0.8         
-##   htmltools_0.3.6    httpuv_1.5.0       jsonlite_1.6      
-##   knitr_1.22         later_0.8.0        lattice_0.20-38   
-##   listenv_0.7.0      lubridate_1.7.4    magrittr_1.5      
-##   markdown_0.9       markovifyR_0.101   Matrix_1.2-16     
-##   methods_3.5.2      mime_0.6           parallel_3.5.2    
-##   pillar_1.3.1       pkgconfig_2.0.2    plogr_0.2.0       
-##   plotrix_3.7-4      promises_1.0.1     purrr_0.3.0       
-##   R6_2.4.0           RColorBrewer_1.1-2 Rcpp_1.0.1        
-##   reticulate_1.11.1  rlang_0.3.1        rmarkdown_1.12    
-##   rstudioapi_0.9.0   servr_0.13         stats_3.5.2       
-##   stringi_1.4.3      stringr_1.4.0      tibble_2.1.1      
-##   tidyselect_0.2.5   tinytex_0.11       tools_3.5.2       
-##   utf8_1.1.4         utils_3.5.2        wordcloud_2.6     
-##   xfun_0.5           yaml_2.2.0</code></pre>
+##   htmltools_0.3.6    httpuv_1.5.1       jsonlite_1.6      
+##   knitr_1.23         later_0.8.0        lattice_0.20-38   
+##   listenv_0.7.0      magrittr_1.5       markdown_1.0      
+##   markovifyR_0.101   Matrix_1.2-16      methods_3.5.2     
+##   mime_0.7           parallel_3.5.2     pillar_1.4.1      
+##   pkgconfig_2.0.2    plogr_0.2.0        plotrix_3.7-6     
+##   promises_1.0.1     purrr_0.3.2        R6_2.4.0          
+##   RColorBrewer_1.1-2 Rcpp_1.0.2         reticulate_1.12   
+##   rlang_0.4.0        rmarkdown_1.13     servr_0.13        
+##   stats_3.5.2        stringi_1.4.3      stringr_1.4.0     
+##   tibble_2.1.3       tidyselect_0.2.5   tinytex_0.13      
+##   tools_3.5.2        utf8_1.1.4         utils_3.5.2       
+##   vctrs_0.1.0        wordcloud_2.6      xfun_0.7          
+##   yaml_2.2.0         zeallot_0.1.0</code></pre>
 </details>
+<hr />
+</div>
