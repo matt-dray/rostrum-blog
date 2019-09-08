@@ -10,6 +10,7 @@ tags:
   - genius
   - markovifyR
   - music
+  - r
   - spotifyr
   - text
   - the mountain goats
@@ -60,13 +61,13 @@ goat_disco &lt;- goat_discography %&gt;%
 sample_n(goat_disco, 5) %&gt;%
   select(album_name, track_name, energy)  # a sample</code></pre>
 <pre><code>## # A tibble: 5 x 3
-##   album_name         track_name             energy
-##   &lt;chr&gt;              &lt;chr&gt;                   &lt;dbl&gt;
-## 1 Get Lonely         Maybe Sprout Wings      0.195
-## 2 Nine Black Poppies Pure Money              0.56 
-## 3 Ghana              Anti-Music Song         0.681
-## 4 All Eternals Deck  For Charles Bronson     0.369
-## 5 Tallahassee        Oceanographer’s Choice  0.685</code></pre>
+##   album_name         track_name                         energy
+##   &lt;chr&gt;              &lt;chr&gt;                               &lt;dbl&gt;
+## 1 All Eternals Deck  Damn These Vampires                 0.273
+## 2 Heretic Pride      Marduk T-Shirt Men&#39;s Room Incident  0.171
+## 3 All Eternals Deck  High Hawk Season                    0.27 
+## 4 Goths              Shelved                             0.598
+## 5 Nine Black Poppies Pure Money                          0.56</code></pre>
 <p>I’ll be saving this data frame for some other analysis, but for now we’ll need only the lyrics. The lyrics are stored in a list-column as a separate tibble (data frame) per song.</p>
 <pre class="r"><code>library(tidyr)  # for unnest()
 
@@ -79,16 +80,16 @@ goat_lyrics &lt;- goat_disco %&gt;%
   pull(lyric)  # convert column to character vector
 
 sample(goat_lyrics, 10)  # a sample</code></pre>
-<pre><code>##  [1] &quot;I heard your voice come lilting through the back of the refrigerator&quot;
-##  [2] &quot;See the ground was wet and they were everywhere&quot;                     
-##  [3] &quot;When they saw that the explosives in the cargo hold&quot;                 
-##  [4] &quot;I will not forget the shock that ran through me when&quot;                
-##  [5] &quot;Where the cool waters run&quot;                                           
-##  [6] &quot;That means you&#39;ll be coming back around&quot;                             
-##  [7] &quot;I went wading through the grass&quot;                                     
-##  [8] &quot;And you shut the door behind you&quot;                                    
-##  [9] &quot;They are warm and the air is warming up now&quot;                         
-## [10] &quot;Against my better judgement I feel alright&quot;</code></pre>
+<pre><code>##  [1] &quot;You can&#39;t cross the same river twice&quot;                     
+##  [2] &quot;And other times the sickness howls&quot;                       
+##  [3] &quot;Holt Boulevard&quot;                                           
+##  [4] &quot;I know you&#39;ve been waiting for a long, long time&quot;         
+##  [5] &quot;Hands in your pockets and sun on your face&quot;               
+##  [6] &quot;Anyone here mentions \&quot;Hotel California\&quot; dies before&quot;    
+##  [7] &quot;The way the wind seems to pass straight through your body&quot;
+##  [8] &quot;In a studio in Harlem&quot;                                    
+##  [9] &quot;Wait for the coming disaster&quot;                             
+## [10] &quot;Of the children playing double-dutch&quot;</code></pre>
 </div>
 <div id="generate-lyrics" class="section level1">
 <h1>Generate lyrics</h1>
@@ -118,56 +119,56 @@ library(furrr)  # install.packages(&quot;furrr&quot;)</code></pre>
   only_distinct = TRUE,
   return_message = TRUE
 )</code></pre>
-<pre><code>## goat_speak: I don&#39;t want to go
-## goat_speak: Stood out on the glass
-## goat_speak: That I will be too hot out there
-## goat_speak: And you&#39;re the one they tore down
-## goat_speak: I could feel the way you were anywhere near his door
-## goat_speak: The girls don&#39;t seem to burst out of my childhood
-## goat_speak: I shot him in his arms, safe in his favor would stand
-## goat_speak: Every now and then they&#39;re gone
-## goat_speak: And I saw him at the racetrack
-## goat_speak: But I know what we do along the thin canvas wall
-## goat_speak: And along the way he had gone
-## goat_speak: And we try to think good thoughts
-## goat_speak: Get the best of my time in prison
-## goat_speak: The glowing world, the bench backed up against my skin is warming up
-## goat_speak: Hope daily for healing, try not to open up to the boat
-## goat_speak: When I emerge, I find my own blood in my way back down, don&#39;t want to start like that, smiling for?
-## goat_speak: I&#39;m glad I am happy where the blinds back up
-## goat_speak: Some people leave before it&#39;s all wrong
-## goat_speak: Girl with a broadsword
-## goat_speak: And all the birds go by
-## goat_speak: Bright red air inside the house this morning
-## goat_speak: Strike funny poses, keep my cool ‘til it became too much of it, but I think I&#39;ll catch fire and burn slowly
-## goat_speak: The people I almost forgot that it was a kid
-## goat_speak: Stare down the shelter
-## goat_speak: Make you disappear as look at this showroom, filled with sound
-## goat_speak: The wind chimes rustling
-## goat_speak: The winter&#39;s wet, and the chemistry sets
-## goat_speak: Halls of the cave
-## goat_speak: Something here will eventually have to come by
-## goat_speak: Face in the net
-## goat_speak: And we raised a tower to broadcast all our posessions, we&#39;re going under
-## goat_speak: Saw you looking for hands
-## goat_speak: But if you see Mars in the street
-## goat_speak: You get to you
-## goat_speak: Gazed out through the kitchen
-## goat_speak: It gets okay to find the smoking wreck
-## goat_speak: There&#39;s not so many years I&#39;ve wondered who you are yet, I will burn all the ashes away
-## goat_speak: There&#39;s the other end
-## goat_speak: Since you&#39;ve left that I&#39;m aware of where our love in clear perspective
-## goat_speak: Someone set up the promise of the prime minister of Canada
-## goat_speak: And I went downtown, sold off most of them were good
-## goat_speak: Teeth filed down to Lloyd Center looking for my closeup today
-## goat_speak: And I let my small ship run aground
-## goat_speak: Had my hand rest against the edges of the stove
-## goat_speak: Nothing like a champagne bottle
-## goat_speak: I know I&#39;m doing fine
-## goat_speak: Shadows on the whole scene&#39;s like a message thumbtacked to the nonreactive ceramic tub
-## goat_speak: From one who&#39;s gone before me and
-## goat_speak: Fight through the static
-## goat_speak: Huge crows loitering by the water burn</code></pre>
+<pre><code>## goat_speak: The human element drags you down to hell
+## goat_speak: High as a rose
+## goat_speak: And I know who might or might not be allowed to touch anything
+## goat_speak: Open up your fishnets
+## goat_speak: Clouds bounced against the sink
+## goat_speak: I cut myself a switchblade
+## goat_speak: I take what I needed
+## goat_speak: But in the net
+## goat_speak: I&#39;m lying on the edge
+## goat_speak: For dear life, I guess but Jesus what a mess
+## goat_speak: They formed a heart pumping blood
+## goat_speak: But it&#39;s something I won&#39;t be cashing in your car and we clink our glasses
+## goat_speak: You can&#39;t cross the same blocked intersection
+## goat_speak: Long dinner with some skinheads
+## goat_speak: We are warm and the completeness
+## goat_speak: You were standing in the skin
+## goat_speak: Lighter than the first time
+## goat_speak: Leann Rimes on the kitchen
+## goat_speak: Down on the West Coast
+## goat_speak: Red squirrel looking down to the end of things, where the blinds back up
+## goat_speak: Planets in the front door
+## goat_speak: And God is my resting place
+## goat_speak: On the morning when I should not be your boy
+## goat_speak: We&#39;ve got stars in the harbor dawn
+## goat_speak: Always seems to pass straight through your hair
+## goat_speak: I let the water all day
+## goat_speak: Where will the spell remain?
+## goat_speak: And they pick me up and blesses me
+## goat_speak: We went down to the shadows but the shadow of a second rate songwriter from the darkening light
+## goat_speak: Remember soaring higher than a vanishing act
+## goat_speak: And some days I don&#39;t know what I was cold, clear water in the door
+## goat_speak: Headed straight for the flash
+## goat_speak: But everything ends in a slow drawl
+## goat_speak: And they&#39;re trying to beat to death
+## goat_speak: Try to see the look on my yellow shirt
+## goat_speak: In the squall of the hidden self-inflicted wounds
+## goat_speak: And there was wind
+## goat_speak: When I try to remember all your weapons
+## goat_speak: Can&#39;t ever set aside an hour
+## goat_speak: And brought me a seat?
+## goat_speak: Wear black wherever you may be the place the river began to bend
+## goat_speak: And I am the white bird was gone
+## goat_speak: I will be hell to pay down the strangers at the racetrack
+## goat_speak: Maybe tomorrow, maybe the next day someone&#39;s initials
+## goat_speak: And I walked out of breath
+## goat_speak: On the morning you went down to the floor now every last one
+## goat_speak: Friends who don&#39;t have to come
+## goat_speak: We&#39;d been staring at the water hotter than the devil&#39;s heart
+## goat_speak: For several hours and then orange then opting for secession
+## goat_speak: But I will come at me in jail until you see</code></pre>
 <p>I ran this function a few times and here a few outputs that made me laugh (or think):</p>
 <ul>
 <li>But I felt all the Portuguese water dogs?</li>
@@ -199,10 +200,10 @@ library(furrr)  # install.packages(&quot;furrr&quot;)</code></pre>
   only_distinct = TRUE,
   return_message = TRUE
 )</code></pre>
-<pre><code>## goat_lyric: I saw the shadows somewhere
-## goat_lyric: And I keep looking at the Travelodge
-## goat_lyric: But 1066 brought the fat vines look like frosted glass if you see is what you brought me some flowers
-## goat_lyric: So tie down the interest</code></pre>
+<pre><code>## goat_lyric: I felt free, and I won&#39;t be here for
+## goat_lyric: And the dying hours dry
+## goat_lyric: But you&#39;re gonna feel it in my pocket
+## goat_lyric: So I tore off to the dock dry</code></pre>
 <p>…or not.</p>
 <p>I think John Darnielle probably remains the best generator of Mountain Goats lyrics for now.</p>
 </div>
