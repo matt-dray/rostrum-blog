@@ -2,29 +2,33 @@
 title: Fix leaky pipes in R
 author: Matt Dray
 date: '2019-04-07'
-slug: fix-leaky-pipes
 categories:
-  - R
+  - code
+  - tutorial
 tags:
-  - dplyr
-  - tidylog
-  - pipecleaner
-  - pipes
-  - bizarro
+  - debug
   - magrittr
+  - pipe
+  - pipes
+  - pipecleaner
+  - tamper
+  - tidylog
   - tidyverse
+  - ViewPipeSteps
+slug: fix-leaky-pipes
 draft: no
 ---
 
 
 
-<p>Matt Dray (<a href="https://www.twitter.com/mattdray">@mattdray</a>)</p>
 <div class="figure">
-<img src="https://media.giphy.com/media/Y8qTuvMUjSh7a/giphy.gif" alt="Data leaking from a pipe (via Giphy)" />
-<p class="caption">Data leaking from a pipe (<a href="https://giphy.com/gifs/tony-bennett-Y8qTuvMUjSh7a">via Giphy</a>)</p>
+<img src="https://media.giphy.com/media/Y8qTuvMUjSh7a/giphy.gif" alt="The character Data from Star Trek: The Next Generation is smoking a pipe.">
+<p class="caption">
+Data leaking from a pipe (<a href="https://giphy.com/gifs/tony-bennett-Y8qTuvMUjSh7a">via Giphy</a>)
+</p>
 </div>
 <div id="tldr" class="section level1">
-<h1>TL;DR</h1>
+<h1>tl;dr</h1>
 <p>You can chain function calls in R with <code>%&gt;%</code>. There’s a few ways to catch errors in these pipelines.</p>
 </div>
 <div id="cest-un-pipe" class="section level1">
@@ -77,7 +81,7 @@ iris_pipe</code></pre>
 </tr>
 <tr class="even">
 <td align="left">{ViewPipeSteps}</td>
-<td align="left">RStudio addin: see changes to dataset per step</td>
+<td align="left">RStudio addin: see changes to data set per step</td>
 <td align="center">✘</td>
 <td align="center">✔</td>
 <td align="center">✔</td>
@@ -133,7 +137,7 @@ iris_pipe</code></pre>
 </tr>
 </tbody>
 </table>
-<p>‘Message’ means whether it prints something informative to the console; <code>View()</code> and <code>print()</code> tell you if the dataset can be viewed at each step; and ‘debug’ if it opens the debug menu.</p>
+<p>‘Message’ means whether it prints something informative to the console; <code>View()</code> and <code>print()</code> tell you if the data set can be viewed at each step; and ‘debug’ if it opens the debug menu.</p>
 <p>Read on for explanations and examples.</p>
 </div>
 <div id="ce-nest-pas-une-probleme" class="section level1">
@@ -160,7 +164,7 @@ iris_pipe</code></pre>
 </ol>
 <div id="summary-inspection" class="section level2">
 <h2>1. Summary inspection</h2>
-<p>These are packages for seeing what happened to your dataset at each step of your pipeline, rather than highlighting where the problem was.</p>
+<p>These are packages for seeing what happened to your data set at each step of your pipeline, rather than highlighting where the problem was.</p>
 <div id="tidylog" class="section level3">
 <h3>1a. {tidylog}</h3>
 <p><a href="https://github.com/elbersb/tidylog">The {tidylog} package</a> was written by <a href="https://elbersb.de/public/">Benjamin Elbers</a>. It prints to the console some summary sentences of the changes that have happened to your data after each {dplyr} step.</p>
@@ -202,17 +206,17 @@ library(tidylog)  # must be loaded after dplyr</code></pre>
 <pre><code>## group_by: one grouping variable (Sepal.Width)</code></pre>
 <pre><code>## summarise: now 0 rows and 2 columns, ungrouped</code></pre>
 <pre><code>## mutate: no changes</code></pre>
-<p>Did you spot the contrived error? I filtered for species that don’t exist in the dataset<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>. This was reported as <code>filter: removed all rows (100%)</code> in the first step.</p>
+<p>Did you spot the contrived error? I filtered for species that don’t exist in the data set<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>. This was reported as <code>filter: removed all rows (100%)</code> in the first step.</p>
 <p>I’ll unload {tidylog} before continuing so it doesn’t interfere with the other examples.</p>
 <pre class="r"><code>unloadNamespace(&quot;tidylog&quot;)</code></pre>
 </div>
 <div id="viewpipesteps" class="section level3">
 <h3>1b. {ViewPipeSteps}</h3>
-<p><a href="https://github.com/daranzolin/ViewPipeSteps">The {ViewPipeSteps} package</a> is an RStudio add-in created by <a href="https://daranzolin.github.io/">David Ranzolin</a>. Basically it runs <code>View()</code> or <code>print()</code> for each of the steps in your pipeline so you can see what’s happened to the the dataset.</p>
+<p><a href="https://github.com/daranzolin/ViewPipeSteps">The {ViewPipeSteps} package</a> is an RStudio add-in created by <a href="https://daranzolin.github.io/">David Ranzolin</a>. Basically it runs <code>View()</code> or <code>print()</code> for each of the steps in your pipeline so you can see what’s happened to the the data set.</p>
 <pre class="r"><code># remotes::install_github(&quot;daranzolin/ViewPipeSteps&quot;)  # not on CRAN
 library(ViewPipeSteps)</code></pre>
 <p>After installing you can simply highlight your code and select ‘View Pipe Chain Steps’ or ‘Print Pipe Chain Steps’ from the add-ins menu.</p>
-<p>Beware if you have lots of steps in your pipeline because it’s going to fill up your console or a while bunch of tabs or windows containing each cut of the dataset.</p>
+<p>Beware if you have lots of steps in your pipeline because it’s going to fill up your console or a while bunch of tabs or windows containing each cut of the data set.</p>
 </div>
 </div>
 <div id="debug-mode" class="section level2">
@@ -307,8 +311,8 @@ undebug(summarise)</code></pre>
 <p><a href="https://github.com/moodymudskipper">Antoine Fabri</a> forked the {magrittr} GitHub repo to add a bunch of <code>%&gt;%</code> variants that have side properties. These are available from his <a href="https://github.com/moodymudskipper/pipes">{pipes} package</a>.</p>
 <p>A few of direct relevance to this discussion:</p>
 <ul>
-<li><code>%P&gt;%</code> to <code>print()</code> the datset to the console</li>
-<li><code>%V&gt;%</code> will <code>View()</code> the full dataset</li>
+<li><code>%P&gt;%</code> to <code>print()</code> the data set to the console</li>
+<li><code>%V&gt;%</code> will <code>View()</code> the full data set</li>
 <li><code>%D&gt;%</code> opens with debug menu</li>
 </ul>
 <p>Others apply different functions during the piping step. There’s some nice ones for summaries, like <code>%glimpse&gt;%</code> and <code>%skim&gt;%</code>.</p>
@@ -344,7 +348,7 @@ library(pipes)</code></pre>
 <li>yes, you can assign to a <code>.</code>, but you’ll need to explicitly supply it as the data argument to the next function call in your Bizarro pipeline</li>
 <li>yes, you can use semi-colons in R for run-on code execution – try <code>head(iris); tail(iris)</code></li>
 </ul>
-<p>So what? Well, you can exeute each line in turn and check the output. But wait: an object called <code>.</code> is not presented in the global environment. Not unless you check ‘Show .Last.value in environment listing’ in RStudio’s settings. Now when you run the line you’ll see the ‘.Last.value’ that’s been output.</p>
+<p>So what? Well, you can execute each line in turn and check the output. But wait: an object called <code>.</code> is not presented in the global environment. Not unless you check ‘Show .Last.value in environment listing’ in RStudio’s settings. Now when you run the line you’ll see the ‘.Last.value’ that’s been output.</p>
 <pre class="r"><code>iris_bizarro &lt;- iris -&gt;.;
   filter(., Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;)) -&gt;.;
   group_by(., Species) -&gt;.;
@@ -364,35 +368,39 @@ library(pipes)</code></pre>
 <p>What’s your approach to this problem?</p>
 <p>What have I missed?</p>
 <div class="figure">
-<img src="https://media.giphy.com/media/TBddd797slSxO/giphy.gif" alt="Bonus cat-with-pipe gif (via Giphy)" />
-<p class="caption">Bonus cat-with-pipe gif (<a href="https://giphy.com/gifs/cat-funny-mash-up-TBddd797slSxO">via Giphy</a>)</p>
+<img src="https://media.giphy.com/media/TBddd797slSxO/giphy.gif" alt="A distinguished-looking cat with top hat, monocle and pipe walks through some grass."/>
+<p class="caption">
+Bonus cat-with-pipe gif (<a href="https://giphy.com/gifs/cat-funny-mash-up-TBddd797slSxO">via Giphy</a>)
+</p>
 </div>
-<p><details><summary>Click for session info</summary></p>
-<pre><code>## R version 3.5.3 (2019-03-11)
+<hr />
+<details>
+<p><summary>Click for session info</summary></p>
+<pre><code>## R version 3.5.2 (2018-12-20)
 ## Platform: x86_64-apple-darwin15.6.0 (64-bit)
-## Running under: macOS Mojave 10.14.1
+## Running under: macOS High Sierra 10.13.6
 ## 
 ## Locale: en_GB.UTF-8 / en_GB.UTF-8 / en_GB.UTF-8 / C / en_GB.UTF-8 / en_GB.UTF-8
 ## 
 ## Package version:
-##   assertthat_0.2.0 base64enc_0.1.3  BH_1.69.0.1      blogdown_0.7    
-##   bookdown_0.7     cli_1.0.1        compiler_3.5.3   crayon_1.3.4    
-##   digest_0.6.18    dplyr_0.8.0.1    emo_0.0.0.9000   evaluate_0.13   
-##   fansi_0.4.0      glue_1.3.0       graphics_3.5.3   grDevices_3.5.3 
-##   highr_0.7        htmltools_0.3.6  httpuv_1.4.5.1   jsonlite_1.6    
-##   knitr_1.22       later_0.8.0      lubridate_1.7.4  magrittr_1.5    
-##   markdown_0.9     methods_3.5.3    mime_0.6         pillar_1.3.1    
-##   pipes_0.0.0.9000 pkgconfig_2.0.2  plogr_0.2.0      promises_1.0.1  
-##   purrr_0.3.1      R6_2.4.0         Rcpp_1.0.0       rlang_0.3.1     
-##   rmarkdown_1.11   rstudioapi_0.10  servr_0.10       stats_3.5.3     
-##   stringi_1.3.1    stringr_1.4.0    tibble_2.0.1     tidyselect_0.2.5
-##   tinytex_0.10     tools_3.5.3      utf8_1.1.4       utils_3.5.3     
-##   xfun_0.5         yaml_2.2.0</code></pre>
-<p></details></p>
+##   assertthat_0.2.1 backports_1.1.4  base64enc_0.1.3  BH_1.69.0.1     
+##   blogdown_0.11    bookdown_0.9     cli_1.1.0        compiler_3.5.2  
+##   crayon_1.3.4     digest_0.6.19    dplyr_0.8.1      evaluate_0.14   
+##   fansi_0.4.0      glue_1.3.1       graphics_3.5.2   grDevices_3.5.2 
+##   highr_0.8        htmltools_0.3.6  httpuv_1.5.1     jsonlite_1.6    
+##   knitr_1.23       later_0.8.0      magrittr_1.5     markdown_1.0    
+##   methods_3.5.2    mime_0.7         pillar_1.4.1     pipes_0.0.0.9000
+##   pkgconfig_2.0.2  plogr_0.2.0      promises_1.0.1   purrr_0.3.2     
+##   R6_2.4.0         Rcpp_1.0.2       rlang_0.4.0      rmarkdown_1.13  
+##   servr_0.13       stats_3.5.2      stringi_1.4.3    stringr_1.4.0   
+##   tibble_2.1.3     tidyselect_0.2.5 tinytex_0.13     tools_3.5.2     
+##   utf8_1.1.4       utils_3.5.2      vctrs_0.1.0      xfun_0.7        
+##   yaml_2.2.0       zeallot_0.1.0</code></pre>
+</details>
 </div>
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>Welcome to Biology Geek Corner. <a href="https://www.nature.com/articles/378711a0">Cycliophora</a> is a <a href="https://en.wikipedia.org/wiki/Phylum">phylum</a> containing just <a href="https://en.wikipedia.org/wiki/Symbion">one genus and (probably) three species</a>. Our own phylum – <a href="https://en.wikipedia.org/wiki/Chordate">Chordata</a> – contains 55,000 species. <a href="https://en.wikipedia.org/wiki/Symbion_pandora"><em>Symbion pandora</em></a> was the first cycliophoran species found in 1995, which appears to live <a href="https://en.wikipedia.org/wiki/Commensalism">commensally</a> and exclusively on lobster lips. <a href="https://en.wikipedia.org/wiki/Onychophora">Onychophora</a> is the velvet worm phylum that contains wee beasties that <a href="https://www.youtube.com/watch?v=LY8TgD6-7kg">spray slime, have little adorable claws and are, surprise, kinda velvety</a> (<a href="https://www.wired.com/2014/10/velvet-worm-named-totoro/">one species is named ‘totoro’</a> because of its similarity to <a href="https://ghibli.fandom.com/wiki/My_Neighbor_Totoro">My Neighbour Totoro</a>’s <a href="https://ghibli.fandom.com/wiki/Catbus">Catbus</a>).<a href="#fnref1">↩</a></p></li>
+<li id="fn1"><p>Welcome to Biology Geek Corner. <a href="https://www.nature.com/articles/378711a0">Cycliophora</a> is a <a href="https://en.wikipedia.org/wiki/Phylum">phylum</a> containing just <a href="https://en.wikipedia.org/wiki/Symbion">one genus and (probably) three species</a>. Our own phylum – <a href="https://en.wikipedia.org/wiki/Chordate">Chordata</a> – contains 55,000 species. <a href="https://en.wikipedia.org/wiki/Symbion_pandora"><em>Symbion pandora</em></a> was the first cycliophoran species found in 1995, which appears to live <a href="https://en.wikipedia.org/wiki/Commensalism">commensally</a> and exclusively on lobster lips. <a href="https://en.wikipedia.org/wiki/Onychophora">Onychophora</a> is the velvet worm phylum that contains wee beasties that <a href="https://www.youtube.com/watch?v=LY8TgD6-7kg">spray slime, have little adorable claws and are, surprise, kinda velvety</a> (<a href="https://www.wired.com/2014/10/velvet-worm-named-totoro/">one species is named ‘totoro’</a> because of its similarity to <a href="https://ghibli.fandom.com/wiki/My_Neighbor_Totoro">My Neighbour Totoro</a>’s <a href="https://ghibli.fandom.com/wiki/Catbus">Catbus</a>).<a href="#fnref1" class="footnote-back">↩</a></p></li>
 </ol>
 </div>

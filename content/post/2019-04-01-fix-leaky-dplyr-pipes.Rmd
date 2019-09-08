@@ -2,25 +2,29 @@
 title: Fix leaky pipes in R
 author: Matt Dray
 date: '2019-04-07'
-slug: fix-leaky-pipes
 categories:
-  - R
+  - code
+  - tutorial
 tags:
-  - dplyr
-  - tidylog
-  - pipecleaner
-  - pipes
-  - bizarro
+  - debug
   - magrittr
+  - pipe
+  - pipes
+  - pipecleaner
+  - tamper
+  - tidylog
   - tidyverse
+  - ViewPipeSteps
+slug: fix-leaky-pipes
 draft: no
 ---
 
-Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
+<div class="figure">
+<img src="https://media.giphy.com/media/Y8qTuvMUjSh7a/giphy.gif" alt="The character Data from Star Trek: The Next Generation is smoking a pipe.">
+<p class="caption">Data leaking from a pipe ([via Giphy](https://giphy.com/gifs/tony-bennett-Y8qTuvMUjSh7a))</p>
+</div>
 
-![Data leaking from a pipe ([via Giphy](https://giphy.com/gifs/tony-bennett-Y8qTuvMUjSh7a))](https://media.giphy.com/media/Y8qTuvMUjSh7a/giphy.gif)
-
-# TL;DR
+# tl;dr
 
 You can chain function calls in R with `%>%`. There's a few ways to catch errors in these pipelines.
 
@@ -58,7 +62,7 @@ This table summarises it even more:
 | Package         | Description                                         | Message  | `View()` | `print()` | Debug    |
 | :---------------| :-------------------------------------------------- | :------: | :------: | :-------: | :------: |
 | {tidylog}       | Console-printed description of changes              | &#10004; | &#10008; | &#10008;  | &#10008; |
-| {ViewPipeSteps} | RStudio addin: see changes to dataset per step      | &#10008; | &#10004; | &#10004;  | &#10008; |
+| {ViewPipeSteps} | RStudio addin: see changes to data set per step      | &#10008; | &#10004; | &#10004;  | &#10008; |
 | {tamper}        | Stack trace replacement for pipe debugging          | &#10004; | &#10008; | &#10008;  | &#10004; |
 | {pipecleaner}   | RStudio addin: 'burst' pipes and debug              | &#10008; | &#10008; | &#10008;  | &#10004; |
 | {magrittr}      | `debug_pipe()` function                             | &#10008; | &#10008; | &#10008;  | &#10004; |
@@ -66,7 +70,7 @@ This table summarises it even more:
 | {pipes}         | Special assignment operators                        | &#10008; | &#10004; | &#10004;  | &#10004; |
 | Bizarro pipe    | Replace `%>%` with `->.;` and observe `.Last.level` | &#10008; | &#10008; | &#10008;  | &#10008; |
 
-'Message' means whether it prints something informative to the console; `View()` and `print()` tell you if the dataset can be viewed at each step; and 'debug' if it opens the debug menu.
+'Message' means whether it prints something informative to the console; `View()` and `print()` tell you if the data set can be viewed at each step; and 'debug' if it opens the debug menu.
 
 Read on for explanations and examples.
 
@@ -88,7 +92,7 @@ I've gathered some solutions into three categories (click to jump):
 
 ## 1. Summary inspection {#summary-inspection}
 
-These are packages for seeing what happened to your dataset at each step of your pipeline, rather than highlighting where the problem was.
+These are packages for seeing what happened to your data set at each step of your pipeline, rather than highlighting where the problem was.
 
 ### 1a. {tidylog} {#tidylog}
 
@@ -119,7 +123,7 @@ iris_pipe <- iris %>%
   mutate(`Mean width` = round(`Mean width`, 1))
 ```
 
-Did you spot the contrived error? I filtered for species that don't exist in the dataset[^species]. This was reported as `filter: removed all rows (100%)` in the first step. 
+Did you spot the contrived error? I filtered for species that don't exist in the data set[^species]. This was reported as `filter: removed all rows (100%)` in the first step. 
 
 I'll unload {tidylog} before continuing so it doesn't interfere with the other examples.
 
@@ -129,7 +133,7 @@ unloadNamespace("tidylog")
 
 ### 1b. {ViewPipeSteps} {#viewpipesteps}
 
-[The {ViewPipeSteps} package](https://github.com/daranzolin/ViewPipeSteps) is an RStudio add-in created by [David Ranzolin](https://daranzolin.github.io/). Basically it runs `View()` or `print()` for each of the steps in your pipeline so you can see what's happened to the the dataset.
+[The {ViewPipeSteps} package](https://github.com/daranzolin/ViewPipeSteps) is an RStudio add-in created by [David Ranzolin](https://daranzolin.github.io/). Basically it runs `View()` or `print()` for each of the steps in your pipeline so you can see what's happened to the the data set.
 
 ```{r viewpipesteps, eval=FALSE}
 # remotes::install_github("daranzolin/ViewPipeSteps")  # not on CRAN
@@ -138,7 +142,7 @@ library(ViewPipeSteps)
 
 After installing you can simply highlight your code and select 'View Pipe Chain Steps' or 'Print Pipe Chain Steps' from the add-ins menu.
 
-Beware if you have lots of steps in your pipeline because it's going to fill up your console or a while bunch of tabs or windows containing each cut of the dataset.
+Beware if you have lots of steps in your pipeline because it's going to fill up your console or a while bunch of tabs or windows containing each cut of the data set.
 
 ## 2. Debug mode {#debug-mode}
 
@@ -257,8 +261,8 @@ It's possible to make variant pipe operators. But maybe we don't even need `%>%`
 
 A few of direct relevance to this discussion:
 
-* `%P>%` to `print()` the datset to the console
-* `%V>%` will `View()` the full dataset
+* `%P>%` to `print()` the data set to the console
+* `%V>%` will `View()` the full data set
 * `%D>%` opens with debug menu
 
 Others apply different functions during the piping step. There's some nice ones for summaries, like `%glimpse>%` and `%skim>%`.
@@ -292,7 +296,7 @@ Things you might be wondering:
 * yes, you can assign to a `.`, but you'll need to explicitly supply it as the data argument to the next function call in your Bizarro pipeline
 * yes, you can use semi-colons in R for run-on code execution -- try `head(iris); tail(iris)`
 
-So what? Well, you can exeute each line in turn and check the output. But wait: an object called `.` is not presented in the global environment. Not unless you check 'Show .Last.value in environment listing' in RStudio's settings. Now when you run the line you'll see the '.Last.value' that's been output.
+So what? Well, you can execute each line in turn and check the output. But wait: an object called `.` is not presented in the global environment. Not unless you check 'Show .Last.value in environment listing' in RStudio's settings. Now when you run the line you'll see the '.Last.value' that's been output.
 
 ```{r bizarro-example}
 iris_bizarro <- iris ->.;
@@ -310,7 +314,12 @@ What's your approach to this problem?
 
 What have I missed?
 
-![Bonus cat-with-pipe gif ([via Giphy](https://giphy.com/gifs/cat-funny-mash-up-TBddd797slSxO))](https://media.giphy.com/media/TBddd797slSxO/giphy.gif)
+<div class="figure">
+<img src="https://media.giphy.com/media/TBddd797slSxO/giphy.gif" alt="A distinguished-looking cat with top hat, monocle and pipe walks through some grass."/>
+<p class="caption">Bonus cat-with-pipe gif ([via Giphy](https://giphy.com/gifs/cat-funny-mash-up-TBddd797slSxO))</p>
+</div>
+
+---
 
 <details><summary>Click for session info</summary>
 ```{r details, echo=FALSE}
