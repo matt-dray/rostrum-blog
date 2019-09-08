@@ -1,34 +1,33 @@
 ---
-title: "A tidyverse functions quiz with {learnr}"
+title: A tidyverse functions quiz with {learnr}
 author: Matt Dray
 date: '2019-03-18'
-slug: tidyverse-quiz
 categories:
-  - R
+  - app
+  - code
+  - teaching
+  - tutorial
 tags:
-  - quiz
   - learnr
-  - tidyverse
   - pacman
+  - quiz
+  - tidyverse
+slug: tidyverse-quiz
 draft: no
 ---
 
 
 
-<p>Matt Dray (<a href="https://www.twitter.com/mattdray">@mattdray</a>)</p>
-<div class="figure">
-<img src="https://raw.githubusercontent.com/matt-dray/tidyverse-quiz/master/images/tidyverse_quiz.gif" />
-
-</div>
+<p><img src="https://raw.githubusercontent.com/matt-dray/tidyverse-quiz/master/images/tidyverse_quiz.gif" alt="A demonstration of how to use the quiz by clicking 'get question', answering it, clicking 'submit answer', then fetching a new question with 'start over'."></p>
 <div id="tldr" class="section level1">
-<h1>TL;DR</h1>
+<h1>tl;dr</h1>
 <p>Can you match the tidyverse function to its package? I used <a href="https://rstudio.github.io/learnr/">{learnr}</a> to make a <a href="https://github.com/matt-dray/tidyquiz">‘tidyquiz’</a> to test you.</p>
 <p>A live version is available at <a href="https://mattdray.shinyapps.io/tidyquiz/" class="uri">https://mattdray.shinyapps.io/tidyquiz/</a></p>
 <p>To run locally and get the very latest functions:</p>
 <ol style="list-style-type: decimal">
-<li><code>remotes::install_github(&quot;matt-dray/tidyquiz&quot;)</code> to install {tidyquiz} (it’s a package!)</li>
+<li><code>remotes::install_github("matt-dray/tidyquiz")</code> to install {tidyquiz} (it’s a package!)</li>
 <li><code>library(tidyquiz)</code> to load it</li>
-<li><code>learnr::run_tutorial(&quot;tidy&quot;, package = &quot;tidyquiz&quot;)</code> to open in your browser</li>
+<li><code>learnr::run_tutorial("tidy", package = "tidyquiz")</code> to open in your browser</li>
 </ol>
 </div>
 <div id="the-problem" class="section level1">
@@ -41,14 +40,14 @@ Hardest part about <a href="https://twitter.com/hashtag/rstats?src=hash&amp;ref_
 — Ryan Timpe 🦖📊 (<span class="citation">@ryantimpe</span>) <a href="https://twitter.com/ryantimpe/status/1102666979909996545?ref_src=twsrc%5Etfw">March 4, 2019</a>
 </blockquote>
 <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
-<p>It’s easy enough to get out of this pickle, but maybe there’s a deeper problem? What if the purpose of each <a href="https://www.tidyverse.org/">tidyverse</a> isn’t clear enough?<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> Is there too much <a href="https://twitter.com/dnlmc/status/1105973896828866560">arbitrary jargon in the tidyverse</a>?</p>
-<p>Enjoy your existential crisis. Meanwhile, I’ve made a little quiz to see if you can remember whether <code>unnest()</code> is from {dplyr} or {tidyr}<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a>. In fact, it’s an interactive multi-choice test that presents you a random function from the tidyverse and challenges you to select the correct package.</p>
+<p>It’s easy enough to get out of this pickle, but maybe there’s a deeper problem? What if the purpose of each <a href="https://www.tidyverse.org/">tidyverse</a> isn’t clear enough?<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> Is there too much <a href="https://twitter.com/dnlmc/status/1105973896828866560">arbitrary jargon in the tidyverse</a>?</p>
+<p>Enjoy your existential crisis. Meanwhile, I’ve made a little quiz to see if you can remember whether <code>unnest()</code> is from {dplyr} or {tidyr}<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>. In fact, it’s an interactive multi-choice test that presents you a random function from the tidyverse and challenges you to select the correct package.</p>
 </div>
 <div id="step-0-the-approach" class="section level1">
 <h1>Step 0: the approach</h1>
 <p>I wanted:</p>
 <ol style="list-style-type: decimal">
-<li>To get a tidy dataframe of all the tidyverse package-function combos</li>
+<li>To get a tidy data frame of all the tidyverse package-function combos</li>
 <li>A user to be presented with an interactive question about one of these tidyverse functions</li>
 <li>The ability to generate a new question from within the document</li>
 <li>To share this quiz easily, without a server</li>
@@ -63,14 +62,14 @@ Hardest part about <a href="https://twitter.com/hashtag/rstats?src=hash&amp;ref_
 </div>
 <div id="step-1-package-function-combos" class="section level1">
 <h1>Step 1: package-function combos</h1>
-<p>The {tidyverse} package is a package that loads packages.<a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a> It’s a convenient way to load the eight core packages of the tidyverse.</p>
+<p>The {tidyverse} package is a package that loads packages.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> It’s a convenient way to load the eight core packages of the tidyverse.</p>
 <pre class="r"><code>library(tidyverse)</code></pre>
-<pre><code>## ── Attaching packages ──────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
-<pre><code>## ✔ ggplot2 3.1.0       ✔ purrr   0.3.0  
-## ✔ tibble  2.1.1       ✔ dplyr   0.8.0.1
-## ✔ tidyr   0.8.3       ✔ stringr 1.4.0  
-## ✔ readr   1.3.1       ✔ forcats 0.4.0</code></pre>
-<pre><code>## ── Conflicts ─────────────────────────────────────────────── tidyverse_conflicts() ──
+<pre><code>## ── Attaching packages ─────────────────────────── tidyverse 1.2.1 ──</code></pre>
+<pre><code>## ✔ ggplot2 3.1.1     ✔ purrr   0.3.2
+## ✔ tibble  2.1.3     ✔ dplyr   0.8.1
+## ✔ tidyr   0.8.3     ✔ stringr 1.4.0
+## ✔ readr   1.3.1     ✔ forcats 0.4.0</code></pre>
+<pre><code>## ── Conflicts ────────────────────────────── tidyverse_conflicts() ──
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()</code></pre>
 <p>But there’s more than these core eight. To access a list of functions for each package, we first need to load all the packages. We can get a character vector of them all with <code>tidyverse_packages()</code>.</p>
@@ -107,26 +106,26 @@ p_load(
 <p>Here’s a small sample:</p>
 <pre class="r"><code>sample_n(tidy_funs, 10)  # random sample</code></pre>
 <pre><code>## # A tibble: 10 x 2
-##    package   functions             
-##    &lt;chr&gt;     &lt;chr&gt;                 
-##  1 ggplot2   standardise_aes_names 
-##  2 lubridate ehours                
-##  3 dplyr     db_begin              
-##  4 forcats   fct_anon              
-##  5 purrr     chuck                 
-##  6 ggplot2   aes_q                 
-##  7 magrittr  is_less_than          
-##  8 xml2      xml_add_child         
-##  9 ggplot2   ggplot_add            
-## 10 ggplot2   scale_colour_gradient2</code></pre>
+##    package functions       
+##    &lt;chr&gt;   &lt;chr&gt;           
+##  1 xml2    xml_structure   
+##  2 ggplot2 label_bquote    
+##  3 forcats fct_c           
+##  4 rlang   is_dictionaryish
+##  5 readr   col_number      
+##  6 tibble  rowid_to_column 
+##  7 dplyr   quo             
+##  8 purrr   prepend         
+##  9 tidyr   separate_rows_  
+## 10 ggplot2 facet_null</code></pre>
 <p>Out of interest we can look at the packages with the most and fewest functions:</p>
 <pre class="r"><code>count(tidy_funs, package, sort = TRUE) %&gt;% slice(1:5)</code></pre>
 <pre><code>## # A tibble: 5 x 2
 ##   package       n
 ##   &lt;chr&gt;     &lt;int&gt;
-## 1 rlang       468
-## 2 ggplot2     456
-## 3 dplyr       258
+## 1 ggplot2     456
+## 2 rlang       455
+## 3 dplyr       261
 ## 4 lubridate   212
 ## 5 purrr       177</code></pre>
 <pre class="r"><code>count(tidy_funs, package) %&gt;% arrange(n) %&gt;% slice(1:5)</code></pre>
@@ -140,14 +139,14 @@ p_load(
 ## 5 readxl       13</code></pre>
 <p>Another source of confusion might be that some functions exist in multiple packages. How many functions?</p>
 <pre class="r"><code>count(tidy_funs, functions, sort = TRUE) %&gt;% filter(n &gt; 1) %&gt;% nrow()</code></pre>
-<pre><code>## [1] 95</code></pre>
-<p>Okay, we have our dataset, so let’s get quizzical.</p>
+<pre><code>## [1] 96</code></pre>
+<p>Okay, we have our data set, so let’s get quizzical.</p>
 </div>
 <div id="step-2-interactive-questions-with-learnr" class="section level1">
 <h1>Step 2: interactive questions with {learnr}</h1>
 <p>The <a href="https://rstudio.github.io/learnr/">{learnr} package</a> helps you turn an R Markdown document into an interactive tutorial with a little help from Shiny. One option is to create a multiple-choice question, which is exactly what we need.</p>
 <p>I should say that {learnr} wasn’t really intended for what I’ve done – it’s better suited to longform tutorials – but using it means that I didn’t have to write the logic for a multi-choice quiz question. Shrug.</p>
-<p>Having installed the package and <a href="https://rstudio.github.io/learnr/#getting_started">started a {learnr}-flavoured R Markdown</a><a href="#fn4" class="footnoteRef" id="fnref4"><sup>4</sup></a> we can create a question inside a code chunk in this form:</p>
+<p>Having installed the package and <a href="https://rstudio.github.io/learnr/#getting_started">started a {learnr}-flavoured R Markdown</a><a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> we can create a question inside a code chunk in this form:</p>
 <pre class="r"><code>quiz(
   caption = &quot;Question 1&quot;,
   question(
@@ -159,7 +158,7 @@ p_load(
     random_answer_order = TRUE  # answers ordered randomly
   )
 )</code></pre>
-<p>But this example is hardcoded. In our case we want to replace the subject of the question and the answers any time we want to be presented with a new question.</p>
+<p>But this example is hard-coded. In our case we want to replace the subject of the question and the answers any time we want to be presented with a new question.</p>
 <p>Looks like we’ll need a button for users to press to signal that they want a new question.</p>
 </div>
 <div id="step-3-generate-new-questions-with-shiny" class="section level1">
@@ -167,7 +166,7 @@ p_load(
 <p>Since {learnr} operates in a Shiny runtime in our R Markdown file, it’s no problem to use Shiny’s <code>actionButton()</code>.</p>
 <pre class="r"><code>actionButton(&quot;goButton&quot;, &quot;Get Question&quot;)  # button</code></pre>
 <p>You can press the button in the app to generate a new seed base don the current time and date. The seed is then used to randomly select a new question for the user.</p>
-<p>To make this reactive – so that nothing will happen until the button is pressed – we can write Shiny server code in an R Markdown chunk by setting <code>context=&quot;server&quot;</code> in the chunk options. So here’s how we get a new seed after clicking:</p>
+<p>To make this reactive – so that nothing will happen until the button is pressed – we can write Shiny server code in an R Markdown chunk by setting <code>context="server"</code> in the chunk options. So here’s how we get a new seed after clicking:</p>
 <pre class="r"><code>seed &lt;- eventReactive(
   input$goButton,
   {
@@ -175,7 +174,7 @@ p_load(
     return(seed_temp)
   }
 )</code></pre>
-<p>Then our code needs to sample a row from the full dataframe of package-function combos and isolate the name of the function the user will be quizzed on. This code is within <code>eventReactive()</code> and will only trigger when the button has been activated. Second, we use <code>renderText()</code> to take the function name and paste it into a string to create our question.</p>
+<p>Then our code needs to sample a row from the full data frame of package-function combos and isolate the name of the function the user will be quizzed on. This code is within <code>eventReactive()</code> and will only trigger when the button has been activated. Second, we use <code>renderText()</code> to take the function name and paste it into a string to create our question.</p>
 <pre class="r"><code># Set the reactive element
 fun_name &lt;- eventReactive(
   input$goButton,  # on input
@@ -193,8 +192,8 @@ fun_name &lt;- eventReactive(
 output$fun_name_out &lt;- renderText({
   paste0(&quot;The function `&quot;, fun_name(), &quot;` is from which tidyverse package?&quot;)
 })</code></pre>
-<p>We can repeat this for getting the right answer and alter the code slightly to generate a few wrong answers. A wrong answer is selected randomly from the dataframe of tidyverse functions, but only once the correct answer and already-selected wrong answers have been removed. I’ve also coded it so that any package that has a function with the same name – a conflict – will also be removed before a ‘wrong’ answer is chosen.</p>
-<p>So rather than the hardcoded example of a multi-choice question in Step 2, our quiz question code will look like this:</p>
+<p>We can repeat this for getting the right answer and alter the code slightly to generate a few wrong answers. A wrong answer is selected randomly from the data frame of tidyverse functions, but only once the correct answer and already-selected wrong answers have been removed. I’ve also coded it so that any package that has a function with the same name – a conflict – will also be removed before a ‘wrong’ answer is chosen.</p>
+<p>So rather than the hard-coded example of a multi-choice question in Step 2, our quiz question code will look like this:</p>
 <pre class="r"><code>quiz(
   caption = &quot;Question &quot;,
   question(
@@ -213,15 +212,15 @@ output$fun_name_out &lt;- renderText({
 <h1>Get the code</h1>
 <p>Browse the code <a href="https://github.com/matt-dray/tidyquiz">on GitHub</a> and <a href="https://github.com/matt-dray/tidyquiz/issues">leave an issue</a> with thoughts or suggestions.</p>
 <p>For example, it could definitely be improved if the user got a set of 10 questions that were graded to give a final mark. Maybe I’ll implement this one day.</p>
-<p>For now, give it a go and let me know if you ever find out if <code>drop_na()</code> is in {dplyr} or {tidyr}.<a href="#fn5" class="footnoteRef" id="fnref5"><sup>5</sup></a></p>
+<p>For now, give it a go and let me know if you ever find out if <code>drop_na()</code> is in {dplyr} or {tidyr}.<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a></p>
 </div>
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>Seems <a href="https://twitter.com/gerlach_d/status/1107718881970438144">even Hadley gets it wrong</a> sometimes.<a href="#fnref1">↩</a></p></li>
-<li id="fn2"><p>Am I tricking you? Is it actually from neither?<a href="#fnref2">↩</a></p></li>
-<li id="fn3"><p>The meme writes itself. Or rather, <a href="https://imgflip.com/memegenerator/Yo-Dawg-Heard-You">you can do it for me</a>.<a href="#fnref3">↩</a></p></li>
-<li id="fn4"><p>After installing {learnr} you can go to new R Markdown &gt; From Template &gt; Interactive Tutorial.<a href="#fnref4">↩</a></p></li>
-<li id="fn5"><p>Am I tricking you? Is it actually from neither?<a href="#fnref5">↩</a></p></li>
+<li id="fn1"><p>Seems <a href="https://twitter.com/gerlach_d/status/1107718881970438144">even Hadley gets it wrong</a> sometimes.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn2"><p>Am I tricking you? Is it actually from neither?<a href="#fnref2" class="footnote-back">↩</a></p></li>
+<li id="fn3"><p>The meme writes itself. Or rather, <a href="https://imgflip.com/memegenerator/Yo-Dawg-Heard-You">you can do it for me</a>.<a href="#fnref3" class="footnote-back">↩</a></p></li>
+<li id="fn4"><p>After installing {learnr} you can go to new R Markdown &gt; From Template &gt; Interactive Tutorial.<a href="#fnref4" class="footnote-back">↩</a></p></li>
+<li id="fn5"><p>Am I tricking you? Is it actually from neither?<a href="#fnref5" class="footnote-back">↩</a></p></li>
 </ol>
 </div>

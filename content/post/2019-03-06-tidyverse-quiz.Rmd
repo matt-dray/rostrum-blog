@@ -1,23 +1,25 @@
 ---
-title: "A tidyverse functions quiz with {learnr}"
+title: A tidyverse functions quiz with {learnr}
 author: Matt Dray
 date: '2019-03-18'
-slug: tidyverse-quiz
 categories:
-  - R
+  - app
+  - code
+  - teaching
+  - tutorial
 tags:
-  - quiz
   - learnr
-  - tidyverse
   - pacman
+  - quiz
+  - tidyverse
+slug: tidyverse-quiz
 draft: no
 ---
 
-Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
 
-![](https://raw.githubusercontent.com/matt-dray/tidyverse-quiz/master/images/tidyverse_quiz.gif)
+<img src="https://raw.githubusercontent.com/matt-dray/tidyverse-quiz/master/images/tidyverse_quiz.gif" alt="A demonstration of how to use the quiz by clicking 'get question', answering it, clicking 'submit answer', then fetching a new question with 'start over'.">
 
-# TL;DR
+# tl;dr
 
 Can you match the tidyverse function to its package? I used [{learnr}](https://rstudio.github.io/learnr/) to make a ['tidyquiz'](https://github.com/matt-dray/tidyquiz) to test you.
 
@@ -38,13 +40,13 @@ I saw a (probably) tongue-in-cheek tweet recently from [Ryan Timpe](https://twit
 
 It's easy enough to get out of this pickle, but maybe there's a deeper problem? What if the purpose of each [tidyverse](https://www.tidyverse.org/) isn't clear enough?[^wide-long] Is there too much [arbitrary jargon in the tidyverse](https://twitter.com/dnlmc/status/1105973896828866560)?
 
-Enjoy your existential crisis. Meanwhile, I've made a little quiz to see if you can remember whether `unnest()` is from {dplyr} or {tidyr}[^unnest]. In fact, it's an interactive multi-choice test that presents you a random function from the tidyverse and challenges you to select the correct package.
+Enjoy your existential crisis. Meanwhile, I've made a little quiz to see if you can remember whether `unnest()` is from {dplyr} or {tidyr}[^trick]. In fact, it's an interactive multi-choice test that presents you a random function from the tidyverse and challenges you to select the correct package.
 
 # Step 0: the approach
 
 I wanted:
 
-1. To get a tidy dataframe of all the tidyverse package-function combos
+1. To get a tidy data frame of all the tidyverse package-function combos
 1. A user to be presented with an interactive question about one of these tidyverse functions
 1. The ability to generate a new question from within the document
 1. To share this quiz easily, without a server
@@ -121,7 +123,7 @@ Another source of confusion might be that some functions exist in multiple packa
 count(tidy_funs, functions, sort = TRUE) %>% filter(n > 1) %>% nrow()
 ```
 
-Okay, we have our dataset, so let's get quizzical.
+Okay, we have our data set, so let's get quizzical.
 
 # Step 2: interactive questions with {learnr}
 
@@ -145,7 +147,7 @@ quiz(
 )
 ```
 
-But this example is hardcoded. In our case we want to replace the subject of the question and the answers any time we want to be presented with a new question.
+But this example is hard-coded. In our case we want to replace the subject of the question and the answers any time we want to be presented with a new question.
 
 Looks like we'll need a button for users to press to signal that they want a new question.
 
@@ -171,7 +173,7 @@ seed <- eventReactive(
 )
 ```
 
-Then our code needs to sample a row from the full dataframe of package-function combos and isolate the name of the function the user will be quizzed on. This code is within `eventReactive()` and will only trigger when the button has been activated. Second, we use `renderText()` to take the function name and paste it into a string to create our question. 
+Then our code needs to sample a row from the full data frame of package-function combos and isolate the name of the function the user will be quizzed on. This code is within `eventReactive()` and will only trigger when the button has been activated. Second, we use `renderText()` to take the function name and paste it into a string to create our question. 
 
 ```{r, shiny-reactive, eval=FALSE}
 # Set the reactive element
@@ -193,9 +195,9 @@ output$fun_name_out <- renderText({
 })
 ```
 
-We can repeat this for getting the right answer and alter the code slightly to generate a few wrong answers. A wrong answer is selected randomly from the dataframe of tidyverse functions, but only once the correct answer and already-selected wrong answers have been removed. I've also coded it so that any package that has a function with the same name -- a conflict -- will also be removed before a 'wrong' answer is chosen. 
+We can repeat this for getting the right answer and alter the code slightly to generate a few wrong answers. A wrong answer is selected randomly from the data frame of tidyverse functions, but only once the correct answer and already-selected wrong answers have been removed. I've also coded it so that any package that has a function with the same name -- a conflict -- will also be removed before a 'wrong' answer is chosen. 
 
-So rather than the hardcoded example of a multi-choice question in Step 2, our quiz question code will look like this:
+So rather than the hard-coded example of a multi-choice question in Step 2, our quiz question code will look like this:
 
 ```{r, reactive-question, eval=FALSE}
 quiz(
@@ -221,10 +223,9 @@ Browse the code [on GitHub](https://github.com/matt-dray/tidyquiz) and [leave an
 
 For example, it could definitely be improved if the user got a set of 10 questions that were graded to give a final mark. Maybe I'll implement this one day.
 
-For now, give it a go and let me know if you ever find out if `drop_na()` is in {dplyr} or {tidyr}.[^drop-na]
+For now, give it a go and let me know if you ever find out if `drop_na()` is in {dplyr} or {tidyr}.[^trick]
 
-[^unnest]: Am I tricking you? Is it actually from neither?
+[^trick]: Am I tricking you? Is it actually from neither?
 [^wide-long]: Seems [even Hadley gets it wrong](https://twitter.com/gerlach_d/status/1107718881970438144) sometimes.
 [^meme]: The meme writes itself. Or rather, [you can do it for me](https://imgflip.com/memegenerator/Yo-Dawg-Heard-You).
 [^learnr-rmd]: After installing {learnr} you can go to new R Markdown > From Template > Interactive Tutorial.
-[^drop-na]: Am I tricking you? Is it actually from neither?
