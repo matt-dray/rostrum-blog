@@ -1,32 +1,34 @@
 ---
-title: Generating Mountain Goats lyrics
+title: Generating the Mountain Goats lyrics
 author: Matt Dray
 date: '2019-04-25'
-slug: gen-tmg-lyrics
 categories:
-  - R
-  - pop culture
+  - code
+  - tutorial
 tags:
-  - dplyr
-  - spotifyr
+  - furrr
+  - genius
   - markovifyR
-  - markovify
-  - the mountain goats
   - music
-  - lyrics
+  - spotifyr
   - text
+  - the mountain goats
+  - tidyverse
+slug: gen-tmg-lyrics
 draft: no
 ---
 
-Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
+<div class="figure">
+<img src="https://media.giphy.com/media/3BZMxpu9VV6w7TnVdm/giphy.gif" alt="John Darnielle of the Mountain Goats holding up a limited edition LP of In League with Dragons with a shiny green slipcase that mimics dragon scales.">
+<p class="caption">John Darnielle with the green-scaled slipcase for In League with Dragons (Merge Records, [via Giphy](https://giphy.com/gifs/mergerecords-the-mountain-goats-john-darnielle-in-league-with-dragons-3BZMxpu9VV6w7TnVdm))</p>
+</div>
 
-![John Darnielle with the green-scaled slipcase for In League with Dragons](https://media.giphy.com/media/3BZMxpu9VV6w7TnVdm/giphy.gif)
 
 [The Mountain Goats](https://en.wikipedia.org/wiki/The_Mountain_Goats) released [_In League with Dragons_](https://www.metacritic.com/music/in-league-with-dragons/the-mountain-goats) today, their [seventeenth studio album](http://www.mountain-goats.com/discography/).
 
-[John Darnielle](https://en.wikipedia.org/wiki/John_Darnielle) has written a lot of words across the Mountain Goat's [back catalogue](https://en.wikipedia.org/wiki/The_Mountain_Goats_discography). His lyrics are poetic and descriptive, covering fictional and autobiographical themes that include susbtance abuse, professional wrestling and cadaver-sniffing dogs.
+[John Darnielle](https://en.wikipedia.org/wiki/John_Darnielle) has written a lot of words across the Mountain Goat's [back catalogue](https://en.wikipedia.org/wiki/The_Mountain_Goats_discography). His lyrics are poetic and descriptive, covering fictional and autobiographical themes that include substance abuse, professional wrestling and cadaver-sniffing dogs.
 
-Can we generate new Mountain Goats lyrics given this rich text dataset? This is a short post to do exactly that using the {spotifyr}, {genius} and {markovifyR} packages for R.
+Can we generate new Mountain Goats lyrics given this rich text data set? This is a short post to do exactly that using the {spotifyr}, {genius} and {markovifyR} packages for R.
 
 Hit play below while reading to generate the right mood.
 
@@ -34,7 +36,8 @@ Hit play below while reading to generate the right mood.
 
 # Get lyrics
 
-[The {spotifyr} package](https://www.rcharlie.com/spotifyr/)[^spotifyr] pulls artist and album information from the music streaming service [Spotify](https://www.spotify.com), along with some interesting audio features like 'danceability' and 'acousticness'. It also fetches lyrics from [Genius](https://genius.com/) via [the {genius} package](https://github.com/josiahparry/genius)[^genius].
+[The {spotifyr} package](https://www.rcharlie.com/spotifyr/) pulls artist and album information from the music streaming service [Spotify](https://www.spotify.com), along with some interesting audio features like 'danceability' and 'acousticness'. It also fetches lyrics from [Genius](https://genius.com/) via [the {genius} package](https://github.com/josiahparry/genius)
+.
 
 First get a developer account for the [Spotify API](https://developer.spotify.com/documentation/web-api/). Run `usethis::edit_r_environ()` and add your client ID and secret in the form `SPOTIFY_CLIENT_ID=X` and `SPOTIFY_CLIENT_SECRET=Y`. The `get_spotify_access_token()` function will add an access token to your environment, which will authenticate each API request.
 
@@ -47,16 +50,24 @@ The `get_discography()` function fetches a named artist's back-catalogue, includ
 
 ```{r eval=FALSE}
 goat_discography <- spotifyr::get_discography("the mountain goats")
-dim(goat_discography)
 ```
-```{r echo=FALSE}
-# An RDS of the raw dataframe was saved to desktop and called into this post.
-# This means I don't have to run get_discography() multiple times.
-goat_discography <- readRDS("~/Desktop/goat_discography.RDS")
+
+You can run the line above, or you can just use `download.file()` to get an RDS version stored on rostrum.blog (note that this file will become out of date as the Mountain Goats release more material).
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+# Download the RDS file of the raw dataframe
+download.file(
+  "https://www.rostrum.blog/datasets/goat_discography.RDS",  # data hosted here
+  "~/Documents/goat_discography.RDS"  # where to put file locally
+  )
+
+# Read the file from local source and check number of columns
+library(readr)
+goat_discography <- read_rds("~/Documents/goat_discography.RDS")
 dim(goat_discography)
 ```
 
-This is a hefty dataframe with 41 columns of data for nearly 400 songs. Let's simplify the columns and for fun we can look at five random sings and their 'energy'.
+This is a relatively wide data frame with 41 columns of data for nearly 400 songs. Let's simplify the columns and for fun we can look at five random sings and their 'energy'.
 
 ```{r message=FALSE}
 library(dplyr)  # for data manipulation and %>%
@@ -76,7 +87,7 @@ sample_n(goat_disco, 5) %>%
   select(album_name, track_name, energy)  # a sample
 ```
 
-I'll be saving this dataframe for some other analysis, but for now we'll need only the lyrics. The lyrics are stored in a list-column as a separate tibble (data frame) per song.
+I'll be saving this data frame for some other analysis, but for now we'll need only the lyrics. The lyrics are stored in a list-column as a separate tibble (data frame) per song.
 
 ```{r}
 library(tidyr)  # for unnest()
@@ -94,9 +105,9 @@ sample(goat_lyrics, 10)  # a sample
 
 # Generate lyrics
 
-We can use a Markov chain to generate new lyrics based on our dataset. Basically, it will predict the next word from the current one based on the likelihood from our input dataset. You can [read more about this principle elsewhere](https://hackernoon.com/from-what-is-a-markov-model-to-here-is-how-markov-models-work-1ac5f4629b71).
+We can use a Markov chain to generate new lyrics based on our data set. Basically, it will predict the next word from the current one based on the likelihood from our input data set. You can [read more about this principle elsewhere](https://hackernoon.com/from-what-is-a-markov-model-to-here-is-how-markov-models-work-1ac5f4629b71).
 
-[The {markovifyR} package](https://github.com/abresler/markovifyR)[^markovifyr] is a wrapper for [the Python package `markovify`](https://github.com/jsvine/markovify), which 'is a simple, extensible Markov chain generator'. You can install `markovify` at the command line via R's `system()` function. {furrr} is also needed.
+[The {markovifyR} package](https://github.com/abresler/markovifyR) is a wrapper for [the Python package `markovify`](https://github.com/jsvine/markovify), which 'is a simple, extensible Markov chain generator'. You can install `markovify` at the command line via R's `system()` function. {furrr} is also needed.
 
 ```{r message=FALSE}
 # system("pip install markovify")
@@ -117,7 +128,11 @@ markov_model <- generate_markovify_model(
 
 You can meddle with these controls, but I've kept to the suggested defaults for now. Note that 'overlap' relates to the likelihood of generating whole sentences that already exist. See [`markovify`](https://github.com/jsvine/markovify) for more detail.
 
-Now to generate a bunch of lines.
+## Generate lines
+
+Use the `markovify_text()` function with our `markov_model` object to generate single lines.
+
+Fans of the Mountain Goats will no doubt recognise some of the phrases from existing songs.
 
 ```{r}
 goat_speak <- markovify_text(
@@ -131,24 +146,24 @@ goat_speak <- markovify_text(
 )
 ```
 
-Mountain Goats fans will probably recognise a few familiar patterns in the text that emerges.
-
 I ran this function a few times and here a few outputs that made me laugh (or think):
 
-* And a bird we would have liked brought the Norman invasion
-* I hope I never liked Morrissey
-* Went and got the case of vodka from a disco in old east Berlin
-* Fresh coffee at sunrise, warm my lips like a dying man
 * But I felt all the Portuguese water dogs?
-* But my love is like a tattoo into my ear
 * I write reminders on my kimono that I could not remember
-* And you brought me a bowl of cooked wild grasses
-* We had hot caramel sticking to her skin
-* And then the special chicken
 * Leann Rimes on the ocean
 * Sunset spilling through your megaphone
 * It's the most gorgeous cow I'd ever wanted
+* I hope I never liked Morrissey
+* Went and got the case of vodka from a disco in old east Berlin
+* Fresh coffee at sunrise, warm my lips like a dying man
+* But my love is like a tattoo into my ear
+* And you brought me a bowl of cooked wild grasses
+* We had hot caramel sticking to her skin
+* And then the special chicken
+* And a bird we would have liked brought the Norman invasion
 * How come there's peacocks in the face of the rainbow
+
+## Generate a verse 
 
 You can also choose to seed the first word in the sentence. You can do this in such a way that you can create a sort-of possible-sounding stanza.
 
@@ -179,13 +194,11 @@ To learn more about the band:
 * [The annotated Mountain Goats](https://kylebarbour.org/tmg/)
 * [themountaingoats.net fan site](http://www.themountaingoats.net/)
 
+---
+
 <details><summary>Session info</summary>
 ```{r sessioninfo, echo=FALSE}
 paste("Last updated", Sys.Date())
 xfun::session_info()
 ```
 </details>
-
-[^spotifyr]: Charlie Thompson, Josiah Parry, Donal Phipps and Tom Wolff (2019). spotifyr: R Wrapper for the 'Spotify' Web API. R package version 2.1.0. https://CRAN.R-project.org/package=spotifyr
-[^genius]: Josiah Parry (2019). genius: Easily Access Song Lyrics from Genius. R package version 0.0.1.0. https://CRAN.R-project.org/package=genius
-[^markovifyr]: Alex Bresler (2017). markovifyR: R wrapper for the Markovify Python module. R package version 0.101. https://github.com/abresler/markovifyR

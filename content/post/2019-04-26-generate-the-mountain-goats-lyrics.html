@@ -1,47 +1,49 @@
 ---
-title: Generating Mountain Goats lyrics
+title: Generating the Mountain Goats lyrics
 author: Matt Dray
 date: '2019-04-25'
-slug: gen-tmg-lyrics
 categories:
-  - R
-  - pop culture
+  - code
+  - tutorial
 tags:
-  - dplyr
-  - spotifyr
+  - furrr
+  - genius
   - markovifyR
-  - markovify
-  - the mountain goats
   - music
-  - lyrics
+  - spotifyr
   - text
+  - the mountain goats
+  - tidyverse
+slug: gen-tmg-lyrics
 draft: no
 ---
 
 
 
-<p>Matt Dray (<a href="https://www.twitter.com/mattdray">@mattdray</a>)</p>
 <div class="figure">
-<img src="https://media.giphy.com/media/3BZMxpu9VV6w7TnVdm/giphy.gif" alt="John Darnielle with the green-scaled slipcase for In League with Dragons" />
-<p class="caption">John Darnielle with the green-scaled slipcase for In League with Dragons</p>
+<img src="https://media.giphy.com/media/3BZMxpu9VV6w7TnVdm/giphy.gif" alt="John Darnielle of the Mountain Goats holding up a limited edition LP of In League with Dragons with a shiny green slipcase that mimics dragon scales.">
+<p class="caption">
+John Darnielle with the green-scaled slipcase for In League with Dragons (Merge Records, <a href="https://giphy.com/gifs/mergerecords-the-mountain-goats-john-darnielle-in-league-with-dragons-3BZMxpu9VV6w7TnVdm">via Giphy</a>)
+</p>
 </div>
 <p><a href="https://en.wikipedia.org/wiki/The_Mountain_Goats">The Mountain Goats</a> released <a href="https://www.metacritic.com/music/in-league-with-dragons/the-mountain-goats"><em>In League with Dragons</em></a> today, their <a href="http://www.mountain-goats.com/discography/">seventeenth studio album</a>.</p>
-<p><a href="https://en.wikipedia.org/wiki/John_Darnielle">John Darnielle</a> has written a lot of words across the Mountain Goat’s <a href="https://en.wikipedia.org/wiki/The_Mountain_Goats_discography">back catalogue</a>. His lyrics are poetic and descriptive, covering fictional and autobiographical themes that include susbtance abuse, professional wrestling and cadaver-sniffing dogs.</p>
-<p>Can we generate new Mountain Goats lyrics given this rich text dataset? This is a short post to do exactly that using the {spotifyr}, {genius} and {markovifyR} packages for R.</p>
+<p><a href="https://en.wikipedia.org/wiki/John_Darnielle">John Darnielle</a> has written a lot of words across the Mountain Goat’s <a href="https://en.wikipedia.org/wiki/The_Mountain_Goats_discography">back catalogue</a>. His lyrics are poetic and descriptive, covering fictional and autobiographical themes that include substance abuse, professional wrestling and cadaver-sniffing dogs.</p>
+<p>Can we generate new Mountain Goats lyrics given this rich text data set? This is a short post to do exactly that using the {spotifyr}, {genius} and {markovifyR} packages for R.</p>
 <p>Hit play below while reading to generate the right mood.</p>
 <iframe src="https://open.spotify.com/embed/track/0R9CW6XBPlNLEoz8E4IIi6" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media">
 </iframe>
 <div id="get-lyrics" class="section level1">
 <h1>Get lyrics</h1>
-<p><a href="https://www.rcharlie.com/spotifyr/">The {spotifyr} package</a><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> pulls artist and album information from the music streaming service <a href="https://www.spotify.com">Spotify</a>, along with some interesting audio features like ‘danceability’ and ‘acousticness’. It also fetches lyrics from <a href="https://genius.com/">Genius</a> via <a href="https://github.com/josiahparry/genius">the {genius} package</a><a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>.</p>
+<p><a href="https://www.rcharlie.com/spotifyr/">The {spotifyr} package</a> pulls artist and album information from the music streaming service <a href="https://www.spotify.com">Spotify</a>, along with some interesting audio features like ‘danceability’ and ‘acousticness’. It also fetches lyrics from <a href="https://genius.com/">Genius</a> via <a href="https://github.com/josiahparry/genius">the {genius} package</a>
+.</p>
 <p>First get a developer account for the <a href="https://developer.spotify.com/documentation/web-api/">Spotify API</a>. Run <code>usethis::edit_r_environ()</code> and add your client ID and secret in the form <code>SPOTIFY_CLIENT_ID=X</code> and <code>SPOTIFY_CLIENT_SECRET=Y</code>. The <code>get_spotify_access_token()</code> function will add an access token to your environment, which will authenticate each API request.</p>
 <pre class="r"><code>library(spotifyr)  # install.packages(&quot;spotifyr&quot;)
 access_token &lt;- get_spotify_access_token()</code></pre>
 <p>The <code>get_discography()</code> function fetches a named artist’s back-catalogue, including the lyrics. Beware: this may include some duplicates from different regions or because of reissues or deluxe versions.</p>
-<pre class="r"><code>goat_discography &lt;- spotifyr::get_discography(&quot;the mountain goats&quot;)
-dim(goat_discography)</code></pre>
+<pre class="r"><code>goat_discography &lt;- spotifyr::get_discography(&quot;the mountain goats&quot;)</code></pre>
+<p>You can run the line above, or you can just use <code>download.file()</code> to get an RDS version stored on rostrum.blog (note that this file will become out of date as the Mountain Goats release more material).</p>
 <pre><code>## [1] 399  41</code></pre>
-<p>This is a hefty dataframe with 41 columns of data for nearly 400 songs. Let’s simplify the columns and for fun we can look at five random sings and their ‘energy’.</p>
+<p>This is a relatively wide data frame with 41 columns of data for nearly 400 songs. Let’s simplify the columns and for fun we can look at five random sings and their ‘energy’.</p>
 <pre class="r"><code>library(dplyr)  # for data manipulation and %&gt;%
 
 goat_disco &lt;- goat_discography %&gt;% 
@@ -58,14 +60,14 @@ goat_disco &lt;- goat_discography %&gt;%
 sample_n(goat_disco, 5) %&gt;%
   select(album_name, track_name, energy)  # a sample</code></pre>
 <pre><code>## # A tibble: 5 x 3
-##   album_name                           track_name                 energy
-##   &lt;chr&gt;                                &lt;chr&gt;                       &lt;dbl&gt;
-## 1 Bitter Melon Farm                    Star Dusting                0.437
-## 2 Transcendental Youth                 Counterfeit Florida Plates  0.714
-## 3 Protein Source Of The Future... Now! Going To Malibu             0.803
-## 4 Full Force Galesburg                 Minnesota                   0.452
-## 5 In League with Dragons               Younger                     0.586</code></pre>
-<p>I’ll be saving this dataframe for some other analysis, but for now we’ll need only the lyrics. The lyrics are stored in a list-column as a separate tibble (data frame) per song.</p>
+##   album_name         track_name             energy
+##   &lt;chr&gt;              &lt;chr&gt;                   &lt;dbl&gt;
+## 1 Get Lonely         Maybe Sprout Wings      0.195
+## 2 Nine Black Poppies Pure Money              0.56 
+## 3 Ghana              Anti-Music Song         0.681
+## 4 All Eternals Deck  For Charles Bronson     0.369
+## 5 Tallahassee        Oceanographer’s Choice  0.685</code></pre>
+<p>I’ll be saving this data frame for some other analysis, but for now we’ll need only the lyrics. The lyrics are stored in a list-column as a separate tibble (data frame) per song.</p>
 <pre class="r"><code>library(tidyr)  # for unnest()
 
 goat_lyrics &lt;- goat_disco %&gt;%
@@ -77,21 +79,21 @@ goat_lyrics &lt;- goat_disco %&gt;%
   pull(lyric)  # convert column to character vector
 
 sample(goat_lyrics, 10)  # a sample</code></pre>
-<pre><code>##  [1] &quot;I try to remember to write in the diary&quot;                         
-##  [2] &quot;Feel bad about the things we do along the way&quot;                   
-##  [3] &quot;I was a red dot blinking on a screen up overhead&quot;                
-##  [4] &quot;Been waiting such a long time now, my number&#39;s finally coming up&quot;
-##  [5] &quot;Drunk on the spirit and high on fumes&quot;                           
-##  [6] &quot;To piss off the dumb few that forgave us&quot;                        
-##  [7] &quot;Save yourselves&quot;                                                 
-##  [8] &quot;Two of the renegades carrying firewood, a third with a lightbulb&quot;
-##  [9] &quot;Garden Grove&quot;                                                    
-## [10] &quot;But the devil is in the details&quot;</code></pre>
+<pre><code>##  [1] &quot;I heard your voice come lilting through the back of the refrigerator&quot;
+##  [2] &quot;See the ground was wet and they were everywhere&quot;                     
+##  [3] &quot;When they saw that the explosives in the cargo hold&quot;                 
+##  [4] &quot;I will not forget the shock that ran through me when&quot;                
+##  [5] &quot;Where the cool waters run&quot;                                           
+##  [6] &quot;That means you&#39;ll be coming back around&quot;                             
+##  [7] &quot;I went wading through the grass&quot;                                     
+##  [8] &quot;And you shut the door behind you&quot;                                    
+##  [9] &quot;They are warm and the air is warming up now&quot;                         
+## [10] &quot;Against my better judgement I feel alright&quot;</code></pre>
 </div>
 <div id="generate-lyrics" class="section level1">
 <h1>Generate lyrics</h1>
-<p>We can use a Markov chain to generate new lyrics based on our dataset. Basically, it will predict the next word from the current one based on the likelihood from our input dataset. You can <a href="https://hackernoon.com/from-what-is-a-markov-model-to-here-is-how-markov-models-work-1ac5f4629b71">read more about this principle elsewhere</a>.</p>
-<p><a href="https://github.com/abresler/markovifyR">The {markovifyR} package</a><a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> is a wrapper for <a href="https://github.com/jsvine/markovify">the Python package <code>markovify</code></a>, which ‘is a simple, extensible Markov chain generator’. You can install <code>markovify</code> at the command line via R’s <code>system()</code> function. {furrr} is also needed.</p>
+<p>We can use a Markov chain to generate new lyrics based on our data set. Basically, it will predict the next word from the current one based on the likelihood from our input data set. You can <a href="https://hackernoon.com/from-what-is-a-markov-model-to-here-is-how-markov-models-work-1ac5f4629b71">read more about this principle elsewhere</a>.</p>
+<p><a href="https://github.com/abresler/markovifyR">The {markovifyR} package</a> is a wrapper for <a href="https://github.com/jsvine/markovify">the Python package <code>markovify</code></a>, which ‘is a simple, extensible Markov chain generator’. You can install <code>markovify</code> at the command line via R’s <code>system()</code> function. {furrr} is also needed.</p>
 <pre class="r"><code># system(&quot;pip install markovify&quot;)
 library(markovifyR)  # remotes::install_github(&quot;abresler/markovifyR&quot;)
 library(furrr)  # install.packages(&quot;furrr&quot;)</code></pre>
@@ -103,7 +105,10 @@ library(furrr)  # install.packages(&quot;furrr&quot;)</code></pre>
     max_overlap_ratio = 0.7
   )</code></pre>
 <p>You can meddle with these controls, but I’ve kept to the suggested defaults for now. Note that ‘overlap’ relates to the likelihood of generating whole sentences that already exist. See <a href="https://github.com/jsvine/markovify"><code>markovify</code></a> for more detail.</p>
-<p>Now to generate a bunch of lines.</p>
+<div id="generate-lines" class="section level2">
+<h2>Generate lines</h2>
+<p>Use the <code>markovify_text()</code> function with our <code>markov_model</code> object to generate single lines.</p>
+<p>Fans of the Mountain Goats will no doubt recognise some of the phrases from existing songs.</p>
 <pre class="r"><code>goat_speak &lt;- markovify_text(
   markov_model = markov_model,
   maximum_sentence_length = NULL,
@@ -113,74 +118,76 @@ library(furrr)  # install.packages(&quot;furrr&quot;)</code></pre>
   only_distinct = TRUE,
   return_message = TRUE
 )</code></pre>
-<pre><code>## goat_speak: Shower room full of promise and potential
-## goat_speak: On the floor again
-## goat_speak: The singer&#39;s locked up in the room fill with steam
-## goat_speak: To tell the cameras
-## goat_speak: Your hair was dark and there is nobody driving
-## goat_speak: You&#39;ll be maybe lunging for the fever to break my fall
-## goat_speak: Deep in my teeth into your handbag and puled out a place to go
-## goat_speak: The color of the night came on, you burst into song
-## goat_speak: Feel like the rhythm of the death-dealing physician
-## goat_speak: As the windows down
-## goat_speak: And I know you see is what you will be saved
-## goat_speak: Don&#39;t feel like I&#39;m gonna take this rabbit into Malibu
-## goat_speak: Children in the desert sand
-## goat_speak: I saw something dark and then remember you
-## goat_speak: The wind from the hands of children
-## goat_speak: The wind behind us like ribbons
-## goat_speak: Let&#39;s go to Maine right now headed silent down the sails tonight
-## goat_speak: You come into the Grand Am
-## goat_speak: Orphans in the black walnut tree
-## goat_speak: To the rooms with the windows on the dunes
-## goat_speak: You were looking at you
-## goat_speak: When we meet again?
-## goat_speak: Perfectly aware of where our love in clear perspective
-## goat_speak: Preacher in the rafters
-## goat_speak: Heading to the concrete walls in shadow
-## goat_speak: They were on Cherry Red I think I&#39;ll stay here
-## goat_speak: There&#39;s champagne on the wind come through his teeth
-## goat_speak: Try not to lose you
-## goat_speak: I fear for my safety, you can see that you&#39;re wearing a wire
-## goat_speak: All the way home from the Hunan Province
-## goat_speak: Let&#39;s go where everybody knows
-## goat_speak: I throw up in the rain falling from the world, I may not ever get the call
-## goat_speak: Though we may kiss no more after me
-## goat_speak: You had sugar on your hair behind your head someday
-## goat_speak: I heard you saying anyway
-## goat_speak: When you eased down the Hertzsprung-Russell diagram
-## goat_speak: To an afternoon I spent in jail again
-## goat_speak: Got out of the refrigerator
-## goat_speak: The wind blew through your body breathing on mine
-## goat_speak: We had hot caramel sticking to her skin
-## goat_speak: See the rain, feel the new found, rich brown, deep, wet ground
-## goat_speak: From all away across the bruised earth
-## goat_speak: When I got real cold
-## goat_speak: Like a desperate strength
-## goat_speak: Try not to open up your eyes
-## goat_speak: Pull down my throat, fresh blood in our throats
-## goat_speak: What it is that I&#39;m aware of where I stand
-## goat_speak: When I get the call
-## goat_speak: But none of your hair
-## goat_speak: Wheels were spitting out sparks, scraping at the stars and knew the secrets within them</code></pre>
-<p>Mountain Goats fans will probably recognise a few familiar patterns in the text that emerges.</p>
+<pre><code>## goat_speak: I don&#39;t want to go
+## goat_speak: Stood out on the glass
+## goat_speak: That I will be too hot out there
+## goat_speak: And you&#39;re the one they tore down
+## goat_speak: I could feel the way you were anywhere near his door
+## goat_speak: The girls don&#39;t seem to burst out of my childhood
+## goat_speak: I shot him in his arms, safe in his favor would stand
+## goat_speak: Every now and then they&#39;re gone
+## goat_speak: And I saw him at the racetrack
+## goat_speak: But I know what we do along the thin canvas wall
+## goat_speak: And along the way he had gone
+## goat_speak: And we try to think good thoughts
+## goat_speak: Get the best of my time in prison
+## goat_speak: The glowing world, the bench backed up against my skin is warming up
+## goat_speak: Hope daily for healing, try not to open up to the boat
+## goat_speak: When I emerge, I find my own blood in my way back down, don&#39;t want to start like that, smiling for?
+## goat_speak: I&#39;m glad I am happy where the blinds back up
+## goat_speak: Some people leave before it&#39;s all wrong
+## goat_speak: Girl with a broadsword
+## goat_speak: And all the birds go by
+## goat_speak: Bright red air inside the house this morning
+## goat_speak: Strike funny poses, keep my cool ‘til it became too much of it, but I think I&#39;ll catch fire and burn slowly
+## goat_speak: The people I almost forgot that it was a kid
+## goat_speak: Stare down the shelter
+## goat_speak: Make you disappear as look at this showroom, filled with sound
+## goat_speak: The wind chimes rustling
+## goat_speak: The winter&#39;s wet, and the chemistry sets
+## goat_speak: Halls of the cave
+## goat_speak: Something here will eventually have to come by
+## goat_speak: Face in the net
+## goat_speak: And we raised a tower to broadcast all our posessions, we&#39;re going under
+## goat_speak: Saw you looking for hands
+## goat_speak: But if you see Mars in the street
+## goat_speak: You get to you
+## goat_speak: Gazed out through the kitchen
+## goat_speak: It gets okay to find the smoking wreck
+## goat_speak: There&#39;s not so many years I&#39;ve wondered who you are yet, I will burn all the ashes away
+## goat_speak: There&#39;s the other end
+## goat_speak: Since you&#39;ve left that I&#39;m aware of where our love in clear perspective
+## goat_speak: Someone set up the promise of the prime minister of Canada
+## goat_speak: And I went downtown, sold off most of them were good
+## goat_speak: Teeth filed down to Lloyd Center looking for my closeup today
+## goat_speak: And I let my small ship run aground
+## goat_speak: Had my hand rest against the edges of the stove
+## goat_speak: Nothing like a champagne bottle
+## goat_speak: I know I&#39;m doing fine
+## goat_speak: Shadows on the whole scene&#39;s like a message thumbtacked to the nonreactive ceramic tub
+## goat_speak: From one who&#39;s gone before me and
+## goat_speak: Fight through the static
+## goat_speak: Huge crows loitering by the water burn</code></pre>
 <p>I ran this function a few times and here a few outputs that made me laugh (or think):</p>
 <ul>
-<li>And a bird we would have liked brought the Norman invasion</li>
-<li>I hope I never liked Morrissey</li>
-<li>Went and got the case of vodka from a disco in old east Berlin</li>
-<li>Fresh coffee at sunrise, warm my lips like a dying man</li>
 <li>But I felt all the Portuguese water dogs?</li>
-<li>But my love is like a tattoo into my ear</li>
 <li>I write reminders on my kimono that I could not remember</li>
-<li>And you brought me a bowl of cooked wild grasses</li>
-<li>We had hot caramel sticking to her skin</li>
-<li>And then the special chicken</li>
 <li>Leann Rimes on the ocean</li>
 <li>Sunset spilling through your megaphone</li>
 <li>It’s the most gorgeous cow I’d ever wanted</li>
+<li>I hope I never liked Morrissey</li>
+<li>Went and got the case of vodka from a disco in old east Berlin</li>
+<li>Fresh coffee at sunrise, warm my lips like a dying man</li>
+<li>But my love is like a tattoo into my ear</li>
+<li>And you brought me a bowl of cooked wild grasses</li>
+<li>We had hot caramel sticking to her skin</li>
+<li>And then the special chicken</li>
+<li>And a bird we would have liked brought the Norman invasion</li>
 <li>How come there’s peacocks in the face of the rainbow</li>
 </ul>
+</div>
+<div id="generate-a-verse" class="section level2">
+<h2>Generate a verse</h2>
 <p>You can also choose to seed the first word in the sentence. You can do this in such a way that you can create a sort-of possible-sounding stanza.</p>
 <pre class="r"><code>goat_speak &lt;- markovify_text(
   markov_model = markov_model,
@@ -192,12 +199,13 @@ library(furrr)  # install.packages(&quot;furrr&quot;)</code></pre>
   only_distinct = TRUE,
   return_message = TRUE
 )</code></pre>
-<pre><code>## goat_lyric: I looked toward the same effect on a shiny black plastic tray
-## goat_lyric: And the world back on
-## goat_lyric: But when you were standing in the dining room
-## goat_lyric: So this is what the point is</code></pre>
+<pre><code>## goat_lyric: I saw the shadows somewhere
+## goat_lyric: And I keep looking at the Travelodge
+## goat_lyric: But 1066 brought the fat vines look like frosted glass if you see is what you brought me some flowers
+## goat_lyric: So tie down the interest</code></pre>
 <p>…or not.</p>
 <p>I think John Darnielle probably remains the best generator of Mountain Goats lyrics for now.</p>
+</div>
 </div>
 <div id="further-reading" class="section level1">
 <h1>Further reading</h1>
@@ -209,9 +217,10 @@ library(furrr)  # install.packages(&quot;furrr&quot;)</code></pre>
 <li><a href="https://kylebarbour.org/tmg/">The annotated Mountain Goats</a></li>
 <li><a href="http://www.themountaingoats.net/">themountaingoats.net fan site</a></li>
 </ul>
+<hr />
 <details>
 <p><summary>Session info</summary></p>
-<pre><code>## [1] &quot;Last updated 2019-04-30&quot;</code></pre>
+<pre><code>## [1] &quot;Last updated 2019-09-08&quot;</code></pre>
 <pre><code>## R version 3.5.2 (2018-12-20)
 ## Platform: x86_64-apple-darwin15.6.0 (64-bit)
 ## Running under: macOS High Sierra 10.13.6
@@ -219,38 +228,24 @@ library(furrr)  # install.packages(&quot;furrr&quot;)</code></pre>
 ## Locale: en_GB.UTF-8 / en_GB.UTF-8 / en_GB.UTF-8 / C / en_GB.UTF-8 / en_GB.UTF-8
 ## 
 ## Package version:
-##   askpass_1.1       assertthat_0.2.0  base64enc_0.1.3  
-##   BH_1.69.0.1       blogdown_0.11     bookdown_0.9     
-##   cli_1.1.0         clipr_0.5.0       codetools_0.2-16 
-##   compiler_3.5.2    crayon_1.3.4      curl_3.3         
-##   digest_0.6.18     dplyr_0.8.0.1     emo_0.0.0.9000   
-##   evaluate_0.13     fansi_0.4.0       furrr_0.1.0      
-##   future_1.12.0     genius_0.0.1.0    globals_0.12.4   
-##   glue_1.3.0.9000   graphics_3.5.2    grDevices_3.5.2  
-##   grid_3.5.2        highr_0.8         hms_0.4.2        
-##   htmltools_0.3.6   httpuv_1.5.0      httr_1.4.0       
-##   jsonlite_1.6      knitr_1.22        later_0.8.0      
-##   lattice_0.20-38   listenv_0.7.0     lubridate_1.7.4  
-##   magrittr_1.5      markdown_0.9      markovifyR_0.101 
-##   Matrix_1.2-16     methods_3.5.2     mime_0.6         
-##   openssl_1.2.2     parallel_3.5.2    pillar_1.3.1     
-##   pkgconfig_2.0.2   plogr_0.2.0       promises_1.0.1   
-##   purrr_0.3.0       R6_2.4.0          Rcpp_1.0.1       
-##   readr_1.3.1       reticulate_1.11.1 rlang_0.3.1      
-##   rmarkdown_1.12    rstudioapi_0.9.0  rvest_0.3.2      
-##   selectr_0.4.1     servr_0.13        spotifyr_2.1.0   
-##   stats_3.5.2       stringi_1.4.3     stringr_1.4.0    
-##   sys_3.1           tibble_2.1.1      tidyr_0.8.3      
-##   tidyselect_0.2.5  tinytex_0.11      tools_3.5.2      
-##   utf8_1.1.4        utils_3.5.2       xfun_0.5         
-##   xml2_1.2.0        yaml_2.2.0</code></pre>
+##   askpass_1.1      assertthat_0.2.1 backports_1.1.4  base64enc_0.1.3 
+##   BH_1.69.0.1      blogdown_0.11    bookdown_0.9     cli_1.1.0       
+##   clipr_0.6.0      codetools_0.2-16 compiler_3.5.2   crayon_1.3.4    
+##   curl_3.3         digest_0.6.19    dplyr_0.8.1      evaluate_0.14   
+##   fansi_0.4.0      furrr_0.1.0      future_1.13.0    genius_0.0.1.0  
+##   globals_0.12.4   glue_1.3.1       graphics_3.5.2   grDevices_3.5.2 
+##   grid_3.5.2       highr_0.8        hms_0.4.2        htmltools_0.3.6 
+##   httpuv_1.5.1     httr_1.4.0       jsonlite_1.6     knitr_1.23      
+##   later_0.8.0      lattice_0.20-38  listenv_0.7.0    lubridate_1.7.4 
+##   magrittr_1.5     markdown_1.0     markovifyR_0.101 Matrix_1.2-16   
+##   methods_3.5.2    mime_0.7         openssl_1.4      parallel_3.5.2  
+##   pillar_1.4.1     pkgconfig_2.0.2  plogr_0.2.0      promises_1.0.1  
+##   purrr_0.3.2      R6_2.4.0         Rcpp_1.0.2       readr_1.3.1     
+##   reticulate_1.12  rlang_0.4.0      rmarkdown_1.13   rvest_0.3.4     
+##   selectr_0.4.1    servr_0.13       spotifyr_2.1.0   stats_3.5.2     
+##   stringi_1.4.3    stringr_1.4.0    sys_3.2          tibble_2.1.3    
+##   tidyr_0.8.3      tidyselect_0.2.5 tinytex_0.13     tools_3.5.2     
+##   utf8_1.1.4       utils_3.5.2      vctrs_0.1.0      xfun_0.7        
+##   xml2_1.2.0       yaml_2.2.0       zeallot_0.1.0</code></pre>
 </details>
-</div>
-<div class="footnotes">
-<hr />
-<ol>
-<li id="fn1"><p>Charlie Thompson, Josiah Parry, Donal Phipps and Tom Wolff (2019). spotifyr: R Wrapper for the ‘Spotify’ Web API. R package version 2.1.0. <a href="https://CRAN.R-project.org/package=spotifyr" class="uri">https://CRAN.R-project.org/package=spotifyr</a><a href="#fnref1" class="footnote-back">↩</a></p></li>
-<li id="fn2"><p>Josiah Parry (2019). genius: Easily Access Song Lyrics from Genius. R package version 0.0.1.0. <a href="https://CRAN.R-project.org/package=genius" class="uri">https://CRAN.R-project.org/package=genius</a><a href="#fnref2" class="footnote-back">↩</a></p></li>
-<li id="fn3"><p>Alex Bresler (2017). markovifyR: R wrapper for the Markovify Python module. R package version 0.101. <a href="https://github.com/abresler/markovifyR" class="uri">https://github.com/abresler/markovifyR</a><a href="#fnref3" class="footnote-back">↩</a></p></li>
-</ol>
 </div>
