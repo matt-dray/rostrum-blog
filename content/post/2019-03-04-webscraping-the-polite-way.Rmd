@@ -1,39 +1,43 @@
 ---
-title: Webscraping the {polite} way
+title: Web scraping the {polite} way
 author: Matt Dray
 date: '2019-03-04'
-slug: polite-webscrape
 categories:
-  - R
+  - code
+  - tutorial
 tags:
   - polite
+  - r
   - rvest
-  - scrape
-  - webscrape
+  - tidyverse
+  - web scrape
+slug: polite-webscrape
 draft: no
 ---
 
-Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
-
-![Tea and polite webscraping: certified lovely](https://media.giphy.com/media/AYhivsYTeBvYA/giphy.gif)
+<img src="https://media.giphy.com/media/AYhivsYTeBvYA/giphy.gif" alt="Martin Freeman as Douglas Adams's Arthur Dent, taking a sip of tea and saying 'oh, come on, that's lovely'">
 
 ## Reaping with `rvest`
 
-Ah, salutations, and welcome to this blogpost about polite webscraping. Please do come in. I'll take your coat. How are you? Would you like a cup of tea? Oh, I insist!
+Ah, salutations, and welcome to this blog post about polite web scraping. Please do come in. I'll take your coat. How are you? Would you like a cup of tea? Oh, I insist!
 
-Speaking of tea, perhaps you'd care to join me in genial conversaton about it. Where to begin? Let's draw inspiration from popular posts on [the Tea subreddit of Reddit](https://www.reddit.com/r/tea/). I'll fetch the post titles using [the {rvest} package](https://rvest.tidyverse.org/) from Hadley Wickham and get the correct CSS selector using [SelectorGadget](https://selectorgadget.com/) by Andrew Cantino and Kyle Maxwell.
+Speaking of tea, perhaps you'd care to join me in genial conversation about it. Where to begin? Let's draw inspiration from popular posts on [the Tea subreddit of Reddit](https://www.reddit.com/r/tea/). I'll fetch the post titles using [the {rvest} package](https://rvest.tidyverse.org/) from Hadley Wickham and get the correct CSS selector using [SelectorGadget](https://selectorgadget.com/) by Andrew Cantino and Kyle Maxwell.
 
 ```{r, message=FALSE}
 # Load some packages we need
 library(rvest)  # scrape a site
 library(dplyr)  # data manipulation
 
+# CSS for post titles found using SelectorGadget
+# (This is a bit of an odd one)
+css_select <- "._3wqmjmv3tb_k-PROt7qFZe ._eYtD2XCVieq6emjKBH3m"
+
 # Scrape a specific named page
-scrape <- read_html("https://www.reddit.com/r/tea") %>%  # read the page
-  html_nodes(css = ".kCqBrs") %>%  # read post titles
+tea_scrape <- read_html("https://www.reddit.com/r/tea") %>%  # read the page
+  html_nodes(css = css_select) %>%  # read post titles
   html_text()  # convert to text
 
-print(scrape)
+print(tea_scrape)
 ```
 
 That'll provide us with some conversational fodder, wot wot.
@@ -48,7 +52,7 @@ Forgive me. Perhaps you'll allow me to show you a more respectful method via [th
 
 Perhaps the website owners don't want people to keep barging in willy-nilly without so much as a 'ahoy-hoy'.
 
-We should identify ourselves and our intent with a humble `bow()`. We can expect a curt but informative response from the site -- via its [robots.txt file](http://www.robotstxt.org/robotstxt.html) -- that tells us where we can visit and how frequently.
+We should identify ourselves and our intent with a humble `bow()`. We can expect a curt but informative response from the site---via its [robots.txt file](http://www.robotstxt.org/robotstxt.html)---that tells us where we can visit and how frequently.
 
 ```{r, message=FALSE}
 # remotes::install_github("dmi3kno/polite")  # to install
@@ -64,7 +68,7 @@ reddit_bow <- bow(
 print(reddit_bow)
 ```
 
-Super-duper. The (literal) bottom line is that we're allowed to scrape. The website does have 34 rules[^rule34] to stop unruly behaviour though, and even calls out four very naughty bots that are obviously not very polite. There's no specific rule about how rapidly we can repeat our visits, so we're going to use the default five-second delay for maximum respect.
+Super-duper. The (literal) bottom line is that we're allowed to scrape. The website does have 32 rules to stop unruly behaviour though, and even calls out four very naughty bots that are obviously not very polite. We're invited to give a five-second delay between requests to allow for maximum respect.
 
 ## Give a nod()
 
@@ -76,7 +80,7 @@ We've already given a `bow()` and made out intentions clear; a knowing `nod()` w
 library(purrr)  # functional programming tools
 library(tidyr)  # tidy-up data structure
 
-get_posts <- function(subreddit_name, bow = reddit_bow){
+get_posts <- function(subreddit_name, bow = reddit_bow, css_select){
   
   # 1. Agree modification of session path with host
   session <- nod(
@@ -90,7 +94,7 @@ get_posts <- function(subreddit_name, bow = reddit_bow){
   # 3. Extract from xpath on the altered URL
   node_result <- html_nodes(
     scraped_page,
-    css = ".kCqBrs"
+    css = css_select
   )
   
   # 4. Render result as text
@@ -113,7 +117,7 @@ subreddits <- set_names(
 # Get top posts for named subreddits
 top_posts <- map_df(
   subreddits,
-  ~get_posts(.x)
+  ~get_posts(.x, css_select = "._3wqmjmv3tb_k-PROt7qFZe ._eYtD2XCVieq6emjKBH3m")
 ) %>% 
   gather(
     BritishProblems, BritishSuccess,
@@ -127,10 +131,13 @@ Bravo, what excellent manners we've demonstrated. You can also iterate over diff
 
 Oh, you have to leave? No, no, you haven't overstayed your welcome! It was truly marvellous to see you. Don't forget your brolly, old chap, and don't forget to print the session info for this post. Pip pip!
 
-# Session info
+---
 
-```{r}
-devtools::session_info()
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+paste("Last updated", Sys.Date())
+xfun::session_info()
 ```
+</details>
 
-[^rule34]: This could be a Reddit meta joke.
+---
