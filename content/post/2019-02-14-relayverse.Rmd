@@ -2,23 +2,34 @@
 title: Graphing the Relayverse of podcasts
 author: Matt Dray
 date: '2019-02-14'
-slug: relayverse
 categories:
   - dataviz
   - pop culture
 tags:
-  - tidygraph
+  - cowplot
   - ggraph
+  - graphs
   - networks
-  - dplyr
+  - podcasts
   - purrr
+  - rvest
+  - tidygraph
+  - tidyverse
   - visNetwork
+slug: relayverse
 draft: no
 ---
 
-Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
+<div class="figure">
+<img src="/post/2019-02-14-relayverse_files/relayverse.gif" alt="A gif of the graph network for Relay FM, showing the ability to zoom and select nodes with the visNetwork package"/>
+<p class="caption">The Relay FM podcast network, visualised. Scroll to the bottom of this post to try it yourself.</p>
+</div>
 
-![The Relay FM podcast network, visualised. Scroll to the bottom of this post to try it yourself.](https://media.giphy.com/media/3gMrq5dCgRelOqQKJG/giphy.gif)
+# tl;dr 
+
+I made an interactive [graph network](https://en.wikipedia.org/wiki/Network_theory) of the podcasts and hosts of [Relay FM](https://www.relay.fm) using R.
+
+The content of this post was updated on `r format(Sys.Date(), "%d %b %Y")`.
 
 # Podcast networks
 
@@ -55,9 +66,12 @@ library(visNetwork)  # wrapper for javascript interactive viz
 
 We can use [the `rvest` package](https://blog.rstudio.com/2014/11/24/rvest-easy-web-scraping-with-r/) by [Hadley Wickham](http://hadley.nz/) to scrape podcast details from [the Wikipedia page for Relay FM](https://en.wikipedia.org/wiki/Relay_FM). There are two separate tables: one for current and one for retired (discontinued) shows. 
 
-![One of the target Wikipedia tables of current Relay FM shows](/post/2019-02-12-graphing-the-relayverse-podcasts_files/relay-wikipedia.png)
+<div class="figure">
+<img src="/post/2019-02-12-graphing-the-relayverse-podcasts_files/relay-wikipedia.png" alt="A screenshot of a table on Wikipedia containing data about podcast shows from Relay FM."/>
+<p class="caption">One of the target Wikipedia tables of current Relay FM shows</p>
+</div>
 
-`read_html()` gets the HTML for the selected page; `html_node()` identifies which element needs to be scraped[^xpath]; and `html_table()` interprets the HTML information as a dataframe. I've removed the show 'B-Sides' because it's clips from other shows.
+`read_html()` gets the HTML for the selected page; `html_node()` identifies which element needs to be scraped[^xpath]; and `html_table()` interprets the HTML information as a data frame. I've removed the show 'B-Sides' because it's clips from other shows.
 
 ```{r scrape}
 # Get the HTML for the selected page
@@ -93,9 +107,12 @@ Unfortunately the host names are in the form 'First LastFirst Last' so we need a
 # Clean the host names
 shows_clean <- shows %>%
   mutate(
-    Hosts = str_remove_all(Hosts, " \\(originally\\)"),
-    Hosts = str_split(Hosts, "(?<=[a-z])(?=[A-Z])")
-  ) %>% 
+    Hosts = str_remove_all(Hosts, "formerly hosted by.*$"),  # remove text and former hosts
+    Hosts = str_remove_all(Hosts, " \\(originally\\)"),  # remove '(originally)' text
+    Hosts = str_remove_all(Hosts, "\\[[:digit:]\\]"),  # remove Wikipedia references
+    Hosts = str_split(Hosts, "(?<=[a-z])(?=[A-Z])") # split where lowercase meets uppercase
+  ) %>%
+  filter(Hosts != "Maddy Myers") %>%  # hack to remove a former host
   unnest() %>% 
   select(Podcast, Hosts, Status)
 
@@ -103,7 +120,9 @@ shows_clean <- shows %>%
 sample_n(shows_clean, 10) %>% knitr::kable()
 ```
 
-Our dataframe is now tidy and ready for Tidygraph, but before moving on, we can do things like look at the host with the most active shows.
+Notice there were a couple of cleaning steps there to remove the text 'formerly hosted by' and the names of the former hosts. There's one instance where this protocol isn't followed in the table and the host's name is followed by '(originally)'. I removed the text with regex, but then just removed the host's name manually with a `filter()` to avoid some complex regex.
+
+Our data frame is now tidy and ready for Tidygraph, but before moving on, we can do things like look at the host with the most active shows.
 
 ```{r}
 shows_clean %>% 
@@ -164,11 +183,11 @@ relay_combos <- shows_clean %>%
 sample_n(relay_combos, 10) %>% knitr::kable()  # random sample of 10
 ```
 
-We can turn this dataframe of host-pair combinations into a tidygraph object with the `as_tbl_graph()` function. This class of object contains two dataframes (the nodes and the edges) and some metadata.
+We can turn this data frame of host-pair combinations into a tidygraph object with the `as_tbl_graph()` function. This class of object contains two data frames (the nodes and the edges) and some metadata.
 
 We can also use functions from the `tidygraph` package to help calculate various network statistics. For example, the `centrality_degree()` function tells us the nodes with the most connections. We can add this as a column in our node data and use this later to do things like resize nodes depending on their centrality.
 
-You can manipulate the nodes and edges dataframes in this tidygraph object by using the `activate()` function to switch between them. Currently the node data are active (it says 'active' above the nodes dataframe), so our application of `centrality_degree()` to the network object will affect the node data specifically.
+You can manipulate the nodes and edges data frames in this tidygraph object by using the `activate()` function to switch between them. Currently the node data are active (it says 'active' above the nodes data frame), so our application of `centrality_degree()` to the network object will affect the node data specifically.
 
 ```{r as-tbl-graph}
 relay_graph <- as_tbl_graph(relay_combos, directed = FALSE)%>% 
@@ -178,7 +197,7 @@ relay_graph <- as_tbl_graph(relay_combos, directed = FALSE)%>%
 print(relay_graph)  
 ```
 
-The edges and nodes are now in the same object. You can see we have a 40 nodes and 66 edges and that the netowrk is undirected (nodes don't 'point' to each other). We also have eight 'components', which are the isolated groups of nodes that connect to each other, but not to other groups.
+The edges and nodes are now in the same object. You can see we have about 38 nodes and 64 edges and that the network is undirected (nodes don't 'point' to each other). We also have eight 'components', which are the isolated groups of nodes that connect to each other, but not to other groups.
 
 # Visualisation
 
@@ -227,7 +246,7 @@ This is where interactive network graphs come in handy, as you can zoom, pan and
 
 ## Interactive with `visNetwork`
 
-[The `visNetwork` package](https://datastorm-open.github.io/visNetwork/) wraps [the `vis.js` library](http://visjs.org) to make interactive network graphs. Its `visNetwork()` function takes separate dataframes of edges and nodes that are in [a pre-specified format](https://datastorm-open.github.io/visNetwork/nodes.html), so we won't be able to use our tidygraph object for this.
+[The `visNetwork` package](https://datastorm-open.github.io/visNetwork/) wraps [the `vis.js` library](http://visjs.org) to make interactive network graphs. Its `visNetwork()` function takes separate data frames of edges and nodes that are in [a pre-specified format](https://datastorm-open.github.io/visNetwork/nodes.html), so we won't be able to use our tidygraph object for this.
 
 ```{r visnetwork-prep}
 # Dataframe of unique nodes with an ID value
@@ -244,34 +263,61 @@ edges <- relay_combos %>%
   rename(from = id.x, to = id.y, title = Podcast)
 ```
 
-Now we can just plug the data into the `visNetwork()` function and pipe this into some other other functions to set some options.
+Now we plug the data into the `visNetwork()` function and pipe this into some other other functions to set some options. It's quite a lot of code, but the piping into other `vis*()` functions breaks it up into more manageable chunks.
 
-```{r visnetwork}
-visNetwork(nodes, edges,
-  main = "The Relayverse", submain = "Nodes are hosts, edges are shows"
-) %>% 
-  visOptions(
-    highlightNearest = TRUE,  # on-hover highlight nearest nodes
-    nodesIdSelection = TRUE  # select node from dropdown
-  ) %>%
-  visInteraction(navigationButtons = TRUE) %>%  # easy-navigation buttons
-  visPhysics(  # set physics 'engine' and options
-    solver = "forceAtlas2Based", 
-    forceAtlas2Based = list(gravitationalConstant = -50)
-  ) %>% 
-  visLayout(randomSeed = 1337)  # reproduce the same network each time
-```
-
-<br>
-<br>
-
-You can:
+And out pops the visualisation! You can:
 
 * use the navigation buttons or your trackpad/mouse to navigate the network
-* click a node to highlight a host and their co-hosts
+* click a node to highlight a host and their co-hosts (single hosts loop back to themselves)
 * hover over an edge to show a label with the show name
 * select a host from the dropdown menu to highlight them and their co-hosts
 * click and drag a node to move it
+
+```{r visnetwork}
+visNetwork(  # add main features
+  nodes, edges,  # add node and edge data
+  main = list(  # set main title and style it
+    text = "The Relayverse",
+    style = "font-family:Lekton, monospace;font-weight:bold;font-size:30px;text-align:center;"
+  ),
+  submain = list(  # set subtitle and style it
+    text = "Click hosts (nodes) to see co-host relationships (edges)",
+    style = "font-family:Lekton, monospace;font-weight:regular;font-size:20px;text-align:center;"
+  ),
+  footer = list(  # add a footer and style it
+    text = paste0("Source: Wikipedia (", format(Sys.Date(), "%Y/%m/%d"), ")"),
+    style = "font-family:Lekton, monospace;font-weight:regular;font-size:15px;text-align:right;"
+  )
+) %>% 
+  visNodes(  # node styling
+    shape = "icon",  # node is an icon specified below 
+    icon = list(code = "f130", size = 75, color = "#000000"),  # microphone icon
+    font = list(face = "Lekton", size = 20)
+  ) %>% 
+  visEdges(  # edge styling
+    color = list(color = "#447d9b", highlight = "#c83c3c", opacity = 0.5),
+    width = 3, selectionWidth = 5  # selected edge is thicker
+  ) %>% 
+  visOptions(  # general graph options
+    highlightNearest = TRUE,  # on-hover highlight nearest nodes
+    nodesIdSelection = TRUE  # select node from dropdown
+  ) %>%
+  visPhysics(  # set physics 'engine' and options
+    solver = "forceAtlas2Based", 
+    forceAtlas2Based = list(gravitationalConstant = -50)
+  ) %>%
+  visLayout(randomSeed = 1337) %>%  # reproduce the same network each time
+  visInteraction(navigationButtons = TRUE) %>%  # add naviagation buttons
+  addFontAwesome()  # makes sure that FontAwesome dependency is in place
+```
+
+Some design points:
+
+* the nodes are microphone icons from [FontAwesome](https://fontawesome.com/)
+* the edges are the same colour as the right-hand circle on the [Reconcilable Differences](https://www.relay.fm/rd) artwork (with 50 per cent transparency)
+* on highlight, the edge colour is the same as for the left-hand circle on the [Reconcilable Differences](https://www.relay.fm/rd) artwork (with 50 per cent transparency)
+* when selecting a node, the edges increase in thickness to show first order interactions, stay the same for second order interactions, while the rest are greyed out
+* the font face should appear as the monospace Lekton, which matches this blog
 
 This is a very simple example, but [lots of other `visNetwork` options are available](https://datastorm-open.github.io/visNetwork/). 
 
