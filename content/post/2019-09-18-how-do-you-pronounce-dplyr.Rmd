@@ -1,0 +1,163 @@
+---
+title: How do you pronounce {dplyr}?
+author: Matt Dray
+date: '2019-09-20'
+slug: say-package
+categories:
+  - code
+tags:
+  - accessibility
+  - audio
+  - mac
+  - r
+draft: yes
+---
+
+<img src="/post/2019-09-18-how-do-you-pronounce-dplyr_files/1280px-Pharynx_(PSF).png" alt="A line-drawing diagram of a cross-sectino of a human larynx" width="40%">
+
+# Deep liar
+
+Sometimes I hear a word being spoken and think 'oh wait, is that how it's actually pronounced?'
+
+I know [people struggle with pronouncing R package names](https://twitter.com/search?q=package%20%23rstats%20pronounce&src=typed_query). They're often hard to parse.
+
+Is {dplyr} 'dee-ply-arr' or 'd'plier'? Is {data.table} 'data table' or 'data-dot-table'?
+
+# Speak the truth
+
+How does this affect users of [assitive technology](https://en.wikipedia.org/wiki/Assistive_technology)? [VoiceOver](https://en.wikipedia.org/wiki/VoiceOver) is a macOS [accessibility](https://en.wikipedia.org/wiki/Accessibility) tool that helps people navigate their computers via audio. It reads text on a page. What happens when VoiceOver reads R package names?
+
+I used the `say` command at the command line to test this out. For example, you can type `say dplyr` to get your machine to interpret and vocalise 'dplyr'.
+
+You can add flags to the command to read text from an input file (`-f`) and then store the audio output (`-o`):
+
+```{bash eval=FALSE}
+say -f input.txt -o output.aiff
+```
+
+I generated some audio of package names being read via `say` and embedded them in the sections below. These were:
+
+* the tidyverse
+* the top 20 downloads from CRAN
+* 20 random CRAN packages
+
+You can [download all the text and audio files as a zip file](https://rostrum.blog/datasets/say.zip) (note that the audio is in .aiff format).
+
+## Tidyverse
+
+You can get the tidyverse packages with the `tidyverse_packages()` function from the {tidyverse} package.
+
+<details><summary>Click for code</summary>
+```{r eval=FALSE}
+# Fetch the packages of the tidyverse
+tidy_pkgs <- tidyverse::tidyverse_packages()
+tidy_pkgs <- gsub("\n\\(>=", "", tidy_pkgs)  # replace rogue characters
+
+# Add terminal periods so that 'say' pauses between package names
+tidy_pkgs <- paste0(tidy_pkgs, ".")
+
+# Write the list to a text file
+write.table(
+  tidy_pkgs,
+  file = "say_tidy.txt",
+  row.names = FALSE,
+  col.names = FALSE
+)
+
+# Get say command to read from text file and output an audio file
+system("say -f say_tidy.txt -o say_tidy.aiff")
+```
+
+</details>
+```
+"broom" "cli" "crayon" "dplyr" "dbplyr" "forcats" "ggplot2" "haven"
+"hms" "httr" "jsonlite" "lubridate" "magrittr" "modelr" "purrr" "readr"
+"readxl" "reprex" "rlang" "rstudioapi" "rvest" "stringr" "tibble"
+"tidyr" "xml2" "tidyverse"
+```
+
+<iframe width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/684095929&color=%23247f1f&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true"></iframe>
+
+## CRAN top 20
+
+You can get the top 20 downloads from CRAN in the last month with the `cran_top_downloads()` function from the {cranlogs} package.
+
+<details><summary>Click for code</summary>
+```{r eval=FALSE}
+# Fetch the top 20 downloaded packages from CRAN in past month
+cran_top_pkgs <- cranlogs::cran_top_downloads(when = "last-month", count = 20)
+
+# Add terminal periods so that 'say' pauses between package names
+cran_top_pkgs$package <- paste0(cran_top_pkgs$package, ".")
+
+# Write the list to a text file
+write.table(
+  cran_top_pkgs$package,
+  file = "say_cran_top.txt",
+  row.names = FALSE,
+  col.names = FALSE
+)
+
+# Get say command to read from text file and output an audio file
+system("say -f say_cran_top.txt -o say_cran_top.aiff")
+```
+</details>
+```
+"magrittr" "aws.s3" "aws.ec2metadata" "rsconnect" "rlang" "Rcpp" "dplyr"
+"ggplot2" "ellipsis" "vctrs" "tibble" "digest" "glue" "pillar" "zeallot"
+"backports" "stringr" "markdown" "fansi" "stringi"
+```
+
+<iframe width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/684095949&color=%23247f1f&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true"></iframe>
+
+## Random CRAN packages
+
+You can get the full list of packages currently on CRAN with the `CRAN_package_db()` function in the {tools} package (part of base R).
+
+<details><summary>Click for code</summary>
+```{r eval=FALSE}
+# Fetch and clean CRAN packages
+cran <- tools::CRAN_package_db()
+
+# Select random packages
+set.seed(1337)
+crandom_pkgs <- sample(cran$Package, size = 20)
+
+# Add terminal periods so that 'say' pauses between package names
+crandom_pkgs <- paste0(cran_rand_pkgs, ".")
+
+# Write the list to a text file
+write.table(
+  crandom_pkgs,
+  file = "~/Desktop/say_cran_random.txt",
+  row.names = FALSE,
+  col.names = FALSE
+)
+
+# Get say command to read from text file and output an audio file
+system("say -f ~/Desktop/say_cran_random.txt -o ~/Desktop/say_cran_random.aiff")
+```
+</details>
+```
+"NScluster" "nlnet" "Bivariate.Pareto" "lisa" "homtest" "glarma" "ttdo"
+"flock" "equSA" "coreCT" "WEE" "xtable" "shinyKGode" "DiffNet" "WGCNA"
+"aqfig" "Voss" "tidymv" "gogarch" "erp.easy"
+```
+
+<iframe width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/684095945&color=%23247f1f&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true"></iframe>
+
+# Results
+
+Obviously there's a lot of subjectivity, but what was strange to your ears? To my southern English ears, it seems like there were a few patterns:
+
+* English word pronounced fine: {haven}, {broom} and {glue}
+* strange English: {lubridate} ('loobridot') and {crayon} ('crain')
+* the trouble with 'tidy': {tidyr} ('tid-ear' instead of 'tidy-arr') and {tidyverse} ('tid-a-verse' instead of 'tidy-verse')
+* the trouble wirh 'r': {rvest}, {rlang} and {rstudioapi} (read as a single word, so 'r' isn't pronounced as 'arr')
+* the trouble with 'read': {readr} and {readxl} ('reed' becomes 'ree-add' because the whole thing is being read as one word)
+* spelled out: {vctrs} (rather than 'vectors' in a New Zealand accent)
+* what the actual heck: {ttdo} (shrug)
+
+And what about {dplyr}? Well, it's something like 'deepleur'. I'm pretty sure that's not quite right.
+
+If you're a user of assistive technology, does the way the machine reads the package names impact your pronunciation of the package name?
