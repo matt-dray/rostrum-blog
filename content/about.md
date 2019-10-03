@@ -40,7 +40,8 @@ Check out [R Weekly](https://rweekly.org/), where posts from this blog have been
 
 ### Design
 
-* The site is generated using [blogdown](https://bookdown.org/yihui/blogdown/) by [Yihui Xie](https://yihui.name/en/)
-* The theme is Hugo Lithium, forked from [@jrutheiser/hugo-lithium-theme](https://github.com/jrutheiser/hugo-lithium-theme) and modified by [Yihui Xie](https://github.com/yihui/hugo-lithium-theme)
+* The site is generated using [{blogdown}](https://bookdown.org/yihui/blogdown/) by [Yihui Xie](https://yihui.name/en/)
+* {blogdown} relies on the [Hugo](https://gohugo.io) static-site generator
+* The theme is Hugo Lithium, forked from [jrutheiser/hugo-lithium-theme](https://github.com/jrutheiser/hugo-lithium-theme) and modified by [Yihui Xie](https://github.com/yihui/hugo-lithium-theme)
 * The site is hosted with [Netlify](https://www.netlify.com/)
 * The logo was designed with [pixlr](https://pixlr.com) and favicon with [favicon.cc](https://www.favicon.cc/) 
