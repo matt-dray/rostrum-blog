@@ -1,7 +1,7 @@
 ---
 title: 'Git going: Git and GitHub'
 author: Matt Dray
-date: '2019-08-17'
+date: '2019-10-13'
 slug: git-going-basics
 categories:
   - code
@@ -16,11 +16,13 @@ tags:
 draft: yes
 ---
 
+<link href="/rmarkdown-libs/font-awesome/css/fontawesome-all.min.css" rel="stylesheet" />
 
 
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>This post is a basic and non-comprehensive introduction to Git and GitHub, with a focus on Mac users working alone on a project. Here’s a quick reference for some commonly-used Git commands:</p>
+<p>This post is a basic and non-comprehensive introduction to Git and GitHub, with a focus on Mac users who are starting a project and working alone.</p>
+<p>Here’s a quick reference for the commonly-used Git commands used in this post:</p>
 <table>
 <thead>
 <tr class="header">
@@ -46,121 +48,144 @@ draft: yes
 <td align="left">Commit the changes with an explanation</td>
 </tr>
 <tr class="odd">
-<td align="left"><code>git push origin master</code></td>
+<td align="left"><code>git push</code></td>
 <td align="left">Send your commits to GitHub</td>
 </tr>
 </tbody>
 </table>
+<p>This is the second part of a series in using Git and Github. <a href="https://www.rostrum.blog/2019/02/01/git-going-cl/">See the first part about basic use of the commadn line</a>.</p>
 </div>
-<div id="git-and-github" class="section level1">
-<h1>Git and GitHub</h1>
-<p>Git is a version control system that tracks file changes on your computer, records why they were made and lets you revert to a past state if something goes wrong.</p>
-<p>GitHub is a website where you can store the Git history of your files remotely on the web <a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>. It acts as a back-up for your work and its versions; lets you explore your code in your browser in a more visual and interactive way; lets other people see your code in the open and use it themselves; lets you record issues and to-do items; and much, much more.</p>
-<p>Our goal in this post is to put a project folder under version control with Git and then upload it to GitHub. I assume you’re a beginner and are, for now, working alone on a project.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
-<p>We’ll be using the command line to do all of this. This is the place where you write code to tell your computer what to do, which you can access via software like <a href="https://en.wikipedia.org/wiki/Terminal_(macOS)">‘Terminal’ on a Mac</a>. You may want to <a href="https://www.rostrum.blog/2019/02/01/git-going-cl/">see my earlier post for how to get basic stuff done with the command line</a> before you continue.</p>
-<p>It’s okay if you aren’t comfortable using the command line. The bottom line is to get your work under some form of version control. You could always use GitHub’s drag and drop interface without needing to use the command line at all.</p>
+<div id="version-control" class="section level1">
+<h1>Version control</h1>
+<div id="tools" class="section level2">
+<h2>Tools</h2>
+<i class="fab  fa-git fa-5x "></i>
+<p><a href="https://en.wikipedia.org/wiki/Git">Git</a> is a version control system that tracks file changes on your computer, records why they were made and lets you revert to a past state if something goes wrong.</p>
+<i class="fab  fa-github fa-5x "></i>
+<p><a href="https://en.wikipedia.org/wiki/GitHub">GitHub</a> is a website where you can store the Git history of your files remotely on the web <a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>. It acts as a back-up for your work and its versions; lets you explore your code in your browser in a more visual and interactive way; lets other people see your code in the open and use it themselves; lets you record issues and to-do items; and much, much more.</p>
+</div>
+<div id="this-post" class="section level2">
+<h2>This post</h2>
+<p>Our goal in this post is to put a new project folder under version control with Git and then upload the version history to GitHub. I assume you’re a beginner and are, for now, working alone on a project.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>We’ll be using the bash language at the command line to do all of this. This is the place where you write code to tell your computer what to do, which you can access via software like <a href="https://en.wikipedia.org/wiki/Terminal_(macOS)">‘Terminal’ on a Mac</a>. You may want to <a href="https://www.rostrum.blog/2019/02/01/git-going-cl/">see my earlier post for how to get basic stuff done at the command line</a> before you continue.</p>
+<p>It’s okay if you aren’t comfortable using the command line. The bottom line is to get your work under some form of version control. You could always use GitHub’s drag and drop interface without needing to use the command line at all. There are guides available for <a href="https://pixelpioneers.co/blog/2017/using-github-without-the-command-line">using GitHub without using the command line</a>.</p>
+</div>
 </div>
 <div id="step-by-step" class="section level1">
 <h1>Step-by-step</h1>
-<p>The steps below summarise what you need to do to set up and use Git and GitHub. I’ve split the steps into broad stages. Click a link to jump to that section.</p>
-<p><a href="#one-time">One-time tasks</a>:</p>
-<ul>
+<p>Let’s break down the steps required to:</p>
+<ol style="list-style-type: decimal">
+<li>set up Git and GitHub (do this once)</li>
+<li>put a project folder under version control with Git (once per project)</li>
+<li>save a version of your work and record it on GitHub (rinse and repeat during your project’s development)</li>
+</ol>
+<p>I’ve written a section for each of these things. Click a link to jump to that section.</p>
+<ol style="list-style-type: decimal">
+<li><a href="#one-time">One-time tasks</a>:
+<ol style="list-style-type: lower-alpha">
 <li><a href="#install">Install Git</a></li>
 <li><a href="#github-account">Create a GitHub account</a></li>
-</ul>
-<p><a href="#project-setup">Project set-up</a>:</p>
-<ol style="list-style-type: decimal">
+</ol></li>
+<li><a href="#project-setup">Start a project with Git</a>:
+<ol style="list-style-type: lower-alpha">
 <li><a href="#folder">Create your project folder</a></li>
 <li><a href="#init">Initiate Git</a></li>
 <li><a href="#gitignore">Create a .gitignore file</a></li>
-</ol>
-<p><a href="#git-github-workflow">A Git/GitHub workflow</a> (you’ll repeat these steps as you develop your project):</p>
-<ol style="list-style-type: decimal">
+</ol></li>
+<li><a href="#git-github-workflow">A Git/GitHub workflow</a>:
+<ol style="list-style-type: lower-alpha">
 <li><a href="#work">Work on your files</a></li>
 <li><a href="#status">Check file status</a></li>
 <li><a href="#add">Add changes</a></li>
 <li><a href="#commit">Commit changes</a></li>
+<li><a href="#edit">Add and edit files</a></li>
 <li><a href="#push">Push changes to GitHub</a></li>
+</ol></li>
 </ol>
 <div id="one-time" class="section level2">
-<h2>One-time tasks</h2>
+<h2>1. One-time tasks</h2>
+<p>You need to install Git on each computer you’ll be working from (feasibly only one computer), but only need to sign up once for GitHub.</p>
 <div id="install" class="section level3">
 <h3>Install Git</h3>
-<p>You can check if Git is installed by typing <code>git --version</code> at the command line. If you get a response like <code>git version 2.23.0</code>, then it’s already installed.</p>
-<p>If not, you can <a href="https://git-scm.com/downloads">download it from the Git website</a> and install it.</p>
 <p>Note that Git is not an ‘app’; there’s not an icon for it on your computer. It’s a bunch of functions installed for use via the command line, with each command preceded with the word <code>git</code>.</p>
-<p>Now you need to shake hands with Git so it remembers who you are. You do this by altering some configuration files like so:</p>
-<pre class="sh"><code>git config --global user.name &#39;&lt;Your Name&gt;&#39;
-git config --global user.email &#39;&lt;youremail@address.com&gt;&#39;
-git config --global --list</code></pre>
+<p>You can check to see if Git is installed on your machine by asking for its version number from the command line:</p>
+<pre class="bash"><code>$ git --version</code></pre>
+<pre><code>git version 2.20.1 (Apple Git-117)</code></pre>
+<p>This response shows that I already have Git installed. If the <code>git</code> command isn’t recognised then you can <a href="https://git-scm.com/downloads">download Git</a> and install it.</p>
+<p>Once installed, Git needs to know who you are so that your name can be recorded when you make changes. You can introduce yourself by supplying your name and email address at the command line to a special Git configuration file:</p>
+<pre class="bash"><code>$ git config --global user.name &#39;Your Name&#39;
+$ git config --global user.email &#39;youremail@address.com&#39;</code></pre>
+<p>You can print the content of the configuration file to check it’s worked. Here’s what happens when I do that on my machine:</p>
+<pre class="bash"><code>$ git config --global --list</code></pre>
+<pre><code>user.name=Matt Dray
+user.email=mwdray@gmail.com</code></pre>
+<p>Excellent, my Git configuration file contains my details.</p>
 </div>
 <div id="github-account" class="section level3">
 <h3>Create a GitHub account</h3>
-<p>GitHub is free to use but you need an account.</p>
-<p>To make one, go to the <a href="https://github.com/">GitHub website</a> and click ‘Sign-up for GitHub’. You’ll need to provide a username (think hard about this), email address and password.</p>
+<p>GitHub is free to use but you need an account. Go to the <a href="https://github.com/">GitHub website</a> and click ‘Sign-up for GitHub’. You’ll need to provide a username, email address and password.</p>
+<p><img src="/post/2019-08-17-git-going-solo_files/gh-sign-up.png" alt="The GitHub sign-up screen"></p>
 <p>When prompted for a subscription level, choose ‘free subscription’. You’ll be able to do everything you need to do with this type of account; a premium account is more suitable for teams.</p>
-<p>You’ll be sent an automated email to verify your email address. Click the button in the email to confirm.</p>
-<p>You don’t need to do anything else right now. Just check that your GitHub profile page is viewable at <code>github.com/yourusername</code> once you’ve compeleted these steps.</p>
+<p>You’ll be sent an automated email to verify your email address. Click the button in the email to confirm. And you’re done!</p>
+<p>Check that your GitHub profile page is viewable at <code>github.com/yourusername</code> once you’ve compeleted these steps.</p>
 </div>
 </div>
 <div id="project-setup" class="section level2">
-<h2>Project set-up</h2>
+<h2>2. Project set-up</h2>
 <p>The following subsections are about creating a project folder and putting it under version control by activating Git.</p>
 <div id="folder" class="section level3">
 <h3>Create your project folder</h3>
-<p>It’s good practice for a self-contained project to exist in a single folder, so all the code, data, tests and documentation are in the same place. Let’s create a project folder now.</p>
-<p>In <a href="https://www.rostrum.blog/2019/02/01/git-going-cl/">part one of this ‘Git going’ series</a> you learnt how to navigate your computer’s filesystem from the command line. We’ll be using that knowledge here, so you may want to revisit.</p>
-<p>At the command line:</p>
-<ol style="list-style-type: decimal">
-<li>Provide to <code>cd</code> the filepath where you want your project folder to be created (e.g. <code>cd ~/Documents</code>)</li>
-<li>Create the project folder with <code>mkdir</code> (e.g. <code>mkdir project-name</code>)</li>
-<li>Enter this new folder with <code>cd</code> (e.g. <code>cd project-name</code>)</li>
-<li>Run <code>pwd</code> to print your working directory, which should be your newly-created project folder (subsequent Git commands will therefore be applied to this folder, which is what we want)</li>
-</ol>
-<p>You could also create a new folder by pointing and clicking; just make sure you navigate to the folder at the command line</p>
+<p>It’s <a href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1005510">good practice for each project to exist in its own repository (folder)</a>, so all the code, data, tests and documentation are in the same place. Let’s create a project folder now.</p>
+<p>Using the command line, navigate with <code>cd</code> to where we want the folder to be, create it with <code>mkdir</code> and then navigate into it:</p>
+<pre class="bash"><code>$ cd ~/Documents
+$ mkdir new-project
+$ cd new-project
+$ pwd</code></pre>
+<pre><code>/Users/matt/Documents/new-project</code></pre>
+<p>You could also create a new folder by pointing and clicking; just make sure you navigate to the folder at the command line with <code>cd</code>.</p>
 </div>
 <div id="init" class="section level3">
 <h3>Initiate Git</h3>
-<p>So we have our empty project folder, but it’s not yet under version control. How can we make Git aware of this folder and start tracking changes?</p>
-<p>Type <code>git init</code> to initiate Git in the project folder. You’ll get something like <code>Initialized empty Git repository in /Users/luigi/Documents/project/.git/</code> if it was successful.</p>
-<p>What did this do? Run <code>ls -a</code> to list all the files in the folder. You’ll see there’s now a hidden <code>.git</code> folder (files preceded with a period aren’t visible by default). It’s hidden because it’s going to run in the background and you can forget about it for now.</p>
+<p>So we have our empty project folder, but it’s not yet under version control. How can we make Git aware of this folder and start tracking changes? We can <code>init</code>iate Git there:</p>
+<pre class="bash"><code>$ git init</code></pre>
+<pre><code>Initialized empty Git repository in /Users/matt/Documents/new-project/.git</code></pre>
+<p>What did this do? If you look inside the folder through your file explorer you’ll see nothing new. But look what happens when you ask at the command line to list all the files:</p>
+<pre class="bash"><code>$ ls -a</code></pre>
+<pre><code>.
+..
+.git</code></pre>
+<p>So the project folder actually contains a <code>.git</code> folder (<code>.</code> and <code>..</code> are in all folders and represent the current and parent directories). This is where the version information will be stored, among other things. Why can’t you see it from the file explorer? Because it starts with a period, which marks it as a hidden file not to be shown unless specifically asked for.</p>
 </div>
 <div id="gitignore" class="section level3">
 <h3>Create a .gitignore file</h3>
-<p>There are files that you may not want to commit. This might include sensitive files, large data sets or language-specific artefacts.</p>
-<p>You can leave instructions in a special ‘gitignore’ file that tells Git not to worry about recording certain things.</p>
-<p>While still in the root of the project directory, add a gitignore file by typing <code>touch .gitignore</code> at the command line. Typing <code>open .gitignore</code> (note the period because this too is a hidden file) will open it in your computer’s default text editor for editing (or you can <a href="https://www.rostrum.blog/2019/02/01/git-going-cl/#createedit-a-file-with-touchnano">edit from the command line itself</a>). Now you can add specific files and file types to the .gitignore so that they’ll be ignored.</p>
-<p>You could start by copying from <a href="https://github.com/github/gitignore">a .gitignore template</a>, like <a href="https://github.com/github/gitignore/blob/master/R.gitignore">the one for R</a>. For example, the first thing in this template is <code>.Rhistory</code> – a log of all the commands you’ve typed – which you probably don’t need to have tracked.</p>
-<p>You could add things like <code>secret.csv</code> to ignore a specific dataset, or <code>*.csv</code> (meaning any filename that ends with <code>.csv</code>) to ignore all CSV files. Mac users will also want to add <code>.DS_Store</code>, which is <a href="https://en.wikipedia.org/wiki/.DS_Store">a kind of Mac-specific metadata file</a>.</p>
-<p>Note that we haven’t recorded any changes to the folder with Git yet. Let’s add some analysis files to the folder first.</p>
-</div>
-<div id="work" class="section level3">
-<h3>Add files</h3>
-<p>Let’s say we create a couple of files for our analysis so the file tree ends up looking like this:</p>
-<p>project/
-analysis.R
-data/
-data.csv
-.git
-.gitignore</p>
-<p>Great, let’s capture this version with Git.</p>
+<p>There are files that you may not want to put under version control. This might include sensitive files, large data sets or language-specific artefacts.</p>
+<p>You can list such files in a special ‘.gitignore’ file that tells Git not to worry about recording them. Note that this file starts with a period, so it’s a hidden file like the <code>.git</code> file in the last section.</p>
+<p>To create a gitignore file, navigate to your project file and use <code>touch</code> to create the file and then <code>open</code> it with your computer’s default text editor (you can also <a href="https://www.rostrum.blog/2019/02/01/git-going-cl/#createedit-a-file-with-touchnano">edit it from the command line itself</a>).</p>
+<pre class="bash"><code>$ touch .gitignore
+$ open .gitignore</code></pre>
+<p>Now to add to the gitignore file. You could start by copying from <a href="https://github.com/github/gitignore">a template</a>, like <a href="https://github.com/github/gitignore/blob/master/R.gitignore">the one for R</a>. As an example, the first file in this template is <code>.Rhistory</code> – a log of all the commands you’ve typed – which you probably don’t need to track.</p>
+<p>You could add things to your gitignore like <code>secret.csv</code> to ignore a specific dataset, or <code>*.csv</code> (meaning any filename that ends with <code>.csv</code>) to ignore all CSV files. Mac users will also want to add <code>.DS_Store</code>, which is <a href="https://en.wikipedia.org/wiki/.DS_Store">a kind of Mac-specific metadata file</a>.</p>
+<p>Note that we haven’t recorded any changes to the folder with Git yet.</p>
 </div>
 </div>
 <div id="git-github-workflow" class="section level2">
-<h2>The Git/GitHub workflow</h2>
-<p>A basic Git workflow might look like this:</p>
-<ol style="list-style-type: decimal">
-<li>Add/edit your files</li>
-<li>from the command line, run <code>git status</code> to check which files have been changed</li>
-<li><code>git add &lt;filename&gt;</code> to ‘stage’ changes</li>
-<li><code>git commit -m &quot;Message&quot;</code> to confirm the additions and record why the changes were made</li>
-<li><code>git push origin master</code> to send a record of the changes to GitHub</li>
-</ol>
+<h2>3. A Git/GitHub workflow</h2>
+<div id="work" class="section level3">
+<h3>Work on your files</h3>
+<p>Add a couple of files to your : an R script file called <code>analysis.R</code> and a data set <code>data/data.csv</code>. file tree ends up looking like this:</p>
+<pre><code>project/
+├── analysis.R
+├── data/
+│   └── data.csv
+├── .git
+└── .gitignore</code></pre>
+<p>Great, let’s capture this version with Git.</p>
+</div>
 <div id="status" class="section level3">
 <h3>Check file status</h3>
-<p>Type <code>git status</code> to see the files that have been created or modified.</p>
-<p>You’ll get output like:</p>
-<pre class="sh"><code>On branch master
+<p>Run <code>git status</code> to see the files that have been created or modified.</p>
+<pre class="bash"><code>$ git status</code></pre>
+<pre class="bash"><code>On branch master
 Your branch is up to date with &#39;origin/master&#39;.
 
 Changes not staged for commit:
@@ -172,9 +197,10 @@ Changes not staged for commit:
         created:    .gitignore
 
 no changes added to commit (use &quot;git add&quot; and/or &quot;git commit -a&quot;)</code></pre>
+<p>There’s a bunch of output.</p>
 <p>You can see on the indented lines the files that are new or have been changed since last time. All the files will be new the first time you run this process, of course.</p>
-<p>Note that any files that are in your .gitignore will not appear here. They’ve been ignored, of course.</p>
-<pre class="sh"><code>On branch master
+<p>Note that any files that are in your .gitignore will not appear here, since they’ve been ignored.</p>
+<pre class="bash"><code>On branch master
 Your branch is up to date with &#39;origin/master&#39;.
 
 Changes not staged for commit:
@@ -191,10 +217,10 @@ no changes added to commit (use &quot;git add&quot; and/or &quot;git commit -a&q
 <h3>Add changes</h3>
 <p>Now you need to earmark the files whose changes you want to record. This process is called staging. The stage is a safe place where you can add files to be captured; they’re not yet confirmed. This is a preventative measure so you don’t accidentally record anything you didn’t mean to.</p>
 <p>There was a handy reminder in the output of <code>git status</code> that tells you what to do next: <code>use &quot;git add &lt;file&gt;...&quot; to update what will be committed</code>. In other words, you can type the names of the files you want to record with <code>git add</code>:</p>
-<pre class="sh"><code>git add readme.md analysis.R data/data.csv</code></pre>
+<pre class="bash"><code>git add readme.md analysis.R data/data.csv</code></pre>
 <p>You could also use <code>git add .</code>, where the period means ‘all the files’. Be careful if you use this – you don’t want to end up capturing things you didn’t mean to.</p>
 <p>You won’t get any output, so how do we know this worked? Type <code>git status</code> again.</p>
-<pre class="sh"><code>On branch master
+<pre class="bash"><code>On branch master
 Your branch is up to date with &#39;origin/master&#39;.
 
 Changes to be committed:
@@ -210,20 +236,20 @@ Changes to be committed:
 <h3>Commit changes</h3>
 <p>When you’re happy with the files that have been staged, you can now commit them. This confirms that you want Git to record the changes made to these files.</p>
 <p>You commit the staged changes using <code>git commit</code>. It’s good practice to leave a message explaining what changes were made and why. You can leave a simple message using the <code>-m</code> flag of <code>git commit</code>:</p>
-<pre class="sh"><code>git commit -m &quot;Add files to the repository&quot;
+<pre class="bash"><code>git commit -m &quot;Add files to the repository&quot;
 [master d870f50] Add files to the repository
  X files changed, 185 insertions(+), 0 deletions(-)</code></pre>
 <p>The message should be short (typically less than 50 characters) but informative (not just ‘changed stuff’).<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
-<p>How often should you make commits? It’s up to you, but it’s probably a good idea to do it when you’ve completed a section of code that does something useful and that you might want to revert to if there’s a problem later. It’s less useful to commit on a time schedule with code expresssions that may be incomplete.</p>
+<p>How often should you make commits? It’s up to you, but it’s probably a good idea to do it when you’ve completed a section of code that does something useful and that you might want to revert to if there’s a problem later.</p>
 </div>
-<div id="add-and-edit-some-more" class="section level3">
-<h3>Add and edit some more</h3>
+<div id="edit" class="section level3">
+<h3>Add and edit files</h3>
 <p>Continue to add and edit files, committing them when necessary. Remember to use <code>git status</code> to check what changes have been made.</p>
 </div>
 <div id="push" class="section level3">
 <h3>Push changes to GitHub</h3>
-<p>Our commits are stored locally. How do we send them to GitHub so we have a remote copy of our version history? We push them.</p>
-<pre class="sh"><code>git push</code></pre>
+<p>Your Git commits are stored locally on your machine. How do you send them to GitHub so you have a remote copy of your version history? You ‘push’ them.</p>
+<pre class="bash"><code>git push</code></pre>
 </div>
 </div>
 </div>
