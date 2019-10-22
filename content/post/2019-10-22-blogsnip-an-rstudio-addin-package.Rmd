@@ -1,0 +1,70 @@
+---
+title: '{blogsnip}: an RStudio addin package'
+author: Matt Dray
+date: '2019-10-22'
+slug: blogsnip
+categories:
+  - code
+  - package
+  - tutorial
+tags:
+  - blogdown
+  - blogsnip
+  - pkgdown
+  - r
+  - rstudio
+---
+
+<div class="figure">
+<img src="/post/2019-10-22-blogsnip-an-rstudio-addin-package_files/blogsnip.gif" alt="The blogsnip addin is demonstrated by selecting 'insert details block' from the addins menu, which creates an expandable details section when rendered from R Markdown to HTML."/>
+<p class="caption">Inserting a details block with the {blogsnip} addin</p>
+</div>
+
+# tl;dr
+
+On my commute home I made [{blogsnip}](https://matt-dray.github.io/blogsnip/){target="_blank"}: a tiny package of [RStudio addins](https://rstudio.github.io/rstudioaddins/) that add snippets of R code to help me write blog posts.
+
+# The problem
+
+I'm lazy.
+
+There's some bits of code I often want to put in my blog posts but I can't remember them.
+
+In particular:
+
+* an expandable 'details' section, which sometimes contains [R session information](https://www.rostrum.blog/2018/10/13/sessioninfo/){target="_blank"} and the date of the post's last update (see [this previous post](https://www.rostrum.blog/2019/05/31/brickr-soccer/) for examples of both)
+* a way to add an image with a caption and alt text that differ, something that makes the images [more accessible](https://www.gov.uk/guidance/content-design/image-copyright-standards-for-gov-uk) for users of screen readers, for example
+* a link that opens in a new tab, rather than in the tab where you're reading a post ([as per this tweet](https://twitter.com/rudeboybert/status/1042418261596545027?s=20){target="_blank"} by [Albert Y Kim](https://twitter.com/rudeboybert/){target="_blank"})
+
+Originally I [stored them in a GitHub Gist](https://gist.github.com/matt-dray/00aa8038b836168bd6689feedb60b5dd), but this is sub-optimal: the internet connection on my commute can be patchy. I needed an offline solution.
+
+# The answer
+
+I use [RStudio](https://rstudio.com/){target="_blank"} and [{blogdown}](https://bookdown.org/yihui/blogdown/){target="_blank"} to write my blog posts. RStudio has a feature that lets you execute functions from [an 'addins' menu](https://rstudio.github.io/rstudioaddins/){target="_blank"}.
+
+A number of packages have addins built in to them that become available when you install them, like [{datapasta}](https://github.com/MilesMcBain/datapasta){target="_blank"} for copy-pasting stuff into R, [{reprex}](https://github.com/tidyverse/reprex){target="_blank"} for generating reproducible examples and even {blogdown} itself, which [has addins for creating new posts and inserting images](https://bookdown.org/yihui/blogdown/rstudio-ide.html){target="_blank"}, for example.
+
+So I wrote my snippets into a package that, when installed, adds some functions to RStudio's addins menu.
+
+The package is called {blogsnip}. Visit the [site](https://matt-dray.github.io/blogsnip/){target="_blank"} or [source](https://github.com/matt-dray/blogsnip/){target="_blank"}.
+
+# How to
+
+You can follow [RStudio's guidance on creating addins](https://rstudio.github.io/rstudioaddins/#developing-addins){target="_blank"}. You can do some fancy stuff like [invoke Shiny](https://rstudio.github.io/rstudioaddins/#shiny-gadgets){target="_blank"} for interactivity.
+
+But perhaps, like me, you just want to create an addin to insert some snippets of text. In which case, you can do the following:
+
+1. Create an R package structure with `usethis::create_package()`
+1. Add an R script to house your functions with `usethis::use_r()`
+1. Edit the script so you have functions in the form `fun_name <- function() {rstudioapi::insertText("Text")}`, where `insertText()` function does exactly that ([see example](https://github.com/matt-dray/blogsnip/blob/master/R/insert_blogdown_helpers.R){target="_blank"})
+1. Add a special file at `inst/rstudio/addins.dcf` that declares your functions as addins ([see example](https://github.com/matt-dray/blogsnip/blob/master/inst/rstudio/addins.dcf){target="_blank"})
+
+That's it, really.
+
+See what this looks like in [the full source code for {blogsnip}](https://github.com/matt-dray/blogsnip){target="_blank"} (note that I've added some other stuff there, like a license, readme and files to generate [a {pkgdown} site](https://pkgdown.r-lib.org/index.html){target="_blank"}).
+
+# Next
+
+Add more useful snippets to {blogsnip} for writing posts with {blogdown}. Maybe [you can help](https://github.com/matt-dray/blogsnip/blob/master/CODE_OF_CONDUCT.md){target="_blank"}?
+
+Oh, and [a sticker](https://github.com/matt-dray/stickers){target="_blank"}, probably.
