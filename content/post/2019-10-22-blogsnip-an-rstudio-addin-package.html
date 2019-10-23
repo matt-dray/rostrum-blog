@@ -45,14 +45,17 @@ remotes::install_github(&quot;matt-dray/blogsnip&quot;)</code></pre>
 <div id="the-answer" class="section level1">
 <h1>The answer</h1>
 <p>I use <a href="https://rstudio.com/" target="_blank">RStudio</a> and <a href="https://bookdown.org/yihui/blogdown/" target="_blank">{blogdown}</a> to write my blog posts. RStudio has a feature that lets you execute functions from <a href="https://rstudio.github.io/rstudioaddins/" target="_blank">an ‘addins’ menu</a>.</p>
-<p>A number of packages have addins built in to them that become available when you install them, like <a href="https://github.com/MilesMcBain/datapasta" target="_blank">{datapasta}</a> for copy-pasting stuff into R, <a href="https://github.com/tidyverse/reprex" target="_blank">{reprex}</a> for generating reproducible examples and even {blogdown} itself, which <a href="https://bookdown.org/yihui/blogdown/rstudio-ide.html" target="_blank">has addins for creating new posts and inserting images</a>, for example.</p>
+<p><a href="https://github.com/daattali/addinslist" target="_blank">Lots of of addins</a> are available (see this RStudio Community thread). Some simple ones are <a href="https://github.com/MilesMcBain/datapasta" target="_blank">{datapasta}</a> for copy-pasting stuff into R, <a href="https://github.com/tidyverse/reprex" target="_blank">{reprex}</a> for generating reproducible examples and even {blogdown} itself, which <a href="https://bookdown.org/yihui/blogdown/rstudio-ide.html" target="_blank">has addins for creating new posts and inserting images</a>, for example.</p>
 <p>So I wrote my snippets into a package that, when installed, adds some functions to RStudio’s addins menu.</p>
-<p>The package is called {blogsnip}. Visit the <a href="https://matt-dray.github.io/blogsnip/" target="_blank">site</a> or <a href="https://github.com/matt-dray/blogsnip/" target="_blank">source</a>.</p>
+<p>The package is called {blogsnip}. Visit the <a href="https://matt-dray.github.io/blogsnip/" target="_blank">site</a> or <a href="https://github.com/matt-dray/blogsnip/" target="_blank">source</a>. Install with:</p>
+<pre class="r"><code>install.packages(&quot;remotes&quot;)
+remotes::install_github(&quot;matt-dray/blogsnip&quot;)</code></pre>
+<p>Once installed, the functions are available under ‘BLOGSNIP’ in RStudio’s ‘addins’ dropdown (see the gif at the top of this post). You could also use them like regular functions by calling <code>blogsnip::addin_details()</code>, for example.</p>
 </div>
 <div id="how-to" class="section level1">
 <h1>How to</h1>
-<p>You can follow <a href="https://rstudio.github.io/rstudioaddins/#developing-addins" target="_blank">RStudio’s guidance on creating addins</a>. You can do some fancy stuff like <a href="https://rstudio.github.io/rstudioaddins/#shiny-gadgets" target="_blank">invoke Shiny</a> for interactivity.</p>
-<p>But perhaps, like me, you just want to create some shareable addins that insert some snippets of text. In which case, you can do the following:</p>
+<p>You can follow <a href="https://rstudio.github.io/rstudioaddins/#developing-addins" target="_blank">RStudio’s guidance on creating addins</a>, which even incldues some fancy stuff like <a href="https://rstudio.github.io/rstudioaddins/#shiny-gadgets" target="_blank">invoking Shiny-powered interfaces</a> for addins.</p>
+<p>But perhaps, like me, you just want to create some simple shareable addins that insert some snippets of text. In which case, the (simplified) steps are:</p>
 <ol style="list-style-type: decimal">
 <li>Create an R package structure with <code>usethis::create_package()</code></li>
 <li>Add an R script to house your functions with <code>usethis::use_r()</code></li>
@@ -60,11 +63,17 @@ remotes::install_github(&quot;matt-dray/blogsnip&quot;)</code></pre>
 <li>Add a special file at <code>inst/rstudio/addins.dcf</code> that declares your functions as addins (<a href="https://github.com/matt-dray/blogsnip/blob/master/inst/rstudio/addins.dcf" target="_blank">see example</a>)</li>
 <li>Document and build your package and host it for others to use</li>
 </ol>
-<p>That’s it, really.</p>
+<p>So you’re writing an R package as usual<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>, making use of {rstudioapi} functions and adding that special .dcf file.</p>
 <p>See what this looks like in <a href="https://github.com/matt-dray/blogsnip" target="_blank">the full source code for {blogsnip}</a> (note that I’ve added some other stuff there, like a license, readme and files to generate <a href="https://pkgdown.r-lib.org/index.html" target="_blank">a {pkgdown} site</a>).</p>
 </div>
 <div id="next" class="section level1">
 <h1>Next</h1>
 <p>Add more useful snippets to {blogsnip} for writing posts with {blogdown}. Maybe <a href="https://github.com/matt-dray/blogsnip/blob/master/CODE_OF_CONDUCT.md" target="_blank">you can help</a>?</p>
 <p>Oh, and <a href="https://github.com/matt-dray/stickers" target="_blank">a sticker</a>, probably.</p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>I recommend <a href="https://r-mageddon.netlify.com/post/writing-an-r-package-from-scratch/" target="_blank">Tomas Westlake’s guide for writing an R package from scratch</a>, <a href="https://www.hvitfeldt.me/blog/usethis-workflow-for-package-development/" target="_blank">Emil Hvitfeldt’s {usethis} workflow for package development</a>, <a href="https://kbroman.org/pkg_primer/">Karl Broman’s R Packages Primer</a> and <a href="http://r-pkgs.had.co.nz/" target="_blank">Hadley Wickham’s R Packages book</a>.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+</ol>
 </div>

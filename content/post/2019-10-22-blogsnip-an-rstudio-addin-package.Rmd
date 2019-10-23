@@ -49,17 +49,24 @@ Originally I [stored them in a GitHub Gist](https://gist.github.com/matt-dray/00
 
 I use [RStudio](https://rstudio.com/){target="_blank"} and [{blogdown}](https://bookdown.org/yihui/blogdown/){target="_blank"} to write my blog posts. RStudio has a feature that lets you execute functions from [an 'addins' menu](https://rstudio.github.io/rstudioaddins/){target="_blank"}.
 
-A number of packages have addins built in to them that become available when you install them, like [{datapasta}](https://github.com/MilesMcBain/datapasta){target="_blank"} for copy-pasting stuff into R, [{reprex}](https://github.com/tidyverse/reprex){target="_blank"} for generating reproducible examples and even {blogdown} itself, which [has addins for creating new posts and inserting images](https://bookdown.org/yihui/blogdown/rstudio-ide.html){target="_blank"}, for example.
+[Lots of of addins](https://github.com/daattali/addinslist){target="_blank"} are available (see this RStudio Community thread). Some simple ones are [{datapasta}](https://github.com/MilesMcBain/datapasta){target="_blank"} for copy-pasting stuff into R, [{reprex}](https://github.com/tidyverse/reprex){target="_blank"} for generating reproducible examples and even {blogdown} itself, which [has addins for creating new posts and inserting images](https://bookdown.org/yihui/blogdown/rstudio-ide.html){target="_blank"}, for example.
 
 So I wrote my snippets into a package that, when installed, adds some functions to RStudio's addins menu.
 
-The package is called {blogsnip}. Visit the [site](https://matt-dray.github.io/blogsnip/){target="_blank"} or [source](https://github.com/matt-dray/blogsnip/){target="_blank"}.
+The package is called {blogsnip}. Visit the [site](https://matt-dray.github.io/blogsnip/){target="_blank"} or [source](https://github.com/matt-dray/blogsnip/){target="_blank"}. Install with:
+
+```{r eval=FALSE}
+install.packages("remotes")
+remotes::install_github("matt-dray/blogsnip")
+```
+
+Once installed, the functions are available under 'BLOGSNIP' in RStudio's 'addins' dropdown (see the gif at the top of this post). You could also use them like regular functions by calling `blogsnip::addin_details()`, for example.
 
 # How to
 
-You can follow [RStudio's guidance on creating addins](https://rstudio.github.io/rstudioaddins/#developing-addins){target="_blank"}. You can do some fancy stuff like [invoke Shiny](https://rstudio.github.io/rstudioaddins/#shiny-gadgets){target="_blank"} for interactivity.
+You can follow [RStudio's guidance on creating addins](https://rstudio.github.io/rstudioaddins/#developing-addins){target="_blank"}, which even incldues some fancy stuff like [invoking Shiny-powered interfaces](https://rstudio.github.io/rstudioaddins/#shiny-gadgets){target="_blank"} for addins.
 
-But perhaps, like me, you just want to create some shareable addins that insert some snippets of text. In which case, you can do the following:
+But perhaps, like me, you just want to create some simple shareable addins that insert some snippets of text. In which case, the (simplified) steps are:
 
 1. Create an R package structure with `usethis::create_package()`
 1. Add an R script to house your functions with `usethis::use_r()`
@@ -67,7 +74,7 @@ But perhaps, like me, you just want to create some shareable addins that insert 
 1. Add a special file at `inst/rstudio/addins.dcf` that declares your functions as addins ([see example](https://github.com/matt-dray/blogsnip/blob/master/inst/rstudio/addins.dcf){target="_blank"})
 1. Document and build your package and host it for others to use
 
-That's it, really.
+So you're writing an R package as usual[^pkg], making use of {rstudioapi} functions and adding that special .dcf file.
 
 See what this looks like in [the full source code for {blogsnip}](https://github.com/matt-dray/blogsnip){target="_blank"} (note that I've added some other stuff there, like a license, readme and files to generate [a {pkgdown} site](https://pkgdown.r-lib.org/index.html){target="_blank"}).
 
@@ -76,3 +83,5 @@ See what this looks like in [the full source code for {blogsnip}](https://github
 Add more useful snippets to {blogsnip} for writing posts with {blogdown}. Maybe [you can help](https://github.com/matt-dray/blogsnip/blob/master/CODE_OF_CONDUCT.md){target="_blank"}?
 
 Oh, and [a sticker](https://github.com/matt-dray/stickers){target="_blank"}, probably.
+
+[^pkg]: I recommend [Tomas Westlake's guide for writing an R package from scratch](https://r-mageddon.netlify.com/post/writing-an-r-package-from-scratch/){target="_blank"}, [Emil Hvitfeldt's {usethis} workflow for package development](https://www.hvitfeldt.me/blog/usethis-workflow-for-package-development/){target="_blank"}, [Karl Broman's R Packages Primer](https://kbroman.org/pkg_primer/) and [Hadley Wickham's R Packages book](http://r-pkgs.had.co.nz/){target="_blank"}.
