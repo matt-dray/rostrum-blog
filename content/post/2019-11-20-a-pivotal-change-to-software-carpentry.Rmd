@@ -1,7 +1,7 @@
 ---
 title: A pivotal change to Software Carpentry
 author: Matt Dray
-date: '2019-11-20'
+date: '2019-11-27'
 slug: pivot
 categories:
   - code
@@ -11,48 +11,48 @@ tags:
   - software carpentry
   - the carpentries
   - tidyr
-draft: yes
+draft: no
 ---
+
+<div class="figure">
+<img src="/post/2019-11-20-a-pivotal-change-to-software-carpentry_files/pivot.gif" alt="A Simpsons gif of a dancing instructor telling Lisa and others 'I said step, pause, turn, pause, pivot, step, step, not step, pause, turn, pause, pivot, step, pause!'"/>
+<p class="caption">[Via Frikiac](https://frinkiac.com/)</p>
+</div>
 
 # tl;dr
 
-Teaching materials from The Carpentries depend on the community to amend and update them. This post is about updating the {tidyr} material for a Software Carpentry lesson.
+Teaching materials from [The Carpentries](https://carpentries.org/) depend on the community to amend and update them. This post is about my first proper contribution by helping to update [the Software Carpentry lesson that teaches the R package {tidyr}](https://swcarpentry.github.io/r-novice-gapminder/14-tidyr/index.html).
 
-Some other helpful explainers on {tidyr} are:
+Some helpful materials for learning about {tidyr}'s new `pivot_*()` functions:
 
 * [the {tidyr} vignette about pivoting](https://tidyr.tidyverse.org/dev/articles/pivot.html)
 * Hiroaki Yutani’s [slides](https://speakerdeck.com/yutannihilation/a-graphical-introduction-to-tidyrs-pivot-star) — ‘A graphical introduction to tide’s pivot_*()’
 * Bruno Rodrigues’s [blogpost](https://www.brodrigues.co/blog/2019-03-20-pivot/) — ‘Pivoting data frames just got easier thanks to `pivot_wide()` and `pivot_long()`’
 * Sharon Machlis’s [video](https://youtu.be/gnUgSkKEW5c) — ‘How to reshape data with tidyr’s new pivot functions’
 * Gavin Simpson’s [blog](https://www.fromthebottomoftheheap.net/2019/10/25/pivoting-tidily/) — ‘Pivoting tidily’ (a real-world problem)
+* I wrote a {tidyr} lesson for [Tidyswirl](https://github.com/matt-dray/tidyswirl), a [Swirl](https://swirlstats.com/) course for learning the tidyverse from within R itself ([read the blog post](https://www.rostrum.blog/2019/11/02/tidyswirl/))
 
-# Instructor
+# Contribute!
 
-I passed [the requirements](https://carpentries.github.io/instructor-training/checkout/) to become a [Software Carpentry](https://software-carpentry.org/) trainer, which ‘teach[es] foundational coding and data science skills to researchers worldwide’ as part of [The Carpentries](https://carpentries.org/) initiative.
+[Software Carpentry](https://software-carpentry.org/) ‘teach[es] foundational coding and data science skills to researchers worldwide’ as part of [The Carpentries](https://carpentries.org/) initiative. I wrote [an earlier post about live coding](https://www.rostrum.blog/2019/09/12/live-code/)[^xpost] as part of the training to [become an instructor](https://carpentries.github.io/instructor-training/).
 
-I wrote about part of this experience in [a post about live coding](https://www.rostrum.blog/2019/09/12/live-code/) ([cross-posted on The Carpentries blog](https://carpentries.org/blog/2019/09/live-coding-experience/)).
+A great thing about the The Carpentries is that the lessons are openly available on GitHub. This means anyone can improve them to improve the experience for learners all over the globe.
 
-# Contribution
-
-A great thing about the The Carpentries is that the lessons are openly available on GitHub. 
-
-One of the instructor assessment requirements is to make a contribution to develop the materials. This can be as simple as raising an issue on GitHub or offering a pull request (PR) to merge in new or amended content.
-
-I made a [trivial PR](https://github.com/swcarpentry/r-novice-gapminder/pull/569) to correct a small problem with bullet points, but I had [a more substantial suggestion that I raised in in an issue](https://github.com/swcarpentry/r-novice-gapminder/issues/570): to update the entire episode about [{tidyr}](https://tidyr.tidyverse.org/)--a [tidyverse](https://www.tidyverse.org/) package used for reshaping data frames--in [the R for Reproducible Scientific Analysis lesson] (https://swcarpentry.github.io/r-novice-gapminder/14-tidyr/index.html).
+To this end, [I raised in in an issue](https://github.com/swcarpentry/r-novice-gapminder/issues/570): to update the entire episode about [{tidyr}](https://tidyr.tidyverse.org/)--a [tidyverse](https://www.tidyverse.org/) package used for reshaping data frames--in [the R for Reproducible Scientific Analysis lesson] (https://swcarpentry.github.io/r-novice-gapminder/14-tidyr/index.html).[^issue]
 
 # Pivot
 
-Why? `pivot_longer()` and `pivot_wider()` have replaced `spread()` and `gather()` functions since {tidyr} [version 1.0.0](https://www.tidyverse.org/blog/2019/09/tidyr-1-0-0/). Their aim is to be more intuitive.
+Why? The `pivot_longer()` and `pivot_wider()` functions replaced `spread()` and `gather()` in {tidyr} [version 1.0.0](https://www.tidyverse.org/blog/2019/09/tidyr-1-0-0/).
 
 These pairs of functions change the 'shape' of a data set from 'wide' to 'long' and vice versa.
 
-Here’s an example of wide data from the World Health Organisation[^table4a]:
+Here’s an example of wide data from the World Health Organisation:
 
 ```{r echo=FALSE}
 tidyr::table4a
 ```
 
-There’s a row per country and a column per year of data, with each yearly column filled with some value. Note that these data aren’t [‘tidy’](https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html): the column headers are values, not variable names, and there isn’t a single observation per row. You have no way of knowing that the values in the columns are tuberculosis cases.
+There’s a row per country and a column per year of data. Each yearly column filled with a value. Note that these data aren’t [‘tidy’](https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html): the column headers are values, not variable names, and there isn’t a single observation per row. You have no way of knowing that the values in the columns are tuberculosis cases.
 
 This data frame can be made more tidy by making it longer. Here's what that looks like:
 
@@ -62,26 +62,57 @@ dplyr::select(tidyr::table1, -population)
 
 So the year values from the headers have been put into their own column and the corresponding counts of tuberculosis are in a column with a more sensible name.
 
-{tidyr} helps you shift between these formats: `pivot_wider()` spreads long data into wide form and `pivot_longer()` gathers the wide data into long form. Why these names? [Hadley did a poll](https://github.com/hadley/table-shapes) to see how people referred to these two table shapes and ‘wider’ and ‘longer’ were most popular.[^stout]
+{tidyr} helps you shift between these formats: `pivot_wider()` spreads long data into wide form and `pivot_longer()` gathers the wide data into long form. Why these names? [Hadley did a poll](https://github.com/hadley/table-shapes) to see how people referred to these two table shapes and ‘wider’ and ‘longer’ were most popular.[^thicc]
 
 # Re-writing the episode
 
-Was re-writing the episode as simple as finding and replacing `spread()` with `pivot_longer()` and `gather()` with `pivot_wider()`? 
-
-No. For two reasons: new arguments and slightly different outputs.
+I started re-writing the eipsode, but turns out it wasn't as simple as replacing `spread()` with `pivot_longer()` and `gather()` with `pivot_wider()`. For two reasons: different function arguments and slightly different outputs.
 
 ## Arguments
 
-The `key` and `value` arguments take the names of new columns to `gather()` into or `spread()` out from. People struggle with what these things mean. The `pivot_*()` functions make this a little easier: `pivot_longer()` has `names_to` and `values_to`, and `pivot_wider()` has `names_from` and `values_from`. The 'to' and 'from' suffixes make clearer what is happening.
+The `key` and `value` arguments take the names of new columns to `gather()` into or `spread()`. People struggle with what these things mean. The `pivot_*()` functions make this a little easier: `pivot_longer()` has `names_to` and `values_to`, and `pivot_wider()` has `names_from` and `values_from`. The 'to' and 'from' suffixes make clearer what is happening.
+
+For example, we can start with our wide-table example (built into the {tidyr} package as `table4a`) and turn it into the long-table example:
+
+```{r}
+library(tidyr)
+
+long <- pivot_longer(
+  data = table4a,  # wide data example 
+  cols = c(`1999`, `2000`),  # the columns to be pivoted
+  names_to = "year",  # new column for the current column headers
+  values_to = "cases"  # new column for the corresponding values
+)
+
+print(long)
+```
+
+And back:
+
+```{r}
+wide <- pivot_wider(
+  data = long,  # dataset created above
+  names_from = year,  # create cols from data in this column
+  values_from = cases  # fill the new columns with data from this column
+)
+
+print(wide)
+```
+
+It was pretty straightforward to update the training materials with these function arguments, remembering that `names_to` needs to be supplied with a quoted string to become the name of the new column, for example, whereas `names_from` refers to an existing column and is a bare variable name.
 
 ## Output changes
 
-I [wrote in the issue](they have tibble class as well as data.frame and are ordered differently. This means some of the figures need updating as well as the text.) that outputs from the `pivot_*()` functions have tibble class as well as data.frame and are ordered differently. This means some of the figures needed updating as well as the text.
+[I raised some things about outputs in my issue](https://github.com/swcarpentry/r-novice-gapminder/issues/570#event-2797050583): (1) outputs from the new functions have tibble class even with a data.frame input and (2) might be ordered differently to outputs from the old functions. This required some changes to the images in the lesson, but didn't change much else fundamentally. 
 
 # Teamwork
 
-While busy with other things, another user took the branch I'd started, improved it and it was merged into the source for
+While busy with other things, another user--[Katrin Leinweber](https://github.com/katrinleinweber)--took the branch I'd started, improved it and it was [merged into the source](https://github.com/swcarpentry/r-novice-gapminder/pull/583#issuecomment-553771995) thanks to [Jeff Oliver](https://github.com/jcoliver). This is a huge benefit of working in the open; other people can see what you've done, suggest improvements and help write code.
 
-[^table4a]: This data set is built into the {tidyr} package: `print(table4a)`.
-[^table1]: This tibble is also built into the tidyr package: `print(table1)` (though I've removed a column).
-[^stout]: Yeah, but `pivot_thicc()` and `pivot_sticc()` would have been amusing.
+[The page is now live](https://swcarpentry.github.io/r-novice-gapminder/14-tidyr/index.html). Learners can now be up to speed with the latest developments in the {tidyr} package. This is an important improvement for new R and tidyverse users because I think these functions are more intuitive than their old counterparts, which are no longer under active development.
+
+Consider [contributing to The Carpentries](https://docs.carpentries.org/topic_folders/maintainers/contributing.html) or another open-source project.
+
+[^xpost]: Cross-posted on [The Carpentries blog](https://carpentries.org/blog/2019/09/live-coding-experience/).
+[^issue]: And a [little pull request](https://github.com/swcarpentry/r-novice-gapminder/pull/569) to correct a small problem with bullet points, which helped me complete my requirements to become an instructor.
+[^thicc]: Yeah, but `pivot_thicc()` and `pivot_sticc()` would have been amusing.
