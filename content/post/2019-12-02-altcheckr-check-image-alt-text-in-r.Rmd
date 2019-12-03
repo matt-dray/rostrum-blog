@@ -1,0 +1,148 @@
+---
+title: '{altcheckr}: check image alt text in R'
+author: Matt Dray
+date: '2019-12-02'
+slug: altcheckr
+categories:
+  - code
+  - package
+tags:
+  - accessibility
+  - alt-text
+  - hunspell
+  - purrr
+  - quanteda
+  - r
+  - rvest
+  - scrape
+  - stringr
+  - tibble
+  - xml2
+draft: yes
+---
+
+# tl;dr
+
+I've made a small R package called {altcheckr} that checks the accessibility of images on web pages. It has functions that (1) scrape attributes from HTML <img> elements and (2) apply simple rules to indicate the suitability of the alt text provided. To use:
+
+```{r, eval=FALSE}
+remotes::install_github("matt-dray/altcheckr")
+images <- alt_get("https://www.bbc.co.uk/news")
+alt_check(images)
+```
+
+# Accessibility
+
+A web site is accessible if everyone can enage with its content. There are guidelines from WCAG for doing this and the law in the UK has recently changed to ensure that all public sector websites publish an accessibility statement.
+
+One obvious target for improvement is accessibility of images.
+
+## Screen readers
+
+Screen readers are a technology that turn text on a web page into audio. They're particularly helpful for people with low vision and people who are blind. Most modern computers have a screen reader pre-installed, like VoiceOver on macOS.
+
+How can a screen reader interpret an image? You provide a descriptive sentence in the underlying code of the web page, which is then read by the screen reader.
+
+Images are declared in the HTML code of a website with a special `<img>` tag. Like other HTML tags, it can have many 'attributes', like the source of the image (where the image is actually hosted), the height and width of the image, and so on.
+
+Images can also have an 'alt' attribute, which provides some alternative text that describes the image. This text won't be visible to people visiting the page, but will be picked up screen readers.
+
+There's many (often free) tools for checking alt text problems as well as other accessibility issues. Tenon and Wave are two examples. 
+
+## When and what to write
+
+What should you actually write as alternative text for an image?
+
+[The alt decision tree by W3C](https://www.w3.org/WAI/tutorials/images/decision-tree/) is a good reference for deciding how to form alt text for an image. It describes several types of image and what should be written for them:
+
+* informative images: need at least a short, complete sentence to describe them
+* decorative images: images serving no informative function should get an empty alt text attribute (`alt = ""`)
+* functional images: images used as buttons, for example, should have alt text that describes their function
+* images containing text: screen readers don't read words from images, so the alt attribute should contain this text
+* complex images: charts, for example, can be difficult to describe succinctly, so an explanation should go in the main body text, or a `longdesc` attribute can be used to link to a separate web page containing a longer description of the image 
+
+# {altcheckr}
+
+So I wrote a small R package called {altcheckr} to help people assess alt text. It has only two functions for now:
+
+* `alt_get()` scrapes the web page at a URL provided by the user and outputs a data frame where each row is an image and each column is an HTML attribute 
+* `alt_check()` takes the output from `alt_get()` and adds a series of columns that assess features of the alt text, like its length
+
+{altcheckr} isn't intended to provide a definitive evaluation of alt text. It uses some simple heuristics and doesn't contain everything that could be checked. For example, short alt text might not be great for an informative image, but might be fine for a functional one.
+
+I welcome suggestions and improvements.
+
+## Example
+
+# Install
+
+You can get the package from GitHub with:
+
+```{r eval=FALSE}
+install.packages("remotes")
+install_github("matt-dray/altcheckr")
+library(altcheckr)
+```
+
+# alt_get()
+
+The `alt_get()` function makes use of {xml2} and {rvest} to scrape a web page and isolate attributes from its `<img>` elements. It returns a tibble via {purrr} where each row is an image.
+
+You can choose to retain all scraped attributes as columns, or it defaults to returning just `src` and `alt` (`longdesc` too if it exists).
+
+Let's take a look at a couple of websites.
+
+The BBC's site is pretty popular and should have good alt text.
+
+```{r}
+bbc_get <- alt_get("https://www.bbc.co.uk/news")
+bbc_get
+```
+
+Looks like we have `r nrow(bbc_get)` rows, with columns for the image source and the alt text.
+
+## alt_check()
+
+The `alt_check()` function takes the output from `alt_get()` and generates some new columns based on what it finds. 
+
+```{r echo=FALSE}
+library(altcheckr)
+```
+```{r}
+bbc_check <- alt_check("bbc_get")
+bbc_check
+```
+
+That's quite a lot of output. Here's the same table rendered to HTML:
+
+```{r}
+knitr::kable(bbc_check)
+```
+
+The output columns are as follows, with reasoning:
+
+| Column name | What | Why |
+| :----- | :----- | :----- |
+| `alt_exists` | Has alt text been provided? | A lack of alt text could be a problem, though it's acceptable if the image is decorative. |
+| `char_length` | Is the alt text short (defaults to 20 characters), long (125) or okay? | Short alt text might not describe the image well, but is acceptable for things like buttons, for example. Long alt text might be too verbose and should probably put in a `longdesc` attribute. |
+| `file_ext` | Does the alt text appear to be a filename? | Alt text shouldn't contain a filename. |
+| `self_evident` | Does the alt text contain redundant phrases? | It doesn't need to say 'a picture showing...' or similar. |
+| `terminal_period` | Is the alt text written like a sentence? | The alt text should end in a sentence terminator, like a full stop. This means the screen reader will parse it as a proper sentence. |
+| `spellcheck` | Do any of the words appear to be misspelled? | Errors in spelling may result in the screen reader misreading a word. |
+| `basic_words` | Does the alt text contain uncommon words? | Text is more accessible in general if it uses simple English. |
+| `readability` | How complex is the alt text? | There are various measures of readability that provide a rough idea of sentence complexity. Lower complexity is more accessible in general. |
+
+I know this isn't optimal. Feel free to suggest changes.
+
+# Why
+
+I'm learning to make packages and accessibility is important. 
+
+You can read some recent posts on
+
+* making packages with {usethis}
+* the {kevinbacran} package to expose CRAN author relationshop
+* the {blogsnip} package with RStudio addins for blog writing
+* {gdstheme}, which contains a {xaringan} theme and template
+
+I've also written briefly on accessibility and some tools for more comprehensively checking a site.
