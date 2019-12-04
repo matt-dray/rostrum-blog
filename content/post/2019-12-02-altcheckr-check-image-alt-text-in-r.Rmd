@@ -23,7 +23,7 @@ draft: yes
 
 # tl;dr
 
-I've made a small R package called {altcheckr} that checks the accessibility of images on web pages. It has functions that (1) scrape attributes from HTML <img> elements and (2) apply simple rules to indicate the suitability of the alt text provided. To use:
+I've made a small R package called [{altcheckr}](https://matt-dray.github.io/altcheckr/){target="_blank"} that checks the accessibility of images on web pages. It has functions that (1) scrape attributes from HTML <img> elements and (2) apply simple rules to indicate the suitability of the alt text provided. To use:
 
 ```{r, eval=FALSE}
 remotes::install_github("matt-dray/altcheckr")
@@ -33,44 +33,38 @@ alt_check(images)
 
 # Accessibility
 
-A web site is accessible if everyone can enage with its content. There are guidelines from WCAG for doing this and the law in the UK has recently changed to ensure that all public sector websites publish an accessibility statement.
+A web site is [accessible](https://en.wikipedia.org/wiki/Accessibility){target="_blank"}  if everyone can enage with its content. There are guidelines from WCAG for doing this and the law in the UK has recently changed to ensure that all public sector websites publish an accessibility statement. There are [many (often free) tools for checking accessibility issues](https://www.w3.org/WAI/ER/tools/).
 
 One obvious target for improvement is accessibility of images.
 
 ## Screen readers
 
-Screen readers are a technology that turn text on a web page into audio. They're particularly helpful for people with low vision and people who are blind. Most modern computers have a screen reader pre-installed, like VoiceOver on macOS.
+[Screen readers]() are a technology that turn text on a web page into audio. They're particularly helpful for people with low vision and people who are blind.
 
-How can a screen reader interpret an image? You provide a descriptive sentence in the underlying code of the web page, which is then read by the screen reader.
+Images are declared in the HTML code of a website with [the `<img>` element](https://www.w3schools.com/tags/tag_img.asp){target="_blank"}. Like other HTML tags, it can have many 'attributes': the source of the image (where the image is actually hosted), the height and width of the image, and so on.
 
-Images are declared in the HTML code of a website with a special `<img>` tag. Like other HTML tags, it can have many 'attributes', like the source of the image (where the image is actually hosted), the height and width of the image, and so on.
-
-Images can also have an 'alt' attribute, which provides some alternative text that describes the image. This text won't be visible to people visiting the page, but will be picked up screen readers.
-
-There's many (often free) tools for checking alt text problems as well as other accessibility issues. Tenon and Wave are two examples. 
+The 'alt' attribute provides alternative text that describes the image. This text won't be visible to people visiting the page, but will be picked up screen readers.
 
 ## When and what to write
 
 What should you actually write as alternative text for an image?
 
-[The alt decision tree by W3C](https://www.w3.org/WAI/tutorials/images/decision-tree/) is a good reference for deciding how to form alt text for an image. It describes several types of image and what should be written for them:
+[The alt decision tree by W3C](https://www.w3.org/WAI/tutorials/images/decision-tree/) is a good reference for deciding how to form alt text for an image. It describes what to do for several image types:
 
 * informative images: need at least a short, complete sentence to describe them
 * decorative images: images serving no informative function should get an empty alt text attribute (`alt = ""`)
 * functional images: images used as buttons, for example, should have alt text that describes their function
 * images containing text: screen readers don't read words from images, so the alt attribute should contain this text
-* complex images: charts, for example, can be difficult to describe succinctly, so an explanation should go in the main body text, or a `longdesc` attribute can be used to link to a separate web page containing a longer description of the image 
+* complex images: charts, for example, can be difficult to describe succinctly, so an explanation should go in the main body text, or a `longdesc` attribute can be used to link to a separate web page containing a longer description of the image
 
 # {altcheckr}
 
-So I wrote a small R package called {altcheckr} to help people assess alt text. It has only two functions for now:
+So I wrote a small R package called {altcheckr} to help assess alt text programmatically. Go to [the source on GitHub](https://github.com/matt-dray/altcheckr) or see [the site](https://matt-dray.github.io/altcheckr/) built with {pkgdown}. It has only two functions for now:
 
-* `alt_get()` scrapes the web page at a URL provided by the user and outputs a data frame where each row is an image and each column is an HTML attribute 
+* `alt_get()` scrapes the web page at a URL provided by the user and outputs a data frame where each row is an image and each column is an HTML attribute
 * `alt_check()` takes the output from `alt_get()` and adds a series of columns that assess features of the alt text, like its length
 
-{altcheckr} isn't intended to provide a definitive evaluation of alt text. It uses some simple heuristics and doesn't contain everything that could be checked. For example, short alt text might not be great for an informative image, but might be fine for a functional one.
-
-I welcome suggestions and improvements.
+{altcheckr} isn't intended to provide a definitive evaluation of alt text. It uses simple heuristics and doesn't contain everything that could be checked.
 
 ## Example
 
@@ -90,9 +84,7 @@ The `alt_get()` function makes use of {xml2} and {rvest} to scrape a web page an
 
 You can choose to retain all scraped attributes as columns, or it defaults to returning just `src` and `alt` (`longdesc` too if it exists).
 
-Let's take a look at a couple of websites.
-
-The BBC's site is pretty popular and should have good alt text.
+The [BBC News](https://www.bbc.co.uk/news) site is popular and should have good alt text.
 
 ```{r echo=FALSE}
 library(altcheckr)
@@ -125,19 +117,38 @@ The output columns are as follows, with reasoning:
 | `terminal_period` | Is the alt text written like a sentence? | The alt text should end in a sentence terminator, like a full stop. This means the screen reader will parse it as a proper sentence. |
 | `spellcheck` | Do any of the words appear to be misspelled? | Errors in spelling may result in the screen reader misreading a word. |
 | `basic_words` | Does the alt text contain uncommon words? | Text is more accessible in general if it uses simple English. |
-| `readability` | How complex is the alt text? | There are various measures of readability that provide a rough idea of sentence complexity. Lower complexity is more accessible in general. |
 
-I know this isn't optimal. Feel free to suggest changes.
+I welcome suggestions and improvements.
+
+## Improvements
+
+In particular, there's a number of alt_check() additions that could be developed. For example:
+
+* optical character recognition (OCR) to decide whether an image has text in it, and to possibly extract it
+* guess the type of image based on its attributes and derived variables (a functional image might have relatively small height and width attributes, for example)
+* assess the text in the link provided by the `longdesc` attribute, if it exists
+* detect 'link stuffing', where people fill the alt text with keywords for search engine optimisation
+
+And of course: better unit testing and test coverage, simplifying the dependencies and making the code more efficient.
 
 # Why
 
-I'm learning to make packages and accessibility is important. 
+I'm learning to make packages and accessibility is important.
 
-You can read some recent posts on
+More package-making posts:
 
-* making packages with {usethis}
-* the {kevinbacran} package to expose CRAN author relationshop
-* the {blogsnip} package with RStudio addins for blog writing
-* {gdstheme}, which contains a {xaringan} theme and template
+* [making packages with {usethis}](https://www.rostrum.blog/2019/11/01/usethis/){target="_blank"}
+* [the {kevinbacran} package](https://www.rostrum.blog/2019/02/27/hadley-number/){target="_blank"} to expose CRAN author relationship
+* [the {blogsnip} package](https://www.rostrum.blog/2019/10/22/blogsnip/){target="_blank"} with RStudio addins for blog writing
+* [{gdstheme}](https://www.rostrum.blog/2019/05/24/xaringan-template/){target="_blank"}, which contains a {xaringan} theme and template
 
-I've also written briefly on accessibility and some tools for more comprehensively checking a site.
+I've also [written briefly on accessibility](https://www.rostrum.blog/2018/05/12/accessibility-workshop-at-sprint18/){target="_blank"} and [some tools for more comprehensive checking](https://www.rostrum.blog/2018/07/12/accessible-accessibility/){target="_blank"} of a site.
+
+---
+
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+paste("Last updated", Sys.Date())
+sessioninfo::session_info()
+```
+</details>

@@ -25,27 +25,25 @@ draft: yes
 
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>I’ve made a small R package called {altcheckr} that checks the accessibility of images on web pages. It has functions that (1) scrape attributes from HTML <img> elements and (2) apply simple rules to indicate the suitability of the alt text provided. To use:</p>
+<p>I’ve made a small R package called <a href="https://matt-dray.github.io/altcheckr/" target="_blank">{altcheckr}</a> that checks the accessibility of images on web pages. It has functions that (1) scrape attributes from HTML <img> elements and (2) apply simple rules to indicate the suitability of the alt text provided. To use:</p>
 <pre class="r"><code>remotes::install_github(&quot;matt-dray/altcheckr&quot;)
 images &lt;- alt_get(&quot;https://www.bbc.co.uk/news&quot;)
 alt_check(images)</code></pre>
 </div>
 <div id="accessibility" class="section level1">
 <h1>Accessibility</h1>
-<p>A web site is accessible if everyone can enage with its content. There are guidelines from WCAG for doing this and the law in the UK has recently changed to ensure that all public sector websites publish an accessibility statement.</p>
+<p>A web site is <a href="https://en.wikipedia.org/wiki/Accessibility" target="_blank">accessible</a> if everyone can enage with its content. There are guidelines from WCAG for doing this and the law in the UK has recently changed to ensure that all public sector websites publish an accessibility statement. There are <a href="https://www.w3.org/WAI/ER/tools/">many (often free) tools for checking accessibility issues</a>.</p>
 <p>One obvious target for improvement is accessibility of images.</p>
 <div id="screen-readers" class="section level2">
 <h2>Screen readers</h2>
-<p>Screen readers are a technology that turn text on a web page into audio. They’re particularly helpful for people with low vision and people who are blind. Most modern computers have a screen reader pre-installed, like VoiceOver on macOS.</p>
-<p>How can a screen reader interpret an image? You provide a descriptive sentence in the underlying code of the web page, which is then read by the screen reader.</p>
-<p>Images are declared in the HTML code of a website with a special <code>&lt;img&gt;</code> tag. Like other HTML tags, it can have many ‘attributes’, like the source of the image (where the image is actually hosted), the height and width of the image, and so on.</p>
-<p>Images can also have an ‘alt’ attribute, which provides some alternative text that describes the image. This text won’t be visible to people visiting the page, but will be picked up screen readers.</p>
-<p>There’s many (often free) tools for checking alt text problems as well as other accessibility issues. Tenon and Wave are two examples.</p>
+<p><a href="">Screen readers</a> are a technology that turn text on a web page into audio. They’re particularly helpful for people with low vision and people who are blind.</p>
+<p>Images are declared in the HTML code of a website with <a href="https://www.w3schools.com/tags/tag_img.asp" target="_blank">the <code>&lt;img&gt;</code> element</a>. Like other HTML tags, it can have many ‘attributes’: the source of the image (where the image is actually hosted), the height and width of the image, and so on.</p>
+<p>The ‘alt’ attribute provides alternative text that describes the image. This text won’t be visible to people visiting the page, but will be picked up screen readers.</p>
 </div>
 <div id="when-and-what-to-write" class="section level2">
 <h2>When and what to write</h2>
 <p>What should you actually write as alternative text for an image?</p>
-<p><a href="https://www.w3.org/WAI/tutorials/images/decision-tree/">The alt decision tree by W3C</a> is a good reference for deciding how to form alt text for an image. It describes several types of image and what should be written for them:</p>
+<p><a href="https://www.w3.org/WAI/tutorials/images/decision-tree/">The alt decision tree by W3C</a> is a good reference for deciding how to form alt text for an image. It describes what to do for several image types:</p>
 <ul>
 <li>informative images: need at least a short, complete sentence to describe them</li>
 <li>decorative images: images serving no informative function should get an empty alt text attribute (<code>alt = &quot;&quot;</code>)</li>
@@ -57,13 +55,12 @@ alt_check(images)</code></pre>
 </div>
 <div id="altcheckr" class="section level1">
 <h1>{altcheckr}</h1>
-<p>So I wrote a small R package called {altcheckr} to help people assess alt text. It has only two functions for now:</p>
+<p>So I wrote a small R package called {altcheckr} to help assess alt text programmatically. Go to <a href="https://github.com/matt-dray/altcheckr">the source on GitHub</a> or see <a href="https://matt-dray.github.io/altcheckr/">the site</a> built with {pkgdown}. It has only two functions for now:</p>
 <ul>
 <li><code>alt_get()</code> scrapes the web page at a URL provided by the user and outputs a data frame where each row is an image and each column is an HTML attribute</li>
 <li><code>alt_check()</code> takes the output from <code>alt_get()</code> and adds a series of columns that assess features of the alt text, like its length</li>
 </ul>
-<p>{altcheckr} isn’t intended to provide a definitive evaluation of alt text. It uses some simple heuristics and doesn’t contain everything that could be checked. For example, short alt text might not be great for an informative image, but might be fine for a functional one.</p>
-<p>I welcome suggestions and improvements.</p>
+<p>{altcheckr} isn’t intended to provide a definitive evaluation of alt text. It uses simple heuristics and doesn’t contain everything that could be checked.</p>
 <div id="example" class="section level2">
 <h2>Example</h2>
 <div id="install" class="section level3">
@@ -77,23 +74,22 @@ library(altcheckr)</code></pre>
 <h3>alt_get()</h3>
 <p>The <code>alt_get()</code> function makes use of {xml2} and {rvest} to scrape a web page and isolate attributes from its <code>&lt;img&gt;</code> elements. It returns a tibble via {purrr} where each row is an image.</p>
 <p>You can choose to retain all scraped attributes as columns, or it defaults to returning just <code>src</code> and <code>alt</code> (<code>longdesc</code> too if it exists).</p>
-<p>Let’s take a look at a couple of websites.</p>
-<p>The BBC’s site is pretty popular and should have good alt text.</p>
+<p>The <a href="https://www.bbc.co.uk/news">BBC News</a> site is popular and should have good alt text.</p>
 <pre class="r"><code>bbc_get &lt;- alt_get(&quot;https://www.bbc.co.uk/news&quot;)
 bbc_get</code></pre>
 <pre><code>## # A tibble: 104 x 2
-##    src                                  alt                                
-##    &lt;chr&gt;                                &lt;chr&gt;                              
-##  1 https://a1.api.bbc.co.uk/hit.xiti?&amp;… &quot;&quot;                                 
-##  2 https://ichef.bbci.co.uk/news/320/c… Trump and Trudeau at Nato summit i…
-##  3 data:image/gif;base64,R0lGODlhAQABA… Bob Willis                         
-##  4 data:image/gif;base64,R0lGODlhAQABA… Jo Swinson                         
-##  5 data:image/gif;base64,R0lGODlhAQABA… Glasgow office buildings           
-##  6 data:image/gif;base64,R0lGODlhAQABA… Greta Thunberg and Nikki Henderson 
-##  7 data:image/gif;base64,R0lGODlhAQABA… L-R : Nazeem Akhtar, Mohammad Rizw…
-##  8 data:image/gif;base64,R0lGODlhAQABA… L-R : Nazeem Akhtar, Mohammad Rizw…
-##  9 data:image/gif;base64,R0lGODlhAQABA… shop                               
-## 10 data:image/gif;base64,R0lGODlhAQABA… congress                           
+##    src                                          alt                        
+##    &lt;chr&gt;                                        &lt;chr&gt;                      
+##  1 https://a1.api.bbc.co.uk/hit.xiti?&amp;col=1&amp;fr… &quot;&quot;                         
+##  2 https://ichef.bbci.co.uk/news/320/cpsprodpb… Trump and Trudeau at Nato …
+##  3 data:image/gif;base64,R0lGODlhAQABAIAAAAAAA… Bob Willis                 
+##  4 data:image/gif;base64,R0lGODlhAQABAIAAAAAAA… Jo Swinson                 
+##  5 data:image/gif;base64,R0lGODlhAQABAIAAAAAAA… Matt Baker                 
+##  6 data:image/gif;base64,R0lGODlhAQABAIAAAAAAA… Greta Thunberg and Nikki H…
+##  7 data:image/gif;base64,R0lGODlhAQABAIAAAAAAA… Glasgow office buildings   
+##  8 data:image/gif;base64,R0lGODlhAQABAIAAAAAAA… Glasgow office buildings   
+##  9 data:image/gif;base64,R0lGODlhAQABAIAAAAAAA… Owen Jones                 
+## 10 data:image/gif;base64,R0lGODlhAQABAIAAAAAAA… shop                       
 ## # … with 94 more rows</code></pre>
 <p>Looks like we have 104 rows, with columns for the image source and the alt text.</p>
 </div>
@@ -107,13 +103,13 @@ dplyr::glimpse(bbc_check)</code></pre>
 ## $ src             &lt;chr&gt; &quot;https://a1.api.bbc.co.uk/hit.xiti?&amp;col=1&amp;from=p…
 ## $ alt             &lt;chr&gt; &quot;&quot;, &quot;Trump and Trudeau at Nato summit in Watford…
 ## $ alt_exists      &lt;chr&gt; &quot;Empty&quot;, &quot;Exists&quot;, &quot;Exists&quot;, &quot;Exists&quot;, &quot;Exists&quot;,…
-## $ char_length     &lt;chr&gt; NA, &quot;OK&quot;, &quot;Short&quot;, &quot;Short&quot;, &quot;OK&quot;, &quot;OK&quot;, &quot;OK&quot;, &quot;O…
+## $ char_length     &lt;chr&gt; NA, &quot;OK&quot;, &quot;Short&quot;, &quot;Short&quot;, &quot;Short&quot;, &quot;OK&quot;, &quot;OK&quot;,…
 ## $ file_ext        &lt;lgl&gt; NA, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FA…
 ## $ self_evident    &lt;lgl&gt; NA, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FA…
 ## $ terminal_period &lt;lgl&gt; NA, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FA…
 ## $ spellcheck      &lt;list&gt; [NA, &lt;&quot;Nato&quot;, &quot;Watford&quot;&gt;, &lt;&gt;, &quot;Swinson&quot;, &lt;&gt;, &quot;T…
-## $ basic_words     &lt;list&gt; [NA, &lt;&quot;and&quot;, &quot;at&quot;, &quot;in&quot;&gt;, &lt;&gt;, &lt;&gt;, &quot;office&quot;, &quot;an…
-## $ readability     &lt;dbl&gt; NA, 77.90500, 77.90500, 34.59000, 32.56000, 24.4…</code></pre>
+## $ basic_words     &lt;list&gt; [NA, &lt;&quot;and&quot;, &quot;at&quot;, &quot;in&quot;&gt;, &lt;&gt;, &lt;&gt;, &lt;&gt;, &quot;and&quot;, &quot;o…
+## $ readability     &lt;dbl&gt; NA, 77.905, 77.905, 77.905, 32.560, 34.590, 34.5…</code></pre>
 <p>The output columns are as follows, with reasoning:</p>
 <table>
 <colgroup>
@@ -164,26 +160,164 @@ dplyr::glimpse(bbc_check)</code></pre>
 <td align="left">Does the alt text contain uncommon words?</td>
 <td align="left">Text is more accessible in general if it uses simple English.</td>
 </tr>
-<tr class="even">
-<td align="left"><code>readability</code></td>
-<td align="left">How complex is the alt text?</td>
-<td align="left">There are various measures of readability that provide a rough idea of sentence complexity. Lower complexity is more accessible in general.</td>
-</tr>
 </tbody>
 </table>
-<p>I know this isn’t optimal. Feel free to suggest changes.</p>
+<p>I welcome suggestions and improvements.</p>
 </div>
+</div>
+<div id="improvements" class="section level2">
+<h2>Improvements</h2>
+<p>In particular, there’s a number of alt_check() additions that could be developed. For example:</p>
+<ul>
+<li>optical character recognition (OCR) to decide whether an image has text in it, and to possibly extract it</li>
+<li>guess the type of image based on its attributes and derived variables (a functional image might have relatively small height and width attributes, for example)</li>
+<li>assess the text in the link provided by the <code>longdesc</code> attribute, if it exists</li>
+<li>detect ‘link stuffing’, where people fill the alt text with keywords for search engine optimisation</li>
+</ul>
+<p>And of course: better unit testing and test coverage, simplifying the dependencies and making the code more efficient.</p>
 </div>
 </div>
 <div id="why" class="section level1">
 <h1>Why</h1>
 <p>I’m learning to make packages and accessibility is important.</p>
-<p>You can read some recent posts on</p>
+<p>More package-making posts:</p>
 <ul>
-<li>making packages with {usethis}</li>
-<li>the {kevinbacran} package to expose CRAN author relationshop</li>
-<li>the {blogsnip} package with RStudio addins for blog writing</li>
-<li>{gdstheme}, which contains a {xaringan} theme and template</li>
+<li><a href="https://www.rostrum.blog/2019/11/01/usethis/" target="_blank">making packages with {usethis}</a></li>
+<li><a href="https://www.rostrum.blog/2019/02/27/hadley-number/" target="_blank">the {kevinbacran} package</a> to expose CRAN author relationship</li>
+<li><a href="https://www.rostrum.blog/2019/10/22/blogsnip/" target="_blank">the {blogsnip} package</a> with RStudio addins for blog writing</li>
+<li><a href="https://www.rostrum.blog/2019/05/24/xaringan-template/" target="_blank">{gdstheme}</a>, which contains a {xaringan} theme and template</li>
 </ul>
-<p>I’ve also written briefly on accessibility and some tools for more comprehensively checking a site.</p>
+<p>I’ve also <a href="https://www.rostrum.blog/2018/05/12/accessibility-workshop-at-sprint18/" target="_blank">written briefly on accessibility</a> and <a href="https://www.rostrum.blog/2018/07/12/accessible-accessibility/" target="_blank">some tools for more comprehensive checking</a> of a site.</p>
+<hr />
+<details>
+<p><summary>Session info</summary></p>
+<pre><code>## [1] &quot;Last updated 2019-12-04&quot;</code></pre>
+<pre><code>## ─ Session info ──────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 3.6.0 (2019-04-26)
+##  os       macOS Mojave 10.14.6        
+##  system   x86_64, darwin15.6.0        
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2019-12-04                  
+## 
+## ─ Packages ──────────────────────────────────────────────────────────────
+##  package      * version    date       lib
+##  altcheckr    * 0.0.0.9000 2019-12-04 [1]
+##  assertthat     0.2.1      2019-03-21 [1]
+##  backports      1.1.5      2019-10-02 [1]
+##  blogdown       0.12       2019-05-01 [1]
+##  bookdown       0.10       2019-05-10 [1]
+##  cli            1.1.0      2019-03-19 [1]
+##  colorspace     1.4-1      2019-03-18 [1]
+##  crayon         1.3.4      2017-09-16 [1]
+##  curl           4.3        2019-12-02 [1]
+##  data.table     1.12.6     2019-10-18 [1]
+##  digest         0.6.23     2019-11-23 [1]
+##  dplyr          0.8.3      2019-07-04 [1]
+##  evaluate       0.14       2019-05-28 [1]
+##  fansi          0.4.0      2018-10-05 [1]
+##  fastmatch      1.1-0      2017-01-28 [1]
+##  ggplot2        3.2.1      2019-08-10 [1]
+##  glue           1.3.1      2019-03-12 [1]
+##  gtable         0.3.0      2019-03-25 [1]
+##  htmltools      0.3.6      2017-04-28 [1]
+##  httr           1.4.1      2019-08-05 [1]
+##  hunspell       3.0        2018-12-15 [1]
+##  knitr          1.24       2019-08-08 [1]
+##  lattice        0.20-38    2018-11-04 [1]
+##  lazyeval       0.2.2      2019-03-15 [1]
+##  lifecycle      0.1.0      2019-08-01 [1]
+##  lubridate      1.7.4      2018-04-11 [1]
+##  magrittr       1.5        2014-11-22 [1]
+##  Matrix         1.2-17     2019-03-22 [1]
+##  munsell        0.5.0      2018-06-12 [1]
+##  pillar         1.4.2      2019-06-29 [1]
+##  pkgconfig      2.0.3      2019-09-22 [1]
+##  purrr          0.3.3      2019-10-18 [1]
+##  quanteda       1.5.2      2019-11-26 [1]
+##  R6             2.4.1      2019-11-12 [1]
+##  Rcpp           1.0.3      2019-11-08 [1]
+##  RcppParallel   4.4.4      2019-09-27 [1]
+##  rlang          0.4.2      2019-11-23 [1]
+##  rmarkdown      1.15       2019-08-21 [1]
+##  rvest          0.3.5      2019-11-08 [1]
+##  scales         1.1.0      2019-11-18 [1]
+##  selectr        0.4-2      2019-11-20 [1]
+##  sessioninfo    1.1.1      2018-11-05 [1]
+##  spacyr         1.2        2019-07-04 [1]
+##  stopwords      1.0        2019-07-24 [1]
+##  stringi        1.4.3      2019-03-12 [1]
+##  stringr        1.4.0      2019-02-10 [1]
+##  tibble         2.1.3      2019-06-06 [1]
+##  tidyselect     0.2.5      2018-10-11 [1]
+##  utf8           1.1.4      2018-05-24 [1]
+##  vctrs          0.2.0      2019-07-05 [1]
+##  withr          2.1.2      2018-03-15 [1]
+##  xfun           0.9        2019-08-21 [1]
+##  xml2           1.2.2      2019-08-09 [1]
+##  yaml           2.2.0      2018-07-25 [1]
+##  zeallot        0.1.0      2018-01-28 [1]
+##  source                              
+##  Github (matt-dray/altcheckr@843f65f)
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+##  CRAN (R 3.6.0)                      
+## 
+## [1] /Library/Frameworks/R.framework/Versions/3.6/Resources/library</code></pre>
+</details>
 </div>
