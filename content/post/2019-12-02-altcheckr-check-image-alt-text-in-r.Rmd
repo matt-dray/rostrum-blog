@@ -1,5 +1,5 @@
 ---
-title: '{altcheckr}: check image alt text in R'
+title: '{altcheckr}: check image alt text from R'
 author: Matt Dray
 date: '2019-12-02'
 slug: altcheckr
@@ -74,17 +74,17 @@ I welcome suggestions and improvements.
 
 ## Example
 
-# Install
+### Install
 
 You can get the package from GitHub with:
 
-```{r eval=FALSE}
+```{r, eval=FALSE}
 install.packages("remotes")
 install_github("matt-dray/altcheckr")
 library(altcheckr)
 ```
 
-# alt_get()
+### alt_get()
 
 The `alt_get()` function makes use of {xml2} and {rvest} to scrape a web page and isolate attributes from its `<img>` elements. It returns a tibble via {purrr} where each row is an image.
 
@@ -94,6 +94,9 @@ Let's take a look at a couple of websites.
 
 The BBC's site is pretty popular and should have good alt text.
 
+```{r echo=FALSE}
+library(altcheckr)
+```
 ```{r}
 bbc_get <- alt_get("https://www.bbc.co.uk/news")
 bbc_get
@@ -101,22 +104,14 @@ bbc_get
 
 Looks like we have `r nrow(bbc_get)` rows, with columns for the image source and the alt text.
 
-## alt_check()
+### alt_check()
 
 The `alt_check()` function takes the output from `alt_get()` and generates some new columns based on what it finds. 
 
-```{r echo=FALSE}
-library(altcheckr)
-```
-```{r}
-bbc_check <- alt_check("bbc_get")
-bbc_check
-```
-
-That's quite a lot of output. Here's the same table rendered to HTML:
 
 ```{r}
-knitr::kable(bbc_check)
+bbc_check <- alt_check(bbc_get)
+dplyr::glimpse(bbc_check)
 ```
 
 The output columns are as follows, with reasoning:
