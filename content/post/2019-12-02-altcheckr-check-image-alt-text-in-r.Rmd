@@ -1,29 +1,35 @@
 ---
 title: '{altcheckr}: check image alt text from R'
 author: Matt Dray
-date: '2019-12-02'
+date: '2019-12-08'
 slug: altcheckr
 categories:
   - code
   - package
+  - tutorial
 tags:
   - accessibility
   - alt-text
+  - dplyr
+  - ggplot2
   - hunspell
+  - polite
   - purrr
-  - quanteda
   - r
   - rvest
   - scrape
   - stringr
   - tibble
+  - tidyverse
   - xml2
-draft: yes
+draft: no
 ---
+
+<img src="https://raw.githubusercontent.com/matt-dray/stickers/master/output/altcheckr_hex.png" alt="Hex sticker for altchecker, with the package name, a checkmark and the URL matt-dray.github.io/altcheckr." width=300 />
 
 # tl;dr
 
-I've made a small R package called [{altcheckr}](https://matt-dray.github.io/altcheckr/){target="_blank"} that checks the accessibility of images on web pages. It has functions that (1) scrape attributes from HTML <img> elements and (2) apply simple rules to indicate the suitability of the alt text provided. To use:
+I've made a small R package called [{altcheckr}](https://matt-dray.github.io/altcheckr/){target="_blank"} that checks the accessibility of images on web pages. It has functions that (1) scrape attributes from HTML <img> elements on a web page and (2) apply simple rules to indicate the suitability of the alt text provided. To use:
 
 ```{r, eval=FALSE}
 remotes::install_github("matt-dray/altcheckr")
@@ -31,42 +37,53 @@ images <- alt_get("https://www.bbc.co.uk/news")
 alt_check(images)
 ```
 
+I'm not an expert and the package has not been user tested.
+
 # Accessibility
 
-A web site is [accessible](https://en.wikipedia.org/wiki/Accessibility){target="_blank"}  if everyone can enage with its content. There are guidelines from WCAG for doing this and the law in the UK has recently changed to ensure that all public sector websites publish an accessibility statement. There are [many (often free) tools for checking accessibility issues](https://www.w3.org/WAI/ER/tools/).
+A web site is [accessible](https://en.wikipedia.org/wiki/Accessibility){target="_blank"}  if everyone can engage with its content. There are [Web Content Accessibility Guidelines](https://www.w3.org/TR/WCAG20/) (WCAG) from the [World Wide Web Consortium](https://www.w3.org/) (W3C) to help achieve this and [many (often free) tools for checking accessibility issues](https://www.w3.org/WAI/ER/tools/). It's pressing because [the law in the UK has recently changed](https://www.gov.uk/guidance/accessibility-requirements-for-public-sector-websites-and-apps) to ensure that all public sector websites publish an accessibility statement.
 
 One obvious target for improvement is accessibility of images.
 
 ## Screen readers
 
-[Screen readers]() are a technology that turn text on a web page into audio. They're particularly helpful for people with low vision and people who are blind.
+[Screen readers](https://en.wikipedia.org/wiki/Screen_reader) are a technology that parse text on a web page and output it as speech audio. They're particularly helpful for blind and partially-sighted people.
 
 Images are declared in the HTML code of a website with [the `<img>` element](https://www.w3schools.com/tags/tag_img.asp){target="_blank"}. Like other HTML tags, it can have many 'attributes': the source of the image (where the image is actually hosted), the height and width of the image, and so on.
 
-The 'alt' attribute provides alternative text that describes the image. This text won't be visible to people visiting the page, but will be picked up screen readers.
+The 'alt' attribute provides alternative text that describes the image. This text won't be visible to people visiting the page (unless you right-click and 'inspect' the HTML for the page), but will be picked up screen readers.
 
 ## When and what to write
 
-What should you actually write as alternative text for an image?
+What should you actually write as alternative text for an image? It depends on the type of image. To summarise [the alt decision tree by W3C](https://www.w3.org/WAI/tutorials/images/decision-tree/):
 
-[The alt decision tree by W3C](https://www.w3.org/WAI/tutorials/images/decision-tree/) is a good reference for deciding how to form alt text for an image. It describes what to do for several image types:
+| Image type | Alt text suggestion |
+| :---- | :---- |
+| Informative | A short, complete, descriptive sentence. |
+| Decorative | None required (`alt = ""`). |
+| Functional | A short description of the purpose served (if it's a button, for example). |
+| Contains text | Text should be repeated unless in the main body text. |
+| Complex | Describe in the main body text or provide a `longdesc` attribute that links to a page containing a longer description. |
 
-* informative images: need at least a short, complete sentence to describe them
-* decorative images: images serving no informative function should get an empty alt text attribute (`alt = ""`)
-* functional images: images used as buttons, for example, should have alt text that describes their function
-* images containing text: screen readers don't read words from images, so the alt attribute should contain this text
-* complex images: charts, for example, can be difficult to describe succinctly, so an explanation should go in the main body text, or a `longdesc` attribute can be used to link to a separate web page containing a longer description of the image
+# Chancellor of the {altcheckr}
 
-# {altcheckr}
+I've been writing different sorts of R packages recently
+(see posts on [{usethis}](https://www.rostrum.blog/2019/11/01/usethis/){target="_blank"}, [{kevinbacran}](https://www.rostrum.blog/2019/02/27/hadley-number/){target="_blank"}, [{blogsnip}](https://www.rostrum.blog/2019/10/22/blogsnip/){target="_blank"} and [{gdstheme}](https://www.rostrum.blog/2019/05/24/xaringan-template/){target="_blank"}) and I've have also [written briefly on accessibility](https://www.rostrum.blog/2018/05/12/accessibility-workshop-at-sprint18/){target="_blank"} and [some related tools](https://www.rostrum.blog/2018/07/12/accessible-accessibility/){target="_blank"}.
 
-So I wrote a small R package called {altcheckr} to help assess alt text programmatically. Go to [the source on GitHub](https://github.com/matt-dray/altcheckr) or see [the site](https://matt-dray.github.io/altcheckr/) built with {pkgdown}. It has only two functions for now:
+To this end, I've written a small R package called {altcheckr} to help assess alt text programmatically. Go to [the source on GitHub](https://github.com/matt-dray/altcheckr) or see [the site](https://matt-dray.github.io/altcheckr/) built with {pkgdown}.
+
+Note that {altcheckr} isn't intended to provide a definitive evaluation of alt text. It uses simple heuristics and doesn't contain everything that could be checked. I'm not an expert and the package isn't user tested.
+
+It has only two functions for now:
 
 * `alt_get()` scrapes the web page at a URL provided by the user and outputs a data frame where each row is an image and each column is an HTML attribute
 * `alt_check()` takes the output from `alt_get()` and adds a series of columns that assess features of the alt text, like its length
 
-{altcheckr} isn't intended to provide a definitive evaluation of alt text. It uses simple heuristics and doesn't contain everything that could be checked.
+It also contains the `example_get` data set, which is a dummy output from `alt_get()` to be used to experiment with `alt_check()`.
 
 ## Example
+
+Let's walk through how you can get the package, fetch alt text from a webpage and then assess it.
 
 ### Install
 
@@ -80,69 +97,121 @@ library(altcheckr)
 
 ### alt_get()
 
-The `alt_get()` function makes use of {xml2} and {rvest} to scrape a web page and isolate attributes from its `<img>` elements. It returns a tibble via {purrr} where each row is an image.
+The `alt_get()` function makes use of {polite}, {xml2} and {rvest} to scrape a web page and isolate attributes from its `<img>` elements. If {polite} determines that it's okay to scrape, `alt_get()` returns a tibble after some {purrr} wrangling, where each row is an image. You can choose to retain all scraped attributes as columns, or it defaults to returning just `src` and `alt` (`longdesc` too if it exists).
 
-You can choose to retain all scraped attributes as columns, or it defaults to returning just `src` and `alt` (`longdesc` too if it exists).
+We'll use the [BBC News](https://www.bbc.co.uk/news) home page as our example. A popular site with constantly-updating content that you would expect to have good alt text.
 
-The [BBC News](https://www.bbc.co.uk/news) site is popular and should have good alt text.
+<div class="figure">
+<img src="/post/2019-12-02-altcheckr-check-image-alt-text-in-r_files/bbc-news.png" alt="The sports section of the BBC News home page showing several images of athletes." width=700 />
+<p class="caption">BBC News sports section. How would you describe these images in alt text?</p>
+</div>
+
+Pass the web page's URL to `alt_get()` to return a tibble where each row is an image from the page and there are columns for the image source (`src`) and alt text  (`alt`).
 
 ```{r echo=FALSE}
 library(altcheckr)
 ```
-```{r}
+```{r message=FALSE}
 bbc_get <- alt_get("https://www.bbc.co.uk/news")
-bbc_get
+str(bbc_get)
 ```
 
-Looks like we have `r nrow(bbc_get)` rows, with columns for the image source and the alt text.
+A whopping `r nrow(bbc_get)` images! Let's take a look at the first few alt text entries.
+
+```{r}
+head(bbc_get$alt)
+```
+
+Some of these seem quite short and aren't particularly descriptive; even without having seen the images that they relate to. Let's do a simple assessment of the alt text using the `alt_check()` function to provide a bit more information.
 
 ### alt_check()
 
-The `alt_check()` function takes the output from `alt_get()` and generates some new columns based on what it finds. 
+The `alt_check()` function takes the output from `alt_get()` and generates some new variables based on the alt text. 
 
-
-```{r}
+```{r message=FALSE}
 bbc_check <- alt_check(bbc_get)
-dplyr::glimpse(bbc_check)
+
+library(dplyr)
+glimpse(bbc_check)
 ```
 
-The output columns are as follows, with reasoning:
+You can see a number of new columns in addition to `src` and `alt` that were output from `alt_get()`. These are as follows, with reasoning:
 
 | Column name | What | Why |
 | :----- | :----- | :----- |
 | `alt_exists` | Has alt text been provided? | A lack of alt text could be a problem, though it's acceptable if the image is decorative. |
-| `char_length` | Is the alt text short (defaults to 20 characters), long (125) or okay? | Short alt text might not describe the image well, but is acceptable for things like buttons, for example. Long alt text might be too verbose and should probably put in a `longdesc` attribute. |
-| `file_ext` | Does the alt text appear to be a filename? | Alt text shouldn't contain a filename. |
-| `self_evident` | Does the alt text contain redundant phrases? | It doesn't need to say 'a picture showing...' or similar. |
-| `terminal_period` | Is the alt text written like a sentence? | The alt text should end in a sentence terminator, like a full stop. This means the screen reader will parse it as a proper sentence. |
-| `spellcheck` | Do any of the words appear to be misspelled? | Errors in spelling may result in the screen reader misreading a word. |
-| `basic_words` | Does the alt text contain uncommon words? | Text is more accessible in general if it uses simple English. |
+| `nchar_count` | Number of characters in the alt text. | Used in `nchar_assess` |
+| `nchar_assess` | Categorical. Whether the alt text is 'short' (defaults to 20 characters), 'long' (125) or 'okay'. | Short alt text might not describe the image well, but is acceptable for things like buttons, for example. Long alt text might be too verbose and should probably put in a `longdesc` attribute. |
+| `file_ext` | Logical. Does the alt text appear to be a file name? | Alt text shouldn't contain a file name. |
+| `self_evident` | Logical. Does the alt text contain redundant phrases? | It doesn't need to say 'a picture showing...' or similar. |
+| `terminal_punct` | Logical. Does the alt text end in terminal punctuation? | The alt text should end in a sentence terminator, like a full stop. This means the screen reader will parse it as a proper sentence. |
+| `spellcheck` | A listcol of character vectors detailing misspelled words according to `hunspell` from the {hunspell} package. | Errors in spelling may result in the screen reader misreading a word. |
+| `not_basic` | A listcol of character vectors that aren't in [Charles Kay Ogden's Basic English](https://en.wikipedia.org/wiki/Basic_English) list.  | Text is more accessible in general if it uses simple English. |
 
-I welcome suggestions and improvements.
+[I'd like to hear your thoughts](https://github.com/matt-dray/altcheckr/issues) on these variables and if you'd like to suggest others. [Contributions to the GitHub repository](https://github.com/matt-dray/altcheckr) are very welcome.
 
-## Improvements
+## Interpret the data
 
-In particular, there's a number of alt_check() additions that could be developed. For example:
+You can take the output from `alt_check()` and investigate further. Here's two very simple and plainly-presented examples.
+
+Let's look first at the length of the alt text. This histogram shows the distribution of character counts coloured by the `nchar_assess` variable, giving different colours to alt text that's under 20 ('short') or over 125 ('long') characters.
+
+```{r message=FALSE}
+library(ggplot2)
+
+bbc_check %>%
+  ggplot(aes(nchar_count)) +
+  geom_histogram(binwidth = 5, na.rm = TRUE, aes(fill = nchar_assess)) +
+  labs(
+    title = "Distribution of character lengths in image alt text",
+    subtitle = paste("BBC News home page,", Sys.Date()),
+    caption = "Source: https://www.bbc.co.uk/news via the {altcheckr} package",
+    x = "Character count", y = "Count"
+  ) + theme_classic() + theme(legend.title = element_blank())
+```
+
+So you can there's see a lot of short alt text that might need looking at if the images are meant to be informative. For example, here's the 10 shortest:
+
+```{r}
+filter(bbc_check, nchar_count < 20) %>%
+  arrange(nchar_count) %>%
+  distinct(alt, nchar_count) %>%
+  slice(1:10)
+```
+
+Next: how does the alt text of images make use of terminal punctuation (period, exclamation point or question mark)?
+
+```{r message=FALSE}
+bbc_check %>%
+  group_by(terminal_punct) %>%
+  summarise(Count = n()) %>%  # count within the variable
+  ggplot(aes(x = terminal_punct, y = Count)) +
+  geom_bar(stat="identity") +
+    labs(
+    title = "Existence of terminal punctuation (., !, ?) in alt text",
+    subtitle = paste("BBC News home page,", Sys.Date()),
+    caption = "Source: https://www.bbc.co.uk/news via the {altcheckr} package",
+    x = "Terminal punctuation exists", y = "Count"
+  ) + theme_classic() +
+  coord_flip() + theme_classic()
+```
+
+So most of the alt text does not end in terminal punctuation (`FALSE`), which is a bit disappointing. This means a screen reader might not fully parse the image as a complete sentence.
+
+Note that the findings here aren't definitive and each case would need to be looked further into. However, these very shallow analyses imply that there are some improvements to make.
+
+## Next steps
+
+There's a number of `alt_check()` additions that could be developed. For example:
 
 * optical character recognition (OCR) to decide whether an image has text in it, and to possibly extract it
 * guess the type of image based on its attributes and derived variables (a functional image might have relatively small height and width attributes, for example)
 * assess the text in the link provided by the `longdesc` attribute, if it exists
-* detect 'link stuffing', where people fill the alt text with keywords for search engine optimisation
+* detect 'link stuffing', where alt text is filed with keywords for purposes of search engine optimisation
 
-And of course: better unit testing and test coverage, simplifying the dependencies and making the code more efficient.
+And of course: better unit testing and test coverage, simplifying the dependencies (there's lots) and making the code more efficient. [Tell me about other things that can be improved](https://github.com/matt-dray/altcheckr/issues).
 
-# Why
-
-I'm learning to make packages and accessibility is important.
-
-More package-making posts:
-
-* [making packages with {usethis}](https://www.rostrum.blog/2019/11/01/usethis/){target="_blank"}
-* [the {kevinbacran} package](https://www.rostrum.blog/2019/02/27/hadley-number/){target="_blank"} to expose CRAN author relationship
-* [the {blogsnip} package](https://www.rostrum.blog/2019/10/22/blogsnip/){target="_blank"} with RStudio addins for blog writing
-* [{gdstheme}](https://www.rostrum.blog/2019/05/24/xaringan-template/){target="_blank"}, which contains a {xaringan} theme and template
-
-I've also [written briefly on accessibility](https://www.rostrum.blog/2018/05/12/accessibility-workshop-at-sprint18/){target="_blank"} and [some tools for more comprehensive checking](https://www.rostrum.blog/2018/07/12/accessible-accessibility/){target="_blank"} of a site.
+Ultimately, my call to action for R users is to explore the wealth of materials for package development[^pkg_devel] and for everyone to take a moment to think about your users and the accessibility of whatever you're producing. 
 
 ---
 
@@ -152,3 +221,5 @@ paste("Last updated", Sys.Date())
 sessioninfo::session_info()
 ```
 </details>
+
+[^pkg_devel]: Particularly from [Emil Hvitfeldt](https://www.hvitfeldt.me/blog/usethis-workflow-for-package-development/){target="_blank"}, [Karl Broman](https://kbroman.org/pkg_primer/){target="_blank"} and [Hadley Wickham](http://r-pkgs.had.co.nz/){target="_blank"}.
