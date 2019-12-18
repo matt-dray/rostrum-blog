@@ -1,7 +1,7 @@
 ---
 title: 'Wrangle TfL Oyster data with {oystr} '
 author: Matt Dray
-date: '2019-11-20'
+date: '2019-12-24'
 slug: intro-oystr
 categories:
   - code
@@ -14,34 +14,34 @@ tags:
 draft: yes
 ---
 
-# You missed a delivery
+# tl;dr
 
-There’s a bunch of posts on this blog about writing R packages:
-
-* the ‘build an R package with {usethis}’ post
-* the {gdstheme} package, which contains a {xaringan} theme and template
-* the {blogsnip} package, which contains an RSStudio addin
-* weird stuff from the {dray} package, like `cloud_pie()` for the best data visualisation of all time, and ‘’ for building soccer players with Ryan Timpe’s {brickr}
-
-I’ve been working on something a little more substantial, but just as esoteric: {oystr}.
+* Problem: I want to analyse my Transport for London (TfL) travel data
+* Answer: I came up with the R package name {oystr} and a sticker design for it
+* More practical answer: I actually wrote the package
+* Conceit: it has no dependencies 
+* Further problem: TfL won't give me information I need to complete it properly
+* Result: blog it and move on
 
 # Shucking Oyster data
 
-Transport for London (TfL) operates the travel system in London. You ‘tap in’ with an Oyster card to use their services. You can sign up to receive monthly CSV files of your Oyster card data, or you can download it form their website.
+Transport for London (TfL) operates the travel system in London. You ‘tap in’ with an Oyster card to use their services. You can sign up to receive monthly CSV files of your Oyster card data, or you can download it from their website.
 
 The data are fine for humans to look at, but I wanted something more machine readable to generate further statistics, like journey duration, and to split these by things like mode of travel. Hence an R package to wrangle the data.
+
+# Journey Inaction
 
 The biggest problem with the format of the Oyster data is the ‘journey action’ column. It’s a bin for all sorts of things, like mode of travel (train, bus, etc), origin and destination, bus route number, failure to tap out and card top-ups.
 
 In fact, I don’t know what all the possibilities are for the ‘journey action’ column. And TfL won’t tell me: I sent a help request and was told that this information isn’t available. I could do a Freedom of Information (FOI) request, but I would only be able to fetch information from my own Oyster history. Which I already have.
 
-This limits how useful this package can be for other people. I can’t build in handling methods for all the possible formats of the ‘journey action’ column. So I might as well write about where I got to.
+This limits how useful this package can be for other people. I can’t build in handling methods for all the possible formats of the ‘journey action’ column. So I might as well write about where I got to and encourage you to add examples to a list I started.
 
 # Minimal dependencies
 
 I set myself a small challenge: to use only base R functions and avoid dependencies. To be more specific, I wanted to avoid packages listed in the ‘Imports’ and ‘Remotes’ fields of the the DESCRIPTION file. These are packages that would also have to be installed to make {oystr} work.
 
-In part because I admire the philosophy of the [tinyverse](http://www.tinyverse.org/) (‘lightweight is the right weight); in part because I’ve been writing too much tidyverse code and want the sweet nostalgia hit of some classic R code; in part because I’m a hero and I care about my users (which is really only me) and don’t want to impose anything on them. 
+In part because I admire the philosophy of the [tinyverse](http://www.tinyverse.org/) (‘lightweight is the right weight); in part because my last package, {altchekr}, was stuffed with dependencies; in part because I’ve been writing too much tidyverse code and want the sweet nostalgia hit of some classic R code; in part because I’m a hero and I care about my users (which is really only me) and don’t want to impose anything on them. 
 
 I don’t mind having packages named in the ‘Suggests’ field. These are external packages that aren’t required to make {oystr} work. For example, {testthat} and {knitr} are noted here because they’re required for testing the package and generating documentation. But they’re not needed by the user.
 
