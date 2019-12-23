@@ -1,56 +1,197 @@
 ---
-title: 'Wrangle TfL Oyster data with {oystr} '
+title: 'Handle London travel data with {oystr}'
 author: Matt Dray
-date: '2019-12-24'
-slug: intro-oystr
+date: '2019-12-23'
+slug: oystr
 categories:
   - code
   - package
 tags:
   - base
-  - r
   - oyster
+  - r
+  - tfl
   - transport
+  - trains
+  - wrangle
 draft: yes
 ---
 
+<div class="figure">
+<img src="https://raw.githubusercontent.com/matt-dray/stickers/master/output/oystr_hex.png" alt="A hexagon-shaped sticker for the oystr package, featuring an oystercatcher bird and a link to matt-dray.github.io/oystr." width=300/>
+</div>
+
 # tl;dr
 
-* Problem: I want to analyse my Transport for London (TfL) travel data
-* Answer: I came up with the R package name {oystr} and a sticker design for it
-* More practical answer: I actually wrote the package
-* Conceit: it has no dependencies 
+* Problem: I wanted to analyse my Transport for London (TfL) travel data
+* Solution: I came up with the R package name {oystr} and a hex sticker design
+* Practical solution: [I actually wrote the package](https://matt-dray.github.io/oystr/)
+* Self-flagellation: it has zero dependencies 
 * Further problem: TfL won't give me information I need to complete it properly
 * Result: blog it and move on
+* Revelation: I've spent more than 53 days on TfL trains since Autumn 2014 `r emo::ji("scream")`
 
-# Shucking Oyster data
+# Clam-ouring for a package
 
-Transport for London (TfL) operates the travel system in London. You ‘tap in’ with an Oyster card to use their services. You can sign up to receive monthly CSV files of your Oyster card data, or you can download it from their website.
+[Transport for London](https://tfl.gov.uk/){target="_blank"} (TfL) operates the travel system in London. To use their services you ‘[tap in](https://tfl.gov.uk/fares/how-to-pay-and-where-to-buy-tickets-and-oyster/pay-as-you-go/touching-in-and-out){target="_blank"}’ with [an Oyster card](https://oyster.tfl.gov.uk/oyster/entry.do){target="_blank"}.
 
-The data are fine for humans to look at, but I wanted something more machine readable to generate further statistics, like journey duration, and to split these by things like mode of travel. Hence an R package to wrangle the data.
+You can sign up for monthly CSV files of your Oyster journey data, or [you can sign in and download it from their website](https://oyster.tfl.gov.uk/oyster/entry.do){target="_blank"}, but they're not in a fully machine-readable state. Hence the {oystr} package.
 
-# Journey Inaction
+Install and load with:
 
-The biggest problem with the format of the Oyster data is the ‘journey action’ column. It’s a bin for all sorts of things, like mode of travel (train, bus, etc), origin and destination, bus route number, failure to tap out and card top-ups.
+```{r install, eval=FALSE}
+install.packages("remotes")
+remotes::install_github("oystr")
+library(oystr)
+```
+```{r library, echo=FALSE}
+library(oystr)
+```
 
-In fact, I don’t know what all the possibilities are for the ‘journey action’ column. And TfL won’t tell me: I sent a help request and was told that this information isn’t available. I could do a Freedom of Information (FOI) request, but I would only be able to fetch information from my own Oyster history. Which I already have.
+{oystr} has two main functions:
 
-This limits how useful this package can be for other people. I can’t build in handling methods for all the possible formats of the ‘journey action’ column. So I might as well write about where I got to and encourage you to add examples to a list I started.
+* `oy_read()` to read in CSV files from a folder and stitch them together
+* `oy_clean()` to wrangle the data into shape and engineer new columns
 
-# Minimal dependencies
+There's two functions that deal with summarising the data, but are very much under development at time of writing:
 
-I set myself a small challenge: to use only base R functions and avoid dependencies. To be more specific, I wanted to avoid packages listed in the ‘Imports’ and ‘Remotes’ fields of the the DESCRIPTION file. These are packages that would also have to be installed to make {oystr} work.
+* `oy_summary()` to create a list of basic data summaries, like most visited stations
+* `oy_lineplot()` to create a simple plots of data over time
 
-In part because I admire the philosophy of the [tinyverse](http://www.tinyverse.org/) (‘lightweight is the right weight); in part because my last package, {altchekr}, was stuffed with dependencies; in part because I’ve been writing too much tidyverse code and want the sweet nostalgia hit of some classic R code; in part because I’m a hero and I care about my users (which is really only me) and don’t want to impose anything on them. 
+There's also two example data sets:
 
-I don’t mind having packages named in the ‘Suggests’ field. These are external packages that aren’t required to make {oystr} work. For example, {testthat} and {knitr} are noted here because they’re required for testing the package and generating documentation. But they’re not needed by the user.
+* `journeys_read` is what a journey-history data set looks like when read in by `oy_read()`
+* `journeys_clean` is what that read-in data set looks like when cleaned by `oy_clean()`
 
-# Some stats
+There's also Oyster-related colours in `oy_col()`.
 
-I’ve been collecting these data for over five years.
+You can read more on [the {oystr} website](https://matt-dray.github.io/oystr/){target="_blank"}, including [a vignette](https://matt-dray.github.io/oystr/articles/oystr-intro.html){target="_blank"}, and [find the source on GitHub](https://github.com/matt-dray/oystr){target="_blank"}.
 
-# Infrequently asked questions
+## Winkle out the data
 
-Did I come up with the name before the package? Yes.
+The `oy_read()` function is straightforward: basically, you supply a folder path and it finds the Oyster journey CSV files with the expected column names, reads them and binds them all together. That ends up looking like this:
 
-Did I make a hex sticker instead of writing more tests? Yes.
+```{r}
+str(journeys_read)
+```
+
+But this isn't enough. The data files have several columns, like `Date`, `Start time` and `Balance` ([see an anonymised example](https://github.com/matt-dray/oystr/blob/master/inst/extdata/july.csv){target="_blank"}) that need sorting.
+
+The `oy_clean()` function is the real MVP[^mvp]. It does things like:
+
+* enforce the datetime class where needed
+* engineer an end date (some journeys ended a different day to when they started)
+* calculate journey duration
+* extract mode of transport, start and end stations, bus routes, etc
+
+That ends up looking like this:
+
+```{r}
+str(journeys_clean)
+```
+
+## Like it or limpet
+
+It was tricky to deal with the `Journey/Action` column. It's a bin for all sorts of things like:
+
+* `Bus journey, route 87`
+* `St James's Park to Kings Cross [London Underground / National Rail]"`
+* `Entered and exited Pimlico`
+* `[No touch-in] to Waterloo (platforms 1-11) [National Rail]"`
+* `Season ticket added on touch in, Liverpool Street [National Rail]`
+* `Automated Refund, Southbury`
+* `Topped up,  `
+
+In fact, I don’t know all the possibilities for this column and TfL won’t tell me: I sent a help request and was told that this information isn’t available. I could do a [Freedom of Information](https://www.gov.uk/make-a-freedom-of-information-request){target="_blank"} (FOI) request, but I can only get my own Oyster history. Which I already have.
+
+This limits how useful this package can be for other people; I can’t handle formats for the `Journey/Action` column that I haven't seen before. So I might as well write about where I've got to with {oystr} and [encourage you to add to this list of possible formats I've started](https://github.com/matt-dray/oystr/issues/14){target="_blank"}.
+
+## Being un-shellfish with dependencies
+
+As an aside, I set myself a small challenge for {oystr}: to use only base R functions and avoid dependencies. These are packages that would have to be installed to make {oystr} work.
+
+Why do this? In part because:
+
+* I admire the philosophy of the [tinyverse](http://www.tinyverse.org/){target="_blank"} (‘lightweight is the right weight')
+* [my last package, {altcheckr}, was stuffed with dependencies](https://www.rostrum.blog/2019/12/08/altcheckr/){target="_blank"}
+* I’ve been writing too much [tidyverse code](https://www.tidyverse.org/){target="_blank"} and want the sweet nostalgia hit of some classic base R code
+* I’m a hero and I care about my users (me); you're (I'm) welcome 
+
+To be more specific, I wanted to avoid required packages in [the ‘Imports’ and ‘Remotes’ fields of the the DESCRIPTION file](http://r-pkgs.had.co.nz/description.html#dependencies){target="_blank"}. Packages in the ‘Suggests’ field are fine; for example, {testthat} and {knitr} are required for development, but not by the user.
+
+# Flexing the package's mussels
+
+Okey dokey, so for about five years I've been collecting my Oyster data as monthly CSVs emailed to me by TfL, though some months are missing. I won't be sharing these data, but here's some quick examples of applying {oystr} to it.
+
+```{r read-demo}
+# Read all the CSV files from a folder path
+data_read <- oy_read("~/Desktop/oyster")
+```
+
+Benchmarking suggests it took `r system.time({ oy_read("~/Desktop/oyster") })[3]` seconds to read and combine the `r length(list.files("~/Desktop/oyster"))` CSV files in this folder.
+
+Next is `oy_clean()` to wrangle the data into shape.
+
+```{r clean-demo}
+# Pass the data frame output from oy_read()
+data_clean <- oy_clean(data_read)
+```
+
+As a quick overview, there's `r nrow(data_clean)` rows of data in the output, of which `r round(100*(nrow(data_clean[data_clean$mode == "Train", ])/nrow(data_clean)), 0)` per cent is train journeys. The earliest recorded journey start is `r data_clean[data_clean$mode == "Train", "datetime_start"][1]`.
+
+We can take this cleaned data and summarise it in various ways. For example, the `oy_summary()` function provides a list where each element is a basic summary.
+
+```{r summary-demo}
+train_summ <- oy_summary(data_clean, mode = "Train")
+names(train_summ)  # list element names
+```
+
+So for example, I can use `train_summ$duration_total` to find out that I've spent `r format(train_summ$duration_total, scientific = FALSE)` on TfL's trains.
+
+That's `r round((train_summ$duration_total/60)/24, 0)` days. `r emo::ji("cold_sweat")`
+
+You could also plot the data. Here's a histogram coloured with Oyster-related colours from `oy_cols()`.
+
+```{r plot}
+par(mar = c(4.5, 4.5, 5, 0))
+
+hist(
+  as.numeric(data_clean$journey_duration),
+  main = NULL, xlab = "Journey duration (mins)", 
+  col = oy_cols("oyster_cyan"), border = oy_cols("oyster_blue"),
+  breaks = seq(0, 120, 5), las = 1
+)
+
+title <- "Matt Dray's journeys are 40 to 45 mins long, mostly"
+sub <- paste("Travelling sweatily via TfL trains since Autumn 2014")
+mtext(side = 3, line = c(3, 2), adj = 0, cex = c(1.2, 1), c(title, sub))
+```
+
+So that's my commute dominating the peak of that histogram. The two-hour journey went right across the network from Southbury in London's north-west to Hounslow in the south-west. I assume the three-minute journey from South Kensington to Gloucester Road to avoid zombie-dinosaur attacks outside the [Natural History Museum.](https://www.nhm.ac.uk/visit/galleries-and-museum-map/dinosaurs.html){target="_blank"}
+
+Obviously you could take the cleaned data and do some other neat stuff. Maybe I'll do another post about this in future.[^old]
+
+# Shuck it up
+
+<div class="figure">
+<img src="/post/2019-11-20-wrangle-tfl-oyster-data-with-oystr_files/oysters.gif" alt="An 1825 black-and-white lithograph of four men shucking oysters." width=400 />
+<p class="caption">Me (centre) and the boys awkwardly slurping Oyster data ([public domain image](https://commons.wikimedia.org/wiki/File:Slurping_Oysters_1825_b.gif){target="_blank"})</p>
+</div>
+
+There's plenty to do. The main task is to handle all formats of the `Journey/Action` column and then use this to inform how the summary and plot functions should be improved. Ultimately, `oy_read()` and `oy_clean()` work for me right now, but you may run into trouble if you actually try to use the package.
+
+Eventually I'd like the package to be at least as good as the sticker.
+
+[Feel free to suggest or make improvements](https://github.com/matt-dray/oystr){target="_blank"} and don't forget to [add to my log of `Journey/Action` formats](https://github.com/matt-dray/oystr/issues/14){target="_blank"} if you've seen some different things.
+
+---
+
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+paste("Last updated", Sys.Date())
+sessioninfo::session_info()
+```
+</details>
+
+[^mvp]: MVP means '[Most Valuable Primate](https://www.imdb.com/title/tt0196106/){target="_blank"}', but also [Minimum Viable Product](https://en.wikipedia.org/wiki/Minimum_viable_product){target="_blank"}.
+[^old]: Haha, suckers. I actually [already did an analysis of a much smaller set of my Oyster data a few years ago on the old version of this blog](https://therostrumblog.wordpress.com/2015/10/22/want-some-data-with-those-oysters/){target="_blank"}. Yes, [I used `setwd()` in 2015](https://www.tidyverse.org/blog/2017/12/workflow-vs-script/){target="_blank"}. `r emo::ji("sweat_smile")`
