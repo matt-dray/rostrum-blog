@@ -1,68 +1,101 @@
 ---
-title: Waggle dance with ggbeeswarm and emoGG
+title: Waggle dance with {ggbeeswarm} and {emoGG}
 author: Matt Dray
 date: '2018-11-21'
 slug: waggle-dance
 categories:
-  - dataviz
-  - R
+  - code
+  - data-viz
+  - tutorial
 tags:
+  - bees
+  - emoGG
+  - emoji
   - ggbeeswarm
   - ggplot2
   - magick
-  - bees
-  - entomology
+  - r
 draft: no
 ---
 
 
 
-<p>Matt Dray (<a href="https://www.twitter.com/mattdray">@mattdray</a>)</p>
 <div class="figure">
-<img src="https://media.giphy.com/media/3o6nUNAsHzitru2Aw0/giphy.gif" alt="A bee scene from irreverent 90s Nicktoon Hey Arnold! (via Giphy)" />
-<p class="caption">A bee scene from irreverent 90s Nicktoon ‘Hey Arnold!’ (<a href="https://giphy.com/gifs/heyarnold-hey-arnold-nicksplat-3o6nUNAsHzitru2Aw0?utm_source=media-link&amp;utm_medium=landing&amp;utm_campaign=Media%20Links&amp;utm_term=">via Giphy</a>)</p>
+<img src="https://media.giphy.com/media/3o6nUNAsHzitru2Aw0/giphy.gif" alt="Bees emerge from a hive in the cartoon Hey Arnold, with text reading 'bees swarming'.">
+<p class="caption">
+A bee scene from irreverent 90s Nicktoon ‘Hey Arnold!’ (<a href="https://giphy.com/gifs/heyarnold-hey-arnold-nicksplat-3o6nUNAsHzitru2Aw0?utm_source=media-link&amp;utm_medium=landing&amp;utm_campaign=Media%20Links&amp;utm_term=" target="_blank">via Giphy</a>)
+</p>
 </div>
 <div id="how-to-plot-grouped-continuous-data" class="section level1">
 <h1>How to plot grouped continuous data?</h1>
-<p>A <a href="https://en.wikipedia.org/wiki/Box_plot">boxplot</a> lets you show continuous data split by categories, but it hides the data points and doesn’t tell you much about distribution. A <a href="https://en.wikipedia.org/wiki/Violin_plot">violin chart</a> will show the distribution but you still don’t know about the density of data.</p>
-<p><a href="https://www.datamentor.io/r-programming/strip-chart/">Stripcharts</a> show the data for each category as individual points. The points can be layered on top of each other where they take the same Y value and can be stretched arbitrarily along the X axis.</p>
-<p>If you don’t have too much data, or if you sample it, you can stop the data points in a stripchart from overlapping and instead line them up side by side where they take the same Y value. This is called a <a href="http://www.cbs.dtu.dk/~eklund/beeswarm/">‘beeswarm’</a>.</p>
-<p>Why? Probably because the cloud of data you’re plotting looks a bit like a swarm of bees.</p>
+<p>A <a href="https://en.wikipedia.org/wiki/Box_plot" target="_blank">boxplot</a> lets you show continuous data split by categories, but it hides the data points and doesn’t tell you much about distribution. A <a href="https://en.wikipedia.org/wiki/Violin_plot" target="_blank">violin chart</a> will show the distribution but you still don’t know about the density of data.</p>
+<p><a href="https://www.datamentor.io/r-programming/strip-chart/" target="_blank">Stripcharts</a> show the data for each category as individual points. The points can be layered on top of each other where they take the same Y value and can be stretched arbitrarily along the X axis.</p>
+<p>If you don’t have too much data, or if you sample it, you can stop the data points in a stripchart from overlapping and instead line them up side by side where they take the same Y value. This is called a <a href="http://www.cbs.dtu.dk/~eklund/beeswarm/" target="_blank">‘beeswarm’</a>. Why? Probably because the cloud of data you’re plotting looks a bit like a swarm of bees.</p>
+<p>Below is how the plots look side by side.</p>
+<details>
+<p><summary>Click for code</summary></p>
+<pre class="r"><code>library(ggplot2)  # for plotting
+library(ggbeeswarm)  # more on this later
+suppressPackageStartupMessages(library(cowplot))  # arrange plots
+
+# Create data set
+data &lt;- data.frame(
+  &quot;variable&quot; = rep(c(&quot;runif&quot;, &quot;rnorm&quot;), each = 100),
+  &quot;value&quot; = c(runif(100, min = -3, max = 3), rnorm(100))
+)
+
+# Generate different plot types
+canvas &lt;- ggplot(data, aes(variable, value)) 
+box &lt;- canvas + geom_boxplot() + ggtitle(&quot;Boxplot&quot;)
+violin &lt;- canvas + geom_violin() + ggtitle(&quot;Violin&quot;)
+strip &lt;- canvas + geom_jitter(width = 0.2)  + ggtitle(&quot;Stripchart&quot;)
+bee &lt;- canvas + geom_quasirandom()  + ggtitle(&quot;Beeswarm&quot;)  # more on this later
+
+# Arrange plots
+grid &lt;- plot_grid(box, violin, strip, bee)</code></pre>
+</details>
+<p><img src="/post/2018-11-21-waggle-dance-with-ggbeeswarm-and-emogg_files/figure-html/grid-print-1.png" width="672" /></p>
 </div>
 <div id="obvious-next-step" class="section level1">
 <h1>Obvious next step</h1>
-<p>We can test this theory by plotting the points as <em>actual bees</em>, <em>lol</em>. Well, <em>emoji</em> bees. Duncan (of <a href="https://nacnudus.github.io/tidyxl/">tidyxl</a> and <a href="https://nacnudus.github.io/unpivotr/">unpivotr</a> fame) did exactly this and tweeted the plot and code.</p>
+<p>We can test this theory by plotting the points as <em>actual bees</em>, <em>lol</em>. Well, <em>emoji</em> bees. Duncan (of <a href="https://nacnudus.github.io/tidyxl/" target="_blank">{tidyxl}</a> and <a href="https://nacnudus.github.io/unpivotr/" target="_blank">{unpivotr}</a> fame) did exactly this and tweeted the plot and code.</p>
 {{% tweet "1063147214124580866" %}}
-<p>To summarise, Duncan did this by hacking <a href="https://github.com/dill/emoGG">emojis via <code>emoGG</code></a> into <a href="https://github.com/eclarke/ggbeeswarm"><code>ggbeeswarm</code>’s <code>geom_beeswarm()</code> function</a> to create <code>gg_beeswarm_emoji()</code> (patent pending).</p>
+<p>To summarise, Duncan did this by hacking <a href="https://github.com/dill/emoGG" target="_blank">emojis via {emoGG}</a> into <a href="https://github.com/eclarke/ggbeeswarm" target="_blank">{ggbeeswarm}’s <code>geom_beeswarm()</code> function</a> to create <code>gg_beeswarm_emoji()</code> – patent pending, presumably.</p>
 </div>
 <div id="obvious-next-next-step" class="section level1">
 <h1>Obvious next next step</h1>
-<p>Wouldn’t it be better if the little emoji bees moved around a little bit? Almost like a <a href="https://en.wikipedia.org/wiki/Waggle_dance">waggle dance</a>?</p>
-<p>I cheated a little bit and recoded the <code>geom_quasirandom()</code> function from <code>ggbeeswarm</code> instead of <code>geom_beeswarm()</code>. Why? Beeswarm plots have an inherent ‘neatness’ to them. <em>That is not becoming of a beeswarm</em>. Instead, <code>geom_quasirandom()</code> gives you some ‘random’ jitter each time you plot the data.</p>
-<p>So we can plot the same data several times and stack the images into a gif. One easy way to do this is via <a href="https://cran.r-project.org/web/packages/magick/vignettes/intro.html">the <code>magick</code> package</a>, a re-engineering of <a href="https://www.imagemagick.org/script/index.php">the open-source ImageMagick sute of tools</a> from <a href="https://twitter.com/opencpu">Jeroen Ooms</a> at <a href="https://ropensci.org/">ROpenSci</a>.</p>
+<p>Wouldn’t it be better if the little emoji bees moved around a little bit? Almost like a <a href="https://en.wikipedia.org/wiki/Waggle_dance" target="_blank">waggle dance</a>?</p>
+<p>I cheated a little bit and recoded the <code>geom_quasirandom()</code> function from {ggbeeswarm} instead of <code>geom_beeswarm()</code>. Why? Beeswarm plots have an inherent ‘neatness’ to them. <em>That is not becoming of a beeswarm</em>. Instead, <code>geom_quasirandom()</code> gives you some ‘random’ jitter each time you plot the data.</p>
+<p>So we can plot the same data several times and stack the images into a gif. One easy way to do this is via <a href="https://cran.r-project.org/web/packages/magick/vignettes/intro.html" target="_blank">the {magick} package</a>, a re-engineering of <a href="https://www.imagemagick.org/script/index.php" target="_blank">the open-source ImageMagick sute of tools</a> from <a href="https://twitter.com/opencpu" target="_blank">Jeroen Ooms</a> at <a href="https://ropensci.org/" target="_blank">ROpenSci</a>.</p>
 </div>
 <div id="code" class="section level1">
 <h1>Code</h1>
 <p>Load the packages.</p>
 <pre class="r"><code>library(ggplot2)
-library(ggbeeswarm)
+library(ggbeeswarm)  # on CRAN
 library(emoGG)  # remotes::install_github(&quot;dill/emoGG&quot;)
 library(magick)</code></pre>
-<p>Recode the <code>geom_quasirandom()</code> to display emoji. <a href="https://twitter.com/nacnudus/status/1063147214124580866">Idea stolen from Duncan’s tweet</a>.</p>
-<pre class="r"><code>geom_quasi_emoji &lt;- function (mapping = NULL, data = NULL, width = NULL, varwidth = FALSE, 
-          bandwidth = 0.5, nbins = NULL, method = &quot;quasirandom&quot;, groupOnX = NULL, 
-          dodge.width = 0, stat = &quot;identity&quot;, position = &quot;quasirandom&quot;, 
-          na.rm = FALSE, show.legend = NA, inherit.aes = TRUE, emoji = &quot;1f4l1d&quot;, ...) {
+<p>Recode the <code>geom_quasirandom()</code> to display emoji. <a href="https://twitter.com/nacnudus/status/1063147214124580866" target="_blank">Idea stolen from Duncan’s tweet</a>.</p>
+<pre class="r"><code>geom_quasi_emoji &lt;- function (
+  mapping = NULL, data = NULL, width = NULL, varwidth = FALSE, 
+  bandwidth = 0.5, nbins = NULL, method = &quot;quasirandom&quot;, groupOnX = NULL, 
+  dodge.width = 0, stat = &quot;identity&quot;, position = &quot;quasirandom&quot;, 
+  na.rm = FALSE, show.legend = NA, inherit.aes = TRUE, emoji = &quot;1f4l1d&quot;, ...
+) {
   
   img &lt;- emoji_get(emoji)[[1]]
   
-  position &lt;- position_quasirandom(width = width, varwidth = varwidth, 
-                                   bandwidth = bandwidth, nbins = nbins, method = method, 
-                                   groupOnX = groupOnX, dodge.width = dodge.width)
+  position &lt;- position_quasirandom(
+    width = width, varwidth = varwidth, 
+    bandwidth = bandwidth, nbins = nbins, method = method, 
+    groupOnX = groupOnX, dodge.width = dodge.width
+  )
   
-  ggplot2::layer(data = data, mapping = mapping, stat = stat, 
-                 geom = emoGG:::GeomEmoji, position = position, show.legend = show.legend, 
-                 inherit.aes = inherit.aes, params = list(na.rm = na.rm, img = img, ...))
+  ggplot2::layer(
+    data = data, mapping = mapping, stat = stat, 
+    geom = emoGG:::GeomEmoji, position = position, show.legend = show.legend, 
+    inherit.aes = inherit.aes, params = list(na.rm = na.rm, img = img, ...)
+  )
 }</code></pre>
 <p>It makes sense to use the data that Duncan generated so we can compare the static plot to the animated one.</p>
 <pre class="r"><code>swarm &lt;- data.frame(
@@ -74,7 +107,7 @@ library(magick)</code></pre>
   geom_quasi_emoji(emoji = &quot;1f41d&quot;, method = &quot;pseudorandom&quot;) +
   theme(panel.background = element_rect(fill = &quot;skyblue&quot;)) +
   ggtitle(&quot;WAGGLE DANCE&quot;)</code></pre>
-<p>Now we can create a few versions of thi plot with different jittering. The plots are magick objects made with <code>image_graph()</code> from <code>magick</code>.</p>
+<p>Now we can create a few versions of this plot with different jittering. The plots are magick-class objects made with <code>image_graph()</code> from the {magick} package.</p>
 <p>We can loop through a few plots, each representing a frame in the final gif.</p>
 <p>And now <code>image_animate()</code> can be used to combine those magick objects into a gif.</p>
 <pre class="r"><code>waggle_dance &lt;- image_animate(c(t1, t2, t3, t4))
@@ -83,4 +116,73 @@ waggle_dance</code></pre>
 <p>And we can save this with <code>image_write()</code>.</p>
 <pre class="r"><code>image_write(waggle_dance, &quot;waggle_dance.gif&quot;)</code></pre>
 <p>Well done, we got through this without any bee puns.</p>
+<hr />
+<details>
+<p><summary>Session info</summary></p>
+<pre><code>## [1] &quot;Last updated 2019-12-31&quot;</code></pre>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 3.6.1 (2019-07-05)
+##  os       macOS Sierra 10.12.6        
+##  system   x86_64, darwin15.6.0        
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2019-12-31                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version   date       lib source                     
+##  assertthat    0.2.1     2019-03-21 [1] CRAN (R 3.6.0)             
+##  beeswarm      0.2.3     2016-04-25 [1] CRAN (R 3.6.0)             
+##  bitops        1.0-6     2013-08-17 [1] CRAN (R 3.6.0)             
+##  blogdown      0.17      2019-11-13 [1] CRAN (R 3.6.0)             
+##  bookdown      0.16      2019-11-22 [1] CRAN (R 3.6.0)             
+##  cli           2.0.0     2019-12-09 [1] CRAN (R 3.6.1)             
+##  colorspace    1.4-1     2019-03-18 [1] CRAN (R 3.6.0)             
+##  cowplot     * 1.0.0     2019-07-11 [1] CRAN (R 3.6.0)             
+##  crayon        1.3.4     2017-09-16 [1] CRAN (R 3.6.0)             
+##  digest        0.6.23    2019-11-23 [1] CRAN (R 3.6.0)             
+##  dplyr         0.8.3     2019-07-04 [1] CRAN (R 3.6.0)             
+##  emoGG       * 0.0.2     2019-12-31 [1] Github (dill/emoGG@96a1018)
+##  evaluate      0.14      2019-05-28 [1] CRAN (R 3.6.0)             
+##  fansi         0.4.0     2018-10-05 [1] CRAN (R 3.6.0)             
+##  farver        2.0.1     2019-11-13 [1] CRAN (R 3.6.0)             
+##  ggbeeswarm  * 0.6.0     2017-08-07 [1] CRAN (R 3.6.0)             
+##  ggplot2     * 3.2.1     2019-08-10 [1] CRAN (R 3.6.0)             
+##  glue          1.3.1     2019-03-12 [1] CRAN (R 3.6.0)             
+##  gtable        0.3.0     2019-03-25 [1] CRAN (R 3.6.0)             
+##  htmltools     0.4.0     2019-10-04 [1] CRAN (R 3.6.0)             
+##  knitr         1.26      2019-11-12 [1] CRAN (R 3.6.0)             
+##  labeling      0.3       2014-08-23 [1] CRAN (R 3.6.0)             
+##  lazyeval      0.2.2     2019-03-15 [1] CRAN (R 3.6.0)             
+##  lifecycle     0.1.0     2019-08-01 [1] CRAN (R 3.6.0)             
+##  magick      * 2.2       2019-08-26 [1] CRAN (R 3.6.0)             
+##  magrittr      1.5       2014-11-22 [1] CRAN (R 3.6.0)             
+##  munsell       0.5.0     2018-06-12 [1] CRAN (R 3.6.0)             
+##  pillar        1.4.3     2019-12-20 [1] CRAN (R 3.6.0)             
+##  pkgconfig     2.0.3     2019-09-22 [1] CRAN (R 3.6.0)             
+##  png           0.1-7     2013-12-03 [1] CRAN (R 3.6.0)             
+##  proto         1.0.0     2016-10-29 [1] CRAN (R 3.6.0)             
+##  purrr         0.3.3     2019-10-18 [1] CRAN (R 3.6.0)             
+##  R6            2.4.1     2019-11-12 [1] CRAN (R 3.6.0)             
+##  Rcpp          1.0.3     2019-11-08 [1] CRAN (R 3.6.0)             
+##  RCurl         1.95-4.12 2019-03-04 [1] CRAN (R 3.6.0)             
+##  rlang         0.4.2     2019-11-23 [1] CRAN (R 3.6.0)             
+##  rmarkdown     1.18      2019-11-27 [1] CRAN (R 3.6.1)             
+##  scales        1.1.0     2019-11-18 [1] CRAN (R 3.6.0)             
+##  sessioninfo   1.1.1     2018-11-05 [1] CRAN (R 3.6.0)             
+##  stringi       1.4.3     2019-03-12 [1] CRAN (R 3.6.0)             
+##  stringr       1.4.0     2019-02-10 [1] CRAN (R 3.6.0)             
+##  tibble        2.1.3     2019-06-06 [1] CRAN (R 3.6.0)             
+##  tidyselect    0.2.5     2018-10-11 [1] CRAN (R 3.6.0)             
+##  vipor         0.4.5     2017-03-22 [1] CRAN (R 3.6.0)             
+##  withr         2.1.2     2018-03-15 [1] CRAN (R 3.6.0)             
+##  xfun          0.11      2019-11-12 [1] CRAN (R 3.6.0)             
+##  yaml          2.2.0     2018-07-25 [1] CRAN (R 3.6.0)             
+## 
+## [1] /Users/matt.dray/Library/R/3.6/library
+## [2] /Library/Frameworks/R.framework/Versions/3.6/Resources/library</code></pre>
+</details>
 </div>
