@@ -1,79 +1,82 @@
 ---
-title: 'Quantify colour with magick'
+title: 'Quantify colour by {magick}'
 author: 'Matt Dray'
 date: '2018-11-25'
 categories:
-  - R
-  - dataviz
+  - code
+  - data-viz
+  - tutorial
 tags:
   - art
-  - design
-  - magick
   - colour
-  - color
+  - design
+  - dplyr
+  - r
+  - magick
 slug: art-of-the-possible
 draft: no
 ---
 
 
 
-<p>Matt Dray (<a href="https://www.twitter.com/mattdray">@mattdray</a>)</p>
 <div class="figure">
-<img src="https://media.giphy.com/media/Dym2LTuxGJJSw/giphy.gif" alt="Walrus with rainbow vomit, of course (via Giphy)" />
-<p class="caption">Walrus with rainbow vomit, of course (<a href="https://giphy.com/gifs/rainbow-vomit-walrus-Dym2LTuxGJJSw?utm_source=media-link&amp;utm_medium=landing&amp;utm_campaign=Media%20Links&amp;utm_term=">via Giphy</a>)</p>
+<img src="https://media.giphy.com/media/Dym2LTuxGJJSw/giphy.gif" alt="A walrus vomiting a cartoon rainbow.">
+<p class="caption">
+‘Walrus rainbow vomit’ is a sentence I’d never thought I’d type (<a href="https://giphy.com/gifs/rainbow-vomit-walrus-Dym2LTuxGJJSw?utm_source=media-link&amp;utm_medium=landing&amp;utm_campaign=Media%20Links&amp;utm_term=" target="_blank">via Giphy</a>)
+</p>
 </div>
 <div id="colour-search" class="section level1">
 <h1>Colour search</h1>
 <p>Lots of online services let you sort images by colour. Some examples:</p>
 <ul>
-<li><a href="https://artsexperiments.withgoogle.com/artpalette/colors/a46053-433932-c2ad8f-b5996a-746251">Google Arts &amp; Culture</a></li>
-<li><a href="https://www.designspiration.net/search/saves/?q=%2389ebd7%20%23afff11%20%23e5ff91%20%23ff9775%20%23f38d00">Designspiration</a></li>
-<li><a href="https://labs.tineye.com/multicolr/">TinEye Multicolr</a></li>
+<li><a href="https://artsexperiments.withgoogle.com/artpalette/colors/a46053-433932-c2ad8f-b5996a-746251" target="_blank">Google Arts &amp; Culture</a></li>
+<li><a href="https://www.designspiration.net/search/saves/?q=%2389ebd7%20%23afff11%20%23e5ff91%20%23ff9775%20%23f38d00" target="_blank">Designspiration</a></li>
+<li><a href="https://labs.tineye.com/multicolr/" target="_blank">TinEye Multicolr</a></li>
 </ul>
-<p>These services must have extracted and quantified each image’s colours. There’s probably a simple way of doing this in R, so let’s give it a go.</p>
-<p>By ‘simple’ I mean we’re not going to do any hard work or consider any colour theory.<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> And we’re going to use colours like ‘green’ instead of ‘olive drab’.<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a></p>
+<p>These services must have extracted and quantified each image’s colours. There’s probably a way of doing this in R, so let’s give it a go.</p>
+<p>By ‘simple’ I mean we’re not going to do any hard work or consider any colour theory.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> And we’re going to use colours like ‘green’ instead of ‘olive drab’.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
 </div>
 <div id="art-of-the-possible" class="section level1">
 <h1>Art of the possible</h1>
-<p>So what we’re going to do is:</p>
+<p>Well do the following:</p>
 <ol style="list-style-type: decimal">
 <li>Read in an image</li>
 <li>Prepare a set of ‘simple colours’</li>
 <li>Map the simple colours to the image</li>
 <li>Quantify the colours</li>
 </ol>
-<p>There’s also a step 5 that I’m not covering here: create a tool where the user chooses a colour and images are returned in order of dominance for that colour. We could also write this all into a function that takes a fodler of images and returns the percentage of each colour in each image.</p>
+<p>There’s also a step 5 that I’m not covering here: create a tool where the user chooses a colour and images are returned in order of dominance for that colour. We could also write this all into a function that takes a folder of images and returns the percentage of each colour in each image.</p>
 </div>
 <div id="its-a-kind-of-imagemagick" class="section level1">
 <h1>It’s a kind of ImageMagick</h1>
-<p>The <code>magick</code> R package is an implementation of <a href="https://www.imagemagick.org/script/index.php">ImageMagick, an open-source software suite whose emphasis is image manipulation from the command line</a>. The flexibility of <code>magick</code> can be seen in the <a href="https://cran.r-project.org/web/packages/magick/vignettes/intro.html">vignette</a>.</p>
-<p><code>magick</code> was created and is maintained by <a href="https://twitter.com/opencpu?lang=en">Jeroen Ooms</a>, a software engineer and postdoc at <a href="https://ropensci.org/">ROpenSci</a>, a collective that seeks <a href="https://ropensci.org/packages/">to develop tools for open and reproducible research</a>.</p>
-<p><a href="https://ropensci.org/blog/2018/10/24/commcall-nov2018/">ROpenSci hosted a workshop</a> from Ooms about working with images in R (<a href="https://jeroen.github.io/munster2018/">presentation slides</a>), which caught my attention. I’ve used some of his code below.</p>
+<p>The {magick} R package is an implementation of <a href="https://www.imagemagick.org/script/index.php" target="_blank">ImageMagick, an open-source software suite whose emphasis is image manipulation from the command line</a>. The flexibility of {magick} can be seen in the <a href="https://cran.r-project.org/web/packages/magick/vignettes/intro.html" target="_blank">vignette</a>.</p>
+<p>The package was created and is maintained by <a href="https://twitter.com/opencpu?lang=en" target="_blank">Jeroen Ooms</a>, a software engineer and postdoc at <a href="https://ropensci.org/" target="_blank">ROpenSci</a>, a collective that seeks <a href="https://ropensci.org/packages/" target="_blank">to develop tools for open and reproducible research</a>.</p>
+<p><a href="https://ropensci.org/blog/2018/10/24/commcall-nov2018/" target="_blank">ROpenSci hosted a workshop</a> from Ooms about working with images in R and th (<a href="https://jeroen.github.io/munster2018/" target="_blank">presentation slides</a>) caught my attention. I’ve used some of Jeroen’s code below.</p>
 </div>
 <div id="code" class="section level1">
 <h1>Code</h1>
 <p>First we need to load our packages.</p>
 <pre class="r"><code># Use install.packages(&quot;package&quot;) if not yet installed
-library(dplyr)  # tidy data manipulation
+library(dplyr)   # tidy data manipulation
 library(tibble)  # tidy tables
-library(magick)  # image manipulation
-library(knitr)  # nice html tables</code></pre>
+library(magick)  # image manipulation</code></pre>
 <div id="read-the-test-image" class="section level2">
 <h2>Read the test image</h2>
-<p>I’ve chosen a colourful image to use for our test case: it’s a picture of a bunch of <a href="https://www.lego.com/en-gb/themes/duplo">Lego Duplo bricks</a>.<a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a></p>
+<p>I’ve chosen a colourful image to use for our test case: it’s a picture of a bunch of <a href="https://www.lego.com/en-gb/themes/duplo" target="_blank">Lego Duplo bricks</a>.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
 <p>We’ll use <code>image_read()</code> to read the JPEG as an object of class ‘magick’ and then <code>image_scale()</code> to reduce the image size and save some space.</p>
 <p>Printing the image also gives us some details of format, dimensions, etc.</p>
 <pre class="r"><code># Path to the image
 duplo_path &lt;- &quot;https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Lego_dublo_arto_alanenpaa_2.JPG/2560px-Lego_dublo_arto_alanenpaa_2.JPG&quot;
 
 # Read as magick object and resize
-duplo &lt;- 
-  image_read(duplo_path) %&gt;%
+duplo &lt;- image_read(duplo_path) %&gt;%
   image_scale(geometry = c(&quot;x600&quot;))
 
 print(duplo)</code></pre>
-<pre><code>##   format width height colorspace matte filesize density
-## 1   JPEG   900    600       sRGB FALSE        0   72x72</code></pre>
+<pre><code>## # A tibble: 1 x 7
+##   format width height colorspace matte filesize density
+##   &lt;chr&gt;  &lt;int&gt;  &lt;int&gt; &lt;chr&gt;      &lt;lgl&gt;    &lt;int&gt; &lt;chr&gt;  
+## 1 JPEG     900    600 sRGB       FALSE        0 72x72</code></pre>
 <p><img src="/post/2018-11-25-art-of-the-possible_files/figure-html/unnamed-chunk-1-1.png" width="450" /></p>
 </div>
 <div id="prepare-simple-colours" class="section level2">
@@ -85,7 +88,9 @@ cols_vec &lt;- setNames(
   c(&quot;#000000&quot;, &quot;#0000ff&quot;, &quot;#008000&quot;, &quot;#ff0000&quot;, &quot;#ffffff&quot;, &quot;#ffff00&quot;),
   c(&quot;black&quot;, &quot;blue&quot;, &quot;green&quot;, &quot;red&quot;, &quot;white&quot;, &quot;yellow&quot;)
 )</code></pre>
-<p>Then we can plot squares of these colours, using <code>image_graph()</code> to read them as magick-class objects.<a href="#fn4" class="footnoteRef" id="fnref4"><sup>4</sup></a> My method here is inefficient and not really reproducible, but you can see the output is an image that contains our six colours.</p>
+<p>Then we can plot squares of these colours, using <code>image_graph()</code> to read them as magick-class objects.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> My method here is notthe most efficient, but you can see the output is an image that contains our six colours.</p>
+<details>
+<p><summary>Click for code</summary></p>
 <pre class="r"><code># For each vector element (colour) create a square of that colour
 for (i in seq_along(cols_vec)) {
   fig_name &lt;- paste0(names(cols_vec)[i], &quot;_square&quot;)  # create object name
@@ -108,30 +113,32 @@ col_square &lt;- paste0(names(cols_vec), &quot;_square&quot;)
 simple_cols &lt;- image_append(c(
   get(col_square[1]), get(col_square[2]), get(col_square[3]),
   get(col_square[4]), get(col_square[5]), get(col_square[6])
-))
-
-print(simple_cols)</code></pre>
-<pre><code>##   format width height colorspace matte filesize density
-## 1    PNG   300     50       sRGB  TRUE        0   72x72</code></pre>
-<p><img src="/post/2018-11-25-art-of-the-possible_files/figure-html/colour-squares-1.png" width="150" /></p>
+))</code></pre>
+</details>
+<pre class="r"><code>print(simple_cols)</code></pre>
+<pre><code>## # A tibble: 1 x 7
+##   format width height colorspace matte filesize density
+##   &lt;chr&gt;  &lt;int&gt;  &lt;int&gt; &lt;chr&gt;      &lt;lgl&gt;    &lt;int&gt; &lt;chr&gt;  
+## 1 PNG      300     50 sRGB       TRUE         0 72x72</code></pre>
+<p><img src="/post/2018-11-25-art-of-the-possible_files/figure-html/print-col-squares-1.png" width="150" /></p>
 <div id="map-to-the-image" class="section level3">
 <h3>Map to the image</h3>
-<p>Now we can apply the simple colour set to the test image using <code>image_map()</code>. I’ve put the images side-by-side underneath using <code>image_append()</code>, also from <code>magick</code>.</p>
+<p>Now we can apply the simple colour set to the test image using <code>image_map()</code>.</p>
 <pre class="r"><code># Map the simple colours to the image
 duplo_mapped &lt;- image_map(
   image = duplo,  # original image
   map = simple_cols  # colours to map on
-)
-
-# Display the original and simplified images side by side
+)</code></pre>
+<p>And we can use <code>image_animate()</code> to see the difference between the two.</p>
+<pre class="r"><code># Display the original and simplified images side by side
 image_animate(c(duplo, duplo_mapped), fps = 1)</code></pre>
-<p><img src="/post/2018-11-25-art-of-the-possible_files/figure-html/map-1.gif" /><!-- --></p>
+<p><img src="/post/2018-11-25-art-of-the-possible_files/figure-html/animation-1.gif" /><!-- --></p>
 <p>Great. You can see where the original colours have been replaced by the ‘closest’ simple colours. Note in particular where the more reflective surfaces are mapped to white than the actual brick colour. This is okay: the brick may be blue, but we’ve only defined <em>one</em> shade of blue. If a particular shade is closer to white, then so be it.</p>
 </div>
 </div>
 <div id="quantify-the-colours" class="section level2">
 <h2>Quantify the colours</h2>
-<p>Now we can take this mapped image and quantify how much of the image belongs to each colour. Imagine we’ve broken the image into pixels and then counting how many belng to each of our six colours.</p>
+<p>Now we can take this mapped image and quantify how much of the image belongs to each colour. Imagine we’ve broken the image into pixels and then we’re counting how many belng to each of our six colours.</p>
 <pre class="r"><code># Function to count the colours (adapted from Jeroen Ooms)
 count_colors &lt;- function(image) {
   data &lt;- image_data(image) %&gt;%
@@ -146,21 +153,19 @@ count_colors &lt;- function(image) {
 duplo_col_freq &lt;- duplo_mapped %&gt;%
   count_colors() %&gt;%
   left_join(
-    as_tibble(cols_vec) %&gt;%
-      rownames_to_column() %&gt;%
-      rename(hex = value, name = rowname),
+    enframe(cols_vec) %&gt;% rename(hex = value),
     by = &quot;hex&quot;
   ) %&gt;% 
   arrange(desc(freq)) %&gt;% 
   mutate(percent = 100*round((freq/sum(freq)), 3)) %&gt;% 
   select(
-    `Colour name` = name, Hexadecimal = hex, `Frequency of colour` = freq,
-    `Percent of image` = percent
+    `Colour name` = name, Hexadecimal = hex,
+    `Frequency of colour` = freq, `Percent of image` = percent
   )
 
 duplo_mapped  # see mapped image again</code></pre>
 <p><img src="/post/2018-11-25-art-of-the-possible_files/figure-html/count-colours-1.png" width="450" /></p>
-<pre class="r"><code>kable(duplo_col_freq)  # quantify colour</code></pre>
+<pre class="r"><code>knitr::kable(duplo_col_freq)  # quantify colour</code></pre>
 <table>
 <thead>
 <tr class="header">
@@ -212,12 +217,39 @@ duplo_mapped  # see mapped image again</code></pre>
 <p>So red makes up almost a quarter with white and black just behind. Many of the bricks are red and much of the shadow areas of yellow bricks were rendered as red. Black and white make up much of the shadowed and reflective surfaces elsewhere in the image.</p>
 </div>
 </div>
-<div id="a-few-more-examples" class="section level1">
-<h1>A few more examples</h1>
+<div id="gallery-more-examples" class="section level1">
+<h1>Gallery: more examples</h1>
 <div id="reef-fish" class="section level2">
 <h2>Reef fish</h2>
-<p><a href="https://commons.wikimedia.org/wiki/File:100%25_reef-fish_Endemism_at_90_m_off_Kure_Atoll.jpg">By Richard L Pyle from Wikimedia Commons, CC0 1.0.</a></p>
-<p><img src="/post/2018-11-25-art-of-the-possible_files/figure-html/reef-1.gif" /><!-- --></p>
+<details>
+<p><summary>Click for details</summary></p>
+<p>Image by <a href="https://commons.wikimedia.org/wiki/File:100%25_reef-fish_Endemism_at_90_m_off_Kure_Atoll.jpg" target="_blank">Richard L Pyle from Wikimedia Commons, CC0 1.0.</a></p>
+<pre class="r"><code>reef_path &lt;- &quot;https://upload.wikimedia.org/wikipedia/commons/0/05/100%25_reef-fish_Endemism_at_90_m_off_Kure_Atoll.jpg&quot;
+
+reef &lt;- image_read(reef_path) %&gt;%
+  image_scale(geometry = c(&quot;x600&quot;))
+
+reef_mapped &lt;- image_map(
+  image = reef,  # original image
+  map = simple_cols  # colours to map on
+)
+
+reef_col_freq &lt;- reef_mapped %&gt;%
+  count_colors() %&gt;%
+  left_join(
+    enframe(cols_vec) %&gt;% rename(hex = value),
+    by = &quot;hex&quot;
+  ) %&gt;% 
+  arrange(desc(freq)) %&gt;% 
+  mutate(percent = 100*round((freq/sum(freq)), 3)) %&gt;% 
+  select(
+    `Colour name` = name, Hexadecimal = hex,
+    `Frequency of colour` = freq, `Percent of image` = percent
+  )
+
+reef_animate &lt;- image_animate(c(reef, reef_mapped), fps = 1)</code></pre>
+</details>
+<p><img src="/post/2018-11-25-art-of-the-possible_files/figure-html/reef-print-1.gif" /><!-- --></p>
 <table>
 <thead>
 <tr class="header">
@@ -231,46 +263,73 @@ duplo_mapped  # see mapped image again</code></pre>
 <tr class="odd">
 <td align="left">blue</td>
 <td align="left">#0000ff</td>
-<td align="right">317133</td>
-<td align="right">49.5</td>
+<td align="right">315549</td>
+<td align="right">49.3</td>
 </tr>
 <tr class="even">
 <td align="left">black</td>
 <td align="left">#000000</td>
-<td align="right">214649</td>
-<td align="right">33.5</td>
+<td align="right">250464</td>
+<td align="right">39.1</td>
 </tr>
 <tr class="odd">
 <td align="left">green</td>
 <td align="left">#008000</td>
-<td align="right">76245</td>
-<td align="right">11.9</td>
+<td align="right">48303</td>
+<td align="right">7.5</td>
 </tr>
 <tr class="even">
 <td align="left">yellow</td>
 <td align="left">#ffff00</td>
-<td align="right">13297</td>
-<td align="right">2.1</td>
+<td align="right">9232</td>
+<td align="right">1.4</td>
 </tr>
 <tr class="odd">
 <td align="left">red</td>
 <td align="left">#ff0000</td>
-<td align="right">10077</td>
-<td align="right">1.6</td>
+<td align="right">9181</td>
+<td align="right">1.4</td>
 </tr>
 <tr class="even">
 <td align="left">white</td>
 <td align="left">#ffffff</td>
-<td align="right">8799</td>
-<td align="right">1.4</td>
+<td align="right">7471</td>
+<td align="right">1.2</td>
 </tr>
 </tbody>
 </table>
 </div>
-<div id="neon-lights-in-hong-kong" class="section level2">
-<h2>Neon lights in Hong Kong</h2>
-<p><a href="https://commons.wikimedia.org/wiki/File:Neon_lights,_Nathan_Road,_Hong_Kong.jpg">By Daniel Case from Wikimedia Commons, CC BY-SA 3.0</a></p>
-<p><img src="/post/2018-11-25-art-of-the-possible_files/figure-html/neon-lights-1.gif" /><!-- --></p>
+<div id="hong-kong-lights" class="section level2">
+<h2>Hong Kong lights</h2>
+<details>
+<p><summary>Click for details</summary></p>
+<p>Image by <a href="https://commons.wikimedia.org/wiki/File:Neon_lights,_Nathan_Road,_Hong_Kong.jpg" target="_blank">Daniel Case from Wikimedia Commons, CC BY-SA 3.0</a></p>
+<pre class="r"><code>neon_path &lt;- &quot;https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Neon_lights%2C_Nathan_Road%2C_Hong_Kong.jpg/900px-Neon_lights%2C_Nathan_Road%2C_Hong_Kong.jpg&quot;
+
+neon &lt;- image_read(neon_path) %&gt;%
+  image_scale(geometry = c(&quot;x600&quot;))
+
+neon_mapped &lt;- image_map(
+  image = neon,  # original image
+  map = simple_cols  # colours to map on
+)
+
+neon_col_freq &lt;- neon_mapped %&gt;%
+  count_colors() %&gt;%
+  left_join(
+    enframe(cols_vec) %&gt;% rename(hex = value),
+    by = &quot;hex&quot;
+  ) %&gt;% 
+  arrange(desc(freq)) %&gt;% 
+  mutate(percent = 100*round((freq/sum(freq)), 3)) %&gt;% 
+  select(
+    `Colour name` = name, Hexadecimal = hex,
+    `Frequency of colour` = freq, `Percent of image` = percent
+  )
+
+neon_animate &lt;- image_animate(c(neon, neon_mapped), fps = 1)</code></pre>
+</details>
+<p><img src="/post/2018-11-25-art-of-the-possible_files/figure-html/neon-print-1.gif" /><!-- --></p>
 <table>
 <thead>
 <tr class="header">
@@ -284,46 +343,73 @@ duplo_mapped  # see mapped image again</code></pre>
 <tr class="odd">
 <td align="left">black</td>
 <td align="left">#000000</td>
-<td align="right">191565</td>
-<td align="right">71.0</td>
+<td align="right">234093</td>
+<td align="right">86.7</td>
+</tr>
+<tr class="even">
+<td align="left">blue</td>
+<td align="left">#0000ff</td>
+<td align="right">9661</td>
+<td align="right">3.6</td>
+</tr>
+<tr class="odd">
+<td align="left">red</td>
+<td align="left">#ff0000</td>
+<td align="right">9118</td>
+<td align="right">3.4</td>
 </tr>
 <tr class="even">
 <td align="left">green</td>
 <td align="left">#008000</td>
-<td align="right">23134</td>
-<td align="right">8.6</td>
-</tr>
-<tr class="odd">
-<td align="left">blue</td>
-<td align="left">#0000ff</td>
-<td align="right">18455</td>
-<td align="right">6.8</td>
-</tr>
-<tr class="even">
-<td align="left">red</td>
-<td align="left">#ff0000</td>
-<td align="right">17551</td>
-<td align="right">6.5</td>
+<td align="right">8478</td>
+<td align="right">3.1</td>
 </tr>
 <tr class="odd">
 <td align="left">yellow</td>
 <td align="left">#ffff00</td>
-<td align="right">10874</td>
-<td align="right">4.0</td>
+<td align="right">5519</td>
+<td align="right">2.0</td>
 </tr>
 <tr class="even">
 <td align="left">white</td>
 <td align="left">#ffffff</td>
-<td align="right">8421</td>
-<td align="right">3.1</td>
+<td align="right">3131</td>
+<td align="right">1.2</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div id="ladybird" class="section level2">
 <h2>Ladybird</h2>
-<p><a href="https://commons.wikimedia.org/wiki/File:Erysimum_Cheiranthoides_(215134987).jpeg">By Elena Andreeva from Wikimedia Commons, CC0 1.0.</a></p>
-<p><img src="/post/2018-11-25-art-of-the-possible_files/figure-html/bfly-1.gif" /><!-- --></p>
+<details>
+<p><summary>Click for details</summary></p>
+<p>Image by <a href="https://commons.wikimedia.org/wiki/File:Erysimum_Cheiranthoides_(215134987)%7Btarget=&#39;_blank&#39;%7D.jpeg">Elena Andreeva from Wikimedia Commons, CC0 1.0.</a></p>
+<pre class="r"><code>lbird_path &lt;- &quot;https://upload.wikimedia.org/wikipedia/commons/d/d5/Erysimum_Cheiranthoides_%28215134987%29.jpeg&quot;
+
+lbird &lt;- image_read(lbird_path) %&gt;%
+  image_scale(geometry = c(&quot;x600&quot;))
+
+lbird_mapped &lt;- image_map(
+  image = lbird,  # original image
+  map = simple_cols  # colours to map on
+)
+
+lbird_col_freq &lt;- lbird_mapped %&gt;%
+  count_colors() %&gt;%
+  left_join(
+    enframe(cols_vec) %&gt;% rename(hex = value),
+    by = &quot;hex&quot;
+  ) %&gt;% 
+  arrange(desc(freq)) %&gt;% 
+  mutate(percent = 100*round((freq/sum(freq)), 3)) %&gt;% 
+  select(
+    `Colour name` = name, Hexadecimal = hex,
+    `Frequency of colour` = freq, `Percent of image` = percent
+  )
+
+lbird_animate &lt;- image_animate(c(lbird, lbird_mapped), fps = 1)</code></pre>
+</details>
+<p><img src="/post/2018-11-25-art-of-the-possible_files/figure-html/lbird-print-1.gif" /><!-- --></p>
 <table>
 <thead>
 <tr class="header">
@@ -372,73 +458,72 @@ duplo_mapped  # see mapped image again</code></pre>
 </tr>
 </tbody>
 </table>
-</div>
-</div>
-<div id="session-info" class="section level1">
-<h1>Session info</h1>
-<pre class="r"><code>devtools::session_info()</code></pre>
-<pre><code>## Session info -------------------------------------------------------------</code></pre>
-<pre><code>##  setting  value                       
-##  version  R version 3.5.1 (2018-07-02)
+<hr />
+<details>
+<p><summary>Session info</summary></p>
+<pre><code>## [1] &quot;Last updated 2020-01-01&quot;</code></pre>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 3.6.1 (2019-07-05)
+##  os       macOS Sierra 10.12.6        
 ##  system   x86_64, darwin15.6.0        
 ##  ui       X11                         
 ##  language (EN)                        
 ##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2018-12-09</code></pre>
-<pre><code>## Packages -----------------------------------------------------------------</code></pre>
-<pre><code>##  package    * version date       source        
-##  assertthat   0.2.0   2017-04-11 CRAN (R 3.5.0)
-##  backports    1.1.2   2017-12-13 CRAN (R 3.5.0)
-##  base       * 3.5.1   2018-07-05 local         
-##  bindr        0.1.1   2018-03-13 CRAN (R 3.5.0)
-##  bindrcpp   * 0.2.2   2018-03-29 CRAN (R 3.5.0)
-##  blogdown     0.7     2018-07-07 CRAN (R 3.5.0)
-##  bookdown     0.7     2018-02-18 CRAN (R 3.5.0)
-##  compiler     3.5.1   2018-07-05 local         
-##  crayon       1.3.4   2017-09-16 CRAN (R 3.5.0)
-##  curl         3.2     2018-03-28 CRAN (R 3.5.0)
-##  datasets   * 3.5.1   2018-07-05 local         
-##  devtools     1.13.6  2018-06-27 CRAN (R 3.5.0)
-##  digest       0.6.18  2018-10-10 cran (@0.6.18)
-##  dplyr      * 0.7.8   2018-11-10 CRAN (R 3.5.0)
-##  evaluate     0.10.1  2017-06-24 CRAN (R 3.5.0)
-##  glue         1.3.0   2018-07-17 CRAN (R 3.5.0)
-##  graphics   * 3.5.1   2018-07-05 local         
-##  grDevices  * 3.5.1   2018-07-05 local         
-##  highr        0.7     2018-06-09 CRAN (R 3.5.0)
-##  htmltools    0.3.6   2017-04-28 CRAN (R 3.5.0)
-##  knitr      * 1.20    2018-02-20 CRAN (R 3.5.0)
-##  magick     * 1.9     2018-05-11 cran (@1.9)   
-##  magrittr     1.5     2014-11-22 CRAN (R 3.5.0)
-##  memoise      1.1.0   2017-04-21 CRAN (R 3.5.0)
-##  methods    * 3.5.1   2018-07-05 local         
-##  pillar       1.3.0   2018-07-14 CRAN (R 3.5.0)
-##  pkgconfig    2.0.2   2018-08-16 cran (@2.0.2) 
-##  png          0.1-7   2013-12-03 CRAN (R 3.5.0)
-##  purrr        0.2.5   2018-05-29 CRAN (R 3.5.0)
-##  R6           2.3.0   2018-10-04 cran (@2.3.0) 
-##  Rcpp         1.0.0   2018-11-07 CRAN (R 3.5.0)
-##  rlang        0.3.0.1 2018-10-25 CRAN (R 3.5.0)
-##  rmarkdown    1.10    2018-06-11 CRAN (R 3.5.0)
-##  rprojroot    1.3-2   2018-01-03 CRAN (R 3.5.0)
-##  stats      * 3.5.1   2018-07-05 local         
-##  stringi      1.2.4   2018-07-20 CRAN (R 3.5.0)
-##  stringr      1.3.1   2018-05-10 CRAN (R 3.5.0)
-##  tibble     * 1.4.2   2018-01-22 CRAN (R 3.5.0)
-##  tidyselect   0.2.5   2018-10-11 CRAN (R 3.5.0)
-##  tools        3.5.1   2018-07-05 local         
-##  utils      * 3.5.1   2018-07-05 local         
-##  withr        2.1.2   2018-03-15 CRAN (R 3.5.0)
-##  xfun         0.3     2018-07-06 CRAN (R 3.5.0)
-##  yaml         2.1.19  2018-05-01 CRAN (R 3.5.0)</code></pre>
+##  date     2020-01-01                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date       lib source        
+##  assertthat    0.2.1   2019-03-21 [1] CRAN (R 3.6.0)
+##  backports     1.1.5   2019-10-02 [1] CRAN (R 3.6.0)
+##  blogdown      0.17    2019-11-13 [1] CRAN (R 3.6.0)
+##  bookdown      0.16    2019-11-22 [1] CRAN (R 3.6.0)
+##  cli           2.0.0   2019-12-09 [1] CRAN (R 3.6.1)
+##  crayon        1.3.4   2017-09-16 [1] CRAN (R 3.6.0)
+##  curl          4.3     2019-12-02 [1] CRAN (R 3.6.0)
+##  digest        0.6.23  2019-11-23 [1] CRAN (R 3.6.0)
+##  dplyr       * 0.8.3   2019-07-04 [1] CRAN (R 3.6.0)
+##  evaluate      0.14    2019-05-28 [1] CRAN (R 3.6.0)
+##  fansi         0.4.0   2018-10-05 [1] CRAN (R 3.6.0)
+##  glue          1.3.1   2019-03-12 [1] CRAN (R 3.6.0)
+##  highr         0.8     2019-03-20 [1] CRAN (R 3.6.0)
+##  htmltools     0.4.0   2019-10-04 [1] CRAN (R 3.6.0)
+##  knitr         1.26    2019-11-12 [1] CRAN (R 3.6.0)
+##  magick      * 2.2     2019-08-26 [1] CRAN (R 3.6.0)
+##  magrittr      1.5     2014-11-22 [1] CRAN (R 3.6.0)
+##  pillar        1.4.3   2019-12-20 [1] CRAN (R 3.6.0)
+##  pkgconfig     2.0.3   2019-09-22 [1] CRAN (R 3.6.0)
+##  png           0.1-7   2013-12-03 [1] CRAN (R 3.6.0)
+##  purrr         0.3.3   2019-10-18 [1] CRAN (R 3.6.0)
+##  R6            2.4.1   2019-11-12 [1] CRAN (R 3.6.0)
+##  Rcpp          1.0.3   2019-11-08 [1] CRAN (R 3.6.0)
+##  rlang         0.4.2   2019-11-23 [1] CRAN (R 3.6.0)
+##  rmarkdown     2.0     2019-12-12 [1] CRAN (R 3.6.0)
+##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 3.6.0)
+##  stringi       1.4.3   2019-03-12 [1] CRAN (R 3.6.0)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 3.6.0)
+##  tibble      * 2.1.3   2019-06-06 [1] CRAN (R 3.6.0)
+##  tidyselect    0.2.5   2018-10-11 [1] CRAN (R 3.6.0)
+##  utf8          1.1.4   2018-05-24 [1] CRAN (R 3.6.0)
+##  vctrs         0.2.1   2019-12-17 [1] CRAN (R 3.6.1)
+##  withr         2.1.2   2018-03-15 [1] CRAN (R 3.6.0)
+##  xfun          0.11    2019-11-12 [1] CRAN (R 3.6.0)
+##  yaml          2.2.0   2018-07-25 [1] CRAN (R 3.6.0)
+##  zeallot       0.1.0   2018-01-28 [1] CRAN (R 3.6.0)
+## 
+## [1] /Users/matt.dray/Library/R/3.6/library
+## [2] /Library/Frameworks/R.framework/Versions/3.6/Resources/library</code></pre>
+</details>
+</div>
 </div>
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>Just as well, because I’m colourblind.<a href="#fnref1">↩</a></p></li>
-<li id="fn2"><p>There are <a href="http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf">five named versions of olive drab</a> in R.<a href="#fnref2">↩</a></p></li>
-<li id="fn3"><p><a href="https://commons.wikimedia.org/wiki/Lego#/media/File:Lego_dublo_arto_alanenpaa_2.JPG">Photo by Arto Alanenpää</a>, CC0-BY-4.0 from Wikimedia Creative Commons.<a href="#fnref3">↩</a></p></li>
-<li id="fn4"><p>Artefacts introduced during compression of PNGs and JPGs might mean that your set of six colours ends up being <em>more</em> than six. It’s preferable to generate our colour set within R, inside <code>image_graph()</code>, so that we have only our six defined colours.<a href="#fnref4">↩</a></p></li>
+<li id="fn1"><p>Just as well, because I’m colourblind.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn2"><p>There are <a href="http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf" target="_blank">five named versions of olive drab</a> in R.<a href="#fnref2" class="footnote-back">↩</a></p></li>
+<li id="fn3"><p><a href="https://commons.wikimedia.org/wiki/Lego#/media/File:Lego_dublo_arto_alanenpaa_2.JPG" target="_blank">Photo by Arto Alanenpää</a>, CC0-BY-4.0 from Wikimedia Creative Commons.<a href="#fnref3" class="footnote-back">↩</a></p></li>
+<li id="fn4"><p>Artefacts introduced during compression of PNGs and JPGs might mean that your set of six colours ends up being <em>more</em> than six. It’s preferable to generate our colour set within R, inside <code>image_graph()</code>, so that we have only our six defined colours.<a href="#fnref4" class="footnote-back">↩</a></p></li>
 </ol>
 </div>

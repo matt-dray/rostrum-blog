@@ -1,54 +1,57 @@
 ---
-title: 'Quantify colour with magick'
+title: 'Quantify colour by {magick}'
 author: 'Matt Dray'
 date: '2018-11-25'
 categories:
-  - R
-  - dataviz
+  - code
+  - data-viz
+  - tutorial
 tags:
   - art
-  - design
-  - magick
   - colour
-  - color
+  - design
+  - dplyr
+  - r
+  - magick
 slug: art-of-the-possible
 draft: no
 ---
 
-Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
-
-![Walrus with rainbow vomit, of course ([via Giphy](https://giphy.com/gifs/rainbow-vomit-walrus-Dym2LTuxGJJSw?utm_source=media-link&utm_medium=landing&utm_campaign=Media%20Links&utm_term=))](https://media.giphy.com/media/Dym2LTuxGJJSw/giphy.gif)
+<div class="figure">
+<img src="https://media.giphy.com/media/Dym2LTuxGJJSw/giphy.gif" alt="A walrus vomiting a cartoon rainbow.">
+<p class="caption">'Walrus rainbow vomit' is a sentence I'd never thought I'd type ([via Giphy](https://giphy.com/gifs/rainbow-vomit-walrus-Dym2LTuxGJJSw?utm_source=media-link&utm_medium=landing&utm_campaign=Media%20Links&utm_term=){target='_blank'})</p>
+</div>
 
 # Colour search
 
 Lots of online services let you sort images by colour. Some examples:
 
-* [Google Arts & Culture](https://artsexperiments.withgoogle.com/artpalette/colors/a46053-433932-c2ad8f-b5996a-746251)
-* [Designspiration](https://www.designspiration.net/search/saves/?q=%2389ebd7%20%23afff11%20%23e5ff91%20%23ff9775%20%23f38d00)
-* [TinEye Multicolr](https://labs.tineye.com/multicolr/)
+* [Google Arts & Culture](https://artsexperiments.withgoogle.com/artpalette/colors/a46053-433932-c2ad8f-b5996a-746251){target='_blank'}
+* [Designspiration](https://www.designspiration.net/search/saves/?q=%2389ebd7%20%23afff11%20%23e5ff91%20%23ff9775%20%23f38d00){target='_blank'}
+* [TinEye Multicolr](https://labs.tineye.com/multicolr/){target='_blank'}
 
-These services must have extracted and quantified each image's colours. There's probably a simple way of doing this in R, so let's give it a go.
+These services must have extracted and quantified each image's colours. There's probably a way of doing this in R, so let's give it a go.
 
-By 'simple' I mean we're not going to do any hard work or consider any colour theory.[^1] And we're going to use colours like 'green' instead of 'olive drab'.[^2]
+By 'simple' I mean we're not going to do any hard work or consider any colour theory.[^theory] And we're going to use colours like 'green' instead of 'olive drab'.[^drab]
 
 # Art of the possible
 
-So what we're going to do is:
+Well do the following:
 
 1. Read in an image
 2. Prepare a set of 'simple colours'
 3. Map the simple colours to the image
 4. Quantify the colours
 
-There's also a step 5 that I'm not covering here: create a tool where the user chooses a colour and images are returned in order of dominance for that colour. We could also write this all into a function that takes a fodler of images and returns the percentage of each colour in each image. 
+There's also a step 5 that I'm not covering here: create a tool where the user chooses a colour and images are returned in order of dominance for that colour. We could also write this all into a function that takes a folder of images and returns the percentage of each colour in each image. 
 
 # It's a kind of ImageMagick
 
-The `magick` R package is an implementation of [ImageMagick, an open-source software suite whose emphasis is image manipulation from the command line](https://www.imagemagick.org/script/index.php). The flexibility of `magick` can be seen in the [vignette](https://cran.r-project.org/web/packages/magick/vignettes/intro.html).
+The {magick} R package is an implementation of [ImageMagick, an open-source software suite whose emphasis is image manipulation from the command line](https://www.imagemagick.org/script/index.php){target='_blank'}. The flexibility of {magick} can be seen in the [vignette](https://cran.r-project.org/web/packages/magick/vignettes/intro.html){target='_blank'}.
 
-`magick` was created and is maintained by [Jeroen Ooms](https://twitter.com/opencpu?lang=en), a software engineer and postdoc at [ROpenSci](https://ropensci.org/), a collective that seeks [to develop tools for open and reproducible research](https://ropensci.org/packages/).
+The package was created and is maintained by [Jeroen Ooms](https://twitter.com/opencpu?lang=en){target='_blank'}, a software engineer and postdoc at [ROpenSci](https://ropensci.org/){target='_blank'}, a collective that seeks [to develop tools for open and reproducible research](https://ropensci.org/packages/){target='_blank'}.
 
-[ROpenSci hosted a workshop](https://ropensci.org/blog/2018/10/24/commcall-nov2018/) from Ooms about working with images in R ([presentation slides](https://jeroen.github.io/munster2018/)), which caught my attention. I've used some of his code below.
+[ROpenSci hosted a workshop](https://ropensci.org/blog/2018/10/24/commcall-nov2018/){target='_blank'} from Ooms about working with images in R and th ([presentation slides](https://jeroen.github.io/munster2018/){target='_blank'}) caught my attention. I've used some of Jeroen's code below.
 
 # Code
 
@@ -56,15 +59,14 @@ First we need to load our packages.
 
 ```{r packages, message=FALSE}
 # Use install.packages("package") if not yet installed
-library(dplyr)  # tidy data manipulation
+library(dplyr)   # tidy data manipulation
 library(tibble)  # tidy tables
 library(magick)  # image manipulation
-library(knitr)  # nice html tables
 ```
 
 ## Read the test image
 
-I've chosen a colourful image to use for our test case: it's a picture of a bunch of [Lego Duplo bricks](https://www.lego.com/en-gb/themes/duplo).[^3]
+I've chosen a colourful image to use for our test case: it's a picture of a bunch of [Lego Duplo bricks](https://www.lego.com/en-gb/themes/duplo){target='_blank'}.[^duplo]
 
 We'll use `image_read()` to read the JPEG as an object of class 'magick' and then `image_scale()` to reduce the image size and save some space.
 
@@ -75,8 +77,7 @@ Printing the image also gives us some details of format, dimensions, etc.
 duplo_path <- "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Lego_dublo_arto_alanenpaa_2.JPG/2560px-Lego_dublo_arto_alanenpaa_2.JPG"
 
 # Read as magick object and resize
-duplo <- 
-  image_read(duplo_path) %>%
+duplo <- image_read(duplo_path) %>%
   image_scale(geometry = c("x600"))
 
 print(duplo)
@@ -96,8 +97,9 @@ cols_vec <- setNames(
 )
 ```
 
-Then we can plot squares of these colours, using `image_graph()` to read them as magick-class objects.[^4] My method here is inefficient and not really reproducible, but you can see the output is an image that contains our six colours.
+Then we can plot squares of these colours, using `image_graph()` to read them as magick-class objects.[^magickclass] My method here is notthe most efficient, but you can see the output is an image that contains our six colours.
 
+<details><summary>Click for code</summary>
 ```{r colour-squares}
 # For each vector element (colour) create a square of that colour
 for (i in seq_along(cols_vec)) {
@@ -122,13 +124,16 @@ simple_cols <- image_append(c(
   get(col_square[1]), get(col_square[2]), get(col_square[3]),
   get(col_square[4]), get(col_square[5]), get(col_square[6])
 ))
+```
+</details>
 
+```{r print-col-squares}
 print(simple_cols)
 ```
 
 ### Map to the image
 
-Now we can apply the simple colour set to the test image using `image_map()`. I've put the images side-by-side underneath using `image_append()`, also from `magick`.
+Now we can apply the simple colour set to the test image using `image_map()`.
 
 ```{r map}
 # Map the simple colours to the image
@@ -136,7 +141,11 @@ duplo_mapped <- image_map(
   image = duplo,  # original image
   map = simple_cols  # colours to map on
 )
+```
 
+And we can use `image_animate()` to see the difference between the two.
+
+```{r animation}
 # Display the original and simplified images side by side
 image_animate(c(duplo, duplo_mapped), fps = 1)
 ```
@@ -145,7 +154,7 @@ Great. You can see where the original colours have been replaced by the 'closest
 
 ## Quantify the colours
 
-Now we can take this mapped image and quantify how much of the image belongs to each colour. Imagine we've broken the image into pixels and then counting how many belng to each of our six colours.
+Now we can take this mapped image and quantify how much of the image belongs to each colour. Imagine we've broken the image into pixels and then we're counting how many belng to each of our six colours.
 
 ```{r count-colours}
 # Function to count the colours (adapted from Jeroen Ooms)
@@ -162,35 +171,34 @@ count_colors <- function(image) {
 duplo_col_freq <- duplo_mapped %>%
   count_colors() %>%
   left_join(
-    as_tibble(cols_vec) %>%
-      rownames_to_column() %>%
-      rename(hex = value, name = rowname),
+    enframe(cols_vec) %>% rename(hex = value),
     by = "hex"
   ) %>% 
   arrange(desc(freq)) %>% 
   mutate(percent = 100*round((freq/sum(freq)), 3)) %>% 
   select(
-    `Colour name` = name, Hexadecimal = hex, `Frequency of colour` = freq,
-    `Percent of image` = percent
+    `Colour name` = name, Hexadecimal = hex,
+    `Frequency of colour` = freq, `Percent of image` = percent
   )
 
 duplo_mapped  # see mapped image again
-kable(duplo_col_freq)  # quantify colour
+knitr::kable(duplo_col_freq)  # quantify colour
 ```
 
 So red makes up almost a quarter with white and black just behind. Many of the bricks are red and much of the shadow areas of yellow bricks were rendered as red. Black and white make up much of the shadowed and reflective surfaces elsewhere in the image.
 
-# A few more examples
+# Gallery: more examples
 
 ## Reef fish
 
-[By Richard L Pyle from Wikimedia Commons, CC0 1.0.](https://commons.wikimedia.org/wiki/File:100%25_reef-fish_Endemism_at_90_m_off_Kure_Atoll.jpg)
+<details><summary>Click for details</summary>
 
-```{r reef, echo=FALSE}
+Image by [Richard L Pyle from Wikimedia Commons, CC0 1.0.](https://commons.wikimedia.org/wiki/File:100%25_reef-fish_Endemism_at_90_m_off_Kure_Atoll.jpg){target='_blank'}
+
+```{r reef}
 reef_path <- "https://upload.wikimedia.org/wikipedia/commons/0/05/100%25_reef-fish_Endemism_at_90_m_off_Kure_Atoll.jpg"
 
-reef <- 
-  image_read(reef_path) %>%
+reef <- image_read(reef_path) %>%
   image_scale(geometry = c("x600"))
 
 reef_mapped <- image_map(
@@ -201,32 +209,35 @@ reef_mapped <- image_map(
 reef_col_freq <- reef_mapped %>%
   count_colors() %>%
   left_join(
-    as_tibble(cols_vec) %>%
-      rownames_to_column() %>%
-      rename(hex = value, name = rowname),
+    enframe(cols_vec) %>% rename(hex = value),
     by = "hex"
   ) %>% 
   arrange(desc(freq)) %>% 
   mutate(percent = 100*round((freq/sum(freq)), 3)) %>% 
   select(
-    `Colour name` = name, Hexadecimal = hex, `Frequency of colour` = freq,
-    `Percent of image` = percent
+    `Colour name` = name, Hexadecimal = hex,
+    `Frequency of colour` = freq, `Percent of image` = percent
   )
 
-image_animate(c(reef, reef_mapped), fps = 1)
+reef_animate <- image_animate(c(reef, reef_mapped), fps = 1)
+```
+</details>
 
-kable(reef_col_freq)
+```{r reef-print, echo=FALSE}
+reef_animate
+knitr::kable(reef_col_freq)
 ```
 
-## Neon lights in Hong Kong
+## Hong Kong lights
 
-[By Daniel Case from Wikimedia Commons, CC BY-SA 3.0](https://commons.wikimedia.org/wiki/File:Neon_lights,_Nathan_Road,_Hong_Kong.jpg)
+<details><summary>Click for details</summary>
 
-```{r neon-lights, echo=FALSE}
+Image by [Daniel Case from Wikimedia Commons, CC BY-SA 3.0](https://commons.wikimedia.org/wiki/File:Neon_lights,_Nathan_Road,_Hong_Kong.jpg){target='_blank'}
+
+```{r neon-lights}
 neon_path <- "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Neon_lights%2C_Nathan_Road%2C_Hong_Kong.jpg/900px-Neon_lights%2C_Nathan_Road%2C_Hong_Kong.jpg"
 
-neon <- 
-  image_read(neon_path) %>%
+neon <- image_read(neon_path) %>%
   image_scale(geometry = c("x600"))
 
 neon_mapped <- image_map(
@@ -237,66 +248,73 @@ neon_mapped <- image_map(
 neon_col_freq <- neon_mapped %>%
   count_colors() %>%
   left_join(
-    as_tibble(cols_vec) %>%
-      rownames_to_column() %>%
-      rename(hex = value, name = rowname),
+    enframe(cols_vec) %>% rename(hex = value),
     by = "hex"
   ) %>% 
   arrange(desc(freq)) %>% 
   mutate(percent = 100*round((freq/sum(freq)), 3)) %>% 
   select(
-    `Colour name` = name, Hexadecimal = hex, `Frequency of colour` = freq,
-    `Percent of image` = percent
+    `Colour name` = name, Hexadecimal = hex,
+    `Frequency of colour` = freq, `Percent of image` = percent
   )
 
-image_animate(c(neon, neon_mapped), fps = 1)
+neon_animate <- image_animate(c(neon, neon_mapped), fps = 1)
+```
+</details>
 
-kable(neon_col_freq)
+```{r neon-print, echo=FALSE}
+neon_animate
+knitr::kable(neon_col_freq)
 ```
 
 ## Ladybird
 
-[By Elena Andreeva from Wikimedia Commons, CC0 1.0.](https://commons.wikimedia.org/wiki/File:Erysimum_Cheiranthoides_(215134987).jpeg)
+<details><summary>Click for details</summary>
 
-```{r bfly, echo=FALSE}
-bfly_path <- "https://upload.wikimedia.org/wikipedia/commons/d/d5/Erysimum_Cheiranthoides_%28215134987%29.jpeg"
+Image by [Elena Andreeva from Wikimedia Commons, CC0 1.0.](https://commons.wikimedia.org/wiki/File:Erysimum_Cheiranthoides_(215134987){target='_blank'}.jpeg)
 
-bfly <- 
-  image_read(bfly_path) %>%
+```{r lbird}
+lbird_path <- "https://upload.wikimedia.org/wikipedia/commons/d/d5/Erysimum_Cheiranthoides_%28215134987%29.jpeg"
+
+lbird <- image_read(lbird_path) %>%
   image_scale(geometry = c("x600"))
 
-bfly_mapped <- image_map(
-  image = bfly,  # original image
+lbird_mapped <- image_map(
+  image = lbird,  # original image
   map = simple_cols  # colours to map on
 )
 
-bfly_col_freq <- bfly_mapped %>%
+lbird_col_freq <- lbird_mapped %>%
   count_colors() %>%
   left_join(
-    as_tibble(cols_vec) %>%
-      rownames_to_column() %>%
-      rename(hex = value, name = rowname),
+    enframe(cols_vec) %>% rename(hex = value),
     by = "hex"
   ) %>% 
   arrange(desc(freq)) %>% 
   mutate(percent = 100*round((freq/sum(freq)), 3)) %>% 
   select(
-    `Colour name` = name, Hexadecimal = hex, `Frequency of colour` = freq,
-    `Percent of image` = percent
+    `Colour name` = name, Hexadecimal = hex,
+    `Frequency of colour` = freq, `Percent of image` = percent
   )
 
-image_animate(c(bfly, bfly_mapped), fps = 1)
+lbird_animate <- image_animate(c(lbird, lbird_mapped), fps = 1)
+```
+</details>
 
-kable(bfly_col_freq)
+```{r lbird-print, echo=FALSE}
+lbird_animate
+knitr::kable(lbird_col_freq)
 ```
 
-# Session info
-
-```{r session-info}
-devtools::session_info()
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+paste("Last updated", Sys.Date())
+sessioninfo::session_info()
 ```
+</details>
 
-[^1]: Just as well, because I'm colourblind.
-[^2]: There are [five named versions of olive drab](http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf) in R.
-[^3]: [Photo by Arto Alanenpää](https://commons.wikimedia.org/wiki/Lego#/media/File:Lego_dublo_arto_alanenpaa_2.JPG), CC0-BY-4.0 from Wikimedia Creative Commons.
-[^4]: Artefacts introduced during compression of PNGs and JPGs might mean that your set of six colours ends up being _more_ than six. It's preferable to generate our colour set within R, inside `image_graph()`, so that we have only our six defined colours.
+[^theory]: Just as well, because I'm colourblind.
+[^drab]: There are [five named versions of olive drab](http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf){target='_blank'} in R.
+[^duplo]: [Photo by Arto Alanenpää](https://commons.wikimedia.org/wiki/Lego#/media/File:Lego_dublo_arto_alanenpaa_2.JPG){target='_blank'}, CC0-BY-4.0 from Wikimedia Creative Commons.
+[^magickclass]: Artefacts introduced during compression of PNGs and JPGs might mean that your set of six colours ends up being _more_ than six. It's preferable to generate our colour set within R, inside `image_graph()`, so that we have only our six defined colours.
