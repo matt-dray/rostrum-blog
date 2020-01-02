@@ -9,6 +9,7 @@ tags:
   - blogdown
   - html
   - hugo
+  - r
   - yihui
   - yaml
 slug: lithium-metadata
@@ -56,14 +57,14 @@ slug: lithium-metadata
 <h2>What’s missing where?</h2>
 <p>The basics of what you need to do is all laid out in the excellent <a href="https://bookdown.org/yihui/blogdown/">blogdown: Creating Websites with R Markdown</a> book by <a href="https://yihui.name/">Yihui</a>, <a href="https://amber.rbind.io/">Amber Thomas</a>, <a href="https://alison.rbind.io/">Alison Hill</a>.</p>
 <p>The file describing the layout of your posts—the one you need to edit—is on this path: <code>layouts/_default/single.html</code> (<a href="https://github.com/yihui/hugo-lithium/blob/master/layouts/_default/single.html">see the default template</a>).</p>
-<p>It’s an HTML file, so has lots of things like <code>&lt;h1 class="article-title"&gt;</code>. This is pretty classic HTML that declares a top-level header and a class that can be styled with CSS.</p>
+<p>It’s an HTML file, so has lots of things like <code>&lt;h1 class=&quot;article-title&quot;&gt;</code>. This is pretty classic HTML that declares a top-level header and a class that can be styled with CSS.</p>
 <p>But what we really care about are the things that look like <code>{{ .Title }}</code>. The parameter names <a href="https://twitter.com/JennyBryan/status/1144817727665631232?s=20">embraced</a> in double-curly brackets refer to our YAML elements, but they don’t necessarily have the same name (<code>title</code> in YAML and <code>.Title</code> here, for example).</p>
-<p>So <code>&lt;h1 class="article-title"&gt;{{ .Title }}&lt;/h1&gt;</code> will return the title of the post as an HTML header that will be styled as the <code>article-title</code> class.</p>
+<p>So <code>&lt;h1 class=&quot;article-title&quot;&gt;{{ .Title }}&lt;/h1&gt;</code> will return the title of the post as an HTML header that will be styled as the <code>article-title</code> class.</p>
 </div>
 <div id="modifications" class="section level2">
 <h2>Modifications</h2>
 <p>I hadn’t added the author name in the past because I wasn’t sure what the right parameter was. I found it in <a href="https://bookdown.org/yihui/blogdown/templates.html#a-minimal-example">section 2.5.1 of the blogdown book</a>: <code>.Params.author</code>.</p>
-<p>This meant I could arrange some metadata at the top of my posts in the form <code>Firstname Lastname / DD Mon YYY / X min read</code> with the line <code>{{ .Params.author }} / {{ .Date.Format "02 Jan 2006" }} / {{ .ReadingTime }} min read</code> to get what I wanted.</p>
+<p>This meant I could arrange some metadata at the top of my posts in the form <code>Firstname Lastname / DD Mon YYY / X min read</code> with the line <code>{{ .Params.author }} / {{ .Date.Format &quot;02 Jan 2006&quot; }} / {{ .ReadingTime }} min read</code> to get what I wanted.</p>
 <p>Displaying categories and tags is trickier. It’s not just about finding the right parameters, but also involves looping through the categories and tags specified in each post’s YAML. Fortunately, the code is provided in <a href="https://bookdown.org/yihui/blogdown/">section 2.5.2 of the blogdown book</a>, under the bullet ‘Display categories and tags in a post if provided in its YAML’. It looks like this:</p>
 <pre><code>&lt;p class=&quot;terms&quot;&gt;
   {{ range $i := (slice &quot;categories&quot; &quot;tags&quot;) }}
