@@ -1,5 +1,5 @@
 ---
-title: "Change font in {blogdown} Lithium theme"
+title: "Change your {blogdown} fonts"
 author: Matt Dray
 date: '2018-11-29'
 categories:
@@ -23,24 +23,79 @@ draft: no
 <p class="caption">Lithium by Nirvana ([via Giphy](https://giphy.com/gifs/nirvana-lithium-3Qf8fuRU2JJ1m?utm_source=media-link&utm_medium=landing&utm_campaign=Media%20Links&utm_term=){target='_blank'})</p>
 </div>
 
-# {blogdown} and Hugo themes
 
-You can change the default font face for your [Blogdown blog](https://bookdown.org/yihui/blogdown/){target='_blank'} by downloading new ones from [Google Fonts](https://fonts.google.com/){target='_blank'} (or [Google Web Fonts Helper](https://google-webfonts-helper.herokuapp.com/fonts){target='_blank'}) and adjusting some CSS.
+# tl;dr
 
-The advice in this blog is intended for users of the the [Lithium theme for Hugo](https://themes.gohugo.io/hugo-lithium-theme/){target='_blank'}, built originally by [Jonathan Rutheiser](https://github.com/jrutheiser){target='_blank'} and edited for use with [{blogdown}](https://bookdown.org/yihui/blogdown/){target='_blank'} by [Yihui Xie](https://github.com/yihui/hugo-lithium){target='_blank'} . The advice below may still be relevant for other themes.
+Want to change the font for your [{blogdown}](https://bookdown.org/yihui/blogdown/){target="_blank"} site? I've been using this workflow:
 
-See Sections [2.5.1](https://bookdown.org/yihui/blogdown/templates.html#how-to){target='_blank'} and [2.7](https://bookdown.org/yihui/blogdown/static-files.html){target='_blank'} of [the Blogdown book](https://bookdown.org/yihui/blogdown/){target='_blank'} for more information.
+1. Find a font on [the Google Fonts site](https://fonts.google.com/){target="_blank"}
+1. Search for the font name on the independent [Google Web Fonts Helper](https://google-webfonts-helper.herokuapp.com/fonts/roboto?subsets=latin){target="_blank"} 
+1. Download the zip file from the Helper, then copy all the files to `static/fonts/` folder
+1. Copy the CSS from the Helper into your `static/css/fonts.css` file
 
-# The default CSS
 
-Below is the default `fonts.css` file for the Hugo Lithium theme, which sits at the file path `themes/hugo-lithium-theme/static/css/fonts.css`. CSS files are basically style instructions that inform how HTML files (like our blog posts) should be rendered.
+# Not my type
 
-You can [see a demo of what the output from these defaults looks like ](https://themes.gohugo.io/theme/hugo-lithium-theme/){target='_blank'}.
+You can change the default font face for your [{blogdown} blog](https://bookdown.org/yihui/blogdown/){target='_blank'} with freely-available files from [Google Fonts](https://fonts.google.com/){target='_blank'}.[^rmd-book]
 
-The `@font-face {}` sections describe the details of the font you're using: the name of the font face, its style and weight, and where the path to the files. The CSS file also specifies the fonts that certain HTML elements that should be styled with (e.g. `body` for body text). The sections between slashes and stars -- `/* example */` --  are just comments I've added and aren't integral to the code.
+In this post I'll show how you can do this with a bit of help from the [Google Web Fonts Helper](https://google-webfonts-helper.herokuapp.com/fonts){target='_blank'}) by [Mario Ranftl](https://mranftl.com/){target="_blank"} and by copy-pasting a small amount of CSS.
 
-```{}
-/* Default font 1 */
+I know this approach works for this blog's base theme: [Lithium for Hugo](https://themes.gohugo.io/hugo-lithium-theme/){target='_blank'} by [Jonathan Rutheiser](https://github.com/jrutheiser){target='_blank'} and edited for use with [{blogdown}](https://bookdown.org/yihui/blogdown/){target='_blank'} by [Yihui Xie](https://github.com/yihui/hugo-lithium){target='_blank'}. Your mileage may vary.
+
+Important note: do not adjust your site's `themes/` folder. We'll be changing things in the `static/` folder only.[^alison]
+
+# Storefont window
+
+The [Google Fonts catalog](https://fonts.google.com/){target="_blank"} has nearly a thousand open-source fonts that you can use for your site. You can filter by categories (serif, sans-serif, monspace, etc), language and font properties (thickness, slant, etc) to find what you're looking for. You can type a sentence and see how it looks in each font.
+
+![](/post/2018-11-29-typeface-change-for-hugo-lithium_files/gf-home.png)
+
+Click a font name to go to a specimen page (example: [Open Sans](https://fonts.google.com/specimen/Open+Sans){target="_blank"}). Here you can see who designed it and a bit of information about the font itself. Of course, you also get a preview of the characters and styles. There's even some suggestions for popular pairings.
+
+![](/post/2018-11-29-typeface-change-for-hugo-lithium_files/gf-specimen.png)
+
+Clicking the 'select this font' button `r icon::ii("android-add-circle")` will add a font to a 'tray' in the bottom right of the page, which is a bit like a shopping basket on a retail site. You can compare your selected fonts by clicking the 'preview and share' button `r icon::fa("share")` in the upper right of the tray.
+
+# Fontastic helper
+
+You will hopefully have selected a font after countless hours perusing Google Fonts.
+
+Rather than use Google Fonts to get the files, I recommend you use [Google Web Fonts Helper](https://google-webfonts-helper.herokuapp.com/fonts){target='_blank'}). Why? It has a simple interface and gives you what you need in one screen ([example: Open Sans](https://google-webfonts-helper.herokuapp.com/fonts/open-sans?subsets=latin){target="_blank"}).
+
+Use the search in the upper right and select your font. Sections 1 and 2 let you select character sets (cyrillic, latin, etc) and styles (regular, italic, etc). The default for many fonts is latin and regular, which is often what you want.
+
+![](/post/2018-11-29-typeface-change-for-hugo-lithium_files/gh-opensans.png)
+
+Now we're going to (1) get the font files and (2) make your site recognise them.
+
+## 1. Get fonts
+
+![](/post/2018-11-29-typeface-change-for-hugo-lithium_files/gh-download.png)
+
+To make the font files available to your site:
+
+1. Go to '4. Download files' on the Helper font page
+1. Click the big blue button `r icon::fa("download")` that says `<font-name>.zip` to download a zipped folder of the font files
+1. Unzip the file and copy all the files to the `static/fonts/` folder of your site 
+
+By default, you'll be copying across multiple file types (eot, svg, ttf, woff, woff2), which will give the best possible coverage for users of your site visitng from different browsers. You can, in theory, get away with using just the woff and woff2 files for modern browsers. Except there's always an IE6 user somewhere.
+
+## 2. Recognise fonts
+
+![](/post/2018-11-29-typeface-change-for-hugo-lithium_files/gh-copycss.png)
+
+It's not enough to just host the font files; we need to adjust some CSS. CSS files are basically style instructions that inform how HTML files (like our blog posts) should be rendered. You don't need to be a CSS expert for this part.
+
+Here's the steps in short:
+
+1. Go to '3. Copy CSS' on the Helper font page
+1. Copy the CSS code
+1. Paste it into `static/css/fonts/` (you can overwrite the CSS for any other fonts that you aren't using)
+1. Adjust the font specifications for the body and title text, overwriting the font you're replacing
+
+It's worth explaining those last couple of steps a bit more. The default `static/css/fonts.css` file for the Lithium theme looks like this:
+
+```
 @font-face {
   font-family: 'Merriweather';
   font-style: normal;
@@ -49,8 +104,6 @@ The `@font-face {}` sections describe the details of the font you're using: the 
        url('../fonts/merriweather-v13-latin-regular.woff2') format('woff2'),
        url('../fonts/merriweather-v13-latin-regular.woff') format('woff');
 }
-
-/* Default font 2 */
 @font-face {
   font-family: 'Lato';
   font-style: normal;
@@ -59,89 +112,70 @@ The `@font-face {}` sections describe the details of the font you're using: the 
        url('../fonts/lato-v11-latin-regular.woff2') format('woff2'),
        url('../fonts/lato-v11-latin-regular.woff') format('woff');
 }
-
-/* Font to use for the body text */
 body {
   font-family: 'Merriweather', serif;
 }
-
-/* Font to use for headings and other things */
 h1, h2, h3, h4, h5, h6, .nav, .article-duration, .archive-item-link, .footer {
   font-family: 'Lato', sans-serif;
 }
 ```
 
-So the two default font faces for the Lithium theme are [Merriweather](https://fonts.google.com/specimen/Merriweather){target='_blank'} (sans-serif) and [Lato](https://fonts.google.com/specimen/Lato){target='_blank'} (serif). Merriweather is being used for the body text and Lato for basically everything else (e.g. `h1` first level headers).
+The `@font-face` sections declare the fonts and where the files are stored. There are two: Merriweather and Lato. 
 
-You can specify several font families for each HTML element. There are two in the example above: `font-family: 'Merriweather', serif;`. This instructs the system to display first your font of choice -- `Merriweather` in this case -- and to fall back to the system's default `serif` font if that fails to be displayed. There's nothing stopping you from adding several named fonts in preference order, separated by commas.
+The last two sections (that don't start with `@`) point out which fonts should be used in the main `body` text and for a number of other elements of the site, like headers (`h1`, etc) and the `.footer`. Other elements can be added.
 
-But who wants defaults? Let's get something different.
+You can also name more than one font for each site element. For example, the `font-family: 'Merriweather', serif;` of the the `body {}` section says that body text should be 'Merriweather' but should default to the host computer's generic serif file if there's a problem displaying Merriweather.
 
-# Get font faces
+So, you can copy-paste over the `@font-face` sections with the CSS you copied from the Helper and then adjust the `font-family` names with your selections.
 
-For this demo, I'm using [Google Fonts](https://fonts.google.com/){target='_blank'} exclusively, but you can also use the excellent [Google Web Fonts Helper](https://google-webfonts-helper.herokuapp.com/fonts){target='_blank'} app by [Mario Ranftl](https://mranftl.com/){target='_blank'}.
+# Just my type
 
-Once you're on a Google Fonts specimen page -- [like this one for Fira Sans](https://fonts.google.com/specimen/Fira+Sans){target='_blank'} -- you can click 'SELECT THIS FONT' to add it to a list for later viewing. You can access this list at the bottom right of the page in a drawer that says 'X Families Selected', where 'X' is the number that you've selected.
+As examples, you can see rostrum.blog's [`static/fonts/`](https://github.com/matt-dray/rostrum-blog/tree/master/static/fonts){target="_blank"} folder and [`static/css/fonts.css`](https://github.com/matt-dray/rostrum-blog/blob/master/static/css/fonts.css){target="_blank"}.
 
-<div class="figure">
-<img src="/post/2018-11-29-typeface-change-for-hugo-lithium_files/font-family-select-tray.png" alt="Screenshot of the fonts tray on Google Fonts, showing Fira Sans."/>
-<p class="caption">The font-family selection tray on Google Fonts with Fira Sans selected.</p>
-</div>
-
-There's some useful information in this drawer. For example, there are two chunks of CSS under 'EMBED': one to help embed the font and one to specify in CSS. You'll need this information later.
-
-To download the font face, you can click 'CUSTOMIZE' in the tray to select which elements of the font family you want (light, medium, semi-bold, etc) and then click the download button (downward pointing arrow) in the upper right of the tray. This will download a .zip file containing your font faces in many file formats.
-
-The .zip file contained lots of file types but we can get away with [copying the WOFF and WOFF2 files](https://css-tricks.com/snippets/css/using-font-face/){target='_blank'} only. 'WOFF' stands for [Web Open Font Format](https://developer.mozilla.org/en-US/docs/Web/Guide/WOFF){target='_blank'}, which is interpreted easily by modern web browsers.
-
-Remember: we don't touch the `themes/` folder. Instead, make your updates in the `static/` folder instead. So put your WOFF and WOFF2 files in `static/fonts/`.
-
-# Activate fonts
-
-We have the files prepared and now we need to amend our `fonts.css` file to point to them. Again, amend the `static/` folder, not the `themes/` folder; that's where the defaults live. Instead, add your WOFF and WOFF2 files to `static/fonts/fonts.css`.
-
-There should be an `@font-face` element for each font we want (you may want more than two). I've also added an instruction to display code blocks using the monospace font.
+Compare the CSS file for this site to the Lithium default above:
 
 ```
-/* Updated font face 1 */
+/* roboto-regular - latin */
 @font-face {
   font-family: 'Roboto';
   font-style: normal;
   font-weight: 400;
+  src: url('../fonts/roboto-v20-latin-regular.eot'); /* IE9 Compat Modes */
   src: local('Roboto'), local('Roboto-Regular'),
-       url('../fonts/roboto-v20-latin-regular.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
-       url('../fonts/roboto-v20-latin-regular.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+       url('../fonts/roboto-v20-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+       url('../fonts/roboto-v20-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
+       url('../fonts/roboto-v20-latin-regular.woff') format('woff'), /* Modern Browsers */
+       url('../fonts/roboto-v20-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
+       url('../fonts/roboto-v20-latin-regular.svg#Roboto') format('svg'); /* Legacy iOS */
 }
-
-/* Updated font face 2 */
+/* lekton-regular - latin */
 @font-face {
   font-family: 'Lekton';
   font-style: normal;
   font-weight: 400;
+  src: url('../fonts/lekton-v10-latin-regular.eot'); /* IE9 Compat Modes */
   src: local('Lekton'), local('Lekton-Regular'),
-       url('../fonts/lekton-v10-latin-regular.woff2') format('woff2'),
-       url('../fonts/lekton-v10-latin-regular.woff') format('woff');
+       url('../fonts/lekton-v10-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+       url('../fonts/lekton-v10-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
+       url('../fonts/lekton-v10-latin-regular.woff') format('woff'), /* Modern Browsers */
+       url('../fonts/lekton-v10-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
+       url('../fonts/lekton-v10-latin-regular.svg#Lekton') format('svg'); /* Legacy iOS */
 }
-
-
-/* Set all body text to font face 1 */
 body {
   font-family: 'Roboto', serif;
 }
-
-/* Set other text formats to font face 2 */
 h1, h2, h3, h4, h5, h6, .nav, .article-duration, .archive-item-link, .article-meta, .footer {
   font-family: 'Lekton', monospace;
 }
-
-/* Set font face for code */
 code {
   font-family: 'Lekton', monospace;
   font-size: 100%;
 }
-
 ```
 
-So I've chosen the monospace [Lekton](https://fonts.google.com/specimen/Lekton){target='_blank'} for code and headers and the serif [Roboto](https://fonts.google.com/specimen/Roboto){target='_blank'} for the body. I like Lekton's relative narrowness especially, along with its almost-square `{braces}`. Roboto is clean and clear, if ubiquitous.
+I chose the monospace [Lekton](https://fonts.google.com/specimen/Lekton){target='_blank'} for code and headers and the serif [Roboto](https://fonts.google.com/specimen/Roboto){target='_blank'} for the body. I like Lekton's relative narrowness especially, along with its almost-square `{braces}`. Roboto is clean and clear, if ubiquitous.
 
-I may change my mind at some point!
+As ever with these decisions, I may well change my mind again at some point.
+
+[^alison]: [Just ask Alison](https://twitter.com/apreshill/status/1078494406301212672){target="_blank"}.
+[^rmd-book]: See also sections [2.5.1](https://bookdown.org/yihui/blogdown/templates.html#how-to){target='_blank'} and [2.7](https://bookdown.org/yihui/blogdown/static-files.html){target='_blank'} of [the Blogdown book](https://bookdown.org/yihui/blogdown/){target='_blank'}.
