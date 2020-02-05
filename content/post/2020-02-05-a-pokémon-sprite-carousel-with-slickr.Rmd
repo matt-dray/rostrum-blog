@@ -22,29 +22,29 @@ draft: no
 
 I was browsing GitHub and the [{slickR}](https://metrumresearchgroup.github.io/slickR/){target='_blank'} package by [Jonathan Sidi](https://yonicd.netlify.com/){target='_blank'} was suggested as a repo to explore.
 
-{slickR} is an [htmlwidget](https://www.htmlwidgets.org/){target='_blank'} that generates carousels using the Slick JavaScript library by [Ken Wheeler](http://kenwheeler.github.io/){target='_blank'}.
+{slickR} is an [htmlwidget](https://www.htmlwidgets.org/){target='_blank'} that generates carousels using the [Slick JavaScript library](https://kenwheeler.github.io/slick/) by [Ken Wheeler](http://kenwheeler.github.io/){target='_blank'}.
 
-You've seen carousels before. They're pretty ubiquitous for scrolling horizontally through images on websites. {slickR} provides a neat way of embedding these in R Markdown documents and Shiny apps. Plus, the elements in the carousel can be basically anything, not just images.
+You've seen carousels before. They're pretty ubiquitous for scrolling horizontally through images on websites. {slickR} provides a neat way of embedding these in R Markdown documents and Shiny apps. Plus, the elements in the carousel can be basically anything (iframes, plots, etc), not just images.
 
 # PokéDemo
 
 I followed the excellent [guidance on the {slickR} site](https://metrumresearchgroup.github.io/slickR/articles/basics.html){target='_blank'} to set up a basic carousel featuring Pokémon sprites[^tm] from the [Pokémon Black and White games](https://bulbapedia.bulbagarden.net/wiki/Pok%C3%A9mon_Black_and_White_Versions), which I collected via [veekun.com](https://veekun.com/dex/downloads){target='_blank'}.
 
-I've embedded the demo at the top of this page, but you can visit it on [a dedicated page](https://matt-dray.github.io/pkmn_slickr/){target='_blank'} or see its [source](https://www.github.com/matt-dray/pkmn_slickr){target='_blank'}.
+I've embedded the demo at the top of this page, but you can visit it on [a dedicated page](https://matt-dray.github.io/pkmn_slickr/){target='_blank'} or see its [source](https://www.github.com/matt-dray/pkmn_slickr){target='_blank'}. These are probably best viewed on a desktop machine.
 
 In fact, it's three carousels that are stacked and synchronised: one with the front sprite, one with the back sprite and one that shows the number and name of the Pokémon. Click a sprite to go to the relevant page on [Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/Main_Page), the Pokémon wiki.
 
-I've also set each page to display three 'mon at a time and so that clicking to the next page will advance by three. This is so that I can display one Pokémon evolutionary chain per page, since the max chain length is three (e.g. Bulbasaur > Ivysaur > Venusaur). I added a blank spacer pad where a chain was shorter than three (e.g. Rattata > Raticate > BLANK, or Farfetch'd > BLANK > BLANK).
+I've also set each page to display three 'mon at a time and that each page will advance by three. This is so that I can display one Pokémon evolutionary chain per page, since the max chain length is three (e.g. Bulbasaur > Ivysaur > Venusaur). I added a blank spacer pad where a chain was shorter than three (e.g. Rattata > Raticate > BLANK, or Farfetch'd > BLANK > BLANK).
 
-The pages auto-advance, but can be advanced manually by clicking the directional arrows, or by using your arrow keys if the widget has been selected.
+The pages auto-advance in the demo above, but can be advanced manually in the [standalone version](https://matt-dray.github.io/pkmn_slickr/) by clicking the directional arrows, or by using your arrow keys if the widget has been selected.
 
 It's also possible to jump to a specific evolutionary chain by using the page 'dots' underneath the carousel. Here, you can click one of the tiny sprites to jump to the page that contains the evolutionary chain that starts with that Pokémon.
 
 # Carousel mechanics
 
-The [code for the full carousel](https://github.com/matt-dray/pkmn_slickr/blob/master/carousel_only.Rmd){target='_blank'} is available from the [matt-dray/pkmn_slickr](https://github.com/matt-dray/pkmn_slickr){target='_blank'} repo.
+Below is some illustrative code for the demo. The [code for the full carousel demo](https://github.com/matt-dray/pkmn_slickr/blob/master/carousel_only.Rmd){target='_blank'} is available from the [matt-dray/pkmn_slickr](https://github.com/matt-dray/pkmn_slickr){target='_blank'} repo.
 
-Again, do check out [the really helpful NBA example on the {slickR} website](https://metrumresearchgroup.github.io/slickR/articles/basics.html).
+Again, do check out [the really helpful NBA example on the {slickR} website](https://metrumresearchgroup.github.io/slickR/articles/basics.html) for more examples.
 
 ## One carousel
 
@@ -55,10 +55,10 @@ front_carousel <- slickR(
   obj = pkmn2$sprite_front_src,
   objLinks = pkmn2$url,
   height = 200, width = "100%"
-) + settings(
+) +
+  settings(
     autoplay = TRUE, arrows = FALSE,
-    slidesToShow = 3, 
-    slidesToScroll = 3
+    slidesToShow = 3, slidesToScroll = 3
   )
 ```
 
@@ -85,15 +85,15 @@ The `%synch%` operator makes sure that advancing any of the carousels advances t
 
 The third of the three carousels, the `names_carousel` has the argument `dots = TRUE` in its settings. This makes dots appear under the carousel to show which 'page' the carousel is currently displaying. You can also click these dots to jump to a given page.
 
-You can change these dots to other things, like values. I was able to use the [guidance](https://metrumresearchgroup.github.io/slickR/articles/basics.html){target='_blank'} to replace the dots with sprites. This means you can click a mini sprite under the carousel to jump to the page where that Pokémon starts an evolutionary chain.
+You can change these dots to other things, like numeric values. I was able to use the [guidance](https://metrumresearchgroup.github.io/slickR/articles/basics.html){target='_blank'} to replace the dots with sprites. This means you can click a mini sprite under the carousel to jump to the page where that Pokémon starts an evolutionary chain.
 
 # Stop, let me off
 
-For more on {slickR}, check out:
+I have a lot of ideas for how to use this package, but for more on {slickR} in the meantime, check out:
 
 * the [{slickR} site](https://metrumresearchgroup.github.io/slickR/)
 * the [basic walkthrough](https://metrumresearchgroup.github.io/slickR/articles/basics.html)
-* how to [use {slickR} in Shiny](https://metrumresearchgroup.github.io/slickR/articles/shiny.html)
-* the [source](https://github.com/metrumresearchgroup/slickR)
+* how to [use {slickR} in Shiny](https://metrumresearchgroup.github.io/slickR/articles/shiny.html) and [other advanced things](https://metrumresearchgroup.github.io/slickR/articles/index.html)
+* the [package source](https://github.com/metrumresearchgroup/slickR)
 
 [^tm]: Pokémon and Pokémon character names are trademarks of [Nintendo](https://www.nintendo.com/). Copyright is 1995–2020 [Nintendo](https://www.nintendo.com/){target='_blank'}/[Creatures Inc](https://www.creatures.co.jp/){target='_blank'}/[GAME FREAK inc](https://www.gamefreak.co.jp/){target='_blank'}

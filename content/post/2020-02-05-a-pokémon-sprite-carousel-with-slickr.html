@@ -23,22 +23,22 @@ draft: no
 <div id="ride-the-carousel" class="section level1">
 <h1>Ride the carousel</h1>
 <p>I was browsing GitHub and the <a href="https://metrumresearchgroup.github.io/slickR/" target="_blank">{slickR}</a> package by <a href="https://yonicd.netlify.com/" target="_blank">Jonathan Sidi</a> was suggested as a repo to explore.</p>
-<p>{slickR} is an <a href="https://www.htmlwidgets.org/" target="_blank">htmlwidget</a> that generates carousels using the Slick JavaScript library by <a href="http://kenwheeler.github.io/" target="_blank">Ken Wheeler</a>.</p>
-<p>You’ve seen carousels before. They’re pretty ubiquitous for scrolling horizontally through images on websites. {slickR} provides a neat way of embedding these in R Markdown documents and Shiny apps. Plus, the elements in the carousel can be basically anything, not just images.</p>
+<p>{slickR} is an <a href="https://www.htmlwidgets.org/" target="_blank">htmlwidget</a> that generates carousels using the <a href="https://kenwheeler.github.io/slick/">Slick JavaScript library</a> by <a href="http://kenwheeler.github.io/" target="_blank">Ken Wheeler</a>.</p>
+<p>You’ve seen carousels before. They’re pretty ubiquitous for scrolling horizontally through images on websites. {slickR} provides a neat way of embedding these in R Markdown documents and Shiny apps. Plus, the elements in the carousel can be basically anything (iframes, plots, etc), not just images.</p>
 </div>
 <div id="pokédemo" class="section level1">
 <h1>PokéDemo</h1>
 <p>I followed the excellent <a href="https://metrumresearchgroup.github.io/slickR/articles/basics.html" target="_blank">guidance on the {slickR} site</a> to set up a basic carousel featuring Pokémon sprites<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> from the <a href="https://bulbapedia.bulbagarden.net/wiki/Pok%C3%A9mon_Black_and_White_Versions">Pokémon Black and White games</a>, which I collected via <a href="https://veekun.com/dex/downloads" target="_blank">veekun.com</a>.</p>
-<p>I’ve embedded the demo at the top of this page, but you can visit it on <a href="https://matt-dray.github.io/pkmn_slickr/" target="_blank">a dedicated page</a> or see its <a href="https://www.github.com/matt-dray/pkmn_slickr" target="_blank">source</a>.</p>
+<p>I’ve embedded the demo at the top of this page, but you can visit it on <a href="https://matt-dray.github.io/pkmn_slickr/" target="_blank">a dedicated page</a> or see its <a href="https://www.github.com/matt-dray/pkmn_slickr" target="_blank">source</a>. These are probably best viewed on a desktop machine.</p>
 <p>In fact, it’s three carousels that are stacked and synchronised: one with the front sprite, one with the back sprite and one that shows the number and name of the Pokémon. Click a sprite to go to the relevant page on <a href="https://bulbapedia.bulbagarden.net/wiki/Main_Page">Bulbapedia</a>, the Pokémon wiki.</p>
-<p>I’ve also set each page to display three ’mon at a time and so that clicking to the next page will advance by three. This is so that I can display one Pokémon evolutionary chain per page, since the max chain length is three (e.g. Bulbasaur &gt; Ivysaur &gt; Venusaur). I added a blank spacer pad where a chain was shorter than three (e.g. Rattata &gt; Raticate &gt; BLANK, or Farfetch’d &gt; BLANK &gt; BLANK).</p>
-<p>The pages auto-advance, but can be advanced manually by clicking the directional arrows, or by using your arrow keys if the widget has been selected.</p>
+<p>I’ve also set each page to display three ’mon at a time and that each page will advance by three. This is so that I can display one Pokémon evolutionary chain per page, since the max chain length is three (e.g. Bulbasaur &gt; Ivysaur &gt; Venusaur). I added a blank spacer pad where a chain was shorter than three (e.g. Rattata &gt; Raticate &gt; BLANK, or Farfetch’d &gt; BLANK &gt; BLANK).</p>
+<p>The pages auto-advance in the demo above, but can be advanced manually in the <a href="https://matt-dray.github.io/pkmn_slickr/">standalone version</a> by clicking the directional arrows, or by using your arrow keys if the widget has been selected.</p>
 <p>It’s also possible to jump to a specific evolutionary chain by using the page ‘dots’ underneath the carousel. Here, you can click one of the tiny sprites to jump to the page that contains the evolutionary chain that starts with that Pokémon.</p>
 </div>
 <div id="carousel-mechanics" class="section level1">
 <h1>Carousel mechanics</h1>
-<p>The <a href="https://github.com/matt-dray/pkmn_slickr/blob/master/carousel_only.Rmd" target="_blank">code for the full carousel</a> is available from the <a href="https://github.com/matt-dray/pkmn_slickr" target="_blank">matt-dray/pkmn_slickr</a> repo.</p>
-<p>Again, do check out <a href="https://metrumresearchgroup.github.io/slickR/articles/basics.html">the really helpful NBA example on the {slickR} website</a>.</p>
+<p>Below is some illustrative code for the demo. The <a href="https://github.com/matt-dray/pkmn_slickr/blob/master/carousel_only.Rmd" target="_blank">code for the full carousel demo</a> is available from the <a href="https://github.com/matt-dray/pkmn_slickr" target="_blank">matt-dray/pkmn_slickr</a> repo.</p>
+<p>Again, do check out <a href="https://metrumresearchgroup.github.io/slickR/articles/basics.html">the really helpful NBA example on the {slickR} website</a> for more examples.</p>
 <div id="one-carousel" class="section level2">
 <h2>One carousel</h2>
 <p>Here’s an example of the code for an individual carousel that displays just the front-facing sprite:</p>
@@ -46,10 +46,10 @@ draft: no
   obj = pkmn2$sprite_front_src,
   objLinks = pkmn2$url,
   height = 200, width = &quot;100%&quot;
-) + settings(
+) +
+  settings(
     autoplay = TRUE, arrows = FALSE,
-    slidesToShow = 3, 
-    slidesToScroll = 3
+    slidesToShow = 3, slidesToScroll = 3
   )</code></pre>
 <p>Basically, You call the <code>slickR()</code> function with arguments that define the <code>obj</code>ect to display and also things like links (<code>objLinks</code>) and the size of the elements. Here, <code>pkmn2$sprite_front_src</code> is a vector of sprite image sources, for example.</p>
 <p>You can then tweak the look and behaviour by adding <code>settings()</code> with a <code>+</code> (like {ggplot2}). Here, <code>autoplay</code> advances the slides automatically; <code>arrows</code> dictates whether to show manually-clickable advancement buttons; and <code>slidesToShow</code> and <code>slidesToScroll</code> control the number of elements seen on one ‘page’ of elements and how many elements to advance by.</p>
@@ -67,17 +67,17 @@ draft: no
 <div id="sprite-dots" class="section level2">
 <h2>Sprite dots</h2>
 <p>The third of the three carousels, the <code>names_carousel</code> has the argument <code>dots = TRUE</code> in its settings. This makes dots appear under the carousel to show which ‘page’ the carousel is currently displaying. You can also click these dots to jump to a given page.</p>
-<p>You can change these dots to other things, like values. I was able to use the <a href="https://metrumresearchgroup.github.io/slickR/articles/basics.html" target="_blank">guidance</a> to replace the dots with sprites. This means you can click a mini sprite under the carousel to jump to the page where that Pokémon starts an evolutionary chain.</p>
+<p>You can change these dots to other things, like numeric values. I was able to use the <a href="https://metrumresearchgroup.github.io/slickR/articles/basics.html" target="_blank">guidance</a> to replace the dots with sprites. This means you can click a mini sprite under the carousel to jump to the page where that Pokémon starts an evolutionary chain.</p>
 </div>
 </div>
 <div id="stop-let-me-off" class="section level1">
 <h1>Stop, let me off</h1>
-<p>For more on {slickR}, check out:</p>
+<p>I have a lot of ideas for how to use this package, but for more on {slickR} in the meantime, check out:</p>
 <ul>
 <li>the <a href="https://metrumresearchgroup.github.io/slickR/">{slickR} site</a></li>
 <li>the <a href="https://metrumresearchgroup.github.io/slickR/articles/basics.html">basic walkthrough</a></li>
-<li>how to <a href="https://metrumresearchgroup.github.io/slickR/articles/shiny.html">use {slickR} in Shiny</a></li>
-<li>the <a href="https://github.com/metrumresearchgroup/slickR">source</a></li>
+<li>how to <a href="https://metrumresearchgroup.github.io/slickR/articles/shiny.html">use {slickR} in Shiny</a> and <a href="https://metrumresearchgroup.github.io/slickR/articles/index.html">other advanced things</a></li>
+<li>the <a href="https://github.com/metrumresearchgroup/slickR">package source</a></li>
 </ul>
 </div>
 <div class="footnotes">
