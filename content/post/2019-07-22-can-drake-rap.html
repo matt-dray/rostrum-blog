@@ -137,8 +137,8 @@ source(plan.R)       # load the plan</code></pre>
 <div id="make" class="section level2">
 <h2>4. Make the plan</h2>
 <p>Having satisfied yourself that the plan looks correct, running the plan is as simple as:</p>
-<pre class="r"><code>make(plan)</code></pre>
-<p>This executes all the instructions laid out in the <code>plan</code> object and our HTML report pops out at the end.</p>
+<pre class="r"><code>make(egg_plan)</code></pre>
+<p>This executes all the instructions laid out in the <code>egg_plan</code> object and our HTML report pops out at the end.</p>
 <p>Of course, re-running the plan straight away again does… nothing. No code needs to be re-executed if nothing’s changed!</p>
 <div id="side-note-the-cache" class="section level3">
 <h3>Side note: the cache</h3>
@@ -149,7 +149,7 @@ source(plan.R)       # load the plan</code></pre>
 <div id="change" class="section level2">
 <h2>5. Make a change</h2>
 <p>If anything changes in our data or code then the downstream targets will be out of sync. Let’s pretend we’ve changed a line of code in the <code>create_plot()</code> function, which could be something is superficial as altering its title. What do you think will happen?</p>
-<p>Well, {drake} knows there’s been a change. You can check this by running <code>source("R/functions.R")</code> in <code>make.R</code> again and then run <code>outdated(egg_config)</code>. This prints the name of the altered file plus the other files impacted by it.</p>
+<p>Well, {drake} knows there’s been a change. You can check this by running <code>source(&quot;R/functions.R&quot;)</code> in <code>make.R</code> again and then run <code>outdated(egg_config)</code>. This prints the name of the altered file plus the other files impacted by it.</p>
 <p>We can see this by recreating the dependency graph <a href="https://matt-dray.github.io/drake-egg-rap/dependency-graph-outdated.html">(see it here)</a>: the <code>plot</code> target is outdated, as are the targets downstream that depend on it (<code>report</code> and the <code>egg-report.html</code> file). This is indicated by them being coloured black. Here’s a static version:</p>
 <p><img src='/post/2019-07-22-can-drake-rap_files/dependency-outdated-static.png' alt="A screenshot of the interactive dependency graph showing that outdated items (the plot and report) are now coloured black. The other items aren't black because they're not impacted by the change to the plot function."></p>
 <p>So now we can see the real power of {drake}, as re-running the plan now will regenerate only the outdated files.</p>
