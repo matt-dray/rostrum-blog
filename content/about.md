@@ -6,7 +6,7 @@ title: "rostrum.blog"
 
 ## tl;dr
 
-A record of interesting or fun things we've learnt using [R](https://www.r-project.org/). It's a bonus if you find it useful and/or amusing.
+Mostly a record of interesting or fun things we've learnt using the [R language](https://www.r-project.org/) for programming and statistics. It's a bonus if you find any of it useful and/or amusing.
 
 ## Us
 
@@ -14,7 +14,7 @@ A record of interesting or fun things we've learnt using [R](https://www.r-proje
 
 <a href='https://twitter.com/mattdray' target="_blank">Twitter</a> | <a href='https://github.com/matt-dray' target="_blank">Github</a> | <a href='https://carpentries.org/instructors/#matt-dray' target="_blank">The Carpentries</a>
 
-I like using R to learn and teach, particularly if it involves important pop-culture references like Pokemon and Dawson's Creek. I'm a data scientist in the public sector (my views belong to me and no-one else). I have a PhD in the effects of environmental change on plant litter decay ('watching leaves rot') from Cardiff University and an Entomology MSc from Imperial College London. I'm not [the rapper](https://en.wikipedia.org/wiki/Dr._Dre).
+I like using R to learn and teach, particularly if it involves important pop-culture references like Pokémon and Dawson's Creek. I'm a data scientist in the public sector (my views belong to me and no-one else). I have a PhD in the effects of environmental change on plant litter decay ('watching leaves rot') from Cardiff University and an Entomology MSc from Imperial College London. I'm not [the rapper](https://en.wikipedia.org/wiki/Dr._Dre).
 
 ### Adriana De Palma
 
@@ -24,24 +24,17 @@ I’m a Postdoctoral Researcher at the [Natural History Museum](http://www.nhm.a
 
 In terms of my research, I am particularly interested in using large scale ecological datasets to answer policy relevant questions. I work on the [PREDICTS project](http://www.predicts.org.uk/) with [Andy Purvis](http://www.nhm.ac.uk/our-science/departments-and-staff/staff-directory/andy-purvis.html), looking at how biodiversity responds over time to land-use change and related pressures. My more general interests lie with science policy, statistics and weird and wonderful invertebrates (my favourite being [Collembola](https://en.wikipedia.org/wiki/Springtail) -- the beautiful springtails).
 
+## Design
+
+* The site is generated using by <a href='https://yihui.name/en/' target="_blank">Yihui Xie</a>'s <a href='https://bookdown.org/yihui/blogdown/' target="_blank">{blogdown}</a>, an implementation of the <a href='https://gohugo.io' target="_blank">Hugo</a> static-site generator
+* The base theme is Hugo Lithium by <a href='https://github.com/jrutheiser/hugo-lithium-theme' target="_blank">Jonathan Rutheiser</a> and modified for {blogdown} by <a href='https://github.com/yihui/hugo-lithium-theme' target="_blank">Yihui Xie</a>
+* Read about our modifications to the <a href='https://www.rostrum.blog/2019/09/06/lithium-metadata/' target="_blank">post header</a> and <a href='https://www.rostrum.blog/2018/11/29/fontface-lithium/' target="_blank">fonts</a> (<a href='https://fonts.google.com/specimen/Lekton' target="_blank">Lekton</a> for monospace and <a href='https://fonts.google.com/specimen/Barlow' target="_blank">Barlow</a> for the body)
+* The site is hosted for free with <a href='https://www.netlify.com/' target="_blank">Netlify</a> and makes use of <a href='https://docs.netlify.com/configure-builds/get-started/' target="_blank">continuous deployment</a>
+* The logo was designed with <a href='https://pixlr.com' target="_blank">pixlr</a> and favicon with <a href='https://www.favicon.cc/' target="_blank">favicon.cc</a>
+* The source code for the site is <a href='https://github.com/matt-dray/rostrum-blog' target="_blank">on GitHub</a> (please leave an <a href='https://github.com/matt-dray/rostrum-blog/issues' target="_blank">issue or question</a> if you have one)
+
 ## Miscellania
 
-### What's a *rostrum*?
-
-The mouthparts of insects in the order <a href='https://en.wikipedia.org/wiki/Hemiptera' target="_blank">Hemiptera</a> (true bugs). But also a <a href='https://en.wikipedia.org/wiki/Rostra' target="_blank">speaker's platform</a>. *Do you see what we did there?*
-
-### Doesn't this already exist?
-
-Sort-of. This was originally a <a href='https://therostrumblog.wordpress.com/' target="_blank">Wordpress blog</a>. We might migrate those posts at some point.
-
-### More R content
-
-Check out <a href='https://rweekly.org/' target="_blank">R Weekly</a>, where posts from this blog have been featured (<a href='https://rweekly.org/2018-28.html#get-rostrum' target="_blank">1</a>, <a href='https://rweekly.org/2019-22.html#get-rostrum' target="_blank">2</a>, <a href='https://rweekly.org/2019-30.html#get-rostrum' target="_blank">3</a>).
-
-### Design
-
-* The site is generated using <a href='https://bookdown.org/yihui/blogdown/' target="_blank">{blogdown}</a> by <a href='https://yihui.name/en/' target="_blank">Yihui Xie</a>
-* {blogdown} relies on the <a href='https://gohugo.io' target="_blank">Hugo</a> static-site generator
-* The theme is Hugo Lithium, forked from <a href='https://github.com/jrutheiser/hugo-lithium-theme' target="_blank">jrutheiser/hugo-lithium-theme</a> and modified by <a href='https://github.com/yihui/hugo-lithium-theme' target="_blank">Yihui Xie</a>
-* The site is hosted with <a href='https://www.netlify.com/' target="_blank">Netlify</a>
-* The logo was designed with <a href='https://pixlr.com' target="_blank">pixlr</a> and favicon with <a href='https://www.favicon.cc/' target="_blank">favicon.cc</a>
+* For more R content, check out <a href='https://rweekly.org/' target="_blank">R Weekly</a>, where posts from this blog have been featured.
+* A 'rostrum' is the mouthparts of insects in the order <a href='https://en.wikipedia.org/wiki/Hemiptera' target="_blank">Hemiptera</a> (true bugs) and also a <a href='https://en.wikipedia.org/wiki/Rostra' target="_blank">speaker's platform</a> (yes, it's an excellent pun)
+* This blog was originally <a href='https://therostrumblog.wordpress.com/' target="_blank">a Wordpress blog</a> that is now defunct
