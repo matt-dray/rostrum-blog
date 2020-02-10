@@ -5,28 +5,34 @@ author: Matt Dray
 date: '2018-06-30'
 slug: markov-chain-phd
 categories:
-  - R
-  - text analysis
+  - code
+  - tutorial
 tags:
-  - phd
+  - ecology
   - markov chain
+  - phd
+  - r
+  - text
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+<div class="figure">
+<img src="/post/2018-06-30-markov-chaining-my-phd-thesis_files/exp-design.png" alt="Design of an experiment showing trees growing under elevated CO2 and leaves being fed to invertebrates in choice tests." width="100%"/>
+<p class="caption">This. Is. Science.</p>
+</div>
 
-Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
+# tl;dr
 
-<img src='/post/2018-06-30-markov-chaining-my-phd-thesis_files/exp-design.png' alt='Design of an experiment showing trees growing under elevated CO2 and leaves being fed to invertebrates in choice tests.' width=500>
+I wrote a thesis, but a Markov chain can rewrite it and make about as much sense as the original.
+
+See also an [updated version of this blog](https://www.rostrum.blog/2019/04/30/markov-chain-phd-2/) for a better approach.
 
 # Doc rot
 
-I wrote a PhD thesis in 2014 called [*Effects of multiple environmental stressors on litter chemical composition and decomposition*](https://orca.cf.ac.uk/68365/). See my [viva presentation slides here](https://drive.google.com/file/d/0B50QikTiorWvUzBWSkVyTjJDYzA/view?usp=sharing) if you don't really like words.
+I wrote a PhD thesis in 2014 called '[Effects of multiple environmental stressors on litter chemical composition and decomposition](https://orca.cf.ac.uk/68365/){target='_blank'}'. See my [viva presentation slides here](https://drive.google.com/file/d/0B50QikTiorWvUzBWSkVyTjJDYzA/view?usp=sharing){target='_blank'} if you don't really like words.
 
-On graduation day, a stranger came up to me and, to paraphrase, said 'you doctors should be proud of what you've achieved, you're doing a great service'. I didn't have the heart to tell him that I wasn't a *medical* doctor. No, I was something nobler and altogether more unique: *a doctor of rotting leaves*.
+On graduation day, a stranger came up to me and, to paraphrase, said 'you doctors should be proud of what you've achieved, you're doing a great service'. I didn't have the heart to tell him that I wasn't a *medical* doctor. No, I was something nobler and altogether more unique: a doctor of rotting leaves.
 
-I know you're thinking 'gosh, what a complicated subject that must be; how could I ever hope to achieve such greatness?'. The answer is that you should simply take my thesis and use a Markov chain to generate new sentences until you have a fresh new thesis. The output will make probably as much sense as the original but won't be detected easily by plagiarism software.
+You're thinking: 'gosh, what a complicated subject that must be; how could I ever hope to achieve such greatness?' The answer is that you should simply take my thesis and use a Markov chain to generate new sentences until you have a fresh new thesis. The output will make probably as much sense as the original but won't be detected easily by plagiarism software.
 
 Heck, I'll even do it for you in this post.
 
@@ -36,32 +42,31 @@ You're welcome. Don't forget to cite me.
 
 I'll be using a very simple approach: Markov chains.
 
-Basically, after providing an input dataset, a Markov chain can generate the *next* word in a sentence given the *current* word. Selection of the new word is random but weighted by occurrences in your input file.
+Basically, after providing an input data set, a Markov chain can generate the next word in a sentence given the current word. Selection of the new word is random but weighted by occurrences in your input file.
 
-There's [a great post on Hackernoon that explains Markov chains for text generation](https://hackernoon.com/automated-text-generator-using-markov-chain-de999a41e047). For [interactive visuals of Markov chains, go to setosa.io](http://setosa.io/ev/markov-chains/).
+There's [a great post on Hackernoon that explains Markov chains for text generation](https://hackernoon.com/automated-text-generator-using-markov-chain-de999a41e047){target='_blank'}. For [interactive visuals of Markov chains, go to setosa.io](http://setosa.io/ev/markov-chains/){target='_blank'}.
 
-Text generation is an expanding field and there are much more successful and complicated methods for doing it. For example, [Andrej Karpathy generated some pretty convincing Shakespeare passages, Wikipedia pages and geometry papers in LaTeX using the 'unreasonably effective' and 'magical' power of Recurrent Neural Networks (RNNs)](http://karpathy.github.io/2015/05/21/rnn-effectiveness/).
+Text generation is an expanding field and there are much more successful and complicated methods for doing it. For example, [Andrej Karpathy generated some pretty convincing Shakespeare passages, Wikipedia pages and geometry papers in LaTeX using the 'unreasonably effective' and 'magical' power of Recurrent Neural Networks (RNNs)](http://karpathy.github.io/2015/05/21/rnn-effectiveness/){target='_blank'}.
 
 # Generate text
 
 ## Code source
 
-I'll be using modified R code written by [Kory Becker](http://www.primaryobjects.com/) that I found [in a GitHub gist](https://gist.github.com/primaryobjects/4c7cca705eeba0d8bad6).
+I'll be using modified R code written by [Kory Becker](http://www.primaryobjects.com/){target='_blank'} from [this GitHub gist](https://gist.github.com/primaryobjects/4c7cca705eeba0d8bad6){target='_blank'}.
 
-In a similar vein, [Roel Hogervorst](https://rmhogervorst.nl/) did a swell job of [generating Captain Picard text](http://rmhogervorst.nl/cleancode/blog/2017/01/21/content/post/2017-01-21-markov-chain/) in R from *Star Trek: The Next Generation* scripts, which is certainly [in our wheelhouse](https://www.rostrum.blog/2018/04/14/r-trek-exploring-stardates/).
+In a similar vein, [Roel Hogervorst](https://rmhogervorst.nl/){target='_blank'} did a swell job of [generating Captain Picard text](http://rmhogervorst.nl/cleancode/blog/2017/01/21/content/post/2017-01-21-markov-chain/){target='_blank'} in R from *Star Trek: The Next Generation* scripts, which is certainly [in our wheelhouse](https://www.rostrum.blog/2018/04/14/r-trek-exploring-stardates/){target='_blank'}.
 
 ## Data
 
-Because I'm helpful I've created a text file version of my thesis. You can get it raw from my [draytasets (*haha*) GitHub repo](https://github.com/matt-dray/draytasets).
+Because I'm helpful I've created a text file version of my thesis. You can get it raw from my [draytasets (*haha*) GitHub repo](https://github.com/matt-dray/draytasets){target='_blank'}.
 
-Alternatively you could get the data from the `dray` package.
+Alternatively you could get the data from the {dray} package.
 
 ```{r dray_phd}
-# download package from github
-# library(devtools)
-# devtools::install_github("matt-dray/dray")
+# Download package from github with
+# remotes::install_github("matt-dray/dray")
 
-# load dray package and assign data to object
+# Load {dray} package and assign data to object
 library(dray)
 phd_text <- dray::phd
 ```
@@ -69,17 +74,17 @@ phd_text <- dray::phd
 We'll alter the data slightly for it to be ready for passing into the Markov chain.
 
 ```{r data_prep}
-# remove blank lines
+# Remove blank lines
 phd_text <- phd_text[nchar(phd_text) > 0]
 
-# put spaces around common punctuation
+# Put spaces around common punctuation
 # so they're not interpreted as part of a word
 phd_text <- gsub(".", " .", phd_text, fixed = TRUE)
 phd_text <- gsub(",", " ,", phd_text, fixed = TRUE)
 phd_text <- gsub("(", "( ", phd_text, fixed = TRUE)
 phd_text <- gsub(")", " )", phd_text, fixed = TRUE)
 
-# split into single tokens
+# Split into single tokens
 terms <- unlist(strsplit(phd_text, " "))
 ```
 
@@ -88,23 +93,21 @@ terms <- unlist(strsplit(phd_text, " "))
 Read the `markovchain` package and fit a Markov chain to the text data.
 
 ```{r markov}
-# load the package we need
-# install.packages("markovchain")
-library(markovchain)
+# Load the package we need
+library(markovchain)  # install first from CRAN
 
-# fit the markov chain to the data
+# Fit the markov chain to the data
 fit <- markovchainFit(data = terms)
 ```
 
 We're going to seed the start of each 'sentence' (a sequence of *n* words, where we specify *n*). We'll do this by supplying one of 50 unique values to the `set.seed()` function in turn. This seed then starts the chain within the `markovchainSequence()` function.
 
 ```{r loop, cache = TRUE}
-
 markov_output <- data.frame(output = rep(NA, 50))
 
 for (i in 1:50) {
   
-  set.seed(i)
+  set.seed(i)  # fresh seed for each element
   
   markov_text <- paste(
     markovchainSequence(
@@ -124,7 +127,7 @@ for (i in 1:50) {
 This table shows 50 samples of length 50 that I generated with the code above, each beginning with a randomly-selected token.
 
 ```{r dt, echo=FALSE}
-DT::datatable(markov_output)
+DT::datatable(markov_output, options = list(pageLength = 5))
 ```
 
 ## Cherry-picked phrases
@@ -137,15 +140,17 @@ I've selected some things from the output that basically look like normal(ish) p
 
 My favourites (my comments in square brackets):
 
-* Not all invertebrate species are among tree species [FACT.]
-* Effect of deciduous trees may be appreciated [They produce oxygen and fruits, after all.]
-* Species-specific utilization of Cardiff University [Well, humans go inside the uni, pigeons sit on the roof; I guess that's 'species-specific'.]
-* Litter was affected by Wallace , Dordrecht [Who is this Dutch guy who's interfering with my studies?]
-* Bags permitted entry of stream ecosystem [I should hope so; I was investigating the effect of the stream ecosystem on the leaf litter stored in those bags, after all.]
-* Permutational Analysis and xylophagous invertebrates can affect ecosystem service provision [My analysis will affect the thing its analysing? The observer effect!]
-* Most studies could shift invertebrate communities [Hang on, this is the observer effect again; I thought I was studying ecology, not physics.]
-* This thesis is responsible for broad underlying principles to mass loss [Health warning: my thesis actually _causes_ decay (possibly to your brain cells).]
-* Carbon dioxide enrichment altered chemical composition [Aha! Actually true!]
+| Generated sentence | Comment |
+| :--- | :--- |
+| Not all invertebrate species are among tree species | Literally true |
+| Effect of deciduous trees may be appreciated | Well, they should be thanked for giving us oxygen and fruits |
+| Species-specific utilization of Cardiff University| Humans inside, pigeons on the roof |
+| Litter was affected by Wallace , Dordrecht | Who is this Dutch guy who's interfering with my studies? |
+| Bags permitted entry of stream ecosystem | I should hope so; I was investigating the effect of the stream ecosystem on the leaf litter stored in those bags |
+| Permutational Analysis and xylophagous invertebrates can affect ecosystem service provision | My analysis will affect the thing its analysing? The curse f the observer effect. |
+| Most studies could shift invertebrate communities | Hang on, this is the observer effect again; I thought I was studying ecology, not physics |
+| This thesis is responsible for broad underlying principles to mass loss | Health warning: my thesis actually causes decay (possibly to your brain cells) |
+| Carbon dioxide enrichment altered chemical composition | Aha, actually true |
 
 Some other things that vaguely make sense:
 
@@ -167,11 +172,10 @@ Some other things that vaguely make sense:
 * The basis of carbon compounds have influenced feeding preferences
 * Annual Review of the physical toughness of rotting detritus altered chemical composition and woodlice Porcellio species
 * Nitrogen concentrations and nitrogen transformations in both leaves grown under ambient CO2 levels of trembling aspen and invertebrate assemblage
-* Odontocerum albicorne was tied to elevated CO2 and terrestrial study was lower carbon sinks
-* a range of data stretching back 25 years of litter chemical composition ( 1979 ) for all interactions used microcosm type modified by elevated CO2
-* homogeneity of invertebrates as defined by increasing local microclimate and no influence mass loss
 
-Congratulations on your doctorate!
+So now you can just paste all this together. Congratulations on your doctorate!
+
+---
 
 <details><summary>Session info</summary>
 ```{r sessioninfo, echo=FALSE}
