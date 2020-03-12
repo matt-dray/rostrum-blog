@@ -1,0 +1,120 @@
+---
+title: "Ninja knitting with Star Wars"
+author: Matt Dray
+date: '2020-03-12'
+slug: knit-with-params
+categories:
+  - code
+  - tutorial
+tags:
+  - automation
+  - knitr
+  - pagedown
+  - purrr
+  - r
+  - reproducibility
+  - rmarkdown
+  - star-wars
+  - xaringan
+draft: no
+---
+
+
+<div class="figure">
+<img src="https://media.giphy.com/media/3ohuPxvsfZAK2sdPDG/giphy.gif" alt="The pilot Wedge Antilles from Star Wars saying 'Ha, that got him!'" width='100%'/>
+<p class="caption">Driving a Wedge (via [Giphy](https://giphy.com/gifs/starwars-star-wars-the-empire-strikes-back-3ohuPxvsfZAK2sdPDG/links){target='_blank'})</p>
+</div>
+
+# tl;dr
+
+You want to use R to generate multiple reports from a single template, supplying different data to each.
+
+How? Create an [RMarkdown](https://rmarkdown.rstudio.com/){target='_blank'} template with [a `params` YAML argument](https://rmarkdown.rstudio.com/developer_parameterized_reports.html%23parameter_types%2F){target='_blank'}. Iterate over param values with `rmarkdown::render()` inside `purrr::map()`.
+
+I made a demo: [Ninja Knitting](https://www.github.com/matt-dray/ninja-knitting){target='_blank'} focusing on parameterised [{xaringan}](https://slides.yihui.org/xaringan/#1){target='_blank'} slides, which require further iteration with `pagedown::chrome_print()` to render from HTML to PDF.
+
+# Parambulate
+
+[RMarkdown](https://rmarkdown.rstudio.com/){target='_blank'} lets you integrate code into a document, which is great for automating the production of reproducible reports. 
+
+[Parameterised reports](https://rmarkdown.rstudio.com/developer_parameterized_reports.html%23parameter_types%2F){target='_blank'} let you provide a variable to the document at rendering time.
+
+To use this feature, you provide a special YAML `params` argument. Maybe we have an RMarkdown template that renders a report about Star Wars characters[^space-ninja]: `starwars-template.Rmd`. We might use a `name` param to declare a character name:
+
+```
+title: Star Wars
+author: Matt Dray
+date: 2020-03-12
+params:
+  name: "Obi-Wan Kenobi"
+```
+
+Now `"Obi-Wan Kenobi"` will be supplied wherever you reference `params$name` in the code of your document.
+
+Maybe you're filtering [the `dplyr::starwars` data set](https://dplyr.tidyverse.org/reference/starwars.html){target='_blank'} to get eye color, so `filter(starwars, name == params$name) %>% pull(eye_color)` will return `blue-gray` when rendered.
+
+Change the param to `name: Chewbacca` and every instance of `params$name` will take the new value on render. Our call to get eye color will now return `blue`.
+
+# Automate
+
+How can you automate the process of opening the document and changing the parameter value by hand?
+
+You can supply values through the `params` argument of `render()` from the {rmarkdown} package:
+
+```{r eval=FALSE}
+rmarkdown::render(
+  input = "starwars-template.Rmd", # the template
+  params = list(names = "Wedge Antilles")  # different param
+)
+```
+
+You can iterate with the `map()` function from {purrr} to supply several parameter values in turn, resulting in a separate output for each one.
+
+```{r eval=FALSE}
+# Create a vector of the elements to iterate over
+characters <- c("Chewbacca", "Obi-Wan Kenobi", "Wedge Antilles")
+
+# Render to HTML the template for each param
+purrr::map(
+  .x = characters,  # vector of param values
+  .f = ~render(
+    input = "starwars-template.Rmd",  # RMarkdown filepath
+    params = list(name = .x),  # iterated parameter value
+    output_file = paste0(.x, ".html")  # iterated output path
+    )
+  )
+)
+```
+
+# Demo: ninja reports with space ninjas
+
+I've created a demo that extends the ideas above to a [{xaringan}](https://slides.yihui.org/xaringan/#1){target='_blank'} slide template to produce 'micro-dossiers' on some Star Wars characters.
+
+There are two main files in the demo:
+
+1. [An RMarkdown template](https://github.com/matt-dray/ninja-knitting/blob/master/docs/ninja-knitting-template.Rmd){target='_blank'} (with [CSS files](https://github.com/matt-dray/ninja-knitting/tree/master/docs/styles){target='_blank'}[^css] to tweak the default style)
+2. [An R script](https://github.com/matt-dray/ninja-knitting/blob/master/src/00_run.R){target='_blank'} to generate HTML and PDF outputs
+
+The [R script](https://github.com/matt-dray/ninja-knitting/blob/master/src/00_run.R){target='_blank'} basically does three things:
+
+1. Prepares the `dplyr::starwars` data set
+2. Uses `purrr::map()` with the `params` argument to render a HTML report per character
+3. Uses `pagedown::chrome_print()` to render each HTML document to PDF
+
+`chrome_print()` is a handy function that uses the Chrome browser's ability to print from HTML to PDF, but without actually opening Chrome[^chrome].
+
+See below for a couple of the rendered outputs from this process: the first with `name: "Obi-Wan Kenobi"` and the second with `name: "Wedge Antilles"`.
+
+<iframe src="https://matt-dray.github.io/ninja-knitting/obiwankenobi.html#1" width="700" height="525" frameborder="1" allowtransparency="true" allow="encrypted-media"></iframe>
+
+<iframe src="https://matt-dray.github.io/ninja-knitting/wedgeantilles.html#1" width="700" height="525" frameborder="1" allowtransparency="true" allow="encrypted-media"></iframe>
+
+I think it was Yoda who said something like:
+
+> RMarkdown is the path to automated PDF production. RMarkdown leads to parameterised reports. Parameterised reports lead to multiple HTMLs. Multiple HTMLs leads to multiple PDFs.
+
+So wise.
+
+[^space-ninja]: Because Jedi and Sith are basically space ninjas, no? 
+[^css]: Yes, I'm using [Libre Gothic](https://fonts.google.com/specimen/Libre+Franklin) to try and approximate the Star Wars [title crawl font](https://starwars.fandom.com/wiki/Opening_crawl).
+[^chrome]: You'll need Chrome or Chromium installed to use this function.
