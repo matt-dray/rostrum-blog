@@ -1,0 +1,83 @@
+---
+title: Ninja scaffolding with {kunoichi}
+author: Matt Dray
+date: '2020-03-12'
+slug: ninja-scaffold
+categories:
+  - code
+  - tutorial
+tags:
+  - kunoichi
+  - rmarkdown
+  - xaringan
+draft: true
+---
+
+
+
+<p>I’ve really taken to the <a href="">{xaringan}</a> package by <a href="">Yihui Xie</a>, an implementaiton of <a href="">remark.js</a>, for creating reproducible slides with R.</p>
+<p>Users have developed themes for {xaringan} and the CSS has been added to the package. Garrick Aden-Buie has made this process even easier with {xaringanthemer}, which lets you define themes using R code rather than getting mucky with the CSS.</p>
+<p>Rather than theming, I’ve been interested recently in page layouts: how can I place items like plots and tables into defined ‘segments’ of a page?</p>
+<p>Sure, {xaringan} has things like <code>.pull-left[]</code> and <code>.pull-right[]</code> that can place content but this only goes so far for my particular need.</p>
+<div id="ninjutsu" class="section level1">
+<h1>Ninjutsu</h1>
+<p><a href="">Emi Tanaka</a>’s excellent <a href="">{kunoichi}</a> package provides some excellent options for splitting slides into multiple sections.</p>
+<p>Emi’s <code>ninjutsu.css</code> file defines a number of page-split classes. For example, a <code>split-1-2-1</code> class that carves the page into three columns, where the middle one is twice the width (50% of the page) of the ones either side (25% each):</p>
+<pre class="css"><code>.split-1-2-1&gt;.column:first-of-type {
+  width: 25%; height: 100%; position: absolute; top: 0; left: 0; 
+}
+.split-1-2-1&gt;.column:nth-of-type(2) {
+  width: 50%; height: 100%; position: absolute; top: 0; left: 25%;
+}
+.split-1-2-1&gt;.column:nth-of-type(3) {
+  width: 25%; height: 100%; position: absolute; top: 0; right: 0;
+}</code></pre>
+<p>To walk this through, each line defining the class has:</p>
+<ul>
+<li>the name of the class (<code>split-1-2-1</code>)</li>
+<li>the number of the column being defined within it (e.g. <code>.column:first-of-type</code> for the first one)</li>
+<li>the style definition for each column in the class (<code>width</code>, <code>height</code>, etc)</li>
+</ul>
+<p>So the first column starts from the extreme left (<code>left: 0;</code>), the middle column starts where the first one ends (<code>left: 25%;</code>) and the third one starts from the extreme right (<code>right: 0;</code>).</p>
+</div>
+<div id="hacking-the-hacker" class="section level1">
+<h1>Hacking the hacker</h1>
+<p>Specifically, I wanted to define title, body and footer ‘segments’ for:</p>
+<ul>
+<li>a cover page</li>
+<li>a generic content page</li>
+<li>a content page that could show a table and plot next to each other, with a wider table underneath</li>
+</ul>
+<p>This means I could colour them and fill them with content according to some additional CSS formatting.</p>
+<p>To do this, I tweaked Emi’s <code>split-1-2-1</code> class to create rows for each of the segments I wanted.</p>
+<p>The title page has two rows, one is a large header area to hold a logo:</p>
+<pre class="css"><code>.split-title&gt;.row:first-of-type {
+  height: 20%; width: 100%; position: absolute; top: 0; left: 0;
+}
+.split-title&gt;.row:nth-of-type(2) {
+  height: 80%; width: 100%; position: absolute; left: 0; top: 20%;
+}</code></pre>
+<p>The main, generic slide, has a title and footer and a large blank area for content:</p>
+<pre class="css"><code>.split-body1&gt;.row:first-of-type {
+  height: 8%; width: 100%; position: absolute; top: 0; left: 0;
+}
+.split-body1&gt;.row:nth-of-type(2) {
+  height: 87%; width: 100%; position: absolute; left: 0; bottom: 5%;
+}
+.split-body1&gt;.row:nth-of-type(3) {
+  height: 5%; width: 100%; position: absolute; bottom: 0; left: 0;
+}</code></pre>
+<p>I’ve modified the main, generic slide so it’s split once more:</p>
+<pre class="css"><code>.split-body2&gt;.row:first-of-type { 
+  height: 8%; width: 100%; position: absolute; top: 0; left: 0;
+  }
+.split-body2&gt;.row:nth-of-type(2) { 
+  height: 43.5%; width: 100%; position: absolute; left: 0; top: 8%;
+  }
+.split-body2&gt;.row:nth-of-type(3) { 
+  height: 43.5%; width: 100%; position: absolute; left: 0; bottom: 5%;
+  }
+.split-body2&gt;.row:nth-of-type(4) { 
+  height: 5%; width: 100%; position: absolute; bottom: 0; left: 0;
+  }</code></pre>
+</div>
