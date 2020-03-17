@@ -1,5 +1,5 @@
 ---
-title: Ninja scaffolding with {kunoichi}
+title: Ninjutsu scaffolding
 author: Matt Dray
 date: '2020-03-12'
 slug: ninja-scaffold
@@ -7,26 +7,47 @@ categories:
   - code
   - tutorial
 tags:
+  - css
   - kunoichi
+  - ninjutsu
   - rmarkdown
   - xaringan
 draft: yes
 ---
 
+# tl;dr 
 
-I've really taken to the [{xaringan}]() package by [Yihui Xie](), an implementaiton of [remark.js](), for creating reproducible slides with R.
+You can create themes for {xaringan} by modifying the CSS. [Emi Tanaka]()'s [ninjutsu]() CSS, avaiable from within {xaringan} itself, does something slightly different: it lets you break up your slide into sections. This is useful for arranging text, plots and other things onto the page. You can take inspiration from her code to create your won layouts.
 
-Users have developed themes for {xaringan} and the CSS has been added to the package. Garrick Aden-Buie has made this process even easier with {xaringanthemer}, which lets you define themes using R code rather than getting mucky with the CSS.
+# {xaringan}
 
-Rather than theming, I've been interested recently in page layouts: how can I place items like plots and tables into defined 'segments' of a page? 
+I've really taken to the [{xaringan}](https://slides.yihui.org/xaringan/#1) package by [Yihui Xie](https://yihui.org/), an implementaiton of [remark.js](https://github.com/gnab/remark), for creating reproducible slides with R.
 
-Sure, {xaringan} has things like `.pull-left[]` and `.pull-right[]` that can place content but this only goes so far for my particular need.
+You can create your own themes by supplying [CSS](). Yihui has [encouraged users](https://yihui.org/en/2017/10/xaringan-themes/) to add their themes to the package itself.
+
+You specify CSS filepaths in the YAML header:
+
+```{}
+css: [default.css, example.css, example-fonts.css]
+```
+
+The order matters: `default.css` will be applied, but instructions from `example.css` and `example-fonts.css` will overwrite `default.css` where they clash. So if `example.css` has a line to make the background green, it will take precendence over the background colour declaration from the `default.css` file.
+
+If you don't know CSS, [Garrick Aden-Buie](https://www.garrickadenbuie.com/)'s [{xaringanthemer}](https://www.garrickadenbuie.com/project/xaringanthemer/) package lets you write R code that will generate the CSS for you.
+
+# Layouts
+
+I've been thinking about slide _layouts_ as much as themes: how can I place items like plots and tables into defined 'segments' of a page with minimal tweaking
+
+Sure, the default {xaringan} CSS has things like `.pull-left[]` and `.pull-right[]` that can place content but this only goes so far for my particular need.
 
 # Ninjutsu
 
-[Emi Tanaka]()'s excellent [{kunoichi}]() package provides some excellent options for splitting slides into multiple sections.
+[Emi Tanaka](https://twitter.com/statsgen) (a [great hacker](https://pagedown.rbind.io/html-letter)) created the '[kunoichi](https://emitanaka.org/ninja-theme/themes/kunoichi/kunoichi-theme-example.html#1)'[^kunoichi] theme for {xaringan}.
 
-Emi's `ninjutsu.css` file defines a number of page-split classes. For example, a `split-1-2-1` class that carves the page into three columns, where the middle one is twice the width (50% of the page) of the ones either side (25% each):
+But more pertinent for this post is that Emi created 'ninjutsu'[^kunoichi]: CSS that provides methods for splitting your page into columns and rows.
+
+Ninjutsu has lots of classes for splitting slides into sections. For example, the `split-1-2-1` class splits the slide into three columns that are 25%, 50% and 25% of the total page width (hence '1-2-1').
 
 ```{css, split121, eval=FALSE}
 .split-1-2-1>.column:first-of-type {
@@ -40,27 +61,23 @@ Emi's `ninjutsu.css` file defines a number of page-split classes. For example, a
 }
 ```
 
-To walk this through, each line defining the class has:
-
-* the name of the class (`split-1-2-1`)
-* the number of the column being defined within it (e.g. `.column:first-of-type` for the first one)
-* the style definition for each column in the class (`width`, `height`, etc)
-
-So the first column starts from the extreme left (`left: 0;`), the middle column starts where the first one ends (`left: 25%;`) and the third one starts from the extreme right (`right: 0;`).
+So the CSS for this class has one line for each column. So the first column (`first-of-type`) starts from the extreme left (`left: 0;`), the middle column (`nth-of-type(2)`) starts where the first one ends (`left: 25%;`) and the third one (`nth-of-type(3)`) starts from the extreme right (`right: 0;`).
 
 # Hacking the hacker
 
-Specifically, I wanted to define title, body and footer 'segments' for:
+Specifically, I wanted to define title, body and footer sections for:
 
-* a cover page
-* a generic content page
+* a title page
+* a main, generic content page
 * a content page that could show a table and plot next to each other, with a wider table underneath
 
-This means I could colour them and fill them with content according to some additional CSS formatting.
+This means I could colour them and/or fill them with content according to some additional CSS formatting.
 
-To do this, I tweaked Emi's `split-1-2-1` class to create rows for each of the segments I wanted.
+To do this, I tweaked Emi's `split-1-2-1` class to create classes with rows (rather than columns) split into the sections I wanted.
 
-The title page has two rows, one is a large header area to hold a logo:
+## Defining the classes
+
+The title page has two rows, one is a large header area to hold a logo and the other is where the talk metadata goes:
 
 ```{css, eval=FALSE}
 .split-title>.row:first-of-type {
@@ -71,33 +88,86 @@ The title page has two rows, one is a large header area to hold a logo:
 }
 ```
 
-The main, generic slide, has a title and footer and a large blank area for content:
+The main slide class has a title and footer section and the content goes in the large section inbetween:
 
 ```{css, eval=FALSE}
-.split-body1>.row:first-of-type {
+.split-main1>.row:first-of-type {
   height: 8%; width: 100%; position: absolute; top: 0; left: 0;
 }
-.split-body1>.row:nth-of-type(2) {
+.split-main1>.row:nth-of-type(2) {
   height: 87%; width: 100%; position: absolute; left: 0; bottom: 5%;
 }
-.split-body1>.row:nth-of-type(3) {
+.split-main1>.row:nth-of-type(3) {
   height: 5%; width: 100%; position: absolute; bottom: 0; left: 0;
 }
 ```
 
-I've modified the main, generic slide so it's split once more:
+I modified slightly this class so the large blank area is split once more:
 
 ```{css, eval=FALSE}
-.split-body2>.row:first-of-type { 
+.split-main2>.row:first-of-type { 
   height: 8%; width: 100%; position: absolute; top: 0; left: 0;
   }
-.split-body2>.row:nth-of-type(2) { 
+.split-main2>.row:nth-of-type(2) { 
   height: 43.5%; width: 100%; position: absolute; left: 0; top: 8%;
   }
-.split-body2>.row:nth-of-type(3) { 
+.split-main2>.row:nth-of-type(3) { 
   height: 43.5%; width: 100%; position: absolute; left: 0; bottom: 5%;
   }
-.split-body2>.row:nth-of-type(4) { 
+.split-main2>.row:nth-of-type(4) { 
   height: 5%; width: 100%; position: absolute; bottom: 0; left: 0;
   }
 ```
+
+## Using the classes in practice
+
+The `split-main1` is used like this:
+
+```{r example-split-main1, eval=FALSE}
+---
+class: split-main1
+
+.row[.content[
+  Title
+]]
+
+.row[.content[
+  Some content
+]]
+
+.row[.content[
+  Footer
+]]
+```
+
+The `split-main2` class has an additional `.row[]` to define because the main body area is split in two horizontally. I've also added a `split-two[]` call inside the second `.row[]` call and declared `.column[]` twice within it. This results the main body area containing one row the width of the page and one row split into two columns.
+
+```{r example-split-main2, eval=FALSE}
+---
+class: split-main2
+
+.row[.content[
+  Title
+]]
+
+.row[.content[
+  Some content
+]]
+
+.row[.content[
+  .split-two[
+    .column[.content[
+      Some content
+    ]]
+    .column[.content[
+      More content
+    ]]
+  ]
+]]
+
+.row[.content[
+  Footer
+]]
+```
+
+[^kunoichi]; '[Kunoichi]()' is the Japanese word for a female ninja and 'ninjutu' means [](). Emi also supplied  '[shinobi]()' style. These names fit Yihui's ninja inspiration for {xaringan} via [Naruto]().

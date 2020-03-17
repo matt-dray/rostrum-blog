@@ -1,5 +1,5 @@
 ---
-title: Ninja scaffolding with {kunoichi}
+title: Ninjutsu scaffolding
 author: Matt Dray
 date: '2020-03-12'
 slug: ninja-scaffold
@@ -7,7 +7,9 @@ categories:
   - code
   - tutorial
 tags:
+  - css
   - kunoichi
+  - ninjutsu
   - rmarkdown
   - xaringan
 draft: yes
@@ -15,14 +17,29 @@ draft: yes
 
 
 
-<p>I’ve really taken to the <a href="">{xaringan}</a> package by <a href="">Yihui Xie</a>, an implementaiton of <a href="">remark.js</a>, for creating reproducible slides with R.</p>
-<p>Users have developed themes for {xaringan} and the CSS has been added to the package. Garrick Aden-Buie has made this process even easier with {xaringanthemer}, which lets you define themes using R code rather than getting mucky with the CSS.</p>
-<p>Rather than theming, I’ve been interested recently in page layouts: how can I place items like plots and tables into defined ‘segments’ of a page?</p>
-<p>Sure, {xaringan} has things like <code>.pull-left[]</code> and <code>.pull-right[]</code> that can place content but this only goes so far for my particular need.</p>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>You can create themes for {xaringan} by modifying the CSS. <a href="">Emi Tanaka</a>’s <a href="">ninjutsu</a> CSS, avaiable from within {xaringan} itself, does something slightly different: it lets you break up your slide into sections. This is useful for arranging text, plots and other things onto the page. You can take inspiration from her code to create your won layouts.</p>
+</div>
+<div id="xaringan" class="section level1">
+<h1>{xaringan}</h1>
+<p>I’ve really taken to the <a href="https://slides.yihui.org/xaringan/#1">{xaringan}</a> package by <a href="https://yihui.org/">Yihui Xie</a>, an implementaiton of <a href="https://github.com/gnab/remark">remark.js</a>, for creating reproducible slides with R.</p>
+<p>You can create your own themes by supplying <a href="">CSS</a>. Yihui has <a href="https://yihui.org/en/2017/10/xaringan-themes/">encouraged users</a> to add their themes to the package itself.</p>
+<p>You specify CSS filepaths in the YAML header:</p>
+<pre><code>css: [default.css, example.css, example-fonts.css]</code></pre>
+<p>The order matters: <code>default.css</code> will be applied, but instructions from <code>example.css</code> and <code>example-fonts.css</code> will overwrite <code>default.css</code> where they clash. So if <code>example.css</code> has a line to make the background green, it will take precendence over the background colour declaration from the <code>default.css</code> file.</p>
+<p>If you don’t know CSS, <a href="https://www.garrickadenbuie.com/">Garrick Aden-Buie</a>’s <a href="https://www.garrickadenbuie.com/project/xaringanthemer/">{xaringanthemer}</a> package lets you write R code that will generate the CSS for you.</p>
+</div>
+<div id="layouts" class="section level1">
+<h1>Layouts</h1>
+<p>I’ve been thinking about slide <em>layouts</em> as much as themes: how can I place items like plots and tables into defined ‘segments’ of a page with minimal tweaking</p>
+<p>Sure, the default {xaringan} CSS has things like <code>.pull-left[]</code> and <code>.pull-right[]</code> that can place content but this only goes so far for my particular need.</p>
+</div>
 <div id="ninjutsu" class="section level1">
 <h1>Ninjutsu</h1>
-<p><a href="">Emi Tanaka</a>’s excellent <a href="">{kunoichi}</a> package provides some excellent options for splitting slides into multiple sections.</p>
-<p>Emi’s <code>ninjutsu.css</code> file defines a number of page-split classes. For example, a <code>split-1-2-1</code> class that carves the page into three columns, where the middle one is twice the width (50% of the page) of the ones either side (25% each):</p>
+<p><a href="https://twitter.com/statsgen">Emi Tanaka</a> (a <a href="https://pagedown.rbind.io/html-letter">great hacker</a>) created the ‘<a href="https://emitanaka.org/ninja-theme/themes/kunoichi/kunoichi-theme-example.html#1">kunoichi</a>’[^kunoichi] theme for {xaringan}.</p>
+<p>But more pertinent for this post is that Emi created ‘ninjutsu’[^kunoichi]: CSS that provides methods for splitting your page into columns and rows.</p>
+<p>Ninjutsu has lots of classes for splitting slides into sections. For example, the <code>split-1-2-1</code> class splits the slide into three columns that are 25%, 50% and 25% of the total page width (hence ‘1-2-1’).</p>
 <pre class="css"><code>.split-1-2-1&gt;.column:first-of-type {
   width: 25%; height: 100%; position: absolute; top: 0; left: 0; 
 }
@@ -32,52 +49,94 @@ draft: yes
 .split-1-2-1&gt;.column:nth-of-type(3) {
   width: 25%; height: 100%; position: absolute; top: 0; right: 0;
 }</code></pre>
-<p>To walk this through, each line defining the class has:</p>
-<ul>
-<li>the name of the class (<code>split-1-2-1</code>)</li>
-<li>the number of the column being defined within it (e.g. <code>.column:first-of-type</code> for the first one)</li>
-<li>the style definition for each column in the class (<code>width</code>, <code>height</code>, etc)</li>
-</ul>
-<p>So the first column starts from the extreme left (<code>left: 0;</code>), the middle column starts where the first one ends (<code>left: 25%;</code>) and the third one starts from the extreme right (<code>right: 0;</code>).</p>
+<p>So the CSS for this class has one line for each column. So the first column (<code>first-of-type</code>) starts from the extreme left (<code>left: 0;</code>), the middle column (<code>nth-of-type(2)</code>) starts where the first one ends (<code>left: 25%;</code>) and the third one (<code>nth-of-type(3)</code>) starts from the extreme right (<code>right: 0;</code>).</p>
 </div>
 <div id="hacking-the-hacker" class="section level1">
 <h1>Hacking the hacker</h1>
-<p>Specifically, I wanted to define title, body and footer ‘segments’ for:</p>
+<p>Specifically, I wanted to define title, body and footer sections for:</p>
 <ul>
-<li>a cover page</li>
-<li>a generic content page</li>
+<li>a title page</li>
+<li>a main, generic content page</li>
 <li>a content page that could show a table and plot next to each other, with a wider table underneath</li>
 </ul>
-<p>This means I could colour them and fill them with content according to some additional CSS formatting.</p>
-<p>To do this, I tweaked Emi’s <code>split-1-2-1</code> class to create rows for each of the segments I wanted.</p>
-<p>The title page has two rows, one is a large header area to hold a logo:</p>
+<p>This means I could colour them and/or fill them with content according to some additional CSS formatting.</p>
+<p>To do this, I tweaked Emi’s <code>split-1-2-1</code> class to create classes with rows (rather than columns) split into the sections I wanted.</p>
+<div id="defining-the-classes" class="section level2">
+<h2>Defining the classes</h2>
+<p>The title page has two rows, one is a large header area to hold a logo and the other is where the talk metadata goes:</p>
 <pre class="css"><code>.split-title&gt;.row:first-of-type {
   height: 20%; width: 100%; position: absolute; top: 0; left: 0;
 }
 .split-title&gt;.row:nth-of-type(2) {
   height: 80%; width: 100%; position: absolute; left: 0; top: 20%;
 }</code></pre>
-<p>The main, generic slide, has a title and footer and a large blank area for content:</p>
-<pre class="css"><code>.split-body1&gt;.row:first-of-type {
+<p>The main slide class has a title and footer section and the content goes in the large section inbetween:</p>
+<pre class="css"><code>.split-main1&gt;.row:first-of-type {
   height: 8%; width: 100%; position: absolute; top: 0; left: 0;
 }
-.split-body1&gt;.row:nth-of-type(2) {
+.split-main1&gt;.row:nth-of-type(2) {
   height: 87%; width: 100%; position: absolute; left: 0; bottom: 5%;
 }
-.split-body1&gt;.row:nth-of-type(3) {
+.split-main1&gt;.row:nth-of-type(3) {
   height: 5%; width: 100%; position: absolute; bottom: 0; left: 0;
 }</code></pre>
-<p>I’ve modified the main, generic slide so it’s split once more:</p>
-<pre class="css"><code>.split-body2&gt;.row:first-of-type { 
+<p>I modified slightly this class so the large blank area is split once more:</p>
+<pre class="css"><code>.split-main2&gt;.row:first-of-type { 
   height: 8%; width: 100%; position: absolute; top: 0; left: 0;
   }
-.split-body2&gt;.row:nth-of-type(2) { 
+.split-main2&gt;.row:nth-of-type(2) { 
   height: 43.5%; width: 100%; position: absolute; left: 0; top: 8%;
   }
-.split-body2&gt;.row:nth-of-type(3) { 
+.split-main2&gt;.row:nth-of-type(3) { 
   height: 43.5%; width: 100%; position: absolute; left: 0; bottom: 5%;
   }
-.split-body2&gt;.row:nth-of-type(4) { 
+.split-main2&gt;.row:nth-of-type(4) { 
   height: 5%; width: 100%; position: absolute; bottom: 0; left: 0;
   }</code></pre>
+</div>
+<div id="using-the-classes-in-practice" class="section level2">
+<h2>Using the classes in practice</h2>
+<p>The <code>split-main1</code> is used like this:</p>
+<pre class="r"><code>---
+class: split-main1
+
+.row[.content[
+  Title
+]]
+
+.row[.content[
+  Some content
+]]
+
+.row[.content[
+  Footer
+]]</code></pre>
+<p>The <code>split-main2</code> class has an additional <code>.row[]</code> to define because the main body area is split in two horizontally. I’ve also added a <code>split-two[]</code> call inside the second <code>.row[]</code> call and declared <code>.column[]</code> twice within it. This results the main body area containing one row the width of the page and one row split into two columns.</p>
+<pre class="r"><code>---
+class: split-main2
+
+.row[.content[
+  Title
+]]
+
+.row[.content[
+  Some content
+]]
+
+.row[.content[
+  .split-two[
+    .column[.content[
+      Some content
+    ]]
+    .column[.content[
+      More content
+    ]]
+  ]
+]]
+
+.row[.content[
+  Footer
+]]</code></pre>
+<p>[^kunoichi]; ‘<a href="">Kunoichi</a>’ is the Japanese word for a female ninja and ‘ninjutu’ means <a href=""></a>. Emi also supplied ‘<a href="">shinobi</a>’ style. These names fit Yihui’s ninja inspiration for {xaringan} via <a href="">Naruto</a>.</p>
+</div>
 </div>
