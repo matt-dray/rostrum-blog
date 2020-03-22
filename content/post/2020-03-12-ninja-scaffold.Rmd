@@ -1,7 +1,7 @@
 ---
-title: Ninjutsu scaffolding
+title: Ninja scaffolding for {xaringan}
 author: Matt Dray
-date: '2020-03-12'
+date: '2020-03-22'
 slug: ninja-scaffold
 categories:
   - code
@@ -10,46 +10,42 @@ tags:
   - css
   - kunoichi
   - ninjutsu
+  - r
   - rmarkdown
   - xaringan
-draft: yes
+draft: no
 ---
+
+```{r, prep-chunks, include=FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+<div class="figure">
+<img src="/post/2020-03-12-ninja-scaffold_files/split-main2.png" alt="A slide split into four sections, with a title row, footer row and two main-body rows, the lower of which is split in two vertically." width='100%'/>
+<p class="caption">Example of modified Ninjutsu for 'scaffolding' a {xaringan} slide.</p>
+</div>
 
 # tl;dr 
 
-You can create themes for {xaringan} by modifying the CSS. [Emi Tanaka]()'s [ninjutsu]() CSS, avaiable from within {xaringan} itself, does something slightly different: it lets you break up your slide into sections. This is useful for arranging text, plots and other things onto the page. You can take inspiration from her code to create your won layouts.
+[Emi Tanaka](https://emitanaka.org/){target='_blank'}'s [Ninjutsu](https://emitanaka.org/ninja-theme/themes/kunoichi/kunoichi-theme-example.html#6){target='_blank'} CSS for [{xaringan}](https://slides.yihui.org/xaringan/#1){target='_blank'} breaks slides into 'cells', which are useful for arranging plots, tables, etc. [I've been experimenting](https://matt-dray.github.io/ninja-scaffold/){target='_blank'} with Emi's CSS to create my own layouts.
 
-# {xaringan}
+# Slide themes
 
-I've really taken to the [{xaringan}](https://slides.yihui.org/xaringan/#1) package by [Yihui Xie](https://yihui.org/), an implementaiton of [remark.js](https://github.com/gnab/remark), for creating reproducible slides with R.
+The [{xaringan}](https://slides.yihui.org/xaringan/#1){target='_blank'} package by [Yihui Xie](https://yihui.org/){target='_blank'} -- an implementation of [remark.js](https://github.com/gnab/remark){target='_blank'} -- lets you create reproducible slides with R.
 
-You can create your own themes by supplying [CSS](). Yihui has [encouraged users](https://yihui.org/en/2017/10/xaringan-themes/) to add their themes to the package itself.
+You can create your own themes for {xaringan} by supplying some [CSS](https://simple.wikipedia.org/wiki/Cascading_Style_Sheets){target='_blank'}. Yihui has [encouraged users](https://yihui.org/en/2017/10/xaringan-themes/){target='_blank'} to add their themes to the package itself.
 
-You specify CSS filepaths in the YAML header:
+Tip: if you don't know CSS, [Garrick Aden-Buie](https://www.garrickadenbuie.com/){target='_blank'}'s [{xaringanthemer}](https://www.garrickadenbuie.com/project/xaringanthemer/){target='_blank'} package lets you write R code and will generate the corresponding CSS for you.
 
-```{}
-css: [default.css, example.css, example-fonts.css]
-```
+# Slide layouts
 
-The order matters: `default.css` will be applied, but instructions from `example.css` and `example-fonts.css` will overwrite `default.css` where they clash. So if `example.css` has a line to make the background green, it will take precendence over the background colour declaration from the `default.css` file.
+I was given a brief to create slides with a particular layout of page elements (plots, tables, text). How could I create a 'scaffold' in {xaringan} into which I could place the page elements?
 
-If you don't know CSS, [Garrick Aden-Buie](https://www.garrickadenbuie.com/)'s [{xaringanthemer}](https://www.garrickadenbuie.com/project/xaringanthemer/) package lets you write R code that will generate the CSS for you.
+Fortunately, [Emi Tanaka](https://twitter.com/statsgen){target='_blank'}[^emitanaka] created [Ninjutsu](https://emitanaka.org/ninja-theme/themes/kunoichi/kunoichi-theme-example.html#7){target='_blank'}[^ninjutsu]: CSS classes for splitting your page into columns and rows. This is now built into {xaringan} along with [her Kunoichi theme](https://emitanaka.org/ninja-theme/themes/kunoichi/kunoichi-theme-example.html#1){target='_blank'}[^kunoichi].
 
-# Layouts
+For example, the `split-1-2-1` class from Ninjutsu splits the slide into three columns that are 25%, 50% and 25% of the total page width (hence '1-2-1').
 
-I've been thinking about slide _layouts_ as much as themes: how can I place items like plots and tables into defined 'segments' of a page with minimal tweaking
-
-Sure, the default {xaringan} CSS has things like `.pull-left[]` and `.pull-right[]` that can place content but this only goes so far for my particular need.
-
-# Ninjutsu
-
-[Emi Tanaka](https://twitter.com/statsgen) (a [great hacker](https://pagedown.rbind.io/html-letter)) created the '[kunoichi](https://emitanaka.org/ninja-theme/themes/kunoichi/kunoichi-theme-example.html#1)'[^kunoichi] theme for {xaringan}.
-
-But more pertinent for this post is that Emi created 'ninjutsu'[^kunoichi]: CSS that provides methods for splitting your page into columns and rows.
-
-Ninjutsu has lots of classes for splitting slides into sections. For example, the `split-1-2-1` class splits the slide into three columns that are 25%, 50% and 25% of the total page width (hence '1-2-1').
-
-```{css, split121, eval=FALSE}
+```{css, split121}
 .split-1-2-1>.column:first-of-type {
   width: 25%; height: 100%; position: absolute; top: 0; left: 0; 
 }
@@ -61,11 +57,23 @@ Ninjutsu has lots of classes for splitting slides into sections. For example, th
 }
 ```
 
-So the CSS for this class has one line for each column. So the first column (`first-of-type`) starts from the extreme left (`left: 0;`), the middle column (`nth-of-type(2)`) starts where the first one ends (`left: 25%;`) and the third one (`nth-of-type(3)`) starts from the extreme right (`right: 0;`).
+There's one line of CSS for each of the three columns that the slide will be split into. In this example, the first column (`first-of-type`) starts from the extreme left (`left: 0;`), the middle column (`nth-of-type(2)`) starts where the first one ends (`left: 25%;`) and the third one (`nth-of-type(3)`) starts from the extreme right (`right: 0;`).
 
-# Hacking the hacker
+# Demo: ninja scaffold
 
-Specifically, I wanted to define title, body and footer sections for:
+I adapted Emi's CSS to create the layouts I wanted. You can:
+
+* [find the source on GitHub](https://github.com/matt-dray/ninja-scaffold){target='_blank'}
+* [inspect the relevant custom CSS](https://github.com/matt-dray/ninja-scaffold/blob/master/custom.css){target='_blank'}
+* [see a demo slideshow](https://matt-dray.github.io/ninja-scaffold/){target='_blank'}, or view it embedded below
+
+Read the rest of this post for an explanation of how I did it.
+
+<iframe src="https://matt-dray.github.io/ninja-scaffold/" width="100%" height="395" frameborder="1" allowtransparency="true" allow="encrypted-media"></iframe>
+
+# Adapting the layout
+
+Specifically, I wanted to define title, body and footer-bar sections for:
 
 * a title page
 * a main, generic content page
@@ -75,99 +83,139 @@ This means I could colour them and/or fill them with content according to some a
 
 To do this, I tweaked Emi's `split-1-2-1` class to create classes with rows (rather than columns) split into the sections I wanted.
 
+Below are some simplified examples of what I did. You can [see the original CSS in the source code](https://github.com/matt-dray/ninja-scaffold/blob/master/custom.css){target='_blank'} of the demo I've put on GitHub.
+
 ## Defining the classes
 
-The title page has two rows, one is a large header area to hold a logo and the other is where the talk metadata goes:
+The title page has two rows, one is a large header area to hold a logo and the other is where the talk metadata goes ([see demo](https://matt-dray.github.io/ninja-scaffold/#5){target='_blank'}):
 
-```{css, eval=FALSE}
+```{css}
 .split-title>.row:first-of-type {
-  height: 20%; width: 100%; position: absolute; top: 0; left: 0;
+  height: 35%; width: 100%; position: absolute; top: 0; left: 0;
 }
 .split-title>.row:nth-of-type(2) {
-  height: 80%; width: 100%; position: absolute; left: 0; top: 20%;
+  height: 65%; width: 100%; position: absolute; left: 0; top: 35%;
 }
 ```
 
-The main slide class has a title and footer section and the content goes in the large section inbetween:
+The main slide class has a title and footer section and the content goes in the large section between ([see demo](https://matt-dray.github.io/ninja-scaffold/#6){target='_blank'}):
 
-```{css, eval=FALSE}
+```{css}
 .split-main1>.row:first-of-type {
-  height: 8%; width: 100%; position: absolute; top: 0; left: 0;
+  height: 15%; width: 100%; position: absolute; top: 0; left: 0;
 }
 .split-main1>.row:nth-of-type(2) {
-  height: 87%; width: 100%; position: absolute; left: 0; bottom: 5%;
+  height: 80%; width: 100%; position: absolute; left: 0; bottom: 5%;
 }
 .split-main1>.row:nth-of-type(3) {
   height: 5%; width: 100%; position: absolute; bottom: 0; left: 0;
 }
 ```
 
-I modified slightly this class so the large blank area is split once more:
+I modified slightly this class so the large blank area is split once more ([see demo](https://matt-dray.github.io/ninja-scaffold/#7){target='_blank'}):
 
-```{css, eval=FALSE}
+```{css}
 .split-main2>.row:first-of-type { 
-  height: 8%; width: 100%; position: absolute; top: 0; left: 0;
-  }
+  height: 15%; width: 100%; position: absolute; top: 0; left: 0;
+}
 .split-main2>.row:nth-of-type(2) { 
-  height: 43.5%; width: 100%; position: absolute; left: 0; top: 8%;
-  }
+  height: 40%; width: 100%; position: absolute; left: 0; top: 15%;
+}
 .split-main2>.row:nth-of-type(3) { 
-  height: 43.5%; width: 100%; position: absolute; left: 0; bottom: 5%;
-  }
+  height: 40%; width: 100%; position: absolute; left: 0; bottom: 5%;
+}
 .split-main2>.row:nth-of-type(4) { 
   height: 5%; width: 100%; position: absolute; bottom: 0; left: 0;
-  }
+}
 ```
 
-## Using the classes in practice
+## Using the classes
 
-The `split-main1` is used like this:
+Having defined the CSS, how do we use it?
 
-```{r example-split-main1, eval=FALSE}
+Let's say I'd saved this CSS into a file called `custom.CSS`, along with some font specifications in `custom-fonts.CSS`. Here's a simplified YAML header showing how to declare these CSS files in your {xaringan} .Rmd file:
+
+```
+---
+title: "Example Title"
+output:
+  xaringan::moon_reader:
+    css: [default, ninjutsu, custom.css, custom-fonts.css]
+---
+```
+
+The CSS files are listed in this order so that the later-listed files take precedence if there's any clashes. Remember also that in-built themes don't need the `.css` file extension, but you need to provide the full path for any custom CSS.
+
+With {xaringan} you name the class at the top of a slide to actually apply it, where slides are defined by three hyphens `---`.
+
+You can [see an example in the source code](https://github.com/matt-dray/ninja-scaffold/blob/master/index.Rmd){target='_blank'} of the demo I put on GitHub.
+
+### Class `split-main1`
+
+So, the `split-main1` could be used like this:
+
+```{r example-split-main1}
 ---
 class: split-main1
 
 .row[.content[
-  Title
+This Is A Title
 ]]
 
 .row[.content[
-  Some content
-]]
-
-.row[.content[
-  Footer
+This is the main body area of the slide.
 ]]
 ```
 
-The `split-main2` class has an additional `.row[]` to define because the main body area is split in two horizontally. I've also added a `split-two[]` call inside the second `.row[]` call and declared `.column[]` twice within it. This results the main body area containing one row the width of the page and one row split into two columns.
+Remember that the `split-main1` class is split into three separate rows for the title, main body and footer sections. We can define what's in each row with `.row[]` and then define the content inside a call to `.content[]`. 
 
-```{r example-split-main2, eval=FALSE}
+The first `.row[]` call will take the style from `.split-main1>.row:first-of-type` in our CSS, the second will take the CSS information from `.split-main1>.row:nth-of-type(2)`, and so on.
+
+Note that Ninjutsu also lets you adjust the content of classes by chaining calls like `.content.vmiddle[]`, which will make the content vertically centred in this case.
+
+### Class `split-main2`
+
+The `split-main2` class has an additional `.row[]` to define because the main body area is composed of two rows rather than one. 
+
+Here I've added a `split-two[]` call inside the second `.row[]` call and declared `.column[]` twice within it. This results the main body area containing one row the width of the page and one row split into two columns ([see demo](https://matt-dray.github.io/ninja-scaffold/#8){target='_blank'}).
+
+```{r example-split-main2}
 ---
 class: split-main2
 
 .row[.content[
-  Title
+This Is A Title
 ]]
 
 .row[.content[
-  Some content
+This is the second row of the page. It's full-width.
 ]]
 
 .row[.content[
-  .split-two[
-    .column[.content[
-      Some content
-    ]]
-    .column[.content[
-      More content
-    ]]
-  ]
+.split-two[
+.column[.content[
+This is the third row, which is split in two. This is the left column.
+]]
+.column[.content[
+This is the right-hand column of the third row.
+]]
+]
 ]]
 
-.row[.content[
-  Footer
-]]
+.row[
+]
 ```
 
-[^kunoichi]; '[Kunoichi]()' is the Japanese word for a female ninja and 'ninjutu' means [](). Emi also supplied  '[shinobi]()' style. These names fit Yihui's ninja inspiration for {xaringan} via [Naruto]().
+# What now?
+
+I think there's a lot of promise in this approach for making bespoke page layouts.
+
+I've already used this approach at work to design a {xaringan} template to a specification, which I used to help automate the generation of a large number of reports. In particular, I used the `split-main2` class to arrange a small table in the top-left, a plot in the top-right, and a full-width wide table below them.
+
+It's possible to create these kinds of layouts in other ways -- [like in {pagedown}](https://github.com/mattkerlogue/pagedown-test){target='_blank'} or with [fancier CSS](https://www.w3schools.com/css/css_grid.asp){target='_blank'} skills. For now I'm most comfortable with {xaringan} and the features it offers, like presenter notes and presenter view. But this is probably less important if your goal is [to output to PDF](https://www.rostrum.blog/2020/03/12/knit-with-params/#demo-ninja-knitting){target='_blank'}.
+
+I look forward to seeing how Ninjutsu and other {xaringan} themes develop to help with page layouts for reproducible presentations.
+
+[^emitanaka]: A certified [great hacker](https://pagedown.rbind.io/html-letter){target='_blank'}.
+[^kunoichi]: [Wikipedia](https://en.wikipedia.org/wiki/Kunoichi){target='_blank'}: 'a female ninja or practitioner of ninjutsu'.
+[^ninjutsu]: [Wikipedia](https://en.wikipedia.org/wiki/Ninjutsu){target='_blank'}: 'the strategy and tactics of unconventional warfare, guerrilla warfare and espionage purportedly practiced by the ninja'.
