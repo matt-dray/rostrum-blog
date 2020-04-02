@@ -59,4 +59,167 @@ I'll show how the thing works first and then talk through the code.
 
 There's quite a lot of code to show. You can click to expand the entire code here, but I'll step through each block to explain it's purpose.
 
+```{r library}
+# install.packages(R6) to get the package from CRAN
+library(R6)
+```
+
+<details><summary>Click for the full code defining the Automatic Bell Dispenser class</summary>
+```{r abd}
+AutomaticBellDispenser <- R6Class(
+  "AutomaticBellDispenser",
+  list(
+    
+    # set initial values
+    savings = 0,
+    loan = 2498000,  # final loan size
+    
+    # Startup message shows account status and options
+    initialize = function(...) {
+      loan_formatted <- format(self$loan, big.mark = ",", scientific = FALSE)
+      savings_formatted <- format(  # separate with commas, prevent sci notation
+        self$savings, big.mark = ",", scientific = FALSE
+      )
+      cat("Automatic Bell Dispenser (ABD)\n\n")  # cat() prints to console
+      cat(emo::ji("bell"), "Loan Balance:", loan_formatted, "Bells\n")
+      cat(emo::ji("pig2"), "Savings Balance:", savings_formatted, "Bells\n\n")
+      cat(
+        "Please make a selection from the menu below\n\n",
+        emo::ji("house"), "loan_payment()\n",
+        emo::ji("arrow_up"), "deposit()\n",
+        emo::ji("arrow_down"), "withdrawal()"
+      )
+    },
+    
+    # function to deposit an amount into savings
+    deposit = function(amount = 0) { 
+      amount_int <- as.integer(amount)  # round to nearest lowest integer
+      if (amount - amount_int > 0) {  # warning if rounding has occurred
+        warning(
+          "Deposit rounded to ", amount_int, " Bells.",
+          call. = FALSE # prevents printing of the error-causing line
+        )
+      } else {
+        self$savings <- self$savings + amount_int  # add amount to savings
+      }
+      invisible(self)
+    },
+    
+    # function to withdraw an amount from savings
+    withdrawal = function(amount = 0) {
+      amount_int <- as.integer(amount)  # round to nearest lowest integer
+      if (amount - amount_int > 0) {  # warning if rounding has occurred
+        warning("Withdrawal rounded to ", amount_int, " Bells.", call. = FALSE)
+      }
+      if (self$savings - amount_int < 0) {
+        warning(  # can't withdraw more than you have so warn and take max
+          "Withdrew all savings: ", self$savings, " Bells.", call. = FALSE
+        )
+        self$savings <- 0
+      } else {  # otherwise subtract amount from your savings
+        self$savings <- self$savings - amount_int
+        invisible(self)
+      }
+    },
+    
+    # function to make loan payment from savings
+    loan_payment = function(amount = 0, full_amount = FALSE) {
+      if (self$loan == 0) {  # stop if the loan has already been paid in full
+        stop("You already finished paying your loan!", call. = FALSE)
+      }
+      amount_int <- as.integer(amount)  # round to nearest lowest integer
+      if (amount - amount_int > 0) {  # warning if rounding has occurred
+        warning("Payment rounded to ", amount_int, " Bells.", call. = FALSE)
+      }
+      if (full_amount == TRUE) {  # choose to pay with everything in savings
+        self$loan <- self$loan - self$savings  # reduce loan by savings amount
+        self$savings <- 0  # remove all savings
+      } else if (self$savings - amount_int < 0) {
+        warning(  # can't pay more than total savings, so warn and pay max
+          "Paid total amount from savings instead: ", self$savings, " Bells.",
+          call. = FALSE
+        )
+        self$loan <- self$loan - self$savings  # subtract total savings
+        self$savings <- 0  # all savings used for this repayment
+      } else if (self$loan - amount_int < 0) {
+        warning(  # can't pay more than remaining loan, warn and pay remaining
+          "Paid total remaining loan instead: ", self$loan, " Bells.",
+          call. = FALSE
+        )
+        self$loan <- 0  # loan paid in full
+        self$savings <- amount_int - self$loan  # excess back into savings
+      } else {  # otherwise just remove the amount from the savings and loan
+        self$savings <- self$savings - amount_int
+        self$loan <- self$loan - amount_int
+      }
+      if (self$loan == 0) {  # when the loan is totally cleared
+        cat(
+          emo::ji("smiley"),
+          "Sweet! I finally finished paying off my very last home loan!",
+          emo::ji("tada")
+        )
+      }
+      invisible(self)
+    },
+    
+    # Print method matches initialisation message
+    print = function(...) {
+      loan_formatted <- format(self$loan, big.mark = ",", scientific = FALSE)
+      savings_formatted <- format(
+        self$savings, big.mark = ",", scientific = FALSE
+      )
+      cat("Automatic Bell Dispenser (ABD)\n\n")
+      cat(emo::ji("bell"), "Loan Balance:", loan_formatted, "Bells\n")
+      cat(emo::ji("pig2"), "Savings Balance:", savings_formatted, "Bells\n\n")
+      cat(
+        "Please make a selection from the menu below\n\n",
+        emo::ji("house"), "loan_payment()\n",
+        emo::ji("arrow_up"), "deposit()\n",
+        emo::ji("arrow_down"), "withdrawal()"
+      )
+    }
+      
+  )
+)
+```
+</details>
+
+## Initialise
+
+Having defined the class, we have to initiliase a new instance. I"m going to call the object `account` because that sees pretty sensible.
+
+```{r initialise}
+account <- AutomaticBellDispenser$new()
+```
+
+Initialising the class triggers the printing of the current details and instuctions. This is what you see on the Automatic Bell Dispenser in the game when you start it up.
+
+## Make a deposit
+
+Now we can make a deposit to our account. Use `$` notation to say 'to the `account` object apply the `deposit` method'. In this case, the value supplied to `deposit` is the amount of Bells. You can check the status of the account by typing its name.
+
+```{r deposit}
+account$deposit(1000)
+account
+```
+
+Or, we can access the `savings` field directly from the `account` object:
+
+```{r savings}
+account$savings
+```
+
+So we now have savings of 1000 Bells!
+
+## Withdraw and pay loan
+
+We can also withdraw and make loan payments. You can chain these calls together.
+
+```{r withdraw-loan}
+account$withdrawal(200)$loan_payment(300)
+account
+```
+
+See how our savings went down to 500 Bells because we both withdrew money (200 Bells) and made a loan payment (300 Bells)?
+
 [^seabass]: _No. Wait. It's at least a C+. No. Wait. It's at least a C+. No. Wait._

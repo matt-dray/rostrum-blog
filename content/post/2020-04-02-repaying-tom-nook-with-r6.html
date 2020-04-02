@@ -51,6 +51,179 @@ draft: yes
 <h1>Demo</h1>
 <p>I’ll show how the thing works first and then talk through the code.</p>
 <p>There’s quite a lot of code to show. You can click to expand the entire code here, but I’ll step through each block to explain it’s purpose.</p>
+<pre class="r"><code># install.packages(R6) to get the package from CRAN
+library(R6)</code></pre>
+<details>
+<p><summary>Click for the full code defining the Automatic Bell Dispenser class</summary></p>
+<pre class="r"><code>AutomaticBellDispenser &lt;- R6Class(
+  &quot;AutomaticBellDispenser&quot;,
+  list(
+    
+    # set initial values
+    savings = 0,
+    loan = 2498000,  # final loan size
+    
+    # Startup message shows account status and options
+    initialize = function(...) {
+      loan_formatted &lt;- format(self$loan, big.mark = &quot;,&quot;, scientific = FALSE)
+      savings_formatted &lt;- format(  # separate with commas, prevent sci notation
+        self$savings, big.mark = &quot;,&quot;, scientific = FALSE
+      )
+      cat(&quot;Automatic Bell Dispenser (ABD)\n\n&quot;)  # cat() prints to console
+      cat(emo::ji(&quot;bell&quot;), &quot;Loan Balance:&quot;, loan_formatted, &quot;Bells\n&quot;)
+      cat(emo::ji(&quot;pig2&quot;), &quot;Savings Balance:&quot;, savings_formatted, &quot;Bells\n\n&quot;)
+      cat(
+        &quot;Please make a selection from the menu below\n\n&quot;,
+        emo::ji(&quot;house&quot;), &quot;loan_payment()\n&quot;,
+        emo::ji(&quot;arrow_up&quot;), &quot;deposit()\n&quot;,
+        emo::ji(&quot;arrow_down&quot;), &quot;withdrawal()&quot;
+      )
+    },
+    
+    # function to deposit an amount into savings
+    deposit = function(amount = 0) { 
+      amount_int &lt;- as.integer(amount)  # round to nearest lowest integer
+      if (amount - amount_int &gt; 0) {  # warning if rounding has occurred
+        warning(
+          &quot;Deposit rounded to &quot;, amount_int, &quot; Bells.&quot;,
+          call. = FALSE # prevents printing of the error-causing line
+        )
+      } else {
+        self$savings &lt;- self$savings + amount_int  # add amount to savings
+      }
+      invisible(self)
+    },
+    
+    # function to withdraw an amount from savings
+    withdrawal = function(amount = 0) {
+      amount_int &lt;- as.integer(amount)  # round to nearest lowest integer
+      if (amount - amount_int &gt; 0) {  # warning if rounding has occurred
+        warning(&quot;Withdrawal rounded to &quot;, amount_int, &quot; Bells.&quot;, call. = FALSE)
+      }
+      if (self$savings - amount_int &lt; 0) {
+        warning(  # can&#39;t withdraw more than you have so warn and take max
+          &quot;Withdrew all savings: &quot;, self$savings, &quot; Bells.&quot;, call. = FALSE
+        )
+        self$savings &lt;- 0
+      } else {  # otherwise subtract amount from your savings
+        self$savings &lt;- self$savings - amount_int
+        invisible(self)
+      }
+    },
+    
+    # function to make loan payment from savings
+    loan_payment = function(amount = 0, full_amount = FALSE) {
+      if (self$loan == 0) {  # stop if the loan has already been paid in full
+        stop(&quot;You already finished paying your loan!&quot;, call. = FALSE)
+      }
+      amount_int &lt;- as.integer(amount)  # round to nearest lowest integer
+      if (amount - amount_int &gt; 0) {  # warning if rounding has occurred
+        warning(&quot;Payment rounded to &quot;, amount_int, &quot; Bells.&quot;, call. = FALSE)
+      }
+      if (full_amount == TRUE) {  # choose to pay with everything in savings
+        self$loan &lt;- self$loan - self$savings  # reduce loan by savings amount
+        self$savings &lt;- 0  # remove all savings
+      } else if (self$savings - amount_int &lt; 0) {
+        warning(  # can&#39;t pay more than total savings, so warn and pay max
+          &quot;Paid total amount from savings instead: &quot;, self$savings, &quot; Bells.&quot;,
+          call. = FALSE
+        )
+        self$loan &lt;- self$loan - self$savings  # subtract total savings
+        self$savings &lt;- 0  # all savings used for this repayment
+      } else if (self$loan - amount_int &lt; 0) {
+        warning(  # can&#39;t pay more than remaining loan, warn and pay remaining
+          &quot;Paid total remaining loan instead: &quot;, self$loan, &quot; Bells.&quot;,
+          call. = FALSE
+        )
+        self$loan &lt;- 0  # loan paid in full
+        self$savings &lt;- amount_int - self$loan  # excess back into savings
+      } else {  # otherwise just remove the amount from the savings and loan
+        self$savings &lt;- self$savings - amount_int
+        self$loan &lt;- self$loan - amount_int
+      }
+      if (self$loan == 0) {  # when the loan is totally cleared
+        cat(
+          emo::ji(&quot;smiley&quot;),
+          &quot;Sweet! I finally finished paying off my very last home loan!&quot;,
+          emo::ji(&quot;tada&quot;)
+        )
+      }
+      invisible(self)
+    },
+    
+    # Print method matches initialisation message
+    print = function(...) {
+      loan_formatted &lt;- format(self$loan, big.mark = &quot;,&quot;, scientific = FALSE)
+      savings_formatted &lt;- format(
+        self$savings, big.mark = &quot;,&quot;, scientific = FALSE
+      )
+      cat(&quot;Automatic Bell Dispenser (ABD)\n\n&quot;)
+      cat(emo::ji(&quot;bell&quot;), &quot;Loan Balance:&quot;, loan_formatted, &quot;Bells\n&quot;)
+      cat(emo::ji(&quot;pig2&quot;), &quot;Savings Balance:&quot;, savings_formatted, &quot;Bells\n\n&quot;)
+      cat(
+        &quot;Please make a selection from the menu below\n\n&quot;,
+        emo::ji(&quot;house&quot;), &quot;loan_payment()\n&quot;,
+        emo::ji(&quot;arrow_up&quot;), &quot;deposit()\n&quot;,
+        emo::ji(&quot;arrow_down&quot;), &quot;withdrawal()&quot;
+      )
+    }
+      
+  )
+)</code></pre>
+</details>
+<div id="initialise" class="section level2">
+<h2>Initialise</h2>
+<p>Having defined the class, we have to initiliase a new instance. I&quot;m going to call the object <code>account</code> because that sees pretty sensible.</p>
+<pre class="r"><code>account &lt;- AutomaticBellDispenser$new()</code></pre>
+<pre><code>## Automatic Bell Dispenser (ABD)
+## 
+## 🔔 Loan Balance: 2,498,000 Bells
+## 🐖 Savings Balance: 0 Bells
+## 
+## Please make a selection from the menu below
+## 
+##  🏠 loan_payment()
+##  ⬆️ deposit()
+##  ⬇️ withdrawal()</code></pre>
+<p>Initialising the class triggers the printing of the current details and instuctions. This is what you see on the Automatic Bell Dispenser in the game when you start it up.</p>
+</div>
+<div id="make-a-deposit" class="section level2">
+<h2>Make a deposit</h2>
+<p>Now we can make a deposit to our account. Use <code>$</code> notation to say ‘to the <code>account</code> object apply the <code>deposit</code> method’. In this case, the value supplied to <code>deposit</code> is the amount of Bells. You can check the status of the account by typing its name.</p>
+<pre class="r"><code>account$deposit(1000)
+account</code></pre>
+<pre><code>## Automatic Bell Dispenser (ABD)
+## 
+## 🔔 Loan Balance: 2,498,000 Bells
+## 🐖 Savings Balance: 1,000 Bells
+## 
+## Please make a selection from the menu below
+## 
+##  🏠 loan_payment()
+##  ⬆️ deposit()
+##  ⬇️ withdrawal()</code></pre>
+<p>Or, we can access the <code>savings</code> field directly from the <code>account</code> object:</p>
+<pre class="r"><code>account$savings</code></pre>
+<pre><code>## [1] 1000</code></pre>
+<p>So we now have savings of 1000 Bells!</p>
+</div>
+<div id="withdraw-and-pay-loan" class="section level2">
+<h2>Withdraw and pay loan</h2>
+<p>We can also withdraw and make loan payments. You can chain these calls together.</p>
+<pre class="r"><code>account$withdrawal(200)$loan_payment(300)
+account</code></pre>
+<pre><code>## Automatic Bell Dispenser (ABD)
+## 
+## 🔔 Loan Balance: 2,497,700 Bells
+## 🐖 Savings Balance: 500 Bells
+## 
+## Please make a selection from the menu below
+## 
+##  🏠 loan_payment()
+##  ⬆️ deposit()
+##  ⬇️ withdrawal()</code></pre>
+<p>See how our savings went down to 500 Bells because we both withdrew money (200 Bells) and made a loan payment (300 Bells)?</p>
+</div>
 </div>
 <div class="footnotes">
 <hr />
