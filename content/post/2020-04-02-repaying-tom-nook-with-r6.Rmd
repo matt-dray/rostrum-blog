@@ -1,0 +1,62 @@
+---
+title: Repaying Tom Nook with R6
+author: Matt Dray
+date: '2020-04-02'
+slug: repaying-tom-nook-with-r6
+categories:
+  - code
+  - tutorial
+tags:
+  - r
+  - r6
+  - animal-crossing
+draft: yes
+---
+
+## tl;dr
+
+How would raccoon-dog capitalist Tom Nook accept home-loan payments if your Animal Crossing island only had access to R?
+
+I built a version of Animal Crossing's Automatic Bell Dispenser (an ATM) using the R6 class from Winston Chang's [{R6} package](https://r6.r-lib.org/). It lets you build classes of objects that can be modified in place (i.e. updated without overwriting), which is handy for the idea of a bank account. This is an extension of a question from Hadley Wickham's [Advanced R](https://adv-r.hadley.nz/r6.html) book.
+
+# I don't understand any of those words
+
+## Animal Crossing
+
+Animal Crossing is a Nintendo video-game franchise in which you, a human, arrive on an island and befriend its anthropomorphic animal villagers. It's pretty whlesome and incredibly chill. You catch insects and fish, design clothes, fill a museum with fossils, develop the infrastructure of the island and interact with other players.
+
+The latest version, New Horizons for the Nintendo Switch, was released at the perfect time for people seeking a getaway from government-enforced self-isolation. Where better?
+
+You know it's popular because the memes are strong.
+
+## Tom Nook
+
+Sounds stress-free right? Well, apart from catching the thousandth sea bass[^seabass] in a row while trying to collect a rare stringfish before the end of March, there's few troubles.
+
+There is, however, the looming spectre of a home loan given to you by Tom Nook.
+
+Tom Nook is a tanooki. Depending on who you ask, he's either a maniacal [rip-off merchant](https://www.vice.com/en_us/article/n7jyjd/tom-nook-ripping-you-off-animal-crossing-new-horizons-bells-to-usd), or a misunderstood chap who is, after all, offering you an interest-free loan with no collection plan.
+
+But you should pay him back, right? And if you do, he'll upgrade your place again with another interest-free loan. 
+
+## Automatic Bell Dispenser
+
+How do you pay off your home loan? The island's currency is Bells, which can be gained by selling fish or furniture, digging it from the ground, or doing tasks for other residents. You use an Automatic Bell Dispenser (ABD, think ATM) housed in resident services on the island to save and withdraw your cash, as well as pay your loan.
+
+## R6
+
+R is a really function-focused language. Pretty much everything involves writing a function to output an object.
+
+But there are other ways to do things. One is with object-oriented programmong (OOP), which are more common in other languages. here, you create an object that has a collection of values (fields) and functions (methods) that are defined by the class of the object. A class should be defined for some small unit of functionality.
+
+Crucially, the methods you call can modify fields 'in place'. This means you don't have to use assignment to overwite your object with a modified version, like `data <- data[, c("col_a", "col_b")]`. Instead, something like `object$some_method()` will directly alter the class's properties without assignment.
+
+A really intriguing and illustrative example is how Giora Simonchi's Castle of R, a text adventure game buit using {R6}. Here, classes are things like 'room' and 'door' that have varous properties and actions you can take on them. The properties and actions change as you progress, given factors like you rlocation and items you may be carrying.
+
+# Demo
+
+I'll show how the thing works first and then talk through the code.
+
+There's quite a lot of code to show. You can click to expand the entire code here, but I'll step through each block to explain it's purpose.
+
+[^seabass]: _No. Wait. It's at least a C+. No. Wait. It's at least a C+. No. Wait._
