@@ -1,83 +1,99 @@
 ---
-title: Repaying Tom Nook with R6
+title: Repaying Tom Nook with {R6}
 author: Matt Dray
-date: '2020-04-02'
+date: '2020-04-04'
 slug: repaying-tom-nook-with-r6
 categories:
   - code
   - tutorial
 tags:
+  - animal-crossing
+  - oop
   - r
   - r6
-  - animal-crossing
 draft: yes
 ---
 
+<div class="figure">
+<img src="/post/2020-04-02-repaying-tom-nook-with-r6_files/ac-flag2.jpg" alt="An Animal Crossing villager stands in front of the town flag, which has the R logo on it." width=100%/>
+<p class="caption">I assume the other villagers are happy with my choice of town flag.</p>
+</div>
+
 ## tl;dr
 
-How would raccoon-dog capitalist Tom Nook accept home-loan payments if your Animal Crossing island only had access to R?
+How would [capitalist raccoon-dog Tom Nook](https://animalcrossing.fandom.com/wiki/Tom_Nook){target='_blank'} simulate home-loan payments using R?[^ages]
 
-I built a version of Animal Crossing's Automatic Bell Dispenser (an ATM) using the R6 class from Winston Chang's [{R6} package](https://r6.r-lib.org/). It lets you build classes of objects that can be modified in place (i.e. updated without overwriting), which is handy for the idea of a bank account. This is an extension of a question from Hadley Wickham's [Advanced R](https://adv-r.hadley.nz/r6.html) book.
+I built a version of [Animal Crossing](https://en.wikipedia.org/wiki/Animal_Crossing){target='_blank'}'s [Automatic Bell Dispenser](https://animalcrossing.fandom.com/wiki/Bells){target='_blank'} (a kind of ATM/cashpoint) using [Winston Chang](https://twitter.com/winston_chang){target='_blank'}'s [{R6} package](https://r6.r-lib.org/){target='_blank'}, inspired by an exercise from [Hadley Wickham](http://hadley.nz/){target='_blank'}'s [Advanced R](https://adv-r.hadley.nz/r6.html){target='_blank'} book.
 
-# I don't understand any of those words
+# What do those words mean?
 
 ## Animal Crossing
 
-Animal Crossing is a Nintendo video-game franchise in which you, a human, arrive on an island and befriend its anthropomorphic animal villagers. It's pretty whlesome and incredibly chill. You catch insects and fish, design clothes, fill a museum with fossils, develop the infrastructure of the island and interact with other players.
-
-The latest version, New Horizons for the Nintendo Switch, was released at the perfect time for people seeking a getaway from government-enforced self-isolation. Where better?
-
-You know it's popular because the memes are strong.
+[Animal Crossing](https://en.wikipedia.org/wiki/Animal_Crossing){target='_blank'} is a wholesome Nintendo videogame franchise in which you arrive on an island and befriend [anthropomorphic animal villagers](https://animalcrossing.fandom.com/wiki/Villager_list_(New_Horizons){target='_blank'}). You can catch insects and fish, design clothes, fill a museum with fossils, develop the infrastructure of the island and interact with other players. It's pretty chill.[^isolation] The latest version, New Horizons, was recently released.[^nh]
 
 ## Tom Nook
 
-Sounds stress-free right? Well, apart from catching the thousandth sea bass[^seabass] in a row while trying to collect a rare stringfish before the end of March, there's few troubles.
-
-There is, however, the looming spectre of a home loan given to you by Tom Nook.
-
-Tom Nook is a tanooki. Depending on who you ask, he's either a maniacal [rip-off merchant](https://www.vice.com/en_us/article/n7jyjd/tom-nook-ripping-you-off-animal-crossing-new-horizons-bells-to-usd), or a misunderstood chap who is, after all, offering you an interest-free loan with no collection plan.
-
-But you should pay him back, right? And if you do, he'll upgrade your place again with another interest-free loan. 
+[Tom Nook](https://animalcrossing.fandom.com/wiki/Tom_Nook){target='_blank'} is a [tanuki](https://en.wikipedia.org/wiki/Japanese_raccoon_dog){target='_blank'}. Depending on who you ask, he's either a maniacal [rip-off merchant](https://www.vice.com/en_us/article/n7jyjd/tom-nook-ripping-you-off-animal-crossing-new-horizons-bells-to-usd){target='_blank'}, or [a misunderstood chap](https://www.theverge.com/2020/3/18/21184928/animal-crossing-new-horizons-nintendo-switch-interview-tom-nook){target='_blank'} who gives you several interest-free home loans with no obligation.
 
 ## Automatic Bell Dispenser
 
-How do you pay off your home loan? The island's currency is Bells, which can be gained by selling fish or furniture, digging it from the ground, or doing tasks for other residents. You use an Automatic Bell Dispenser (ABD, think ATM) housed in resident services on the island to save and withdraw your cash, as well as pay your loan.
+The in-game currency is [Bells](https://animalcrossing.fandom.com/wiki/Bells){target='_blank'}, which can be gained by selling things, helping residents or occasionally hitting a rock with a spade. You use an [Automatic Bell Dispenser](https://animalcrossing.fandom.com/wiki/Automatic_Bell_Dispenser){target='_blank'} (ABD, like an ATM) to deposit, withdraw and make loan payments.
 
 ## R6
 
-R is a really function-focused language. Pretty much everything involves writing a function to output an object.
+R is primarily a function-focused language. Mostly you write functions that output objects.
 
-But there are other ways to do things. One is with object-oriented programmong (OOP), which are more common in other languages. here, you create an object that has a collection of values (fields) and functions (methods) that are defined by the class of the object. A class should be defined for some small unit of functionality.
+But there's also Object-Oriented Programming (OOP). OOP brings together values (fields) and functions (methods) into classes. You can interact with a class via its methods, which may trigger further internal methods and update the values. You can also create subclasses that add to or amend the logic of its parent. 
 
-Crucially, the methods you call can modify fields 'in place'. This means you don't have to use assignment to overwite your object with a modified version, like `data <- data[, c("col_a", "col_b")]`. Instead, something like `object$some_method()` will directly alter the class's properties without assignment.
+You may have heard of the object-oriented systems S3 and S4 in R; R6 provides another, newer implementation of OOP. There are two important things to know about R6 objects. To simplify, they're:
 
-A really intriguing and illustrative example is how Giora Simonchi's Castle of R, a text adventure game buit using {R6}. Here, classes are things like 'room' and 'door' that have varous properties and actions you can take on them. The properties and actions change as you progress, given factors like you rlocation and items you may be carrying.
+* 'encapsulated', meaning that methods are applied to objects, like `object$some_method()`
+* 'mutable', meaning that fields are updated as you apply the methods
 
-# Demo
+I'm not going into depth about OOP and R6 here. For more, I recommend:
 
-I'll show how the thing works first and then talk through the code.
+* the [{R6} introduction vignette](https://r6.r-lib.org/articles/Introduction.html){target='_blank'} by [Winston Chang](https://twitter.com/winston_chang){target='_blank'}
+* a chapter in [Advanced R](https://adv-r.hadley.nz/oo.html){target='_blank'} by [Hadley Wickham](http://hadley.nz/){target='_blank'}[^ad-r-solutions]
+* the article '[How to explain OOP concepts to a 6-year-old](https://www.freecodecamp.org/news/object-oriented-programming-concepts-21bb035f7260/){target='_blank'}' by Alexander Petkov of [freeCodeCamp](https://www.freecodecamp.org/){target='_blank'}
 
-There's quite a lot of code to show. You can click to expand the entire code here, but I'll step through each block to explain it's purpose.
+A really intriguing and illustrative use-case of R6 is [Giora Simonchi](http://giorasimchoni.com/){target='_blank'}'s [Castle of R](http://giorasimchoni.com/2017/09/10/2017-09-10-you-re-in-a-room-the-castleofr-package/){target='_blank'}, which is a text adventure game for R(!). Here, classes are things like 'room' and 'door' that have specific properties and actions you can take on them. The properties are modified as you play, given your location, items you're carrying, etc.
 
-```{r library}
-# install.packages(R6) to get the package from CRAN
-library(R6)
-```
+# Demo {#demo}
 
-<details><summary>Click for the full code defining the Automatic Bell Dispenser class</summary>
+The R6 chapter of the Advanced R book has [an exercise](https://adv-r.hadley.nz/r6.html#exercises-44){target='_blank'} about building a bank account class.
+
+Inspired by this, I've built a class that mimics the functionality of an Automatic Bell Dispenser with some particular fields (`savings` and `loan` values) and methods (`deposit`, `withdraw` and `loan_payment` functions).[^optimised]
+
+<div class="figure">
+<img src="/post/2020-04-02-repaying-tom-nook-with-r6_files/ac-abd.jpg" alt="The user interface for the Automatic Bell Dispenser, with buttons to deposit, withdraw and pay the loan." width=100%/>
+<p class="caption">The Automatic Bell Dispenser interface. The grind is real.</p>
+</div>
+
+You can click below to expand the code, but it may be a lot to take in at once. Skip ahead to the next section to see examples of its use and then some explanations of specific bits of the code.
+
+<details><summary>Click to expand the full `AutomaticBellDispenser` class `r emo::ji("bell")`</summary>
 ```{r abd}
+# Load packages
+library(R6)  # install.packages("R6")
+library(emo)  # remotes::install_github("hadley/emo")
+
+# Build the class
 AutomaticBellDispenser <- R6Class(
-  "AutomaticBellDispenser",
+  "AutomaticBellDispenser",  # class name
   list(
     
-    # set initial values
-    savings = 0,
-    loan = 2498000,  # final loan size
+    # set initial values for fields
+    savings = 0,     # start from zero
+    loan = 2498000,  # loan size
     
-    # Startup message shows account status and options
+    # show on startup the account status and options
     initialize = function(...) {
-      loan_formatted <- format(self$loan, big.mark = ",", scientific = FALSE)
-      savings_formatted <- format(  # separate with commas, prevent sci notation
+      loan_formatted <- format(  # reformat the loan field value
+        self$loan,          # the 'loan' field from this class (i.e. 'itself')
+        big.mark = ",",     # format as '1,000' rather than '1000'
+        scientific = FALSE  # prevent 12000000 being displayed as '1.2e+07'
+      )
+      savings_formatted <- format(
         self$savings, big.mark = ",", scientific = FALSE
       )
       cat("Automatic Bell Dispenser (ABD)\n\n")  # cat() prints to console
@@ -87,63 +103,63 @@ AutomaticBellDispenser <- R6Class(
         "Please make a selection from the menu below\n\n",
         emo::ji("house"), "loan_payment()\n",
         emo::ji("arrow_up"), "deposit()\n",
-        emo::ji("arrow_down"), "withdrawal()"
+        emo::ji("arrow_down"), "withdraw()"
       )
     },
     
-    # function to deposit an amount into savings
-    deposit = function(amount = 0) { 
+    # method to deposit an amount into savings
+    deposit = function(amount = 0) {    # function takes an amount to deposit
       amount_int <- as.integer(amount)  # round to nearest lowest integer
-      if (amount - amount_int > 0) {  # warning if rounding has occurred
+      if (amount - amount_int > 0) {    # warning if rounding has occurred
         warning(
-          "Deposit rounded to ", amount_int, " Bells.",
+          "Deposit rounded to ", amount_int, " Bells.\n",
           call. = FALSE # prevents printing of the error-causing line
         )
       } else {
         self$savings <- self$savings + amount_int  # add amount to savings
       }
-      invisible(self)
+      invisible(self)  # return but don't print
     },
     
     # function to withdraw an amount from savings
-    withdrawal = function(amount = 0) {
+    withdraw = function(amount = 0) {
       amount_int <- as.integer(amount)  # round to nearest lowest integer
       if (amount - amount_int > 0) {  # warning if rounding has occurred
-        warning("Withdrawal rounded to ", amount_int, " Bells.", call. = FALSE)
+        warning("Withdrawal rounded to ", amount_int, " Bells.\n", call. = FALSE)
       }
       if (self$savings - amount_int < 0) {
         warning(  # can't withdraw more than you have so warn and take max
-          "Withdrew all savings: ", self$savings, " Bells.", call. = FALSE
+          "Withdrew all savings: ", self$savings, " Bells.\n", call. = FALSE
         )
         self$savings <- 0
       } else {  # otherwise subtract amount from your savings
         self$savings <- self$savings - amount_int
-        invisible(self)
       }
+      invisible(self)  # return but don't print
     },
     
     # function to make loan payment from savings
     loan_payment = function(amount = 0, full_amount = FALSE) {
       if (self$loan == 0) {  # stop if the loan has already been paid in full
-        stop("You already finished paying your loan!", call. = FALSE)
+        stop("You already finished paying your loan!\n", call. = FALSE)
       }
       amount_int <- as.integer(amount)  # round to nearest lowest integer
       if (amount - amount_int > 0) {  # warning if rounding has occurred
-        warning("Payment rounded to ", amount_int, " Bells.", call. = FALSE)
+        warning("Payment rounded to ", amount_int, " Bells.\n", call. = FALSE)
       }
       if (full_amount == TRUE) {  # choose to pay with everything in savings
         self$loan <- self$loan - self$savings  # reduce loan by savings amount
         self$savings <- 0  # remove all savings
       } else if (self$savings - amount_int < 0) {
         warning(  # can't pay more than total savings, so warn and pay max
-          "Paid total amount from savings instead: ", self$savings, " Bells.",
+          "Paid total amount from savings instead: ", self$savings, " Bells.\n",
           call. = FALSE
         )
         self$loan <- self$loan - self$savings  # subtract total savings
         self$savings <- 0  # all savings used for this repayment
       } else if (self$loan - amount_int < 0) {
         warning(  # can't pay more than remaining loan, warn and pay remaining
-          "Paid total remaining loan instead: ", self$loan, " Bells.",
+          "Paid total remaining loan instead: ", self$loan, " Bells.\n",
           call. = FALSE
         )
         self$loan <- 0  # loan paid in full
@@ -156,13 +172,14 @@ AutomaticBellDispenser <- R6Class(
         cat(
           emo::ji("smiley"),
           "Sweet! I finally finished paying off my very last home loan!",
-          emo::ji("tada")
+          emo::ji("tada"), "\n\n"
         )
       }
-      invisible(self)
+      invisible(self)  # return but don't print
     },
     
-    # Print method matches initialisation message
+    # Print method wen calling the name of an object with this class
+    # (Content matches the initialise method)
     print = function(...) {
       loan_formatted <- format(self$loan, big.mark = ",", scientific = FALSE)
       savings_formatted <- format(
@@ -175,7 +192,7 @@ AutomaticBellDispenser <- R6Class(
         "Please make a selection from the menu below\n\n",
         emo::ji("house"), "loan_payment()\n",
         emo::ji("arrow_up"), "deposit()\n",
-        emo::ji("arrow_down"), "withdrawal()"
+        emo::ji("arrow_down"), "withdraw()"
       )
     }
       
@@ -184,42 +201,199 @@ AutomaticBellDispenser <- R6Class(
 ```
 </details>
 
-## Initialise
+## Use the class
 
-Having defined the class, we have to initiliase a new instance. I"m going to call the object `account` because that sees pretty sensible.
+I'll explain below how to:
+
+* start a new instance of the class
+* use the `deposit()` method to increase the value of the `savings` field
+* use the `withdraw()` method to decrease the `savings` field
+* use the `pay_loan()` method to decrease the value of the `loan` field
+
+### Initialise
+
+You can start, or 'initialise', an instance of the class by calling `new()` on the class name and assigning it. I've called my object `account`.
 
 ```{r initialise}
 account <- AutomaticBellDispenser$new()
 ```
 
-Initialising the class triggers the printing of the current details and instuctions. This is what you see on the Automatic Bell Dispenser in the game when you start it up.
+Initialising the class also triggers the printing of the current account details and instructions. This mimics the interface you see on the Automatic Bell Dispenser in-game.
 
-## Make a deposit
+In this case, you can see that we have zero savings, but a multi-million loan to pay off. This value represents the final loan amount that Nook sets you in the game.[^fish-price]
 
-Now we can make a deposit to our account. Use `$` notation to say 'to the `account` object apply the `deposit` method'. In this case, the value supplied to `deposit` is the amount of Bells. You can check the status of the account by typing its name.
+### Make a deposit
+
+Now we can make a deposit to our account. Use `$` notation to say 'to the `account` object apply the `deposit` method'. In this case, the value supplied to `deposit` is the amount of Bells. 
 
 ```{r deposit}
 account$deposit(1000)
-account
+account  # check status of account
 ```
 
-Or, we can access the `savings` field directly from the `account` object:
+You could also access the updated `savings` field directly from the `account` object:
 
 ```{r savings}
 account$savings
 ```
 
-So we now have savings of 1000 Bells!
+So we now have savings of 1000 Bells! Of course, I just made up that value. I could add as much as I want. Use your imagination.
 
-## Withdraw and pay loan
+In game, you can sell items and receive gifts to get money in your pocket, which you can then add to your savings. I haven't created the concept of 'pockets' in this demo, but you could create a `pocket` class. You could also create a `fish` class with subclasses for each species, including the trade value.
 
-We can also withdraw and make loan payments. You can chain these calls together.
+### Withdraw and pay loan
+
+We can also withdraw money and make loan payments. You can chain method calls together with `$` between them, so we could withdraw 200 Bells and make a loan payment of 300 Bells at once.
 
 ```{r withdraw-loan}
-account$withdrawal(200)$loan_payment(300)
+account$withdraw(200)$loan_payment(300)
 account
 ```
 
-See how our savings went down to 500 Bells because we both withdrew money (200 Bells) and made a loan payment (300 Bells)?
+So the loan amount was reduced by 300 Bells, but our savings reduced by 500 Bells (200 + 300 Bells).
 
-[^seabass]: _No. Wait. It's at least a C+. No. Wait. It's at least a C+. No. Wait._
+Important point: notice how we didn't have to overwrite the `account` object to update the values? Remember that this is because the class is _mutable_.
+
+As in the game, you can also choose to transfer everything in your savings by providing `full_amount = TRUE` rather than a value amount.
+
+```{r full-amount}
+account$loan_payment(full_amount = TRUE)
+account
+```
+
+So the loan balance has gone down by a further 500 bells, which was the remainder of our savings.
+
+### Messages
+
+There are some limits to the Automatic Bell Dispenser system, like there's no overdraft and the outstanding loan amount can't be negative. I built a few warnings and errors into the class to handle these situation. For example:
+
+* warning -- you can only pay in whole Bells (decimal amounts are rounded down to the nearest whole number)
+* warning -- you can't remove more savings than you have (defaults to removing the maximum amount you have in savings)
+* warning -- you can't pay off more than the total loan amount (defaults to paying total remaining loan)
+* error -- once you pay off your loan, you can't make more payments!
+
+You'll also get a celebratory message when the loan reaches zero.
+
+So, for example, here's what happens if you try to pay off the loan with more savings than you have and if you also try to pay in decimal Bells:
+
+```{r warnings}
+account$deposit(1000)$loan_payment(1001.10)
+```
+
+We got two warnings:
+
+1. The decimal value was rounded down to the nearest integer
+1. We tried to pay off 1001 Bells, but only had a total of 1000 Bells
+
+The result is that our savings are empty and the loan is 1000 Bells lighter.
+
+```{r}
+account$savings
+account$loan
+```
+
+## Build the class
+
+I wanted to point out a few elements of the code that went into building the class. You can refer back to the full code in [the expandable section above](#demo).
+
+First, the basic structure is a call to `R6::R6Class()`, which contains the name of the class and a list of values and fields.
+
+```{r r6-structure, eval=FALSE}
+AutomaticBellDispenser <- R6Class(  # call the function, assign a name
+  "AutomaticBellDispenser",  # class name
+  list(
+    # truncated (fields and methods go here)
+  )
+)
+```
+
+There are two fields in this class, which are put inside the `list()` with some starting values:
+
+```{r r6-fields, eval=FALSE}
+#...
+  # set initial values for fields
+  savings = 0,     # start from zero
+  loan = 2498000,  # loan size
+#...
+```
+
+There's an `initialize()` method that I've used to print the Automatic Bell Dispenser display when a new instance of the class is started. It reformats values and uses emoji for the lols.
+
+```{r r6-initialize, eval=FALSE}
+#...
+  # show on startup the account status and options
+  initialize = function(...) {
+    loan_formatted <- format(  # reformat the loan field value
+      self$loan,          # the 'loan' field from this class (i.e. 'itself')
+      big.mark = ",",     # format as '1,000' rather than '1000'
+      scientific = FALSE  # prevent 12000000 being displayed as '1.2e+07'
+    )
+    savings_formatted <- format(
+      self$savings, big.mark = ",", scientific = FALSE
+    )
+    cat("Automatic Bell Dispenser (ABD)\n\n")  # cat() prints to console
+    cat(emo::ji("bell"), "Loan Balance:", loan_formatted, "Bells\n")
+    cat(emo::ji("pig2"), "Savings Balance:", savings_formatted, "Bells\n\n")
+    cat(
+      "Please make a selection from the menu below\n\n",
+      emo::ji("house"), "loan_payment()\n",
+      emo::ji("arrow_up"), "deposit()\n",
+      emo::ji("arrow_down"), "withdraw()"
+    )
+  },
+#...
+```
+
+The same code is used in the `print()` method too, which means that these details will be printed whenever you call your object.
+
+The methods for `deposit()`, `withdraw()` and `loan_payment()` look similar, but have slightly different behaviour. The simplest is `deposit()`, which makes the input an integer and warns the user if a decimal value has been used, then adds the amount to the `savings` field.
+
+```{r r6-deposit, eval=FALSE}
+#...
+  deposit = function(amount = 0) {    # function takes an amount to deposit
+    amount_int <- as.integer(amount)  # round to nearest lowest integer
+    if (amount - amount_int > 0) {    # warning if rounding has occurred
+      warning(
+        "Deposit rounded to ", amount_int, " Bells.\n",
+        call. = FALSE # prevents printing of the error-causing line
+      )
+    } else {
+      self$savings <- self$savings + amount_int  # add amount to savings
+    }
+    invisible(self)  # return but don't print
+  }
+#...
+```
+
+Note how the field values are accessed with `self$field_name`. We also return `self` at the end, but it's wrapped in `invisible()` so it updates the field without printing.
+
+# What now, squirt?
+
+So now you know how I've been spending my time during this period of enforced isolation: playing Animal Crossing, messing about with R or, most importantly, messing around with Animal Crossing in R.
+
+While this use of {R6} has been totally frivolous, it's helped me understand OOP a bit better and get more of an insight into how R works.
+
+I recommend you take a look at the Advanced R book, which is [online for free](https://adv-r.hadley.nz/) or can be [purchased](https://www.crcpress.com/Advanced-R-Second-Edition/Wickham/p/book/9780815384571),[^sponsor] for a better understanding of OOP and its implementations in R.
+
+I also recommend getting hold of Animal Crossing: New Horizons. Just be wary of that racoon guy...
+
+<div class="figure">
+<img src="/post/2020-04-02-repaying-tom-nook-with-r6_files/ac-tarantula.jpg" alt="The pocket interface in Animal Crossing, showing all available space filled with tarantulas." width=100%/>
+<p class="caption">Tip: the lucrative Tarantula Island will help you satiate Nook's thirst for Bells.</p>
+</div>
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+paste("Last updated", Sys.Date())
+sessioninfo::session_info()
+```
+</details>
+
+[^ages]: Literally the most important question in 2020.
+[^nh]: My island has peaches and lillies. Current villagers are Biff, Renee, Midge, Al and Patty.
+[^isolation]: Perhaps [a literal life-saver](https://www.teenvogue.com/story/animal-crossing-new-horizons-comfort-coronavirus-pandemic){target='_blank'} in these times of self-isolation. 
+[^ad-r-solutions]: Spoiler alert: there's an online book of [solutions to the questions](https://advanced-r-solutions.rbind.io/index.html){target='_blank'} by Malte Grosser, Henning Bumann and Hadley Wickham.
+[^optimised]: I don't claim that this is an optimal approach, nor is it fully tested, but it works! Tell me how to improve it.
+[^fish-price]: Impressive, bearing in mind that the ubiquitous Sea Bass (_no, wait, more like a C+_) has a sale price of only 400 Bells.
+[^sponsor]: None of my posts are sponsored, but I _will_ accept payments in the form of Bells.
