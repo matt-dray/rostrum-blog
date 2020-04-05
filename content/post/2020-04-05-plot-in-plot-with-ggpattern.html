@@ -1,0 +1,125 @@
+---
+title: Plotception with {ggpattern}
+author: Matt Dray
+date: '2020-04-05'
+slug: yo-dawg
+categories:
+  - code
+  - data-viz
+tags:
+  - ggpattern
+  - r
+---
+
+
+
+<div id="yo-dawg" class="section level1">
+<h1>Yo dawg</h1>
+<p>Followers of this blog might remember <a href="https://www.rostrum.blog/2018/05/25/cloud-pie/">the unveiling of <code>cloud_pie()</code></a>, the greatest new visualisation technique of the 21st Century.</p>
+<p>Luckily, R-package machine <a href="https://coolbutuseless.github.io/">mikefc</a> of <a href="https://twitter.com/coolbutuseless">@coolbutuseless</a> has released <a href="https://coolbutuseless.github.io/package/ggpattern/">{ggpattern}</a>, which lets you image- or pattern-fill the bars of your {ggplot2} plot. Most usefully <a href="https://twitter.com/coolbutuseless/status/1245099072756895746?s=20">with pictures of kittens or Bill Murray</a>.</p>
+<p>This has opened the door to yet another ground-breaking viz. The secret yet obvious real purpose of {ggpattern} is to <a href="https://twitter.com/mattdray/status/1245376176564187141?s=20"><em>put plots inside your plots</em></a>.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>Voilá.</p>
+<div class="figure">
+<img src="/post/2020-04-05-plot-in-plot-with-ggpattern_files/ggpattern_plot.png" alt="A bar lot where each bar is also a plot." width='100%'/>
+<p class="caption">
+Shield the eyes of any younglings.
+</p>
+</div>
+<p>Glorious.</p>
+<p>It may be too much to take in; let me explain. The main plot is of car weight by the number of cylinders from the mtcars dataset.</p>
+<p>But lo, <em>each bar is itself a plot</em> of weight by gears for the number of cylinders on the x-axis of the main plot.</p>
+<p>Please clean your blown mind from the ceilling before you leave, thank you.</p>
+</div>
+<div id="the-secret" class="section level1">
+<h1>The secret</h1>
+<details>
+<p><summary>Expand for the full, hacky, non-reproducible code used to create this masterpiece.</summary></p>
+<pre class="r"><code># Plot weight by cylinders, with weight by gear inside
+# Using {ggpattern} by @coolbutuseless
+# https://coolbutuseless.github.io/package/ggpattern/
+
+# Load packages
+library(dplyr)
+library(purrr)
+library(tidyr)
+library(ggplot2)
+library(ggpattern)
+
+# Prepare mean wt per cyl with filenames for gear-wt plots
+cyl_weights &lt;- mtcars %&gt;% group_by(cyl) %&gt;% summarise(mean_wt = mean(wt))
+
+# See the pixel dimensions of the bars
+# This will depend on the size of your plot; I just used the default 7 x 7
+dummy_plot &lt;- ggplot(cyl_weights, aes(as.character(cyl), mean_wt)) +
+  geom_col_pattern(pattern = &quot;placeholder&quot;, pattern_type = &quot;dummy&quot;) +
+  labs(
+    title = &quot;Weight by gears by weight by cylinders&quot;,
+    caption = &quot;Thanks to {ggpattern} by @coolbutuseless&quot;,
+    x = &quot;Cylinders&quot;, y = &quot;Weight&quot;
+  ) +
+  theme_grey(base_size = 15)
+
+# Save the dummy plot
+ggsave(&quot;~/Desktop/dummy_plot.png&quot;, dummy_plot)  # defaults to 7 x 7 output</code></pre>
+<p><img src="/post/2020-04-05-plot-in-plot-with-ggpattern_files/dummy_plot.png" alt="Subplot of weight by gears for 4 cylinders." width='50%'/></p>
+<pre class="r"><code># Plot of mean weight by gear for each cyl
+sub_plots &lt;- mtcars %&gt;% 
+  group_by(cyl) %&gt;% nest() %&gt;% ungroup() %&gt;%  # listcol by cyl
+  mutate(
+    data_mean = map(data, ~group_by(., gear) %&gt;% summarise(mean_wt = mean(wt))),
+    plot = map(  # listcol of plots for each cyl
+      data_mean,
+      ~ggplot(., aes(as.character(gear), mean_wt)) +
+        labs(title = &quot;Weight by gears&quot;, x = &quot;Gears&quot;, y = &quot;Weight&quot;) +
+        geom_col() +
+        theme_grey(base_size = 60)  # trial and error until it looked okay
+    ),
+    filename = paste0(cyl, &quot;_cyl.png&quot;)  # unique filename based on cyl value
+  ) %&gt;% 
+  arrange(cyl) %&gt;%   # in order of cy number
+  mutate(  # pixel values manually added from looking at the dummy plot output!
+    width = 141 * 0.084666667,  # conversion from pixels to mm given 300 dpi
+    height = c(261, 357, 458) * 0.084666667
+  ) %&gt;% 
+  select(filename, plot, height, width)
+
+# Save the sub-plots as separate files wth provided dimensions
+# These will be read into the main plot
+pwalk(sub_plots, ggsave, path = &quot;~/Desktop/&quot;)</code></pre>
+<p>The subplots look like this (not to scale).</p>
+<p><img src="/post/2020-04-05-plot-in-plot-with-ggpattern_files/4_cyl.png" alt="Subplot of weight by gears for 4 cylinders." width='33%'/><img src="/post/2020-04-05-plot-in-plot-with-ggpattern_files/6_cyl.png" alt="Subplot of weight by gears for 6 cylinders." width='33%'/><img src="/post/2020-04-05-plot-in-plot-with-ggpattern_files/8_cyl.png" alt="Subplot of weight by gears for 8 cylinders." width='33%'/></p>
+<pre class="r"><code># Plot weight by cylinders, with weight by gear inside
+main_plot &lt;- cyl_weights %&gt;% 
+  mutate(  # add filepaths for where to find the saved subplots
+    filename = case_when(
+      cyl == 4 ~ &quot;~/Desktop/4_cyl.png&quot;,
+      cyl == 6 ~ &quot;~/Desktop/6_cyl.png&quot;,
+      cyl == 8 ~ &quot;~/Desktop/8_cyl.png&quot;,
+    )
+  ) %&gt;% 
+  ggplot(aes(as.character(cyl), mean_wt)) +
+  geom_col_pattern(
+    aes(pattern_filename = I(filename)),
+    pattern = &quot;image&quot;,
+    pattern_type = &quot;squish&quot;
+  ) +
+  labs(
+    title = &quot;Weight by gears by weight by cylinders&quot;,
+    caption = &quot;Thanks to {ggpattern} by @coolbutuseless&quot;,
+    x = &quot;Cylinders&quot;, y = &quot;Weight&quot;
+  ) +
+  theme_grey(base_size = 15)
+
+# Save plot
+ggsave(&quot;~/Desktop/ggpattern_plot.png&quot;, main_plot)  # default 7 x 7 output</code></pre>
+</details>
+<p>In short, you can use arguments <code>pattern = &quot;placeholder&quot;</code> and <code>pattern_type = &quot;dummy&quot;</code> to <code>geom_col_pattern()</code> to produce a plot containing pixel dimensions for each bar.</p>
+<p>From there, you can create plots that match those dimensions. Then you can recreate your plot but this time use argument <code>pattern = &quot;image&quot;</code> and provide the filepaths as an <code>aes()</code>thetic.</p>
+<p><em>So efficient.</em> Bless you, <a href="https://twitter.com/coolbutuseless">@coolbutuseless</a>.</p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p><a href="https://twitter.com/mattdray/status/1245441179673661441?s=20">It can’t be chartjunk if it’s simply more charts</a>, he said, posting on April 1st.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+</ol>
+</div>
