@@ -1,0 +1,249 @@
+---
+title: Owning the shame of my old R code
+author: Matt Dray
+date: '2020-04-17'
+slug: r-self-shame
+categories:
+  - code
+tags:
+  - functions
+  - r
+  - reproducibility
+draft: yes
+---
+
+<div class="figure">
+<img src="/post/2020-04-09-self-shame-and-r-code_files/brehm-1895-hare.jpg" alt="Line drawing of two hares, one of which is standing on its hind legs." width="75%"/>
+<p class="caption">Bemusement (all images from [Brehm's Life of Animals, 1895](https://archive.org/details/brehmslifeofanim00breh/page/n8/mode/2up))</p>
+</div>
+
+# tl;dr
+
+In which I shudder at my past-self's R scripts. Learnings: don't use `file.choose()`, `setwd()` and `attach()`; structure your projects sensibly; write functions instead of copy-pasting code.
+
+# A startling discovery
+
+I dug up a time capsule from a decade ago. It contained poorly constructed R code. Twist: it was me all along.
+
+Reading these scripts brought the sweet nostalgia of the vanilla R GUI running on my [precious white MacBook](https://en.wikipedia.org/wiki/MacBook_(2006%E2%80%932012)). At the time I was using R as an interactive calculator, basically
+
+What nuggets of pain did I unearth? Past-Matthew seemed to like:
+
+1. `file.choose()` and `setwd()` for non-reproducible [file locations](#files)
+1. The [`attach()`](#attach) function for basically hiding his data and forgetting it exists
+1. Working in [the same R workspace](#env) at all times regardless of context
+1. [Repeating code](#repeat) over and over and over and over and
+
+This is a learning moment for past-Matthew. Read on for problems and solutions.
+
+<div class="figure">
+<img src="/post/2020-04-09-self-shame-and-r-code_files/brehm-1895-otter.jpg" alt="Line drawing of an otter in agony with its paw trapped in some fishing tackle." width="75%"/>
+<p class="caption">Agony</p>
+
+# 1. Falling foul of a file fail {#files}
+
+Can't remember where a file is? Don't want long filepaths cluttering your scripts? Nevermind! Past-Matthew was using `file.choose()` to open the file explorer to navigate to the correct file.
+
+```{r file-choose, eval=FALSE}
+df <- read.csv(file.choose())
+```
+
+But how can anyone reading your script (including you) know what file you actually read in? It's not recorded in your script. You can't re-run this code in without that information.
+
+Solutions: 
+
+* good project-folder structure that puts all the elements of your analysis -- data, scripts, outputs -- all in one place so its portable for other users
+* relative filepaths that start from your project folder, so you can use the machine-agnostic paths like `data/cool-data.csv` rather `path/specific/to/my/machine/data/cool-data.csv`
+
+One specific helper is [RStudio Projects](https://support.rstudio.com/hc/en-us/articles/200526207-Using-Projects), which encourages good structure and has the bonus of relative file paths, which start from the diretory containing the .Rproj file. 
+
+[The {here} package](https://here.r-lib.org/) by [Kirill Müller](https://twitter.com/krlmlr) can also help with relative filepaths. `here()` will find a file based on the perceived 'home' for the project. You can also set it manually by placing a hidden `.here` file with `set_here()`.
+
+```{r here, eval=FALSE}
+df <- read.csv(here("data", "cool-data.csv"))
+```
+
+## Justified arson
+
+You might be wondering why I haven't mentioned `setwd()` as a solution here. It's because [Jenny Bryan](https://jennybryan.org/) will [set your computer on fire if you do it](https://www.tidyverse.org/blog/2017/12/workflow-vs-script/).
+
+But of course past-Matthew did this. He would use `setwd()` to point to where the project was housed locally:[^melt]
+
+```{r setwd, eval=FALSE}
+setwd("/Users/Matthew//local/path/to/project/")
+```
+
+So filepaths thereafter to look more like this:
+
+```{r setwd-read, eval=FALSE}
+df <- read.csv("data/some_file.csv")
+```
+
+What's the problem? The bit in `setwd()` is not reproducible -- it's the location on a particular machine only!
+
+<div class="figure">
+<img src="/post/2020-04-09-self-shame-and-r-code_files/brehm-1895-mouse.jpg" alt="Line drawing of two mice that look like they're laughing." width="75%"/>
+<p class="caption">Mirth</p>
+
+# 2. Getting too attached {#attach}
+
+This problem begins with a question: how does R know where to look for a variable?
+
+Here's three ways to calculate Pokémon body mass index by reference to variables in the data set:
+
+```{r df-ref}
+df <- suppressMessages(readr::read_csv(
+  "https://raw.githubusercontent.com/mwdray/datasets/master/pokemon_go_captures.csv",
+))
+
+mean(df$weight_kg / df$height_m ^ 2)  # dollar notation
+mean(df[["weight_kg"]] / df[["height_m"]] ^ 2)  # square brackets
+with(df, mean(weight_kg / height_m ^ 2))  # with() function
+```
+
+So each specifies the data frame object where R should look for the named variables. Which is why the following won't work:
+
+```{r no-attach-calc, eval=FALSE}
+mean(weight_kg / height_m ^ 2)
+```
+
+```
+## Error in mean(height_m/weight_kg) : object 'weight_kg' not found
+```
+
+R is actually searching a few places for those variables before returning the error. It starts with variables you've created in the global environment and then moves onto base R packages.
+
+```{r search}
+search()
+```
+
+Past-Matthew was using an approach he was taught[^rbook], but is frowned upon: you can add your data frame to the search with `attach()`.
+
+```{r attach-search}
+attach(df)
+search()  # now 'df' is in the search
+```
+
+The following expression can now be calculated because R can find the variable names in the attached `data` object.
+
+```{r attach-calc}
+mean(weight_kg / height_m ^ 2)
+```
+
+So we never need to refer to the data frame name at all. Wow, how can that be bad?
+
+Consider a data set with column names that match our original:
+
+```{r}
+df2 <- df[species == "caterpie", ]
+attach(df2)
+```
+
+You might be able to guess the problem: R will get variables from `data2` first, since it was the most recently attached.
+
+Bad news: this means the code we wrote earlier will get a different result.
+
+```{r}
+mean(weight_kg / height_m ^ 2)
+```
+
+This has serious implications for reproducibility and the confidence you can have in your results.[^inferno]
+
+Pro tip: if you do ever use `attach()` (don't), you'll want to make sure you `detach()`.
+
+```{r}
+detach(df)
+detach(df2)
+```
+
+<div class="figure">
+<img src="/post/2020-04-09-self-shame-and-r-code_files/brehm-1895-lemur.jpg" alt="Line drawing of a lemur in a aggressive posture." width="75%"/>
+<p class="caption">Scorn</p>
+</div>
+
+# 3. Polluting the environment {#env}
+
+Past-Matthew clearly executed different projects and scripts in the same running instance of R. The potential for confusion and error is high in this scenario. Which object was generated from which script? Who knows?
+
+I'm also certain that past-Matthew's workspace was being saved at the end of each session, meaning all that trash would come back next time he fired up R.
+
+So confused was he that he ran strange lines like the following, which would unload a package beause of a conflict with a package that might have been loaded from elsewhere. 
+
+```{r detach-pkg, eval=FALSE}
+detach("package:nlme")  # conflicts with lme4
+```
+
+Unecessary and odd.
+
+My current working practice is to treat everything in my environemnt with contempt. I regularly restart R and rebuild things from scratch to have confidence that my script does what I think it does and to stop interference from older objects that are clogging up my environment.
+
+A classic piece of advice these days is to change the defualt behaviour of RStudio to prevent yoru workspace being saved. That way you can start afresh whenever you open R.
+
+To do this, untick 'Restore .Rdata on startup' and set 'Save workspace to .RData on exit' to 'Never' in Tools > Global Options > General > Basic > Workspace.
+
+<div class="figure">
+<img src="/post/2020-04-09-self-shame-and-r-code_files/brehm-1895-gopher.jpg" alt="Line drawing of two gophers, one side-on and one with its face popping up from a hole." width="75%"/>
+<p class="caption">Disgust</p>
+</div>
+
+# 4. There's a function for that {#repeat}
+
+Turns out past-Matthew repeated loads of code because functions looked too much like Real Programming and were therefore hard.
+
+So this sort of thing was pretty common in past-Matthew's scripts:[^semi] 
+
+```{r repetition}
+sub_koffing <- subset(df, species == "koffing")
+mean_koffing <- round(mean(sub_koffing[["weight_kg"]]), 2)
+
+sub_paras <- subset(df, species == "paras")
+mean_paras <- round(mean(sub_paras[["weight_kg"]]), 2)
+
+sub_geodude <- subset(df, species == "geodude")
+mean_geodude <- round(mean(sub_koffing[["weight_kg"]]), 2)
+
+mean_koffing; mean_paras; mean_geodude
+```
+
+You know this is bad news -- copy-pasting can lead to mistakes. See how two of those outputs are suspiciously similar? Oops.[^rock]
+
+Past-Matthew just didn't know how to code functions. But functions let you write the meat of the code just once, eliminating the copy-paste error. You can then loop over the variables of interest to get your results.
+
+```{r mean-fn}
+# Function to generate the mean of a variable
+# given a species name
+get_sp_mean <- function(sp, var = "weight_kg", dp = 2) {
+  
+  sub_sp <- subset(df, species == sp)
+  mean_sp <- round(mean(sub_sp[[var]]), dp)
+  return(mean_sp)
+  
+}
+
+# Create a named vector to iterate over
+species <- c("paras", "koffing", "weedle")
+names(species) <- species
+
+# Iterate over the vector to apply the function
+purrr::map(species, get_sp_mean)
+```
+
+_Friendship ended with code repetition. Now bespoke functions and {purrr} are my best friends._
+
+<div class="figure">
+<img src="/post/2020-04-09-self-shame-and-r-code_files/brehm-1895-loris.jpg" alt="Line drawing of la loris staring into the foreground." width="75%"/>
+<p class="caption">Empathy</p>
+</div>
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^melt]: My darling white plastic MacBook would have melted horribly if set on fire.
+[^rbook]: I disagree with Crawley that `attach()` 'makes the code easier to understand for beginners', which he says in section 2.14.2 of the second edition of his [R Book](https://www.wiley.com/en-gb/The+R+Book%2C+2nd+Edition-p-9780470973929), especially since this section also says 'avoid using attach wherever possible'.
+[^semi]: Note past-Matthew's use of semi-colons, which I never see anyone use (including present-Matthew).
+[^rock]: Especially because Geodude is made of rock and Koffing is basically just made of gas.
+[^inferno]: The 'search list shuffle' danger of `attach()` is also referenced in Circle 8.1.35 of [The R Inferno](https://www.burns-stat.com/pages/Tutor/R_inferno.pdf) by Patrick Burns.

@@ -1,0 +1,256 @@
+---
+title: Owning the shame of my old R code
+author: Matt Dray
+date: '2020-04-17'
+slug: r-self-shame
+categories:
+  - code
+tags:
+  - functions
+  - r
+  - reproducibility
+draft: yes
+---
+
+
+
+<div class="figure">
+<img src="/post/2020-04-09-self-shame-and-r-code_files/brehm-1895-hare.jpg" alt="Line drawing of two hares, one of which is standing on its hind legs." width="75%"/>
+<p class="caption">
+Bemusement (all images from <a href="https://archive.org/details/brehmslifeofanim00breh/page/n8/mode/2up">Brehm’s Life of Animals, 1895</a>)
+</p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>In which I shudder at my past-self’s R scripts. Learnings: don’t use <code>file.choose()</code>, <code>setwd()</code> and <code>attach()</code>; structure your projects sensibly; write functions instead of copy-pasting code.</p>
+</div>
+<div id="a-startling-discovery" class="section level1">
+<h1>A startling discovery</h1>
+<p>I dug up a time capsule from a decade ago. It contained poorly constructed R code. Twist: it was me all along.</p>
+<p>Reading these scripts brought the sweet nostalgia of the vanilla R GUI running on my <a href="https://en.wikipedia.org/wiki/MacBook_(2006%E2%80%932012)">precious white MacBook</a>. At the time I was using R as an interactive calculator, basically</p>
+<p>What nuggets of pain did I unearth? Past-Matthew seemed to like:</p>
+<ol style="list-style-type: decimal">
+<li><code>file.choose()</code> and <code>setwd()</code> for non-reproducible <a href="#files">file locations</a></li>
+<li>The <a href="#attach"><code>attach()</code></a> function for basically hiding his data and forgetting it exists</li>
+<li>Working in <a href="#env">the same R workspace</a> at all times regardless of context</li>
+<li><a href="#repeat">Repeating code</a> over and over and over and over and</li>
+</ol>
+<p>This is a learning moment for past-Matthew. Read on for problems and solutions.</p>
+<div class="figure">
+<img src="/post/2020-04-09-self-shame-and-r-code_files/brehm-1895-otter.jpg" alt="Line drawing of an otter in agony with its paw trapped in some fishing tackle." width="75%"/>
+<p class="caption">
+Agony
+</p>
+</div>
+<div id="files" class="section level1">
+<h1>1. Falling foul of a file fail</h1>
+<p>Can’t remember where a file is? Don’t want long filepaths cluttering your scripts? Nevermind! Past-Matthew was using <code>file.choose()</code> to open the file explorer to navigate to the correct file.</p>
+<pre class="r"><code>df &lt;- read.csv(file.choose())</code></pre>
+<p>But how can anyone reading your script (including you) know what file you actually read in? It’s not recorded in your script. You can’t re-run this code in without that information.</p>
+<p>Solutions:</p>
+<ul>
+<li>good project-folder structure that puts all the elements of your analysis – data, scripts, outputs – all in one place so its portable for other users</li>
+<li>relative filepaths that start from your project folder, so you can use the machine-agnostic paths like <code>data/cool-data.csv</code> rather <code>path/specific/to/my/machine/data/cool-data.csv</code></li>
+</ul>
+<p>One specific helper is <a href="https://support.rstudio.com/hc/en-us/articles/200526207-Using-Projects">RStudio Projects</a>, which encourages good structure and has the bonus of relative file paths, which start from the diretory containing the .Rproj file.</p>
+<p><a href="https://here.r-lib.org/">The {here} package</a> by <a href="https://twitter.com/krlmlr">Kirill Müller</a> can also help with relative filepaths. <code>here()</code> will find a file based on the perceived ‘home’ for the project. You can also set it manually by placing a hidden <code>.here</code> file with <code>set_here()</code>.</p>
+<pre class="r"><code>df &lt;- read.csv(here(&quot;data&quot;, &quot;cool-data.csv&quot;))</code></pre>
+<div id="justified-arson" class="section level2">
+<h2>Justified arson</h2>
+<p>You might be wondering why I haven’t mentioned <code>setwd()</code> as a solution here. It’s because <a href="https://jennybryan.org/">Jenny Bryan</a> will <a href="https://www.tidyverse.org/blog/2017/12/workflow-vs-script/">set your computer on fire if you do it</a>.</p>
+<p>But of course past-Matthew did this. He would use <code>setwd()</code> to point to where the project was housed locally:<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<pre class="r"><code>setwd(&quot;/Users/Matthew//local/path/to/project/&quot;)</code></pre>
+<p>So filepaths thereafter to look more like this:</p>
+<pre class="r"><code>df &lt;- read.csv(&quot;data/some_file.csv&quot;)</code></pre>
+<p>What’s the problem? The bit in <code>setwd()</code> is not reproducible – it’s the location on a particular machine only!</p>
+<div class="figure">
+<img src="/post/2020-04-09-self-shame-and-r-code_files/brehm-1895-mouse.jpg" alt="Line drawing of two mice that look like they're laughing." width="75%"/>
+<p class="caption">
+Mirth
+</p>
+</div>
+</div>
+<div id="attach" class="section level1">
+<h1>2. Getting too attached</h1>
+<p>This problem begins with a question: how does R know where to look for a variable?</p>
+<p>Here’s three ways to calculate Pokémon body mass index by reference to variables in the data set:</p>
+<pre class="r"><code>df &lt;- suppressMessages(readr::read_csv(
+  &quot;https://raw.githubusercontent.com/mwdray/datasets/master/pokemon_go_captures.csv&quot;,
+))
+
+mean(df$weight_kg / df$height_m ^ 2)  # dollar notation</code></pre>
+<pre><code>## [1] 31.17416</code></pre>
+<pre class="r"><code>mean(df[[&quot;weight_kg&quot;]] / df[[&quot;height_m&quot;]] ^ 2)  # square brackets</code></pre>
+<pre><code>## [1] 31.17416</code></pre>
+<pre class="r"><code>with(df, mean(weight_kg / height_m ^ 2))  # with() function</code></pre>
+<pre><code>## [1] 31.17416</code></pre>
+<p>So each specifies the data frame object where R should look for the named variables. Which is why the following won’t work:</p>
+<pre class="r"><code>mean(weight_kg / height_m ^ 2)</code></pre>
+<pre><code>## Error in mean(height_m/weight_kg) : object &#39;weight_kg&#39; not found</code></pre>
+<p>R is actually searching a few places for those variables before returning the error. It starts with variables you’ve created in the global environment and then moves onto base R packages.</p>
+<pre class="r"><code>search()</code></pre>
+<pre><code>## [1] &quot;.GlobalEnv&quot;        &quot;package:stats&quot;     &quot;package:graphics&quot; 
+## [4] &quot;package:grDevices&quot; &quot;package:utils&quot;     &quot;package:datasets&quot; 
+## [7] &quot;package:methods&quot;   &quot;Autoloads&quot;         &quot;package:base&quot;</code></pre>
+<p>Past-Matthew was using an approach he was taught<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>, but is frowned upon: you can add your data frame to the search with <code>attach()</code>.</p>
+<pre class="r"><code>attach(df)
+search()  # now &#39;df&#39; is in the search</code></pre>
+<pre><code>##  [1] &quot;.GlobalEnv&quot;        &quot;df&quot;                &quot;package:stats&quot;    
+##  [4] &quot;package:graphics&quot;  &quot;package:grDevices&quot; &quot;package:utils&quot;    
+##  [7] &quot;package:datasets&quot;  &quot;package:methods&quot;   &quot;Autoloads&quot;        
+## [10] &quot;package:base&quot;</code></pre>
+<p>The following expression can now be calculated because R can find the variable names in the attached <code>data</code> object.</p>
+<pre class="r"><code>mean(weight_kg / height_m ^ 2)</code></pre>
+<pre><code>## [1] 31.17416</code></pre>
+<p>So we never need to refer to the data frame name at all. Wow, how can that be bad?</p>
+<p>Consider a data set with column names that match our original:</p>
+<pre class="r"><code>df2 &lt;- df[species == &quot;caterpie&quot;, ]
+attach(df2)</code></pre>
+<pre><code>## The following objects are masked from df:
+## 
+##     charge_attack, combat_power, fast_attack, height_bin, height_m,
+##     hit_points, species, weight_bin, weight_kg</code></pre>
+<p>You might be able to guess the problem: R will get variables from <code>data2</code> first, since it was the most recently attached.</p>
+<p>Bad news: this means the code we wrote earlier will get a different result.</p>
+<pre class="r"><code>mean(weight_kg / height_m ^ 2)</code></pre>
+<pre><code>## [1] 31.64357</code></pre>
+<p>This has serious implications for reproducibility and the confidence you can have in your results.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<p>Pro tip: if you do ever use <code>attach()</code> (don’t), you’ll want to make sure you <code>detach()</code>.</p>
+<pre class="r"><code>detach(df)
+detach(df2)</code></pre>
+<div class="figure">
+<img src="/post/2020-04-09-self-shame-and-r-code_files/brehm-1895-lemur.jpg" alt="Line drawing of a lemur in a aggressive posture." width="75%"/>
+<p class="caption">
+Scorn
+</p>
+</div>
+</div>
+<div id="env" class="section level1">
+<h1>3. Polluting the environment</h1>
+<p>Past-Matthew clearly executed different projects and scripts in the same running instance of R. The potential for confusion and error is high in this scenario. Which object was generated from which script? Who knows?</p>
+<p>I’m also certain that past-Matthew’s workspace was being saved at the end of each session, meaning all that trash would come back next time he fired up R.</p>
+<p>So confused was he that he ran strange lines like the following, which would unload a package beause of a conflict with a package that might have been loaded from elsewhere.</p>
+<pre class="r"><code>detach(&quot;package:nlme&quot;)  # conflicts with lme4</code></pre>
+<p>Unecessary and odd.</p>
+<p>My current working practice is to treat everything in my environemnt with contempt. I regularly restart R and rebuild things from scratch to have confidence that my script does what I think it does and to stop interference from older objects that are clogging up my environment.</p>
+<p>A classic piece of advice these days is to change the defualt behaviour of RStudio to prevent yoru workspace being saved. That way you can start afresh whenever you open R.</p>
+<p>To do this, untick ‘Restore .Rdata on startup’ and set ‘Save workspace to .RData on exit’ to ‘Never’ in Tools &gt; Global Options &gt; General &gt; Basic &gt; Workspace.</p>
+<div class="figure">
+<img src="/post/2020-04-09-self-shame-and-r-code_files/brehm-1895-gopher.jpg" alt="Line drawing of two gophers, one side-on and one with its face popping up from a hole." width="75%"/>
+<p class="caption">
+Disgust
+</p>
+</div>
+</div>
+<div id="repeat" class="section level1">
+<h1>4. There’s a function for that</h1>
+<p>Turns out past-Matthew repeated loads of code because functions looked too much like Real Programming and were therefore hard.</p>
+<p>So this sort of thing was pretty common in past-Matthew’s scripts:<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
+<pre class="r"><code>sub_koffing &lt;- subset(df, species == &quot;koffing&quot;)
+mean_koffing &lt;- round(mean(sub_koffing[[&quot;weight_kg&quot;]]), 2)
+
+sub_paras &lt;- subset(df, species == &quot;paras&quot;)
+mean_paras &lt;- round(mean(sub_paras[[&quot;weight_kg&quot;]]), 2)
+
+sub_geodude &lt;- subset(df, species == &quot;geodude&quot;)
+mean_geodude &lt;- round(mean(sub_koffing[[&quot;weight_kg&quot;]]), 2)
+
+mean_koffing; mean_paras; mean_geodude</code></pre>
+<pre><code>## [1] 0.92</code></pre>
+<pre><code>## [1] 5.39</code></pre>
+<pre><code>## [1] 0.92</code></pre>
+<p>You know this is bad news – copy-pasting can lead to mistakes. See how two of those outputs are suspiciously similar? Oops.<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a></p>
+<p>Past-Matthew just didn’t know how to code functions. But functions let you write the meat of the code just once, eliminating the copy-paste error. You can then loop over the variables of interest to get your results.</p>
+<pre class="r"><code># Function to generate the mean of a variable
+# given a species name
+get_sp_mean &lt;- function(sp, var = &quot;weight_kg&quot;, dp = 2) {
+  
+  sub_sp &lt;- subset(df, species == sp)
+  mean_sp &lt;- round(mean(sub_sp[[var]]), dp)
+  return(mean_sp)
+  
+}
+
+# Create a named vector to iterate over
+species &lt;- c(&quot;paras&quot;, &quot;koffing&quot;, &quot;weedle&quot;)
+names(species) &lt;- species
+
+# Iterate over the vector to apply the function
+purrr::map(species, get_sp_mean)</code></pre>
+<pre><code>## $paras
+## [1] 5.39
+## 
+## $koffing
+## [1] 0.92
+## 
+## $weedle
+## [1] 2.97</code></pre>
+<p><em>Friendship ended with code repetition. Now bespoke functions and {purrr} are my best friends.</em></p>
+<div class="figure">
+<img src="/post/2020-04-09-self-shame-and-r-code_files/brehm-1895-loris.jpg" alt="Line drawing of la loris staring into the foreground." width="75%"/>
+<p class="caption">
+Empathy
+</p>
+</div>
+<hr />
+<details>
+<p><summary>Session info</summary></p>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 3.6.1 (2019-07-05)
+##  os       macOS Sierra 10.12.6        
+##  system   x86_64, darwin15.6.0        
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2020-04-17                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date       lib source        
+##  assertthat    0.2.1   2019-03-21 [1] CRAN (R 3.6.0)
+##  blogdown      0.17    2019-11-13 [1] CRAN (R 3.6.0)
+##  bookdown      0.18    2020-03-05 [1] CRAN (R 3.6.0)
+##  cli           2.0.2   2020-02-28 [1] CRAN (R 3.6.0)
+##  crayon        1.3.4   2017-09-16 [1] CRAN (R 3.6.0)
+##  curl          4.3     2019-12-02 [1] CRAN (R 3.6.0)
+##  digest        0.6.25  2020-02-23 [1] CRAN (R 3.6.0)
+##  evaluate      0.14    2019-05-28 [1] CRAN (R 3.6.0)
+##  fansi         0.4.1   2020-01-08 [1] CRAN (R 3.6.0)
+##  glue          1.3.1   2019-03-12 [1] CRAN (R 3.6.0)
+##  hms           0.5.3   2020-01-08 [1] CRAN (R 3.6.0)
+##  htmltools     0.4.0   2019-10-04 [1] CRAN (R 3.6.0)
+##  knitr         1.28    2020-02-06 [1] CRAN (R 3.6.0)
+##  magrittr      1.5     2014-11-22 [1] CRAN (R 3.6.0)
+##  pillar        1.4.3   2019-12-20 [1] CRAN (R 3.6.0)
+##  pkgconfig     2.0.3   2019-09-22 [1] CRAN (R 3.6.0)
+##  purrr         0.3.3   2019-10-18 [1] CRAN (R 3.6.0)
+##  R6            2.4.1   2019-11-12 [1] CRAN (R 3.6.0)
+##  Rcpp          1.0.3   2019-11-08 [1] CRAN (R 3.6.0)
+##  readr         1.3.1   2018-12-21 [1] CRAN (R 3.6.0)
+##  rlang         0.4.5   2020-03-01 [1] CRAN (R 3.6.0)
+##  rmarkdown     2.1     2020-01-20 [1] CRAN (R 3.6.0)
+##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 3.6.0)
+##  stringi       1.4.6   2020-02-17 [1] CRAN (R 3.6.1)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 3.6.0)
+##  tibble        2.1.3   2019-06-06 [1] CRAN (R 3.6.0)
+##  vctrs         0.2.4   2020-03-10 [1] CRAN (R 3.6.1)
+##  withr         2.1.2   2018-03-15 [1] CRAN (R 3.6.0)
+##  xfun          0.12    2020-01-13 [1] CRAN (R 3.6.0)
+##  yaml          2.2.1   2020-02-01 [1] CRAN (R 3.6.0)
+## 
+## [1] /Users/matt.dray/Library/R/3.6/library
+## [2] /Library/Frameworks/R.framework/Versions/3.6/Resources/library</code></pre>
+</details>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>My darling white plastic MacBook would have melted horribly if set on fire.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn2"><p>I disagree with Crawley that <code>attach()</code> ‘makes the code easier to understand for beginners’, which he says in section 2.14.2 of the second edition of his <a href="https://www.wiley.com/en-gb/The+R+Book%2C+2nd+Edition-p-9780470973929">R Book</a>, especially since this section also says ‘avoid using attach wherever possible’.<a href="#fnref2" class="footnote-back">↩</a></p></li>
+<li id="fn3"><p>The ‘search list shuffle’ danger of <code>attach()</code> is also referenced in Circle 8.1.35 of <a href="https://www.burns-stat.com/pages/Tutor/R_inferno.pdf">The R Inferno</a> by Patrick Burns.<a href="#fnref3" class="footnote-back">↩</a></p></li>
+<li id="fn4"><p>Note past-Matthew’s use of semi-colons, which I never see anyone use (including present-Matthew).<a href="#fnref4" class="footnote-back">↩</a></p></li>
+<li id="fn5"><p>Especially because Geodude is made of rock and Koffing is basically just made of gas.<a href="#fnref5" class="footnote-back">↩</a></p></li>
+</ol>
+</div>
