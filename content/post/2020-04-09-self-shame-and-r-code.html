@@ -28,16 +28,17 @@ Bemusement (all images from <a href="https://archive.org/details/brehmslifeofani
 <div id="a-startling-discovery" class="section level1">
 <h1>A startling discovery</h1>
 <p>I dug up a time capsule from a decade ago. It contained poorly constructed R code.</p>
-<p>Twist: <em>it was me all along</em>.</p>
-<p>Reading these scripts brought back the sweet nostalgia of running the vanilla R GUI on my <a href="https://en.wikipedia.org/wiki/MacBook_(2006%E2%80%932012)%7Btarget=&#39;_blank&#39;%7D">precious white MacBook</a>. At the time I was using R as an interactive calculator for <a href="https://www.rostrum.blog/2019/04/30/markov-chain-phd-2/" target="_blank">ecological analyses</a>, basically.</p>
+<p>Twist: <em>it was me who wrote it</em>.</p>
+<p>Reading these scripts brought back the sweet nostalgia of running the vanilla R GUI on my <a href="https://en.wikipedia.org/wiki/MacBook_(2006%E2%80%932012)%7Btarget=&#39;_blank&#39;%7D">precious white MacBook</a>, using R as little more than an interactive calculator for <a href="https://www.rostrum.blog/2019/04/30/markov-chain-phd-2/" target="_blank">ecological analyses</a>.</p>
 <p>What nuggets of pain did I unearth? Past-Matthew seemed to like:</p>
 <ol style="list-style-type: decimal">
-<li><code>file.choose()</code> and <code>setwd()</code> for non-reproducible <a href="#files" target="_blank">file locations</a></li>
-<li>The <a href="#attach" target="_blank"><code>attach()</code></a> function for basically hiding his data and forgetting it exists</li>
-<li>Working in <a href="#env" target="_blank">the same R workspace</a> at all times regardless of context</li>
-<li><a href="#repeat" target="_blank">Repeating code</a> over and over and over and over and</li>
+<li><a href="#files" target="_blank"><code>file.choose()</code> and <code>setwd()</code> for non-reproducible file locations</a></li>
+<li><a href="#attach" target="_blank">The <code>attach()</code> function for basically hiding his data and forgetting it exists</a></li>
+<li><a href="#env" target="_blank">Working in the same R workspace at all times regardless of context</a></li>
+<li><a href="#repeat" target="_blank">Repeating code over and over and over and over and</a></li>
 </ol>
 <p>This post is a belated learning moment for past-Matthew.</p>
+<p>Click the list items above to jump to that section.</p>
 <div class="figure">
 <img src="/post/2020-04-09-self-shame-and-r-code_files/brehm-1895-otter.jpg" alt="Line drawing of an otter in agony with its paw trapped in some fishing tackle." width="75%"/>
 <p class="caption">
@@ -61,7 +62,7 @@ Agony
 </ul>
 <div id="justified-arson" class="section level2">
 <h2>Justified arson</h2>
-<p>You may wonder why I haven’t mentioned <code>setwd()</code> as a solution here. It’s because <a href="https://jennybryan.org/" target="_blank">Jenny Bryan</a> will <a href="https://www.tidyverse.org/blog/2017/12/workflow-vs-script/" target="_blank">set your computer on fire if you do it</a>.</p>
+<p>You may wonder why I haven’t mentioned <code>setwd()</code> as a solution here. It’s because <a href="https://jennybryan.org/" target="_blank">Jenny Bryan</a> will <a href="https://www.tidyverse.org/blog/2017/12/workflow-vs-script/" target="_blank">set your computer on fire</a>.</p>
 <p>But of course past-Matthew did this.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> He would use <code>setwd()</code> to point to where the project was housed locally:</p>
 <pre class="r"><code>setwd(&quot;/Users/Matthew//local/path/to/project/&quot;)
 df &lt;- read.csv(&quot;data/some_file.csv&quot;)</code></pre>
@@ -121,7 +122,8 @@ attach(df2)</code></pre>
 <p>Bad news: this means the code we wrote earlier will get a different result.</p>
 <pre class="r"><code>mean(weight_kg / height_m ^ 2)</code></pre>
 <pre><code>## [1] 31.64357</code></pre>
-<p>This has serious implications for reproducibility and the confidence you can have in your results.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>This has serious implications for reproducibility and the confidence you can have in your results.</p>
+<p>See also the ‘search list shuffle’ danger of <code>attach()</code> referenced in Circle 8.1.35 of <a href="https://www.burns-stat.com/pages/Tutor/R_inferno.pdf" target="_blank">The R Inferno</a> by Patrick Burns.</p>
 <p>Past Matthew was using this approach because he was taught with <a href="https://www.wiley.com/en-gb/The+R+Book%2C+2nd+Edition-p-9780470973929" target="_blank">Mick Crawley’s R Book</a>. I disagree with Mick that <code>attach()</code> ‘makes the code easier to understand for beginners’ (page 18), especially because he also says ‘avoid using attach wherever possible’.</p>
 <p>Pro tip: if you do ever use <code>attach()</code> (don’t), you’ll want to make sure you <code>detach()</code> your objects.</p>
 <pre class="r"><code>detach(df)
@@ -154,7 +156,7 @@ Disgust
 <div id="repeat" class="section level1">
 <h1>4. There’s a function for that</h1>
 <p>Turns out past-Matthew repeated loads of code because functions looked too much like Real Programming and were therefore Quite Hard.</p>
-<p>Here’s a simple example of code repetition that was pretty common in past-Matthew’s scripts:<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<p>Here’s a simple example of code repetition that was pretty common in past-Matthew’s scripts:</p>
 <pre class="r"><code># Subset the data and then get a mean value
 sub_koffing &lt;- subset(df, species == &quot;koffing&quot;)
 mean_koffing &lt;- round(mean(sub_koffing[[&quot;weight_kg&quot;]]), 2)
@@ -172,32 +174,36 @@ mean_koffing; mean_paras; mean_geodude</code></pre>
 <pre><code>## [1] 0.92</code></pre>
 <pre><code>## [1] 5.39</code></pre>
 <pre><code>## [1] 0.92</code></pre>
-<p>You know this is bad news; copy-pasting leads to mistakes. See how two of those outputs are suspiciously similar? Oops.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
+<p>You know this is bad news; copy-pasting leads to mistakes. See how two of those outputs are suspiciously similar? Oops.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>(Note the use of semi-colons here as well. Past-Matthew seemed to like using these to print multiple results, but I don’t use these anymore and don’t see anyone else doing it.)</p>
 <p>Functions let you write the meat of the code just once, eliminating the copy-paste error. You can then loop over the variables of interest to get your results.</p>
 <p>The effort of learning to write your own functions is worth it to avoid the problems. See <a href="https://r4ds.had.co.nz/functions.html" target="_blank">R for Data Science</a> for more on this.</p>
+<p>Here’s one way to tackle the code repetition above:</p>
 <pre class="r"><code># Function to calcuate a rounded mean value for a given species
-get_sp_mean &lt;- function(sp, var = &quot;weight_kg&quot;, dp = 2) {
+get_sp_mean &lt;- function(
+  sp, data = df, var = &quot;weight_kg&quot;, dp = 2
+) {
   
-  sub_sp &lt;- subset(df, species == sp)  # subset data
+  sub_sp &lt;- subset(data, species == sp)  # subset data
   mean_sp &lt;- round(mean(sub_sp[[var]]), dp)  # get mean
   return(mean_sp)  # function will output the mean value
   
 }
 
 # Create a named vector to iterate over
-species &lt;- c(&quot;paras&quot;, &quot;koffing&quot;, &quot;weedle&quot;)
-names(species) &lt;- species
+species &lt;- c(&quot;koffing&quot;, &quot;paras&quot;, &quot;geodude&quot;)
+names(species) &lt;- species  # make it a named vector
 
 # Iterate over the vector to apply the function
 purrr::map(species, get_sp_mean)</code></pre>
-<pre><code>## $paras
-## [1] 5.39
-## 
-## $koffing
+<pre><code>## $koffing
 ## [1] 0.92
 ## 
-## $weedle
-## [1] 2.97</code></pre>
+## $paras
+## [1] 5.39
+## 
+## $geodude
+## [1] 23.24</code></pre>
 <p><em>Friendship ended with code repetition. Now bespoke functions and {purrr} are my best friends.</em></p>
 <div class="figure">
 <img src="/post/2020-04-09-self-shame-and-r-code_files/brehm-1895-loris.jpg" alt="Line drawing of la loris staring into the foreground." width="75%"/>
@@ -208,7 +214,7 @@ Empathy
 </div>
 <div id="reflections" class="section level1">
 <h1>Reflections</h1>
-<p>I think it’s a good exercise to look back and critique your old code.</p>
+<p>I think it’s a good exercise to look back and critique your old code. What makes you cringe when you look back on it?</p>
 <p>There’s no shame in writing code that does what you want it to do. I can see why past-Matthew did the things he did. But I’m also glad he stopped doing them.</p>
 <p>See you in ten years to look back on the inevitably terrible code I’ve written in this blog.</p>
 <hr />
@@ -224,7 +230,7 @@ Empathy
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2020-04-19                  
+##  date     2020-04-20                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
 ##  package     * version date       lib source        
@@ -267,8 +273,6 @@ Empathy
 <hr />
 <ol>
 <li id="fn1"><p>My darling white plastic MacBook would have melted horribly if set on fire.<a href="#fnref1" class="footnote-back">↩</a></p></li>
-<li id="fn2"><p>The ‘search list shuffle’ danger of <code>attach()</code> is also referenced in Circle 8.1.35 of <a href="https://www.burns-stat.com/pages/Tutor/R_inferno.pdf" target="_blank">The R Inferno</a> by Patrick Burns.<a href="#fnref2" class="footnote-back">↩</a></p></li>
-<li id="fn3"><p>Note past-Matthew’s use of semi-colons, which I never see anyone use (including present-Matthew).<a href="#fnref3" class="footnote-back">↩</a></p></li>
-<li id="fn4"><p>Especially because Geodude is made of rock and Koffing is basically just made of gas.<a href="#fnref4" class="footnote-back">↩</a></p></li>
+<li id="fn2"><p>Especially because Geodude is made of rock and Koffing is basically just made of gas.<a href="#fnref2" class="footnote-back">↩</a></p></li>
 </ol>
 </div>
