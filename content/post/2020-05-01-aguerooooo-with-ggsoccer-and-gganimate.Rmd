@@ -70,7 +70,7 @@ ball <- tribble(
   5,  83, 54,  # received by Balotelli
   6,  88, 38,  # received by Agüero
   7,  94, 36,  # Agüero shot
-  8, 100, 50   # goal 
+  8, 100, 46   # goal 
 
 )
 
@@ -183,7 +183,7 @@ library(tibble) # Simple Data Frames
 
 I also used {tibble} to create data frames with `tribble()`, but this isn't a requirement.
 
-# Points
+# Set coordinates
 
 You need to start with coordinate data for the players and ball. {ggsoccer} defaults to a 100- by 100-unit pitch on which to plot these data. But where do you get it from?
 
@@ -259,7 +259,7 @@ ball <- tribble(
   5,  83, 54,  # received by Balotelli
   6,  88, 38,  # received by Agüero
   7,  94, 36,  # Agüero shot
-  8, 100, 50   # goal 
+  8, 100, 46   # goal 
 
 )
 ```
@@ -268,7 +268,7 @@ ball <- tribble(
 
 The first step in producing the animation is to create a single plot object that contains all the points. {gganimate} takes the object and animates it frame by frame, interpolating the data points between each time step.
 
-## Plot
+## Static plot
 
 To produce the plot object:
 
@@ -310,15 +310,21 @@ plot <-
 
 I've chosen to rotate the plot and crop it because we only need to see one half of the pitch. Note that this means the y-aesthetic for the points is set to `100 - y`.
 
-The output `plot` object contains everything that {gganimate} needs to render the animation. You wouldn't plot this object as-is, but here's what it looks like:
+The output `plot` object is composed of all the frames that we set out in the `player` and `ball` data sets. You wouldn't plot this object as-is, but here's what it looks like:
 
 ```{r}
 plot
 ```
 
-## Animate
+{gganimate} will take each time-step---specified by the `frame` variable---to render the animation. Here's each of those frames from the `player` data.
 
-{gganimate} can turn the static plot into an animation in one step.
+```{r}
+plot + facet_wrap(~ frame) + ggtitle(NULL, NULL)
+```
+
+## Animated plots
+
+{gganimate} turns the static plot into an animation in one step.
 
 The `transition_states()` function builds on top of the `plot` object. I specified the time-step variable; the durations for showing the frame and the interpolated frames between; and whether or not the animation should loop back to the start. 
 
