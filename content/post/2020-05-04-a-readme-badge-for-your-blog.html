@@ -1,0 +1,104 @@
+---
+title: A README badge for your blog
+author: Matt Dray
+date: '2020-05-04'
+slug: readme-badge
+categories:
+  - tutorial
+  - blog-meta
+tags:
+  - badge
+  - design
+  - github
+draft: yes
+---
+
+
+
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>Sometimes a post on this blog is related to some code in a GitHub repository. I’ve created a little badge to put in the repo README that links to the relevant post.</p>
+<p>It looks like this:</p>
+<p><embed src="https://img.shields.io/badge/rostrum.blog-post-008900?labelColor=000000&amp;logo=data%3Aimage%2Fgif%3Bbase64%2CR0lGODlhEAAQAPEAAAAAABWCBAAAAAAAACH5BAlkAAIAIf8LTkVUU0NBUEUyLjADAQAAACwAAAAAEAAQAAAC55QkISIiEoQQQgghRBBCiCAIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAAh%2BQQJZAACACwAAAAAEAAQAAAC55QkIiESIoQQQgghhAhCBCEIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAA7" /></p>
+<p>For an example, see <a href="https://github.com/matt-dray/oystr/blob/master/README.md">the README for my {oystr} R package</a>.</p>
+</div>
+<div id="whats-a-badge" class="section level1">
+<h1>What’s a badge?</h1>
+<p>You’ll see badges in the README files of code repositories on sites like GitHub and GitLab.</p>
+<p>Badges communicate something about the code at-a-glance and usually contain a link to further information.</p>
+<p>Dynamic badges help you judge the status of the repo. For example, a common badge is one that indicates whether the code has passed testing via a continuous integration service like Travis. So ‘build passing’ means that the code in the latest update is working. Clicking the badge will take you to the associated site to get more information.</p>
+<p>Other badges are static and act as a handy link. For example, some repos have badges for services like <a href="https://help.ko-fi.com/hc/en-us/articles/360021025553-How-to-add-a-Ko-fi-button-to-GitHub">Ko-Fi</a> for donations, or perhaps to <a href="https://mybinder.readthedocs.io/en/latest/howto/badges.html">open the repo in a cloud-based instance of Binder</a>.</p>
+</div>
+<div id="roll-your-own" class="section level1">
+<h1>Roll your own</h1>
+<p>These badges aren’t particularly special. You can create your own.</p>
+<p>Why would you do that? For whatever reason you want.</p>
+<p>I want people to know if one of my GitHub repositories is related to a post on this blog so they can find out more. I could just link to the post in the README—I often do—but the badge sits at the top of the README and is eye-catching. It’s also a useful reminder for me when I’m looking over my repos.</p>
+<div id="shields.io" class="section level2">
+<h2>shields.io</h2>
+<p>Fortunately, there’s a serice called <a href="https://shields.io/">shields.io</a> that makes it easy to create and serve a badge. It exposes a badge with parameters you provide in a URL.</p>
+<p>You can generate a simple static badge by modifying a URL string in the form <code>https://img.shields.io/badge/&lt;LABEL&gt;-&lt;MESSAGE&gt;-&lt;COLOR&gt;</code>.</p>
+<p>So <code>![](https://img.shields.io/badge/label-message-red)</code> results in this:</p>
+<p><img src="https://img.shields.io/badge/label-message-red" /></p>
+<p>You could build on this by providing an alternative style and an image from <a href="https://simpleicons.org/">Simple Icons</a>.</p>
+<p>For example, <code>![](https://img.shields.io/badge/label-message-181717?style=for-the-badge&amp;logo=github)</code> results in this:</p>
+<p><img src="https://img.shields.io/badge/label-message-181717?style=for-the-badge&amp;logo=github" /></p>
+<pre class="r"><code>get_shieldsio_endpoint &lt;- function(
+  label = &quot;Label&quot;,
+  message = &quot;Message&quot;,
+  color = &quot;ff0000&quot;,
+  logo_path = NULL,
+  logo_filetype = NULL,
+) {
+  
+  badge_url &lt;- paste0(
+    &quot;https://img.shields.io/badge/&quot;,
+    label, &quot;-&quot;,
+    message, &quot;-&quot;,
+    color
+  )
+  
+  if (!is.null(logo_path)) {
+    
+    &lt;- base64encode(logo_path)
+    
+  &quot;?data:image/&quot;, logo_filetype, &quot;;base64,&quot;
+  
+  }
+  
+  return(badge_url)
+  
+}</code></pre>
+</div>
+<div id="custom-image" class="section level2">
+<h2>Custom image</h2>
+<p>I wanted <a href="https://raw.githubusercontent.com/matt-dray/rostrum-blog/master/static/images/favicon.ico">the rostrum.blog logo favicon</a> to appear in the badge. This is a tiny 16x16 animated gif file (the antennae of the bug wiggle in and out).</p>
+<p>But this isn’t straightforward. Basically you need to encode the image to base 64 encoded format</p>
+<pre class="r"><code>library(base64enc)
+
+icon_path &lt;- &quot;https://raw.githubusercontent.com/matt-dray/rostrum-blog/master/static/images/favicon.ico&quot;
+
+icon_b64 &lt;- base64encode(icon_path)
+
+paste0(&quot;data:image/gif;base64&quot;, icon_b64)</code></pre>
+<pre><code>## [1] &quot;data:image/gif;base64R0lGODlhEAAQAPEAAAAAABWCBAAAAAAAACH5BAlkAAIAIf8LTkVUU0NBUEUyLjADAQAAACwAAAAAEAAQAAAC55QkISIiEoQQQgghRBBCiCAIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAAh+QQJZAACACwAAAAAEAAQAAAC55QkIiESIoQQQgghhAhCBCEIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAA7&quot;</code></pre>
+<p>Here’s what the code underlying the badge looks like:</p>
+<pre><code>![](https://img.shields.io/badge/rostrum.blog-post-008900?labelColor=000000&amp;logo=data:image/gif;base64,R0lGODlhEAAQAPEAAAAAABWCBAAAAAAAACH5BAlkAAIAIf8LTkVUU0NBUEUyLjADAQAAACwAAAAAEAAQAAAC55QkISIiEoQQQgghRBBCiCAIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAAh+QQJZAACACwAAAAAEAAQAAAC55QkIiESIoQQQgghhAhCBCEIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAA7)</code></pre>
+<div class="figure">
+<embed src="https://img.shields.io/badge/rostrum.blog-post-008900?labelColor=000000&amp;logo=data:image/gif;base64,R0lGODlhEAAQAPEAAAAAABWCBAAAAAAAACH5BAlkAAIAIf8LTkVUU0NBUEUyLjADAQAAACwAAAAAEAAQAAAC55QkISIiEoQQQgghRBBCiCAIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAAh+QQJZAACACwAAAAAEAAQAAAC55QkIiESIoQQQgghhAhCBCEIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAA7" />
+<p class="caption">Blog post</p>
+</div>
+<p>This is an example from my <a href="https://www.github.com/matt-dray/altcheckr">matt-dray/oystr</a> repo, which contains an R package for checking the alt-text of images on websites. The badge looks like this:</p>
+<div class="figure">
+<embed src="https://img.shields.io/badge/rostrum.blog-post-008900?labelColor=000000&amp;logo=data%3Aimage%2Fgif%3Bbase64%2CR0lGODlhEAAQAPEAAAAAABWCBAAAAAAAACH5BAlkAAIAIf8LTkVUU0NBUEUyLjADAQAAACwAAAAAEAAQAAAC55QkISIiEoQQQgghRBBCiCAIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAAh%2BQQJZAACACwAAAAAEAAQAAAC55QkIiESIoQQQgghhAhCBCEIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAA7" />
+<p class="caption">Blog post</p>
+</div>
+</div>
+</div>
+<div id="badges-with-pkgdown" class="section level1">
+<h1>Badges with {pkgdown}</h1>
+<p>If you put this between some comment markers, then {pkgdown} will recognise them and add them to the sidebar of the resulting website. You can add these with <code>usethis::use_badge()</code>.</p>
+<pre><code>&lt;!-- badges: start --&gt;
+&lt;!-- badges: end --&gt;</code></pre>
+<p>See how it appears on the right-hand side of <a href="https://matt-dray.github.io/oystr/">the {oystr} web site</a> with the other badges?</p>
+</div>
