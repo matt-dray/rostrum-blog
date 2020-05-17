@@ -5,6 +5,7 @@ date: '2020-05-16'
 slug: postcode-pandemonium
 categories:
   - code
+  - tutorial
 tags:
   - data.table
   - geography
@@ -18,12 +19,12 @@ tags:
 <div class="figure">
 <img src="/post/2020-05-16-postcode-pandemonium-with-data-table_files/600px-BA_postcode_area_map.svg.png" alt="A map of the BA postcode area around Bath, UK." width='100%'/>
 <p class="caption">
-Bath postcodes are unlikely to score highly (via <a href="https://commons.wikimedia.org/wiki/File:BA_postcode_area_map.svg" target="_blank">Wikimedia</a>)
+Postcodes in Bath are unlikely to score highly (via <a href="https://commons.wikimedia.org/wiki/File:BA_postcode_area_map.svg" target="_blank">Wikimedia</a>)
 </p>
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>I used {data.table} to find the highest- and lowest-scoring UK postcodes based on the sum of their numbers and letters (A = 1, B = 2, etc). You can <a href="#results">jump to the results</a>.</p>
+<p>I used the R package {data.table} to find the highest- and lowest-scoring UK postcodes based on the sum of their numbers and letters (A = 1, B = 2, etc). You can <a href="#results">jump to the results</a>.</p>
 </div>
 <div id="the-premise" class="section level1">
 <h1>The premise</h1>
@@ -42,7 +43,7 @@ library(tictoc)      # timing</code></pre>
 </div>
 <div id="get-the-data" class="section level2">
 <h2>Get the data</h2>
-<p>The latest postcode data (February 2020) is available on <a href="https://geoportal.statistics.gov.uk/datasets/national-statistics-postcode-lookup-february-2020" target="_blank">the Open Geography Portal by the Office for National Statistics</a>. From there you can download a zipped folder that contains the file we want: <code>Data/NSPL_FEB_2020_UK.csv</code>.</p>
+<p>The latest postcode data (February 2020) is available on <a href="https://geoportal.statistics.gov.uk/datasets/national-statistics-postcode-lookup-february-2020" target="_blank">the Open Geography Portal by the Office for National Statistics</a>. From there you can download a zipped folder that contains the file we want, <code>NSPL_FEB_2020_UK.csv</code>.</p>
 <p>You can download the .zip to a temporary location on your machine and then <code>unzip()</code> it inside {data.table}’s <code>fread()</code> for a rapid read.</p>
 <pre class="r"><code># Path to the zipped file
 zip_path &lt;-
@@ -61,9 +62,14 @@ toc()
 
 # Delete the temporary location
 unlink(temp)</code></pre>
-<p>Then we’ll need to filter for postcodes that are active (thanks to <a href="https://twitter.com/RobertKaleta/status/1261733628461146113">Robert Kaleta</a> for pointing this out). For simplicty, we can also simplify the object to just a single column containing the postcodes.</p>
+<p>And we can check the dimensions of this object.</p>
+<pre class="r"><code># Rows and columns in the data set
+dim(pcodes_dt)</code></pre>
+<pre><code>## [1] 2640516      41</code></pre>
+<p>So there’s more than 2.5 million rows. Some postcodes have, however, been terminated over time. We’ll need to filter for the postcodes that are still active (thanks to <a href="https://twitter.com/RobertKaleta/status/1261733628461146113">Robert Kaleta</a> for pointing this out).</p>
+<p>We can also simplify to just the postcode column that we want using {data.table}‘s <code>.()</code> notation. Data in the <code>pcds</code> column has the consistent form of letter, letter, digit, space, digit, letter, letter (e.g. ’AB12 3CD’), which makes them relatively easy to deal with.</p>
 <pre class="r"><code># Filter for empty date of termination (doterm)
-# Retain only the postcode column (in the form &quot;XX00 0XX&quot;)
+# Retain only the postcode column
 pcodes_dt &lt;- pcodes_dt[is.na(doterm), .(pcds)]
 
 # Preview
@@ -75,16 +81,34 @@ head(pcodes_dt)</code></pre>
 ## 4: AB10 1AH
 ## 5: AB10 1AL
 ## 6: AB10 1AN</code></pre>
-<p>This output contains 1,766,067 rows.</p>
+<pre class="r"><code># Count rows
+nrow(pcodes_dt)</code></pre>
+<pre><code>## [1] 1766067</code></pre>
+<p>You can see that this removes a large number of terminated postcodes.</p>
 </div>
 <div id="extract" class="section level2">
 <h2>Extract</h2>
-<p>Now to extract the numbers and letters so that AB12 3CD is broken into A, B, 12, 3, C and D, for example. Note that we want to extract multi-digit numbers if they exist within each half (the ‘outward’ and ‘inward’ parts) of the postcode, so 12 rather than 1 and 2, and 12 and 3 rather than 123.</p>
-<p>I’m doing this so it produces two list-columns: one with the letters extracted into it and one with the numbers. The regular expression contains values in the curly braces to indicate the desired character lengths to be matched.</p>
+<p>Now to extract the numbers and letters so that ‘AB12 3CD’ is broken into A, B, 12, 3, C and D, for example. Note that we want to extract multi-digit numbers if they exist within each half (the ‘outward’ and ‘inward’ parts) of the postcode, so 12 rather than 1 and 2, and 12 and 3 rather than 123.</p>
+<p>The walrus operator (<code>:=</code>) is used here as a function to create new columns and assign names to them. I’ve chose to use {stringr}’s <code>str_extract_all()</code> function to match the strings we want. The regular expression contains values in the curly braces to indicate the desired character lengths to be matched.</p>
+<p>This will produce two list-columns: one with the letters extracted into it and one with the numbers.</p>
 <pre class="r"><code># Extract letters into one list column and numbers into another
 pcodes_dt[, `:=`(letter = str_extract_all(pcds, &quot;[:alpha:]{1}&quot;),
-                 number = str_extract_all(pcds, &quot;[:digit:]{1,2}&quot;))]</code></pre>
-<p>Remember that {data.table} will edit in place here, so the <code>pcodes_dt</code> object will be updated and doesn’t need to be overwritten.</p>
+                 number = str_extract_all(pcds, &quot;[:digit:]{1,2}&quot;))]
+
+pcodes_dt</code></pre>
+<pre><code>##              pcds  letter number
+##       1: AB10 1AB A,B,A,B   10,1
+##       2: AB10 1AF A,B,A,F   10,1
+##       3: AB10 1AG A,B,A,G   10,1
+##       4: AB10 1AH A,B,A,H   10,1
+##       5: AB10 1AL A,B,A,L   10,1
+##      ---                        
+## 1766063:  ZE3 9JU Z,E,J,U    3,9
+## 1766064:  ZE3 9JW Z,E,J,W    3,9
+## 1766065:  ZE3 9JX Z,E,J,X    3,9
+## 1766066:  ZE3 9JY Z,E,J,Y    3,9
+## 1766067:  ZE3 9JZ Z,E,J,Z    3,9</code></pre>
+<p>Remember that {data.table} edits in place, so the <code>pcodes_dt</code> object will be updated and without the need to overwrite it (i.e. no need to do something like <code>pcodes_dt &lt;- pcodes_dt[&lt;whatever&gt;]</code>).</p>
 </div>
 <div id="numbers-and-letters" class="section level2">
 <h2>Numbers and letters</h2>
@@ -92,13 +116,14 @@ pcodes_dt[, `:=`(letter = str_extract_all(pcds, &quot;[:alpha:]{1}&quot;),
 <pre class="r"><code>tic(&quot;Make numbers numeric class&quot;)
 pcodes_dt[, number := lapply(number, as.numeric)]
 toc()</code></pre>
-<pre><code>## Make numbers numeric class: 19.306 sec elapsed</code></pre>
+<pre><code>## Make numbers numeric class: 10.305 sec elapsed</code></pre>
 <p>And now to work with the <code>letter</code> list column. The custom function in <code>lapply()</code> first turns the letters into the factor class, where the full set of possible levels is provided by the <code>LETTERS</code> vector, and then uses <code>as.numeric()</code> to convert each factor level to its corresponding numeric value.</p>
 <p>This works on the principle that <code>as.numeric(factor(c(&quot;A&quot;, &quot;B&quot;, &quot;C&quot;)))</code> becomes <code>c(1, 2, 3)</code>. The first factor level, <code>A</code> gets converted to 1, <code>B</code> to 2 and so on.</p>
 <pre class="r"><code>tic(&quot;Convert letters to numbers, make numeric class&quot;)
-pcodes_dt[, letter_number := lapply(letter, function(x) as.numeric(factor(x, levels = LETTERS)))]
+pcodes_dt[, letter_number := lapply(
+  letter, function(x) as.numeric(factor(x, levels = LETTERS)))]
 toc()</code></pre>
-<pre><code>## Convert letters to numbers, make numeric class: 57.857 sec elapsed</code></pre>
+<pre><code>## Convert letters to numbers, make numeric class: 31.133 sec elapsed</code></pre>
 </div>
 <div id="scores" class="section level2">
 <h2>Scores</h2>
@@ -114,21 +139,21 @@ pcodes_dt$letter_sum &lt;- as.numeric(pcodes_dt$letter_sum)
 # Sum the number and letter values
 pcodes_dt[, score := number_sum + letter_sum]
 
-# Preview
-pcodes_dt</code></pre>
-<pre><code>##              pcds  letter number letter_number number_sum letter_sum score
-##       1: AB10 1AB A,B,A,B  10, 1       1,2,1,2         11          6    17
-##       2: AB10 1AF A,B,A,F  10, 1       1,2,1,6         11         10    21
-##       3: AB10 1AG A,B,A,G  10, 1       1,2,1,7         11         11    22
-##       4: AB10 1AH A,B,A,H  10, 1       1,2,1,8         11         12    23
-##       5: AB10 1AL A,B,A,L  10, 1    1, 2, 1,12         11         16    27
-##      ---                                                                  
-## 1766063:  ZE3 9JU Z,E,J,U    3,9   26, 5,10,21         12         62    74
-## 1766064:  ZE3 9JW Z,E,J,W    3,9   26, 5,10,23         12         64    76
-## 1766065:  ZE3 9JX Z,E,J,X    3,9   26, 5,10,24         12         65    77
-## 1766066:  ZE3 9JY Z,E,J,Y    3,9   26, 5,10,25         12         66    78
-## 1766067:  ZE3 9JZ Z,E,J,Z    3,9   26, 5,10,26         12         67    79</code></pre>
-<p>And now to preview the top and bottom scores.</p>
+# The first few scores
+head(pcodes_dt[, .(pcds, number_sum, letter_sum, score)])</code></pre>
+<pre><code>##        pcds number_sum letter_sum score
+## 1: AB10 1AB         11          6    17
+## 2: AB10 1AF         11         10    21
+## 3: AB10 1AG         11         11    22
+## 4: AB10 1AH         11         12    23
+## 5: AB10 1AL         11         16    27
+## 6: AB10 1AN         11         18    29</code></pre>
+<p>So you can see, for example, that AB10 1AB has a number sum of 11 (10 + 1) and a letter sum of 6 (a couple of As and Bs, so 1 + 2 + 1 + 2), totalling 17.</p>
+</div>
+</div>
+<div id="results" class="section level1">
+<h1>Results</h1>
+<p>Now to order the results, focus on the postcodes and scores alone, and preview the top and bottom scores (provided by default in {data.table}’s print method).</p>
 <pre class="r"><code># Select cols and reorder by score
 pcodes_dt[order(-score), .(pcds, score)]</code></pre>
 <pre><code>##              pcds score
@@ -143,13 +168,22 @@ pcodes_dt[order(-score), .(pcds, score)]</code></pre>
 ## 1766065:   B1 2AA     7
 ## 1766066:  BA1 1AA     7
 ## 1766067:  BA2 0AA     7</code></pre>
-<p>I could make this a searchable table so you can find your own postcode, but it’s a wee bit big for that.</p>
-</div>
-</div>
-<div id="results" class="section level1">
-<h1>Results</h1>
-<p>The top-scoring postcode was WV99 1ZZ with 197 points. It’s on an industrial estate in Telford, north-east of Birmingham. You can <a href="https://goo.gl/maps/574KB3wmc6wy9Rms6" target="_blank">view it on Google Maps</a>.</p>
-<p>The lowest scoring postcodes were in Birmingham (Holloway Circus <a href="https://goo.gl/maps/ZM7p9ZjFWXBc4nt6A" target="_blank">B1 1BA</a> and Arena Birmingham <a href="https://goo.gl/maps/yPgYP74uP3AqMtCa7" target="_blank">B1 2AA</a>) and Bath (near Bath Spa train station <a href="https://goo.gl/maps/eD5jL7dbeb8sAkZf9" target="_blank">BA1 1AA</a> and south of Farmborough <a href="https://goo.gl/maps/DN2ZAm1AJAz2oq329" target="_blank">BA2 0AA</a>). They scored only 7.</p>
+<p>So the top-scoring postcode was WV99 1ZZ with 197 points. It’s on an industrial estate in Telford, north-east of Birmingham. You can <a href="https://goo.gl/maps/574KB3wmc6wy9Rms6" target="_blank">view it on Google Maps</a>.</p>
+<p>The lowest scoring postcodes were in Birmingham (Holloway Circus at <a href="https://goo.gl/maps/ZM7p9ZjFWXBc4nt6A" target="_blank">B1 1BA</a> and Arena Birmingham at <a href="https://goo.gl/maps/yPgYP74uP3AqMtCa7" target="_blank">B1 2AA</a>) and Bath (near Bath Spa train station at <a href="https://goo.gl/maps/eD5jL7dbeb8sAkZf9" target="_blank">BA1 1AA</a> and south of Farmborough at <a href="https://goo.gl/maps/DN2ZAm1AJAz2oq329" target="_blank">BA2 0AA</a>). They scored only 7.</p>
+<p>The distribution of scores looks like this:</p>
+<pre class="r"><code>hist(
+  pcodes_dt$score,
+  xlab = &quot;Score&quot;,
+  main = &quot;Histogram of postcode scores&quot;
+)</code></pre>
+<p><img src="/post/2020-05-16-postcode-pandemonium-with-data-table_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>It’s slightly skewed, with nearly 350,000 instances of scores between 60 and 70 and very few scores over 150.</p>
+<p>Let’s check out the summary statistics.</p>
+<pre class="r"><code>summary(pcodes_dt$score)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    7.00   54.00   67.00   68.87   81.00  197.00</code></pre>
+<p>So the mean score is just under 70.</p>
+<p>How does your score compare?</p>
 <div class="figure">
 <img src="/post/2020-05-16-postcode-pandemonium-with-data-table_files/500px-WV_postcode_area_map.svg.png" alt="A map of the WV postcode area around Wolverhampton" width='100%'/>
 <p class="caption">
@@ -169,7 +203,7 @@ pcodes_dt[order(-score), .(pcds, score)]</code></pre>
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2020-05-16                  
+##  date     2020-05-17                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
 ##  package     * version date       lib source        
