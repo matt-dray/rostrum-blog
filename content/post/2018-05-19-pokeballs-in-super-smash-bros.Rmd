@@ -1,18 +1,19 @@
 ---
-title: Pokeballs in Super Smash Bros
+title: Pokéballs in Super Smash Bros
 author: Matt Dray
 date: '2018-05-19'
 slug: pokeballs-in-super-smash-bros
 categories:
-  - pop culture
-  - R
+  - code
+  - tutorial
 tags:
-  - pokemon
   - dplyr
   - ggplot2
-  - readr
   - janitor
-  - n64
+  - nintendo
+  - pokémon
+  - r
+  - readr
 draft: no
 ---
 
@@ -20,29 +21,27 @@ draft: no
 knitr::opts_chunk$set(echo = TRUE, warnings = FALSE, message = FALSE, error = FALSE, eval = TRUE)
 ```
 
-Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
-
 <img src="https://media.giphy.com/media/2TOlr2Cams64M/giphy.gif" alt="Super Smash Bros for N64" width="100%">
 
 # Smash!
 
-[Super Smash Bros](https://en.wikipedia.org/wiki/Super_Smash_Bros.) (SSB) is a beat 'em up videogame series featuring characters from various Nintendo franchises and beyond. 
+[Super Smash Bros](https://en.wikipedia.org/wiki/Super_Smash_Bros.){target='_blank'} (SSB) is a beat 'em up videogame series featuring characters from various Nintendo franchises and beyond. 
 
-The series has featured on Nintendo 64 ([Super Smash Bros, 1998](https://en.wikipedia.org/wiki/Super_Smash_Bros._(video_game))), Gamecube ([SSB Melee, 2001](https://en.wikipedia.org/wiki/Super_Smash_Bros._Melee)), Wii ([SSB Brawl, 2008](https://en.wikipedia.org/wiki/Super_Smash_Bros._Brawl)), Wii U and 3DS ([SSB '4', 2014](https://en.wikipedia.org/wiki/Super_Smash_Bros._for_Nintendo_3DS_and_Wii_U)) and an upcoming title for the Switch console.
+The series has featured on Nintendo 64 ([Super Smash Bros, 1998](https://en.wikipedia.org/wiki/Super_Smash_Bros._(video_game){target='_blank'})), Gamecube ([SSB Melee, 2001](https://en.wikipedia.org/wiki/Super_Smash_Bros._Melee){target='_blank'}), Wii ([SSB Brawl, 2008](https://en.wikipedia.org/wiki/Super_Smash_Bros._Brawl){target='_blank'}), Wii U and 3DS ([SSB '4', 2014](https://en.wikipedia.org/wiki/Super_Smash_Bros._for_Nintendo_3DS_and_Wii_U){target='_blank'}) and an upcoming title for the Switch console.
 
-The game is popular enough to have resulted in [a series of organised tournaments](https://www.ssbwiki.com/List_of_largest_Smash_tournaments)[^1].
+The game is popular enough to have resulted in [a series of organised tournaments](https://www.ssbwiki.com/List_of_largest_Smash_tournaments){target='_blank'}[^1].
 
-You can fight characters directly but you can also make use of items and weapons from games across the Nintendo universe, such as the mushroom ([the Super Mario series](https://en.wikipedia.org/wiki/Super_Mario)), the heart container ([Zelda](https://en.wikipedia.org/wiki/The_Legend_of_Zelda)) and the home run bat ([EarthBound](https://en.wikipedia.org/wiki/EarthBound)).
+You can fight characters directly but you can also make use of items and weapons from games across the Nintendo universe, such as the mushroom ([the Super Mario series](https://en.wikipedia.org/wiki/Super_Mario){target='_blank'}), the heart container ([Zelda](https://en.wikipedia.org/wiki/The_Legend_of_Zelda){target='_blank'}) and the home run bat ([EarthBound](https://en.wikipedia.org/wiki/EarthBound){target='_blank'}).
 
-One of the more interesting items in SSB is the pokeball. This item is used in [the Pokemon series of games](https://en.wikipedia.org/wiki/Pok%C3%A9mon_(video_game_series)) to capture and store Pokemon. When a player picks up and throws a pokeball in SSB, it opens to release 1 of a possible 13 Pokemon. [The SSB wiki](https://www.ssbwiki.com/Pok%C3%A9_Ball) says that all of them are 'common', except for 'uncommon' Snorlax and 'rare' Mew (apparently only once every 151 releases, which is related to the number of Pokemon in the original game).
+One of the more interesting items in SSB is the pokéball. This item is used in [the Pokémon series of games](https://en.wikipedia.org/wiki/Pok%C3%A9mon_(video_game_series){target='_blank'}) to capture and store Pokémon. When a player picks up and throws a pokéball in SSB, it opens to release 1 of a possible 13 Pokémon. [The SSB wiki](https://www.ssbwiki.com/Pok%C3%A9_Ball){target='_blank'} says that all of them are 'common', except for 'uncommon' Snorlax and 'rare' Mew (apparently only once every 151 releases, which is related to the number of Pokémon in the original game).
 
-So how frequently in practice does each Pokemon emerge from a pokeball in SSB on N64?
+So how frequently in practice does each Pokémon emerge from a pokéball in SSB on N64?
 
 This is a short post to sate my curiosity. I've used R code throughout. The post will update as I gather more data.
 
 # Data
 
-I'm a recovering ecologist, so data collection by observation is very important to me. I watched four computer-controlled players face-off in versus mode (it's a weekend and I'm old enough to do whatever I want (after I've done my chores)). Pokeballs were the only items set to 'on' and frequency was set to 'very high'. I saved the file as [a CSV on GitHub](https://github.com/matt-dray/draytasets/blob/master/ssb_pokeballs.csv).
+I'm a recovering ecologist, so data collection by observation is very important to me. I watched four computer-controlled players face-off in versus mode (it's a weekend and I'm old enough to do whatever I want (after I've done my chores)). Pokéballs were the only items set to 'on' and frequency was set to 'very high'. I saved the file as [a CSV on GitHub](https://github.com/matt-dray/draytasets/blob/master/ssb_pokeballs.csv){target='_blank'}.
 
 ```{r read}
 # load packages
@@ -80,11 +79,11 @@ knitr::kable(balls_summary)
 
 ## Plot
 
-Of course we can plot these data a well. It seems fitting to have a Pokemon theme, so we can use the `gghealth()` function from [the `Rokemon` package](https://github.com/schochastics/Rokemon) by [David Schoch](http://schochastics.net/). This creates a bar chart where the bars look like the health point (HP) meter from the original Pokemon games on the Nintendo Game Boy.[^2]
+Of course we can plot these data a well. It seems fitting to have a Pokémon theme, so we can use the `gghealth()` function from [the `Rokemon` package](https://github.com/schochastics/Rokemon){target='_blank'} by [David Schoch](http://schochastics.net/){target='_blank'}. This creates a bar chart where the bars look like the health point (HP) meter from the original Pokémon games on the Nintendo Game Boy.[^2]
 
 ```{r plot}
 library(ggplot2)  # plots
-library(Rokemon)  # poke-themed package
+library(Rokemon)  # remotes::install_github("schochastics/Rokemon")
 
 balls %>% 
   group_by(pokemon) %>% 
@@ -99,24 +98,22 @@ balls %>%
 
 # Revelation
 
-So it looks like the 'common' Pokemon according to [the SSB wiki](https://www.ssbwiki.com/Pok%C3%A9_Ball) are indeed more common, though Snorlax appears equal first on this list, despite being labelled as 'uncommon'. Clefairy also appeared less than expected, given it was labelled as 'common'.
+So it looks like the 'common' Pokémon according to [the SSB wiki](https://www.ssbwiki.com/Pok%C3%A9_Ball){target='_blank'} are indeed more common, though Snorlax appears equal first on this list, despite being labelled as 'uncommon'. Clefairy also appeared less than expected, given it was labelled as 'common'.
 
 Mew appeared `r balls_summary[balls_summary$Pokemon == "Mew", "Count"]` times out of `r nrow(balls)`, which is once every `r round((nrow(balls)/balls_summary[balls_summary$Pokemon == "Mew", "Count"]), 1)` releases; `r ifelse(round((nrow(balls)/balls_summary[balls_summary$Pokemon == "Mew", "Count"]), 1) < 151, "less", "more")` than the once every 151 releases I mentioned above.
 
-Bear in mind that this is only based on a sample of `r nrow(balls)` so far . I'll keep collecting data to update this post.
+Bear in mind that this is only based on a sample of `r nrow(balls)` so far. I might collect more data at a later point.
 
-# Gratuitous shot of my coveted Pokemon Stadium special-edition N64 playing SSB
+For now, here's a gratuitous shot of my coveted Pokémon Stadium special-edition N64.
 
 ![Special edition Nintendo 64 playing Super Smash Bros](/post/2018-05-19-pokeballs-in-super-smash-bros_files/n64.JPG){width=100%}
 
-# R session information
-
+---
 <details><summary>Session info</summary>
-```{r session-info, echo=FALSE}
-paste("Last updated", Sys.Date())
-sessionInfo()
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
 ```
 </details>
 
-[^1]: I recommend you watch [the indie documentary on YouTube about the rise of SSB Melee tournaments](https://www.youtube.com/watch?v=NSf2mgkRm7Q&list=PLoUHkRwnRH-IXbZfwlgiEN8eXmoj6DtKM).
-[^2]: Also check out the `geom_pokemon()` function in the `ggimage` package by [Guangchuang Yu](https://guangchuangyu.github.io/), which [plots points as Pokemon sprites](https://cran.r-project.org/web/packages/ggimage/vignettes/ggimage.html).
+[^1]: I recommend you watch [the indie documentary on YouTube about the rise of SSB Melee tournaments](https://www.youtube.com/watch?v=NSf2mgkRm7Q&list=PLoUHkRwnRH-IXbZfwlgiEN8eXmoj6DtKM){target='_blank'}.
+[^2]: Also check out the `geom_pokemon()` function in the `ggimage` package by [Guangchuang Yu](https://guangchuangyu.github.io/){target='_blank'}, which [plots points as Pokémon sprites](https://cran.r-project.org/web/packages/ggimage/vignettes/ggimage.html){target='_blank'}.
