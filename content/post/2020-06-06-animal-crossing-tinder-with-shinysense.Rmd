@@ -24,7 +24,9 @@ draft: no
 
 # tl;dr 
 
-Who's the most popular [Animal Crossing: New Horizons](https://en.wikipedia.org/wiki/Animal_Crossing:_New_Horizons){target='_blank'} villager? I made [an R Shiny app](https://mattdray.shinyapps.io/acnh-swipe/){target='_blank'} where you swipe right if you like a randomly-presented villager and left if you dislike them.
+The villagers of [Animal Crossing: New Horizons](https://en.wikipedia.org/wiki/Animal_Crossing:_New_Horizons){target='_blank'} are taking part in a popularity contest and you're the judge.
+
+I made [an R Shiny app](https://mattdray.shinyapps.io/acnh-swipe/){target='_blank'} where you swipe right if you like a randomly-presented villager and left if you dislike them.
 
 [Visit the app here](https://mattdray.shinyapps.io/acnh-swipe/){target='_blank'} and help decide the most popular villager! You can also [visit the source code](https://github.com/matt-dray/acnh-swipe){target='_blank'}.
 
@@ -32,7 +34,7 @@ Who's the most popular [Animal Crossing: New Horizons](https://en.wikipedia.org/
 
 [Tidy Tuesday](https://github.com/rfordatascience/tidytuesday){target='_blank'} is an open event for the R community. The organisers provide a data set and participants submit their take on wrangling and presenting the data, usually via Twitter with the hashtag [#tidytuesday](https://twitter.com/search?q=%23tidytuesday){target='_blank'}.
 
-A [recent data set](https://github.com/rfordatascience/tidytuesday/blob/master/data/2020/2020-05-05/readme.md){target='_blank'} (week 19) included information about villager characters from the wildly popular [Animal Crossing: New Horizons](https://en.wikipedia.org/wiki/Animal_Crossing:_New_Horizons){target='_blank'} game for the Nintendo Switch. A similar set of data was also [uploaded to Kaggle](https://www.kaggle.com/jessicali9530/animal-crossing-new-horizons-nookplaza-dataset/data){target='_blank'}.
+A [recent data set](https://github.com/rfordatascience/tidytuesday/blob/master/data/2020/2020-05-05/readme.md){target='_blank'} (week 19) via [VillagerDB](https://villagerdb.com/) includes information about villager non-player characters from the wildly popular [Animal Crossing: New Horizons](https://en.wikipedia.org/wiki/Animal_Crossing:_New_Horizons){target='_blank'} game for the Nintendo Switch. A similar set of data was also [uploaded to Kaggle](https://www.kaggle.com/jessicali9530/animal-crossing-new-horizons-nookplaza-dataset/data){target='_blank'}.
 
 I couldn't resist, having recently written about [learning R6 object-oriented programming with an Animal Crossing example](https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/){target='_blank'}.
 
@@ -42,30 +44,40 @@ This was also a good chance to learn more about two packages in particular: {shi
 
 [Nick Strayer](http://nickstrayer.me/){target='_blank'}'s [{shinysense}](http://nickstrayer.me/shinysense/){target='_blank'} package lets Shiny 'sense the world around it', with modules for touch, vision, hearing and motion.
 
-I wanted to try out shinyswipr, which presents a user with a 'card' that they can swipe. You can [read Nick's blog post](https://livefreeordichotomize.com/2017/03/12/introducing-shinyswipr-swipe-your-way-to-a-great-shiny-ui/){target='_blank'} about its inception.
+I wanted to try out shinyswipr, which presents a user with a 'card' that they can swipe. The direction of swiping can be used to indicate something, like a preference. After swiping, the card content can be updated.
+
+You can [read Nick's blog post](https://livefreeordichotomize.com/2017/03/12/introducing-shinyswipr-swipe-your-way-to-a-great-shiny-ui/){target='_blank'} about its inception.
 
 ## {googlesheets4}
 
 In [Nick's shinyswipr example](https://nickstrayer.shinyapps.io/shinyswipr_demo/){target='_blank'}, he presents back to the user their swipe history, but how can we record the information from all users and return the collated results?
 
-There's [a number of ways to do it](https://shiny.rstudio.com/articles/persistent-data-storage.html){target='_blank'}, but a relatively simple one is to write the data to Google Sheets and read the entire sheet back into the app.
+There's [a number of ways to do persistent storing with Shiny](https://shiny.rstudio.com/articles/persistent-data-storage.html){target='_blank'}, but a relatively simple one is to write the data to Google Sheets and read the entire sheet back into the app.
 
 The [{googlesheets4} package](https://googlesheets4.tidyverse.org/){target='_blank'} by [Jenny Bryan](https://jennybryan.org/){target='_blank'} helps you do exactly that, with functions like `sheet_append()` and `read_sheet()`.
 
-# The app
+# The ACNH Popularity Contest
+
+There's a lot of articles online about favourite villagers, but they aren't very democratic. They tend to cite characters like [Raymond](https://animalcrossing.fandom.com/wiki/Raymond){target='_blank'}, [Beau](https://animalcrossing.fandom.com/wiki/Beau){target='_blank'}, [Marshal](https://animalcrossing.fandom.com/wiki/Marshal){target='_blank'}, [Judy](https://animalcrossing.fandom.com/wiki/Judy){target='_blank'} and [Audie](https://animalcrossing.fandom.com/wiki/Audie){target='_blank'}.
+
+It's time to let the people speak.
+
+# How to use
 
 If you [visit the app](https://mattdray.shinyapps.io/acnh-swipe/){target='_blank'}, or look at the image at the top of this post, you'll see that the user is presented with a card containing a randomly-selected villager and some details (name, species, personality and hobby).
 
-The user then moves the card to the right to indicate they like the character, or to the left if they dislike them. On mobile you can swipe left or right with your finger. On desktop you can click and drag the card.
+You can move the card to the right to indicate you like the character, or to the left if you dislike them. On mobile you can swipe left or right with your finger. On desktop you can click and drag the card.
 
-The swipe event results in the information being written to a Google Sheet and triggers the entirety of the updated data set being read back to the app. It's then wrangled lightly and the information is presented as a table of the current top 10 villagers by 'like' count. Finally, a new random villager is presented.
-
-No data about the user is stored. The app records only the date-time, the villager name and the swipe direction.
+The swipe event results in the information being written to a Google Sheet and triggers the entirety of the updated data set to be read back to the app. It's then wrangled lightly and the information is presented as a table of the current top 10 villagers by 'like' count. Finally, a new random villager is presented.
 
 This is obviously a bit of fun and definitely not polished. Do [let me know](https://github.com/matt-dray/acnh-swipe/issues){target='_blank'} of any bugs that you find, though. I'm aware that mobiles may not display the fonts correctly, for example.
 
-It's also [hosted for free on shinyapps.io](https://www.shinyapps.io/), so there's a limited number of uptime hours it can use per month.
+## Data and hosting
 
-# What next?
+No data about the user is stored. The app records only the date-time, the villager name and the swipe direction.
 
-I hope that enough people cast a vote to make the results interesting. I'll hopefully be able to analyse the results in a future post.
+The app is [hosted for free on shinyapps.io](https://www.shinyapps.io/), so there's a limited number of uptime hours it can use per month.
+
+# Results
+
+I hope that enough people cast a vote to make the results interesting... but <a href='https://animalcrossing.fandom.com/wiki/Villager_list_(New_Horizons)' target='_blank'>there's nearly 400 villagers</a>, so that seems unlikely!
