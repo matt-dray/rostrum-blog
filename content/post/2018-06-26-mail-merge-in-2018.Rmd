@@ -1,15 +1,19 @@
 ---
 draft: no
-title: 'Mail merge in 2018 with R'
+title: "Mail merge with R and Dawson's Creek"
 author: Matt Dray
 date: '2018-06-26'
 categories:
   - code
   - tutorial
 tags:
+  - automation
   - iterate
+  - knitr
   - r
+  - reproducibility
   - rmarkdown
+  - word
 slug: mail-merge
 ---
 
@@ -24,59 +28,72 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, error = FALSE, message = FAL
 
 # tl;dr
 
-You can iteratively produce Microsoft Word documents from an R Markdown template using R. For example, you can provide a list of Dawson's Creek episodes and render information from them into separate reports.
+You have customer details. You want to send each person a personalised letter from a template. You want to mail merge, basically.
 
-(Edit: you may want to consider [a parameterised R Markdown report](https://www.rostrum.blog/2020/03/12/knit-with-params/){target='_blank'} instead of the approach laid out in this post.)
+This post shows how you can use R to iteratively produce separate Microsoft Word reports from a common template, each one with slightly different data. Here I use R Markdown and the {knitr} package to render a separate report about each episode of Dawson's Creek (a classic use case!).
 
-# Two-thousand and late
+# Merge those mails
 
-[Clip art](http://hddfhm.com/clip-art/clipart-word-2000.html){target='_blank'}! [Fax machines](http://www.bbc.com/future/story/20150224-why-the-fax-machine-wont-die){target='_blank'}! [CD-ROMs](https://archive.org/download/encarta95/encarta95.jpg){target='_blank'}! [Dial-up modems](https://gizmodo.com/i-used-a-56k-modem-for-a-week-and-it-was-hell-on-earth-1693124620){target='_blank'}! [The World Wide Web](http://www.cs.trinity.edu/~thicks/Tutorials/WebEditor-Composer0-Install/Netscape1.gif){target='_blank'}! [*Mail merge*](https://en.wikipedia.org/wiki/Mail_merge){target='_blank'}*!*
+I remember learning to mail merge in computer class at the turn of the century; autocompleting a Word template letter with details for imaginary customers from some made-up Access database. 
 
-These exotic terms give me flashbacks to computer class at the turn of the millennium.
+I no longer need to invoice 'Mr Sonic The-Hedgehog' for ordering '25 chili dogs', but the general approach of generating the same template multiple times with different information is still pertinent. The difference now is that I don't want to use proprietary software to do it and I want the process to be more reproducible.
 
-I have particularly fond memories of learning to mail merge, which was taught as a way to autocomplete template Word letters for made-up customers in some made-up Access database. I no longer need to invoice 'Mr Sonic The-Hedgehog' for ordering '25 chili dogs', but the general approach of generating the same template multiple times with different information is still pertinent.
+I've helped a few colleagues with this recently so they could avoid hours of copy-pasting. R is a natural choice for automating this kind of task and for maximising reproducibility.
 
-I've helped a few colleagues with this recently to avoid the need for hours of copy-pasting. R is a natural choice for automating and maximising the reproducibility of this kind of task. 
+# Who will she choose?
 
-# *Who will she choose?*
-
-To keep to the theme, I'll be auto-generating reports that detail each episode of the first season of the hit late-90s-early-2000s-weirdly-articulate-teen-angst-love-triangle masterpiece that is [*Dawson's Creek*](https://www.imdb.com/title/tt0118300/){target='_blank'}. Data via [Wikipedia](https://en.wikipedia.org/wiki/List_of_Dawson%27s_Creek_episodes#Season_1:_1998){target='_blank'}.
+To keep to the turn-of-the-millennium theme, this post explains how to autogenerate reports that contain data for each episode of the first season of the hit late-90s-early-2000s-weirdly-articulate-teen-angst-love-triangle masterpiece that is [Dawson's Creek](https://www.imdb.com/title/tt0118300/){target='_blank'}. Data via [Wikipedia](https://en.wikipedia.org/wiki/List_of_Dawson%27s_Creek_episodes#Season_1:_1998){target='_blank'}.
 
 I've created [an accompanying GitHub repository](https://github.com/matt-dray/mail-merge-2018){target='_blank'} where you can download or clone a whole R Project that replicates the approach used in this post.
 
 # Approach
 
-We'll make an R Markdown template and fill it with data for each episode of *Dawson's Creek* by looping through each of them in turn. Each will be rendered to a Word (.docx) file and formatted according to a style template that we've created and specified. 
+A basic overview of the process is that you:
 
-I don't claim this to be the most efficient method, but it's useful for beginners and, well, it works. (Edit: [I've written a more recent post](https://www.rostrum.blog/2020/03/12/knit-with-params/){target='_blank'} that uses parameterised R Markdown reports and iteration with {purrr} that may suit you better.)
+* write a template document using R Markdown, with snippets of R code that will pull in the data for each element you're iterating over (e.g. Dawson's Creek episodes)
+* make reference to a Word document that contains the style information for your output (i.e. fonts, colours, etc)
+* loop over each element (e.g. each episode), supplying data to the template and rendering ('knitting') a separate output file for each one
 
-Your working directory should contain three important files:
+[Update: this approach is quite basic. You may want to read [a more recent post on this blog](https://www.rostrum.blog/2020/03/12/knit-with-params/){target='_blank'} that uses [parameterised R Markdown](https://rmarkdown.rstudio.com/developer_parameterized_reports.html%23parameter_types%2F) reports and iteration with the {purrr} package, which may suit you better.]
 
-1. Your letter or report template prepared in R Markdown (file type .Rmd)
-2. Your style-reference document (.docx) that we'll put in a folder called 'style'
-3. A script (.R) file for reading your data and looping through each element 
+## Set up
 
-The folder should also contain:
+I recommend creating an RStudio Project with three files important to this task:
 
-* your R Project file (.Rproj)
-* a folder to hold the output files (e.g. 'output')
-* any additional folders you need for input files (e.g. 'data' and 'images')
-* a README file to explain the purpose of your work (.md or something)
+1. Your document template prepared in R Markdown (file type `.Rmd`)
+2. Your style-reference document (`.docx`) that we'll put in a `style/` subfolder
+3. A script (`.R`) file for reading your data and looping through each element 
+
+Aside from your .Rproj file, your folder should also contain:
+
+* a subfolder to hold the output files (e.g. `output/`)
+* any additional subfolders you need for input files (e.g. `data/` and `images/`)
+* an optional `README.md` file to explain the purpose of your work
 
 <div class="figure">
 <img src="/post/2018-06-26-mail-merge-in-2018_files/directory_structure.PNG" alt="A folder structure with folders for data, output and style; an Rmd file; an R script; a readme; and an R Project file." width='40%'/>
 <p class="caption">A simple folder setup for your working directory</p>
 </div>
 
-## 1. The template
+Below is a more detailed explanation using the Dawson's Creek example. Click to jump to each section:
+
+* [the R Markdown template](#template)
+* [the Word document used as a style reference](#style)
+* [the R script for iterating over the template](#loop)
+
+## 1. The template {#template}
+
+### R Markdown
 
 Your report template should be an R Markdown file. In short, R Markdown files allow you to write plain text formatted with special symbols and insert R code inline or in 'chunks'. You can [find out more about R Markdown from the RStudio website](https://rmarkdown.rstudio.com/){target='_blank'}. I've also written [a short guide to writing R Markdown documents](https://matt-dray.github.io/knitting-club/){target='_blank'} and created [a small set of slides](https://matt-dray.github.io/quick-rmd/#1){target='_blank'}, both with beginners in mind.
 
-The R code in your template should refer to the subset of data for each element of your data set that you're generating reports for. In our case we need to refer to episodes of the *Dawson's Creek* data set.
+You can see the full R Markdown file for this demo [in the source code on GitHub](https://github.com/matt-dray/mail-merge-2018/blob/master/01_template.Rmd){target='_blank'}.
 
-We'll be subsetting the data to create one-row data frames of each episode, so it's this `episode` object that the template should refer to.
+### Specify Word output
 
-The template itself should start with a YAML header section that indicates the output type (`word_document`) and document containing style information (at the path `style/dawson_style.docx` in our case). (We'll look at this style document in the next section.) You can of course add add a title, name, etc, to the YAML section if you like.
+The template itself should start with a YAML header section that states (i) the output type, which is `word_document` in this example[^word], and (ii) a path to the Word document that contains the style information (i.e. `style/dawson_style.docx` in this example). The style document is explained in [the next section](#style).
+
+Here's what the basic YAML header looks like:
 
 ```{r eval=FALSE}
 ---
@@ -86,13 +103,19 @@ output:
 ---
 ```
 
-You're then free to add script to the body of the R Markdown file as you would normally. For example, the following code in the template will be filled with the episode's production code and title:
+### Reference the data
+
+We'll be feeding data into the template via an object called `episode`. This object is a data frame that contains the variables that we want to put into our template, with one row per episode (more on this in [the section below about iterating](#loop) below).
+
+When it comes to iterating over the data to produce each output file, we'll be subsetting a row at a time so we only pass one episode's information to the template.
+
+This means the R code in our R Markdown file should refer to the `episode` object. For example, here's some inline code that will be rendered into the production code and title ([see this in the source repo on GitHub](https://github.com/matt-dray/mail-merge-2018/blob/dd0e15b9653d1aadb310f679316d1dadb1c5398f/01_template.Rmd#L15){target='_blank'}):
 
 ```{r eval=FALSE}
 `r paste0(episode$production_code, ": '", episode$title, "'")`
 ```
 
-We can also do something like this inside an R Markdown code chunk to get a table containing information about the episodes:
+And here's an example R Markdown chunk that will get a table containing information about the episodes ([see this in the source code](https://github.com/matt-dray/mail-merge-2018/blob/dd0e15b9653d1aadb310f679316d1dadb1c5398f/01_template.Rmd#L19-L28){target='_blank'}):
 
 ```{r eval=FALSE}
 episode %>% 
@@ -105,26 +128,26 @@ episode %>%
   knitr::kable()  # print to output table
 ```
 
-## 2. The style
+## 2. The style {#style}
 
-The default output when rendering R Markdown to .docx is a bit boring. You can create a separate dummy Word document that contains modified styles to suit your theme. 
+The default output when rendering R Markdown to Word is a bit boring. Instead, you can create a separate dummy Word document that contains modified styles to suit your theme. 
 
-You can read more about creating a style document in [Richard Layton's 'happy collaboration with Rmd to docx'](https://rmarkdown.rstudio.com/articles_docx.html){target='_blank'} on the R Markdown site. Basically you create a fake document in which you've set the formatting for each style element (title, third-level header, paragraph text, etc), store it in your working repository and refer to it from the YAML of your R Markdown report (see section above).
-
-Here I stole and modified a template from [the {dfeR} package](https://dfe-analytical-services.github.io/dfeR/){target='_blank'}, which is intended for use in presenting official statistics.
-
-![Screenshot of the .docx style document](/post/2018-06-26-mail-merge-in-2018_files/dawson_style.PNG){width=75%}
+You can read more about creating a style document in [Richard Layton's 'happy collaboration with Rmd to docx'](https://rmarkdown.rstudio.com/articles_docx.html){target='_blank'} on the R Markdown site. Basically you create a dummy document in which you've set the formatting for each style element (title, third-level header, paragraph text, etc), store it in your working repository and refer to it from the YAML of your R Markdown report (as mentioned in [the section above](#template)).
 
 <div class="figure">
 <img src="/post/2018-06-26-mail-merge-in-2018_files/dawson_style.PNG" alt="Screenshot of Microsoft Word showing the style document." width='75%'/>
 <p class="caption">The style document</p>
 </div>
 
-## 3. Read/loop
+You can download the example style file used in this demo [from the GitHub repo](https://github.com/matt-dray/mail-merge-2018/tree/master/){target='_blank'}.
 
-We now have the template and style in place.
+## 3. Iterate {#loop}
 
-You should have an R script (.R) file that (1) reads the data and (2) executes a loop that applies episode data to the template and saves it with a unique name to a specified subfolder. You'll get one document for each unique element, so we'll get 13 because there are 13 rows in our data set; one for each episode.
+So we have the template (`.Rmd`) and style (`.docx`) files in place. Now we need an R script (`.R`) to orchestrate the iteration of our outputs.
+
+This script (i) reads the data and (ii) executes a loop that applies episode data to the template, saving to a specified subfolder with a unique file name. You'll get one document for each unique element; in this demo we'll get 13 because there are 13 rows (episodes) in our data set.
+
+You can see the script file for this demo in [the source code on GitHub](https://github.com/matt-dray/mail-merge-2018/blob/master/02_loop.R){target='_blank'}.
 
 After reading in the data with something like `data <- readr::read_csv(file = "data/dawsons-creek-season-1.csv")` you can write a loop that looks something like this:
 
@@ -155,11 +178,11 @@ So this code:
 * subsets the `data` object (a data frame of all episodes) to isolate the production code for each episode in turn
 * renders the template document after filling it with the `episode` data
 * gives the file a name that incorporates the production code
-* saves this file to the 'output' folder in our project directory
+* saves this file to the `output/` subfolder in our project directory
 
 # Execute
 
-Run the R script and the files will be rendered in turn according to the formatting in the style document, and added one by one to the output folder. It's fun to open this folder and watch them pop into existence.
+Run the R script and the files will be rendered in turn according to the formatting in the style document, and added one by one to the `output/` folder. It's fun to open this folder and watch them pop into existence.
 
 <div class="figure">
 <img src="/post/2018-06-26-mail-merge-in-2018_files/dawson101.PNG" alt="Screenshot of Microsoft Word with details in it from episode 101 of Dawson's Creek." width='75%'/>
@@ -171,7 +194,7 @@ Run the R script and the files will be rendered in turn according to the formatt
 <p class="caption">Report for episode 102 of Dawson's Creek</p>
 </div>
 
-Congratulations! You now have a separate file that contains the information for each of the episodes in season 1 of *Dawson's Creek*! Make sure to share with your friends (assuming you're not in an awkward love triangle).
+Congratulations! You now have a separate file that contains the information for each of the episodes in season 1 of Dawson's Creek! Make sure to share with your friends (assuming you're not in an awkward love triangle).
 
 ---
 <details><summary>Session info</summary>
@@ -182,3 +205,5 @@ I don't wanna wait for this post to be oooover...
 sessioninfo::session_info()
 ```
 </details>
+
+[^word]: You don't have to render to Word. You could [render to HTML or PDF instead](https://bookdown.org/yihui/rmarkdown/output-formats.html){target='_blank'}, using CSS to style your document instead of a `.docx` style template.
