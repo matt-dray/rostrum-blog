@@ -1,0 +1,136 @@
+---
+title: Take a {ghdump} to download GitHub repos
+author: Matt Dray
+date: '2020-06-14'
+slug: ghdump
+categories:
+  - code
+  - package
+tags:
+  - r
+  - gh
+  - ghdump
+  - purrr
+  - github
+draft: no
+---
+
+
+
+<div class="figure">
+<img src="/post/2020-06-13-take-a-ghdump-to-download-github-repos_files/dumptruck.png" alt="A silhouette of a dump truck dumping trash bags." width='50%'/>
+<p class="caption">
+My garbage GitHub repos being dumped onto my local machine (via <a href="https://openclipart.org/detail/169444/landfill-with-options" target="_blank">openclipart.org</a>, <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank">CC0 1.0</a>)
+</p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>Run <code>ghd_download()</code> from <a href="https://github.com/matt-dray/ghdump" target="_blank">the {ghdump} package</a> to download all the GitHub repositories for a given user.</p>
+<p>The package comes with no guarantees and will likely be in a perpetual work-in-progress state.</p>
+</div>
+<div id="ghdump" class="section level1">
+<h1>{ghdump}</h1>
+<p>Situation:</p>
+<ul>
+<li>I work across different computers and don’t always have copies of all my repositories</li>
+<li>I sometimes want to be able to archive my repos so I’m not dependent on GitHub nor any given computer</li>
+<li>it would be tedious to download or clone the repos one-by-one from the GitHub interface</li>
+</ul>
+<p>Need:</p>
+<ul>
+<li>to download all of my repos with one command</li>
+<li>to sometimes keep them zipped, sometimes unzip them</li>
+<li>do this from within R, mostly for the learning experience, but also to allow for user interactivity</li>
+</ul>
+<p>Observations:</p>
+<ul>
+<li>I don’t know of a specific R function that automates mass-downloading of GitHub repos</li>
+<li><a href="https://github.com/r-lib/gh" target="_blank">the {gh} package</a> provides a lightweight <a href="https://developer.github.com/v3/" target="_blank">GitHub API</a> wrapper for R that’s likely to be helpful</li>
+<li>R has many file-handling functions</li>
+</ul>
+</div>
+<div id="ghdump-1" class="section level1">
+<h1>{ghdump}</h1>
+<p>The result is that I wrote a function that downloads all the repos for a given user to a specified location. You can get it in <a href="https://github.com/matt-dray/ghdump" target="_blank">the tiny {ghdump} package</a>.</p>
+<div id="get-and-use" class="section level2">
+<h2>Get and use</h2>
+<p>Install with:</p>
+<pre class="r"><code>remotes::install_github(&quot;matt-dray/ghdump&quot;)</code></pre>
+<p>And use it like this:</p>
+<pre class="r"><code>ghdump::ghd_download(
+  gh_user = &quot;matt-dray&quot;,     # GitHub user to download repos from
+  dir = &quot;~/Documents/repos&quot;  # where to download to locally
+)</code></pre>
+<p>This assumes you have a GitHub account and a GitHub Personal Access Token (PAT) stored in your .Renviron file. You can do this with the following steps:</p>
+<pre class="r"><code>usethis::browse_github_pat()  # opens browser to generate token
+usethis::edit_r_environ()     # add your token to the .Renviron</code></pre>
+<p>See the <a href="https://happygitwithr.com/github-pat.html" target="_blank">Happy Git and GitHub for the useR</a> book by Jenny Bryan, the STAT 545 TAs and Jim Hester for more info on this.</p>
+</div>
+<div id="interactivity" class="section level2">
+<h2>Interactivity</h2>
+<p>My expectation is to use <code>ghd_download()</code> infrequently and in a non-programmatic way, so I’ve made it quite interactive. This means user input is required; you’ll get some yes/no questions in the console that will affect how the function runs.</p>
+<p>Here’s an imaginary demo of the output from <code>ghd_download()</code>:</p>
+<pre class="r"><code>ghdump::ghd_download(&quot;made-up-user&quot;, &quot;~/Documents/repos&quot;)
+## Fetching GitHub repos for user made-up-user 
+## 3 repos found
+## Create new directory at path ~/Documents/repos? y/n: y
+## Download all 3 repos? y/n: y
+## Downloading zipped repositories to ~/Documents/&lt;directory&gt; 
+## trying URL &#39;https://github.com/made-up-user/repo1/archive/master.zip&#39;
+## trying URL &#39;https://github.com/made-up-user/repo2/archive/master.zip&#39;
+## trying URL &#39;https://github.com/made-up-user/repo3/archive/master.zip&#39;
+## Unzip all folders? y/n: y
+## Unzipping repositories
+## Retain the zip files? y/n: y
+## Keeping zipped folders.
+## Remove &#39;-master&#39; suffix from unzipped directory names? y/n: y
+## Renaming files to remove &#39;-master&#39; suffix
+## Finished</code></pre>
+</div>
+<div id="under-the-hood" class="section level2">
+<h2>Under the hood</h2>
+<p>What are the steps to downloading repos? There are five (non-exported) functions in {gh} that are called by <code>ghd_download()</code>:</p>
+<ol style="list-style-type: decimal">
+<li><code>ghdump:::ghd_get_repos()</code> passes a GitHub username to <code>gh::gh()</code>, which contacts the GitHub API to return a gh_response object that contains info about each of that user’s repos</li>
+<li><code>ghdump:::ghd_extract_names()</code> takes the gh_response object from <code>ghd_get_repos()</code> and extracts the names into a character vector</li>
+<li><code>ghdump:::ghd_enframe_urls()</code> turns that character vector of repo names into a data.frame, with a corresponding column that contains the URL to a zip file for that repo</li>
+<li><code>ghdump:::ghd_download_zips()</code> takes each zip file URL from that data frame and downloads them to the file path provided by the user</li>
+<li><code>ghdump:::ghd_unzip()</code> unzips the zipped repos</li>
+</ol>
+<p>You can, of course, use these intermediate functions if you have slightly different needs. Maybe you want to limit the repos that are downloaded; do this by filtering the vector output from <code>ghdump:::ghd_extract_names()</code> for example.</p>
+</div>
+</div>
+<div id="why-bother" class="section level1">
+<h1>Why bother?</h1>
+<p>What did I learn from doing this?</p>
+<div id="iteration" class="section level2">
+<h2>Iteration</h2>
+<p>Aside from {gh}, the package also depends on {purrr} for iterative programming.</p>
+<p>For example, the gh_response object output from <code>ghdump:::ghd_get_repos()</code> is passed to <code>map()</code> with the <code>pluck()</code> function to extract the repo names.</p>
+<p>Another example is the use of <code>walk()</code>, which is like <code>map()</code>, except we use it when the output is some ‘side effect’. By ‘side effect’, we mean that it doesn’t return an R object. For example, we can <code>walk()</code> the <code>unzip()</code> function over the path to each zip file. This doesn’t return anything in R; it results in file manipulation.</p>
+</div>
+<div id="file-manipulation" class="section level2">
+<h2>File manipulation</h2>
+<p>There’s a number of file-manipulation functions from base R used in this package as well:</p>
+<ul>
+<li><code>dir.create()</code> to create a new folder</li>
+<li><code>file.remove()</code> to remove a file or folder</li>
+<li><code>list.files()</code> and <code>list.dirs()</code> to return a character vector files and folders at some path</li>
+<li><code>file.rename</code> to change the name of a file or folder</li>
+<li><code>unzip()</code> to unpack a zipped folder</li>
+</ul>
+</div>
+<div id="user-input" class="section level2">
+<h2>User input</h2>
+<p>And the interactive use is made possible by <code>readline()</code>. You pass it a string to prompt the user, whose return value can be stored. For example, this is how it looks in the console:</p>
+<pre class="r"><code>&gt; answer &lt;- readline(&quot;Do you like pizza? &quot;) 
+Do you like pizza? yes
+&gt; answer
+[1] &quot;yes&quot;</code></pre>
+<p>Where a user has written <code>yes</code> after the prompt on the second line.</p>
+</div>
+</div>
+<div id="this-belongs-in-a-dump" class="section level1">
+<h1>This belongs in a dump</h1>
+<p>Yeah, maybe. It’s not sophisticated, but I’ve found it useful for my own specific purpose.</p>
+</div>

@@ -1,0 +1,153 @@
+---
+title: Take a {ghdump} to download GitHub repos
+author: Matt Dray
+date: '2020-06-14'
+slug: ghdump
+categories:
+  - code
+  - package
+tags:
+  - r
+  - gh
+  - ghdump
+  - purrr
+  - github
+draft: no
+---
+
+<div class="figure">
+<img src="/post/2020-06-13-take-a-ghdump-to-download-github-repos_files/dumptruck.png" alt="A silhouette of a dump truck dumping trash bags." width='50%'/>
+<p class="caption">My garbage GitHub repos being dumped onto my local machine (via [openclipart.org](https://openclipart.org/detail/169444/landfill-with-options){target='_blank'}, [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/){target='_blank'})</p>
+</div>
+
+# tl;dr
+
+Run `ghd_download()` from [the {ghdump} package](https://github.com/matt-dray/ghdump){target='_blank'} to download all the GitHub repositories for a given user.
+
+The package comes with no guarantees and will likely be in a perpetual work-in-progress state.
+
+# {ghdump}
+
+Situation: 
+
+* I work across different computers and don't always have copies of all my repositories
+* I sometimes want to be able to archive my repos so I'm not dependent on GitHub nor any given computer
+* it would be tedious to download or clone the repos one-by-one from the GitHub interface
+
+Need:
+
+* to download all of my repos with one command
+* to sometimes keep them zipped, sometimes unzip them
+* do this from within R, mostly for the learning experience, but also to allow for user interactivity
+
+Observations:
+
+* I don't know of a specific R function that automates mass-downloading of GitHub repos
+* [the {gh} package](https://github.com/r-lib/gh){target='_blank'} provides a lightweight [GitHub API](https://developer.github.com/v3/){target='_blank'} wrapper for R that's likely to be helpful
+* R has many file-handling functions
+
+# {ghdump}
+
+The result is that I wrote a function that downloads all the repos for a given user to a specified location. You can get it in [the tiny {ghdump} package](https://github.com/matt-dray/ghdump){target='_blank'}.
+
+## Get and use
+
+Install with:
+
+```{r eval=FALSE}
+remotes::install_github("matt-dray/ghdump")
+```
+
+And use it like this:
+
+```{r eval=FALSE}
+ghdump::ghd_download(
+  gh_user = "matt-dray",     # GitHub user to download repos from
+  dir = "~/Documents/repos"  # where to download to locally
+)
+```
+
+This assumes you have a GitHub account and a GitHub Personal Access Token (PAT) stored in your .Renviron file. You can do this with the following steps:
+
+```{r eval=FALSE}
+usethis::browse_github_pat()  # opens browser to generate token
+usethis::edit_r_environ()     # add your token to the .Renviron
+```
+
+See the [Happy Git and GitHub for the useR](https://happygitwithr.com/github-pat.html){target='_blank'} book by Jenny Bryan, the STAT 545 TAs and Jim Hester for more info on this.
+
+## Interactivity
+
+My expectation is to use `ghd_download()` infrequently and in a non-programmatic way, so I've made it quite interactive. This means user input is required; you'll get some yes/no questions in the console that will affect how the function runs.
+
+Here's an imaginary demo of the output from `ghd_download()`:
+
+```{r eval=FALSE}
+ghdump::ghd_download("made-up-user", "~/Documents/repos")
+## Fetching GitHub repos for user made-up-user 
+## 3 repos found
+## Create new directory at path ~/Documents/repos? y/n: y
+## Download all 3 repos? y/n: y
+## Downloading zipped repositories to ~/Documents/<directory> 
+## trying URL 'https://github.com/made-up-user/repo1/archive/master.zip'
+## trying URL 'https://github.com/made-up-user/repo2/archive/master.zip'
+## trying URL 'https://github.com/made-up-user/repo3/archive/master.zip'
+## Unzip all folders? y/n: y
+## Unzipping repositories
+## Retain the zip files? y/n: y
+## Keeping zipped folders.
+## Remove '-master' suffix from unzipped directory names? y/n: y
+## Renaming files to remove '-master' suffix
+## Finished
+```
+
+## Under the hood
+
+What are the steps to downloading repos? There are five (non-exported) functions in {gh} that are called by `ghd_download()`:
+
+1. `ghdump:::ghd_get_repos()` passes a GitHub username to `gh::gh()`, which contacts the GitHub API to return a gh_response object that contains info about each of that user's repos
+1. `ghdump:::ghd_extract_names()` takes the gh_response object from `ghd_get_repos()` and extracts the names into a character vector
+1. `ghdump:::ghd_enframe_urls()` turns that character vector of repo names into a data.frame, with a corresponding column that contains the URL to a zip file for that repo
+1. `ghdump:::ghd_download_zips()` takes each zip file URL from that data frame and downloads them to the file path provided by the user
+1. `ghdump:::ghd_unzip()` unzips the zipped repos
+
+You can, of course, use these intermediate functions if you have slightly different needs. Maybe you want to limit the repos that are downloaded; do this by filtering the vector output from `ghdump:::ghd_extract_names()` for example.
+
+# Why bother?
+
+What did I learn from doing this?
+
+## Iteration
+
+Aside from {gh}, the package also depends on {purrr} for iterative programming. 
+
+For example, the gh_response object output from `ghdump:::ghd_get_repos()` is passed to `map()` with the `pluck()` function to extract the repo names. 
+
+Another example is the use of `walk()`, which is like `map()`, except we use it when the output is some 'side effect'. By 'side effect', we mean that it doesn't return an R object. For example, we can `walk()` the `unzip()` function over the path to each zip file. This doesn't return anything in R; it results in file manipulation.
+
+## File manipulation
+
+There's a number of file-manipulation functions from base R used in this package as well:
+
+* `dir.create()` to create a new folder
+* `file.remove()` to remove a file or folder
+* `list.files()` and `list.dirs()` to return a character vector files and folders at some path
+* `file.rename` to change the name of a file or folder
+* `unzip()` to unpack a zipped folder
+
+## User input
+
+And the interactive use is made possible by `readline()`. You pass it a string to prompt the user, whose return value can be stored. For example, this is how it looks in the console:
+
+```{r eval=FALSE}
+> answer <- readline("Do you like pizza? ") 
+Do you like pizza? yes
+> answer
+[1] "yes"
+```
+
+Where a user has written `yes` after the prompt on the second line.
+
+# This belongs in a dump
+
+Yeah, maybe. It's not sophisticated, but I've found it useful for my own specific purpose.
