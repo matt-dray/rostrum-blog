@@ -22,7 +22,7 @@ draft: no
 
 # tl;dr
 
-Run `ghd_download()` from [the {ghdump} package](https://github.com/matt-dray/ghdump){target='_blank'} to download all the GitHub repositories for a given user.
+Run `ghd_download()` from [the {ghdump} package](https://github.com/matt-dray/ghdump){target='_blank'} to download all the GitHub repositories for a given user. Intended for archival purposes.
 
 The package comes with no guarantees and will likely be in a perpetual work-in-progress state.
 
@@ -30,25 +30,26 @@ The package comes with no guarantees and will likely be in a perpetual work-in-p
 
 Situation: 
 
-* I work across different computers and don't always have copies of all my repositories
 * I sometimes want to be able to archive my repos so I'm not dependent on GitHub nor any given computer
-* it would be tedious to download or clone the repos one-by-one from the GitHub interface
+* it would be tedious to download the repos one-by-one from the GitHub interface
 
 Need:
 
 * to download all of my repos with one command
-* to sometimes keep them zipped, sometimes unzip them
+* be able to unzip them all en masse if I want to
 * do this from within R, mostly for the learning experience, but also to allow for user interactivity
 
 Observations:
 
 * I don't know of a specific R function that automates mass-downloading of GitHub repos
 * [the {gh} package](https://github.com/r-lib/gh){target='_blank'} provides a lightweight [GitHub API](https://developer.github.com/v3/){target='_blank'} wrapper for R that's likely to be helpful
-* R has many file-handling functions
+* R has many file-handling functions taht will be helpful
 
 # {ghdump}
 
 The result is that I wrote a function that downloads all the repos for a given user to a specified location. You can get it in [the tiny {ghdump} package](https://github.com/matt-dray/ghdump){target='_blank'}.
+
+It's dependent on [the handy {gh} package](https://github.com/r-lib/gh) by Gábor Csárdi, Jenny Bryan and Hadley Wickham for accessing the GitHub API.
 
 ## Get and use
 
@@ -123,11 +124,11 @@ Aside from {gh}, the package also depends on {purrr} for iterative programming.
 
 For example, the gh_response object output from `ghdump:::ghd_get_repos()` is passed to `map()` with the `pluck()` function to extract the repo names. 
 
-Another example is the use of `walk()`, which is like `map()`, except we use it when the output is some 'side effect'. By 'side effect', we mean that it doesn't return an R object. For example, we can `walk()` the `unzip()` function over the path to each zip file. This doesn't return anything in R; it results in file manipulation.
+Another example is the use of `walk()`, which is like `map()`, except we use it when the output is some 'side effect'. By 'side effect', we mean that it doesn't return an R object. For example, we can `walk()` the `unzip()` function over the path to each zip file. This doesn't return anything in R; it results in some local files being manipulated.
 
 ## File manipulation
 
-There's a number of file-manipulation functions from base R used in this package as well:
+R can be used to interact with files on your computer. There's a number of these base R funntions in teh package:
 
 * `dir.create()` to create a new folder
 * `file.remove()` to remove a file or folder
@@ -137,7 +138,9 @@ There's a number of file-manipulation functions from base R used in this package
 
 ## User input
 
-And the interactive use is made possible by `readline()`. You pass it a string to prompt the user, whose return value can be stored. For example, this is how it looks in the console:
+How do you ask questions of your user and get answers? This interactivity is made possible by `readline()`. You pass it a string to prompt the user, whose return value can be stored. 
+
+For example, this is how it looks in the console:
 
 ```{r eval=FALSE}
 > answer <- readline("Do you like pizza? ") 

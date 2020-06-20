@@ -25,33 +25,33 @@ My garbage GitHub repos being dumped onto my local machine (via <a href="https:/
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>Run <code>ghd_download()</code> from <a href="https://github.com/matt-dray/ghdump" target="_blank">the {ghdump} package</a> to download all the GitHub repositories for a given user.</p>
+<p>Run <code>ghd_download()</code> from <a href="https://github.com/matt-dray/ghdump" target="_blank">the {ghdump} package</a> to download all the GitHub repositories for a given user. Intended for archival purposes.</p>
 <p>The package comes with no guarantees and will likely be in a perpetual work-in-progress state.</p>
 </div>
 <div id="wheres-that-repo" class="section level1">
 <h1>Where’s that repo?</h1>
 <p>Situation:</p>
 <ul>
-<li>I work across different computers and don’t always have copies of all my repositories</li>
 <li>I sometimes want to be able to archive my repos so I’m not dependent on GitHub nor any given computer</li>
-<li>it would be tedious to download or clone the repos one-by-one from the GitHub interface</li>
+<li>it would be tedious to download the repos one-by-one from the GitHub interface</li>
 </ul>
 <p>Need:</p>
 <ul>
 <li>to download all of my repos with one command</li>
-<li>to sometimes keep them zipped, sometimes unzip them</li>
+<li>be able to unzip them all en masse if I want to</li>
 <li>do this from within R, mostly for the learning experience, but also to allow for user interactivity</li>
 </ul>
 <p>Observations:</p>
 <ul>
 <li>I don’t know of a specific R function that automates mass-downloading of GitHub repos</li>
 <li><a href="https://github.com/r-lib/gh" target="_blank">the {gh} package</a> provides a lightweight <a href="https://developer.github.com/v3/" target="_blank">GitHub API</a> wrapper for R that’s likely to be helpful</li>
-<li>R has many file-handling functions</li>
+<li>R has many file-handling functions taht will be helpful</li>
 </ul>
 </div>
 <div id="ghdump" class="section level1">
 <h1>{ghdump}</h1>
 <p>The result is that I wrote a function that downloads all the repos for a given user to a specified location. You can get it in <a href="https://github.com/matt-dray/ghdump" target="_blank">the tiny {ghdump} package</a>.</p>
+<p>It’s dependent on <a href="https://github.com/r-lib/gh">the handy {gh} package</a> by Gábor Csárdi, Jenny Bryan and Hadley Wickham for accessing the GitHub API.</p>
 <div id="get-and-use" class="section level2">
 <h2>Get and use</h2>
 <p>Install with:</p>
@@ -107,11 +107,11 @@ usethis::edit_r_environ()     # add your token to the .Renviron</code></pre>
 <h2>Iteration</h2>
 <p>Aside from {gh}, the package also depends on {purrr} for iterative programming.</p>
 <p>For example, the gh_response object output from <code>ghdump:::ghd_get_repos()</code> is passed to <code>map()</code> with the <code>pluck()</code> function to extract the repo names.</p>
-<p>Another example is the use of <code>walk()</code>, which is like <code>map()</code>, except we use it when the output is some ‘side effect’. By ‘side effect’, we mean that it doesn’t return an R object. For example, we can <code>walk()</code> the <code>unzip()</code> function over the path to each zip file. This doesn’t return anything in R; it results in file manipulation.</p>
+<p>Another example is the use of <code>walk()</code>, which is like <code>map()</code>, except we use it when the output is some ‘side effect’. By ‘side effect’, we mean that it doesn’t return an R object. For example, we can <code>walk()</code> the <code>unzip()</code> function over the path to each zip file. This doesn’t return anything in R; it results in some local files being manipulated.</p>
 </div>
 <div id="file-manipulation" class="section level2">
 <h2>File manipulation</h2>
-<p>There’s a number of file-manipulation functions from base R used in this package as well:</p>
+<p>R can be used to interact with files on your computer. There’s a number of these base R funntions in teh package:</p>
 <ul>
 <li><code>dir.create()</code> to create a new folder</li>
 <li><code>file.remove()</code> to remove a file or folder</li>
@@ -122,7 +122,8 @@ usethis::edit_r_environ()     # add your token to the .Renviron</code></pre>
 </div>
 <div id="user-input" class="section level2">
 <h2>User input</h2>
-<p>And the interactive use is made possible by <code>readline()</code>. You pass it a string to prompt the user, whose return value can be stored. For example, this is how it looks in the console:</p>
+<p>How do you ask questions of your user and get answers? This interactivity is made possible by <code>readline()</code>. You pass it a string to prompt the user, whose return value can be stored.</p>
+<p>For example, this is how it looks in the console:</p>
 <pre class="r"><code>&gt; answer &lt;- readline(&quot;Do you like pizza? &quot;) 
 Do you like pizza? yes
 &gt; answer
