@@ -1,305 +1,465 @@
 ---
-title: The NBA Northwest Division with gmapsdistance
+title: 'Travel the NBA with {rvest}, {leaflet} and {osrm}'
 author: Matt Dray
 date: '2018-12-24'
 slug: nba-travel
 categories:
-  - R
+  - code
+  - tutorial
 tags:
-  - nba
-  - gmapsdistance
   - dplyr
-  - rvest
-  - stringr
-  - stringi
+  - ggplot2
   - leaflet
+  - nba
+  - osrm
+  - plotly
+  - rvest
+  - sport
+  - stringr
   - tidyr
+  - tidyverse
+  - web-scrape
 draft: no
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(eval=TRUE)
-library(gmapsdistance)  # because the chunk it's in is eval=FALSE
-api_key <- read.table("~/Desktop/api_key.txt")[1, 1]  # key stored locally
-set.api.key(api_key)  # set key
+<div class="figure">
+<img src="https://media.giphy.com/media/GOIl4CelYNleM/giphy.gif" alt="John Stockton passes the basketball to Karl Malone who dunks it." width="75%"/>
+<p class="caption">Classic Jazz: Stockton to Malone for the dunk ([via Giphy](https://giphy.com/gifs/vintage-basketball-GOIl4CelYNleM))</p>
+</div>
+
+# tl;dr
+
+[The {osrm} R package](https://github.com/rCarto/osrm){target='_blank'} can retrieve from [the OSRM API](http://project-osrm.org/){target='_blank'} the travel duration between points. I looked at these data for NBA basketball-team arenas, whose details I scraped from the web using [{rvest}](https://rvest.tidyverse.org/){target='_blank'} and mapped with [{leaflet}](https://rstudio.github.io/leaflet/){target='_blank'}.
+
+[Note: The original version of this post (December 2018) used [the {gmapsdistance} package](https://github.com/rodazuero/gmapsdistance){target='_blank'}. I updated it extensively in June 2020 to use the {osrm} package, which doesn't require an API key nor billing details.]
+
+# On the road
+
+Fans don't have far to travel in the UK if they want to see their favourite sports team play an away match.
+
+The USA is pretty big, though. 
+
+The National Basketball Association (NBA) compensates by separating its teams into Eastern and Western conferences, each with three divisions of five teams. This means that the majority of [regular-season games](https://en.wikipedia.org/wiki/National_Basketball_Association#Regular_season){target='_blank'} aren't too far away.
+
+But this varies. Teams are clustered near Lakes Michigan and Erie in the Central division, but the Northwest division stretches from Portland in the Pacific Northwest to Oklahoma City in the centre-south of the country.
+
+What would it take to be a basketball fan who wanted to drive to away games? How long would it take?
+
+# R can help
+
+Surprise, this is all a ruse for me to practice with some R packages:
+
+* [{rvest}](https://rvest.tidyverse.org/){target='_blank'} for scraping web pages
+* [{leaflet}](https://rstudio.github.io/leaflet/){target='_blank'}) for interactive mapping
+* [{osrm}](https://github.com/rCarto/osrm){target='_blank'} for calculating duration of travel between points
+
+There's four main parts to the post (click to jump):
+
+1. [Scrape team data](#scrape)
+1. [Map the locations](#map)
+1. [Get travel duration](#travel)
+1. [Make a heatmap](#viz)
+
+Let's start by attaching the packages we need. As always, make sure these are installed first, using `install.packages()`.
+
+```{r packages, message=FALSE}
+library(rvest)    # scrape
+library(dplyr)    # wrangle data
+library(tibble)   # fancy data frames
+library(tidyr)    # wrangle data
+library(stringr)  # wrangle strings
+library(sf)       # handle geographies
+library(osrm)     # fetch travel info
+library(leaflet)  # interactive maps
+library(DT)       # interactive tables
+library(ggplot2)  # static plots
+library(plotly)   # interactive plots
 ```
 
-Matt Dray ([\@mattdray](https://www.twitter.com/mattdray))
+## 1. Scrape team data {#scrape}
 
-![Classic Jazz: Stockton to Malone for the dunk ([via Giphy](https://giphy.com/gifs/vintage-basketball-GOIl4CelYNleM))](https://media.giphy.com/media/GOIl4CelYNleM/giphy.gif)
+### Use {rvest}
 
-# TL;DR
+The Wikipedia page for the NBA has a table with each team and its location, including coordinates. We can use [the {rvest} web-scraping package](https://rvest.tidyverse.org/){target='_blank'} to extract that table into a data frame with these steps:
 
-The `gmapsdistance` R package lets you query the Google Maps API. I used it to look at travel distances between basketball teams. Surprise: they can be far apart even if they're in the same division.
+1. Read the HTML of the page with `xml2::read_html()`
+2. Extract the HTML node for the table with `rvest::html_nodes()`
+3. Parse the HTML as a table with `rvest::html_table()`
 
-# The NBA
+Note that you have to provide to `html_nodes()` a CSS selector or an XPath that identifies the table's 'location' in the HTML. You can find these using a tool like [SelectorGadget](https://selectorgadget.com/){target='_blank'}, or with your browser's 'inspect' tool (for Chrome, right-click the element on the page, select 'inspect', right-click the HTML for that element, go to 'Copy', then 'Copy full XPath).
 
-The USA is pretty big.
+```{r scrape}
+nba_scrape <-
+  read_html("https://en.wikipedia.org/wiki/National_Basketball_Association") %>% 
+  html_nodes(xpath = '//*[@id="mw-content-text"]/div/table[3]') %>%
+  html_table(fill = TRUE, header = NA) %>%
+  .[[1]]  # list was returned, so extract first list element
 
-So the National Basketball Association (NBA) is separated geographically into Eastern and Western conferences, each with three divisions of five teams. The majority of match-ups are [within the division and conference](https://en.wikipedia.org/wiki/National_Basketball_Association#Regular_season).
-
-This is fine for the Central division: teams clustered near Lakes Michigan and Erie.
-
-But not for the Northwest division: it stretches from Portland in the Pacific Northwest to Oklahoma City in the centre-south, with Salt Lake City and Denver between. The other team is in Minneapolis; much closer to the Central division. 
-
-![NBA team locations with states coloured by division (CC BY-SA 2.5, [Wikipedia](https://en.wikipedia.org/wiki/National_Basketball_Association#/media/File:Map_of_USA_and_Canada,_NBA,_zoom.svg))](/post/2018-12-18-googlemaps-in-the-nba-pacific-division_files/nba-map-wiki.png)
-
-That's a lot of travel for fans.
-
-# Google Maps and `gmapsdistance`
-
-If you didn't know, Google Maps is one of many services that calculates journey distances and durations. 
-The R package [`gmapsdistance`](https://CRAN.R-project.org/package=gmapsdistance) was written by Rodrigo Azuero, Demetrio Rodriguez and David Zarruk. It wraps the [Google Maps](https://www.google.co.uk/maps) [Application Programming Interface (API)](https://medium.freecodecamp.org/what-is-an-api-in-english-please-b880a3214a82). You can use it to get travel distance and time for several modes of travel.
-
-You need an API key for Google Maps. This helps prevent misuse of the service and helps keeps track of your credit. The process is outlined in detail in [the Google developer documentation pages](https://developers.google.com/maps/documentation/distance-matrix/get-api-key#key). [Go to the Google Cloud maps platform pages](https://cloud.google.com/maps-platform/) and follow the instructions. You'll need a Google account to do this.
-
-![Setting up Google Maps platform on Google Cloud](/post/2018-12-18-nba-travel_files/1-select-product.png)
-
-# Get data
-
-We can scrape the [NBA Wikipedia page](https://en.wikipedia.org/wiki/National_Basketball_Association) with the [`rvest` package](https://github.com/hadley/rvest) to get a table of teams and locations.
-
-Start by loading `rvest` and some other packages for data manipulation.
-
-```{r load-packages, message=FALSE, warning=FALSE}
-library(dplyr)  # data manipulation and %>%
-library(tidyr)  # tidying dataframes
-library(stringr); library(stringi)  # string manipulation
-library(rvest)  # web scraping
-library(knitr)  # print tables nicely
+glimpse(nba_scrape)  # a data frame
 ```
 
-We can extract the table with its xpath, which is like an 'address' for HTML content. You can use the 'inspect' function in your browser or [the selectorgadget browser extension](https://selectorgadget.com/) to get this information.
+So, the table has been returned, but it needs to be tidied up.
 
-```{r set-scrape-variables}
-# Read the HTML from a specified web URL
-html <- read_html("https://en.wikipedia.org/wiki/National_Basketball_Association")
+### Wrangle the data
 
-# Use selectorgadget or your browser's 'inspect' mode to get xpath
-table_xpath <- '//*[@id="mw-content-text"]/div/table[4]'
-```
+To summarise the main cleaning steps required:
 
-Now we can collect the table and get the parts we want: team names and locations. We can get the latter as both latitude-longitude coordinates and as text. Text can be parsed by Google Maps if words are separated by the plus symbol: `arena+city+state`. Steps to do this are annotated in the code below.
+* remove the rogue `NA`-filled column
+* filter out the spanning headers that identify the conferences
+* add a column for each team's conference
+* make numeric the arena capacity
+* separate city and state into separate columns
+* isolate the latitude and longitude by separating them from the `Coordinates` column
+* remove the 'zero width no-break space' unicode character in the longitude column
+* retain only the columns of interest
 
-```{r get-nba-table}
-nba_table <-
-  # Read HTML, isolate table, focus on NW
-  html_nodes(x = html, xpath = table_xpath) %>%  # scrape the HTML
-  html_table(fill = TRUE, header = NA) %>%  # parse as table
-  as.data.frame() %>%  # convert from list
-  filter(Division == "Northwest") %>%  # NW division only
-  # Isolate the latitude and longitude
+```{r wrangle}
+nba_wrangle <- nba_scrape %>% 
+  select(-length(.)) %>%  # remove the last column (NA)
+  dplyr::filter(!str_detect(Division, "Conference")) %>% 
+  mutate(
+    Conference = c(rep("Eastern", 15), rep("Western", 15)),
+    Capacity = as.numeric(str_remove(Capacity, ","))
+  ) %>% 
+  separate(`City, State`, c("City", "State"), sep = ", ") %>% 
   separate(Coordinates, c("Coords1", "Coords2", "Coords3"), " / ") %>% 
   separate(Coords3, c("Latitude", "Longitude"), sep = "; ") %>% 
   separate(Longitude, c("Longitude", "X"), sep = " \\(") %>% 
   mutate(
-    # Make coordinates numeric
-    Latitude = as.numeric(Latitude),  # make numeric
-    Longitude = stri_escape_unicode(Longitude),  # there's a weird character
-    Longitude = str_replace(Longitude, "\\\\ufeff", ""),  # remove it
-    Longitude = as.numeric(Longitude),  # make numeric
-    # Create text search string
-    Search = paste(Arena, City.State),  # combine location details
-    Search = str_replace_all(Search, ",", ""),  # replace comma with blank
-    Search = str_replace_all(Search, " ", "+"),  # replace space with plus
-    # Add three-letter team codes to help simplify outputs
-    `Team code` = case_when(
-      Team == "Denver Nuggets" ~ "DEN",
-      Team == "Minnesota Timberwolves" ~ "MIN",
-      Team == "Oklahoma City Thunder" ~ "OKC",
-      Team == "Portland Trail Blazers" ~ "POR",
-      Team == "Utah Jazz" ~ "UTA"
-    )
+    Latitude = as.numeric(Latitude),
+    Longitude = as.numeric(
+      str_remove(Longitude, "\\ufeff")  # remove rogue unicode
+    )  
   ) %>% 
-  select(  # Retain columns of interest only
-    Team, `Team code`,
-    Arena, City = City.State,
-    Latitude, Longitude, Search
-  )
+  select(
+    Team, Conference, everything(),
+    -Founded, -Joined, -Coords1, -Coords2, -X
+  ) %>% 
+  as_tibble()  # convert to tibble
 
-# Print a simple version of the table
-select(nba_table, `Team code`, Latitude, Longitude, Search) %>% kable()
+glimpse(nba_wrangle)
 ```
 
-# Map locations
+Great, a clean and tidy table.
 
-We can map the latitude and longitude for fun.
+### Add more information
 
-```{r map}
-library(leaflet)  # for interactive maps
+I also wanted to add three-letter team codes, which can be scraped from [another Wikipedia table](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_National_Basketball_Association/National_Basketball_Association_team_abbreviations){target='_blank'}.
 
+I also wanted to add team colours to later customise the marker pins on the interactive map. These are a little tricky to get in an automated way, so I input them manually with reference to [teamcolorcodes.com](https://teamcolorcodes.com/nba-team-color-codes/){target='_blank'}. With {leaflet}, the markers can only take a small set of named colours (see `?awesomeIcons`), whereas the icon can use any CSS-valid colour (like hex codes).
+
+I've hidden the code for this below to save space and because it doesn't introduce anything new.
+
+<details><summary>Click for the code that creates a data frame of team codes and colours</summary>
+```{r abbr_cols}
+nba_abbr_cols <- 
+  read_html(
+    "https://en.wikipedia.org/wiki/Wikipedia:WikiProject_National_Basketball_Association/National_Basketball_Association_team_abbreviations"
+  ) %>% 
+  html_nodes(xpath = "/html/body/div[3]/div[3]/div[4]/div/table") %>%
+  html_table(header = TRUE) %>%
+  .[[1]] %>% 
+  rename(Code = `Abbreviation/Acronym`) %>% 
+  mutate(
+    # {leaflet} markers take a named colour
+    colour_marker = case_when(
+      Code == "ATL" ~ "red",
+      Code == "BKN" ~ "black",
+      Code == "BOS" ~ "green",
+      Code == "CHA" ~ "darkblue",
+      Code == "CHI" ~ "red",
+      Code == "CLE" ~ "darkred",
+      Code == "DAL" ~ "blue",
+      Code == "DEN" ~ "darkblue",
+      Code == "DET" ~ "red",
+      Code == "GSW" ~ "blue",
+      Code == "HOU" ~ "red",
+      Code == "IND" ~ "darkblue",
+      Code == "LAC" ~ "red",
+      Code == "LAL" ~ "blue",
+      Code == "MEM" ~ "lightblue",
+      Code == "MIA" ~ "red",
+      Code == "MIL" ~ "darkgreen",
+      Code == "MIN" ~ "darkblue",
+      Code == "NOP" ~ "darkblue",
+      Code == "NYK" ~ "blue",
+      Code == "OKC" ~ "blue",
+      Code == "ORL" ~ "blue",
+      Code == "PHI" ~ "blue",
+      Code == "PHX" ~ "darkblue",
+      Code == "POR" ~ "red",
+      Code == "SAC" ~ "purple",
+      Code == "SAS" ~ "black",
+      Code == "TOR" ~ "red",
+      Code == "UTA" ~ "darkblue",
+      Code == "WAS" ~ "darkblue"
+    ),
+    # {leaflet} marker icons take hex
+    colour_icon = case_when(
+      Code == "ATL" ~ "#C1D32F",
+      Code == "BKN" ~ "#FFFFFF",
+      Code == "BOS" ~ "#BA9653",
+      Code == "CHA" ~ "#00788C",
+      Code == "CHI" ~ "#000000",
+      Code == "CLE" ~ "#FDBB30",
+      Code == "DAL" ~ "#B8C4CA",
+      Code == "DEN" ~ "#FEC524",
+      Code == "DET" ~ "#1D42BA",
+      Code == "GSW" ~ "#FFC72C",
+      Code == "HOU" ~ "#000000",
+      Code == "IND" ~ "#FDBB30",
+      Code == "LAC" ~ "#1D428A",
+      Code == "LAL" ~ "#FDB927",
+      Code == "MEM" ~ "#12173F",
+      Code == "MIA" ~ "#F9A01B",
+      Code == "MIL" ~ "#EEE1C6",
+      Code == "MIN" ~ "#9EA2A2",
+      Code == "NOP" ~ "#C8102E",
+      Code == "NYK" ~ "#F58426",
+      Code == "OKC" ~ "#EF3B24",
+      Code == "ORL" ~ "#C4CED4",
+      Code == "PHI" ~ "#ED174C",
+      Code == "PHX" ~ "#E56020",
+      Code == "POR" ~ "#000000",
+      Code == "SAC" ~ "#63727A",
+      Code == "SAS" ~ "#C4CED4",
+      Code == "TOR" ~ "#000000",
+      Code == "UTA" ~ "#F9A01B",
+      Code == "WAS" ~ "#E31837"
+    )
+  ) %>% 
+  as_tibble()
+```
+</details>
+
+```{r nba_abbr_cols}
+sample_n(nba_abbr_cols, 5)
+```
+
+Now this extra information can be joined to our scraped and wrangled data frame from before.
+
+```{r add-abbrev}
+nba_table <- nba_wrangle %>% 
+  left_join(nba_abbr_cols, by = c("Team" = "Franchise")) %>%
+  select(Code, everything())
+
+glimpse(nba_table)
+```
+
+Now we have everything we need to visualise the data and fetch the travel duration times.
+ 
+## 2. Map the locations {#map}
+
+So where are all the arenas?
+
+We can create a simple interactive map with {leaflet} by plotting the `Latitude` and `Longitude` columns and creating custom point markers with a basketball icon and each team's colours, as well as an information box that appears on-click.
+
+```{r leaflet}
 leaflet(nba_table) %>%
-  fitBounds(lng1 = -125, lng2 = -90, lat1 = 34, lat2 = 46) %>% 
-  addProviderTiles(providers$Stamen.TonerLite) %>%
-  addAwesomeMarkers(
-    lng = ~Longitude, lat = ~Latitude,
-    popup = ~paste0(
-      "<b>", nba_table$Team, "</b>",
-      "<br>", nba_table$Arena,
-      "<br>", nba_table$City
+  addProviderTiles(providers$Stamen.TonerLite) %>%  # add basemap
+  addAwesomeMarkers(  # add markers
+    lng = ~Longitude, lat = ~Latitude,  # coordinates
+    popup = ~paste0(  # HTML content for popup info
+      "<b>", nba_table$Team, "</b>",  # team name
+      "<br>", paste0(nba_table$Arena, ", ", nba_table$City),  # location
+      if_else(  # division/conference information
+        nba_table$Conference == "Eastern",
+        paste0("<br><font color='#0000FF'>", nba_table$Division,
+               " Division (Eastern Conference)</font>"),
+        paste0("<br><font color='#FF0000'>", nba_table$Division,
+               " Division (Western Conference)</font>")
+      )
     ),
     icon = awesomeIcons(
-      library = "ion", icon = "ion-ios-basketball", # add icon
-      markerColor = case_when(
-        nba_table$`Team code` == "DEN" ~ "darkblue",
-        nba_table$`Team code` == "MIN" ~ "darkblue",
-        nba_table$`Team code` == "OKC" ~ "blue",
-        nba_table$`Team code` == "POR" ~ "black",
-        nba_table$`Team code` == "UTA" ~ "darkblue"
-      ),
-      iconColor = case_when(  # see teamcolorcodes.com
-        nba_table$`Team code` == "DEN" ~ "#FEC524",
-        nba_table$`Team code` == "MIN" ~ "#9EA2A2",
-        nba_table$`Team code` == "OKC" ~ "#EF3B24",
-        nba_table$`Team code` == "POR" ~ "#E03A3E",
-        nba_table$`Team code` == "UTA" ~ "#00471B"
-      )
+      library = "ion", icon = "ion-ios-basketball", # add basketball icon
+      markerColor = nba_table$colour_marker,  # colour the marker
+      iconColor = nba_table$colour_icon  # colour the basketball icon
     )
   ) %>%
-  addMeasure()
+  addMeasure()  # add straight-line distance-measuring tool
 ```
 
-# Get travel distances
+You can drag and zoom and click the points.
 
-We start by making our API key available in the package environment by using the `set.api.key()` function from `gmapsdistance`.
+## 3. Get travel duration {#travel}
 
-```{r set-api-key, eval=FALSE}
-library(gmapsdistance)
-set.api.key("YOUR-API-KEY")  # replace with your key
+So how far between these locations?
+
+[The {osrm} R package](https://github.com/rCarto/osrm){target='_blank'} from Timothée Giraud, Robin Cura and Matthieu Viry lets you fetch shortest paths and travel times from [OpenStreetMap](https://www.openstreetmap.org/){target='_blank'} via the [OSRM API](http://project-osrm.org/){target='_blank'}. It defaults to driving, but you can select walking and biking too. Since we're using the demo server for OSRM, we can only fetch duration.
+
+### Duration matrix
+
+The `osrm::osrmTable()` function takes a data frame (or spatial object) where the first three columns are an identifier and coordinates. The return object is a list, where the first element is a matrix of durations for each pair of points.
+
+```{r osrm}
+nba_locs <- select(nba_table, Code, Longitude, Latitude)
+nba_dur <- osrmTable(loc = nba_locs)
+
+glimpse(nba_dur)
 ```
 
-The basic arguments to the `gmapsdistance()` function are the origin and destination (can be an address, postcode or latlong coordinates), the mode of travel (car, public transit, walking) and the return format (shape) of the data (each origin-destination pair per row, or a matrix). We want all possible combinations.
+### Duration: all teams
 
-Now we can query Google Maps with the API key. I've explained the function arguments in the code comments.
+Let's take this matrix and tidy it into a data frame so there's one row per team-pair. We can also round to the nearest minute and calculate the nearest number of hours.
 
-```{r use-gmapsdistance, cache=TRUE}
-nba_travel <- 
-  gmapsdistance(
-    key = get.api.key(),  # retrieve the API key we set in the step above
-    origin = nba_table$Search,  # vector of locations from our dataframe
-    destination = nba_table$Search,  # as above
-    combinations = "all",  # all possible pairs of locations
-    mode = "driving",  # rather than walking, public transport or cycling
-    shape = "long"  # one row per location-pair
-  )
-```
-
-I've focused here on driving as the mode of transport. Note that you can also do things like set specific start times and dates, but I've left these out for simplicity.
-
-# Travel distance output
-
-What does the returned data look like?
-
-```{r nw_nba_list}
-glimpse(nba_travel)
-```
-
-It's a list object with three elements: `Time`, `Distance` and `Status`. Each list element is a dataframe with 25 observations (each team paired with every other) and 3 columns:
-
-* `or` -- the origin point
-* `de` -- the destination point
-* one of `Time` in seconds, `Distance` in metres or `Status` (whether the request was successful)
-
-All our requests returned 'OK' for `Status` so there were no problems with fetching the data.
-
-# Exploring results
-
-The data is returned in a tidy data frame with one row per origin-destination. We can clean this up by matching three-letter team codes to the data, arranging by distance within origin location and removing rows that provide the distance from each team to themselves (i.e. zero kilometres).
-
-```{r distance-long, warning=FALSE}
-# Create a mini-lookup of search strings to three-letter team codes
-nba_lookup <- select(nba_table, `Team code`, Search)
-
-# Make the output table easier to read by joining team codes
-nba_distance <- nba_travel$Distance %>%
-  left_join(nba_lookup, by = c("or" = "Search")) %>% 
-  left_join(
-    nba_lookup, by = c("de" = "Search"), suffix = c(" (origin)", " (destination)")
+```{r dur-table}
+nba_dur_all <-
+  as.data.frame(nba_dur$durations) %>% 
+  rownames_to_column("Start") %>% 
+  pivot_longer(
+    cols = BOS:SAS,
+    names_to = "End",
+    values_to = "Duration (mins)"
   ) %>% 
-  mutate(Distance = round(Distance/1000, 1)) %>% # m to km
-  select(`Team code (origin)`, `Team code (destination)`, Distance)
-
-# View table
-nba_distance %>%
-  arrange(`Team code (origin)`, desc(Distance)) %>% 
-  filter(Distance != 0) %>%
-  rename(`Distance (km)` = Distance) %>% 
-  kable()
-```
-
-# Travel distance summaries
-
-It's trivial to summarise the furthest travel distance within the Northwest division for each team in that division.
-
-```{r furthest-game}
-nba_distance %>% 
-  arrange(`Team code (origin)`, desc(Distance)) %>%
-  group_by(`Team code (origin)`) %>% 
-  slice(1) %>% 
-  ungroup() %>% 
-  arrange(desc(Distance)) %>% 
-  rename(`Distance (km)` = Distance) %>% 
-  kable()
-```
-
-Similarly, we can get the total distance each team must travel to each of the others in the Northwest Division.
-
-```{r total-distance}
-nba_distance %>% 
-  group_by(`Team code (origin)`) %>% 
-  summarise(`Total distance (km)` = sum(Distance)) %>% 
-  arrange(desc(`Total distance (km)`)) %>% 
-  kable()
-```
-
-So fans of the Portland Trail Blazers have the furthest total distance to travel to each of the other teams in the Northwest: over 9000 km. That's about the same distance as London to Johannesburg in a straight line. Bear in mind these totals are only the travel in one direction as well.
-
-## Travel distance lookup
-
-Another way to view this is to 'spread' the data from long to wide format to create a look-up between origin teams (rows) and destination teams (columns).
-
-```{r distance-lookup, message=FALSE}
-# Create easy look-up table for travel distances between teams
-nba_distance %>% 
-  spread(key = `Team code (destination)`, value = Distance) %>% 
-  rename(`Travel distance (km)` = `Team code (origin)`) %>% 
-  kable()
-```
-
-So Portland Trail Blazers and Oklahoma City Thunder have a driving travel distance of over 3000 km. That's a similar distance as from London to Longyearbyen on Svalbard.
-
-## Travel time lookup
-
-We can also create a team-to-team lookup for travel time.
-
-```{r time-lookup, warning=FALSE, message=FALSE}
-nba_travel$Time %>%
-  left_join(nba_lookup, by = c("or" = "Search")) %>% 
-  left_join(
-    nba_lookup, by = c("de" = "Search"), suffix = c(" (origin)", " (destination)")
+  mutate(
+    `Duration (mins)`= janitor::round_half_up(`Duration (mins)`),
+    `Duration (hrs)` = janitor::round_half_up(`Duration (mins)` / 60)
   ) %>% 
-  mutate(Time = round(Time/60/60), 1) %>% # s to hrs
-  select(`Team code (origin)`, `Team code (destination)`, Time) %>% 
-  spread(key = `Team code (destination)`, value = Time) %>% 
-  rename(`Travel time (hours)` = `Team code (origin)`) %>% 
-  kable()
+  arrange(desc(`Duration (mins)`))
 ```
 
-So more than half a day's drive for many of the journeys and more than a day's drive between Portland and Oklahoma City.
+Here's a {DT} interactive table sorted by duration that you can filter. Click the 'CSV' button to download the data.
 
-# Recap
-
-We:
-
-* [got an API key](https://cloud.google.com/maps-platform/)
-* scraped and wrangled data [with `rvest`](https://CRAN.R-project.org/package=gmapsdistance) and other packages
-* mapped it with [the `leaflet` package](https://cran.r-project.org/web/packages/leaflet/index.html)
-* queried the Google Maps API [with `gmapsdistance`](https://CRAN.R-project.org/package=gmapsdistance)
-* summarised the output
-* were impressed by the thought of any of these team's fans actually driving these distances
-
-# Session info
-
-```{r session-info}
-devtools::session_info()
+```{r}
+nba_dur_all %>% 
+  datatable(
+    filter = "top",
+    extensions = c("Buttons","Scroller"),
+    class = "compact", width = "100%",
+    options = list(
+      dom = "Blrtip",
+      scroller = TRUE, scrollY = 300,
+      buttons = list("csv")
+    )
+)
 ```
+
+So an incredible 58 hours of driving to get from Miami to Portland.
+
+### Duration: by division
+
+We can also narrow this down to get only the team-pairs that play in the same division as each other.
+
+```{r dur-table-div}
+nba_dur_div <- nba_dur_all %>%
+  left_join(select(nba_table, Code, Division), by = c("Start" = "Code")) %>% 
+  left_join(select(nba_table, Code, Division), by = c("End" = "Code")) %>% 
+  dplyr::filter(Division.x == Division.y, `Duration (mins)` != 0) %>% 
+  select(Division = Division.x, everything(), -Division.y) %>% 
+  arrange(Division, desc(`Duration (mins)`))
+```
+
+Again, here's an interactive table that you can use to explore the data. Note that it's ordered by Division and then duration in minutes. I've hidden the code because it's the same as for the table above.
+
+<details><summary>Click for the {DT} code</summary>
+```{r}
+nba_dur_div %>% 
+  datatable(
+    filter = "top",
+    extensions = c("Buttons","Scroller"),
+    rownames = FALSE,
+    class = "compact", width = "100%",
+    options = list(
+      dom = "Blrtip",
+      scroller = TRUE, scrollY = 300,
+      buttons = list("csv")
+    )
+)
+```
+</details>
+
+This time we can see that there's a maximum of 33 hours of driving required between two teams in the same division: Portland to Oklahoma City.
+
+### A quick diversion: routing 
+
+We know from using `osrm::osrmTable()` that Miami to Portland has the longest travel duration. What's the route?
+
+Fortunately, {osrm} has the function `osrmRoute()` for fetching the routes between a pair of points.
+
+We can grab a vector of coordinates for each team from our `nba_table` object and set these as our origin (`src`) and destination (`dst`) in `osrm::osrmRoute()`. The return object is a 'linestring' object that contains detail on the coordinates and coordinate system for the route.
+
+```{r}
+# Function to extract latlong vectors for teams
+get_ll <- function(data, team_code) {
+  team_data <- dplyr::filter(data, Code == team_code)
+  lng <- pull(team_data, Longitude)
+  lat <- pull(team_data, Latitude)
+  lnglat <- c(lng, lat)
+  return(lnglat)
+}
+
+# Get route between latlong pairs
+route <- osrmRoute(
+  src = get_ll(nba_table, "MIA"),
+  dst = get_ll(nba_table, "POR"),
+  returnclass = "sf"
+)
+
+route
+```
+
+Now we can set up the same type of {leaflet} map as earlier, but we'll include only Portland and OKC. I've hidden the map definition because it's almost the same as before.
+
+<details><summary>Click for the {leaflet} map definition</summary>
+```{r}
+mia_por <- nba_table %>%
+  dplyr::filter(Code %in% c("MIA", "POR"))
+
+mia_por_map <- 
+  leaflet(mia_por) %>%
+  addProviderTiles(providers$Stamen.TonerLite) %>%  # add basemap
+  addAwesomeMarkers(  # add markers
+    lng = ~Longitude, lat = ~Latitude,  # coordinates
+    popup = ~paste0(  # HTML content for popup info
+      "<b>", mia_por$Team, "</b>",  # team name
+      "<br>", paste0(mia_por$Arena, ", ", mia_por$City),  # location
+      if_else(  # division/conference information
+        mia_por$Conference == "Eastern",
+        paste0("<br><font color='#0000FF'>", mia_por$Division,
+               " Division (Eastern Conference)</font>"),
+        paste0("<br><font color='#FF0000'>", mia_por$Division,
+               " Division (Western Conference)</font>")
+      )
+    ),
+    icon = awesomeIcons(
+      library = "ion", icon = "ion-ios-basketball", # add basketball icon
+      markerColor = mia_por$colour_marker,  # colour the marker
+      iconColor = mia_por$colour_icon  # colour the basketball icon
+    )
+  ) %>%
+  addMeasure()  # add straight-line distance-measuring tool
+```
+</details>
+
+And to that map we can add the line that defines the route
+
+```{r}
+mia_por_map %>% addPolylines(data = st_geometry(route))
+```
+
+That's a long way.
+
+## 4. Make a heatmap {#viz}
+
+A quick way to visualise the data is to create a heatmap, where we take a matrix of teams in each division and colour by duration. Here, lighter colours indicate greater travel duration.
+
+The plot is interactive; you can hover over squares in each facet to see specific information about that pair, including the exact duration value.
+
+```{r heatmap, warning=FALSE}
+p <- nba_dur_div %>% 
+  ggplot(aes(Start, End)) +
+  geom_tile(aes(fill = `Duration (hrs)`)) +
+  xlab("") + ylab("") + 
+  facet_wrap(~Division, scales = "free")
+
+ggplotly(p)
+```
+
+Note the light colours in the Northwest division where teams have to travel far (like the 33 hour trip from Portland and Oklahoma City), while travel durations in the Atlantic and Central divisions are shorter. Of course, the Clippers and Lakers both play in the Staples Center in LA, so their journey time is zero. 
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
