@@ -8,8 +8,12 @@ categories:
   - tutorial
 tags:
   - blogdown
+  - neovim
+  - nvim-r
   - r
   - raspberry-pi
+  - raspberry-pi-os
+  - vim
 draft: yes
 ---
 
@@ -17,46 +21,113 @@ draft: yes
 
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>I installed R on a Raspberry Pi 2 model B and set it up to use {blogdown}.</p>
+<p>I installed R on a <a href="#raspberry-pi">Raspberry Pi</a> and set it up to use {blogdown}.</p>
 </div>
 <div id="raspberry-pi" class="section level1">
 <h1>Raspberry Pi</h1>
 <div id="hardware" class="section level2">
 <h2>Hardware</h2>
+<p>The <a href="https://www.raspberrypi.org/">Raspberry Pi</a> is a small, inexpensive, single-board computer designed to make computing and coding accessible to all. It’s also popular in the maker community given its support for various peripherals like cameras and sensors.</p>
+<p>The Pi was first released in 2012 and is now in its fourth generation of hardware. I was gifted a <a href="https://en.wikipedia.org/wiki/Raspberry_Pi#Generations">Pi 2 Model B</a> in 2015 and have used it intermittently as a secondary computer and a video game <a href="https://retropie.org.uk/">emulation machine</a>.</p>
+<p>I decided to pull my Pi out of retirement to explore how well it could run R, and more specifically, be used as a machine for blogging.</p>
 </div>
-<div id="software" class="section level2">
-<h2>Software</h2>
+<div id="os" class="section level2">
+<h2>OS</h2>
+<p>The Raspberry Pi is capable of running <a href="https://www.raspberrypi.org/downloads/">a large number of operating systems</a>. The go-to is <a href="https://en.wikipedia.org/wiki/Raspberry_Pi_OS">Raspberry Pi OS</a> (formerly Raspbian), built on the open-source Debian Linux distribution.</p>
+<p>You need to install the OS onto a micro-SD card<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> via a second computer and then insert it into your Pi. Installing <a href="https://www.raspberrypi.org/blog/raspberry-pi-imager-imaging-utility/">the Raspberry Pi Imager</a> to your second computer will help you format (clean) the card and install the OS. At the time of writing, this was the May 2020 release.</p>
 </div>
 </div>
-<div id="installing-stuff" class="section level1">
-<h1>Installing stuff</h1>
-<div id="r" class="section level2">
-<h2>R</h2>
-<p>R version 3.5.</p>
+<div id="software" class="section level1">
+<h1>Software</h1>
+<p>Now that we have out Pi with the latest Raspberry Pi OS installed, we can get on with installing the software we need to get blogging. In each case, we’ll be running commands from the Terminal to install what we need.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>It’s a good idea to run this update command before installing anything:</p>
+<pre><code>sudo apt-get update</code></pre>
+<p>This makes sure that <a href="https://askubuntu.com/questions/222348/what-does-sudo-apt-get-update-do">the latest package versions are installed</a>.</p>
+<div id="r-and-an-ide" class="section level2">
+<h2>R and an IDE</h2>
+<p>It’s not too tricky to get hold of R, but what copding environment can we use? I typically use the RStudio integrated development environment (IDE), but it isn’t available on this platform. You could just run R from the Terminal, but it’s tedious to work entirely from the command line or copy-paste commands to it from a text editor.</p>
+<p>This is where Nvim-R comes in; it turns your Terminal into an IDE.</p>
+<div id="r" class="section level3">
+<h3>R</h3>
+<p>So, first to install R. From the command line:</p>
 <pre><code>sudo apt-get install r-base r-base-core r-base-dev</code></pre>
+<p>This grabs the latest R version that’s available for the platform, which is 3.5. At time of writing, R v4.0 has been released on other platforms, so we’ll miss out on the latest advancements like <code>stringsAsFactors=FALSE</code> by default(!).</p>
 </div>
-<div id="pandoc" class="section level2">
-<h2>Pandoc</h2>
-<p><a href="https://dev.to/psnebc/sudo-apt-get-install-pandoc-34m" class="uri">https://dev.to/psnebc/sudo-apt-get-install-pandoc-34m</a></p>
-<pre><code>sudo apt-get update
-sudo apt-get install pandoc</code></pre>
+<div id="vim-or-neovim" class="section level3">
+<h3>Vim or Neovim</h3>
+<p>A prerequisite for Nvim-R is either <a href="https://www.vim.org/">Vim</a> or <a href="https://neovim.io/">Neovim</a>. What are these? <a href="https://en.wikipedia.org/wiki/Vim_(text_editor)">Vim is a powerful text editor</a> for the command line and Neovim is <a href="https://en.wikipedia.org/wiki/Vim_(text_editor)#Neovim">effectively a more extensible version of it</a>.</p>
+<p>I’ve been using Neovim, which can be installed with:</p>
+<pre><code>sudo apt install neovim</code></pre>
+<p>At time of writing, this installed version 0.3.4.</p>
 </div>
-<div id="blogdown" class="section level2">
-<h2>{blogdown}</h2>
-<pre class="r"><code>install.packages(&quot;blogdown&quot;)</code></pre>
-<p>I had to install {httpuv} separately.</p>
+<div id="nvim-r" class="section level3">
+<h3>Nvim-R</h3>
+<p>In this section I rely heavily on <a href="https://www.youtube.com/watch?v=nm45WagtV3w">the YouTube video</a> and <a href="https://gist.github.com/rohitfarmer/68cdadeaeeb196e8a6ecdebdee6e76a5">GitHub gist</a> by <a href="https://rohitfarmer.github.io/">Rohit Farmer</a>.</p>
+<p>There are a whole bunch of plugins available for Neovim to help extend it. You can see these at <a href="https://vimawesome.com/">the VimAwesome site</a>.</p>
+<p><a href="https://github.com/jalvesaq/Nvim-R">Nvim-R</a> by <a href="https://posgradsoc.ufc.br/en/professors/jakson-aquino/">Jakson Alves de Aquino</a> is <a href="https://vimawesome.com/plugin/nvim-r">one such plugin</a>.</p>
+<p>At the simplest level, Nvim-R turns your Terminal into an R IDE by allowing for a concurrent script editor and console (along with many other features). This means you can write R code and send it to the console without having to copy-paste or write directly into the console. This is analagous to something like RStudio without the point-and-click features.</p>
+<p>We can install a plugin manager to help install and manage Nvim-R and other Neovim extensions: <a href="https://github.com/junegunn/vim-plug">vim-plug</a> by Junegunn Choi. Having installed Neovim, run:</p>
+<pre><code>sh -c &#39;curl -fLo &quot;${XDG_DATA_HOME:-$HOME/.local/share}&quot;/nvim/site/autoload/plug.vim --create-dirs \
+       https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim&#39;</code></pre>
+<p>You specify your plugins in a special <code>init.vim</code> file. This line starts Neovim in the Terminal so you can begin editing the <code>init.vim</code> file at this specific filepath:</p>
+<pre><code>nvim ~/.config/nvim/init.vim</code></pre>
+<p>You can then toggle into insert mode (press <kbd>i</kbd>) and paste this in:</p>
+<pre><code>&quot; Specify a directory for plugins
+&quot; - Avoid using standard Vim directory names like &#39;plugin&#39;
+call plug#begin(&#39;~/.vim/plugged&#39;)
+
+&quot; List of plugins.
+&quot; Make sure you use single quotes
+
+&quot; Shorthand notation
+Plug &#39;jalvesaq/Nvim-R&#39;, {&#39;branch&#39;: &#39;stable&#39;}
+
+&quot; Initialize plugin system
+call plug#end()</code></pre>
+<p>Where <code>Plug 'jalvesaq/Nvim-R'</code> is the part where <a href="https://vimawesome.com/plugin/nvim-r">the Nvim-R plugin</a> is specified.</p>
+<p>This is a super minimal <code>init.vim</code> file. You can add a whole bunch of other plugins to this list that will allow for things like code autocompletion and themes. You can also add lines to this file to modify various settings within Neovim.</p>
+<p>Escape insert mode (press <kbd>Esc</kbd>) and then type the following and hit <kbd>Enter</kbd>:</p>
+<pre><code>:PluginInstall</code></pre>
+<p>This triggers the installation of the plugins you specified in the <code>init.vim</code> file. For me, this installed the latest Nvim-R version, 0.9.14.</p>
 </div>
-<div id="hugo" class="section level2">
-<h2>Hugo</h2>
-<p><code>blogdown::install_hugo()</code> failed because it tried to install the 64-bit version.</p>
-<p>I used <a href="https://snapcraft.io/install/hugo/raspbian">snapd</a>.</p>
-<blockquote>
-<p>Snaps are applications packaged with all their dependencies to run on all popular Linux distributions from a single build</p>
-</blockquote>
-<p>To install snapd:</p>
-<pre><code>sudo apt update
-sudo apt install snapd</code></pre>
-<p>After a reboot, install the Hugo snap:</p>
+</div>
+<div id="blogging" class="section level2">
+<h2>Blogging</h2>
+<p>With R, Neovim and Nvim-R installed, we can get to installing the requirements for blogging with R.</p>
+<div id="blogdown" class="section level3">
+<h3>{blogdown}</h3>
+<p>I use Yihui Xie’s {blogdown} package to post on this blog. You can enter R from the Terminal by typing <kbd>R</kbd> and then:</p>
+<pre class="r"><code>install.packages(c(&quot;httpuv&quot;, &quot;blogdown&quot;))</code></pre>
+<p>This installed {blogdown} version 0.20 at time of writing.</p>
+<p>I found that I had to install {httpuv} separately first to ensure that {blogdown} would install without errors.</p>
+<p>But we also need two further things that aren’t R packages: Pandoc and Hugo.</p>
+</div>
+<div id="pandoc" class="section level3">
+<h3>Pandoc</h3>
+<p>{blogdown} is based on turning R Markdown files into HTML files to be served as a website. A crucial element of this conversion process is a document converter called <a href="https://pandoc.org/">Pandoc</a>. It can be installed via the Terminal with:</p>
+<pre><code>sudo apt-get install pandoc</code></pre>
+<p>This installed version 2.2.1 at time of writing.</p>
+</div>
+<div id="hugo" class="section level3">
+<h3>Hugo</h3>
+<p>Hugo is a static-site generator; it builds the posts into the website you’re looking at now.</p>
+<p>You can install it from within R with <code>blogdown::install_hugo()</code>, but this failed for me because it tries to install a 64-but version and Raspberry Pi OS is 32-bit.</p>
+<p>Instead, I used <a href="https://snapcraft.io/">snapcraft</a>, which describes itself as ‘the app store for Linux’. It bundles up everything you need for a given installation. This is great for a noob like me.</p>
+<p>To enable the installation of snaps, you first need to run:</p>
+<pre><code>sudo apt install snapd</code></pre>
+<p>After a reboot, <a href="https://snapcraft.io/install/hugo/raspbian">install the Hugo snap</a>:</p>
 <pre><code>sudo snap install hugo</code></pre>
+<p>This installed version 0.73.0 for me at time of writing.</p>
 </div>
+</div>
+</div>
+<div id="workflow" class="section level1">
+<h1>Workflow</h1>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>I’m using a spare card that’s only 16 GB. The OS will take up something like 2.5 GB.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn2"><p>You can open the Terminal from the taskbar (the icon with ’&gt;_’ on it) or via the Pi statr menu under Accessories.<a href="#fnref2" class="footnote-back">↩</a></p></li>
+</ol>
 </div>

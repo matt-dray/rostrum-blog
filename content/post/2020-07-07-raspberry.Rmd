@@ -8,65 +8,182 @@ categories:
   - tutorial
 tags:
   - blogdown
+  - neovim
+  - nvim-r
   - r
   - raspberry-pi
+  - raspberry-pi-os
+  - vim
 draft: yes
 ---
 
 # tl;dr
 
-I installed R on a Raspberry Pi 2 model B and set it up to use {blogdown}.
+I installed R on a [Raspberry Pi] and set it up to use {blogdown}.
 
 # Raspberry Pi
 
 ## Hardware
 
-## Software
+The [Raspberry Pi](https://www.raspberrypi.org/) is a small, inexpensive, single-board computer designed to make computing and coding accessible to all. It's also popular in the maker community given its support for various peripherals like cameras and sensors.
 
-# Installing stuff
+The Pi was first released in 2012 and is now in its fourth generation of hardware. I was gifted a [Pi 2 Model B](https://en.wikipedia.org/wiki/Raspberry_Pi#Generations) in 2015 and have used it intermittently as a secondary computer and a video game [emulation machine](https://retropie.org.uk/).
 
-## R
+I decided to pull my Pi out of retirement to explore how well it could run R, and more specifically, be used as a machine for blogging.
 
-R version 3.5.
+## OS
+
+The Raspberry Pi is capable of running [a large number of operating systems](https://www.raspberrypi.org/downloads/). The go-to is [Raspberry Pi OS](https://en.wikipedia.org/wiki/Raspberry_Pi_OS) (formerly Raspbian), built on the open-source Debian Linux distribution.
+
+You need to install the OS onto a micro-SD card[^sd] via a second computer and then insert it into your Pi. Installing [the Raspberry Pi Imager](https://www.raspberrypi.org/blog/raspberry-pi-imager-imaging-utility/) to your second computer will help you format (clean) the card and install the OS. At the time of writing, this was the May 2020 release.
+
+
+# Software
+
+Now that we have out Pi with the latest Raspberry Pi OS installed, we can get on with installing the software we need to get blogging. In each case, we'll be running commands from the Terminal to install what we need.[^terminal] 
+
+It's a good idea to run this update command before installing anything:
+
+```
+sudo apt-get update
+```
+
+This makes sure that [the latest package versions are installed](https://askubuntu.com/questions/222348/what-does-sudo-apt-get-update-do).
+
+
+## R and an IDE
+
+It's not too tricky to get hold of R, but what copding environment can we use? I typically use the RStudio integrated development environment (IDE), but it isn't available on this platform. You could just run R from the Terminal, but it's tedious to work entirely from the command line or copy-paste commands to it from a text editor. 
+
+This is where Nvim-R comes in; it turns your Terminal into an IDE.
+
+### R
+
+So, first to install R. From the command line:
 
 ```
 sudo apt-get install r-base r-base-core r-base-dev
 ```
 
-## Pandoc
+This grabs the latest R version that's available for the platform, which is 3.5. At time of writing, R v4.0 has been released on other platforms, so we'll miss out on the latest advancements like `stringsAsFactors=FALSE` by default(!).
 
-https://dev.to/psnebc/sudo-apt-get-install-pandoc-34m
+### Vim or Neovim
+
+A prerequisite for Nvim-R is either [Vim](https://www.vim.org/) or [Neovim](https://neovim.io/). What are these? [Vim is a powerful text editor](https://en.wikipedia.org/wiki/Vim_(text_editor)) for the command line and Neovim is [effectively a more extensible version of it](https://en.wikipedia.org/wiki/Vim_(text_editor)#Neovim).
+
+I've been using Neovim, which can be installed with:
 
 ```
-sudo apt-get update
+sudo apt install neovim
+```
+
+At time of writing, this installed version 0.3.4.
+
+### Nvim-R
+
+In this section I rely heavily on [the YouTube video](https://www.youtube.com/watch?v=nm45WagtV3w) and [GitHub gist](https://gist.github.com/rohitfarmer/68cdadeaeeb196e8a6ecdebdee6e76a5) by [Rohit Farmer](https://rohitfarmer.github.io/).
+
+There are a whole bunch of plugins available for Neovim to help extend it. You can see these at [the VimAwesome site](https://vimawesome.com/).
+
+[Nvim-R](https://github.com/jalvesaq/Nvim-R) by [Jakson Alves de Aquino](https://posgradsoc.ufc.br/en/professors/jakson-aquino/) is [one such plugin](https://vimawesome.com/plugin/nvim-r).
+
+At the simplest level, Nvim-R turns your Terminal into an R IDE by allowing for a concurrent script editor and console (along with many other features). This means you can write R code and send it to the console without having to copy-paste or write directly into the console. This is analagous to something like RStudio without the point-and-click features.
+
+We can install a plugin manager to help install and manage Nvim-R and other Neovim extensions: [vim-plug](https://github.com/junegunn/vim-plug) by Junegunn Choi. Having installed Neovim, run:
+
+```
+sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
+       https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+```
+
+You specify your plugins in a special `init.vim` file. This line starts Neovim in the Terminal so you can begin editing the `init.vim` file at this specific filepath:
+
+```
+nvim ~/.config/nvim/init.vim
+```
+
+You can then toggle into insert mode (press <kbd>i</kbd>) and paste this in:
+
+```
+" Specify a directory for plugins
+" - Avoid using standard Vim directory names like 'plugin'
+call plug#begin('~/.vim/plugged')
+
+" List of plugins.
+" Make sure you use single quotes
+
+" Shorthand notation
+Plug 'jalvesaq/Nvim-R', {'branch': 'stable'}
+
+" Initialize plugin system
+call plug#end()
+```
+
+Where `Plug 'jalvesaq/Nvim-R'` is the part where [the Nvim-R plugin](https://vimawesome.com/plugin/nvim-r) is specified.
+
+This is a super minimal `init.vim` file. You can add a whole bunch of other plugins to this list that will allow for things like code autocompletion and themes. You can also add lines to this file to modify various settings within Neovim.
+
+Escape insert mode (press <kbd>Esc</kbd>) and then type the following and hit <kbd>Enter</kbd>:
+
+```
+:PluginInstall
+```
+
+This triggers the installation of the plugins you specified in the `init.vim` file. For me, this installed the latest Nvim-R version, 0.9.14.
+
+## Blogging
+
+With R, Neovim and Nvim-R installed, we can get to installing the requirements for blogging with R.
+
+### {blogdown}
+
+I use Yihui Xie's {blogdown} package to post on this blog. You can enter R from the Terminal by typing <kbd>R</kbd> and then:
+
+```{r eval=FALSE}
+install.packages(c("httpuv", "blogdown"))
+```
+
+This installed {blogdown} version 0.20 at time of writing. 
+
+I found that I had to install {httpuv} separately first to ensure that {blogdown} would install without errors.
+
+But we also need two further things that aren't R packages: Pandoc and Hugo. 
+
+### Pandoc
+
+{blogdown} is based on turning R Markdown files into HTML files to be served as a website. A crucial element of this conversion process is a document converter called [Pandoc](https://pandoc.org/). It can be installed via the Terminal with:
+
+```
 sudo apt-get install pandoc
 ```
 
-## {blogdown}
+This installed version 2.2.1 at time of writing. 
 
-```{r eval=FALSE}
-install.packages("blogdown")
-```
+### Hugo
 
-I had to install {httpuv} separately.
+Hugo is a static-site generator; it builds the posts into the website you're looking at now.
 
-## Hugo
+You can install it from within R with `blogdown::install_hugo()`, but this failed for me because it tries to install a 64-but version and Raspberry Pi OS is 32-bit.
 
-`blogdown::install_hugo()` failed because it tried to install the 64-bit version.
+Instead, I used [snapcraft](https://snapcraft.io/), which describes itself as 'the app store for Linux'. It bundles up everything you need for a given installation. This is great for a noob like me.
 
-I used [snapd](https://snapcraft.io/install/hugo/raspbian).
-
-> Snaps are applications packaged with all their dependencies to run on all popular Linux distributions from a single build
-
-To install snapd:
+To enable the installation of snaps, you first need to run:
 
 ```
-sudo apt update
 sudo apt install snapd
 ```
 
-After a reboot, install the Hugo snap:
+After a reboot, [install the Hugo snap](https://snapcraft.io/install/hugo/raspbian):
 
 ```
 sudo snap install hugo
 ```
+
+This installed version 0.73.0 for me at time of writing.
+
+# Workflow
+
+
+[^sd]: I'm using a spare card that's only 16 GB. The OS will take up something like 2.5 GB.
+[^terminal]: You can open the Terminal from the taskbar (the icon with '>_' on it) or via the Pi statr menu under Accessories.
+[^init]: You can bring this file into existence from the command line with `touch ~/.config/nvim/init.vim`. 
