@@ -44,11 +44,12 @@ Raspberry Pi 2 Model B (rostrum.blog limited edition)
 <h2>Raspberry Pi OS</h2>
 <p>The Raspberry Pi is capable of running <a href="https://www.raspberrypi.org/downloads/" target="_blank">a large number of operating systems</a>. The go-to is <a href="https://en.wikipedia.org/wiki/Raspberry_Pi_OS" target="_blank">Raspberry Pi OS</a> (formerly Raspbian), built on the open-source Debian Linux distribution.</p>
 <p>You need to install the OS onto a micro-SD card<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> via a second computer and then insert it into your Pi. Installing <a href="https://www.raspberrypi.org/blog/raspberry-pi-imager-imaging-utility/" target="_blank">the Raspberry Pi Imager</a> to your second computer will help you format (clean) the card and install the OS. At the time of writing, this was the May 2020 release.</p>
+<p>There’s <a href="https://projects.raspberrypi.org/en/projects/raspberry-pi-setting-up" target="_blank">a full walkthrough for setting up your machine</a> on the Raspberry Pi website.</p>
 </div>
 </div>
 <div id="installing-software" class="section level1">
 <h1>Installing software</h1>
-<p>With the Pi set up, we can get on with installing the software we need to get blogging.</p>
+<p>With the Pi set up, we can get on with installing the software we need to get blogging. Things may change over time, but the sections below describe what worked at time of writing. I’ve added software version numbers below for posterity.</p>
 <p>You can click to jump to each section:</p>
 <ul>
 <li><a href="#ride">1. Install R and an IDE</a>
@@ -70,8 +71,8 @@ Raspberry Pi 2 Model B (rostrum.blog limited edition)
 <div id="ride" class="section level2">
 <h2>1. Install R and an IDE</h2>
 <p>It’s not too tricky to get hold of R, but what coding environment can we use?</p>
-<p>I typically use the RStudio integrated development environment (IDE), but it isn’t available on this platform. You could just run R from the Terminal, but it’s tedious to work entirely from the command line or copy-paste commands to it from a text editor.</p>
-<p>This is where <a href="https://github.com/jalvesaq/Nvim-R">Nvim-R</a> comes in; it turns your Terminal into an IDE.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<p>I typically use the RStudio integrated development environment (IDE), but it isn’t available on this platform<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>. You could just run R from the Terminal, but it’s tedious to work entirely from the command line or copy-paste commands to it from a text editor.</p>
+<p>This is where <a href="https://github.com/jalvesaq/Nvim-R">Nvim-R</a> comes in. It turns your Terminal into an IDE.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
 <div id="r" class="section level3">
 <h3>1a. Install R</h3>
 <p>R can be installed from the command line with:</p>
@@ -80,11 +81,11 @@ Raspberry Pi 2 Model B (rostrum.blog limited edition)
 </div>
 <div id="neovim" class="section level3">
 <h3>1b. Install Neovim</h3>
-<p>We’ll be using Nvim-R as a development environment (more in the next section). A prerequisite for this is either <a href="https://www.vim.org/" target="_blank">Vim</a> or <a href="https://neovim.io/" target="_blank">Neovim</a>.</p>
-<p>What are these? Vim is <a href="https://en.wikipedia.org/wiki/Vim_(text_editor)" target="_blank">a powerful text editor</a> for the command line and Neovim is <a href="https://en.wikipedia.org/wiki/Vim_(text_editor)#Neovim" target="_blank">effectively a more extensible version of it</a>.</p>
+<p>A prerequisite for Nvim-R is either <a href="https://www.vim.org/" target="_blank">Vim</a> or <a href="https://neovim.io/" target="_blank">Neovim</a>. Nvim-R is a plugin for these tools.</p>
+<p>But what are they, actually? Vim is <a href="https://en.wikipedia.org/wiki/Vim_(text_editor)" target="_blank">a powerful text editor</a> for the command line and Neovim is <a href="https://en.wikipedia.org/wiki/Vim_(text_editor)#Neovim" target="_blank">effectively a more extensible version of it</a>.</p>
 <p>I’ve been using Neovim, which can be installed with:</p>
 <pre><code>sudo apt install neovim</code></pre>
-<p>At time of writing, this installs version 0.3.4. You can enter Neovim by opening a terminal and running <code>nvim</code>.</p>
+<p>At time of writing, this installs version 0.3.4. You can enter Neovim by opening a terminal and running <code>nvim</code>. This puts you into a text editor interface.</p>
 </div>
 <div id="nvimr" class="section level3">
 <h3>1c. Install Nvim-R</h3>
@@ -96,13 +97,16 @@ Nvim-R running in Terminal. Script up top, console below.
 </div>
 <p>There are a whole bunch of plugins available for Neovim to help extend it. You can see these at <a href="https://vimawesome.com/" target="_blank">the VimAwesome site</a>.</p>
 <p><a href="https://github.com/jalvesaq/Nvim-R" target="_blank">Nvim-R</a> by <a href="https://posgradsoc.ufc.br/en/professors/jakson-aquino/" target="_blank">Jakson Alves de Aquino</a> is <a href="https://vimawesome.com/plugin/nvim-r" target="_blank">one such plugin</a>.</p>
-<p>At the simplest level, Nvim-R turns your Terminal into an R IDE by allowing for a concurrent script editor and console (along with many other features). This means you can write R code and send it to the console without having to copy-paste or write directly into the console. This is analagous to something like RStudio without the point-and-click features.</p>
-<p>We can install a plugin manager to help install and manage Nvim-R and other Neovim extensions: <a href="https://github.com/junegunn/vim-plug" target="_blank">vim-plug</a> by Junegunn Choi. Having installed Neovim, run:</p>
+<p>At the simplest level, Nvim-R turns your terminal into an R IDE by allowing for a concurrent script editor and console (along with many other features). This means you can write R code and send it to the console without having to copy-paste or write directly into the console. This is analagous to something like RStudio without the point-and-click features.</p>
+<div id="vim-plug-and-nvim-r" class="section level4">
+<h4>vim-plug and Nvim-R</h4>
+<p>We can install a plugin manager to help install and manage Nvim-R and other Neovim extensions: <a href="https://github.com/junegunn/vim-plug" target="_blank">vim-plug</a> by Junegunn Choi.</p>
+<p>Having installed Neovim, you can get vim-plug by running this via Terminal:</p>
 <pre><code>sh -c &#39;curl -fLo &quot;${XDG_DATA_HOME:-$HOME/.local/share}&quot;/nvim/site/autoload/plug.vim --create-dirs \
        https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim&#39;</code></pre>
-<p>You specify your plugins in a special <code>init.vim</code> file. This line starts Neovim in the Terminal so you can begin editing the <code>init.vim</code> file at this specific filepath:</p>
+<p>You specify your plugins in a special <code>init.vim</code> file. Run the following line to create the file and open it in Neovim in the Terminal so you can begin editing:</p>
 <pre><code>nvim ~/.config/nvim/init.vim</code></pre>
-<p>You can then toggle into Neovim’s ‘insert’ mode (press <kbd>i</kbd>) and paste this in:</p>
+<p>You can then toggle into Neovim’s ‘insert’ mode (press <kbd>i</kbd>) and paste (<kbd>ctrl</kbd> + <kbd>shift</kbd> + <kbd>V</kbd>) this in:</p>
 <pre><code>&quot; Specify a directory for plugins
 &quot; - Avoid using standard Vim directory names like &#39;plugin&#39;
 call plug#begin(&#39;~/.vim/plugged&#39;)
@@ -120,17 +124,17 @@ call plug#end()</code></pre>
 <p>Enter ‘normal’ mode (press <kbd>Esc</kbd>) and then type the following and hit <kbd>Enter</kbd>:</p>
 <pre><code>:PluginInstall</code></pre>
 <p>This triggers the installation of the plugins you specified in the <code>init.vim</code> file. For me, this installed the latest Nvim-R version, 0.9.14.</p>
-<p>I found <a href="https://www.youtube.com/watch?v=nm45WagtV3w" target="_blank">a YouTube video</a> and a <a href="https://gist.github.com/rohitfarmer/68cdadeaeeb196e8a6ecdebdee6e76a5">GitHub gist</a> by <a href="https://rohitfarmer.github.io/" target="_blank">Rohit Farmer</a> really useful for doing these steps.</p>
+<p>I found <a href="https://www.youtube.com/watch?v=nm45WagtV3w" target="_blank">a YouTube video</a> and a <a href="https://gist.github.com/rohitfarmer/68cdadeaeeb196e8a6ecdebdee6e76a5">GitHub gist</a> by <a href="https://rohitfarmer.github.io/" target="_blank">Rohit Farmer</a> really useful for doing these steps. Rohit provides some good examples of additional plugins that will improve your experience of Nvim-R.</p>
 </div>
-<div id="using" class="section level3">
-<h3>USing</h3>
-<p>A full run-through of how to use Neovim and Nvim-R are out of scope for this post, but it’s worth an aside here.</p>
+<div id="using-nvim-r" class="section level4">
+<h4>Using Nvim-R</h4>
+<p>A full run-through of how to use Neovim and Nvim-R are out of scope for this post, but it’s worth a quick aside here.</p>
 <p>To open an .R or .Rmd script for editing in Nvim-R, you can:</p>
 <ul>
 <li>type <code>nvim</code> and the path to your file, like <code>nvim ~/path/to/file.R</code>, from a Terminal</li>
 <li>right-click the file in the explorer and select ‘Nvim-R’, which will open that file in Nvim-R in a Terminal window</li>
 </ul>
-<p>The important thing to know is that Neovim and Nvim-R are keyboard-driven; there’s no pointing-and-clicking like in RStudio. You’ll need to remember a bunch of non-obvious key presses to get around, though these are all configurable.</p>
+<p>The important thing to know is that Neovim and Nvim-R are keyboard-driven; there’s no pointing-and-clicking like in RStudio. You’ll need to remember a bunch of non-obvious key presses to get around, although these are all configurable.</p>
 <p>See <a href="https://neovim.io/doc/user/" target="_blank">Neovim’s docs</a> for its key bindings (i.e. key presses that result in something happening), but here’s some useful ones:</p>
 <ul>
 <li><kbd>i</kbd> to enter ‘insert’ mode and begin typing text</li>
@@ -147,6 +151,7 @@ call plug#end()</code></pre>
 <li><kbd>\cc</kbd> to send the current R Markdown chunk</li>
 <li><kbd>\ro</kbd> to open and close the object browser</li>
 </ul>
+</div>
 </div>
 </div>
 <div id="blogreq" class="section level2">
@@ -169,10 +174,10 @@ call plug#end()</code></pre>
 </div>
 <div id="hugo" class="section level3">
 <h3>2c. Install Hugo</h3>
-<p>Hugo is a static-site generator; it builds the posts into the website you’re looking at now.</p>
-<p>You can install it from within R with <code>blogdown::install_hugo()</code>, but this failed for me because it tries to install a 64-but version and Raspberry Pi OS is 32-bit.</p>
-<p>Instead, I used <a href="https://snapcraft.io/" target="_blank">snapcraft</a>, which describes itself as ‘the app store for Linux’. It bundles up everything you need for a given installation. This is great for a noob like me.</p>
-<p>To enable the installation of snaps, you first need to run:</p>
+<p>Hugo is a static-site generator that builds your posts into a website, like the one you’re looking at now.</p>
+<p>You can install Hugo from within R with <code>blogdown::install_hugo()</code>, but this failed for me because it tries to install a 64-bit version and Raspberry Pi OS is 32-bit.</p>
+<p>Instead, I used <a href="https://snapcraft.io/" target="_blank">snapcraft</a>, which describes itself as ‘the app store for Linux’. It bundles up everything you need for a given installation, including dependencies. This is great for a noob like me.</p>
+<p>To enable the installation of ‘snaps’, you first need to run:</p>
 <pre><code>sudo apt install snapd</code></pre>
 <p>After a reboot, <a href="https://snapcraft.io/install/hugo/raspbian" target="_blank">install the Hugo snap</a>:</p>
 <pre><code>sudo snap install hugo</code></pre>
@@ -183,17 +188,17 @@ call plug#end()</code></pre>
 <div id="a-blogging-workflow" class="section level1">
 <h1>A blogging workflow</h1>
 <p>So now we have everything installed, what’s the workflow for blogging?</p>
-<p>I’m assuming here that you’ve already set up your blog. Obviously I’ve already created this blog and it’s served from GitHub via Netlify. You can find instructions for this in the <a href="https://bookdown.org/yihui/blogdown/" target="_blank">blogdown companion book</a> by Yihui Xie, Amber Thomas and Alison Presmanes Hill.</p>
+<p>Setting up a blog is out of scope for this post, but you can find instructions for this in the <a href="https://bookdown.org/yihui/blogdown/" target="_blank">blogdown companion book</a> by Yihui Xie, Amber Thomas and Alison Presmanes Hill.</p>
 <p>The flow could be something like:</p>
 <ol style="list-style-type: decimal">
 <li>Create a new <code>YYYY-MM-DD-post-name.Rmd</code> file for the post in <code>content/post/</code></li>
-<li>Open this file with Neovim-R and begin writing, including the YAML metadata and R Markdown chunks as usual</li>
+<li>Open this file with Neovim-R and begin writing, including the YAML metadata and R Markdown chunks as usual (remembering that you can send R Markdown chunks to the console with the <code>\\cc</code> default key binding)</li>
 <li>Use <code>blogdown::serve_site()</code> from the console to render the site and serve it locally (it’ll open in your browser)</li>
-<li>Commit and push your changes to GitHub as normal (Git is preinstalled with Raspberry Pi OS<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>)</li>
+<li>Commit and push your changes to GitHub as normal (Git is preinstalled with Raspberry Pi OS<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a>)</li>
 </ol>
-<p>For images, a folder at <code>static/post/YYYY-MM-DD-post-name_files</code> needs to be created and referred to in the form <code>/post/2020-07-07-post-name_files/image.jpg</code> in the post.</p>
+<p>For images or other files you wan to embed in your post, create <code>static/post/YYYY-MM-DD-post-name_files</code> and refer to it from your post in the form <code>/post/2020-07-07-post-name_files/image.jpg</code>.</p>
 <p>Typically I would use the {blogdown} RStudio addin to help set up the YAML and put the files in the right place, but it isn’t a big deal to do this ‘manually’.</p>
-<p>Ultimately this approach works; you’re currently looking at a post made from my Raspberry Pi!</p>
+<p>This approach works for me: you’re currently looking at a post made from my Raspberry Pi!</p>
 </div>
 <div id="blow-a-raspberry" class="section level1">
 <h1>Blow a raspberry</h1>
@@ -205,8 +210,9 @@ call plug#end()</code></pre>
 <hr />
 <ol>
 <li id="fn1"><p>I’m using a spare card that’s only 16 GB. The OS will take up something like 2.5 GB.<a href="#fnref1" class="footnote-back">↩</a></p></li>
-<li id="fn2"><p>You can open the Terminal from the taskbar (the icon with ’&gt;_’ on it) or via the Pi statr menu under Accessories.<a href="#fnref2" class="footnote-back">↩</a></p></li>
-<li id="fn3"><p>Not <a href="https://www.nvimr.com/" target="_blank">Nevadans for Informed Marijuana Regulation</a> (NVIMR).<a href="#fnref3" class="footnote-back">↩</a></p></li>
-<li id="fn4"><p>I recommend you <a href="https://happygitwithr.com/hello-git.html" target="_blank">introduce yourself to Git</a> and <a href="https://happygitwithr.com/ssh-keys.html" target="_blank">set up keys for SSH</a> to make this process seamless (these links go to Happy Git With R by Jenny Bryan, the STAT 545 TAs and Jim Hester).<a href="#fnref4" class="footnote-back">↩</a></p></li>
+<li id="fn2"><p>You can open the Terminal from the taskbar (the icon with ’&gt;_’ on it) or via the Pi start menu under Accessories.<a href="#fnref2" class="footnote-back">↩</a></p></li>
+<li id="fn3"><p>Though you could use <a href="https://rstudio.com/products/cloud/">RStudio Cloud</a> via the browser.<a href="#fnref3" class="footnote-back">↩</a></p></li>
+<li id="fn4"><p>Not <a href="https://www.nvimr.com/" target="_blank">Nevadans for Informed Marijuana Regulation</a> (NVIMR).<a href="#fnref4" class="footnote-back">↩</a></p></li>
+<li id="fn5"><p>I recommend you <a href="https://happygitwithr.com/hello-git.html" target="_blank">introduce yourself to Git</a> and <a href="https://happygitwithr.com/ssh-keys.html" target="_blank">set up keys for SSH</a> to make this process seamless (these links go to Happy Git With R by Jenny Bryan, the STAT 545 TAs and Jim Hester).<a href="#fnref5" class="footnote-back">↩</a></p></li>
 </ol>
 </div>
