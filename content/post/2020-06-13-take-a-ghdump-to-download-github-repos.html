@@ -38,7 +38,7 @@ My garbage GitHub repos being dumped onto my local machine (via <a href="https:/
 </ul>
 <p>Wants:</p>
 <ul>
-<li>To clone or download all of my repos with one command</li>
+<li>To clone (with HTTPS or SSH) or download all of my repos with one command</li>
 <li>Be able to unzip downloaded repos en masse if I want to</li>
 <li>Do all this from within R, mostly for the learning experience, but also to allow for user interactivity</li>
 </ul>
@@ -57,17 +57,24 @@ My garbage GitHub repos being dumped onto my local machine (via <a href="https:/
 <h2>Get and use</h2>
 <p>Install with:</p>
 <pre class="r"><code>remotes::install_github(&quot;matt-dray/ghdump&quot;)</code></pre>
-<p>In brief, you use it like this:</p>
-<pre class="r"><code>ghdump::ghd_copy(
-  gh_user = &quot;matt-dray&quot;,          # download repos for this user
-  dest_dir = &quot;~/Documents/repos&quot;  # full local file path to copy to
-  copy_type = &quot;download&quot;          # &quot;download&quot; or &quot;clone&quot; the repos
-)</code></pre>
-<p>This assumes you have a GitHub account and a GitHub Personal Access Token (PAT) stored in your .Renviron file. You can do this with the following steps:</p>
+<p>To use the package, you’ll need a GitHub account and <a href="https://happygitwithr.com/github-pat.html">a GitHub Personal Access Token (PAT) stored in your .Renviron file</a>. You can do this with the following steps:</p>
 <pre class="r"><code>usethis::browse_github_pat()  # opens browser to generate token
 usethis::edit_r_environ()     # add your token to the .Renviron
 # then restart R</code></pre>
-<p>See the <a href="https://happygitwithr.com/github-pat.html" target="_blank">Happy Git and GitHub for the useR</a> book by Jenny Bryan, the STAT 545 TAs and Jim Hester for more info on this.</p>
+<p>You can use {ghdump} to download the repos for a specified user:</p>
+<pre class="r"><code>ghdump::ghd_copy(
+  gh_user = &quot;matt-dray&quot;,           # download repos for this user
+  dest_dir = &quot;~/Documents/repos&quot;,  # full local file path to copy to
+  copy_type = &quot;download&quot;           # &quot;download&quot; or &quot;clone&quot; the repos
+)</code></pre>
+<p>Or clone them:</p>
+<pre class="r"><code>ghdump::ghd_copy(
+  gh_user = &quot;matt-dray&quot;,
+  dest_dir = &quot;~/Documents/repos&quot;
+  copy_type = &quot;clone&quot;,
+  protocol = &quot;https&quot; # specify &quot;https&quot; or &quot;ssh&quot;
+)</code></pre>
+<p>If you want to use the SSH protocol when cloning, you need to make sure that you’ve <a href="https://happygitwithr.com/ssh-keys.html">set up your keys</a>.</p>
 </div>
 <div id="interactivity" class="section level2">
 <h2>Interactivity</h2>
@@ -102,7 +109,7 @@ Remove &#39;-master&#39; suffix from unzipped directory names? y/n: y
 Renaming files to remove &#39;-master&#39; suffix
 Finished downloading</code></pre>
 <p>And now imaginary demo of the output from <code>ghd_copy()</code> when <code>copy_type = "clone"</code>:</p>
-<pre class="r"><code>&gt; ghd_copy(&quot;mase-up-user&quot;, &quot;~/Desktop/test-clone&quot;, &quot;clone&quot;)
+<pre class="r"><code>&gt; ghd_copy(&quot;made-up-user&quot;, &quot;~/Desktop/test-clone&quot;, &quot;clone&quot;, &quot;ssh&quot;)
 Fetching GitHub repos for user made-up-user... 3 repos found
 Create new directory at path ~/Desktop/test-clone? y/n: y
 Definitely clone all 3 repos? y/n: y
@@ -172,4 +179,45 @@ Do you like pizza? yes
 <div id="this-belongs-in-a-dump" class="section level1">
 <h1>This belongs in a dump</h1>
 <p>Yeah, maybe. It’s not sophisticated, but I’ve found it useful for my own specific purposes.</p>
+<hr />
+<details>
+<p><summary>Session info</summary></p>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.0.0 (2020-04-24)
+##  os       macOS Mojave 10.14.6        
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2020-07-18                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date       lib source        
+##  assertthat    0.2.1   2019-03-21 [1] CRAN (R 4.0.0)
+##  blogdown      0.19    2020-05-22 [1] CRAN (R 4.0.0)
+##  bookdown      0.19    2020-05-15 [1] CRAN (R 4.0.0)
+##  cli           2.0.2   2020-02-28 [1] CRAN (R 4.0.0)
+##  crayon        1.3.4   2017-09-16 [1] CRAN (R 4.0.0)
+##  digest        0.6.25  2020-02-23 [1] CRAN (R 4.0.0)
+##  evaluate      0.14    2019-05-28 [1] CRAN (R 4.0.0)
+##  fansi         0.4.1   2020-01-08 [1] CRAN (R 4.0.0)
+##  glue          1.4.1   2020-05-13 [1] CRAN (R 4.0.0)
+##  htmltools     0.4.0   2019-10-04 [1] CRAN (R 4.0.0)
+##  knitr         1.29    2020-06-23 [1] CRAN (R 4.0.2)
+##  magrittr      1.5     2014-11-22 [1] CRAN (R 4.0.0)
+##  Rcpp          1.0.4.6 2020-04-09 [1] CRAN (R 4.0.0)
+##  rlang         0.4.7   2020-07-09 [1] CRAN (R 4.0.2)
+##  rmarkdown     2.1     2020-01-20 [1] CRAN (R 4.0.0)
+##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.0.0)
+##  stringi       1.4.6   2020-02-17 [1] CRAN (R 4.0.0)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.0.0)
+##  withr         2.2.0   2020-04-20 [1] CRAN (R 4.0.0)
+##  xfun          0.15    2020-06-21 [1] CRAN (R 4.0.2)
+##  yaml          2.2.1   2020-02-01 [1] CRAN (R 4.0.0)
+## 
+## [1] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
+</details>
 </div>

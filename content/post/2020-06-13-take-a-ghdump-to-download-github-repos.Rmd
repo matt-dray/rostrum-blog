@@ -36,7 +36,7 @@ Situation:
 
 Wants:
 
-* To clone or download all of my repos with one command
+* To clone (with HTTPS or SSH) or download all of my repos with one command
 * Be able to unzip downloaded repos en masse if I want to
 * Do all this from within R, mostly for the learning experience, but also to allow for user interactivity
 
@@ -60,17 +60,7 @@ Install with:
 remotes::install_github("matt-dray/ghdump")
 ```
 
-In brief, you use it like this:
-
-```{r eval=FALSE}
-ghdump::ghd_copy(
-  gh_user = "matt-dray",          # download repos for this user
-  dest_dir = "~/Documents/repos"  # full local file path to copy to
-  copy_type = "download"          # "download" or "clone" the repos
-)
-```
-
-This assumes you have a GitHub account and a GitHub Personal Access Token (PAT) stored in your .Renviron file. You can do this with the following steps:
+To use the package, you'll need a GitHub account and [a GitHub Personal Access Token (PAT) stored in your .Renviron file](https://happygitwithr.com/github-pat.html). You can do this with the following steps:
 
 ```{r eval=FALSE}
 usethis::browse_github_pat()  # opens browser to generate token
@@ -78,7 +68,28 @@ usethis::edit_r_environ()     # add your token to the .Renviron
 # then restart R
 ```
 
-See the [Happy Git and GitHub for the useR](https://happygitwithr.com/github-pat.html){target='_blank'} book by Jenny Bryan, the STAT 545 TAs and Jim Hester for more info on this.
+You can use {ghdump} to download the repos for a specified user:
+
+```{r eval=FALSE}
+ghdump::ghd_copy(
+  gh_user = "matt-dray",           # download repos for this user
+  dest_dir = "~/Documents/repos",  # full local file path to copy to
+  copy_type = "download"           # "download" or "clone" the repos
+)
+```
+
+Or clone them:
+
+```{r eval=FALSE}
+ghdump::ghd_copy(
+  gh_user = "matt-dray",
+  dest_dir = "~/Documents/repos"
+  copy_type = "clone",
+  protocol = "https" # specify "https" or "ssh"
+)
+```
+
+If you want to use the SSH protocol when cloning, you need to make sure that you've [set up your keys](https://happygitwithr.com/ssh-keys.html).
 
 ## Interactivity
 
@@ -120,7 +131,7 @@ Finished downloading
 And now imaginary demo of the output from `ghd_copy()` when `copy_type = "clone"`:
 
 ```{r eval=FALSE}
-> ghd_copy("mase-up-user", "~/Desktop/test-clone", "clone")
+> ghd_copy("made-up-user", "~/Desktop/test-clone", "clone", "ssh")
 Fetching GitHub repos for user made-up-user... 3 repos found
 Create new directory at path ~/Desktop/test-clone? y/n: y
 Definitely clone all 3 repos? y/n: y
@@ -198,3 +209,10 @@ I've designed a few hex stickers with the {hexSticker} package; you can see them
 # This belongs in a dump
 
 Yeah, maybe. It's not sophisticated, but I've found it useful for my own specific purposes.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
