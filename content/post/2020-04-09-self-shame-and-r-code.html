@@ -23,22 +23,23 @@ Bemusement (all images from <a href="https://archive.org/details/brehmslifeofani
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>In which I reflect on my past-self’s bad R practices. Learnings: don’t use <code>file.choose()</code>, <code>setwd()</code>, nor <code>attach()</code>; structure your projects sensibly; write functions instead of copy-pasting code.</p>
+<p>In which I reflect on my past-self’s journey toward better R code.</p>
+<p>This post suggests alternatives to <code>file.choose()</code>, <code>setwd()</code> and <code>attach()</code>; encourages sensible project structure; and talks about the benefit of writing functions.</p>
 </div>
 <div id="a-startling-discovery" class="section level1">
 <h1>A startling discovery</h1>
 <p>I dug up a time capsule from a decade ago. It contained poorly constructed R code.</p>
 <p>Twist: <em>it was me who wrote it</em>.</p>
 <p>Reading these scripts brought back the sweet nostalgia of running the vanilla R GUI on my <a href="https://en.wikipedia.org/wiki/MacBook_(2006%E2%80%932012)%7Btarget=&#39;_blank&#39;%7D">precious white MacBook</a>, using R as little more than an interactive calculator for <a href="https://www.rostrum.blog/2019/04/30/markov-chain-phd-2/" target="_blank">ecological analyses</a>.</p>
-<p>What nuggets of pain did I unearth? Past-Matthew seemed to like:</p>
+<p>There were some things in that code that look alien to me now (click to jump ahead):</p>
 <ol style="list-style-type: decimal">
 <li><a href="#files" target="_blank"><code>file.choose()</code> and <code>setwd()</code> for non-reproducible file locations</a></li>
 <li><a href="#attach" target="_blank">The <code>attach()</code> function for basically hiding his data and forgetting it exists</a></li>
 <li><a href="#env" target="_blank">Working in the same R workspace at all times regardless of context</a></li>
 <li><a href="#repeat" target="_blank">Repeating code over and over and over and over and…</a></li>
 </ol>
-<p>This post is a belated learning moment for past-Matthew.</p>
-<p>Click the list items above to jump to that section.</p>
+<p>This post is about learning. It’s about looking for improvements. Everyone is a beginner at some point and everyone is taught in a different way. There’s no shame in that.</p>
+<p>Hopefully this post might act as a shortcut for you to hear about some alternative techniques.</p>
 <div class="figure">
 <img src="/post/2020-04-09-self-shame-and-r-code_files/brehm-1895-otter.jpg" alt="Line drawing of an otter in agony with its paw trapped in some fishing tackle." width="75%"/>
 <p class="caption">
@@ -63,10 +64,10 @@ Agony
 <div id="justified-arson" class="section level2">
 <h2>Justified arson</h2>
 <p>You may wonder why I haven’t mentioned <code>setwd()</code> as a solution here. It’s because <a href="https://jennybryan.org/" target="_blank">Jenny Bryan</a> will <a href="https://www.tidyverse.org/blog/2017/12/workflow-vs-script/" target="_blank">set your computer on fire</a>.</p>
-<p>But of course past-Matthew did this.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> He would use <code>setwd()</code> to point to where the project was housed locally:</p>
+<p>But past-Matthew did this.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> He used <code>setwd()</code> to point to where a project was stored locally:</p>
 <pre class="r"><code>setwd(&quot;/Users/Matthew//local/path/to/project/&quot;)
 df &lt;- read.csv(&quot;data/some_file.csv&quot;)</code></pre>
-<p>What’s the problem? The bit in <code>setwd()</code> is not reproducible — it’s the file location on one particular machine only!</p>
+<p>What’s the problem? The bit in <code>setwd()</code> is not reproducible — it’s the file location on one particular machine only.</p>
 <div class="figure">
 <img src="/post/2020-04-09-self-shame-and-r-code_files/brehm-1895-mouse.jpg" alt="Line drawing of two mice that look like they're laughing." width="75%"/>
 <p class="caption">
@@ -124,7 +125,7 @@ attach(df2)</code></pre>
 <pre><code>## [1] 31.64357</code></pre>
 <p>This has serious implications for reproducibility and the confidence you can have in your results.</p>
 <p>See also the ‘search list shuffle’ danger of <code>attach()</code> referenced in Circle 8.1.35 of <a href="https://www.burns-stat.com/pages/Tutor/R_inferno.pdf" target="_blank">The R Inferno</a> by Patrick Burns.</p>
-<p>Past-Matthew was using this approach because he was taught with <a href="https://www.wiley.com/en-gb/The+R+Book%2C+2nd+Edition-p-9780470973929" target="_blank">Mick Crawley’s R Book</a>. Mick says <code>attach()</code> ‘makes the code easier to understand for beginners’ (page 18)<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> — possibly because expressions end up looking less cluttered. But this only sets up beginners (like me) for problems later. In fact, Mick even says to ‘avoid using attach wherever possible’ in his book.</p>
+<p>Past-Matthew was using this approach because he was taught with <a href="https://www.wiley.com/en-gb/The+R+Book%2C+2nd+Edition-p-9780470973929" target="_blank">Mick Crawley’s R Book</a>. Mick says <code>attach()</code> ‘makes the code easier to understand for beginners’ (page 18)<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> — possibly because expressions end up looking less cluttered. But this only sets up beginners (like me) for problems later. In fact, Mick even says, perhaps confusingly, to ‘avoid using attach wherever possible’ in his book.</p>
 <p>Pro tip: if you do ever use <code>attach()</code> (don’t), you’ll want to make sure you <code>detach()</code> your objects from the search path.</p>
 <pre class="r"><code>detach(df)
 detach(df2)</code></pre>
@@ -142,7 +143,7 @@ Scorn
 <p>I’m also certain that the content of past-Matthew’s workspace was being saved at the end of each session — the default behaviour — meaning all that trash would come back next time he fired up R.</p>
 <p>There were also some strange defensive lines like the following, which pre-emptively unloads the {nlme} package because of a namespace conflict with {lme4}:</p>
 <pre class="r"><code>detach(&quot;package:nlme&quot;)  # conflicts with lme4</code></pre>
-<p>Unnecessary and odd. I assume this was because past-Matthew was never quite sure of the state of his current working environment.</p>
+<p>I assume this was because past-Matthew was never quite sure of the state of his current working environment.</p>
 <p>These days I treat everything in my environment with suspicion and restart R regularly and rebuild objects from scratch. This means I can have confidence that my script does what I think it does and also stops interference from older objects that are clogging up my environment.</p>
 <p>I also modified the default behaviour of RStudio to prevent my workspace being saved, which means I can start afresh when I open a project. To do this, untick ‘Restore .Rdata on startup’ and set ‘Save workspace to .RData on exit’ to ‘Never’ in Tools &gt; Global Options &gt; General &gt; Basic &gt; Workspace.</p>
 <p><a href="https://r4ds.had.co.nz/workflow-projects.html" target="_blank">Read more about workflow in the R for Data Science book</a> by Garrett Grolemund and Hadley Wickham.</p>
@@ -214,7 +215,7 @@ Empathy
 </div>
 <div id="reflections" class="section level1">
 <h1>Reflections</h1>
-<p>I think it’s a good exercise to look back and critique your old code. What makes you cringe when you look back on it?</p>
+<p>I think it’s a good exercise to look back and critique your old code. What changes have you made to your coding practices over time?</p>
 <p>There’s no shame in writing code that does what you want it to do. I can see why past-Matthew did the things he did. But I’m also glad he stopped doing them.</p>
 <p>See you in ten years to look back on the inevitably terrible code I’ve written in this blog.</p>
 <hr />
@@ -230,40 +231,42 @@ Empathy
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2020-04-21                  
+##  date     2020-07-21                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
-##  package     * version date       lib source        
-##  assertthat    0.2.1   2019-03-21 [1] CRAN (R 3.6.0)
-##  blogdown      0.17    2019-11-13 [1] CRAN (R 3.6.0)
-##  bookdown      0.18    2020-03-05 [1] CRAN (R 3.6.0)
-##  cli           2.0.2   2020-02-28 [1] CRAN (R 3.6.0)
-##  crayon        1.3.4   2017-09-16 [1] CRAN (R 3.6.0)
-##  curl          4.3     2019-12-02 [1] CRAN (R 3.6.0)
-##  digest        0.6.25  2020-02-23 [1] CRAN (R 3.6.0)
-##  evaluate      0.14    2019-05-28 [1] CRAN (R 3.6.0)
-##  fansi         0.4.1   2020-01-08 [1] CRAN (R 3.6.0)
-##  glue          1.3.1   2019-03-12 [1] CRAN (R 3.6.0)
-##  hms           0.5.3   2020-01-08 [1] CRAN (R 3.6.0)
-##  htmltools     0.4.0   2019-10-04 [1] CRAN (R 3.6.0)
-##  knitr         1.28    2020-02-06 [1] CRAN (R 3.6.0)
-##  magrittr      1.5     2014-11-22 [1] CRAN (R 3.6.0)
-##  pillar        1.4.3   2019-12-20 [1] CRAN (R 3.6.0)
-##  pkgconfig     2.0.3   2019-09-22 [1] CRAN (R 3.6.0)
-##  purrr         0.3.3   2019-10-18 [1] CRAN (R 3.6.0)
-##  R6            2.4.1   2019-11-12 [1] CRAN (R 3.6.0)
-##  Rcpp          1.0.3   2019-11-08 [1] CRAN (R 3.6.0)
-##  readr         1.3.1   2018-12-21 [1] CRAN (R 3.6.0)
-##  rlang         0.4.5   2020-03-01 [1] CRAN (R 3.6.0)
-##  rmarkdown     2.1     2020-01-20 [1] CRAN (R 3.6.0)
-##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 3.6.0)
-##  stringi       1.4.6   2020-02-17 [1] CRAN (R 3.6.1)
-##  stringr       1.4.0   2019-02-10 [1] CRAN (R 3.6.0)
-##  tibble        2.1.3   2019-06-06 [1] CRAN (R 3.6.0)
-##  vctrs         0.2.4   2020-03-10 [1] CRAN (R 3.6.1)
-##  withr         2.1.2   2018-03-15 [1] CRAN (R 3.6.0)
-##  xfun          0.12    2020-01-13 [1] CRAN (R 3.6.0)
-##  yaml          2.2.1   2020-02-01 [1] CRAN (R 3.6.0)
+##  package     * version    date       lib source                            
+##  assertthat    0.2.1      2019-03-21 [1] CRAN (R 3.6.0)                    
+##  blogdown      0.18       2020-03-04 [1] CRAN (R 3.6.0)                    
+##  bookdown      0.20       2020-06-23 [1] CRAN (R 3.6.2)                    
+##  cli           2.0.2      2020-02-28 [1] CRAN (R 3.6.0)                    
+##  crayon        1.3.4      2017-09-16 [1] CRAN (R 3.6.0)                    
+##  curl          4.3        2019-12-02 [1] CRAN (R 3.6.0)                    
+##  digest        0.6.25     2020-02-23 [1] CRAN (R 3.6.0)                    
+##  ellipsis      0.3.1      2020-05-15 [1] CRAN (R 3.6.2)                    
+##  evaluate      0.14       2019-05-28 [1] CRAN (R 3.6.0)                    
+##  fansi         0.4.1      2020-01-08 [1] CRAN (R 3.6.0)                    
+##  glue          1.4.1      2020-05-13 [1] CRAN (R 3.6.2)                    
+##  hms           0.5.3      2020-01-08 [1] CRAN (R 3.6.0)                    
+##  htmltools     0.4.0.9003 2020-05-09 [1] Github (rstudio/htmltools@984b39c)
+##  knitr         1.29       2020-06-23 [1] CRAN (R 3.6.2)                    
+##  lifecycle     0.2.0      2020-03-06 [1] CRAN (R 3.6.0)                    
+##  magrittr      1.5        2014-11-22 [1] CRAN (R 3.6.0)                    
+##  pillar        1.4.5      2020-07-09 [1] CRAN (R 3.6.1)                    
+##  pkgconfig     2.0.3      2019-09-22 [1] CRAN (R 3.6.0)                    
+##  purrr         0.3.4      2020-04-17 [1] CRAN (R 3.6.2)                    
+##  R6            2.4.1      2019-11-12 [1] CRAN (R 3.6.0)                    
+##  Rcpp          1.0.5      2020-07-06 [1] CRAN (R 3.6.2)                    
+##  readr         1.3.1      2018-12-21 [1] CRAN (R 3.6.0)                    
+##  rlang         0.4.7      2020-07-09 [1] CRAN (R 3.6.1)                    
+##  rmarkdown     2.3        2020-06-18 [1] CRAN (R 3.6.2)                    
+##  sessioninfo   1.1.1      2018-11-05 [1] CRAN (R 3.6.0)                    
+##  stringi       1.4.6      2020-02-17 [1] CRAN (R 3.6.1)                    
+##  stringr       1.4.0      2019-02-10 [1] CRAN (R 3.6.0)                    
+##  tibble        3.0.3      2020-07-10 [1] CRAN (R 3.6.2)                    
+##  vctrs         0.3.1      2020-06-05 [1] CRAN (R 3.6.2)                    
+##  withr         2.2.0      2020-04-20 [1] CRAN (R 3.6.2)                    
+##  xfun          0.15       2020-06-21 [1] CRAN (R 3.6.2)                    
+##  yaml          2.2.1      2020-02-01 [1] CRAN (R 3.6.0)                    
 ## 
 ## [1] /Users/matt.dray/Library/R/3.6/library
 ## [2] /Library/Frameworks/R.framework/Versions/3.6/Resources/library</code></pre>

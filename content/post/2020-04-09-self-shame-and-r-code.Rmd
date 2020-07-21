@@ -20,7 +20,9 @@ draft: no
 
 # tl;dr
 
-In which I reflect on my past-self's bad R practices. Learnings: don't use `file.choose()`, `setwd()`, nor `attach()`; structure your projects sensibly; write functions instead of copy-pasting code.
+In which I reflect on my past-self's journey toward better R code.
+
+This post suggests alternatives to `file.choose()`, `setwd()` and `attach()`; encourages sensible project structure; and talks about the benefit of writing functions.
 
 # A startling discovery
 
@@ -30,16 +32,16 @@ Twist: _it was me who wrote it_.
 
 Reading these scripts brought back the sweet nostalgia of running the vanilla R GUI on my [precious white MacBook](https://en.wikipedia.org/wiki/MacBook_(2006%E2%80%932012){target='_blank'}), using R as little more than an interactive calculator for [ecological analyses](https://www.rostrum.blog/2019/04/30/markov-chain-phd-2/){target='_blank'}.
 
-What nuggets of pain did I unearth? Past-Matthew seemed to like:
+There were some things in that code that look alien to me now (click to jump ahead):
 
 1. [`file.choose()` and `setwd()` for non-reproducible file locations](#files){target='_blank'}
 1. [The `attach()` function for basically hiding his data and forgetting it exists](#attach){target='_blank'}
 1. [Working in the same R workspace at all times regardless of context](#env){target='_blank'}
 1. [Repeating code over and over and over and over and...](#repeat){target='_blank'}
 
-This post is a belated learning moment for past-Matthew.
+This post is about learning. It's about looking for improvements. Everyone is a beginner at some point and everyone is taught in a different way. There's no shame in that.
 
-Click the list items above to jump to that section.
+Hopefully this post might act as a shortcut for you to hear about some alternative techniques.
 
 <div class="figure">
 <img src="/post/2020-04-09-self-shame-and-r-code_files/brehm-1895-otter.jpg" alt="Line drawing of an otter in agony with its paw trapped in some fishing tackle." width="75%"/>
@@ -69,14 +71,14 @@ Tools:
 
 You may wonder why I haven't mentioned `setwd()` as a solution here. It's because [Jenny Bryan](https://jennybryan.org/){target='_blank'} will [set your computer on fire](https://www.tidyverse.org/blog/2017/12/workflow-vs-script/){target='_blank'}.
 
-But of course past-Matthew did this.[^melt] He would use `setwd()` to point to where the project was housed locally:
+But past-Matthew did this.[^melt] He used `setwd()` to point to where a project was stored locally:
 
 ```{r setwd, eval=FALSE}
 setwd("/Users/Matthew//local/path/to/project/")
 df <- read.csv("data/some_file.csv")
 ```
 
-What's the problem? The bit in `setwd()` is not reproducible --- it's the file location on one particular machine only!
+What's the problem? The bit in `setwd()` is not reproducible --- it's the file location on one particular machine only.
 
 <div class="figure">
 <img src="/post/2020-04-09-self-shame-and-r-code_files/brehm-1895-mouse.jpg" alt="Line drawing of two mice that look like they're laughing." width="75%"/>
@@ -155,7 +157,7 @@ This has serious implications for reproducibility and the confidence you can hav
 
 See also the 'search list shuffle' danger of `attach()` referenced in Circle 8.1.35 of [The R Inferno](https://www.burns-stat.com/pages/Tutor/R_inferno.pdf){target='_blank'} by Patrick Burns.
 
-Past-Matthew was using this approach because he was taught with [Mick Crawley's R Book](https://www.wiley.com/en-gb/The+R+Book%2C+2nd+Edition-p-9780470973929){target='_blank'}. Mick says `attach()` 'makes the code easier to understand for beginners' (page 18)[^beginner] --- possibly because expressions end up looking less cluttered. But this only sets up beginners (like me) for problems later. In fact, Mick even says to 'avoid using attach wherever possible' in his book.
+Past-Matthew was using this approach because he was taught with [Mick Crawley's R Book](https://www.wiley.com/en-gb/The+R+Book%2C+2nd+Edition-p-9780470973929){target='_blank'}. Mick says `attach()` 'makes the code easier to understand for beginners' (page 18)[^beginner] --- possibly because expressions end up looking less cluttered. But this only sets up beginners (like me) for problems later. In fact, Mick even says, perhaps confusingly, to 'avoid using attach wherever possible' in his book.
 
 Pro tip: if you do ever use `attach()` (don't), you'll want to make sure you `detach()` your objects from the search path.
 
@@ -183,7 +185,7 @@ There were also some strange defensive lines like the following, which pre-empti
 detach("package:nlme")  # conflicts with lme4
 ```
 
-Unnecessary and odd. I assume this was because past-Matthew was never quite sure of the state of his current working environment.
+I assume this was because past-Matthew was never quite sure of the state of his current working environment.
 
 These days I treat everything in my environment with suspicion and restart R regularly and rebuild objects from scratch. This means I can have confidence that my script does what I think it does and also stops interference from older objects that are clogging up my environment.
 
@@ -258,7 +260,7 @@ _Friendship ended with code repetition. Now bespoke functions and {purrr} are my
 
 # Reflections
 
-I think it's a good exercise to look back and critique your old code. What makes you cringe when you look back on it?
+I think it's a good exercise to look back and critique your old code. What changes have you made to your coding practices over time?
 
 There's no shame in writing code that does what you want it to do. I can see why past-Matthew did the things he did. But I'm also glad he stopped doing them.
 
