@@ -1,0 +1,169 @@
+---
+title: 'GitHub Actions: quick setup for R packages'
+author: Matt Dray
+date: '2020-08-05'
+slug: ghactions-pkgs
+categories:
+  - code
+  - package
+  - tutorial
+tags:
+  - continuous-integration
+  - codecov
+  - covr
+  - github
+  - github-actions
+  - pkgdown
+  - r-lib
+  - tests
+  - usethis
+---
+
+
+
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>You can trigger GitHub Actions to build and test your R package after a push or pull request. Create <code>.github/workflows/</code> in your repo and add actions with <code>usethis::use_github_action()</code>. r-lib has pre-made examples for R CMD check, calculating test coverage and rebuilding your {pkgdown} website.</p>
+</div>
+<div id="lights-camera" class="section level1">
+<h1>Lights, camera…</h1>
+<p><a href="https://github.com/features/actions" target="_blank">GitHub Actions</a> is a service that can be triggered to run workflows that build, test and deploy your code.</p>
+<p>This is really useful for developing R packages on GitHub. On push, you can trigger actions that:</p>
+<ul>
+<li>run an <a href="https://kbroman.org/pkg_primer/pages/check.html" target="_blank">R CMD build check</a> on multiple platforms</li>
+<li>run your <a href="https://testthat.r-lib.org/" target="_blank">{testthat} unit tests</a></li>
+<li>check test coverage with <a href="https://covr.r-lib.org/" target="_blank">{covr}</a> and <a href="https://codecov.io/" target="_blank">Codecov</a></li>
+<li>rebuild your <a href="https://pkgdown.r-lib.org/" target="_blank">{pkgdown} website</a></li>
+</ul>
+<p>You can then add badges to your GitHub repo that will update automatically with the result of the checks. This is useful for people arriving at your repo on GitHub and wondering what state of development it’s in.</p>
+<p>It’s useful for you too, because the process is automatic and removes the needs to run these things manually. You can see if a pull request (PR) will pass its checks and then make extra commits if necessary.</p>
+</div>
+<div id="action" class="section level1">
+<h1>…Action</h1>
+<p>How do you trigger an action? You put a small script file in your repo that contains the instructions for what to run and when to run it.</p>
+<p>You put these scripts in a <code>.github/workflows/</code> folder in your repo. Each action has its own script, which is YAML format. These scripts are step-by-step recipes for performing the workflow.</p>
+<p>For example, I have <a href="https://github.com/matt-dray/r2eng/blob/master/.github/workflows/R-CMD-check.yaml" target="_blank">an action that performs an R CMD check for {r2eng}</a>. The <a href="https://github.com/matt-dray/r2eng/blob/3a12b31226ddc9de0fc757fba6589430f36b3181/.github/workflows/R-CMD-check.yaml#L1-L7" target="_blank">top of the YAML</a> says ‘run this following push or a PR’:</p>
+<pre><code>on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master</code></pre>
+<p>The remainder of that script provides some configuration and the actual code to be executed. For example, <a href="https://github.com/matt-dray/r2eng/blob/3a12b31226ddc9de0fc757fba6589430f36b3181/.github/workflows/R-CMD-check.yaml#L82-L86" target="_blank">this step</a> that runs the R CMD checks:</p>
+<pre><code>- name: Check
+  env:
+    _R_CHECK_CRAN_INCOMING_: false
+    run: rcmdcheck::rcmdcheck(args = c(&quot;--no-manual&quot;, &quot;--as-cran&quot;), error_on = &quot;warning&quot;, check_dir = &quot;check&quot;)
+    shell: Rscript {0}</code></pre>
+<p>You don’t have to understand exactly what’s happening in these YAML files, nor do you have to write them yourself. You can get started quickly with pre-written actions instead.</p>
+</div>
+<div id="usethis-and-r-lib" class="section level1">
+<h1>{usethis} and r-lib</h1>
+<p>{usethis} helps to shortcut the set up R packages and projects, including functions that add GitHub Actions.</p>
+<p>In particular, <code>usethis::use_github_action()</code> will add a GitHub Action to your repo for you; you just supply the name of a pre-written action.</p>
+<p>Where do these pre-written actions come from? There’s <a href="https://github.com/r-lib/actions/tree/master/examples" target="_blank">a repo of examples made by the r-lib team</a> (who also authored {usethis}).</p>
+<p>Below is a walkthrough of setting up some actions that are pretty useful in R package development.</p>
+</div>
+<div id="example-r2eng-package" class="section level1">
+<h1>Example: {r2eng} package</h1>
+<p>I recently set up GitHub Actions for the <a href="https://github.com/matt-dray/r2eng" target="_blank">in-development {r2eng} package</a> and wanted to record the process.</p>
+<p>The first step was to create the folder <code>.github/workflows/</code>, which will store the action scripts. This is a standard location that GitHub Actions checks for YAML files to run.</p>
+<p>{r2eng} has <a href="https://github.com/matt-dray/r2eng/tree/master/.github/workflows" target="_blank">three actions in this folder</a>: <code>R-CMD-check.yaml</code>, <code>test-coverage.yaml</code> and <code>pkgdown.yaml</code>. Let’s talk through them.</p>
+<div id="build-check" class="section level2">
+<h2>Build check</h2>
+<p>R CMD check runs a plethora of tests on your package (including your own unit tests) and returns errors, notes and warnings. You’re aiming for a passing build to prove the package is up to scratch.</p>
+<p>{usethis} has three actions-related functions specifically for setting up the build check. The standard one will run the R CMD check on macOS, Linux and Windows to make sure it passes across platforms.</p>
+<p>Run this to add the <code>R-CMD-check.yaml</code> action to the <code>.github/workflows/</code> folder:</p>
+<pre class="r"><code>usethis::use_github_action_check_standard()</code></pre>
+<p>On a push or PR, GitHub Actions will automatically set up and run the build check on each OS.</p>
+</div>
+<div id="coverage" class="section level2">
+<h2>Coverage</h2>
+<p>The R CMD check runs your unit tests, but it doesn’t calculate coverage. This is a measure of how much of your code has a test related to it. Ideally you want this to be 100%, but also bear in mind that the metric doesn’t take account of the volume or quality of tests.</p>
+<p>Add the action to your repo with:</p>
+<pre class="r"><code>usethis::use_github_action(&quot;test-coverage&quot;)</code></pre>
+<p>On push or a PR, the coverage of the code is evaluated with the {covr} package. Assuming your package is public, the results are supplied to <a href="https://codecov.io/" target="_blank">the Codecov site</a>.</p>
+<p>For example, <a href="https://codecov.io/gh/matt-dray/r2eng" target="_blank">the Codecov page for {r2eng}</a> shows the percentage of coverage, a breakdown of the lines ‘hit’ and ‘missed’, and the commits that led to checks.</p>
+</div>
+<div id="pkgdown-site" class="section level2">
+<h2>{pkgdown} site</h2>
+<p><a href="https://pkgdown.r-lib.org/" target="_blank">{pkgdown} is another r-lib package</a> that makes it easy to turn your package’s documentation into a customisable website. People can then access the help files and vignettes online.</p>
+<p>The steps for setting up a {pkgdown} site are laid out clearly in <a href="https://ropenscilabs.github.io/actions_sandbox/websites-using-pkgdown-bookdown-and-blogdown.html" target="_blank">the GitHub Actions with R book</a>.</p>
+<p>In short, you don’t want the files associated with your site to be part of the R package itself, so you set them up in an empty ‘gh-pages’ branch instead.</p>
+<p>The site files can be added to this branch with <code>usethis::use_pkgdown()</code>. To serve with GitHub pages, go to that section in the repo settings and set the source to the ‘gh-pages’ branch. This page will be served in the form <a href="https://matt-dray.github.io/r2eng/" target="_blank">https://matt-dray.github.io/r2eng/</a>.</p>
+<p>The GitHub Action can then be added to the main branch of your repo with:</p>
+<pre class="r"><code>usethis::use_github_action(&quot;pkgdown&quot;)</code></pre>
+<p>On push, the site will be rebuilt in the ‘gh-pages’ branch.</p>
+</div>
+</div>
+<div id="success" class="section level1">
+<h1>Success?</h1>
+<p>You’ll get the full results of the actions in the ‘Actions’ tab of your repo on GitHub. A successful check will get a green tick next it, which will also appear in the favicon of your browser tab. A failing test gets a red cross.</p>
+<div class="figure">
+<img src="/post/2020-08-05-ghactions-pkgs_files/actions-tab.png" alt="The Actions tab of the a GitHub repository showing successful tests with tick marks next to them." width="100%"/>
+<p class="caption">
+Successful builds in the ‘pkgdown’ workflow.
+</p>
+</div>
+<p>This means you can spot a failing PR and provide more commits to fix it before it gets merged.</p>
+<p>It also means that users can check the results of the checks from the ‘Actions’ tab without leaving GitHub.</p>
+<p>You can also generate badges<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> for your repo README that display the results of the actions. These are great for an at-a-glance understanding of a package’s development state.</p>
+<div class="figure">
+<img src="/post/2020-08-05-ghactions-pkgs_files/make-badge.png" alt="GitHub's 'create status badge' tool showing a badge for the R CMD check and the Markdown needed to reproduce it." width="100%"/>
+<p class="caption">
+Copy the Markdown to your README.
+</p>
+</div>
+<p>For example, here are the badges for {r2eng}, showing the check status and percentage of test coverage:</p>
+<p><a href="https://github.com/matt-dray/r2eng/actions"><img src="https://github.com/matt-dray/r2eng/workflows/R-CMD-check/badge.svg" alt="R build status" /></a>
+<a href="https://codecov.io/gh/matt-dray/r2eng"><img src="https://codecov.io/gh/matt-dray/r2eng/branch/master/graph/badge.svg" alt="codecov" /></a></p>
+<p>Clicking them takes you to the relevant page for the full breakdown of results (the ‘Actions’ tab for the build check and codecov.io for the coverage).</p>
+<hr />
+<details>
+<p><summary>Session info</summary></p>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.0.2 (2020-06-22)
+##  os       macOS Mojave 10.14.6        
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2020-08-08                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date       lib source        
+##  assertthat    0.2.1   2019-03-21 [1] CRAN (R 4.0.0)
+##  blogdown      0.19    2020-05-22 [1] CRAN (R 4.0.0)
+##  bookdown      0.19    2020-05-15 [1] CRAN (R 4.0.0)
+##  cli           2.0.2   2020-02-28 [1] CRAN (R 4.0.0)
+##  crayon        1.3.4   2017-09-16 [1] CRAN (R 4.0.0)
+##  digest        0.6.25  2020-02-23 [1] CRAN (R 4.0.0)
+##  evaluate      0.14    2019-05-28 [1] CRAN (R 4.0.0)
+##  fansi         0.4.1   2020-01-08 [1] CRAN (R 4.0.0)
+##  glue          1.4.1   2020-05-13 [1] CRAN (R 4.0.0)
+##  htmltools     0.4.0   2019-10-04 [1] CRAN (R 4.0.0)
+##  knitr         1.29    2020-06-23 [1] CRAN (R 4.0.2)
+##  magrittr      1.5     2014-11-22 [1] CRAN (R 4.0.0)
+##  Rcpp          1.0.5   2020-07-06 [1] CRAN (R 4.0.2)
+##  rlang         0.4.7   2020-07-09 [1] CRAN (R 4.0.2)
+##  rmarkdown     2.1     2020-01-20 [1] CRAN (R 4.0.0)
+##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.0.0)
+##  stringi       1.4.6   2020-02-17 [1] CRAN (R 4.0.0)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.0.0)
+##  withr         2.2.0   2020-04-20 [1] CRAN (R 4.0.0)
+##  xfun          0.16    2020-07-24 [1] CRAN (R 4.0.2)
+##  yaml          2.2.1   2020-02-01 [1] CRAN (R 4.0.0)
+## 
+## [1] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
+</details>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>I showed how to create these sorts of badges in an earlier blog post: <a href="https://www.rostrum.blog/2020/05/08/readme-badge/" target="_blank">‘Make a README badge with {badgr}’</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
