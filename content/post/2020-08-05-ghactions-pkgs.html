@@ -28,13 +28,13 @@ A GitHub Action in action on GitHub.
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>You can trigger <a href="https://github.com/features/actions" target="_blank">GitHub Actions</a> to build and test your R package after a push or pull request. Create <code>.github/workflows/</code> in your repo and add <a href="https://github.com/r-lib/actions/tree/master/examples" target="_blank">pre-prepared actions by r-lib</a> with <code>usethis::use_github_action()</code>.</p>
+<p>You can trigger <a href="https://github.com/features/actions" target="_blank">GitHub Actions</a> to build and test your R package after a push or pull request. Create <code>.github/workflows/</code> in your repo and add <a href="https://github.com/r-lib/actions/tree/master/examples" target="_blank">pre-prepared actions by the r-lib team</a> with <code>usethis::use_github_action()</code>.</p>
 </div>
 <div id="lights-camera" class="section level1">
 <h1>Lights, camera…</h1>
 <p><a href="https://github.com/features/actions" target="_blank">GitHub Actions</a> is a service that can be triggered to run workflows that build, test and deploy your code on GitHub. In other words, a <a href="https://en.wikipedia.org/wiki/Continuous_integration" target="_blank">continuous integration</a> platform baked right into GitHub.</p>
 <p>Before you start, I recommend checking out <a href="https://www.jimhester.com/talk/2020-rsc-github-actions/" target="_blank">Jim Hester’s talk from rstudio::conf 2020</a> and reading <a href="https://ropenscilabs.github.io/actions_sandbox/" target="_blank">the GitHub Actions with R book</a>.</p>
-<p>In short, GitHub Actions is helpful for developing R packages. For example, you can trigger actions with a push or pull request (PR) that:</p>
+<p>GitHub Actions can be really helpful for developing R packages. For example, you can trigger actions with a push or pull request (PR) that:</p>
 <ul>
 <li>run an <a href="http://r-pkgs.had.co.nz/check.html" target="_blank">R CMD build check</a> of your package on multiple platforms</li>
 <li>run your <a href="https://testthat.r-lib.org/" target="_blank">{testthat} unit tests</a></li>
@@ -42,80 +42,80 @@ A GitHub Action in action on GitHub.
 <li>rebuild your <a href="https://pkgdown.r-lib.org/" target="_blank">{pkgdown} website</a></li>
 </ul>
 <p>Checking the build and coverage are standard practices for package development. They help ensure that your package works and is stable. GitHub Actions provides the icing on the cake by doing these things automatically.</p>
+<p>I wrote this post to remind me how to do it.</p>
 </div>
 <div id="actions" class="section level1">
 <h1>…Actions</h1>
 <p>How are actions stored, recognised and triggered?</p>
 <p>Actions are expressed in YAML script files that read like a recipe for what to run and when to run it. You put these files in your repo at the path <code>.github/workflows/</code>, where GitHub recognises them. The information is interpreted and the actions are run remotely given the specified trigger.</p>
-<p>You can learn more about the content of these YAML files from the <a href="https://ropenscilabs.github.io/actions_sandbox/understanding-yaml.html" target="_blank">GitHub actions with R book</a>, but you don’t have to understand exactly what’s happening. You don’t even have to write them yourself; you can get started quickly with pre-written ones instead.</p>
+<p>You can learn more about the content of these YAML files from the <a href="https://ropenscilabs.github.io/actions_sandbox/understanding-yaml.html" target="_blank">GitHub actions with R book</a>.</p>
+<p>You could set these up manually, but actually you can shortcut the process with the {usethis} package and some pre-written examples.</p>
 </div>
 <div id="usethis-and-r-lib" class="section level1">
 <h1>{usethis} and r-lib</h1>
-<p>{usethis} helps to shortcut the tedious setup steps of R packages and projects. It also includes functions to add GitHub Actions.</p>
-<p>In particular, <code>usethis::use_github_action()</code> will add a GitHub Action to your repo for you; you just supply the name of a pre-written action.</p>
-<p>Where do these pre-written actions come from? Well, the kind folks at r-lib have made <a href="https://github.com/r-lib/actions/tree/master/examples" target="_blank">a repo of examples</a> that you can use.</p>
-</div>
-<div id="example-r2eng-package" class="section level1">
-<h1>Example: {r2eng} package</h1>
-<p>I recently set up GitHub Actions for the <a href="https://github.com/matt-dray/r2eng" target="_blank">in-development {r2eng} package</a> with what I think are a core set of actions for R package development, using the pre-written YAML files by r-lib.</p>
-<p>The first step was to create the folder <code>.github/workflows/</code>, which stored the action scripts. This is a standard location that GitHub Actions checks for YAML files to run.</p>
+<p>{usethis} helps to shortcut the tedious setup steps of R packages and projects. It also includes functions to add GitHub Actions to your R package for you.</p>
+<p>In particular, <code>usethis::use_github_action()</code> will add a GitHub Action YAML file; you just supply the name of a pre-written action.</p>
+<p>Where do these pre-written actions come from? Well, the kind folks at <a href="https://github.com/r-lib" target="_blank">r-lib</a> have made <a href="https://github.com/r-lib/actions/tree/master/examples" target="_blank">a repo of R-focused examples</a> that you can use.</p>
+<div id="example-r2eng-package" class="section level2">
+<h2>Example: {r2eng} package</h2>
+<p>I recently used this method to set up GitHub Actions for the <a href="https://github.com/matt-dray/r2eng" target="_blank">in-development {r2eng} package</a>.</p>
+<p>The first step was to create the folder <code>.github/workflows/</code> where the YAML files will be added for GitHub Actions to find them.</p>
 <p>{r2eng} has <a href="https://github.com/matt-dray/r2eng/tree/master/.github/workflows" target="_blank">three actions in the workflow folder</a>:</p>
 <ul>
 <li><code>R-CMD-check.yaml</code> (<a href="https://github.com/matt-dray/r2eng/blob/master/.github/workflows/R-CMD-check.yaml" target="_blank">see the YAML file</a>)</li>
 <li><code>test-coverage.yaml</code> (<a href="https://github.com/matt-dray/r2eng/blob/master/.github/workflows/test-coverage.yaml" target="_blank">YAML</a>)</li>
 <li><code>pkgdown.yaml</code> (<a href="https://github.com/matt-dray/r2eng/blob/master/.github/workflows/pkgdown.yaml" target="_blank">YAML</a>)</li>
 </ul>
-<p>Let’s talk them through.</p>
-<div id="build-check" class="section level2">
-<h2>Build check</h2>
+<p>This is a typical, minimal set of actions that suit me when developing R packages. Let’s talk them through.</p>
+<div id="build-check" class="section level3">
+<h3>Build check</h3>
 <p>An R CMD check<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> runs a bunch of tests on your package (including your own unit tests) and returns errors, notes and warnings. You’re aiming for a passing build to prove the package is up to scratch.</p>
 <p>{usethis} has three actions-related functions specifically for setting up the build check. The standard one will run the R CMD check on macOS, Linux and Windows to make sure it passes across all these platforms.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
 <p>Run this line to add the <code>R-CMD-check.yaml</code> action to the <code>.github/workflows/</code> folder:</p>
 <pre class="r"><code>usethis::use_github_action_check_standard()</code></pre>
-<p>On a push or PR, GitHub Actions will automatically set up and run the build check on each OS to make sure the package is fit for purpose.</p>
+<p>On a push or PR, GitHub Actions will automatically set up and run the build check on each OS to make sure the package meets the requirements.</p>
 </div>
-<div id="coverage" class="section level2">
-<h2>Coverage</h2>
-<p>The R CMD check runs your unit tests, but it doesn’t calculate how much of your code is actually tested. Ideally you want this to be 100%, but also bear in mind that the metric doesn’t take account of the volume or quality of tests.</p>
+<div id="coverage" class="section level3">
+<h3>Coverage</h3>
+<p>The R CMD check runs your unit tests, but it doesn’t calculate how much of your code is actually <a href="https://en.wikipedia.org/wiki/Code_coverage" target="_blank">covered</a> by testing. Ideally you want this to be 100%, but also bear in mind that the metric doesn’t take account of the volume or quality of tests.</p>
 <p>Add the action to your repo with:</p>
 <pre class="r"><code>usethis::use_github_action(&quot;test-coverage&quot;)</code></pre>
 <p>On push or a PR, the coverage of the tests is evaluated with <a href="https://covr.r-lib.org/" target="_blank">the {covr} package</a>, another r-lib package. The results are then uploaded to <a href="https://codecov.io/" target="_blank">the Codecov site</a> for everyone to see.</p>
 <p>For example, <a href="https://codecov.io/gh/matt-dray/r2eng" target="_blank">the Codecov page for {r2eng}</a> shows the percentage of coverage, a breakdown of the lines ‘hit’ and ‘missed’, and the commits that led to checks.</p>
 </div>
-<div id="pkgdown-site" class="section level2">
-<h2>{pkgdown} site</h2>
-<p><a href="https://pkgdown.r-lib.org/" target="_blank">{pkgdown} is (yet another!) r-lib package</a> that makes it easy to turn your package’s documentation into a customisable website. People can then access the help files and vignettes online.</p>
-<p>The steps for setting up a {pkgdown} site are laid out clearly in <a href="https://ropenscilabs.github.io/actions_sandbox/websites-using-pkgdown-bookdown-and-blogdown.html" target="_blank">the GitHub Actions with R book</a>.</p>
-<p>In short, you don’t want the files associated with your site to be part of the R package itself, so you set them up in an empty ‘gh-pages’ branch instead.</p>
-<p>The site files can be added to this branch with <code>usethis::use_pkgdown()</code>. To serve with GitHub pages, go to that section in the repo settings and set the source to the ‘gh-pages’ branch. This page will be served in the form <a href="https://matt-dray.github.io/r2eng/" target="_blank">https://matt-dray.github.io/r2eng/</a>.</p>
+<div id="pkgdown-site" class="section level3">
+<h3>{pkgdown} site</h3>
+<p><a href="https://pkgdown.r-lib.org/" target="_blank">{pkgdown} is yet another r-lib package</a> that makes it easy to turn your package’s documentation into a customisable website. People can then access the help files and vignettes online.</p>
+<p>The steps for setting up a {pkgdown} site with GitHub Actions are laid out clearly in <a href="https://ropenscilabs.github.io/actions_sandbox/websites-using-pkgdown-bookdown-and-blogdown.html" target="_blank">the GitHub Actions with R book</a>. In short, you don’t want the files associated with your site to be part of the R package itself, so you set them up in an empty ‘gh-pages’ branch instead.</p>
+<p>The site files can be added to this branch with <code>usethis::use_pkgdown()</code>. To serve with GitHub pages, go to that section in the repo settings and set the source to the ‘gh-pages’ branch. Here’s <a href="https://matt-dray.github.io/r2eng/" target="_blank">the example website for the {r2eng} package</a>.</p>
 <p>The GitHub Action can then be added to the main branch of your repo with:</p>
 <pre class="r"><code>usethis::use_github_action(&quot;pkgdown&quot;)</code></pre>
-<p>On push, the site will be rebuilt in the ‘gh-pages’ branch.</p>
-<p>Here’s <a href="https://matt-dray.github.io/r2eng/" target="_blank">the example website for the {r2eng} package</a>.</p>
+<p>On push, the site will be rebuilt in the ‘gh-pages’ branch and the site will be updated when you navigate to it online.</p>
 </div>
 </div>
-<div id="success" class="section level1">
-<h1>Success?</h1>
-<p>You’ll get the full results of the actions in the ‘Actions’ tab of your repo on GitHub. A successful check will get a tick next it, which will also appear in the favicon of your browser tab. A failing test gets a cross.</p>
-<p>This means you and your users can check the results of your checks from the ‘Actions’ tab of you repo without leaving GitHub.</p>
+</div>
+<div id="tickety-boo" class="section level1">
+<h1>Tickety-boo</h1>
+<p>You’ll get the full results of the actions in the ‘Actions’ tab of your repo on GitHub. A successful check gets a satisfying tick next it. A failing test gets a cross. You can select a result and expand the results to trace exactly what the error was.</p>
 <div class="figure">
 <img src="/post/2020-08-05-ghactions-pkgs_files/actions-tab.png" alt="The Actions tab of the a GitHub repository showing successful tests with tick marks next to them." width="100%"/>
 <p class="caption">
 Successful builds in the ‘pkgdown’ workflow.
 </p>
 </div>
-<p>This means you can spot a failing PR and provide more commits to fix it before it gets merged.</p>
+<p>This is handy because you and your users can check the results of your checks from the ‘Actions’ tab of you repo without leaving GitHub.</p>
+<p>It also means you can spot a failing PR and provide more commits to fix it before it gets merged.</p>
 <div class="figure">
 <img src="/post/2020-08-05-ghactions-pkgs_files/pr.png" alt="A GitHub pull request showing the successful results of each test run with GitHub Actions." width="100%"/>
 <p class="caption">
 Ticks! Ticks! Ticks!
 </p>
 </div>
-<p>You can also generate badges<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> for your README that display the results of these actions and automatically update when they’re re-run. These are great for an at-a-glance understanding of a package’s development state.</p>
+<p>You can also generate Markdown badges<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> for your README that display the results of these actions and automatically update when they’re re-run. These are great for an at-a-glance understanding of a package’s development state.</p>
 <div class="figure">
 <img src="/post/2020-08-05-ghactions-pkgs_files/make-badge.png" alt="GitHub's 'create status badge' tool showing a badge for the R CMD check and the Markdown needed to reproduce it." width="100%"/>
 <p class="caption">
-Copy the Markdown to your README.
+More easily obtained than having to defeat a Pokémon gym leader.
 </p>
 </div>
 <p>For example, you can <a href="https://github.com/matt-dray/r2eng/blob/master/README.md" target="_blank">see the badges in the {r2eng} README</a>, showing the check status and percentage of test coverage. I’ve copied them here:</p>
@@ -123,10 +123,11 @@ Copy the Markdown to your README.
 <a href="https://codecov.io/gh/matt-dray/r2eng"><img src="https://codecov.io/gh/matt-dray/r2eng/branch/master/graph/badge.svg" alt="codecov" /></a></p>
 <p>Clicking them takes you to the relevant page for the full breakdown of results (the ‘Actions’ tab for the build check and codecov.io for the coverage).</p>
 </div>
-<div id="thats-a-wrap" class="section level1">
-<h1>That’s a wrap</h1>
-<p>So the simplest thing for checking your R package is probably a combo of {usethis} and r-lib’s pre-prepared YAML files.</p>
+<div id="other-platforms-are-available" class="section level1">
+<h1>Other platforms are available</h1>
+<p>So, I think a combo of {usethis} and r-lib’s pre-prepared YAML files is the simplest route to auto-checking your R package and rebuilding its site.</p>
 <p>There are many other <a href="https://github.com/r-lib/actions/tree/master/examples" target="_blank">YAML examples from r-lib</a> though, and you can write your own. There’s also <a href="https://github.com/sdras/awesome-actions" target="_blank">an ‘awesome list’ of more general-purpose actions</a> to explore.</p>
+<p>It’s important to note that there are several other platforms for continuous integration, like <a href="https://travis-ci.org/" target="_blank">Travis CI</a> and <a href="https://www.appveyor.com/" target="_blank">Appveyor</a> (<a href="https://bookdown.org/rdpeng/RProgDA/continuous-integration.html" target="_blank">see Roger Peng’s book</a> for an overview), but this requires you to setup multiple accounts and configuration files. At time of writing, GitHub Actions has the benefit of testing across all the major operating systems and is easier to set up (learn more in <a href="https://speakerdeck.com/jimhester/github-actions-for-r?slide=17" target="_blank">Jim Hester’s talk</a>).</p>
 <hr />
 <details>
 <p><summary>Session info</summary></p>
