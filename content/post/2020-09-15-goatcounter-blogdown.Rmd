@@ -10,7 +10,7 @@ tags:
   - google-analytics
   - goatcounter
   - transparency
-draft: yes
+draft: no
 ---
 
 <div class="figure">
@@ -20,54 +20,98 @@ draft: yes
 
 # tl;dr
 
-This site now uses [GoatCounter]() instead of [Google Analytics](). GoatCounter is a lightweight and unobtrusive site-visit counter made by the independent developer [Martin Tournoij](https://www.arp242.net).
+This blog now uses [GoatCounter](https://www.goatcounter.com/) instead of [Google Analytics](https://en.wikipedia.org/wiki/Google_Analytics). GoatCounter is a lightweight and unobtrusive site-visit counter made by developer [Martin Tournoij](https://www.arp242.net).
 
-# What I need
+# Do blogposts dream of electric goats?
 
-[I write posts on this blog for me, primarily](https://www.rostrum.blog/2020/02/27/get-blogging/). It's great if others find the content useful or interesting. I don't and never will make money from this site, so why would I care how many visits it gets?
+[I write posts on this blog for me and for other learners](https://www.rostrum.blog/2020/02/27/get-blogging/). It's great if people find the content useful or interesting. 
 
-A highly-viewed post indicates to me that the topic is worth talking about. It's a signal that it might be worth writing more about that thing in future.
+But I don't and never will make money from this site, so why would I care how many visits it gets?
 
-Given how quickly things change, it's also good to know which posts might need updating or need to carry a health warning. I don't want people to visit this blog and be given erroneous or out-of-date information.
+A highly-viewed post indicates to me that the topic is worth talking about. It's a signal that it might be worth writing more about that thing in future. Popular posts might also need updating over time to keep the information up to date.
 
-So I think I have a use case. Except I don't want to 'track'; I just want a count of visits to each page.
+So I think I have a use case. Except I don't want to 'track' people; I just want to count visits views.
 
 # Friendship ended
 
-I've been using Google Analytics for this blog since it began in April 2018. Why? It's free, it's ubiquitous, it's easily implemented.
+I've been using [Google Analytics](https://en.wikipedia.org/wiki/Google_Analytics) for this blog since it began in April 2018. Why? My naïve reasons were that it's free, it's ubiquitous and it's easily [implemented in {blogdown}](https://bookdown.org/yihui/blogdown/templates.html).
 
-Google Analytics is massively bloated for my use case, though. I don't need to create marketing reports, optimise for click rates or see what visitors have eaten for breakfast. 
+It's massively bloated for my use case though. Acquisition reports, revenue per user and cohort analysis are not relevant to me. And I don't even know what they mean.
 
-But mostly I'm uncomfortable with various [privacy concerns](https://en.wikipedia.org/wiki/Privacy_concerns_regarding_Google) around the company and platform. I don't need or want you to be tracked. I don't want to be a potential node for data harvesting.
+More importantly, I'm uncomfortable with various [privacy concerns](https://en.wikipedia.org/wiki/Privacy_concerns_regarding_Google) around the company and platform. I don't need or want you to be the product.
+
+This change has been a long time coming and follows my earlier removal of [the Disqus comment platform](https://en.wikipedia.org/wiki/Disqus), thanks to [a Maëlle Salmon post](https://masalmon.eu/2019/10/02/disqus/).
 
 # New best friend
 
-So why is GoatCounter better?
+[A number of alternatives are available](https://alternativeto.net/software/google-analytics/),[^alt] but I chose [GoatCounter](https://www.goatcounter.com/) by independent developer [Martin Tournoij](https://www.arp242.net). Why?
 
-1. Privacy
-1. Considerate
-1. Transparency
-1. Lightweight
-1. Simple interface
+To summarise, the large type at the top of [the GoatCounter home page](https://www.goatcounter.com/) says:
 
-It probably doesn't need a GDPR notice. goatcounter.com/gdpr
+> Easy web analytics. No tracking of personal data.
 
-The process is up front.
+What does that encompass?
 
-Rationale https://github.com/zgoat/goatcounter/blob/master/docs/rationale.markdown
+| What | Explain |
+| :--- | :--- |
+| Privacy | GoatCounter doesn't collect personally-identifiable data and as such it ['probably doesn't require a GDPR consent notice'](https://www.goatcounter.com/gdpr). |
+| Simple web interface | [A clean interface](https://www.goatcounter.com/design) with focus on visits and viewers over time ([see a live demo](https://stats.arp242.net/)).  |
+| Transparent | GoatCounter is [open source](https://github.com/zgoat/goatcounter) and the creator is open about comparisons to other products. |
+| Thoughtful | The creator has [written openly about the rationale](https://github.com/zgoat/goatcounter/blob/master/docs/rationale.markdown) and has considered users of assistive tech. |
+| Free | With paid plans or donations available ([Patreon](https://www.patreon.com/arp242/), [GitHub Sponsors](https://github.com/sponsors/arp242)). |
+| Lightweight | It's less than 3 kb. |
 
-# The divorce
 
-Switching to GoatCounter was easy. There were basically two steps:
+# Herding GoatCounter
 
-1. Goodbye GA: I removed the Google Analytics token from [the site's `config.toml` file](https://github.com/matt-dray/rostrum-blog/blob/master/config.toml)
-1. Hello GoatCounter: I added a supplied line of code to the `<body>` of the site
+Switching to GoatCounter was straightforward. 
 
-Painless. And in fact, I used a feature of Netlify to add the needed line of code. The service inserts the code on deployment, without needing to add it explicitly to your site.
+This blog was created with the R package [{blogdown}](https://bookdown.org/yihui/blogdown/), which is built on the [Hugo static site generator](https://gohugo.io/), and it's deployed via [Netlify](https://www.netlify.com/). Your mileage may vary, but there were basically three steps:
 
-This site was made with the R package {blogdown}, which uses Hugo, and is deployed using Netlify. Your mileage may vary.
+1. Remove the Google Analytics token from [the site's `config.toml` file](https://github.com/matt-dray/rostrum-blog/blob/master/config.toml).
+1. [Create a GoatCounter account](https://www.goatcounter.com/signup).
+1. Add a single script tag to the `<body>` of your site[^tag].
 
-# GA findings
+For that last step I used [a special Netlify feature that inserts code snippets into the HTML of your site on deployment](https://docs.netlify.com/site-deploys/post-processing/snippet-injection/).[^maxyfc] I didn't have to worry about where to put it in the code of the site.
 
-top x posts
-activity peaks
+<div class="figure">
+<img src="/post/2020-09-15-goatcounter-blogdown_files/inject.png" alt="Netlify's HTML injection option confirming the GoatCounter code snippet used to count page visits." width="100%"/>
+<p class="caption">Analytics straight into the vein.</p>
+</div>
+
+Your stats will then be available from a URL in the form `https://yoursite.goatcounter.com`, which you set during the sign-up process.
+
+Now you can start counting sheep. Er... goats.
+
+# Greatest Of All Time (GOAT)
+
+The switch does mean I'll lose cumulative view counts for posts that already exist, but I'm not bothered about that. I can always export the Google Analytics data and manually add it to GoatCounter's counts.
+
+For interest, here's the most viewed posts as counted by Google Analytics:
+
+1. [Repaying Tom Nook with {R6}](https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/) (Apr 2020)
+1. [Packages that Sparked Joy in 2019](https://www.rostrum.blog/2019/12/27/pkgs-2019/) (Dec 2019)
+1. [Package a {xaringan} template](https://www.rostrum.blog/2019/05/24/xaringan-template/) (May 2019)
+1. [Mail merge with R and Dawson's Creek](https://www.rostrum.blog/2018/06/26/mail-merge/) (Jun 2018)
+1. [How do you pronounce {dplyr}?](https://www.rostrum.blog/2019/09/20/say-package/) (Sep 2019)
+
+In particular, the [post about {R6}](https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/) is a good example of something I wanted to learn and then blog about for posterity. I think the timing helped in people viewing it, since [Animal Crossing: New Horizons](https://animal-crossing.com/new-horizons/) had just been released to great fanfare. To illustrate the 'zeitgeistiness', this post had the highest view spike of any post and has settled down a great deal since then.
+
+The ['mail merge' post](https://www.rostrum.blog/2018/06/26/mail-merge/) is a good example of [that classic David Robinson tweet](https://twitter.com/drob/status/928447584712253440?s=20): 
+
+> When you’ve written the same code 3 times, write a function. When you’ve given the same in-person advice 3 times, write a blog post
+
+Given its popularity, I also decided to overhaul it to make it more simple and accessible. It also led to a later post on [parameterised R Markdown reports](https://www.rostrum.blog/2020/03/12/knit-with-params/), which I think is actually the better solution in most cases.
+
+I wouldn't have known any of this without having a record of page views, but the method for collecting that data no longer [grinds my goat](https://www.urbandictionary.com/define.php?term=grinds%20my%20goat).
+
+# Bonus goat
+
+<div class="figure">
+<img src="https://media.giphy.com/media/U1MNceJIcNEPe/giphy.gif" alt="A kid goat being cute, jumping and falling over."/>
+<p class="caption">I kid you not (Cheezburger via [Giphy](https://giphy.com/gifs/cheezburger-cute-dance-U1MNceJIcNEPe)).</p>
+</div>
+
+[^alt] You can read about some further considerations in [a blog by David Papandrew](https://mentalpivot.com/ethical-web-analytics-alternatives-google/).
+[^maxyfc]: Thanks to [a post by Max](https://maxyfc.dev/posts/2020/01/adding-web-analytics/).
+[^tag]: This is provided to you by GoatCounter when you set up an account, but it's just in the form `<script data-goatcounter="https://yoursite.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>`.
