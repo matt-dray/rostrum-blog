@@ -1,7 +1,7 @@
 ---
 title: A Twitter bot with {rtweet} and GitHub Actions
 author: Matt Dray
-date: '2020-09-20'
+date: '2020-09-21'
 slug: londonmapbot
 categories:
   - code
@@ -13,13 +13,12 @@ tags:
   - r
   - rtweet
   - twitter
-draft: no
 ---
 
 
 
 <div class="figure">
-<img src="/post/2020-09-19-londonmapbot_files/londonmapbot-profile.png" alt="The Twitter profile page for @londonmapbot." width="80%"/>
+<img src="/post/2020-09-21-londonmapbot_files/londonmapbot-profile.png" alt="The Twitter profile page for @londonmapbot." width="80%"/>
 <p class="caption">
 <a href="https://www.twitter.com/londonmapbot">@londonmapbot</a> on Twitter.
 </p>
@@ -34,12 +33,11 @@ draft: no
 <p>Finally I’ve made <a href="https://www.twitter.com/londonmapbot">@londonmapbot</a>: a completely unsophisticated proof-of-concept Twitter bot that continues my learning about GitHub Actions from <a href="https://www.rostrum.blog/2020/08/09/ghactions-pkgs/">a previous post</a>.</p>
 <p>What does it do? It posts a satellite image of a random bit of Greater London every half hour. just take in the aesthetics of spaghetti streets intermingled with green space, or you can try to guess where it is. For example, what’s the location of this image from <a href="https://twitter.com/londonmapbot/status/1307508110295289858?s=20">an existing @londonmapbot tweet</a>?<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
 <div class="figure">
-<img src="/post/2020-09-19-londonmapbot_files/haggerston.jpg" alt="A satellite image of part of London, showing green space, a canal and some large white circular buildings." width=600/>
+<img src="/post/2020-09-21-londonmapbot_files/haggerston.jpg" alt="A satellite image of part of London, showing green space, a canal and some large white circular buildings." width=600/>
 <p class="caption">
 </p>
 </div>
-<p>So how does this thing work? A scheduled action runs code to generate random coordinates, send them to the <a href="https://docs.mapbox.com/api/maps/#static-images">Mapbox API</a>, retrieve an image, and then post it via the Twitter API, which is accessed through the R package <a href="https://docs.ropensci.org/rtweet/">{rtweet}</a>.</p>
-<p>It’s pretty simple: the source code is <a href="https://github.com/matt-dray/londonmapbot">a single YAML file</a>.</p>
+<p>So how does this thing work? A scheduled action runs code to generate random coordinates, send them to the <a href="https://docs.mapbox.com/api/maps/#static-images">Mapbox API</a>, retrieve an image, and then post it via the Twitter API, which is accessed through the R package <a href="https://docs.ropensci.org/rtweet/">{rtweet}</a>. The source code is just <a href="https://github.com/matt-dray/londonmapbot">a single YAML file</a>.</p>
 </div>
 <div id="the-components" class="section level1">
 <h1>The components</h1>
@@ -77,6 +75,7 @@ jobs:
 </ul></li>
 </ul>
 <p>GitHub recognises the YAML as an action when placed at the path <code>.github/workflows/</code> and it will start running it.</p>
+<p>I should note that there are already <a href="https://github.com/marketplace?query=tweet">actions on the GitHub Marketplace for tweeting</a>, but they don’t quite do what I want. I also wanted to write the juicy bit with R code, which I’m most familiar with.</p>
 </div>
 <div id="rtweet" class="section level2">
 <h2>{rtweet}</h2>
@@ -110,7 +109,7 @@ rtweet::post_tweet(status = &quot;This is a test tweet.&quot;)</code></pre>
 <pre><code>https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/-123.1387,49.3037,12,0/300x200@2x?access_token=YOUR_MAPBOX_ACCESS_TOKEN</code></pre>
 <p>Visiting the URL returns the requested image as a JPEG:</p>
 <div class="figure">
-<img src="/post/2020-09-19-londonmapbot_files/stanley.jpg" alt="A satellite view of Stanley Park in Vancouver, Canada, with watermarks of copyrights for Mapbox, OpenStreetMap and Maxar." width=300/>
+<img src="/post/2020-09-21-londonmapbot_files/stanley.jpg" alt="A satellite view of Stanley Park in Vancouver, Canada, with watermarks of copyrights for Mapbox, OpenStreetMap and Maxar." width=300/>
 <p class="caption">
 A recommended cycle route. Get a bike with a basket for your poutine.
 </p>
@@ -122,7 +121,7 @@ A recommended cycle route. Get a bike with a basket for your poutine.
 <h1>Secrets</h1>
 <p><a href="https://docs.github.com/en/actions/reference/encrypted-secrets">Github lets you store secrets securely</a> in the ‘Secrets’ section of the ‘Settings’ tab in your repo. No-one can see these, but they can be called into your code when it runs.</p>
 <div class="figure">
-<img src="/post/2020-09-19-londonmapbot_files/secrets-github.png" alt="The GitHub website opened in the Secrets section of the Settings menu, with an example Mapbox token name being shown." width="100%"/>
+<img src="/post/2020-09-21-londonmapbot_files/secrets-github.png" alt="The GitHub website opened in the Secrets section of the Settings menu, with an example Mapbox token name being shown." width="100%"/>
 <p class="caption">
 Keep it secret… keep it safe.
 </p>
@@ -131,19 +130,19 @@ Keep it secret… keep it safe.
 </div>
 <div id="londonmapbot-in-action" class="section level1">
 <h1>londonmapbot in action</h1>
-<p>So, you can put that all together and you get a GitHub Action that every half-hour is triggered to:</p>
+<p>So, to summarise, you can put that all together and you get a GitHub Action that every half-hour is triggered to:</p>
 <ol style="list-style-type: decimal">
 <li>Generate some random coordinates within (roughly) Greater London</li>
 <li>Send these to the Mapbox API in a URL</li>
 <li>Download the resulting image in a temporary location</li>
 <li>Pass the image as media to be posted by <code>rtweet::post_tweet()</code> to <a href="https://www.twitter.com/londonmapbot">the @londonmapbot account</a></li>
 </ol>
-<p>I’m Frankenstein. Mapbox, Twitter and {rtweet} are ‘spare’ bodyparts. GitHub Actions is the electricity. @londonmapbot is my monster.</p>
+<p>A bad analogy is that I’m Frankenstein; Mapbox, Twitter and {rtweet} are bodyparts; GitHub Actions is electricity; and @londonmapbot is my resulting monster.</p>
 <div id="naughty-botlazy-programmer" class="section level2">
 <h2>Naughty bot/lazy programmer</h2>
 <p>Unfortunately, it doesn’t post successfully 100% of the time. You can see why by checking the actions log, which is accessed from <a href="https://github.com/matt-dray/londonmapbot/actions">the ‘Actions’ tab on the repo</a>. The failed ones, with red crosses, seem mostly due to an ‘empty reply from server’. I’m okay with this for now.</p>
 <p>I’m also mildly ashamed of just passing all the R code as a single line in the YAML file. I had one or two issues with object persistence when I tried breaking this into separate lines and separate steps of the YAML file. I know it can be done more tidily though.</p>
-<p>Do give me suggestions and pull requests, or tell me how good you are at identifying the location of each image.</p>
+<p>Do give me suggestions and pull requests, or tell me how good you are at identifying the granular location in each image.</p>
 </div>
 </div>
 <div class="footnotes">

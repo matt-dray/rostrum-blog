@@ -1,7 +1,7 @@
 ---
 title: A Twitter bot with {rtweet} and GitHub Actions
 author: Matt Dray
-date: '2020-09-20'
+date: '2020-09-21'
 slug: londonmapbot
 categories:
   - code
@@ -13,11 +13,10 @@ tags:
   - r
   - rtweet
   - twitter
-draft: no
 ---
 
 <div class="figure">
-<img src="/post/2020-09-19-londonmapbot_files/londonmapbot-profile.png" alt="The Twitter profile page for @londonmapbot." width="80%"/>
+<img src="/post/2020-09-21-londonmapbot_files/londonmapbot-profile.png" alt="The Twitter profile page for @londonmapbot." width="80%"/>
 <p class="caption">[\@londonmapbot](https://www.twitter.com/londonmapbot) on Twitter.</p>
 </div>
 
@@ -34,13 +33,11 @@ Finally I've made [\@londonmapbot](https://www.twitter.com/londonmapbot): a comp
 What does it do? It posts a satellite image of a random bit of Greater London every half hour. just take in the aesthetics of spaghetti streets intermingled with green space, or you can try to guess where it is. For example, what's the location of this image from [an existing \@londonmapbot tweet](https://twitter.com/londonmapbot/status/1307508110295289858?s=20)?[^guess]
 
 <div class="figure">
-<img src="/post/2020-09-19-londonmapbot_files/haggerston.jpg" alt="A satellite image of part of London, showing green space, a canal and some large white circular buildings." width=600/>
+<img src="/post/2020-09-21-londonmapbot_files/haggerston.jpg" alt="A satellite image of part of London, showing green space, a canal and some large white circular buildings." width=600/>
 <p class="caption"></p>
 </div>
 
-So how does this thing work? A scheduled action runs code to generate random coordinates, send them to the [Mapbox API](https://docs.mapbox.com/api/maps/#static-images), retrieve an image, and then post it via the Twitter API, which is accessed through the R package [{rtweet}](https://docs.ropensci.org/rtweet/).
-
-It's pretty simple: the source code is [a single YAML file](https://github.com/matt-dray/londonmapbot).
+So how does this thing work? A scheduled action runs code to generate random coordinates, send them to the [Mapbox API](https://docs.mapbox.com/api/maps/#static-images), retrieve an image, and then post it via the Twitter API, which is accessed through the R package [{rtweet}](https://docs.ropensci.org/rtweet/). The source code is just [a single YAML file](https://github.com/matt-dray/londonmapbot).
 
 # The components
 
@@ -84,6 +81,8 @@ This reads like:
     * run the provided R code with a system call
 
 GitHub recognises the YAML as an action when placed at the path `.github/workflows/` and it will start running it.
+
+I should note that there are already [actions on the GitHub Marketplace for tweeting](https://github.com/marketplace?query=tweet), but they don't quite do what I want. I also wanted to write the juicy bit with R code, which I'm most familiar with.
 
 ## {rtweet}
 
@@ -135,7 +134,7 @@ https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/-123.1387,49.3037,12
 Visiting the URL returns the requested image as a JPEG:
 
 <div class="figure">
-<img src="/post/2020-09-19-londonmapbot_files/stanley.jpg" alt="A satellite view of Stanley Park in Vancouver, Canada, with watermarks of copyrights for Mapbox, OpenStreetMap and Maxar." width=300/>
+<img src="/post/2020-09-21-londonmapbot_files/stanley.jpg" alt="A satellite view of Stanley Park in Vancouver, Canada, with watermarks of copyrights for Mapbox, OpenStreetMap and Maxar." width=300/>
 <p class="caption">A recommended cycle route. Get a bike with a basket for your poutine.</p>
 </div>
 
@@ -146,7 +145,7 @@ Except I lied: it actually doesn't. You'll need to replace the access-token plac
 [Github lets you store secrets securely](https://docs.github.com/en/actions/reference/encrypted-secrets) in the 'Secrets' section of the 'Settings' tab in your repo. No-one can see these, but they can be called into your code when it runs.
 
 <div class="figure">
-<img src="/post/2020-09-19-londonmapbot_files/secrets-github.png" alt="The GitHub website opened in the Secrets section of the Settings menu, with an example Mapbox token name being shown." width="100%"/>
+<img src="/post/2020-09-21-londonmapbot_files/secrets-github.png" alt="The GitHub website opened in the Secrets section of the Settings menu, with an example Mapbox token name being shown." width="100%"/>
 <p class="caption">Keep it secret... keep it safe.</p>
 </div>
 
@@ -154,14 +153,14 @@ Let's look at one of the Twitter keys as an example. You could save as a secret 
 
 # londonmapbot in action
 
-So, you can put that all together and you get a GitHub Action that every half-hour is triggered to:
+So, to summarise, you can put that all together and you get a GitHub Action that every half-hour is triggered to:
 
 1. Generate some random coordinates within (roughly) Greater London
 1. Send these to the Mapbox API in a URL
 1. Download the resulting image in a temporary location
 1. Pass the image as media to be posted by `rtweet::post_tweet()` to [the \@londonmapbot account](https://www.twitter.com/londonmapbot)
 
-I'm Frankenstein. Mapbox, Twitter and {rtweet} are 'spare' bodyparts. GitHub Actions is the electricity. \@londonmapbot is my monster.
+A bad analogy is that I'm Frankenstein; Mapbox, Twitter and {rtweet} are bodyparts; GitHub Actions is electricity; and \@londonmapbot is my resulting monster.
 
 ## Naughty bot/lazy programmer
 
@@ -169,6 +168,6 @@ Unfortunately, it doesn't post successfully 100% of the time. You can see why by
 
 I'm also mildly ashamed of just passing all the R code as a single line in the YAML file. I had one or two issues with object persistence when I tried breaking this into separate lines and separate steps of the YAML file. I know it can be done more tidily though.
 
-Do give me suggestions and pull requests, or tell me how good you are at identifying the location of each image.
+Do give me suggestions and pull requests, or tell me how good you are at identifying the granular location in each image.
 
 [^guess]: It's between Haggerston and Cambridge Heath. Regent's Canal runs upper-left to right; Haggerston Park to the west; the white circular buildings are the [gas holders](https://en.wikipedia.org/wiki/Gas_holder); and the train line into London Liverpool Street can be seen on the far-right. The coordinates are [51.534, -0.0642](https://goo.gl/maps/SxGDCWQaM3WB2v6q6).
