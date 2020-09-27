@@ -1,7 +1,7 @@
 ---
 title: Hit your reproducibility {targets}
 author: Matt Dray
-date: '2020-09-25'
+date: '2020-09-27'
 slug: targets-dsfest
 categories:
   - code
@@ -13,31 +13,76 @@ tags:
   - r
   - reproducibility
   - targets
-draft: yes
+draft: no
 ---
 
 <script src="/rmarkdown-libs/fitvids/fitvids.min.js"></script>
 
 
+<div class="figure">
+<img src="https://media.giphy.com/media/Qw4X3FLJ9IqHAJorAEU/giphy.gif" alt="A beaver pushing mud up against a dam." width="75%"/>
+<p class="caption">
+An excuse to use the dam good (lol) <code>beavers1</code> data (<a href="https://giphy.com/gifs/pbsnature-beaver-Qw4X3FLJ9IqHAJorAEU/links">Nature on PBS via Giphy</a>)
+</p>
+</div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>I spoke at the UK Government Data Science Festival about the R package <a href="">{targets}</a> for workflow reproducibility by <a href="">Will Landau</a>.</p>
+<p>I’m speaking at the <a href="https://dataingovernment.blog.gov.uk/2020/09/25/government-data-science-festival-2020/">UK Government Data Science Festival</a> about the R package <a href="https://wlandau.github.io/targets/">{targets}</a> for workflow reproducibility by <a href="https://wlandau.github.io/">Will Landau</a>.</p>
+<p>You can <a href="#slides">jump to the slides</a>.</p>
+</div>
+<div id="targets" class="section level1">
+<h1>{targets}</h1>
+<p>Reproducibility is an important part of any analysis. People should be able to re-run your code from scratch, on a different machine, in the future and without you present.</p>
+<p>One thing that sometimes gets overlooked is the reproducibility of the workflow itself. In other words, the relationships between functions, file and objects and the order in which they run.</p>
+<div class="figure">
+<p><img src="/post/2020-09-25-targets-dsfest_files/targets-hex.png" alt="The hexagon logo for the targets package, which shows images of a folder, histogram and bar chart joined consecutively by arrows." width="20%"/></p>
+</div>
+<p>The R package {targets} ‘remembers’ the relationships between objects in your workflow. When you update your analysis, {targets} makes sure that only the impacted objects are re-run. This means you don’t have to recreate everything from scratch each time.</p>
+<p>The basic overview of using {targets}:</p>
+<ol style="list-style-type: decimal">
+<li>Write a special pipeline script</li>
+<li>Inspect the pipeline (including visually)</li>
+<li>Execute the pipeline</li>
+<li>Change stuff</li>
+<li>Go to 2</li>
+</ol>
+<p>With functions:</p>
+<ol style="list-style-type: decimal">
+<li><code>tar_script()</code> creates a <code>_targets.R</code> file, which is where you declare you write functions and options and create your targets with <code>tar_targets()</code>, declaring the pipeline with <code>tar_pipeline()</code></li>
+<li><code>tar_manifest()</code> lets you check the configuration of your targets</li>
+<li><code>tar_visnetwork</code> visualises your pipeline as a graph network</li>
+<li><code>tar_make()</code> executes your pipeline, which caches outputs and metadata in a <code>_targets/</code> directory that can be read from with <code>tar_read()</code> and <code>tar_load()</code> (you could use )</li>
+<li><code>tar_outdated()</code> prints any targets that need to be updated following any changes to other targets, after which you can reinspect your pipeline and re-make it</li>
+</ol>
+<p>You can find <a href="https://wlandau.github.io/targets-manual/walkthrough.html">an example workflow in the {targets} manual</a>.</p>
 </div>
 <div id="slides" class="section level1">
-<h1>Slides</h1>
-<p>You can see the slides <a href="https://matt-dray.github.io/targets-dsfest/#1">in a dedicated browser window</a> and <a href="https://github.com/matt-dray/targets-dsfest">visit the source</a>.</p>
-<p>Press <kbd>P</kbd> for presenter notes, <kbd>O</kbd> for a slide overview and <kbd>F</kbd> for fullscreen.</p>
+<h1>Slides and code</h1>
+<p>The slides<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> contain an argument for workflow reproducibility and a small, contrived demo of the {targets} package in action. The demo shows a short pipeline for rendering an R Markdown report with a plot and a table about <a href="https://stat.ethz.ch/R-manual/R-devel/library/boot/html/beaver.html">beaver temperature data</a>.</p>
 <div class="shareagain" style="min-width:300px;margin:1em auto;">
 <iframe src="https://matt-dray.github.io/targets-dsfest/" width="400" height="300" style="border:2px solid currentColor;" loading="lazy" allowfullscreen></iframe>
 <script>fitvids('.shareagain', {players: 'iframe'});</script>
 </div>
+<p>You can see the slides <a href="https://matt-dray.github.io/targets-dsfest/#1">in a dedicated browser window</a> and <a href="https://github.com/matt-dray/targets-dsfest">visit the source</a>. Press <kbd>P</kbd> for presenter notes, <kbd>O</kbd> for a slide overview and <kbd>F</kbd> for fullscreen.</p>
+<p>The presentation’s source is in <a href="https://github.com/matt-dray/targets-dsfest">a GitHub repo</a> that also contains {targets}-related files and scripts for running the example seen in the slides. See <a href="https://github.com/matt-dray/targets-dsfest#readme">the ‘Demo code’ section of the repo’s README</a> for details.</p>
+<p>It wasn’t possible in this talk to go into greater depth on features like parallel computing and branching, which you can read about in <a href="https://wlandau.github.io/targets-manual/">the {targets} manual</a>.</p>
 </div>
-<div id="targets" class="section level1">
-<h1>{targets}</h1>
-<p>{targets} ‘remembers’ the relationships between objects in your workflow. When you update your analysis, {targets} makes sure that only the impacted objects are re-run. This means you don’t have to recreate everything from scratch each time.</p>
+<div id="but-drake" class="section level1">
+<h1>But… {drake}?</h1>
+<p>You may have noticed I have cunningly plagiarised myself by re-using slides from <a href="https://www.rostrum.blog/2020/01/31/reprobioinformatics/">a presentation to Bioinformatics London</a> in January 2020.</p>
+<div class="figure">
+<p><img src="/post/2020-09-25-targets-dsfest_files/drake-hex.png" alt="The hexagon logo for the drake package, which shows a hammer with a brain inside it." width="20%"/></p>
 </div>
-<div id="butdrake" class="section level1">
-<h1>But…{drake}?</h1>
-<p>You may have noticed I cunningly plagiarised myself by re-using slides from <a href="https://www.rostrum.blog/2020/01/31/reprobioinformatics/">a presentation to Bioinformatics London</a> in January 2020.</p>
-<p>The difference is that that presentation was about {drake}, another workflow reproducibility package by Will Landau. So what’s the difference between the two packages?</p>
+<p>That presentation was about {drake}, another workflow reproducibility package by Will Landau. I also <a href="https://www.rostrum.blog/2019/07/23/can-drake-rap/">wrote about the {drake} package as a tool</a> for the <a href="https://dataingovernment.blog.gov.uk/2017/03/27/reproducible-analytical-pipeline/">Reproducible Analytical Pipelines</a> (RAP) movement in UK government.</p>
+<p>So what’s the difference between the two packages? In <a href="https://wlandau.github.io/targets-manual/">Will’s own words</a>:</p>
+<blockquote>
+<p>years of community feedback [on {drake}] have exposed major user-side limitations regarding data management, collaboration, parallel efficiency, and pipeline archetypes</p>
+</blockquote>
+<p>With this hindsight, {targets} is designed to address these issues from the get-go.</p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Created with <a href="https://slides.yihui.org/xaringan/#1">{xaringan}</a> by <a href="https://yihui.org/">Yihui Xie</a> with some bonus features via <a href="https://pkg.garrickadenbuie.com/xaringanExtra/#/">{xaringanExtra}</a> by <a href="https://www.garrickadenbuie.com/">Garrick Aden-Buie</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
 </div>

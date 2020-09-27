@@ -1,7 +1,7 @@
 ---
 title: Hit your reproducibility {targets}
 author: Matt Dray
-date: '2020-09-25'
+date: '2020-09-27'
 slug: targets-dsfest
 categories:
   - code
@@ -13,18 +13,53 @@ tags:
   - r
   - reproducibility
   - targets
-draft: yes
+draft: no
 ---
+
+<div class="figure">
+<img src="https://media.giphy.com/media/Qw4X3FLJ9IqHAJorAEU/giphy.gif" alt="A beaver pushing mud up against a dam." width="75%"/>
+<p class="caption">An excuse to use the dam good (lol) `beavers1` data ([Nature on PBS via Giphy](https://giphy.com/gifs/pbsnature-beaver-Qw4X3FLJ9IqHAJorAEU/links))</p>
+</div>
 
 # tl;dr
 
-I spoke at the UK Government Data Science Festival about the R package [{targets}]() for workflow reproducibility by [Will Landau]().
+I'm speaking at the [UK Government Data Science Festival](https://dataingovernment.blog.gov.uk/2020/09/25/government-data-science-festival-2020/) about the R package [{targets}](https://wlandau.github.io/targets/) for workflow reproducibility by [Will Landau](https://wlandau.github.io/).
 
-# Slides
+You can [jump to the slides](#slides).
 
-You can see the slides [in a dedicated browser window](https://matt-dray.github.io/targets-dsfest/#1) and [visit the source](https://github.com/matt-dray/targets-dsfest).
+# {targets}
 
-Press <kbd>P</kbd> for presenter notes, <kbd>O</kbd> for a slide overview and <kbd>F</kbd> for fullscreen.
+Reproducibility is an important part of any analysis. People should be able to re-run your code from scratch, on a different machine, in the future and without you present.
+
+One thing that sometimes gets overlooked is the reproducibility of the workflow itself. In other words, the relationships between functions, file and objects and the order in which they run.
+
+<div class="figure">
+<img src="/post/2020-09-25-targets-dsfest_files/targets-hex.png" alt="The hexagon logo for the targets package, which shows images of a folder, histogram and bar chart joined consecutively by arrows." width="20%"/>
+</div>
+
+The R package {targets} ‘remembers’ the relationships between objects in your workflow. When you update your analysis, {targets} makes sure that only the impacted objects are re-run. This means you don’t have to recreate everything from scratch each time.
+
+The basic overview of using {targets}:
+
+1. Write a special pipeline script
+1. Inspect the pipeline (including visually)
+1. Execute the pipeline
+1. Change stuff
+1. Go to 2
+
+With functions:
+
+1. `tar_script()` creates a `_targets.R` file, which is where you declare you write functions and options and create your targets with `tar_targets()`, declaring the pipeline with `tar_pipeline()`
+1. `tar_manifest()` lets you check the configuration of your targets
+1. `tar_visnetwork` visualises your pipeline as a graph network
+1. `tar_make()` executes your pipeline, which caches outputs and metadata in a `_targets/` directory that can be read from with `tar_read()` and `tar_load()` (you could use )
+1. `tar_outdated()` prints any targets that need to be updated following any changes to other targets, after which you can reinspect your pipeline and re-make it
+
+You can find [an example workflow in the {targets} manual](https://wlandau.github.io/targets-manual/walkthrough.html).
+
+# Slides and code {#slides}
+
+The slides[^xaringan] contain an argument for workflow reproducibility and a small, contrived demo of the {targets} package in action. The demo shows a short pipeline for rendering an R Markdown report with a plot and a table about [beaver temperature data](https://stat.ethz.ch/R-manual/R-devel/library/boot/html/beaver.html).
 
 ```{r slides, echo=FALSE}
 xaringanExtra::embed_xaringan(
@@ -33,12 +68,26 @@ xaringanExtra::embed_xaringan(
 )
 ```
 
-# {targets}
+You can see the slides [in a dedicated browser window](https://matt-dray.github.io/targets-dsfest/#1) and [visit the source](https://github.com/matt-dray/targets-dsfest). Press <kbd>P</kbd> for presenter notes, <kbd>O</kbd> for a slide overview and <kbd>F</kbd> for fullscreen.
 
-{targets} ‘remembers’ the relationships between objects in your workflow. When you update your analysis, {targets} makes sure that only the impacted objects are re-run. This means you don’t have to recreate everything from scratch each time.
+The presentation's source is in [a GitHub repo](https://github.com/matt-dray/targets-dsfest) that also contains {targets}-related files and scripts for running the example seen in the slides. See [the 'Demo code' section of the repo's README](https://github.com/matt-dray/targets-dsfest#readme) for details.
 
-# But...{drake}?
+It wasn't possible in this talk to go into greater depth on features like parallel computing and branching, which you can read about in [the {targets} manual](https://wlandau.github.io/targets-manual/).
 
-You may have noticed I cunningly plagiarised myself by re-using slides from [a presentation to Bioinformatics London](https://www.rostrum.blog/2020/01/31/reprobioinformatics/) in January 2020.
+# But... {drake}?
 
-The difference is that that presentation was about {drake}, another workflow reproducibility package by Will Landau. So what's the difference between the two packages?
+You may have noticed I have cunningly plagiarised myself by re-using slides from [a presentation to Bioinformatics London](https://www.rostrum.blog/2020/01/31/reprobioinformatics/) in January 2020.
+
+<div class="figure">
+<img src="/post/2020-09-25-targets-dsfest_files/drake-hex.png" alt="The hexagon logo for the drake package, which shows a hammer with a brain inside it." width="20%"/>
+</div>
+
+That presentation was about {drake}, another workflow reproducibility package by Will Landau. I also [wrote about the {drake} package as a tool](https://www.rostrum.blog/2019/07/23/can-drake-rap/) for the [Reproducible Analytical Pipelines](https://dataingovernment.blog.gov.uk/2017/03/27/reproducible-analytical-pipeline/) (RAP) movement in UK government.
+
+So what's the difference between the two packages? In [Will's own words](https://wlandau.github.io/targets-manual/):
+
+>years of community feedback [on {drake}] have exposed major user-side limitations regarding data management, collaboration, parallel efficiency, and pipeline archetypes
+
+With this hindsight, {targets} is designed to address these issues from the get-go.
+
+[^xaringan]: Created with [{xaringan}](https://slides.yihui.org/xaringan/#1) by [Yihui Xie](https://yihui.org/) with some bonus features via [{xaringanExtra}](https://pkg.garrickadenbuie.com/xaringanExtra/#/) by [Garrick Aden-Buie](https://www.garrickadenbuie.com/).
