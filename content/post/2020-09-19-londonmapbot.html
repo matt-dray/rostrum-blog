@@ -18,34 +18,41 @@ tags:
 
 
 <div class="figure">
-<img src="/post/2020-09-21-londonmapbot_files/londonmapbot-profile.png" alt="The Twitter profile page for @londonmapbot." width="80%"/>
+<img src="/post/2020-09-21-londonmapbot_files/londonmapbot-profile.png" alt="The Twitter profile page for londonmapbot." width="80%"/>
 <p class="caption">
 <a href="https://www.twitter.com/londonmapbot">@londonmapbot</a> on Twitter.
 </p>
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>You can create simple Twitter bots with R using GitHub Actions and {rtweet}. I made <a href="https://www.twitter.com/londonmapbot">@londonmapbot</a>.</p>
+<p>I made <a href="https://www.twitter.com/londonmapbot">@londonmapbot</a>: a simple Twitter bot that uses the R package {rtweet}, GitHub Actions and the Mapbox API. Find <a href="https://github.com/matt-dray/londonmapbot">the source on Github</a>.</p>
 </div>
 <div id="london-from-socially-distant-space" class="section level1">
 <h1>London from (socially-distant) space</h1>
 <p>I’ve wanted to make a Twitter bot for a while, but it seemed like Hard Work. Spoiler: it’s not.</p>
-<p>So, I’ve made <a href="https://www.twitter.com/londonmapbot">@londonmapbot</a>: a completely unsophisticated proof-of-concept Twitter bot that continues my learning about GitHub Actions from <a href="https://www.rostrum.blog/2020/08/09/ghactions-pkgs/">a previous post</a>.</p>
-<p>What does it do? It posts a satellite image of a random bit of Greater London (well, within the M25 motorway) every half hour. Some of these are quite pleasing to look at. Below is an example image from <a href="https://twitter.com/londonmapbot/status/1309199157530431489?s=20">an existing @londonmapbot tweet</a>. Can you guess where it is?<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>So, I’ve made <a href="https://www.twitter.com/londonmapbot">@londonmapbot</a>: a completely unsophisticated proof-of-concept Twitter bot.</p>
+<p>What does it do? It posts a satellite image from random coordinates in Greater London (well, from a bounding box roughly within the M25 motorway) every half hour. Below is an example image from <a href="https://twitter.com/londonmapbot/status/1309199157530431489?s=20">an existing @londonmapbot tweet</a>. Can you guess where it is?<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
 <div class="figure">
-<img src="/post/2020-09-19-londonmapbot_files/mystery-location.jpg" alt="A satellite image of part of London, showing what looks like a large number of tennis courts, including some in stadia." width=600/>
+<img src="/post/2020-09-21-londonmapbot_files/mystery-location.jpg" alt="A satellite image of part of London, showing what looks like a large number of tennis courts, including some in stadia." width=600/>
 <p class="caption">
 </p>
 </div>
-<p>So how does this thing work? A scheduled action runs code to generate random coordinates, send them to the <a href="https://docs.mapbox.com/api/maps/#static-images">Mapbox API</a>, retrieve an image, and then post it via <a href="https://developer.twitter.com/en/docs">the Twitter API</a>, which is accessed through the R package <a href="https://docs.ropensci.org/rtweet/">{rtweet}</a>. The source code is <a href="https://github.com/matt-dray/londonmapbot">a single YAML file</a> containing the action and <a href="https://github.com/matt-dray/londonmapbot/blob/master/londonmapbot-tweet.R">a single R script</a> that generates the tweet and posts it.</p>
+<p>The code for this runs remotely. You can set it up, let it run and never think about it again.</p>
+<p>So how does it work? A scheduled GitHub Action runs R code to generate random latitude and longitude values, which are sent to the <a href="https://docs.mapbox.com/api/maps/#static-images">Mapbox API</a> to retrieve a satellite picture. The image is then posted via <a href="https://developer.twitter.com/en/docs">the Twitter API</a> that is accessed using the <a href="https://docs.ropensci.org/rtweet/">{rtweet}</a> package. A link to the coordinates on OpenStreetMap is also included so you can find out exactly where the image is form.</p>
+<p>The main purpose was to learn more about GitHub Actions, building on <a href="https://www.rostrum.blog/2020/08/09/ghactions-pkgs/">my previous posts about using actions for continuous integration</a>, but I think incidentally that the tweets are quite pleasing to look at and to guess where they are.</p>
 </div>
 <div id="the-components" class="section level1">
 <h1>The components</h1>
-<p>Let’s look at the how GitHub Actions, {rtweet} and Mapbox are used in londonmapbot.</p>
+<p>The <a href="https://github.com/matt-dray/londonmapbot">source code</a> is quite simple. There’s two files, basically:</p>
+<ul>
+<li><a href="https://github.com/matt-dray/londonmapbot">a single YAML file</a> containing the action</li>
+<li><a href="https://github.com/matt-dray/londonmapbot/blob/master/londonmapbot-tweet.R">a single R script</a> that generates the tweet and posts it</li>
+</ul>
+<p>Let’s look at the GitHub Actions code in the YAML file and the use of {rtweet} and Mapbox in the R file.</p>
 <div id="github-actions" class="section level2">
 <h2>GitHub Actions</h2>
 <p><a href="https://docs.github.com/en/actions">GitHub Actions</a> is a platform for automating workflows remotely. In short, you write a small YAML file in the <code>.github/workflows/</code> subfolder of your repo, which contains instructions for the code you want to run and when to run it. I’ve written before about <a href="https://www.rostrum.blog/2020/08/09/ghactions-pkgs/">using GitHub Actions for continuous integration of R packages</a>, for example.</p>
-<p>An action can be triggered by an event, like a <code>git push</code> to your repo. You can also schedule it with a <a href="https://simple.wikipedia.org/wiki/Cron">cron job</a>. I took advantage of this for londonmapbot, which executes every half-hour.</p>
+<p>An action can be triggered by an event, like a <code>git push</code> to your repo. You can also schedule it with a <a href="https://simple.wikipedia.org/wiki/Cron">cron job</a>. I took advantage of this for londonmapbot, which executes every half-hour on :00 and :30 past each hour.</p>
 <p>Here’s what <a href="https://github.com/matt-dray/londonmapbot/blob/master/.github/workflows/londonmapbot.yml">the YAML file</a> looks like for the londonmapbot action:</p>
 <pre><code>name: londonmapbot
 
@@ -75,7 +82,7 @@ jobs:
 <li>run this code at :00 and :30 past each hour<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></li>
 <li>the first (and only) job in this action is called londonmapbot-post</li>
 <li>start up a remote machine with the latest macOS operating system installed (this is where your code will be run)</li>
-<li>set some environmental variables, in this case keys that will be used to access the Twitter and Mapbox APIs (see the <a href="#secrets">secrets</a> section later in this post)</li>
+<li>set some environmental variables, in this case keys that will be used to access the Twitter and Mapbox APIs (see the <a href="#secrets">‘Secrets’</a> section later in this post)</li>
 <li>the steps of the job are to:
 <ul>
 <li>use <a href="https://github.com/actions/checkout">some pre-written code by GitHub</a> to check out the repo</li>
@@ -84,10 +91,11 @@ jobs:
 <li>run <a href="https://github.com/matt-dray/londonmapbot/blob/master/londonmapbot-tweet.R">the named R script</a> from the repo</li>
 </ul></li>
 </ul>
+<p>I would recommend changing your GitHub notification alerts once the bot is up and running, otherwise you’ll get a message every time the action executes. You can change this under Settings &gt; Notifications &gt; GitHub Actions, where you can uncheck the boxes under ‘Notifications for workflow runs on repositories set up with GitHub Actions’.</p>
 </div>
 <div id="rtweet" class="section level2">
 <h2>{rtweet}</h2>
-<p>The action runs an R script that generates content for a tweet and then posts it. This script makes use of the package <a href="https://docs.ropensci.org/rtweet/">{rtweet}</a> by <a href="https://mikewk.com/">Mike Kearney</a>, which lets you interact with Twitter through R via its <a href="https://developer.twitter.com/en/docs/twitter-api">API</a>.</p>
+<p>The action runs an R script that generates content for a tweet and then posts it. This script makes use of the package <a href="https://docs.ropensci.org/rtweet/">{rtweet}</a> by <a href="https://mikewk.com/">Mike Kearney</a>, which lets you interact with <a href="https://developer.twitter.com/en/docs/twitter-api">the Twitter API</a> with R functions.</p>
 <p>You need a Twitter account, of course, and also to <a href="https://developer.twitter.com/en/apply-for-access">sign up as a Twitter developer</a> to access the API. As a developer, you can <a href="developer.twitter.com/en/apps">create ‘apps’</a> to obtain keys: private alphanumeric passcodes that grant you access to the API.</p>
 <p>Typically, when working locally, you would either provide these keys as bare strings, or put them in <a href="https://rstats.wtf/r-startup.html#renviron">your .Renviron file</a>. With the latter, you can then use <code>Sys.getenv()</code> to call them from your .Renviron, which stops you exposing the raw keys in your code.</p>
 <p>Below is an example of how you can use {rtweet} to post a tweet from R if you’ve added the keys to your .Renviron.</p>
@@ -106,20 +114,20 @@ rtweet::create_token(
 # Example: post a tweet via the API
 # The keys will are in your environment thanks to create_token()
 rtweet::post_tweet(status = &quot;This is a test tweet.&quot;)</code></pre>
-<p>This is basically what happens in <a href="https://github.com/matt-dray/londonmapbot/blob/master/londonmapbot-tweet.R">the londonmapbot R script</a> too. When writing an action, the keys aren’t fetched from your .Renviron file, however. Instead, you can encrypt them on GitHub and provide them in the <code>env</code> call of your action’s YAML file. See the <a href="#secrets">secrets</a> section below for more detail on this.</p>
+<p>This is basically what happens in <a href="https://github.com/matt-dray/londonmapbot/blob/master/londonmapbot-tweet.R">the londonmapbot R script</a> too. When writing an action, the keys aren’t fetched from your .Renviron file, however. Instead, you can encrypt them on GitHub and provide them in the <code>env</code> call of your action’s YAML file. See the <a href="#secrets">‘Secrets’</a> section below for more detail on this.</p>
 </div>
 <div id="mapbox" class="section level2">
 <h2>Mapbox</h2>
 <p><a href="https://www.mapbox.com/">Mapbox</a> is a company with services for mapping, geocoding and navigation, which developers can use for integrating into their apps for things like asset tracking, route optimisation or anything that requires a map interface for users.</p>
 <p>Again, you’ll need to set up a Mapbox account to get a key for using the API. While the target audience is largely commercial, there’s a generous allowance of 50,000 free requests for static satellite images.</p>
 <p>You can then pass parameters to the Mapbox API via a URL. This is well explained in <a href="https://docs.mapbox.com/api/maps/#static-images">the Mapbox Documentation</a>, which has <a href="https://docs.mapbox.com/playground/static/">an excellent ‘playground’ interface</a> for you to test out your call.</p>
-<p>You basically modify a particular URL string to ask the API for what you want. For example, you can ask for a <code>300x200</code> pixel <code>satellite</code> image of the coordinates of <code>-123.1387</code> and <code>49.3037</code>, which is <a href="https://en.wikipedia.org/wiki/Stanley_Park">Stanley Park in Vancouver, Canada</a>:</p>
-<pre><code>https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/-123.1387,49.3037,12,0/300x200@2x?access_token=YOUR_MAPBOX_ACCESS_TOKEN</code></pre>
+<p>You basically modify a particular URL string to ask the API for what you want. For example, you can ask for a <code>300x200</code> pixel <code>satellite</code> image of the coordinates of <code>-0.1709</code> and <code>51.5065</code> with zoom level <code>12</code>, which is <a href="https://en.wikipedia.org/wiki/Hyde_Park,_London">Hyde Park</a>:</p>
+<pre><code>https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/-0.1709,51.5065,12,0/300x200?access_token=YOUR_MAPBOX_ACCESS_TOKEN</code></pre>
 <p>Visiting the URL in your browser returns the requested image as a JPEG:</p>
 <div class="figure">
-<img src="/post/2020-09-21-londonmapbot_files/stanley.jpg" alt="A satellite view of Stanley Park in Vancouver, Canada, with watermarks of copyrights for Mapbox, OpenStreetMap and Maxar." width=300/>
+<img src="/post/2020-09-21-londonmapbot_files/hyde.jpg" alt="A satellite view of Hyde Park in London, with watermarks of copyrights for Mapbox, OpenStreetMap and Maxar." width=300/>
 <p class="caption">
-A recommended cycle route. Get a bike with a basket for your poutine.
+The Serpentine is so aptly named.
 </p>
 </div>
 <p>Of course, you’ll need to replace the access-token placeholder (<code>YOUR_MAPBOX_ACCESS_TOKEN</code>) in that URL with your own Mapbox key. Rather than provide this as a bare string, <a href="https://github.com/matt-dray/londonmapbot/blob/master/londonmapbot-tweet.R">the londonmapbot R script</a> calls it from the environment (like we saw in the {rtweet} code in the last section).</p>
