@@ -1,0 +1,129 @@
+---
+title: Translate R to English with {r2eng}
+author: Matt Dray
+date: '2020-10-25'
+slug: r2eng
+categories:
+  - package
+tags:
+  - accessibility
+  - r
+  - r2eng
+draft: yes
+---
+
+
+
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+</div>
+<div id="communication-is-hard" class="section level1">
+<h1>Communication is hard</h1>
+<p><a href="https://twitter.com/AmeliaMN">Amelia McNamara</a> gave a talk at the useR! 2020 conference called ‘Speaking R’ (<a href="https://www.youtube.com/watch?v=ckW9sSdIVAc">YouTube</a>, <a href="https://www.amelia.mn/SpeakingR/#1">slides</a>).</p>
+<p>To summarise greatly: R code should be speakable so that we can teach, learn and communicate with minimal friction. Arguably this has never been more needed given the massive expansion of remote working this year.</p>
+<p>By ‘speakable’ we mean that we should be able to map consistently each R code element to an English phrase. We should both understand exactly what we’re talking about when discussing a script.</p>
+<p>But that’s easier said than… said.</p>
+<p>The symbol that reads literally as percent-greater-than-percent, <code>%&gt;%</code>, would be referred to by R users as a ‘pipe’. But it’s more complex than that: an R user may say the word ‘then’ when they’re reading it in an expression. For example, <code>x %&gt;% print()</code> might be vocalised as ‘x then print’.</p>
+<p>Naming symbols consistently is one challenge, but what about parsing entire expressions into English? Do you read the whole thing from left to right, or in some other way? Something as simple as <code>x &lt;- 1</code> could be ‘x gets 1’, or ‘assign 1 to the variable x’, or something else entirely.</p>
+</div>
+<div id="introducing-r2eng" class="section level1">
+<h1>Introducing {r2eng}</h1>
+<p>We might as well start somewhere.</p>
+<p>Chung-hong Chan.</p>
+<p>You can install the package from GitHub, which is in development version 0.0.0.9005 at the time of writing.</p>
+<pre class="r"><code># Having installed {remotes}
+remotes::install_github(&quot;matt-dray/r2eng&quot;)</code></pre>
+<p>It’s likely to be in perpetual state of development and to be used as a way of furthering discussion on how we can make R speakable.</p>
+<p>That said, it does do what it says on the tin for simple R expressions.</p>
+<div id="basic-approach" class="section level2">
+<h2>Basic approach</h2>
+<p>{r2eng} is naive in its approach to translation.</p>
+<p>It works on the basis of a one-to-one mapping between code and English. This means it has an opinionated set of English phrases that match to each token. You may not agree with the English terms used.</p>
+<p>It also evaluates code on a left-to-right-basis. It has no awareness of the construction of a given R expression.</p>
+<p>The secret sauce of the package is that it recognises the ‘tokens’ that make up an R expression before translation. In other words, the assignment operator is interpreted as the single token <code>&lt;-</code>, rather than the two tokens</p>
+</div>
+<div id="translate" class="section level2">
+<h2>translate()</h2>
+<p>There are two main functions in {r2eng}: <code>translate()</code> and <code>translate_string()</code>. They translate to English text a bare or quoted R expression, respectively.</p>
+<p>With <code>translate()</code> you pass bare R code to the <code>expression</code> argument and a few things happen.</p>
+<pre class="r"><code>library(r2eng)
+translate(data &lt;- 1 + 1)</code></pre>
+<pre><code>## Original expression: data &lt;- 1 + 1
+## English expression: data gets 1 plus 1</code></pre>
+<p>First, it prints both the original R expression and the corresponding English translation. Second, and only if you are using macOS, the English string is passed to a system command that vocalises the string.</p>
+<p>The <code>translate_string()</code> takes an R expression as a string instead.</p>
+<pre class="r"><code>library(magrittr)
+&quot;data&lt;-1+1&quot; %&gt;%
+  translate_string(speak = FALSE)</code></pre>
+<pre><code>## Original expression: data &lt;- 1 + 1
+## English expression: data gets 1 plus 1</code></pre>
+<p>We get the same result, of course, but this time I set the <code>speak</code> argument to <code>FALSE</code> to stop the English text from being ‘spoken’ by my computer. I also eliminated spaces from the input to demonstrate that they’re ignored.</p>
+</div>
+<div id="r2eng-objects" class="section level2">
+<h2>r2eng objects</h2>
+<p>Of course, you can assign a translation to an object.</p>
+<pre class="r"><code>my_translation &lt;- 
+  translate(data &lt;- 1 + 1, speak = FALSE)</code></pre>
+<p>The object is a special <code>r2eng</code> S3 class of object, which is also a list.</p>
+<pre class="r"><code>class(my_translation)</code></pre>
+<pre><code>## [1] &quot;list&quot;  &quot;r2eng&quot;</code></pre>
+<p>You can apply some methods to such an object: <code>print()</code>, <code>speak()</code> and <code>evaluate()</code>.</p>
+<p>Print the object to see that custom console output again:</p>
+<pre class="r"><code>print(my_translation)</code></pre>
+<pre><code>## Original expression: data &lt;- 1 + 1
+## English expression: data gets 1 plus 1</code></pre>
+<p>Re-call the system command that ‘speaks’ the R expression out loud (again, only on macOS).</p>
+<pre class="r"><code>speak(my_translation)</code></pre>
+<p>And you can actually evaluate the R expression you supplied to <code>translate()</code> in the first place. So the expression we supplied, <code>data &lt;- 1 + 1</code>, is evaluated so that calling <code>data</code> gives us the result of <code>1 + 1</code>.</p>
+<pre class="r"><code>evaluate(my_translation)
+data</code></pre>
+<pre><code>## [1] 2</code></pre>
+</div>
+<div id="list-elements" class="section level2">
+<h2>List elements</h2>
+<p>You can also access the R expression, the English translation and the mapping between them as elements of your <code>r2eng</code> list object.</p>
+<p>Here’s the R expression again:</p>
+<pre class="r"><code>my_translation$r_expression</code></pre>
+<pre><code>## [1] &quot;data &lt;- 1 + 1&quot;</code></pre>
+<p>And the translated output:</p>
+<pre class="r"><code>my_translation$eng_expression</code></pre>
+<pre><code>## [1] &quot; data gets 1 plus 1 &quot;</code></pre>
+<p>And a <code>data.frame</code> object that contains the mapping (I’ve removed the blanks that indicate spaces).</p>
+<pre class="r"><code>map &lt;- my_translation$translation_map
+map[map$text != &quot;&quot;, ]</code></pre>
+<pre><code>##         token text  eng
+## 1      SYMBOL data data
+## 2 LEFT_ASSIGN   &lt;- gets
+## 4   NUM_CONST    1    1
+## 6         &#39;+&#39;    + plus
+## 7   NUM_CONST    1    1</code></pre>
+<p>This element is a good summary of what {r2eng}’s is doing under the hood: it breaks the R expression into recognised tokens and maps words to them where it knows what the corresponding English for that token should be. So <code>&lt;-</code> is recognised as the token <code>LEFT_ASSIGN</code>, which is mapped internally to the English text <code>gets</code>.</p>
+</div>
+<div id="bonus-functionality" class="section level2">
+<h2>Bonus functionality</h2>
+<div id="rstudio-addin" class="section level3">
+<h3>RStudio Addin</h3>
+<p>The <code>print()</code> and <code>speak()</code> functions can be accessed via an RStudio addin that’s part of the package. Once installed, you can select R expressions in your script and select either:</p>
+<ul>
+<li>‘Speak R Expression In English’ to vocalise it through your speakers</li>
+<li>‘Print R Expression In English’ to output an English translation</li>
+</ul>
+<p>These can be mapped to keyboard shortcuts so you can highlight and translate quickly without specifically calling <code>translate()</code> and <code>print()</code> or <code>speak()</code>.</p>
+</div>
+<div id="binder-demo" class="section level3">
+<h3>Binder demo</h3>
+<p><a href="https://mybinder.org/v2/gh/matt-dray/try-r2eng/master?urlpath=rstudio"><img src="http://mybinder.org/badge_logo.svg" alt="Launch Rstudio Binder" /></a></p>
+<p><a href="https://github.com/matt-dray/try-r2eng" class="uri">https://github.com/matt-dray/try-r2eng</a></p>
+</div>
+</div>
+</div>
+<div id="plans" class="section level1">
+<h1>Plans</h1>
+<ul>
+<li>Expanded list of translations</li>
+<li>Slightly less-opinionated English terms</li>
+<li>Full script awareness</li>
+<li>Speaking on non-Mac platforms</li>
+<li>Non-English languages</li>
+</ul>
+</div>
