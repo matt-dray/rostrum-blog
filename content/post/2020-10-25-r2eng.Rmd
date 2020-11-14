@@ -1,20 +1,26 @@
 ---
 title: Translate R to English with {r2eng}
 author: Matt Dray
-date: '2020-10-27'
-slug: r2eng
+date: '2020-11-14'
+slug: hello-r2eng
 categories:
+  - code
   - package
+  - tutorial
 tags:
   - accessibility
+  - binder
+  - language
+  - lintr
   - r
   - r2eng
-draft: yes
+  - rstudio-addin
+draft: no
 ---
 
 <div class="figure">
-<img src="https://raw.githubusercontent.com/matt-dray/stickers/master/output/r2eng_hex.png" alt="Hexagonal logo for the r2eng packlage showing the package name inside a speech bubble with the URL matt-dray.github.io/r2eng." width=300/>
-<p class="caption">It's not an R package without a hex sticker.</p>
+<img src="https://raw.githubusercontent.com/matt-dray/stickers/master/output/r2eng_hex.png" alt="Hexagonal logo for the r2eng package showing the package name inside a speech bubble with the URL matt-dray.github.io/r2eng." width=300/>
+<p class="caption">As in 'R to English', of course.</p>
 </div>
 
 # tl;dr
@@ -27,57 +33,59 @@ Amelia McNamara ([site](http://www.amelia.mn/), [Twitter](https://twitter.com/Am
 
 To summarise greatly: R code should be speakable so that we can teach, learn and communicate with minimal friction.
 
-'Speakable' means I should be able to read an R expression to you as an English sentence, rather than reading out individual characters. An example for one operator: I would call the character sequence `%>%` a 'pipe' rather than say 'percent greater-than percent'.
+'Speakable' means I should be able to read an R expression to you as an English sentence, rather than reading out individual characters.
 
 But this is all easier said than... said.
 
-Ideally we'd have an agreed dictionary that maps each R token to an equivalent English phrase. But there will always be variation between users and across communities; between beginners and aficionados; and given language differences.
+Ideally we'd have an agreed dictionary that maps each R token to an equivalent English phrase. But there will always be variation between users and across communities; between beginners and aficionados; and given differences in spoken language.
 
-Then there's context. We might agree that `%>%` is a pipe, but I might say the word 'then' when speaking it out loud: 'take data then select x' might be one translation for `data %>% select(x)`.
+Then there's context. We might agree that the operator `%>%` is called a 'pipe', but you might say the word 'then' when reading an expression. So `data %>% print()` might be spoken as 'data _then_ print'.
 
-And actually, R expressions can be parsed differently: something as simple as `x <- 1` could be 'x gets 1', 'assign the value 1 to the variable named x', or something else entirely. Imagine that on the scale of an entire script.
+The order of parsing may also differ between people. Something as simple as `x <- 1` could be 'x gets 1', 'assign the value 1 to the variable named x', or something else entirely. Now imagine that on the scale of an entire script.
 
-These are deep problems that may never be solved satisfactorily. But maybe we should start somewhere, even if just to promote the discussion.
+I don't think we can completely 'solve' any of this, but we could probably develop the conversation with the help of a tool accessible from R itself.
 
 # Introducing {r2eng}
 
-This is where {r2eng} comes in. The goal is to take an R expression and translate it to an equivalent speakable, English sentence.
+This is where the {r2eng} package comes in. The goal is to take an R expression and translate it to an equivalent speakable, English sentence, from within R itself.
 
 The initial focus has been to:
 
 * concentrate on English translations
-* map the most common tokens
-* try to use the most commonly-used English phrases
-* work on a simple one-to-one, left-to-right mapping
+* map the most common R operators
+* use commonly-used English translations for R operators
+* work on a simple one-to-one, left-to-right mapping of R to English
 * keep the API simple
-* make _something_ available to keep Amelia's discussion going
+* begin a practical approach for addressing issues raised in Amelia's presentation 
 
-Chung-hong Chan ([site](http://chainsawriot.com/), [Twitter](https://twitter.com/chainsawriot)).
+Obviously the package is not finished, let alone perfect, and it requires more theoretical and practical considerations to make it truly useful. Clearly I don't have all the answers and I'm certainly not an arbiter of language, but I think the purpose is defined and it certainly works for simple cases.
 
-You can install the package from GitHub, which is in development version 0.0.0.9005 at the time of writing.
+At worst, I hope the package will encourage discussion. There's been some interest [on Twitter](https://twitter.com/mattdray/status/1282378130901131264?s=20) and [on the RStudio Community site](https://community.rstudio.com/t/how-do-you-speak-r/73727), but do consider contributing thoughts and ideas to [the {r2eng} GitHub repo](https://github.com/matt-dray/r2eng).
+
+In this vein, it's important to highlight Chung-hong Chan's valuable contributions to the package. Check out his [website](http://chainsawriot.com/) and find him on [Twitter](https://twitter.com/chainsawriot). Chung-hong was responsible for updating {r2eng} to handle [non-standard evaluation](https://github.com/matt-dray/r2eng/commit/c38e0a44a785f3ac10dfd7a9302cf3f77091ba55) in the `translate()` function and for replacing my original simple R-to-English lookup with a proper [parsing method](https://github.com/matt-dray/r2eng/commit/dcbfa08a7b7798a76c6c7101c9c152b1a3ccb77f) for interpreting R expressions. 
+
+## Installation
+
+You can install the package from GitHub, which is in development version 0.0.0.9005 at the time of writing. This post discusses current functionality. Things may change.
 
 ```{r install, eval=FALSE}
 # Having installed {remotes}
 remotes::install_github("matt-dray/r2eng")
 ```
 
-It's definitely not perfect and requires both theoretical and practical changes to make it truly useful. But I think it's at a stage where the purpose is defined and it mostly works.
-
-I was hoping to develop the package more, but haven't yet found time. In the meantime, I thought it best to at least write a post about the theory and some basic functionality. Better out than in.
-
 ## How it works
 
 ### Recognising tokens
 
-The secret sauce of the package is that it recognises the 'tokens' that make up an R expression. So the assignment operator, `<-`, is recognised as a single token rather than the less-than and hyphen characters typed sequentially.
+The secret sauce of the package is that it recognises the 'tokens' that make up an R expression. So the assignment operator, `<-`, is recognised as a single token rather than the less-than (`<`) and hyphen (`-`) characters typed sequentially.
 
 This power is brought to {r2eng} thanks to [{lintr}](https://github.com/jimhester/lintr), a package by [Jim Hester](https://www.jimhester.com/) that assesses your code for possible errors and style improvements.
 
-An important part of this process is parsing R expressions and recognising tokens using the `lintr::get_source_expressions()` function. It can detect the assignment operator, `<-`, in yoru expression as the token `LEFT_ASSIGN`.
+An important part of this process is parsing R expressions and recognising tokens using the `lintr::get_source_expressions()` function. For example, it detects `<-` as the special token `LEFT_ASSIGN`.
 
-This is some deep R magic. There's a [special grammar file](https://github.com/wch/r-source/blob/trunk/src/main/gram.y) file in the R source code that [carries these mappings](https://github.com/wch/r-source/blob/trunk/src/main/gram.y#L2092-L2127).[^acraig]
+This is some deep R magic. You can see a [special grammar file](https://github.com/wch/r-source/blob/trunk/src/main/gram.y) file in the R source code that [carries these mappings](https://github.com/wch/r-source/blob/trunk/src/main/gram.y#L2092-L2127).[^acraig]
 
-{r2eng} hijacks this process and then adds the step of mapping each tokens to English terms, before recombining the text into a sentence.
+Put simply, {r2eng} hijacks this process and then adds the step of mapping each tokens to English terms, before recombining the text into a sentence.
 
 ### Speech
 
@@ -85,22 +93,25 @@ By default, {r2eng} will translate an R expression and then your computer will s
 
 This is relatively straightforward on a Mac: the resulting English text is handed to your machine with a `system()` call and is vocalised by the built-in VoiceOver text-to-speech converter. This functionality is not built into Windows by default, so the `system()` call fails silently.
 
-Of course, this assumes that VoiceOver will do a good job of parsing the English expression from {r2eng}, but that isn't guaranteed because of new issues like localised pronunciation and uncommon words. I've written before about how [text-to-speech isn't necessarily that good at recognising R package names](https://www.rostrum.blog/2019/09/20/say-package/), for example.
+Of course, this assumes that VoiceOver will do a good job of parsing the English expression from {r2eng}, but that isn't guaranteed because of issues like localised pronunciation and uncommon words. I've written before about how [text-to-speech isn't necessarily that good at recognising R package names](https://www.rostrum.blog/2019/09/20/say-package/), for example.
 
 ## Using {r2eng}
 
 You can find further examples in the package README, but I'll explain here the main functionality here.
 
-Bear in mind that the package is in development and the functions, arguments and defaults are likely to change.
+First I'll attach the package havign installed it.
+
+```{r attach}
+library(r2eng)
+```
 
 ### translate()
 
-There are two main functions in {r2eng}: `translate()` and `translate_string()`. They translate to English text a bare or quoted R expression, respectively.
+There are two main functions in {r2eng}: `translate()` and `translate_string()`. They convert from a bare or quoted R expression, respectively, to English.
 
-With `translate()` you pass bare R code to the `expression` argument and a few things happen.
+`translate()` takes advantage of non-standard evaluation: you pass bare (i.e. unquoted) R code to the `expression` argument and a few things happen.
 
 ```{r translate}
-library(r2eng)
 translate(data <- 1 + 1)
 ```
 
@@ -115,15 +126,17 @@ translate(
 )
 ```
 
+Note the `function_call_end` argument in this example. The default is `"of "`, which would would have made the translation `data then select of open paren x y close paren`, etc. Feedback suggested that this was how some users spoke the English translation out loud, so the functionality has been included for now.
+
 While `translate()` takes a bare expression, `translate_string()` takes a string.
 
 ```{r translate-str}
-library(magrittr)
+library(magrittr)  # attached for pipes
 "data<-1+1" %>%
   translate_string(speak = FALSE)
 ```
 
-We get the same result, of course, but this time I set the `speak` argument to `FALSE` to stop the English text from being 'spoken' by my computer. I also eliminated spaces from the input to demonstrate that they're ignored.
+We get the same sort of output as the `translate()` example, but this time I set the `speak` argument to `FALSE` to stop the English text from being 'spoken' by my computer and I also eliminated spaces from the input to demonstrate that they're ignored.
 
 ### r2eng objects
 
@@ -177,38 +190,49 @@ And the translated output:
 my_translation$eng_expression
 ```
 
-And a `data.frame` object that contains the mapping (I've removed the blanks that indicate spaces).
+And a `data.frame` object that contains the mapping.
 
 ```{r translate-list-map}
 map <- my_translation$translation_map
-map[map$text != "", ]
+map[map$text != "", ]  # filter out text spaces
 ```
 
 This element is a good summary of what {r2eng} is doing under the hood: it breaks the R expression into recognised tokens and maps words to them where it knows what the corresponding English for that token should be. So `<-` is recognised as the token `LEFT_ASSIGN`, which is mapped internally to the English text `gets`.
 
-## Bonus stuff
+## Bonus material
 
 ### RStudio Addin
 
 The `print()` and `speak()` functions can be accessed via an RStudio addin that's installed with the package (you may need to restart RStudio after installation). To use them, highlight an R expression in your script and select from the RStudio addins menu:
 
-* 'Speak R Expression In English' to vocalise the expression through your computer's speakers (Mac only)
+* 'Speak R Expression In English' to vocalise the expression through your computer's speakers (macOS only)
 * 'Print R Expression In English' to output an English translation to the console
 
 These can be mapped to keyboard shortcuts so you can highlight and translate quickly without specifically calling `translate()` and `print()` or `speak()`.
 
 ### Binder demo
 
+Maybe you don't want to install the package. That's fine. Instead, you can try out the package by opening this [Binder](https://mybinder.org/) instance of RStudio with {r2eng} and the tidyverse pre-installed. Click this badge to launch it:
+
 [![Launch Rstudio Binder](http://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/matt-dray/try-r2eng/master?urlpath=rstudio)
 
-https://github.com/matt-dray/try-r2eng
+The downside is that you can't use the speak method. Make sure to set the argument `speak = FALSE` in `translate()` or `translate_string()`, or you'll get a warning message when you run your code.
 
-# Plans
+You can find the source for this at [try-r2eng](https://github.com/matt-dray/try-r2eng) GitHub repo and you can [read one of my posts](https://www.rostrum.blog/2019/08/25/holepunch-drake/) on how to set up Binder using [Karthik Ram's {holepunch} package](https://karthik.github.io/holepunch/).
 
-* Expand list of translations
-* Slightly less-opinionated English terms
-* Full script awareness
-* Speaking on non-Mac platforms
-* Non-English languages
+# Improvement
+
+As mentioned, this is really just the beginning.
+
+There's plenty of room for simple improvements, as well as some long term possibilities. For example, we could:
+
+* expand the list of R tokens that can be translated
+* do user-research to find out the most common English terms used
+* provide instructions to make the speak method possible on non-Mac platforms
+* include full script awareness so that we aren't limited by left-to-right interpretation
+* expand the package non-English languages ({r2es}, {r2fr}, etc)
+* etc
+
+Hopefully we can work on some of these things and this won't be the last post about {r2eng} on this blog. In the meantime, do consider contributing to [the GitHub repo](https://github.com/matt-dray/r2eng).
 
 [^acraig]: I first saw the gram.y file in action in [Andrew Craig's interesting TokyoR talk](https://speakerdeck.com/andycraig/x-equals-x-plus-1) about extending R to accept function definitions in the form `(x) => x + 1`.
