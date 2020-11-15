@@ -20,7 +20,6 @@ draft: no
 
 <div class="figure">
 <img src="https://raw.githubusercontent.com/matt-dray/stickers/master/output/r2eng_hex.png" alt="Hexagonal logo for the r2eng package showing the package name inside a speech bubble with the URL matt-dray.github.io/r2eng." width=300/>
-<p class="caption">As in 'R to English', of course.</p>
 </div>
 
 # tl;dr
@@ -29,11 +28,11 @@ I created the work-in-progress {r2eng} package ([source](https://github.com/matt
 
 # Communication is hard
 
-Amelia McNamara ([site](http://www.amelia.mn/), [Twitter](https://twitter.com/AmeliaMN)) gave a talk at the useR! 2020 conference called 'Speaking R'. Watch the video on [YouTube](https://www.youtube.com/watch?v=ckW9sSdIVAc), or take a look at the [slides](https://www.amelia.mn/SpeakingR/#1)).
+Amelia McNamara ([site](http://www.amelia.mn/), [Twitter](https://twitter.com/AmeliaMN)) gave a talk at the useR! 2020 conference called 'Speaking R'. Watch the video on [YouTube](https://www.youtube.com/watch?v=ckW9sSdIVAc), or take a look at the [slides](https://www.amelia.mn/SpeakingR/#1).
 
 To summarise greatly: R code should be speakable so that we can teach, learn and communicate with minimal friction.
 
-'Speakable' means I should be able to read an R expression to you as an English sentence, rather than reading out individual characters.
+'Speakable' means I should be able to read an R expression to you as an English sentence (rather than reading out individual characters) and we should be able to understand each other.
 
 But this is all easier said than... said.
 
@@ -45,18 +44,18 @@ The order of parsing may also differ between people. Something as simple as `x <
 
 I don't think we can completely 'solve' any of this, but we could probably develop the conversation with the help of a tool accessible from R itself.
 
-# Introducing {r2eng}
+# Hello {r2eng}
 
 This is where the {r2eng} package comes in. The goal is to take an R expression and translate it to an equivalent speakable, English sentence, from within R itself.
 
 The initial focus has been to:
 
-* concentrate on English translations
-* map the most common R operators
-* use commonly-used English translations for R operators
+* concentrate on translating to English (I'm biased)
+* map the most common R operators (e.g. assignment, maths, brackets)
+* use commonly-used (but currently opinionated[^paren]) English translations for R operators ('gets' for `<-`)
 * work on a simple one-to-one, left-to-right mapping of R to English
-* keep the API simple
-* begin a practical approach for addressing issues raised in Amelia's presentation 
+* keep the API simple, so you just supply an expression and get a result
+* simply _begin_ an approach to address what was raised in Amelia's presentation 
 
 Obviously the package is not finished, let alone perfect, and it requires more theoretical and practical considerations to make it truly useful. Clearly I don't have all the answers and I'm certainly not an arbiter of language, but I think the purpose is defined and it certainly works for simple cases.
 
@@ -66,10 +65,10 @@ In this vein, it's important to highlight Chung-hong Chan's valuable contributio
 
 ## Installation
 
-You can install the package from GitHub, which is in development version 0.0.0.9005 at the time of writing. This post discusses current functionality. Things may change.
+You can install the package from GitHub using the {remotes} package. The package is in development version 0.0.0.9005 at the time of writing and this post discusses functionality for that version. Things may change.
 
 ```{r install, eval=FALSE}
-# Having installed {remotes}
+install.packages("remotes")  # if not already installed
 remotes::install_github("matt-dray/r2eng")
 ```
 
@@ -81,11 +80,11 @@ The secret sauce of the package is that it recognises the 'tokens' that make up 
 
 This power is brought to {r2eng} thanks to [{lintr}](https://github.com/jimhester/lintr), a package by [Jim Hester](https://www.jimhester.com/) that assesses your code for possible errors and style improvements.
 
-An important part of this process is parsing R expressions and recognising tokens using the `lintr::get_source_expressions()` function. For example, it detects `<-` as the special token `LEFT_ASSIGN`.
+An important part of this process is parsing R expressions and recognising tokens using the `lintr::get_source_expressions()` function. For example, that `<-` operator is recognised as the special token `LEFT_ASSIGN` under the hood.
 
 This is some deep R magic. You can see a [special grammar file](https://github.com/wch/r-source/blob/trunk/src/main/gram.y) file in the R source code that [carries these mappings](https://github.com/wch/r-source/blob/trunk/src/main/gram.y#L2092-L2127).[^acraig]
 
-Put simply, {r2eng} hijacks this process and then adds the step of mapping each tokens to English terms, before recombining the text into a sentence.
+Put simply, {r2eng} hijacks this process, adds a step that maps each token to English terms, then recombines the text into a sentence.
 
 ### Speech
 
@@ -95,17 +94,19 @@ This is relatively straightforward on a Mac: the resulting English text is hande
 
 Of course, this assumes that VoiceOver will do a good job of parsing the English expression from {r2eng}, but that isn't guaranteed because of issues like localised pronunciation and uncommon words. I've written before about how [text-to-speech isn't necessarily that good at recognising R package names](https://www.rostrum.blog/2019/09/20/say-package/), for example.
 
+In theory, and assuming that the translation gets good, {r2eng} could be used as a simple accessibility tool because it can interpret R-specific tokens in a way that VoiceOver cannot.
+
 ## Using {r2eng}
 
-You can find further examples in the package README, but I'll explain here the main functionality here.
+You can find further examples in [the package README](https://github.com/matt-dray/r2eng/blob/master/README.md), but I'll explain here the main functionality.
 
-First I'll attach the package havign installed it.
+First I'll attach the package after having installed it.
 
 ```{r attach}
 library(r2eng)
 ```
 
-### translate()
+### The `translate()` function
 
 There are two main functions in {r2eng}: `translate()` and `translate_string()`. They convert from a bare or quoted R expression, respectively, to English.
 
@@ -117,11 +118,11 @@ translate(data <- 1 + 1)
 
 First, it prints both the original R expression and the corresponding English translation. Second, and only if you are using macOS, the English string is passed to a system command that vocalises the string.
 
-Here's a more complex example.
+Here's a more complex example using some {dplyr} functions. Note that we don't need to attach {dplyr} to be able to translate.
 
 ```{r translate-complex}
 translate(
-  data %>% select(x, y) %>% filter(y == "example"),
+  data %>% select(x, y) %>% dplyr::filter(y == "example"),
   function_call_end = ""
 )
 ```
@@ -131,7 +132,7 @@ Note the `function_call_end` argument in this example. The default is `"of "`, w
 While `translate()` takes a bare expression, `translate_string()` takes a string.
 
 ```{r translate-str}
-library(magrittr)  # attached for pipes
+library(magrittr)  # attach for pipes
 "data<-1+1" %>%
   translate_string(speak = FALSE)
 ```
@@ -218,21 +219,23 @@ Maybe you don't want to install the package. That's fine. Instead, you can try o
 
 The downside is that you can't use the speak method. Make sure to set the argument `speak = FALSE` in `translate()` or `translate_string()`, or you'll get a warning message when you run your code.
 
-You can find the source for this at [try-r2eng](https://github.com/matt-dray/try-r2eng) GitHub repo and you can [read one of my posts](https://www.rostrum.blog/2019/08/25/holepunch-drake/) on how to set up Binder using [Karthik Ram's {holepunch} package](https://karthik.github.io/holepunch/).
+You can find the source for this at the [try-r2eng](https://github.com/matt-dray/try-r2eng) GitHub repo and you can [read one of my posts](https://www.rostrum.blog/2019/08/25/holepunch-drake/) on how to set up Binder using [Karthik Ram's {holepunch} package](https://karthik.github.io/holepunch/).
 
-# Improvement
+# There's lots to do
 
 As mentioned, this is really just the beginning.
 
 There's plenty of room for simple improvements, as well as some long term possibilities. For example, we could:
 
 * expand the list of R tokens that can be translated
+* allow for context-dependent translation where the same token can be used for more than one application
 * do user-research to find out the most common English terms used
 * provide instructions to make the speak method possible on non-Mac platforms
 * include full script awareness so that we aren't limited by left-to-right interpretation
-* expand the package non-English languages ({r2es}, {r2fr}, etc)
+* expand the package for non-English languages, or create {r2es}, {r2fr}, etc
 * etc
 
 Hopefully we can work on some of these things and this won't be the last post about {r2eng} on this blog. In the meantime, do consider contributing to [the GitHub repo](https://github.com/matt-dray/r2eng).
 
+[^paren]: A good example of opinionated word choice is this character: `(`. Is it an 'open bracket', 'open parenthesis', 'open paren', 'mouth for an emoticon smiley', or something else entirely? {r2eng} uses 'open paren', largely for brevity.
 [^acraig]: I first saw the gram.y file in action in [Andrew Craig's interesting TokyoR talk](https://speakerdeck.com/andycraig/x-equals-x-plus-1) about extending R to accept function definitions in the form `(x) => x + 1`.

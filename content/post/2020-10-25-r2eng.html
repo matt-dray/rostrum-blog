@@ -21,10 +21,7 @@ draft: no
 
 
 <div class="figure">
-<img src="https://raw.githubusercontent.com/matt-dray/stickers/master/output/r2eng_hex.png" alt="Hexagonal logo for the r2eng package showing the package name inside a speech bubble with the URL matt-dray.github.io/r2eng." width=300/>
-<p class="caption">
-As in ‘R to English’, of course.
-</p>
+<p><img src="https://raw.githubusercontent.com/matt-dray/stickers/master/output/r2eng_hex.png" alt="Hexagonal logo for the r2eng package showing the package name inside a speech bubble with the URL matt-dray.github.io/r2eng." width=300/></p>
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
@@ -32,34 +29,34 @@ As in ‘R to English’, of course.
 </div>
 <div id="communication-is-hard" class="section level1">
 <h1>Communication is hard</h1>
-<p>Amelia McNamara (<a href="http://www.amelia.mn/">site</a>, <a href="https://twitter.com/AmeliaMN">Twitter</a>) gave a talk at the useR! 2020 conference called ‘Speaking R’. Watch the video on <a href="https://www.youtube.com/watch?v=ckW9sSdIVAc">YouTube</a>, or take a look at the <a href="https://www.amelia.mn/SpeakingR/#1">slides</a>).</p>
+<p>Amelia McNamara (<a href="http://www.amelia.mn/">site</a>, <a href="https://twitter.com/AmeliaMN">Twitter</a>) gave a talk at the useR! 2020 conference called ‘Speaking R’. Watch the video on <a href="https://www.youtube.com/watch?v=ckW9sSdIVAc">YouTube</a>, or take a look at the <a href="https://www.amelia.mn/SpeakingR/#1">slides</a>.</p>
 <p>To summarise greatly: R code should be speakable so that we can teach, learn and communicate with minimal friction.</p>
-<p>‘Speakable’ means I should be able to read an R expression to you as an English sentence, rather than reading out individual characters.</p>
+<p>‘Speakable’ means I should be able to read an R expression to you as an English sentence (rather than reading out individual characters) and we should be able to understand each other.</p>
 <p>But this is all easier said than… said.</p>
 <p>Ideally we’d have an agreed dictionary that maps each R token to an equivalent English phrase. But there will always be variation between users and across communities; between beginners and aficionados; and given differences in spoken language.</p>
 <p>Then there’s context. We might agree that the operator <code>%&gt;%</code> is called a ‘pipe’, but you might say the word ‘then’ when reading an expression. So <code>data %&gt;% print()</code> might be spoken as ‘data <em>then</em> print’.</p>
 <p>The order of parsing may also differ between people. Something as simple as <code>x &lt;- 1</code> could be ‘x gets 1’, ‘assign the value 1 to the variable named x’, or something else entirely. Now imagine that on the scale of an entire script.</p>
 <p>I don’t think we can completely ‘solve’ any of this, but we could probably develop the conversation with the help of a tool accessible from R itself.</p>
 </div>
-<div id="introducing-r2eng" class="section level1">
-<h1>Introducing {r2eng}</h1>
+<div id="hello-r2eng" class="section level1">
+<h1>Hello {r2eng}</h1>
 <p>This is where the {r2eng} package comes in. The goal is to take an R expression and translate it to an equivalent speakable, English sentence, from within R itself.</p>
 <p>The initial focus has been to:</p>
 <ul>
-<li>concentrate on English translations</li>
-<li>map the most common R operators</li>
-<li>use commonly-used English translations for R operators</li>
+<li>concentrate on translating to English (I’m biased)</li>
+<li>map the most common R operators (e.g. assignment, maths, brackets)</li>
+<li>use commonly-used (but currently opinionated<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>) English translations for R operators (‘gets’ for <code>&lt;-</code>)</li>
 <li>work on a simple one-to-one, left-to-right mapping of R to English</li>
-<li>keep the API simple</li>
-<li>begin a practical approach for addressing issues raised in Amelia’s presentation</li>
+<li>keep the API simple, so you just supply an expression and get a result</li>
+<li>simply <em>begin</em> an approach to address what was raised in Amelia’s presentation</li>
 </ul>
 <p>Obviously the package is not finished, let alone perfect, and it requires more theoretical and practical considerations to make it truly useful. Clearly I don’t have all the answers and I’m certainly not an arbiter of language, but I think the purpose is defined and it certainly works for simple cases.</p>
 <p>At worst, I hope the package will encourage discussion. There’s been some interest <a href="https://twitter.com/mattdray/status/1282378130901131264?s=20">on Twitter</a> and <a href="https://community.rstudio.com/t/how-do-you-speak-r/73727">on the RStudio Community site</a>, but do consider contributing thoughts and ideas to <a href="https://github.com/matt-dray/r2eng">the {r2eng} GitHub repo</a>.</p>
 <p>In this vein, it’s important to highlight Chung-hong Chan’s valuable contributions to the package. Check out his <a href="http://chainsawriot.com/">website</a> and find him on <a href="https://twitter.com/chainsawriot">Twitter</a>. Chung-hong was responsible for updating {r2eng} to handle <a href="https://github.com/matt-dray/r2eng/commit/c38e0a44a785f3ac10dfd7a9302cf3f77091ba55">non-standard evaluation</a> in the <code>translate()</code> function and for replacing my original simple R-to-English lookup with a proper <a href="https://github.com/matt-dray/r2eng/commit/dcbfa08a7b7798a76c6c7101c9c152b1a3ccb77f">parsing method</a> for interpreting R expressions.</p>
 <div id="installation" class="section level2">
 <h2>Installation</h2>
-<p>You can install the package from GitHub, which is in development version 0.0.0.9005 at the time of writing. This post discusses current functionality. Things may change.</p>
-<pre class="r"><code># Having installed {remotes}
+<p>You can install the package from GitHub using the {remotes} package. The package is in development version 0.0.0.9005 at the time of writing and this post discusses functionality for that version. Things may change.</p>
+<pre class="r"><code>install.packages(&quot;remotes&quot;)  # if not already installed
 remotes::install_github(&quot;matt-dray/r2eng&quot;)</code></pre>
 </div>
 <div id="how-it-works" class="section level2">
@@ -68,40 +65,41 @@ remotes::install_github(&quot;matt-dray/r2eng&quot;)</code></pre>
 <h3>Recognising tokens</h3>
 <p>The secret sauce of the package is that it recognises the ‘tokens’ that make up an R expression. So the assignment operator, <code>&lt;-</code>, is recognised as a single token rather than the less-than (<code>&lt;</code>) and hyphen (<code>-</code>) characters typed sequentially.</p>
 <p>This power is brought to {r2eng} thanks to <a href="https://github.com/jimhester/lintr">{lintr}</a>, a package by <a href="https://www.jimhester.com/">Jim Hester</a> that assesses your code for possible errors and style improvements.</p>
-<p>An important part of this process is parsing R expressions and recognising tokens using the <code>lintr::get_source_expressions()</code> function. For example, it detects <code>&lt;-</code> as the special token <code>LEFT_ASSIGN</code>.</p>
-<p>This is some deep R magic. You can see a <a href="https://github.com/wch/r-source/blob/trunk/src/main/gram.y">special grammar file</a> file in the R source code that <a href="https://github.com/wch/r-source/blob/trunk/src/main/gram.y#L2092-L2127">carries these mappings</a>.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
-<p>Put simply, {r2eng} hijacks this process and then adds the step of mapping each tokens to English terms, before recombining the text into a sentence.</p>
+<p>An important part of this process is parsing R expressions and recognising tokens using the <code>lintr::get_source_expressions()</code> function. For example, that <code>&lt;-</code> operator is recognised as the special token <code>LEFT_ASSIGN</code> under the hood.</p>
+<p>This is some deep R magic. You can see a <a href="https://github.com/wch/r-source/blob/trunk/src/main/gram.y">special grammar file</a> file in the R source code that <a href="https://github.com/wch/r-source/blob/trunk/src/main/gram.y#L2092-L2127">carries these mappings</a>.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>Put simply, {r2eng} hijacks this process, adds a step that maps each token to English terms, then recombines the text into a sentence.</p>
 </div>
 <div id="speech" class="section level3">
 <h3>Speech</h3>
 <p>By default, {r2eng} will translate an R expression and then your computer will speak it out loud.</p>
 <p>This is relatively straightforward on a Mac: the resulting English text is handed to your machine with a <code>system()</code> call and is vocalised by the built-in VoiceOver text-to-speech converter. This functionality is not built into Windows by default, so the <code>system()</code> call fails silently.</p>
 <p>Of course, this assumes that VoiceOver will do a good job of parsing the English expression from {r2eng}, but that isn’t guaranteed because of issues like localised pronunciation and uncommon words. I’ve written before about how <a href="https://www.rostrum.blog/2019/09/20/say-package/">text-to-speech isn’t necessarily that good at recognising R package names</a>, for example.</p>
+<p>In theory, and assuming that the translation gets good, {r2eng} could be used as a simple accessibility tool because it can interpret R-specific tokens in a way that VoiceOver cannot.</p>
 </div>
 </div>
 <div id="using-r2eng" class="section level2">
 <h2>Using {r2eng}</h2>
-<p>You can find further examples in the package README, but I’ll explain here the main functionality here.</p>
-<p>First I’ll attach the package havign installed it.</p>
+<p>You can find further examples in <a href="https://github.com/matt-dray/r2eng/blob/master/README.md">the package README</a>, but I’ll explain here the main functionality.</p>
+<p>First I’ll attach the package after having installed it.</p>
 <pre class="r"><code>library(r2eng)</code></pre>
-<div id="translate" class="section level3">
-<h3>translate()</h3>
+<div id="the-translate-function" class="section level3">
+<h3>The <code>translate()</code> function</h3>
 <p>There are two main functions in {r2eng}: <code>translate()</code> and <code>translate_string()</code>. They convert from a bare or quoted R expression, respectively, to English.</p>
 <p><code>translate()</code> takes advantage of non-standard evaluation: you pass bare (i.e. unquoted) R code to the <code>expression</code> argument and a few things happen.</p>
 <pre class="r"><code>translate(data &lt;- 1 + 1)</code></pre>
 <pre><code>## Original expression: data &lt;- 1 + 1
 ## English expression: data gets 1 plus 1</code></pre>
 <p>First, it prints both the original R expression and the corresponding English translation. Second, and only if you are using macOS, the English string is passed to a system command that vocalises the string.</p>
-<p>Here’s a more complex example.</p>
+<p>Here’s a more complex example using some {dplyr} functions. Note that we don’t need to attach {dplyr} to be able to translate.</p>
 <pre class="r"><code>translate(
-  data %&gt;% select(x, y) %&gt;% filter(y == &quot;example&quot;),
+  data %&gt;% select(x, y) %&gt;% dplyr::filter(y == &quot;example&quot;),
   function_call_end = &quot;&quot;
 )</code></pre>
-<pre><code>## Original expression: data %&gt;% select(x, y) %&gt;% filter(y == &quot;example&quot;)
-## English expression: data then select open paren x , y close paren then filter open paren y double equals string &quot;example&quot; close paren</code></pre>
+<pre><code>## Original expression: data %&gt;% select(x, y) %&gt;% dplyr::filter(y == &quot;example&quot;)
+## English expression: data then select open paren x , y close paren then dplyr double-colon filter open paren y double equals string &quot;example&quot; close paren</code></pre>
 <p>Note the <code>function_call_end</code> argument in this example. The default is <code>"of "</code>, which would would have made the translation <code>data then select of open paren x y close paren</code>, etc. Feedback suggested that this was how some users spoke the English translation out loud, so the functionality has been included for now.</p>
 <p>While <code>translate()</code> takes a bare expression, <code>translate_string()</code> takes a string.</p>
-<pre class="r"><code>library(magrittr)  # attached for pipes
+<pre class="r"><code>library(magrittr)  # attach for pipes
 &quot;data&lt;-1+1&quot; %&gt;%
   translate_string(speak = FALSE)</code></pre>
 <pre><code>## Original expression: data &lt;- 1 + 1
@@ -165,20 +163,21 @@ map[map$text != &quot;&quot;, ]  # filter out text spaces</code></pre>
 <p>Maybe you don’t want to install the package. That’s fine. Instead, you can try out the package by opening this <a href="https://mybinder.org/">Binder</a> instance of RStudio with {r2eng} and the tidyverse pre-installed. Click this badge to launch it:</p>
 <p><a href="https://mybinder.org/v2/gh/matt-dray/try-r2eng/master?urlpath=rstudio"><img src="http://mybinder.org/badge_logo.svg" alt="Launch Rstudio Binder" /></a></p>
 <p>The downside is that you can’t use the speak method. Make sure to set the argument <code>speak = FALSE</code> in <code>translate()</code> or <code>translate_string()</code>, or you’ll get a warning message when you run your code.</p>
-<p>You can find the source for this at <a href="https://github.com/matt-dray/try-r2eng">try-r2eng</a> GitHub repo and you can <a href="https://www.rostrum.blog/2019/08/25/holepunch-drake/">read one of my posts</a> on how to set up Binder using <a href="https://karthik.github.io/holepunch/">Karthik Ram’s {holepunch} package</a>.</p>
+<p>You can find the source for this at the <a href="https://github.com/matt-dray/try-r2eng">try-r2eng</a> GitHub repo and you can <a href="https://www.rostrum.blog/2019/08/25/holepunch-drake/">read one of my posts</a> on how to set up Binder using <a href="https://karthik.github.io/holepunch/">Karthik Ram’s {holepunch} package</a>.</p>
 </div>
 </div>
 </div>
-<div id="improvement" class="section level1">
-<h1>Improvement</h1>
+<div id="theres-lots-to-do" class="section level1">
+<h1>There’s lots to do</h1>
 <p>As mentioned, this is really just the beginning.</p>
 <p>There’s plenty of room for simple improvements, as well as some long term possibilities. For example, we could:</p>
 <ul>
 <li>expand the list of R tokens that can be translated</li>
+<li>allow for context-dependent translation where the same token can be used for more than one application</li>
 <li>do user-research to find out the most common English terms used</li>
 <li>provide instructions to make the speak method possible on non-Mac platforms</li>
 <li>include full script awareness so that we aren’t limited by left-to-right interpretation</li>
-<li>expand the package non-English languages ({r2es}, {r2fr}, etc)</li>
+<li>expand the package for non-English languages, or create {r2es}, {r2fr}, etc</li>
 <li>etc</li>
 </ul>
 <p>Hopefully we can work on some of these things and this won’t be the last post about {r2eng} on this blog. In the meantime, do consider contributing to <a href="https://github.com/matt-dray/r2eng">the GitHub repo</a>.</p>
@@ -186,6 +185,7 @@ map[map$text != &quot;&quot;, ]  # filter out text spaces</code></pre>
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>I first saw the gram.y file in action in <a href="https://speakerdeck.com/andycraig/x-equals-x-plus-1">Andrew Craig’s interesting TokyoR talk</a> about extending R to accept function definitions in the form <code>(x) =&gt; x + 1</code>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn1"><p>A good example of opinionated word choice is this character: <code>(</code>. Is it an ‘open bracket’, ‘open parenthesis’, ‘open paren’, ‘mouth for an emoticon smiley’, or something else entirely? {r2eng} uses ‘open paren’, largely for brevity.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>I first saw the gram.y file in action in <a href="https://speakerdeck.com/andycraig/x-equals-x-plus-1">Andrew Craig’s interesting TokyoR talk</a> about extending R to accept function definitions in the form <code>(x) =&gt; x + 1</code>.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
