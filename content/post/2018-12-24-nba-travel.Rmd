@@ -27,11 +27,14 @@ draft: no
 <p class="caption">Classic Jazz: Stockton to Malone for the dunk ([via Giphy](https://giphy.com/gifs/vintage-basketball-GOIl4CelYNleM))</p>
 </div>
 
+<div class="tip"> `r icon::fa("exclamation-circle")` <b>Note</b>
+
+The original version of this post (December 2018) used [the {gmapsdistance} package](https://github.com/rodazuero/gmapsdistance){target='_blank'}. I updated it extensively in 2020 to use the {osrm} package, which doesn't require an API key nor billing details.
+</div>
+
 # tl;dr
 
 [The {osrm} R package](https://github.com/rCarto/osrm){target='_blank'} can retrieve from [the OSRM API](http://project-osrm.org/){target='_blank'} the travel duration between points. I looked at these data for NBA basketball-team arenas, whose details I scraped from the web using [{rvest}](https://rvest.tidyverse.org/){target='_blank'} and mapped with [{leaflet}](https://rstudio.github.io/leaflet/){target='_blank'}.
-
-[Note: The original version of this post (December 2018) used [the {gmapsdistance} package](https://github.com/rodazuero/gmapsdistance){target='_blank'}. I updated it extensively in June 2020 to use the {osrm} package, which doesn't require an API key nor billing details.]
 
 # On the road
 
@@ -50,7 +53,7 @@ What would it take to be a basketball fan who wanted to drive to away games? How
 Surprise, this is all a ruse for me to practice with some R packages:
 
 * [{rvest}](https://rvest.tidyverse.org/){target='_blank'} for scraping web pages
-* [{leaflet}](https://rstudio.github.io/leaflet/){target='_blank'}) for interactive mapping
+* [{leaflet}](https://rstudio.github.io/leaflet/){target='_blank'} for interactive mapping
 * [{osrm}](https://github.com/rCarto/osrm){target='_blank'} for calculating duration of travel between points
 
 There's four main parts to the post (click to jump):
@@ -63,17 +66,18 @@ There's four main parts to the post (click to jump):
 Let's start by attaching the packages we need. As always, make sure these are installed first, using `install.packages()`.
 
 ```{r packages, message=FALSE}
-library(rvest)    # scrape
-library(dplyr)    # wrangle data
-library(tibble)   # fancy data frames
-library(tidyr)    # wrangle data
-library(stringr)  # wrangle strings
-library(sf)       # handle geographies
-library(osrm)     # fetch travel info
-library(leaflet)  # interactive maps
-library(DT)       # interactive tables
-library(ggplot2)  # static plots
-library(plotly)   # interactive plots
+# Tidyverse
+library(tidyverse)  # data handling and plotting
+library(rvest)      # scrape data
+
+# Geography and travel
+library(sf)         # handle geographies
+library(osrm)       # fetch travel info
+
+# Interactive elements
+library(leaflet)    # interactive maps
+library(DT)         # interactive tables
+library(plotly)     # interactive plots
 ```
 
 ## 1. Scrape team data {#scrape}
@@ -91,7 +95,7 @@ Note that you have to provide to `html_nodes()` a CSS selector or an XPath that 
 ```{r scrape}
 nba_scrape <-
   read_html("https://en.wikipedia.org/wiki/National_Basketball_Association") %>% 
-  html_nodes(xpath = '//*[@id="mw-content-text"]/div/table[3]') %>%
+  html_nodes(xpath = "/html/body/div[3]/div[3]/div[5]/div[1]/table[4]") %>%
   html_table(fill = TRUE, header = NA) %>%
   .[[1]]  # list was returned, so extract first list element
 
@@ -156,7 +160,7 @@ nba_abbr_cols <-
   read_html(
     "https://en.wikipedia.org/wiki/Wikipedia:WikiProject_National_Basketball_Association/National_Basketball_Association_team_abbreviations"
   ) %>% 
-  html_nodes(xpath = "/html/body/div[3]/div[3]/div[4]/div/table") %>%
+  html_nodes(xpath = "/html/body/div[3]/div[3]/div[5]/div[1]/table") %>%
   html_table(header = TRUE) %>%
   .[[1]] %>% 
   rename(Code = `Abbreviation/Acronym`) %>% 
@@ -352,7 +356,7 @@ nba_dur_div <- nba_dur_all %>%
 Again, here's an interactive table that you can use to explore the data. Note that it's ordered by Division and then duration in minutes. I've hidden the code because it's the same as for the table above.
 
 <details><summary>Click for the {DT} code</summary>
-```{r}
+```{r eval=FALSE}
 nba_dur_div %>% 
   datatable(
     filter = "top",
@@ -367,6 +371,21 @@ nba_dur_div %>%
 )
 ```
 </details>
+
+```{r echo=FALSE}
+nba_dur_div %>% 
+  datatable(
+    filter = "top",
+    extensions = c("Buttons","Scroller"),
+    rownames = FALSE,
+    class = "compact", width = "100%",
+    options = list(
+      dom = "Blrtip",
+      scroller = TRUE, scrollY = 300,
+      buttons = list("csv")
+    )
+)
+```
 
 This time we can see that there's a maximum of 33 hours of driving required between two teams in the same division: Portland to Oklahoma City.
 
@@ -456,6 +475,16 @@ ggplotly(p)
 ```
 
 Note the light colours in the Northwest division where teams have to travel far (like the 33 hour trip from Portland and Oklahoma City), while travel durations in the Atlantic and Central divisions are shorter. Of course, the Clippers and Lakers both play in the Staples Center in LA, so their journey time is zero. 
+
+# Ending the journey
+
+So, this post shows the the power of the {osrm} package for travel distance, duration and routing information.
+
+Of course, it's never usually as simple as having your geographic data ready to go, so I hope this post also provides a good use-case for {rvest} to help you collect information and {tidyverse} for wrangling it.
+
+The plots here are pretty minimal, but they hopefully give a flavour of how to use {leaflet} for plotting points and the routing between them according to {osrm}.
+
+This post was initially written before the travel restrictions brought about by the 2020 pandemic. Of course, the maps would have been much simpler during for the 2020 playoffs, which all took place in [a 'bubble' at Disney World, Florida](https://en.wikipedia.org/wiki/2020_NBA_Bubble)!
 
 ---
 <details><summary>Session info</summary>
