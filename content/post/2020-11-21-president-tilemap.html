@@ -1,0 +1,318 @@
+---
+title: 'US presidential election 2020 with {tilegramsR}'
+author: Matt Dray
+date: '2020-11-21'
+slug: president-tilegram
+categories:
+  - code
+  - data-viz
+  - tutorial
+tags:
+  - election
+  - geospatial
+  - ggtext
+  - maps
+  - patchwork
+  - politics
+  - r
+  - tidyverse
+  - tilegramsR
+---
+
+
+
+<div class="figure">
+<p><img src="/post/2020-11-21-president-tilemap_files/tile.png" alt="A zoomed-in portion of a tilegram map, with hexagons coloured red and blue to indicate the winning party." width="100%"/></p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p><a href="https://bhaskarvk.github.io/tilegramsR/">The {tilegramsR} package</a> contains a tilegram object with a separate tile for each elector in <a href="https://en.wikipedia.org/wiki/United_States_Electoral_College">the US electoral college</a>. I amended it for states that use the <a href="https://www.fairvote.org/maine_nebraska">congressional district method</a> and generated a minimalist map of the results for the 2020 US presidential election.</p>
+</div>
+<div id="back-to-college" class="section level1">
+<h1>Back to college</h1>
+<p>It’s best to scale subnational divisions by voter count when visualising election results. This is because election outcomes are decided by people, not land area.</p>
+<p>The US presidential election is a special case because vote counts don’t directly elect a leader. Instead there’s <a href="https://en.wikipedia.org/wiki/United_States_Electoral_College">an ‘electoral college’ system</a>. Put extremely simply, each state has a number of representatives (‘electors’) that are sent to vote for the candidate that got the majority vote share in their state. The winning national candidate has the majority (270) of state electors declaring for them.</p>
+<p>So, we should scale maps of US presidential election results by electoral college contribution, not a direct count of the citizens that voted.</p>
+</div>
+<div id="hexageometry" class="section level1">
+<h1>Hexageometry</h1>
+<p><a href="https://en.wikipedia.org/wiki/Cartogram">Cartograms</a> are maps where the geographic entities are resized according to something other than area. This can be good for visualising election results because subnational divisions can be sized by population.</p>
+<p>A simplification of this is a tilegram, which disregards the shape of the geographic entities entirely and represents them with uniform shapes instead. The tiles could be squares, but hexagons give you a bit more freedom to approximate geographic location. <a href="https://www.youtube.com/watch?v=thOifuHs6eY">Hexagons are the bestagons</a>, after all.</p>
+<p>Fortunately, <a href="https://bhaskarvk.github.io/tilegramsR/">the {tilegramsR} package by Bhaskar V. Karambelkar</a> has an <code>sf_FiveThirtyEightElectoralCollege</code> object that contains tilegram data for the US where each state is represented by one hexagon per electoral college vote. It’s <a href="https://r-spatial.github.io/sf/">an sf-class object</a>, which means it contains tidy geospatial information: each row is an elector, with a column for the state abbreviation and a column for the hexagon geometries.</p>
+<p>The object was created and named for the tilegrams by <a href="https://fivethirtyeight.com/">fivethirtyeight</a>, a company named after the total count of electors in the US electoral college.</p>
+<p>Before we take a look, let’s load the packages used in this post.</p>
+<pre class="r"><code>library(dplyr)  # data manipulation
+library(stringr)  # string manipulation
+library(tilegramsR)  # tilegram objects
+library(ggplot2)  # plotting
+library(ggtext)  # text manipulation in plots
+library(ggthemes)  # has a map theme
+library(patchwork)  # organise plots</code></pre>
+<p>Here’s what that electoral college tilegram object looks like.</p>
+<pre class="r"><code>sf_FiveThirtyEightElectoralCollege</code></pre>
+<pre><code>## Simple feature collection with 538 features and 3 fields
+## geometry type:  POLYGON
+## dimension:      XY
+## bbox:           xmin: 293.6239 ymin: 16.95238 xmax: 2495.803 ymax: 1661.333
+## CRS:            NA
+## First 10 features:
+##    FID state tilegramVa                       geometry
+## 1   02    AK          3 POLYGON ((293.6239 237.3333...
+## 2   06    CA         55 POLYGON ((352.3486 847.619,...
+## 3   06    CA         55 POLYGON ((322.9862 796.7619...
+## 4   06    CA         55 POLYGON ((352.3486 745.9048...
+## 5   06    CA         55 POLYGON ((322.9862 695.0476...
+## 6   06    CA         55 POLYGON ((352.3486 644.1905...
+## 7   02    AK          3 POLYGON ((322.9862 288.1905...
+## 8   02    AK          3 POLYGON ((352.3486 237.3333...
+## 9   06    CA         55 POLYGON ((411.0734 949.3333...
+## 10  06    CA         55 POLYGON ((381.711 898.4762,...</code></pre>
+<p>Similarly, there’s an object called <code>sf_FiveThirtyEightElectoralCollege.states</code> that contains geometry to delineate state boundaries in the <code>sf_FiveThirtyEightElectoralCollege</code> object. We can combine these and look at a simple tilegram of the US electoral college using {ggplot2} and the special <code>geom_sf()</code> geom for visualising geospatial data stored in sf format.</p>
+<pre class="r"><code>ggplot() + 
+  geom_sf(data = sf_FiveThirtyEightElectoralCollege) + 
+  geom_sf(
+    data = sf_FiveThirtyEightElectoralCollege.states,
+    color = &quot;black&quot;, alpha = 0, size = 1
+  ) + 
+  theme_map()</code></pre>
+<p><img src="/post/2020-11-21-president-tilemap_files/figure-html/college-538-map-1.png" width="672" /></p>
+<p>Each elector is represented by a single hexagon and groups of hexagons are combined into states (thick outlines). Hexagons are placed roughly in the familiar shape of the US despite the change to the apparent area of each one. The non-contiguous regions in the lower left are Alaska (three electors) and Hawaii (four).</p>
+</div>
+<div id="the-odd-ones-out" class="section level1">
+<h1>The odd ones out</h1>
+<p>In general, the winner of the popular vote within a state gains all the electors for that state. There are two exceptions: Nebraska (NE) and Maine (ME). These states use <a href="https://www.fairvote.org/maine_nebraska">the ‘congressional district method’</a>. The popular-vote winner wins two electors by default and the remaining electors are based on the winners of districts within the state (three in Nebraska and two in Maine). In other words, the electors from these states could be from more than one party.</p>
+<p>The <code>sf_FiveThirtyEightElectoralCollege</code> doesn’t account for the congressional district method, so we’ll have to build this in ourselves. We can isolate rows for Nebraska and Maine and then generate a <code>state_cdm</code> column to create distinct names for the districts, which we’ll number sequentially.</p>
+<pre class="r"><code># Isolate/update states with the congressional district method
+cdm_sf &lt;- sf_FiveThirtyEightElectoralCollege %&gt;% 
+  filter(state %in% c(&quot;NE&quot;, &quot;ME&quot;)) %&gt;% 
+  mutate(
+    state_cdm = c(
+      &quot;NE&quot;, &quot;NE&quot;, &quot;NE1&quot;, &quot;NE2&quot;, &quot;NE3&quot;, 
+      &quot;ME&quot;, &quot;ME&quot;, &quot;ME1&quot;, &quot;ME2&quot;
+    )
+  )
+
+# Preview
+cdm_sf</code></pre>
+<pre><code>## Simple feature collection with 9 features and 4 fields
+## geometry type:  POLYGON
+## dimension:      XY
+## bbox:           xmin: 851.5092 ymin: 932.381 xmax: 2407.716 ymax: 1661.333
+## CRS:            NA
+##   FID state tilegramVa                       geometry state_cdm
+## 1  31    NE          5 POLYGON ((851.5092 1000.19,...        NE
+## 2  31    NE          5 POLYGON ((910.2339 1000.19,...        NE
+## 3  31    NE          5 POLYGON ((939.5963 949.3333...       NE1
+## 4  31    NE          5 POLYGON ((968.9587 1000.19,...       NE2
+## 5  31    NE          5 POLYGON ((998.3211 949.3333...       NE3
+## 6  23    ME          4 POLYGON ((2290.266 1559.619...        ME
+## 7  23    ME          4 POLYGON ((2319.628 1610.476...        ME
+## 8  23    ME          4 POLYGON ((2348.991 1559.619...       ME1
+## 9  23    ME          4 POLYGON ((2319.628 1508.762...       ME2</code></pre>
+<p>Now we can replace the data for these states in our original sf-class object.</p>
+<pre class="r"><code># Update the original object with the new information
+f38_cdm_sf &lt;- sf_FiveThirtyEightElectoralCollege %&gt;% 
+  mutate(state_cdm = state) %&gt;% 
+  filter(!state %in% c(&quot;ME&quot;, &quot;NE&quot;)) %&gt;% 
+  bind_rows(cdm_sf)</code></pre>
+</div>
+<div id="states-declared" class="section level1">
+<h1>States declared</h1>
+<p>We have our geospatial information sorted; now to create vectors of the states won by each candidate.</p>
+<pre class="r"><code># Vector of states/districts won by Democrat candidate
+d_states &lt;- c(
+  &quot;AZ&quot;, &quot;CA&quot;, &quot;CO&quot;, &quot;CT&quot;, &quot;DC&quot;, &quot;DE&quot;, &quot;GA&quot;, &quot;HI&quot;,
+  &quot;IL&quot;, &quot;MA&quot;, &quot;MD&quot;, &quot;ME&quot;, &quot;ME1&quot;, &quot;MI&quot;, &quot;MN&quot;, &quot;NE2&quot;,
+  &quot;NH&quot;, &quot;NJ&quot;, &quot;NM&quot;, &quot;NV&quot;, &quot;NY&quot;, &quot;OR&quot;, &quot;PA&quot;, &quot;RI&quot;,
+  &quot;VA&quot;, &quot;VT&quot;, &quot;WA&quot;, &quot;WI&quot;
+)
+
+# Vector of states/districts won by Republican candidate
+r_states &lt;- c(
+  &quot;AK&quot;, &quot;AL&quot;, &quot;AR&quot;, &quot;FL&quot;, &quot;IA&quot;, &quot;ID&quot;, &quot;IN&quot;, &quot;KS&quot;,
+  &quot;KY&quot;, &quot;LA&quot;, &quot;ME2&quot;, &quot;MO&quot;, &quot;MS&quot;, &quot;MT&quot;, &quot;NC&quot;, &quot;ND&quot;,
+  &quot;NE&quot;, &quot;NE1&quot;, &quot;NE3&quot;, &quot;OH&quot;, &quot;OK&quot;, &quot;SC&quot;, &quot;SD&quot;, &quot;TN&quot;,
+  &quot;TX&quot;, &quot;UT&quot;, &quot;WV&quot;, &quot;WY&quot;
+)</code></pre>
+<p>With this information we can add a couple of columns to our geospatial object: <code>result</code> to indicate a <code>D</code>emocrat or <code>R</code>epublican winner, and the symbolic <code>colour</code> of the party (blue for Democrat and red for Republican).</p>
+<pre class="r"><code># Mark districts with winning party and provide colour
+results_sf &lt;- f38_cdm_sf %&gt;% 
+  mutate(
+    result = case_when(
+      state_cdm %in% d_states ~ &quot;D&quot;,  # Democrat
+      state_cdm %in% r_states ~ &quot;R&quot;   # Republican
+    ),
+    colour = case_when(
+      result == &quot;D&quot; ~ &quot;#0000FF&quot;,  # blue
+      result == &quot;R&quot; ~ &quot;#FF0000&quot;   # red
+    )
+  )
+
+# Preview
+results_sf</code></pre>
+<pre><code>## Simple feature collection with 538 features and 6 fields
+## geometry type:  POLYGON
+## dimension:      XY
+## bbox:           xmin: 293.6239 ymin: 16.95238 xmax: 2495.803 ymax: 1661.333
+## CRS:            NA
+## First 10 features:
+##    FID state tilegramVa state_cdm                       geometry result  colour
+## 1   02    AK          3        AK POLYGON ((293.6239 237.3333...      R #FF0000
+## 2   06    CA         55        CA POLYGON ((352.3486 847.619,...      D #0000FF
+## 3   06    CA         55        CA POLYGON ((322.9862 796.7619...      D #0000FF
+## 4   06    CA         55        CA POLYGON ((352.3486 745.9048...      D #0000FF
+## 5   06    CA         55        CA POLYGON ((322.9862 695.0476...      D #0000FF
+## 6   06    CA         55        CA POLYGON ((352.3486 644.1905...      D #0000FF
+## 7   02    AK          3        AK POLYGON ((322.9862 288.1905...      R #FF0000
+## 8   02    AK          3        AK POLYGON ((352.3486 237.3333...      R #FF0000
+## 9   06    CA         55        CA POLYGON ((411.0734 949.3333...      D #0000FF
+## 10  06    CA         55        CA POLYGON ((381.711 898.4762,...      D #0000FF</code></pre>
+</div>
+<div id="entilegramation" class="section level1">
+<h1>Entilegramation</h1>
+<p>The plot will be built from our sf-class object that has been edited for the congressional district method and contains the results; the state boundaries from <code>sf_FiveThirtyEightElectoralCollege.states</code>; and the title with coloured as a key matching the candidate’s party.</p>
+<p>Note that Nebraska (centre-left) and Maine (upper-right) are indeed coloured to represent more than one party, given the share of votes in their congressional district systems.</p>
+<pre class="r"><code># Plot results
+ggplot() +
+  geom_sf(  # layer containing district hexagons
+    data = results_sf,
+    fill = results_sf$colour,  # hex interiors
+    color = results_sf$colour  # hex outlines
+  ) + 
+  geom_sf(  # layer containing state hexagons
+    data = sf_FiveThirtyEightElectoralCollege.states,
+    color = &quot;white&quot;,  # state boundaries
+    alpha = 0,  # transparent
+    size = 1  # thickness
+  ) +
+  labs(  # {ggtext} to colour names by party
+    title = &quot;&lt;span style=&#39;font-size:15pt&#39;&gt;
+    US Presidential Election 2020&quot;,
+    subtitle = &quot;&lt;span style=&#39;font-size:10pt&#39;&gt;Electoral college votes for
+    &lt;span style=&#39;color:#0000FF;&#39;&gt;Joe Biden&lt;/span&gt; (302) and 
+    &lt;span style=&#39;color:#FF0000;&#39;&gt;Donald Trump&lt;/span&gt; (232)
+    &lt;/span&gt;&quot;,
+    caption = &quot;Made with {ggplot2}, {tilemapsR} and {ggtext}&quot;
+  ) +
+  theme_map() +  # remove non-data plot elements
+  theme(
+    plot.title = element_markdown(lineheight = 1.1),
+    plot.subtitle = element_markdown(lineheight = 1.1)
+  )</code></pre>
+<p><img src="/post/2020-11-21-president-tilemap_files/figure-html/plot-1.png" width="672" /></p>
+</div>
+<div id="zoom-enhance" class="section level1">
+<h1>Zoom! Enhance!</h1>
+<p>In case you didn’t spot Nebraska and Maine, we can plot these two alone and label them by <code>state_cdm</code> to expose the district names.</p>
+<pre class="r"><code># Quick and dirty function to plot each state
+plot_state &lt;- function(state_abbrev) {
+  
+  # Isolate state data
+  state_sf &lt;- results_sf %&gt;% 
+    filter(str_detect(state, paste0(&quot;^&quot;, state_abbrev)))
+  
+  # Build plot
+  p &lt;- ggplot() +
+    geom_sf(
+      data = state_sf,
+      fill = state_sf$colour, color = state_sf$colour
+    ) +
+    geom_sf_text(  # overlay state abbrev
+      data = state_sf, aes(label = state_cdm),
+      size = 5, color = &quot;white&quot;
+    ) +
+    theme_void()
+  
+  # Provide a 
+  if (state_abbrev == &quot;NE&quot;) {
+    p &lt;- p + labs(title = &quot;Nebraska&quot;)
+  } else if (state_abbrev == &quot;ME&quot;){
+    p &lt;- p + labs(title = &quot;Maine&quot;)
+  }
+  
+  return(p)
+  
+}
+
+# Arrange plots side-by-side with {patchwork}
+plot_state(&quot;NE&quot;) + plot_state(&quot;ME&quot;)</code></pre>
+<p><img src="/post/2020-11-21-president-tilemap_files/figure-html/plot2-1.png" width="672" /></p>
+<p>Note that the districts aren’t necessarily placed in geographically-accurate locations within each state, relatively speaking. But that’s okay, because the tilegram is not an accurate representation of geography anyway.</p>
+</div>
+<div id="development" class="section level1">
+<h1>Development</h1>
+<p>I’ve chosen to keep these maps very simple, partly for the aesthetics, but also because the purpose is to communicate the share of electoral college votes with minimal distraction.</p>
+<p>You could do a number of other things to provide further information, like label states with <code>geom_sf_text()</code>, colour the tiles by vote share rather than outright winner, or make it interactive with <a href="https://rstudio.github.io/leaflet/">the {leaflet} package</a> and include mouseovers to show a full breakdown of results.</p>
+<hr />
+<details>
+<p><summary>Session info</summary></p>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.0.2 (2020-06-22)
+##  os       macOS Mojave 10.14.6        
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2020-11-21                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date       lib source                          
+##  assertthat    0.2.1   2019-03-21 [1] CRAN (R 4.0.0)                  
+##  blogdown      0.19    2020-05-22 [1] CRAN (R 4.0.0)                  
+##  bookdown      0.19    2020-05-15 [1] CRAN (R 4.0.0)                  
+##  class         7.3-17  2020-04-26 [1] CRAN (R 4.0.2)                  
+##  classInt      0.4-3   2020-04-07 [1] CRAN (R 4.0.0)                  
+##  cli           2.0.2   2020-02-28 [1] CRAN (R 4.0.0)                  
+##  colorspace    1.4-1   2019-03-18 [1] CRAN (R 4.0.0)                  
+##  crayon        1.3.4   2017-09-16 [1] CRAN (R 4.0.0)                  
+##  DBI           1.1.0   2019-12-15 [1] CRAN (R 4.0.0)                  
+##  digest        0.6.25  2020-02-23 [1] CRAN (R 4.0.0)                  
+##  dplyr       * 1.0.0   2020-08-10 [1] Github (tidyverse/dplyr@5e3f3ec)
+##  e1071         1.7-3   2019-11-26 [1] CRAN (R 4.0.0)                  
+##  ellipsis      0.3.1   2020-05-15 [1] CRAN (R 4.0.0)                  
+##  evaluate      0.14    2019-05-28 [1] CRAN (R 4.0.0)                  
+##  fansi         0.4.1   2020-01-08 [1] CRAN (R 4.0.0)                  
+##  farver        2.0.3   2020-01-16 [1] CRAN (R 4.0.0)                  
+##  generics      0.0.2   2018-11-29 [1] CRAN (R 4.0.0)                  
+##  ggplot2     * 3.3.1   2020-05-28 [1] CRAN (R 4.0.0)                  
+##  ggtext      * 0.1.0   2020-06-04 [1] CRAN (R 4.0.2)                  
+##  ggthemes    * 4.2.0   2019-05-13 [1] CRAN (R 4.0.2)                  
+##  glue          1.4.1   2020-05-13 [1] CRAN (R 4.0.0)                  
+##  gridtext      0.1.1   2020-02-24 [1] CRAN (R 4.0.2)                  
+##  gtable        0.3.0   2019-03-25 [1] CRAN (R 4.0.0)                  
+##  htmltools     0.5.0   2020-06-16 [1] CRAN (R 4.0.2)                  
+##  KernSmooth    2.23-17 2020-04-26 [1] CRAN (R 4.0.2)                  
+##  knitr         1.29    2020-06-23 [1] CRAN (R 4.0.2)                  
+##  lifecycle     0.2.0   2020-03-06 [1] CRAN (R 4.0.0)                  
+##  magrittr      1.5     2014-11-22 [1] CRAN (R 4.0.0)                  
+##  markdown      1.1     2019-08-07 [1] CRAN (R 4.0.0)                  
+##  munsell       0.5.0   2018-06-12 [1] CRAN (R 4.0.0)                  
+##  patchwork   * 1.0.1   2020-06-22 [1] CRAN (R 4.0.0)                  
+##  pillar        1.4.6   2020-07-10 [1] CRAN (R 4.0.2)                  
+##  pkgconfig     2.0.3   2019-09-22 [1] CRAN (R 4.0.0)                  
+##  purrr         0.3.4   2020-04-17 [1] CRAN (R 4.0.0)                  
+##  R6            2.4.1   2019-11-12 [1] CRAN (R 4.0.0)                  
+##  Rcpp          1.0.5   2020-07-06 [1] CRAN (R 4.0.2)                  
+##  rlang         0.4.7   2020-07-09 [1] CRAN (R 4.0.2)                  
+##  rmarkdown     2.1     2020-01-20 [1] CRAN (R 4.0.0)                  
+##  scales        1.1.1   2020-05-11 [1] CRAN (R 4.0.0)                  
+##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.0.0)                  
+##  sf          * 0.9-4   2020-06-13 [1] CRAN (R 4.0.0)                  
+##  stringi       1.4.6   2020-02-17 [1] CRAN (R 4.0.0)                  
+##  stringr     * 1.4.0   2019-02-10 [1] CRAN (R 4.0.0)                  
+##  tibble        3.0.3   2020-07-10 [1] CRAN (R 4.0.2)                  
+##  tidyselect    1.1.0   2020-05-11 [1] CRAN (R 4.0.0)                  
+##  tilegramsR  * 0.2.0   2017-03-29 [1] CRAN (R 4.0.2)                  
+##  units         0.6-7   2020-06-13 [1] CRAN (R 4.0.0)                  
+##  vctrs         0.3.2   2020-07-15 [1] CRAN (R 4.0.0)                  
+##  withr         2.2.0   2020-04-20 [1] CRAN (R 4.0.0)                  
+##  xfun          0.16    2020-07-24 [1] CRAN (R 4.0.2)                  
+##  xml2          1.3.2   2020-04-23 [1] CRAN (R 4.0.0)                  
+##  yaml          2.2.1   2020-02-01 [1] CRAN (R 4.0.0)                  
+## 
+## [1] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
+</details>
+</div>

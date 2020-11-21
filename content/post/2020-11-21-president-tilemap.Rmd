@@ -1,0 +1,241 @@
+---
+title: 'US presidential election 2020 with {tilegramsR}'
+author: Matt Dray
+date: '2020-11-21'
+slug: president-tilegram
+categories:
+  - code
+  - data-viz
+  - tutorial
+tags:
+  - election
+  - geospatial
+  - ggtext
+  - maps
+  - patchwork
+  - politics
+  - r
+  - tidyverse
+  - tilegramsR
+---
+
+<div class="figure">
+<img src="/post/2020-11-21-president-tilemap_files/tile.png" alt="A zoomed-in portion of a tilegram map, with hexagons coloured red and blue to indicate the winning party." width="100%"/>
+</div>
+
+# tl;dr
+
+[The {tilegramsR} package](https://bhaskarvk.github.io/tilegramsR/) contains a tilegram object with a separate tile for each elector in [the US electoral college](https://en.wikipedia.org/wiki/United_States_Electoral_College). I amended it for states that use the [congressional district method](https://www.fairvote.org/maine_nebraska) and generated a minimalist map of the results for the 2020 US presidential election.
+
+# Back to college
+
+It's best to scale subnational divisions by voter count when visualising election results. This is because election outcomes are decided by people, not land area.
+
+The US presidential election is a special case because vote counts don't directly elect a leader. Instead there's [an 'electoral college' system](https://en.wikipedia.org/wiki/United_States_Electoral_College). Put extremely simply, each state has a number of representatives ('electors') that are sent to vote for the candidate that got the majority vote share in their state. The winning national candidate has the majority (270) of state electors declaring for them.
+
+So, we should scale maps of US presidential election results by electoral college contribution, not a direct count of the citizens that voted.
+
+# Hexageometry
+
+[Cartograms](https://en.wikipedia.org/wiki/Cartogram) are maps where the geographic entities are resized according to something other than area. This can be good for visualising election results because subnational divisions can be sized by population.
+
+A simplification of this is a tilegram, which disregards the shape of the geographic entities entirely and represents them with uniform shapes instead. The tiles could be squares, but hexagons give you a bit more freedom to approximate geographic location. [Hexagons are the bestagons](https://www.youtube.com/watch?v=thOifuHs6eY), after all.
+
+Fortunately, [the {tilegramsR} package by Bhaskar V. Karambelkar](https://bhaskarvk.github.io/tilegramsR/) has an `sf_FiveThirtyEightElectoralCollege` object that contains tilegram data for the US where each state is represented by one hexagon per electoral college vote. It's [an sf-class object](https://r-spatial.github.io/sf/), which means it contains tidy geospatial information: each row is an elector, with a column for the state abbreviation and a column for the hexagon geometries.
+
+The object was created and named for the tilegrams by [fivethirtyeight](https://fivethirtyeight.com/), a company named after the total count of electors in the US electoral college.
+
+Before we take a look, let's load the packages used in this post.
+
+```{r packages, message=FALSE, warning=FALSE}
+library(dplyr)  # data manipulation
+library(stringr)  # string manipulation
+library(tilegramsR)  # tilegram objects
+library(ggplot2)  # plotting
+library(ggtext)  # text manipulation in plots
+library(ggthemes)  # has a map theme
+library(patchwork)  # organise plots
+```
+
+Here's what that electoral college tilegram object looks like.
+
+```{r college-538}
+sf_FiveThirtyEightElectoralCollege
+```
+
+Similarly, there's an object called `sf_FiveThirtyEightElectoralCollege.states` that contains geometry to delineate state boundaries in the `sf_FiveThirtyEightElectoralCollege` object. We can combine these and look at a simple tilegram of the US electoral college using {ggplot2} and the special `geom_sf()` geom for visualising geospatial data stored in sf format.
+
+```{r college-538-map}
+ggplot() + 
+  geom_sf(data = sf_FiveThirtyEightElectoralCollege) + 
+  geom_sf(
+    data = sf_FiveThirtyEightElectoralCollege.states,
+    color = "black", alpha = 0, size = 1
+  ) + 
+  theme_map()
+```
+
+Each elector is represented by a single hexagon and groups of hexagons are combined into states (thick outlines). Hexagons are placed roughly in the familiar shape of the US despite the change to the apparent area of each one. The non-contiguous regions in the lower left are Alaska (three electors) and Hawaii (four).
+
+# The odd ones out
+
+In general, the winner of the popular vote within a state gains all the electors for that state. There are two exceptions: Nebraska (NE) and Maine (ME). These states use [the 'congressional district method'](https://www.fairvote.org/maine_nebraska). The popular-vote winner wins two electors by default and the remaining electors are based on the winners of districts within the state (three in Nebraska and two in Maine). In other words, the electors from these states could be from more than one party.
+
+The `sf_FiveThirtyEightElectoralCollege` doesn't account for the congressional district method, so we'll have to build this in ourselves. We can isolate rows for Nebraska and Maine and then generate a `state_cdm` column to create distinct names for the districts, which we'll number sequentially.
+
+```{r district-college}
+# Isolate/update states with the congressional district method
+cdm_sf <- sf_FiveThirtyEightElectoralCollege %>% 
+  filter(state %in% c("NE", "ME")) %>% 
+  mutate(
+    state_cdm = c(
+      "NE", "NE", "NE1", "NE2", "NE3", 
+      "ME", "ME", "ME1", "ME2"
+    )
+  )
+
+# Preview
+cdm_sf
+```
+
+Now we can replace the data for these states in our original sf-class object.
+
+```{r update}
+# Update the original object with the new information
+f38_cdm_sf <- sf_FiveThirtyEightElectoralCollege %>% 
+  mutate(state_cdm = state) %>% 
+  filter(!state %in% c("ME", "NE")) %>% 
+  bind_rows(cdm_sf)
+```
+
+# States declared
+
+We have our geospatial information sorted; now to create vectors of the states won by each candidate.
+
+```{r win-vectors}
+# Vector of states/districts won by Democrat candidate
+d_states <- c(
+  "AZ", "CA", "CO", "CT", "DC", "DE", "GA", "HI",
+  "IL", "MA", "MD", "ME", "ME1", "MI", "MN", "NE2",
+  "NH", "NJ", "NM", "NV", "NY", "OR", "PA", "RI",
+  "VA", "VT", "WA", "WI"
+)
+
+# Vector of states/districts won by Republican candidate
+r_states <- c(
+  "AK", "AL", "AR", "FL", "IA", "ID", "IN", "KS",
+  "KY", "LA", "ME2", "MO", "MS", "MT", "NC", "ND",
+  "NE", "NE1", "NE3", "OH", "OK", "SC", "SD", "TN",
+  "TX", "UT", "WV", "WY"
+)
+```
+
+With this information we can add a couple of columns to our geospatial object: `result` to indicate a `D`emocrat or `R`epublican winner, and the symbolic `colour` of the party (blue for Democrat and red for Republican).
+
+```{r sf-win-join}
+# Mark districts with winning party and provide colour
+results_sf <- f38_cdm_sf %>% 
+  mutate(
+    result = case_when(
+      state_cdm %in% d_states ~ "D",  # Democrat
+      state_cdm %in% r_states ~ "R"   # Republican
+    ),
+    colour = case_when(
+      result == "D" ~ "#0000FF",  # blue
+      result == "R" ~ "#FF0000"   # red
+    )
+  )
+
+# Preview
+results_sf
+```
+
+# Entilegramation
+
+The plot will be built from our sf-class object that has been edited for the congressional district method and contains the results; the state boundaries from `sf_FiveThirtyEightElectoralCollege.states`; and the title with coloured as a key matching the candidate's party.
+
+Note that Nebraska (centre-left) and Maine (upper-right) are indeed coloured to represent more than one party, given the share of votes in their congressional district systems.
+
+```{r plot}
+# Plot results
+ggplot() +
+  geom_sf(  # layer containing district hexagons
+    data = results_sf,
+    fill = results_sf$colour,  # hex interiors
+    color = results_sf$colour  # hex outlines
+  ) + 
+  geom_sf(  # layer containing state hexagons
+    data = sf_FiveThirtyEightElectoralCollege.states,
+    color = "white",  # state boundaries
+    alpha = 0,  # transparent
+    size = 1  # thickness
+  ) +
+  labs(  # {ggtext} to colour names by party
+    title = "<span style='font-size:15pt'>
+    US Presidential Election 2020",
+    subtitle = "<span style='font-size:10pt'>Electoral college votes for
+    <span style='color:#0000FF;'>Joe Biden</span> (302) and 
+    <span style='color:#FF0000;'>Donald Trump</span> (232)
+    </span>",
+    caption = "Made with {ggplot2}, {tilemapsR} and {ggtext}"
+  ) +
+  theme_map() +  # remove non-data plot elements
+  theme(
+    plot.title = element_markdown(lineheight = 1.1),
+    plot.subtitle = element_markdown(lineheight = 1.1)
+  )
+```
+
+# Zoom! Enhance!
+
+In case you didn't spot Nebraska and Maine, we can plot these two alone and label them by `state_cdm` to expose the district names. 
+
+```{r plot2}
+# Quick and dirty function to plot each state
+plot_state <- function(state_abbrev) {
+  
+  # Isolate state data
+  state_sf <- results_sf %>% 
+    filter(str_detect(state, paste0("^", state_abbrev)))
+  
+  # Build plot
+  p <- ggplot() +
+    geom_sf(
+      data = state_sf,
+      fill = state_sf$colour, color = state_sf$colour
+    ) +
+    geom_sf_text(  # overlay state abbrev
+      data = state_sf, aes(label = state_cdm),
+      size = 5, color = "white"
+    ) +
+    theme_void()
+  
+  # Provide a 
+  if (state_abbrev == "NE") {
+    p <- p + labs(title = "Nebraska")
+  } else if (state_abbrev == "ME"){
+    p <- p + labs(title = "Maine")
+  }
+  
+  return(p)
+  
+}
+
+# Arrange plots side-by-side with {patchwork}
+plot_state("NE") + plot_state("ME")
+```
+
+Note that the districts aren't necessarily placed in geographically-accurate locations within each state, relatively speaking. But that's okay, because the tilegram is not an accurate representation of geography anyway.
+
+# Development
+
+I've chosen to keep these maps very simple, partly for the aesthetics, but also because the purpose is to communicate the share of electoral college votes with minimal distraction.
+
+You could do a number of other things to provide further information, like label states with `geom_sf_text()`, colour the tiles by vote share rather than outright winner, or make it interactive with [the {leaflet} package](https://rstudio.github.io/leaflet/) and include mouseovers to show a full breakdown of results.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
