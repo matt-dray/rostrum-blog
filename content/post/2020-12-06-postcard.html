@@ -1,0 +1,91 @@
+---
+title: 'Send {postcards} for a personal webpage'
+author: 'Matt Dray'
+date: '2020-12-06'
+slug: postcard
+categories:
+  - code
+  - tutorial
+tags:
+  - namecheap
+  - netlify
+  - postcards
+  - r
+draft: yes
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+<link href="/rmarkdown-libs/anchor-sections/anchor-sections.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/anchor-sections/anchor-sections.js"></script>
+
+
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<blockquote>
+<p>Dear ma and pa,</p>
+<p>The food here is okay. I’ve mostly been setting up a single-page personal site with {postcards} in R, hosting it with Netlify and setting up a custom domain with Namecheap. More rain is forecast for tomorrow.</p>
+<p>Wish you were here,</p>
+<p>Matthew</p>
+</blockquote>
+</div>
+<div id="section" class="section level1">
+<h1></h1>
+<p>I’ve been thinking about a single-page website with my face on it and links to my internet-based stuff. I even got as far as buying <a href="https://www.matt-dray.com"><code>matt-dray.com/</code></a>.</p>
+<p>Yes, I could spend weeks centering that div to make a cool page myself. But why bother when <a href="https://twitter.com/seankross">Sean Kross</a> has recently announced <a href="https://github.com/seankross/postcards">the {postcards} R package</a> for exactly this use case?</p>
+<p>This post is a walkthrough to remind me how to:</p>
+<ol style="list-style-type: decimal">
+<li>Build a webpage with {postcards}</li>
+<li>Host it with Netlify</li>
+<li>Point to it with a custom domain from Namecheap</li>
+</ol>
+</div>
+<div id="write-your-postcard" class="section level1">
+<h1>Write your postcard</h1>
+<p>{postcards} provides some R Markdown templates that contain space for a photo, a mini-bio and some buttons to link out to your profiles elsewhere. See <a href="https://github.com/seankross/postcards/blob/main/README.md">the readme on GitHub</a> for more detail.</p>
+<p>In short, you can install the development version from GitHub:</p>
+<pre class="r"><code>remotes::install_github(&quot;seankross/postcards&quot;)</code></pre>
+<p>I generated an R Markdown file with the Jolla style using the following line:</p>
+<pre class="r"><code>rmarkdown::draft(&quot;index.Rmd&quot;, &quot;Jolla&quot;, package = &quot;postcards&quot;)</code></pre>
+<p>The file is called <code>index.Rmd</code> so it will be rendered to <code>index.html</code>, which is the industry-standard default page to read when a site is visited.</p>
+<p>In the YAML header of the template you can specify a <code>title</code>, which is likely to be your name; the <code>output</code> format, which is the name for our chosen {postcards} template in this case; <code>links</code>, where you specify the wording and underlying links for the page’s buttons; <code>image</code> for your bokeh-rich professional headshot and <code>favicon</code> for the little image to appear alongside your page title in a browser tab.</p>
+<pre><code>---
+title: &quot;Matt Dray&quot;
+image: &quot;matt.jpg&quot;
+links:
+  - Blog: &quot;https://www.rostrum.blog/&quot;
+  - Twitter: &quot;https://twitter.com/mattdray/&quot;
+  - GitHub: &quot;https://github.com/matt-dray/&quot;
+output:
+  postcards::jolla
+favicon: favicon.gif
+---</code></pre>
+<p>You can then write your mini bio in the body text of the document. I garnished mine with emoji via Hadley Wickham’s {emo} package.</p>
+<p>The {postcards} templates are ready to go out of the box but you can still tinker. I decided to pull in a font, <a href="https://github.com/belluzj/fantasque-sans">Fantasque Sans Mono by Jany Belluz</a><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>, and put a CSS chunk in the R Markdown to call it.</p>
+</div>
+<div id="pop-it-in-the-post" class="section level1">
+<h1>Pop it in the post</h1>
+<p>You can pop your postcard in a Github repo and serve it with GitHub Pages if you want. Upside: it’s free. Downside: your URL will be in the form <code>username.github.io/your-postcard-repo/</code></p>
+<p>Instead you could use a service like Netlify, which can serve your site from a GitHub/GitLab/BitBucket repo via a custom domain. Other providers are available, but I’ve had success with Netlify for this blog.</p>
+<p>After signing into my Netlify account, I:</p>
+<ul>
+<li>clicked the ‘New site from Git’ button</li>
+<li>clicked ‘GitHub’ in ‘1. Connect to Git provider’, because that’s where my {postcards} repo is stored</li>
+<li>selected my <code>github.com/matt-dray/postcard/</code> repo in ‘2. Pick a repository’ after authorising Netlify to connecto to it</li>
+<li>left the ‘build command’ empty in step ‘3. Build options and deploy!’ and set the ‘publish directory’ to ‘/’ because I want to serve <code>index.html</code> from the root of the repo</li>
+<li>clicked ‘deploy site’</li>
+</ul>
+<p>Netlify will build the site and serve it immediately from a web address in the form <code>random-name.netlify.app/</code>.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> But</p>
+</div>
+<div id="address-it-properly" class="section level1">
+<h1>Address it properly</h1>
+<p>You can buy web addresses. I bought <code>matt-dray.com</code> from Namecheap, one of many providers.</p>
+<p>I changed some settings in Netlify to make my domain name point to my webpage.</p>
+<p>So now <a href="https://www.matt-dray.com/"><code>https://www.matt-dray.com/</code></a> goes to my page.</p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>I learnt about this via a GitHub star by <a href="https://twitter.com/apreshill">Alison Presmanes Hill</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>You can change the random element to be more meaningful. For example, I changed it to <a href="https://www.matt-dray.netlify.app/"><code>matt-dray.netlify.app/</code></a>. You could stop there, but the whole point of using Netlify in this example is to use a custom domain instead.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>

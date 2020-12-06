@@ -1,0 +1,102 @@
+---
+title: 'Send {postcards} for a personal webpage'
+author: 'Matt Dray'
+date: '2020-12-06'
+slug: postcard
+categories:
+  - code
+  - tutorial
+tags:
+  - namecheap
+  - netlify
+  - postcards
+  - r
+draft: yes
+---
+
+# tl;dr
+
+>Dear ma and pa,
+>
+>The food here is okay. I've mostly been setting up a single-page personal site with {postcards} in R, hosting it with Netlify and setting up a custom domain with Namecheap. More rain is forecast for tomorrow.
+>
+>Wish you were here,
+>
+>Matthew
+
+# 
+
+I've been thinking about a single-page website with my face on it and links to my internet-based stuff. I even got as far as buying [`matt-dray.com/`](https://www.matt-dray.com).
+
+Yes, I could spend weeks centering that div to make a cool page myself. But why bother when [Sean Kross](https://twitter.com/seankross) has recently announced [the {postcards} R package](https://github.com/seankross/postcards) for exactly this use case?
+
+This post is a walkthrough to remind me how to:
+
+1. Build a webpage with {postcards}
+1. Host it with Netlify
+1. Point to it with a custom domain from Namecheap
+
+# Write your postcard
+
+{postcards} provides some R Markdown templates that contain space for a photo, a mini-bio and some buttons to link out to your profiles elsewhere. See [the readme on GitHub](https://github.com/seankross/postcards/blob/main/README.md) for more detail.
+
+In short, you can install the development version from GitHub:
+
+```{r install, eval=FALSE}
+remotes::install_github("seankross/postcards")
+```
+
+I generated an R Markdown file with the Jolla style using the following line:
+
+```{r templates, eval=FALSE}
+rmarkdown::draft("index.Rmd", "Jolla", package = "postcards")
+```
+
+The file is called `index.Rmd` so it will be rendered to `index.html`, which is the industry-standard default page to read when a site is visited.
+
+In the YAML header of the template you can specify a `title`, which is likely to be your name; the `output` format, which is the name for our chosen {postcards} template in this case; `links`, where you specify the wording and underlying links for the page's buttons; `image` for your bokeh-rich professional headshot and `favicon` for the little image to appear alongside your page title in a browser tab.
+
+```
+---
+title: "Matt Dray"
+image: "matt.jpg"
+links:
+  - Blog: "https://www.rostrum.blog/"
+  - Twitter: "https://twitter.com/mattdray/"
+  - GitHub: "https://github.com/matt-dray/"
+output:
+  postcards::jolla
+favicon: favicon.gif
+---
+```
+
+You can then write your mini bio in the body text of the document. I garnished mine with emoji via Hadley Wickham's {emo} package.
+
+The {postcards} templates are ready to go out of the box but you can still tinker. I decided to pull in a font, [Fantasque Sans Mono by Jany Belluz](https://github.com/belluzj/fantasque-sans)[^font], and put a CSS chunk in the R Markdown to call it.
+
+# Pop it in the post
+
+You can pop your postcard in a Github repo and serve it with GitHub Pages if you want. Upside: it's free. Downside: your URL will be in the form `username.github.io/your-postcard-repo/`
+
+Instead you could use a service like Netlify, which can serve your site from a GitHub/GitLab/BitBucket repo via a custom domain. Other providers are available, but I've had success with Netlify for this blog.
+
+After signing into my Netlify account, I:
+
+* clicked the 'New site from Git' button
+* clicked 'GitHub' in '1. Connect to Git provider', because that's where my {postcards} repo is stored
+* selected my `github.com/matt-dray/postcard/` repo in '2. Pick a repository' after authorising Netlify to connecto to it
+* left the 'build command' empty in step '3. Build options and deploy!' and set the 'publish directory' to '/' because I want to serve `index.html` from the root of the repo
+* clicked 'deploy site'
+
+Netlify will build the site and serve it immediately from a web address in the form `random-name.netlify.app/`.[^random-name] But 
+
+# Address it properly
+
+You can buy web addresses. I bought `matt-dray.com` from Namecheap, one of many providers.
+
+I changed some settings in Netlify to make my domain name point to my webpage.
+
+So now [`https://www.matt-dray.com/`](https://www.matt-dray.com/) goes to my page.
+
+[^font]: I learnt about this via a GitHub star by [Alison Presmanes Hill](https://twitter.com/apreshill).
+[^random-name]: You can change the random element to be more meaningful. For example, I changed it to [`matt-dray.netlify.app/`](https://www.matt-dray.netlify.app/). You could stop there, but the whole point of using Netlify in this example is to use a custom domain instead.
