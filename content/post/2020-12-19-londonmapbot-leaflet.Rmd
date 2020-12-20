@@ -1,0 +1,122 @@
+---
+title: 'londonmapbot {leaflet}'
+author: 'Matt Dray'
+date: '2020-12-19'
+slug: londonmapbot-leaflet
+categories:
+  - data-viz
+  - code
+  - tutorial
+tags:
+  - r
+  - leaflet
+  - maps
+  - twitter
+draft: yes
+---
+
+# Packages
+
+```{r packages, message=FALSE, warning=FALSE}
+library(tidyverse)
+
+library(rtweet)
+
+library(sf)
+library(leaflet)
+library(PostcodesioR)
+library(geojsonio)
+```
+
+# Fetch tweets
+
+This is so easy it should be illegal.
+
+```{r get-tweets}
+lmb_tweets <- get_timeline("londonmapbot", n = 3200)
+lmb_tweets[1:5, c("created_at", "text")]
+```
+
+# Extract tweet information
+
+Get:
+
+* the `status_id` as the unique tweet identifier
+# the datetime the tweet was `created_at`
+* the latitude and longitude out of the tweet text
+* the `media_url` (the image) and the `urls_expanded_urls` (the OpenStreetMap link). 
+
+```{r simplify-tweets}
+lmb_tweets_ll <- lmb_tweets %>% 
+  filter(str_detect(text, "^\\d")) %>%  # must start with a digit
+  separate(  # break column into new columns given separator
+    text,  # column to separate
+    into = c("lat", "lon"),  # names to split into
+    sep = "[:space:]",  # separate on spaces
+    extra = "drop" # discard split elements
+  ) %>% 
+  mutate(
+    lat = str_remove(lat, ","),
+    across(c(lat, lon), as.numeric)
+  ) %>% 
+  select(
+    status_id, created_at, lat, lon,
+    osm_url = urls_expanded_url, media_url
+  ) %>% 
+  mutate(
+    reverse_geocode = map2(lon, lat, ~reverse_geocoding(.x, .y, limit = 1))
+  ) %>% 
+  unnest(cols = reverse_geocode) %>%
+  hoist(reverse_geocode, "postcode") %>% 
+  hoist(reverse_geocode, "admin_district")
+
+lmb_tweets_ll[1:5, c("status_id", "lat", "lon")]
+```
+
+# Convert to spatial object
+
+The `lat` and `lon` can be passed to `sf::st_as_sf()` to convert the object to a spatial object. The coordinate reference system, `crs`, is `4236` because it's based on latitude and longitude.
+
+```{r make-spatial}
+lmb_sf <- lmb_tweets_ll %>% 
+  st_as_sf(coords = c("lon", "lat"), crs = 4326, remove = FALSE)
+
+lmb_sf[1:5, c("status_id", "geometry")]
+```
+
+# Create map
+
+Since there are thousands of points, it makes sense to cluster them with `markerClusterOptions()`. Click a cluster to expand until you reach a marker.
+
+The markers have rich pop-ups when clicked. You'll get information from the tweet, including URLs, plus some reverse geocoding with {PostcodesioR} to get the location and postcode.
+
+```{r make-map}
+ldn_sf <- geojson_read(
+  "https://opendata.arcgis.com/datasets/01fd6b2d7600446d8af768005992f76a_4.geojson",
+  what = "sp"  # spatial class
+) %>% 
+  st_as_sf() %>% 
+  filter(nuts118nm == "London")
+
+leaflet(ldn_sf) %>% 
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(
+    color = "black", weight = 2,
+    opacity = 1, fillOpacity = 0.2
+  ) %>% 
+  addAwesomeMarkers(
+    lng = lmb_sf$lon, lat = lmb_sf$lat,
+    clusterOptions = markerClusterOptions(),
+    popup =
+      ~paste0(
+        emo::ji("round_pushpin"), " ", lmb_sf$lat, ", ", lmb_sf$lon, "<br>",
+        emo::ji("postbox"), lmb_sf$admin_district, 
+          ", ", lmb_sf$postcode, "<br>",
+        emo::ji("bird"), " <a href='https://twitter.com/londonmapbot/status/",
+          lmb_sf$status_id, "'>Tweet</a><br>",
+        emo::ji("world_map"), " ", "<a href='",
+          lmb_sf$osm_url, "' width='100%'>OpenStreetMap</a><br><br>",
+        "<img src='", lmb_sf$media_url, "' width='200'>"
+      )
+  )
+```
