@@ -1,122 +1,250 @@
 ---
-title: 'londonmapbot {leaflet}'
+title: 'londonmapbot tweets with {leaflet}'
 author: 'Matt Dray'
-date: '2020-12-19'
+date: '2020-12-20'
 slug: londonmapbot-leaflet
 categories:
-  - data-viz
   - code
+  - data-viz
   - tutorial
 tags:
-  - r
   - leaflet
+  - london
   - maps
+  - PostcodesioR
+  - r
+  - rtweet
+  - sf
+  - spatial
+  - tidyverse
   - twitter
-draft: yes
+draft: no
 ---
+
+<div class="figure">
+<img src="/post/2020-12-19-londonmapbot-leaflet_files/leicester-square.png" alt="Screenshot of a leaflet map showing Leicester Square, London, with a popup giving geographic information and a satellite view." width="100%"/>
+<p class="caption">Closest I've been to Leicester Square since the start of lockdown.</p>
+</div>
+
+# tl;dr
+
+I recently [made a Twitter bot with R, {rtweet}, MapBox and GitHub Actions](https://www.rostrum.blog/2020/09/21/londonmapbot/) -- [londonmapbot](https://twitter.com/londonmapbot) -- that tweets images of random coordinates in London. I decided to explore them interactively by creating a simple [{leaflet}](https://rstudio.github.io/leaflet/) map. You can [jump directly to the map](#map)).
+
+# The bot
+
+I built [the londonmapbot Twitter bot](https://www.twitter.com/londonmapbot/) as a fun little project to get to grips with [GitHub Actions](https://github.com/features/actions). An action is scheduled every 30 minutes to run some R code that (1) selects random coordinates in London, (2) fetches a satellite image from [the MapBox API](https://docs.mapbox.com/api/overview/), (3) generates an [OpenStreetMap](https://www.openstreetmap.org/) URL, all of which are (4) passed to [{rtweet}](https://docs.ropensci.org/rtweet/) to post to the londonmapbot account.
+
+The outputs have been compelling so far. The composition is usually 'accidentally' pleasing. Sometimes landmarks are captured, like [The Shard](https://twitter.com/londonmapbot/status/1334220239467376643?s=20), [The Natural History Museum and V&A](https://twitter.com/londonmapbot/status/1333173374332395522?s=20) and [Heathrow](https://twitter.com/londonmapbot/status/1333702486545354752?s=20). 
+
+<div class="figure">
+<img src="/post/2020-12-19-londonmapbot-leaflet_files/shard.png" alt="Screenshot of a tweet by londonmapbot showing a satellite view of the area round London Bridge Station and The Shard." width="100%"/>
+<p class="caption">The Shard looks pointy even in 2D.</p>
+</div>
+
+I was wondering whether the bot has 'found' other landmarks that I hadn't noticed or whether it's found my house. [The londonmapbot source code](https://github.com/matt-dray/londonmapbot) doesn't have a log file for all the coordinates it's generated, so I figured the easiest way to get this information and explore it would be to grab all the tweets -- which contain the coordinates as text -- and then map the results.
 
 # Packages
 
+I'm loading [the tidyverse](https://www.tidyverse.org/) for data manipulation with {dplyr}, {tidyr} and {stringr}. [{rtweet}](https://docs.ropensci.org/rtweet/) greatly simplifies the Twitter API and the objects it returns. We'll use it to fetch all the tweets from londonmapbot.
+
+I'm using a few geography-related packages: [{sf}](https://r-spatial.github.io/sf/) for tidy dataframes with spatial information; [{geojsonio}](https://docs.ropensci.org/geojsonio/) to read spatial files in geojson format; [{PostcodesioR}](https://docs.ropensci.org/PostcodesioR/) to fetch additional geographic data given our x-y information; and [{leaflet}](https://rstudio.github.io/leaflet/) to build interactive maps from spatial data.
+
 ```{r packages, message=FALSE, warning=FALSE}
 library(tidyverse)
-
 library(rtweet)
-
 library(sf)
-library(leaflet)
-library(PostcodesioR)
 library(geojsonio)
+library(PostcodesioR)
+library(leaflet)
 ```
+
+A particular shoutout to [rOpenSci](https://ropensci.org/) for this post: {rtweet}, {geojsonio} and {PostcodesioR} have all passed muster to become part of the rOpenSci suite of approved packages.
 
 # Fetch tweets
 
-This is so easy it should be illegal.
+{rtweet} does all the legwork to fetch and parse information from the Twitter API, saving you loads of effort.
+
+The `rtweet::get_timeline()` function is amazing in its user-side simplicity. Pass the account name from which to fetch tweets, along with the number of tweets to get (3200 is the maximum). 
 
 ```{r get-tweets}
 lmb_tweets <- get_timeline("londonmapbot", n = 3200)
-lmb_tweets[1:5, c("created_at", "text")]
+lmb_tweets[1:5, c("created_at", "text")]  # limited preview
 ```
+
+{rtweet} has a function to quick-plot tweets over time. There's meant to be a tweet every half-hour from londonmapbot, but GitHub Actions has been a little inconsistent and sometimes fails to post.
+
+```{r ts-plot}
+rtweet::ts_plot(lmb_tweets) +  # plot daily tweets
+  labs(
+    title = "@londonmapbot tweets per day",
+    x = "", y = "", caption = "Data collected via {rtweet}"
+  )
+```
+
+Is that a downward trend at the end? I'll keep an eye on that. 
 
 # Extract tweet information
 
-Get:
+The dataframe returned by {rtweet} contains nearly 100 columns. For our purposes we can minimise to:
 
-* the `status_id` as the unique tweet identifier
-# the datetime the tweet was `created_at`
-* the latitude and longitude out of the tweet text
-* the `media_url` (the image) and the `urls_expanded_urls` (the OpenStreetMap link). 
+* the unique tweet identifier, `status_id`, which we can use to build a URL back to the tweet
+* the datetime the tweet was `created_at`
+* the tweet text content, from which we can isolate the latitude and longitude values
+* the `media_url` to the MapBox image attached to each tweet
+* the full OpenStreetMap link in each tweet via `urls_expanded_urls` 
 
 ```{r simplify-tweets}
-lmb_tweets_ll <- lmb_tweets %>% 
+lmb_simple <- lmb_tweets %>% 
   filter(str_detect(text, "^\\d")) %>%  # must start with a digit
   separate(  # break column into new columns given separator
     text,  # column to separate
     into = c("lat", "lon"),  # names to split into
-    sep = "[:space:]",  # separate on spaces
+    sep = "\\s",  # separate on spaces
     extra = "drop" # discard split elements
   ) %>% 
-  mutate(
+  mutate(  # tidy up variables 
     lat = str_remove(lat, ","),
     across(c(lat, lon), as.numeric)
   ) %>% 
-  select(
+  select(  # focus variables
     status_id, created_at, lat, lon,
     osm_url = urls_expanded_url, media_url
-  ) %>% 
-  mutate(
-    reverse_geocode = map2(lon, lat, ~reverse_geocoding(.x, .y, limit = 1))
-  ) %>% 
-  unnest(cols = reverse_geocode) %>%
-  hoist(reverse_geocode, "postcode") %>% 
-  hoist(reverse_geocode, "admin_district")
+  )
 
-lmb_tweets_ll[1:5, c("status_id", "lat", "lon")]
+lmb_simple[1:5, c("status_id", "lat", "lon")]  # limited preview
 ```
+
+# Reverse geocode
+
+Tweets from londonmapbot are really simple by design; they only have the latitude and longitude, a link to OpenStreetMap and a satellite image pulled from [the MapBox API](https://docs.mapbox.com/api/overview/). It might be interesting to provide additional geographic information.
+
+{PostcodesioR} can perform a 'reverse geocode'[^wrassle] of our coordinates. Give latitude and longitude to `PostcodesioR::reverse_geocoding()` and it returns a list with various administrative geographies for that point.
+
+```{r reverse-geocode}
+lmb_geocode <-  lmb_simple %>% 
+  mutate(
+    reverse_geocode = map2(
+      .x = lon, .y = lat,
+      ~reverse_geocoding(.x, .y, limit = 1)  # limit to first result
+    )
+  ) %>% 
+  unnest(cols = reverse_geocode) %>%  # unpack listcol
+  hoist(reverse_geocode, "postcode") %>%  # pull out postcode into a 
+  hoist(reverse_geocode, "admin_district") # pull out borough
+
+lmb_geocode[1:5, c("lat", "lon", "postcode", "admin_district")]  # limited preview
+```
+
+The object returned from the reverse geocode is a nested list that we can `tidyr::hoist()` the geographic information from. Here we grabbed the postcode and 'administrative district', which for our purposes is the London borough that the point is in.
 
 # Convert to spatial object
 
-The `lat` and `lon` can be passed to `sf::st_as_sf()` to convert the object to a spatial object. The coordinate reference system, `crs`, is `4236` because it's based on latitude and longitude.
+Right now we have a dataframe where the geographic information is stored as numeric values. We can use the {sf} package to convert and handle this information as spatial information instead. 
+
+Basically we can use {sf} to 'geographise' our dataframe. It can add geometry (points in our case), dimensions (XY, meaning 2D), the maximum geographic extent (a 'bounding box' that roughly covers London) and recognition of the coordinate reference system ('4236' for latitude-longitude).
+
+The `sf::st_as_sf()` function performs the magic of converting our tidy dataframe into a tidy spatial dataframe. You'll see that the print method provides us the extra spatial metadata and that our geographic information has been stored in a special `geometry` column with class `sfc_POINT`.
 
 ```{r make-spatial}
-lmb_sf <- lmb_tweets_ll %>% 
-  st_as_sf(coords = c("lon", "lat"), crs = 4326, remove = FALSE)
+lmb_sf <- lmb_geocode %>% 
+  st_as_sf(
+    coords = c("lon", "lat"),  # xy columns
+    crs = 4326,  # coordinate reference system code
+    remove = FALSE  # retain the xy columns
+  )
 
-lmb_sf[1:5, c("status_id", "geometry")]
+lmb_sf[1:5, c("status_id", "geometry")]  # limited preview
 ```
 
-# Create map
+# Map it
 
-Since there are thousands of points, it makes sense to cluster them with `markerClusterOptions()`. Click a cluster to expand until you reach a marker.
+## London boundary geojson
 
-The markers have rich pop-ups when clicked. You'll get information from the tweet, including URLs, plus some reverse geocoding with {PostcodesioR} to get the location and postcode.
+Coordinates for londonmapbot tweets are selected randomly within a rectangle roughly within the boundary of the M25 motorway. We can grab a polygon of the Greater London boundary to see which points fall within the 'true' extent of London. 
 
-```{r make-map}
+To do this, I'm using a set of boundaries for England's regions[^nuts] via the [Office for National Statistics's Open Geography Portal](https://geoportal.statistics.gov.uk/datasets/nuts-level-1-january-2018-ultra-generalised-clipped-boundaries-in-the-united-kingdom) API. The polygons are 'ultra generalised' to be represented by very few points (every 500m). This means it doesn't follow the exact boundary of London, but that's okay: it's only being used as a guide and we get the benefit of a small polygon file.
+
+```{r ldn-polygon}
 ldn_sf <- geojson_read(
-  "https://opendata.arcgis.com/datasets/01fd6b2d7600446d8af768005992f76a_4.geojson",
-  what = "sp"  # spatial class
+  paste0(  # API endpoint for NUTS1 geography geojson
+    "https://opendata.arcgis.com/datasets/",
+    "01fd6b2d7600446d8af768005992f76a_4.geojson"
+    ), 
+  what = "sp"  # read as spatial object
 ) %>% 
-  st_as_sf() %>% 
-  filter(nuts118nm == "London")
+  st_as_sf() %>%  # convert to sf object
+  filter(nuts118nm == "London")  # London polygon only
 
-leaflet(ldn_sf) %>% 
+ldn_sf[, c("nuts118nm", "geometry")]  # limited preview
+```
+
+{ggplot2} has a geom for quick-plotting of {sf} objects, so we can check the boundary.
+
+```{r ldn-map}
+ggplot(ldn_sf) +
+  geom_sf() +
+  labs(
+    title = "London boundary",
+    subtitle = "Ultra-generalised NUTS1 extent",
+    caption = "Data collected via ONS Open Geography Portal API"
+  )
+```
+
+## Build map with {leaflet}
+
+You can build up layers in {leaflet} in a similar kind of way to a {ggplot2} graphic. The base map is applied with `addProviderTiles()`, followed by the London boundary with `addPolygons()`, with the points added as circle-shaped points with `addCircleMarkers()`.
+
+```{r build-map}
+lmb_map <- leaflet(ldn_sf) %>% 
   addProviderTiles("CartoDB.Positron") %>%
-  addPolygons(
+  addPolygons(  # generalised London boundary
     color = "black", weight = 2,
     opacity = 1, fillOpacity = 0.2
   ) %>% 
-  addAwesomeMarkers(
-    lng = lmb_sf$lon, lat = lmb_sf$lat,
-    clusterOptions = markerClusterOptions(),
-    popup =
-      ~paste0(
-        emo::ji("round_pushpin"), " ", lmb_sf$lat, ", ", lmb_sf$lon, "<br>",
-        emo::ji("postbox"), lmb_sf$admin_district, 
-          ", ", lmb_sf$postcode, "<br>",
-        emo::ji("bird"), " <a href='https://twitter.com/londonmapbot/status/",
-          lmb_sf$status_id, "'>Tweet</a><br>",
-        emo::ji("world_map"), " ", "<a href='",
-          lmb_sf$osm_url, "' width='100%'>OpenStreetMap</a><br><br>",
-        "<img src='", lmb_sf$media_url, "' width='200'>"
-      )
+  addCircleMarkers(  # locations as points
+    lng = lmb_sf$lon, lat = lmb_sf$lat,  # xy
+    radius = 5, stroke = FALSE,  # marker design
+    fillOpacity = 0.5, fillColor = "#0000FF",  # marker colours
+    clusterOptions = markerClusterOptions(),  # bunch-up markers
+    popup = ~paste0(  # dynamic HTML-creation for popup content
+      emo::ji("round_pushpin"), " ", lmb_sf$lat, ", ", lmb_sf$lon, "<br>",
+      emo::ji("postbox"), lmb_sf$admin_district, 
+        ", ", lmb_sf$postcode, "<br>",
+      emo::ji("bird"), " <a href='https://twitter.com/londonmapbot/status/",
+        lmb_sf$status_id, "'>Tweet</a><br>",
+      emo::ji("world_map"), " ", "<a href='",
+        lmb_sf$osm_url, "' width='100%'>OpenStreetMap</a><br><br>",
+      "<img src='", lmb_sf$media_url, "' width='200'>"
+    )
   )
 ```
+
+The markers, which are blue dots, have rich pop-ups when clicked. The information is generated dynamically for each point by pasting HTML strings with the content of the dataframe. 
+
+You'll see information from the tweet, including the satellite image and printed coordinates; URLS to the original tweet and OpenStreetMap; plus the reverse-geocoded info we got from {PostcodesioR}. 
+
+Since there are thousands of points, it makes sense to cluster them with `markerClusterOptions()` to avoid graphical and navigational troubles. Click a cluster to expand until you reach a marker.
+
+# The map {#map}
+
+```{r print-map}
+lmb_map
+```
+
+To keep the design simple and uncluttered, I've intentionally used a muted base map and limited the amount of pop-up content.
+
+And no, it hasn't captured my house yet.
+
+# Development
+
+I made this for my own amusement and as an excuse to use {PostcodesioR} and reacquaint myself with {leaflet}. If I were going to develop it, I would make a Shiny app that continuously refreshes with the latest tweet information. I may revisit londonmapbot in future, or create a new bot; in which case the reverse geocoding capabilities of {PostcodesioR} could come in handy for providing more content in tweet text.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^nuts]: Technically we're using the [NUTS1 regional designations](https://en.wikipedia.org/wiki/NUTS_1_statistical_regions_of_England), a [Eurostat](https://en.wikipedia.org/wiki/Eurostat) standard.
+[^wrassle]: I'm going to assume this is also a wrestling move.
