@@ -1,5 +1,5 @@
 ---
-title: 'Quick GitHub Actions for your R package'
+title: 'R-Package GitHub Actions via {usethis} and r-lib'
 author: Matt Dray
 date: '2020-08-09'
 slug: ghactions-pkgs
@@ -41,6 +41,8 @@ GitHub Actions can be really helpful for developing R packages. For example, you
 * rebuild your [{pkgdown} website](https://pkgdown.r-lib.org/){target="_blank"}
 
 Checking the build and coverage are standard practices for package development. They help ensure that your package works and is stable. GitHub Actions provides the icing on the cake by doing these things automatically.
+
+These are all important for users of your package too. Build and coverage results show the robustness of the code and a website makes your documentation much easier to access.
 
 I wrote this post to remind me how to do it.
 
@@ -88,21 +90,31 @@ Run this line to add the `R-CMD-check.yaml` action to the `.github/workflows/` f
 usethis::use_github_action_check_standard()
 ```
 
-On a push or PR, GitHub Actions will automatically set up and run the build check on each OS to make sure the package meets the requirements.
+On a push or PR, GitHub Actions will automatically set up and run the build check on each OS to make sure the package meets the requirements. 
 
 ### Coverage
 
-The R CMD check runs your unit tests, but it doesn't calculate how much of your code is actually [covered](https://en.wikipedia.org/wiki/Code_coverage){target="_blank"} by testing. Ideally you want this to be 100%, but also bear in mind that the metric doesn't take account of the volume or quality of tests.
+The R CMD check runs your unit tests, but it doesn't calculate how much of your code is actually [covered](https://en.wikipedia.org/wiki/Code_coverage){target="_blank"} by testing. Ideally you want this to be 100%, but also bear in mind that the metric doesn't take account of the volume or quality of tests. 
 
-Add the action to your repo with:
+I use another r-lib package, [{covr}](https://covr.r-lib.org/){target="_blank"}, to interactively check how much of my code is tested. (In particular, the `covr::report()` function provides an interactive HTML report showing the total percentage and a line-by-line breakdown of where tests are missing.)
+
+You can set up the free services [Codecov](http://about.codecov.io/){target="_blank"} or [Coveralls](https://coveralls.io/){target="_blank"} to make your results public. You'll need to have signed up for these services and granted their access to the repo you want to report on. 
+
+{usethis} makes it easy to set up these services for your repo: it adds the relevant YAML files, a line to the 'Suggests' section of your DESCRIPTION, and a badge to your README. 
 
 ```{r, coverage, eval=FALSE}
+usethis::use_coverage("codecov")
+```
+
+You can see an example in action on [the Codecov page for {r2eng}](https://codecov.io/gh/matt-dray/r2eng){target="_blank"}, which shows the percentage of coverage, a breakdown of the lines 'hit' and 'missed', and the commits that led to checks. 
+
+Of course, you can automate this. Run this line to add the `test-coverage.yaml` action to the `.github/workflows/` folder
+
+```{r, coverage-action, eval=FALSE}
 usethis::use_github_action("test-coverage")
 ```
 
-On push or a PR, the coverage of the tests is evaluated with [the {covr} package](https://covr.r-lib.org/){target="_blank"}, another r-lib package. The results are then uploaded to [the Codecov site](https://codecov.io/){target="_blank"} for everyone to see.
-
-For example, [the Codecov page for {r2eng}](https://codecov.io/gh/matt-dray/r2eng){target="_blank"} shows the percentage of coverage, a breakdown of the lines 'hit' and 'missed', and the commits that led to checks.
+The 'test-coverage' GitHub Action will recheck coverage when you next push to the repo, with the results being updated on your coverage service of choice.
 
 ### {pkgdown} site
 
@@ -138,14 +150,14 @@ It also means you can spot a failing PR and provide more commits to fix it befor
 <p class="caption">Ticks! Ticks! Ticks!</p>
 </div>
 
-You can also generate Markdown badges[^badgr] for your README that display the results of these actions and automatically update when they're re-run. These are great for an at-a-glance understanding of a package's development state.
+You can also generate Markdown badges[^badgr] for your README that display the results of these actions and automatically update when they're re-run. These are great for an at-a-glance understanding of a package's development state. {usethis} adds these to your README automatically, but it's useful to know that you can get these badges from GitHub itself.
 
 <div class="figure">
 <img src="/post/2020-08-05-ghactions-pkgs_files/make-badge.png" alt="GitHub's 'create status badge' tool showing a badge for the R CMD check and the Markdown needed to reproduce it." width="100%"/>
 <p class="caption">More easily obtained than having to defeat a Pokémon gym leader.</p>
 </div>
 
-For example, you can [see the badges in the {r2eng} README](https://github.com/matt-dray/r2eng/blob/master/README.md){target="_blank"}, showing the check status and percentage of test coverage. I've copied them here:
+For example, you can [see the badges in the {r2eng} README](https://github.com/matt-dray/r2eng/blob/master/README.md){target="_blank"}, showing the check status and percentage of test coverage:
 
 [![R build
 status](https://github.com/matt-dray/r2eng/workflows/R-CMD-check/badge.svg)](https://github.com/matt-dray/r2eng/actions)
