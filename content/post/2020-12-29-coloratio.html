@@ -1,0 +1,236 @@
+---
+title: 'Accessible colour contrasts with {coloratio}'
+author: Matt Dray
+date: '2021-01-01'
+slug: coloratio
+categories:
+  - data-viz
+  - package
+  - tutorial
+tags:
+  - accessibility
+  - coloratio
+  - ggplot2
+  - r
+  - savonliquide
+draft: yes
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+<link href="/rmarkdown-libs/anchor-sections/anchor-sections.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/anchor-sections/anchor-sections.js"></script>
+
+
+<p><img src="/post/2020-12-29-coloratio_files/figure-html/unnamed-chunk-1-1.png" width="768" /></p>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I made <a href="https://github.com/matt-dray/coloratio">a small package called {coloratio}</a> to evaluate colour contrast ratios for accessibility. But really this post is about the emotional rollercoaster of writing a package to solve a problem, only to find that a package already exists; <a href="https://github.com/feddelegrand7/savonliquide">{savonliquide}</a> in this case.</p>
+</div>
+<div id="inception" class="section level1">
+<h1>Inception</h1>
+<p>The UK government’s website, <a href="https://www.gov.uk/">GOV.UK</a>, was developed with user needs and accessibility in mind. I wondered if I could use {ggplot2} recreate <a href="https://www.gov.uk/government/publications/examples-of-visual-content-to-use-on-govuk/examples-of-visual-content-to-use-on-govuk">the simple, accessible chart styles</a> suggested for use on GOV.UK by <a href="https://gss.civilservice.gov.uk/">the Government Statistical Service</a>.</p>
+<p>In short, yes. But I wondered: is it possible to programmatically select a high-contrast text colour to overlay the fill colours of a {ggplot2} barplot?</p>
+<p>But what is ‘high contrast’ anyway? Luckily, GOV.UK’s <a href="https://design-system.service.gov.uk/styles/colour/">Design System</a> refers to <a href="https://www.w3.org/TR/WCAG21/#contrast-minimum">W3C’s contrast guidance from WCAG 2.1</a>, which suggests a ratio of 4.5:1 for regular text.</p>
+</div>
+<div id="creation" class="section level1">
+<h1>Creation</h1>
+<div id="a-package" class="section level2">
+<h2>A package</h2>
+<p>So how about a function to derive colour contrast ratios for any two colours? Make it a package, why not? Introducing {coloratio}.</p>
+<pre class="r"><code>remotes::install_github(&quot;matt-dray/coloratio&quot;)</code></pre>
+<p>Pass two colours to <code>cr_get_ratio()</code> as either named R colours (see <code>colors()</code>) or hex values and it performs the necessary calculations to derive <a href="https://www.w3.org/TR/WCAG/#dfn-relative-luminance">relative luminance</a> and return a <a href="https://www.w3.org/TR/WCAG/#dfn-contrast-ratio">colour contrast ratio</a>.</p>
+<pre class="r"><code>library(coloratio)  # attach package
+
+cr_get_ratio(
+  &quot;papayawhip&quot;, &quot;#000000&quot;,  # colours to compare
+  view = TRUE  # optional demo of colours 
+)</code></pre>
+<p><img src="/post/2020-12-29-coloratio_files/figure-html/unnamed-chunk-3-1.png" width="480" /></p>
+<pre><code>## [1] 18.55942</code></pre>
+<p>This contrast value is above the 4.5 threshold, so we’re good to go. You’ll get a warning if the contrast is insufficient.</p>
+<pre class="r"><code>cr_get_ratio(&quot;olivedrab&quot;, &quot;olivedrab2&quot;)</code></pre>
+<pre><code>## Warning in cr_get_ratio(&quot;olivedrab&quot;, &quot;olivedrab2&quot;): Aim for a value of 4.5 or higher.</code></pre>
+<pre><code>## [1] 2.755693</code></pre>
+<p>We can then use this to return either <code>"black"</code> or <code>"white"</code> depending on the greatest contrast with a supplied background colour.</p>
+<pre class="r"><code>cr_choose_bw(&quot;moccasin&quot;)</code></pre>
+<pre><code>## [1] &quot;black&quot;</code></pre>
+</div>
+<div id="a-plot" class="section level2">
+<h2>A plot</h2>
+<p>Great, so we can use <code>cr_choose_bw()</code> to programmatically choose the text colour for a given background fill. Let’s create a column with light-ish and dark-ish fill colours, then use <code>cr_choose_bw()</code> to choose black or white for the overlaying text.</p>
+<pre class="r"><code>library(tidyverse)  # for data manipulation
+
+# Example data
+d &lt;- data.frame(
+  x_val = c(&quot;A&quot;, &quot;A&quot;, &quot;B&quot;, &quot;B&quot;),
+  y_val = c(3, 6, 4, 10),
+  z_val = c(&quot;a&quot;, &quot;b&quot;, &quot;a&quot;, &quot;b&quot;)
+) %&gt;% 
+  mutate(  # add colour columns
+    fill_col = rep(c(&quot;hotpink4&quot;, &quot;lemonchiffon3&quot;), 2),
+    text_col = map_chr(fill_col, coloratio::cr_choose_bw)
+  )
+
+d  # preview</code></pre>
+<pre><code>##   x_val y_val z_val      fill_col text_col
+## 1     A     3     a      hotpink4    white
+## 2     A     6     b lemonchiffon3    black
+## 3     B     4     a      hotpink4    white
+## 4     B    10     b lemonchiffon3    black</code></pre>
+<p>Now we can refer to this <code>text_col</code> column in the <code>colour</code> argument of <code>geom_text()</code> to assign the appropriate colour for the given bar. It would default to black otherwise, which would be sub-optimal for the darker bar.</p>
+<pre class="r"><code>ggplot(d, aes(x_val, y_val, fill = z_val)) +
+  geom_bar(position = &quot;dodge&quot;, stat = &quot;identity&quot;) +  # add bars
+  scale_fill_manual(values = d$fill_col) +  # colour the bars
+  geom_text(  # add bar-overlay text
+    aes(y = 0.5, label = y_val), position = position_dodge(0.9), 
+    size = 5, colour = d$text_col  # as chosen by cr_choose_bw()
+  ) + 
+  coord_flip() + theme_minimal(base_size = 16) + 
+  theme(axis.text.x = element_blank(), panel.grid = element_blank())</code></pre>
+<p><img src="/post/2020-12-29-coloratio_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+</div>
+<div id="a-challenge" class="section level2">
+<h2>A challenge</h2>
+<p>As an aside, I originally wanted <code>geom_text()</code> to choose text colours on the fly, rather than by specifying them ‘manually’ in the input data. My roundabout solution requires you to build the plot object, then interrogate it with <code>ggplot_build()</code> to identify the bar-fill colours. This code evaluates to the same plot output as above.</p>
+<pre class="r"><code># Build grouped bar plot
+p &lt;- ggplot(d, aes(x_val, y_val, fill = z_val)) +
+  geom_bar(position = &quot;dodge&quot;, stat = &quot;identity&quot;) +
+  scale_fill_manual(values = c(&quot;hotpink4&quot;, &quot;lemonchiffon3&quot;)) +
+  coord_flip() + theme_minimal(base_size = 16) + 
+  theme(axis.text.x = element_blank(), panel.grid = element_blank())
+
+# Extract the p object fills and choose text overlay colour
+p + geom_text(
+  aes(y = 0.5, label = y_val), position = position_dodge(0.9), size = 5,
+  colour = map_chr(  # make text colour dependent on bar colour
+    ggplot_build(p)[[1]][[1]]$fill,  # access the fills from the p object
+    coloratio::cr_choose_bw   # choose black/white text based on fill
+  )
+)</code></pre>
+<p>I put this to <a href="https://community.rstudio.com/t/can-you-conditionally-choose-geom-text-colours-based-on-underlying-geom-bar-fills/91777">the RStudio Community</a> with no answer to date. Let me know if you have any ideas.</p>
+</div>
+</div>
+<div id="despair" class="section level1">
+<h1>Despair</h1>
+<p>Having solved this little problem, I was suspicious. Surely this has been done in R before? I put out a tweet to investigate.</p>
+{{% tweet "1342160455557668866" %}}
+<p>I very quickly realised my error.</p>
+{{% tweet "1342267391007477762" %}}
+<p>Whoops. <a href="https://github.com/feddelegrand7/savonliquide">{savonliquide}</a> by <a href="https://twitter.com/moh_fodil">Ihaddaden M. EL Fodil</a> can query the <a href="https://webaim.org/resources/contrastchecker/">WebAIM contrast checker API</a> to get the contrast ratio for two colours. And it’s on CRAN! Perhaps I missed it because of the name, which translates to ‘hand soap’?</p>
+<pre class="r"><code>install.packages(&quot;savonliquide&quot;)</code></pre>
+<p>Like <code>coloratio::cr_get_ratio()</code>, you can pass two named colours or hex values.</p>
+<pre class="r"><code>savonliquide::check_contrast(&quot;blanchedalmond&quot;, &quot;bisque2&quot;)</code></pre>
+<pre><code>## 
+## * The Contrast Ratio is 1.04
+## 
+## * The result for the AA check is : FAIL
+## 
+## * The result for the AALarge check is : FAIL
+## 
+## * The result for the AAA check is : FAIL
+## 
+## * The result for the AAALarge check is : FAIL</code></pre>
+<p>You get a more informative output than <code>cr_get_ratio()</code>; it also provides results from testing against <a href="https://www.w3.org/TR/WCAG21/#contrast-minimum">the more stringent accessibility checks of WCAG 2.1</a>. Here, the two colours provided are so similar that they fail across the board.</p>
+<p>Handily, there’s also the <code>savonliquide::check_contrast_raw()</code> variant that returns a list with each result as an element.</p>
+</div>
+<div id="acceptance" class="section level1">
+<h1>Acceptance</h1>
+<p>So… should you wash your hands of {coloratio}?<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> Well, it at least fills the micro-niche of an R package that doesn’t require an internet connection to fetch colour contrast ratios. But it’s probably never going to go on CRAN, so you should use {savonliquide}.</p>
+<p>I could say I learnt a lesson about doing due diligence when developing a package. But I also <a href="https://twitter.com/mattdray/status/1343289157565689856?s=20">discovered recently</a> that I had somehow managed to reinvent <a href="https://github.com/GuangchuangYu/badger">the {badger} package</a> with <a href="https://www.rostrum.blog/2020/05/08/readme-badge/">my own {badgr} package</a>.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>At worst, I got to learn more about colour accessibility,<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> practice some package building, and laugh at the funny named colour set available in R.</p>
+<p>‘Papayawhip’ sounds delicious. And painful.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.0.2 (2020-06-22)
+##  os       macOS Mojave 10.14.6        
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2020-12-29                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package      * version    date       lib source                          
+##  assertthat     0.2.1      2019-03-21 [1] CRAN (R 4.0.0)                  
+##  backports      1.1.8      2020-06-17 [1] CRAN (R 4.0.0)                  
+##  blob           1.2.1      2020-01-20 [1] CRAN (R 4.0.2)                  
+##  blogdown       0.19       2020-05-22 [1] CRAN (R 4.0.0)                  
+##  bookdown       0.19       2020-05-15 [1] CRAN (R 4.0.0)                  
+##  broom          0.7.0      2020-07-09 [1] CRAN (R 4.0.2)                  
+##  cellranger     1.1.0      2016-07-27 [1] CRAN (R 4.0.2)                  
+##  cli            2.2.0      2020-11-20 [1] CRAN (R 4.0.2)                  
+##  coloratio    * 0.0.0.9003 2020-12-28 [1] local                           
+##  colorspace     2.0-0      2020-11-11 [1] CRAN (R 4.0.2)                  
+##  crayon         1.3.4      2017-09-16 [1] CRAN (R 4.0.0)                  
+##  curl           4.3        2019-12-02 [1] CRAN (R 4.0.0)                  
+##  DBI            1.1.0      2019-12-15 [1] CRAN (R 4.0.0)                  
+##  dbplyr         1.4.4      2020-05-27 [1] CRAN (R 4.0.2)                  
+##  digest         0.6.27     2020-10-24 [1] CRAN (R 4.0.2)                  
+##  dplyr        * 1.0.0      2020-08-10 [1] Github (tidyverse/dplyr@5e3f3ec)
+##  ellipsis       0.3.1      2020-05-15 [1] CRAN (R 4.0.0)                  
+##  evaluate       0.14       2019-05-28 [1] CRAN (R 4.0.0)                  
+##  fansi          0.4.1      2020-01-08 [1] CRAN (R 4.0.0)                  
+##  farver         2.0.3      2020-01-16 [1] CRAN (R 4.0.0)                  
+##  forcats      * 0.5.0      2020-03-01 [1] CRAN (R 4.0.2)                  
+##  fs             1.5.0      2020-07-31 [1] CRAN (R 4.0.2)                  
+##  generics       0.1.0      2020-10-31 [1] CRAN (R 4.0.2)                  
+##  ggplot2      * 3.3.2      2020-06-19 [1] CRAN (R 4.0.2)                  
+##  glue           1.4.2      2020-08-27 [1] CRAN (R 4.0.2)                  
+##  gtable         0.3.0      2019-03-25 [1] CRAN (R 4.0.0)                  
+##  haven          2.3.1      2020-06-01 [1] CRAN (R 4.0.2)                  
+##  hms            0.5.3      2020-01-08 [1] CRAN (R 4.0.2)                  
+##  htmltools      0.5.0      2020-06-16 [1] CRAN (R 4.0.2)                  
+##  httr           1.4.2      2020-07-20 [1] CRAN (R 4.0.2)                  
+##  jsonlite       1.7.2      2020-12-09 [1] CRAN (R 4.0.2)                  
+##  knitr          1.30       2020-09-22 [1] CRAN (R 4.0.2)                  
+##  labeling       0.4.2      2020-10-20 [1] CRAN (R 4.0.2)                  
+##  lifecycle      0.2.0      2020-03-06 [1] CRAN (R 4.0.0)                  
+##  lubridate      1.7.9.2    2020-11-13 [1] CRAN (R 4.0.2)                  
+##  magrittr       2.0.1      2020-11-17 [1] CRAN (R 4.0.2)                  
+##  modelr         0.1.8      2020-05-19 [1] CRAN (R 4.0.2)                  
+##  munsell        0.5.0      2018-06-12 [1] CRAN (R 4.0.0)                  
+##  pillar         1.4.7      2020-11-20 [1] CRAN (R 4.0.2)                  
+##  pkgconfig      2.0.3      2019-09-22 [1] CRAN (R 4.0.0)                  
+##  purrr        * 0.3.4      2020-04-17 [1] CRAN (R 4.0.0)                  
+##  R6             2.5.0      2020-10-28 [1] CRAN (R 4.0.2)                  
+##  Rcpp           1.0.5      2020-07-06 [1] CRAN (R 4.0.2)                  
+##  readr        * 1.4.0      2020-10-05 [1] CRAN (R 4.0.2)                  
+##  readxl         1.3.1      2019-03-13 [1] CRAN (R 4.0.2)                  
+##  reprex         0.3.0      2019-05-16 [1] CRAN (R 4.0.2)                  
+##  rlang          0.4.9      2020-11-26 [1] CRAN (R 4.0.2)                  
+##  rmarkdown      2.5        2020-10-21 [1] CRAN (R 4.0.2)                  
+##  rstudioapi     0.13       2020-11-12 [1] CRAN (R 4.0.2)                  
+##  rvest          0.3.6      2020-07-25 [1] CRAN (R 4.0.2)                  
+##  savonliquide   0.1.0      2020-12-07 [1] CRAN (R 4.0.2)                  
+##  scales         1.1.1      2020-05-11 [1] CRAN (R 4.0.0)                  
+##  sessioninfo    1.1.1      2018-11-05 [1] CRAN (R 4.0.0)                  
+##  stringi        1.5.3      2020-09-09 [1] CRAN (R 4.0.2)                  
+##  stringr      * 1.4.0      2019-02-10 [1] CRAN (R 4.0.0)                  
+##  tibble       * 3.0.4      2020-10-12 [1] CRAN (R 4.0.2)                  
+##  tidyr        * 1.1.2      2020-08-27 [1] CRAN (R 4.0.2)                  
+##  tidyselect     1.1.0      2020-05-11 [1] CRAN (R 4.0.0)                  
+##  tidyverse    * 1.3.0      2019-11-21 [1] CRAN (R 4.0.2)                  
+##  vctrs          0.3.6      2020-12-17 [1] CRAN (R 4.0.2)                  
+##  withr          2.3.0      2020-09-22 [1] CRAN (R 4.0.2)                  
+##  xfun           0.19       2020-10-30 [1] CRAN (R 4.0.2)                  
+##  xml2           1.3.2      2020-04-23 [1] CRAN (R 4.0.0)                  
+##  yaml           2.2.1      2020-02-01 [1] CRAN (R 4.0.0)                  
+## 
+## [1] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
+</details>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>This is an excellent <em>savon liquide</em> pun.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>{badger} has functions to generate a bunch of badges you’re likely to want. {badgr} focuses only on custom badges and has some extra options relative to <code>badger::badge_custom()</code>, like the ability to add an icon. But wow, how did I miss this?<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>Disclaimer: I have deuteranopia.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>

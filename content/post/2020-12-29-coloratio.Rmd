@@ -1,0 +1,186 @@
+---
+title: 'Accessible colour contrasts with {coloratio}'
+author: Matt Dray
+date: '2021-01-01'
+slug: coloratio
+categories:
+  - data-viz
+  - package
+  - tutorial
+tags:
+  - accessibility
+  - coloratio
+  - ggplot2
+  - r
+  - savonliquide
+draft: yes
+---
+
+```{r, echo=FALSE, fig.height=3, fig.width=8}
+col_1 <- "#1c7012"
+col_2 <-"black"
+withr::with_par(
+  list(mar = rep(0.1, 4)),
+  barplot(
+    matrix(c(1, 1)), col = c(col_2, col_1),
+    border = "white", yaxt = "n", beside = TRUE
+  )
+)
+text(2.5, 0.5, "{coloratio}", col = col_2, cex = 3)
+text(1.5, 0.5, "{coloratio}", col = col_1, cex = 3)
+```
+
+# tl;dr
+
+I made [a small package called {coloratio}](https://github.com/matt-dray/coloratio) to evaluate colour contrast ratios for accessibility. But really this post is about the emotional rollercoaster of writing a package to solve a problem, only to find that a package already exists; [{savonliquide}](https://github.com/feddelegrand7/savonliquide) in this case.
+
+# Inception
+
+The UK government's website, [GOV.UK](https://www.gov.uk/), was developed with user needs and accessibility in mind. I wondered if I could use {ggplot2} recreate [the simple, accessible chart styles](https://www.gov.uk/government/publications/examples-of-visual-content-to-use-on-govuk/examples-of-visual-content-to-use-on-govuk) suggested for use on GOV.UK by [the Government Statistical Service](https://gss.civilservice.gov.uk/).
+
+In short, yes. But I wondered: is it possible to programmatically select a high-contrast text colour to overlay the fill colours of a {ggplot2} barplot?
+
+But what is 'high contrast' anyway? Luckily, GOV.UK's [Design System](https://design-system.service.gov.uk/styles/colour/) refers to [W3C's contrast guidance from WCAG 2.1](https://www.w3.org/TR/WCAG21/#contrast-minimum), which suggests a ratio of 4.5:1 for regular text.
+
+# Creation
+
+## A package
+
+So how about a function to derive colour contrast ratios for any two colours? Make it a package, why not? Introducing {coloratio}.
+
+```{r eval=FALSE}
+remotes::install_github("matt-dray/coloratio")
+```
+
+Pass two colours to `cr_get_ratio()` as either named R colours (see `colors()`) or hex values and it performs the necessary calculations to derive [relative luminance](https://www.w3.org/TR/WCAG/#dfn-relative-luminance) and return a [colour contrast ratio](https://www.w3.org/TR/WCAG/#dfn-contrast-ratio).
+
+```{r, fig.height=3.5, fig.width=5}
+library(coloratio)  # attach package
+
+cr_get_ratio(
+  "papayawhip", "#000000",  # colours to compare
+  view = TRUE  # optional demo of colours 
+)
+```
+
+This contrast value is above the 4.5 threshold, so we're good to go. You'll get a warning if the contrast is insufficient.
+
+```{r}
+cr_get_ratio("olivedrab", "olivedrab2")
+```
+
+We can then use this to return either `"black"` or `"white"` depending on the greatest contrast with a supplied background colour.
+
+```{r}
+cr_choose_bw("moccasin")
+```
+
+## A plot
+
+Great, so we can use `cr_choose_bw()` to programmatically choose the text colour for a given background fill. Let's create a column with light-ish and dark-ish fill colours, then use `cr_choose_bw()` to choose black or white for the overlaying text.
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)  # for data manipulation
+
+# Example data
+d <- data.frame(
+  x_val = c("A", "A", "B", "B"),
+  y_val = c(3, 6, 4, 10),
+  z_val = c("a", "b", "a", "b")
+) %>% 
+  mutate(  # add colour columns
+    fill_col = rep(c("hotpink4", "lemonchiffon3"), 2),
+    text_col = map_chr(fill_col, coloratio::cr_choose_bw)
+  )
+
+d  # preview
+```
+
+Now we can refer to this `text_col` column in the `colour` argument of `geom_text()` to assign the appropriate colour for the given bar. It would default to black otherwise, which would be sub-optimal for the darker bar.
+
+```{r}
+ggplot(d, aes(x_val, y_val, fill = z_val)) +
+  geom_bar(position = "dodge", stat = "identity") +  # add bars
+  scale_fill_manual(values = d$fill_col) +  # colour the bars
+  geom_text(  # add bar-overlay text
+    aes(y = 0.5, label = y_val), position = position_dodge(0.9), 
+    size = 5, colour = d$text_col  # as chosen by cr_choose_bw()
+  ) + 
+  coord_flip() + theme_minimal(base_size = 16) + 
+  theme(axis.text.x = element_blank(), panel.grid = element_blank())
+```
+
+## A challenge
+
+As an aside, I originally wanted `geom_text()` to choose text colours on the fly, rather than by specifying them 'manually' in the input data. My roundabout solution requires you to build the plot object, then interrogate it with `ggplot_build()` to identify the bar-fill colours. This code evaluates to the same plot output as above.
+
+```{r, eval=FALSE}
+# Build grouped bar plot
+p <- ggplot(d, aes(x_val, y_val, fill = z_val)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_fill_manual(values = c("hotpink4", "lemonchiffon3")) +
+  coord_flip() + theme_minimal(base_size = 16) + 
+  theme(axis.text.x = element_blank(), panel.grid = element_blank())
+
+# Extract the p object fills and choose text overlay colour
+p + geom_text(
+  aes(y = 0.5, label = y_val), position = position_dodge(0.9), size = 5,
+  colour = map_chr(  # make text colour dependent on bar colour
+    ggplot_build(p)[[1]][[1]]$fill,  # access the fills from the p object
+    coloratio::cr_choose_bw   # choose black/white text based on fill
+  )
+)
+```
+
+I put this to [the RStudio Community](https://community.rstudio.com/t/can-you-conditionally-choose-geom-text-colours-based-on-underlying-geom-bar-fills/91777) with no answer to date. Let me know if you have any ideas.
+
+# Despair
+
+Having solved this little problem, I was suspicious. Surely this has been done in R before? I put out a tweet to investigate.
+
+```{r, echo=FALSE}
+blogdown::shortcode("tweet", "1342160455557668866")
+```
+
+I very quickly realised my error.
+
+```{r, echo=FALSE}
+blogdown::shortcode("tweet", "1342267391007477762")
+```
+
+Whoops. [{savonliquide}](https://github.com/feddelegrand7/savonliquide) by [Ihaddaden M. EL Fodil](https://twitter.com/moh_fodil) can query the [WebAIM contrast checker API](https://webaim.org/resources/contrastchecker/) to get the contrast ratio for two colours. And it's on CRAN! Perhaps I missed it because of the name, which translates to 'hand soap'?
+
+```{r, eval=FALSE}
+install.packages("savonliquide")
+```
+
+Like `coloratio::cr_get_ratio()`, you can pass two named colours or hex values.
+
+```{r}
+savonliquide::check_contrast("blanchedalmond", "bisque2")
+```
+
+You get a more informative output than `cr_get_ratio()`; it also provides results from testing against [the more stringent accessibility checks of WCAG 2.1](https://www.w3.org/TR/WCAG21/#contrast-minimum). Here, the two colours provided are so similar that they fail across the board.
+
+Handily, there's also the `savonliquide::check_contrast_raw()` variant that returns a list with each result as an element.
+
+# Acceptance
+
+So... should you wash your hands of {coloratio}?[^savon] Well, it at least fills the micro-niche of an R package that doesn't require an internet connection to fetch colour contrast ratios. But it's probably never going to go on CRAN, so you should use {savonliquide}.
+
+I could say I learnt a lesson about doing due diligence when developing a package. But I also [discovered recently](https://twitter.com/mattdray/status/1343289157565689856?s=20) that I had somehow managed to reinvent [the {badger} package](https://github.com/GuangchuangYu/badger) with [my own {badgr} package](https://www.rostrum.blog/2020/05/08/readme-badge/).[^badgr]
+
+At worst, I got to learn more about colour accessibility,[^blind] practice some package building, and laugh at the funny named colour set available in R.
+
+'Papayawhip' sounds delicious. And painful.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^savon]: This is an excellent _savon liquide_ pun.
+[^blind]: Disclaimer: I have deuteranopia.
+[^badgr]: {badger} has functions to generate a bunch of badges you're likely to want. {badgr} focuses only on custom badges and has some extra options relative to `badger::badge_custom()`, like the ability to add an icon. But wow, how did I miss this?
