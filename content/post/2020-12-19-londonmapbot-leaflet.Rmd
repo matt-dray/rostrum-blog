@@ -81,8 +81,6 @@ rtweet::ts_plot(lmb_tweets) +  # plot daily tweets
   )
 ```
 
-Is that a downward trend at the end? I'll keep an eye on that. 
-
 # Extract tweet information
 
 The dataframe returned by {rtweet} contains nearly 100 columns. For our purposes we can minimise to:
@@ -195,7 +193,7 @@ ggplot(ldn_sf) +
 You can build up layers in {leaflet} in a similar kind of way to a {ggplot2} graphic. The base map is applied with `addProviderTiles()`, followed by the London boundary with `addPolygons()`, with the points added as circle-shaped points with `addCircleMarkers()`.
 
 ```{r build-map}
-lmb_map <- leaflet(ldn_sf) %>% 
+lmb_map <- leaflet(ldn_sf, width = '100%') %>% 
   addProviderTiles("CartoDB.Positron") %>%
   addPolygons(  # generalised London boundary
     color = "black", weight = 2,
@@ -221,6 +219,8 @@ lmb_map <- leaflet(ldn_sf) %>%
 
 The markers, which are blue dots, have rich pop-ups when clicked. The information is generated dynamically for each point by pasting HTML strings with the content of the dataframe. Props to [Matt Kerlogue](https://lapsedgeographer.london/)'s [narrowbotR](https://twitter.com/narrowbotR), which uses this emoji-info layout in its automated tweets.
 
+To keep the design simple and uncluttered, I've intentionally used a muted base map ('Positron' from CartoDB) and limited the amount of pop-up content.
+
 In the pop-up you'll see information from the tweet, including the satellite image and printed coordinates; URLS to the original tweet and OpenStreetMap; plus the reverse-geocoded info we got from {PostcodesioR}. 
 
 Since there are thousands of points, it makes sense to cluster them with `markerClusterOptions()` to avoid graphical and navigational troubles. Click a cluster to expand until you reach a marker.
@@ -231,9 +231,9 @@ Since there are thousands of points, it makes sense to cluster them with `marker
 lmb_map
 ```
 
-To keep the design simple and uncluttered, I've intentionally used a muted base map and limited the amount of pop-up content.
+If you can't see the satellite photos in each pop-up you may need to change browser.
 
-And no, it hasn't captured my house yet.
+And no, it hasn't captured my house yet!
 
 # Development
 
