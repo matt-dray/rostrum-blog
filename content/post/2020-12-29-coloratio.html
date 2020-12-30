@@ -1,7 +1,7 @@
 ---
 title: 'Accessible colour contrasts with {coloratio}'
 author: Matt Dray
-date: '2021-01-01'
+date: '2020-12-31'
 slug: coloratio
 categories:
   - data-viz
@@ -10,6 +10,7 @@ categories:
 tags:
   - accessibility
   - coloratio
+  - colour
   - ggplot2
   - r
   - savonliquide
@@ -24,21 +25,21 @@ draft: yes
 <p><img src="/post/2020-12-29-coloratio_files/figure-html/unnamed-chunk-1-1.png" width="768" /></p>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>I made <a href="https://github.com/matt-dray/coloratio">a small package called {coloratio}</a> to evaluate colour contrast ratios for accessibility. But really this post is about the emotional rollercoaster of writing a package to solve a problem, only to find that a package already exists; <a href="https://github.com/feddelegrand7/savonliquide">{savonliquide}</a> in this case.</p>
+<p>I made <a href="https://github.com/matt-dray/coloratio">a small R package called {coloratio}</a> to evaluate <a href="https://accessibility.blog.gov.uk/2016/06/17/colour-contrast-why-does-it-matter/">colour-contrast ratios for accessibility</a>. Then I found out that <a href="https://github.com/feddelegrand7/savonliquide">{savonliquide}</a> already exists to do this.</p>
 </div>
-<div id="inception" class="section level1">
-<h1>Inception</h1>
-<p>The UK government’s website, <a href="https://www.gov.uk/">GOV.UK</a>, was developed with user needs and accessibility in mind. I wondered if I could use {ggplot2} recreate <a href="https://www.gov.uk/government/publications/examples-of-visual-content-to-use-on-govuk/examples-of-visual-content-to-use-on-govuk">the simple, accessible chart styles</a> suggested for use on GOV.UK by <a href="https://gss.civilservice.gov.uk/">the Government Statistical Service</a>.</p>
-<p>In short, yes. But I wondered: is it possible to programmatically select a high-contrast text colour to overlay the fill colours of a {ggplot2} barplot?</p>
-<p>But what is ‘high contrast’ anyway? Luckily, GOV.UK’s <a href="https://design-system.service.gov.uk/styles/colour/">Design System</a> refers to <a href="https://www.w3.org/TR/WCAG21/#contrast-minimum">W3C’s contrast guidance from WCAG 2.1</a>, which suggests a ratio of 4.5:1 for regular text.</p>
+<div id="accessible-charts" class="section level1">
+<h1>Accessible charts</h1>
+<p>The UK government’s website, <a href="https://www.gov.uk/">GOV.UK</a>, was developed with user needs and accessibility in mind. I’ve been using {ggplot2} to recreate <a href="https://www.gov.uk/government/publications/examples-of-visual-content-to-use-on-govuk/examples-of-visual-content-to-use-on-govuk">the simple, accessible chart styles</a> suggested for use on GOV.UK by <a href="https://gss.civilservice.gov.uk/">the Government Statistical Service</a>.</p>
+<p>But I wondered: is it possible to programmatically select a high-contrast text colour to overlay the fill colours of a {ggplot2} barplot? You would want black text over white and vice versa, for example. It isn’t a big deal to program this ‘manually’, but that’s not fun.</p>
+<p>What is ‘high contrast’ anyway? GOV.UK’s <a href="https://design-system.service.gov.uk/styles/colour/">Design System</a> refers to <a href="https://www.w3.org/TR/WCAG21/#contrast-minimum">W3C’s contrast guidance from WCAG 2.1</a>, which suggests a ratio of 4.5:1 for regular text on a block-coloured background.</p>
 </div>
-<div id="creation" class="section level1">
-<h1>Creation</h1>
-<div id="a-package" class="section level2">
-<h2>A package</h2>
-<p>So how about a function to derive colour contrast ratios for any two colours? Make it a package, why not? Introducing {coloratio}.</p>
+<div id="ratio-calculation" class="section level1">
+<h1>Ratio calculation</h1>
+<div id="is-the-contrast-accessible" class="section level2">
+<h2>Is the contrast accessible?</h2>
+<p>This problem calls for a small package with some functions to derive colour contrast ratios. Introducing <a href="https://github.com/matt-dray/coloratio">{coloratio}</a>.</p>
 <pre class="r"><code>remotes::install_github(&quot;matt-dray/coloratio&quot;)</code></pre>
-<p>Pass two colours to <code>cr_get_ratio()</code> as either named R colours (see <code>colors()</code>) or hex values and it performs the necessary calculations to derive <a href="https://www.w3.org/TR/WCAG/#dfn-relative-luminance">relative luminance</a> and return a <a href="https://www.w3.org/TR/WCAG/#dfn-contrast-ratio">colour contrast ratio</a>.</p>
+<p>Pass two colours to <code>cr_get_ratio()</code> as hex values or named colours—see <code>colors()</code>—and it performs the necessary calculations to derive <a href="https://www.w3.org/TR/WCAG/#dfn-relative-luminance">relative luminance</a> and return a <a href="https://www.w3.org/TR/WCAG/#dfn-contrast-ratio">colour contrast ratio</a>.</p>
 <pre class="r"><code>library(coloratio)  # attach package
 
 cr_get_ratio(
@@ -51,13 +52,16 @@ cr_get_ratio(
 <pre class="r"><code>cr_get_ratio(&quot;olivedrab&quot;, &quot;olivedrab2&quot;)</code></pre>
 <pre><code>## Warning in cr_get_ratio(&quot;olivedrab&quot;, &quot;olivedrab2&quot;): Aim for a value of 4.5 or higher.</code></pre>
 <pre><code>## [1] 2.755693</code></pre>
-<p>We can then use this to return either <code>"black"</code> or <code>"white"</code> depending on the greatest contrast with a supplied background colour.</p>
-<pre class="r"><code>cr_choose_bw(&quot;moccasin&quot;)</code></pre>
-<pre><code>## [1] &quot;black&quot;</code></pre>
+<p>Surprise: as stunning as an all-olivedrab palette might be, these colours aren’t distinct enough to be accessible.</p>
 </div>
-<div id="a-plot" class="section level2">
-<h2>A plot</h2>
-<p>Great, so we can use <code>cr_choose_bw()</code> to programmatically choose the text colour for a given background fill. Let’s create a column with light-ish and dark-ish fill colours, then use <code>cr_choose_bw()</code> to choose black or white for the overlaying text.</p>
+<div id="black-or-white" class="section level2">
+<h2>Black or white?</h2>
+<p><code>cr_get_ratio()</code> in turn powers the function <code>cr_choose_bw()</code>, which returns black or white depending on the greatest contrast with a supplied background colour.</p>
+<pre class="r"><code>cr_choose_bw(&quot;snow&quot;)</code></pre>
+<pre><code>## [1] &quot;black&quot;</code></pre>
+<pre class="r"><code>cr_choose_bw(&quot;saddlebrown&quot;)</code></pre>
+<pre><code>## [1] &quot;white&quot;</code></pre>
+<p>To demonstrate better, let’s create a grouped barplot with lighter (<code>lemonchiffon3</code>) and darker (<code>hotpink4</code>) fill colours, then use <code>cr_choose_bw()</code> to choose black or white for the overlaying text.</p>
 <pre class="r"><code>library(tidyverse)  # for data manipulation
 
 # Example data
@@ -77,48 +81,50 @@ d  # preview</code></pre>
 ## 2     A     6     b lemonchiffon3    black
 ## 3     B     4     a      hotpink4    white
 ## 4     B    10     b lemonchiffon3    black</code></pre>
-<p>Now we can refer to this <code>text_col</code> column in the <code>colour</code> argument of <code>geom_text()</code> to assign the appropriate colour for the given bar. It would default to black otherwise, which would be sub-optimal for the darker bar.</p>
+<p>No surprise: white was returned for the darker fill and black for the lighter fill.</p>
+<p>We can now refer to this information in the <code>colour</code> argument of <code>geom_text()</code>.</p>
 <pre class="r"><code>ggplot(d, aes(x_val, y_val, fill = z_val)) +
-  geom_bar(position = &quot;dodge&quot;, stat = &quot;identity&quot;) +  # add bars
-  scale_fill_manual(values = d$fill_col) +  # colour the bars
-  geom_text(  # add bar-overlay text
-    aes(y = 0.5, label = y_val), position = position_dodge(0.9), 
-    size = 5, colour = d$text_col  # as chosen by cr_choose_bw()
-  ) + 
-  coord_flip() + theme_minimal(base_size = 16) + 
-  theme(axis.text.x = element_blank(), panel.grid = element_blank())</code></pre>
+  geom_bar(position = &quot;dodge&quot;, stat = &quot;identity&quot;) +
+  scale_fill_manual(values = d$fill_col) +    # fill colour
+  geom_text(aes(y = 0.5, label = y_val), 
+            position = position_dodge(0.9), 
+            size = 5, colour = d$text_col) +  # text colour 
+  coord_flip() + 
+  theme_minimal(base_size = 16) +  # clean up the theme
+  theme(axis.text.x = element_blank(), axis.title = element_blank(), 
+        legend.title = element_blank(), panel.grid = element_blank())</code></pre>
 <p><img src="/post/2020-12-29-coloratio_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>As desired: black on the lighter fill; white on the darker fill. The default would be black text, which would provide insufficient contrast for darker fills.</p>
 </div>
-<div id="a-challenge" class="section level2">
-<h2>A challenge</h2>
-<p>As an aside, I originally wanted <code>geom_text()</code> to choose text colours on the fly, rather than by specifying them ‘manually’ in the input data. My roundabout solution requires you to build the plot object, then interrogate it with <code>ggplot_build()</code> to identify the bar-fill colours. This code evaluates to the same plot output as above.</p>
-<pre class="r"><code># Build grouped bar plot
+<div id="aside-cr_choose_bw-in-geom_text" class="section level2">
+<h2>Aside: <code>cr_choose_bw()</code> in <code>geom_text()</code>?</h2>
+<p>Originally I wanted <code>geom_text()</code> to choose text colours on the fly, rather than adding them to the input data. This roundabout solution—which outputs a similar plot to the one above—requires you to build the plot object, then interrogate it with <code>ggplot_build()</code> to identify the bar-fill colours.</p>
+<pre class="r"><code># Build simple grouped barplot again
 p &lt;- ggplot(d, aes(x_val, y_val, fill = z_val)) +
   geom_bar(position = &quot;dodge&quot;, stat = &quot;identity&quot;) +
   scale_fill_manual(values = c(&quot;hotpink4&quot;, &quot;lemonchiffon3&quot;)) +
-  coord_flip() + theme_minimal(base_size = 16) + 
-  theme(axis.text.x = element_blank(), panel.grid = element_blank())
+  coord_flip()
 
-# Extract the p object fills and choose text overlay colour
+# Extract the p-object fills and choose text overlay colour
 p + geom_text(
   aes(y = 0.5, label = y_val), position = position_dodge(0.9), size = 5,
   colour = map_chr(  # make text colour dependent on bar colour
-    ggplot_build(p)[[1]][[1]]$fill,  # access the fills from the p object
+    ggplot_build(p)[[1]][[1]]$fill,  # access p-object fills
     coloratio::cr_choose_bw   # choose black/white text based on fill
   )
 )</code></pre>
 <p>I put this to <a href="https://community.rstudio.com/t/can-you-conditionally-choose-geom-text-colours-based-on-underlying-geom-bar-fills/91777">the RStudio Community</a> with no answer to date. Let me know if you have any ideas.</p>
 </div>
 </div>
-<div id="despair" class="section level1">
-<h1>Despair</h1>
-<p>Having solved this little problem, I was suspicious. Surely this has been done in R before? I put out a tweet to investigate.</p>
+<div id="a-soapy-slip-up" class="section level1">
+<h1>A soapy slip-up</h1>
+<p>Having addressed my need, I was suspicious. Surely this has been done in R before? I put out a tweet to investigate.</p>
 {{% tweet "1342160455557668866" %}}
-<p>I very quickly realised my error.</p>
+<p>I soon realised my error. Merry Christmas!</p>
 {{% tweet "1342267391007477762" %}}
-<p>Whoops. <a href="https://github.com/feddelegrand7/savonliquide">{savonliquide}</a> by <a href="https://twitter.com/moh_fodil">Ihaddaden M. EL Fodil</a> can query the <a href="https://webaim.org/resources/contrastchecker/">WebAIM contrast checker API</a> to get the contrast ratio for two colours. And it’s on CRAN! Perhaps I missed it because of the name, which translates to ‘hand soap’?</p>
+<p>Whoops. <a href="https://github.com/feddelegrand7/savonliquide">{savonliquide}</a> by <a href="https://twitter.com/moh_fodil">Ihaddaden M. EL Fodil</a> can query the <a href="https://webaim.org/resources/contrastchecker/">WebAIM contrast checker API</a> to get the contrast ratio for two colours. And it’s on CRAN. Perhaps I missed it because of the name, which translates to ‘hand soap’?</p>
 <pre class="r"><code>install.packages(&quot;savonliquide&quot;)</code></pre>
-<p>Like <code>coloratio::cr_get_ratio()</code>, you can pass two named colours or hex values.</p>
+<p>Like <code>coloratio::cr_get_ratio()</code>, you can pass two hex values or named colours to {savonliquide}’s <code>check_contrast()</code> function.</p>
 <pre class="r"><code>savonliquide::check_contrast(&quot;blanchedalmond&quot;, &quot;bisque2&quot;)</code></pre>
 <pre><code>## 
 ## * The Contrast Ratio is 1.04
@@ -130,15 +136,16 @@ p + geom_text(
 ## * The result for the AAA check is : FAIL
 ## 
 ## * The result for the AAALarge check is : FAIL</code></pre>
-<p>You get a more informative output than <code>cr_get_ratio()</code>; it also provides results from testing against <a href="https://www.w3.org/TR/WCAG21/#contrast-minimum">the more stringent accessibility checks of WCAG 2.1</a>. Here, the two colours provided are so similar that they fail across the board.</p>
+<p>You get a more informative output than for <code>coloratio::cr_get_ratio()</code>: it provides results from testing against <a href="https://www.w3.org/TR/WCAG21/#contrast-minimum">additional accessibility checks in WCAG 2.1</a> that involve larger text and more a stringent contrast threshold.</p>
+<p>The two provided colours above are so similar that they fail the tests across the board.</p>
 <p>Handily, there’s also the <code>savonliquide::check_contrast_raw()</code> variant that returns a list with each result as an element.</p>
 </div>
 <div id="acceptance" class="section level1">
 <h1>Acceptance</h1>
-<p>So… should you wash your hands of {coloratio}?<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> Well, it at least fills the micro-niche of an R package that doesn’t require an internet connection to fetch colour contrast ratios. But it’s probably never going to go on CRAN, so you should use {savonliquide}.</p>
-<p>I could say I learnt a lesson about doing due diligence when developing a package. But I also <a href="https://twitter.com/mattdray/status/1343289157565689856?s=20">discovered recently</a> that I had somehow managed to reinvent <a href="https://github.com/GuangchuangYu/badger">the {badger} package</a> with <a href="https://www.rostrum.blog/2020/05/08/readme-badge/">my own {badgr} package</a>.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
-<p>At worst, I got to learn more about colour accessibility,<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> practice some package building, and laugh at the funny named colour set available in R.</p>
-<p>‘Papayawhip’ sounds delicious. And painful.</p>
+<p>So… should you wash your hands of {coloratio}?<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> Well, it fills the micro-niche of an R package that doesn’t require an internet connection to fetch colour contrast ratios. But it’s probably never going to go on CRAN, so you should use {savonliquide}.</p>
+<p>I certainly learnt a lesson about due diligence during package development. Especially because I also <a href="https://twitter.com/mattdray/status/1343289157565689856?s=20">discovered recently</a> that I had also somehow managed to reinvent <a href="https://github.com/GuangchuangYu/badger">the {badger} package</a> with <a href="https://www.rostrum.blog/2020/05/08/readme-badge/">my own {badgr} package</a>.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>At worst, I got to learn more about accessibility, practice some package building, and solve my initial problem (kinda).</p>
+<p>I also got to admire the creativity of <a href="https://cpb-us-e1.wpmucdn.com/sites.ucsc.edu/dist/d/276/files/2015/10/colorbynames.png">the names in the named-colour set</a>. ‘Papayawhip’ sounds really appealing. Or perhaps painful. <em>Just like package development.</em><a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
 <hr />
 <details>
 <summary>
@@ -154,7 +161,7 @@ Session info
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2020-12-29                  
+##  date     2020-12-30                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
 ##  package      * version    date       lib source                          
@@ -229,8 +236,8 @@ Session info
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>This is an excellent <em>savon liquide</em> pun.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn1"><p>I assure you this is an excellent <em>savon liquide</em> pun.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
 <li id="fn2"><p>{badger} has functions to generate a bunch of badges you’re likely to want. {badgr} focuses only on custom badges and has some extra options relative to <code>badger::badge_custom()</code>, like the ability to add an icon. But wow, how did I miss this?<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
-<li id="fn3"><p>Disclaimer: I have deuteranopia.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>#deep<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
