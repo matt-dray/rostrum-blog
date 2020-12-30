@@ -1,7 +1,7 @@
 ---
 title: 'Accessible colour contrasts with {coloratio}'
 author: Matt Dray
-date: '2020-12-31'
+date: '2020-12-30'
 slug: coloratio
 categories:
   - data-viz
@@ -14,22 +14,13 @@ tags:
   - ggplot2
   - r
   - savonliquide
-draft: yes
+draft: no
 ---
 
-```{r, echo=FALSE, fig.height=3, fig.width=8}
-col_1 <- "#1c7012"
-col_2 <-"black"
-withr::with_par(
-  list(mar = rep(0.1, 4)),
-  barplot(
-    matrix(c(1, 1)), col = c(col_2, col_1),
-    border = "white", yaxt = "n", beside = TRUE
-  )
-)
-text(2.5, 0.5, "{coloratio}", col = col_2, cex = 3)
-text(1.5, 0.5, "{coloratio}", col = col_1, cex = 3)
-```
+<div class="figure">
+<img src="/post/2020-12-29-coloratio_files/coloratio.png" alt="The word 'coloratio' in green text on a black background and vice versa to its right." width="100%"/>
+<p class="caption">This blog's theme: insufficient contrast!</p>
+</div>
 
 # tl;dr
 
@@ -39,15 +30,17 @@ I made [a small R package called {coloratio}](https://github.com/matt-dray/color
 
 The UK government's website, [GOV.UK](https://www.gov.uk/), was developed with user needs and accessibility in mind. I've been using {ggplot2} to recreate [the simple, accessible chart styles](https://www.gov.uk/government/publications/examples-of-visual-content-to-use-on-govuk/examples-of-visual-content-to-use-on-govuk) suggested for use on GOV.UK by [the Government Statistical Service](https://gss.civilservice.gov.uk/).
 
-But I wondered: is it possible to programmatically select a high-contrast text colour to overlay the fill colours of a {ggplot2} barplot? You would want black text over white and vice versa, for example. It isn't a big deal to program this 'manually', but that's not fun.
+But I wondered: is it possible to programmatically select a high-contrast text colour to overlay the fill colours of a {ggplot2} barplot? You would want black text over white and vice versa, for example. 
 
 What is 'high contrast' anyway? GOV.UK's [Design System](https://design-system.service.gov.uk/styles/colour/) refers to [W3C's contrast guidance from WCAG 2.1](https://www.w3.org/TR/WCAG21/#contrast-minimum), which suggests a ratio of 4.5:1 for regular text on a block-coloured background.
+
+It isn't a big deal to program this 'manually', but that's not fun.
 
 # Ratio calculation
 
 ## Is the contrast accessible?
 
-This problem calls for a small package with some functions to derive colour contrast ratios. Introducing [{coloratio}](https://github.com/matt-dray/coloratio).
+How about a small package with some functions to derive colour contrast ratios? Introducing [{coloratio}](https://github.com/matt-dray/coloratio).
 
 ```{r eval=FALSE}
 remotes::install_github("matt-dray/coloratio")
@@ -156,21 +149,21 @@ I soon realised my error. Merry Christmas!
 blogdown::shortcode("tweet", "1342267391007477762")
 ```
 
-Whoops. [{savonliquide}](https://github.com/feddelegrand7/savonliquide) by [Ihaddaden M. EL Fodil](https://twitter.com/moh_fodil) can query the [WebAIM contrast checker API](https://webaim.org/resources/contrastchecker/) to get the contrast ratio for two colours. And it's on CRAN. Perhaps I missed it because of the name, which translates to 'hand soap'?
+Whoops. [{savonliquide}](https://github.com/feddelegrand7/savonliquide) by [Ihaddaden M. EL Fodil](https://twitter.com/moh_fodil) can query the [WebAIM contrast checker API](https://webaim.org/resources/contrastchecker/) to get the contrast ratio for two colours. And it's on CRAN. 
 
 ```{r, eval=FALSE}
 install.packages("savonliquide")
 ```
 
-Like `coloratio::cr_get_ratio()`, you can pass two hex values or named colours to {savonliquide}'s `check_contrast()` function.
+Maybe I missed it because of the name, which translates to 'hand soap'?
+
+Anyway, like `coloratio::cr_get_ratio()`, you can pass two hex values or named colours to {savonliquide}'s `check_contrast()` function.
 
 ```{r}
 savonliquide::check_contrast("blanchedalmond", "bisque2")
 ```
 
-You get a more informative output than for `coloratio::cr_get_ratio()`: it provides results from testing against [additional accessibility checks in WCAG 2.1](https://www.w3.org/TR/WCAG21/#contrast-minimum) that involve larger text and more a stringent contrast threshold. 
-
-The two provided colours above are so similar that they fail the tests across the board.
+The output is richer than `coloratio::cr_get_ratio()`. You can see here that the supplied colours fail [additional accessibility checks from WCAG 2.1](https://www.w3.org/TR/WCAG21/#contrast-minimum) that involve large text and more stringent contrast thresholds. 
 
 Handily, there's also the `savonliquide::check_contrast_raw()` variant that returns a list with each result as an element.
 
@@ -178,11 +171,11 @@ Handily, there's also the `savonliquide::check_contrast_raw()` variant that retu
 
 So... should you wash your hands of {coloratio}?[^savon] Well, it fills the micro-niche of an R package that doesn't require an internet connection to fetch colour contrast ratios. But it's probably never going to go on CRAN, so you should use {savonliquide}.
 
-I certainly learnt a lesson about due diligence during package development. Especially because I also [discovered recently](https://twitter.com/mattdray/status/1343289157565689856?s=20) that I had also somehow managed to reinvent [the {badger} package](https://github.com/GuangchuangYu/badger) with [my own {badgr} package](https://www.rostrum.blog/2020/05/08/readme-badge/).[^badgr]
+I certainly learnt a lesson about due diligence during package development. Especially because I also [discovered recently](https://twitter.com/mattdray/status/1343289157565689856?s=20) that I had also somehow managed to reinvent [the {badger} package](https://github.com/GuangchuangYu/badger) with [my own {badgr} package](https://www.rostrum.blog/2020/05/08/readme-badge/).[^badgr] Whoops again.
 
 At worst, I got to learn more about accessibility, practice some package building, and solve my initial problem (kinda).
 
-I also got to admire the creativity of [the names in the named-colour set](https://cpb-us-e1.wpmucdn.com/sites.ucsc.edu/dist/d/276/files/2015/10/colorbynames.png). 'Papayawhip' sounds really appealing. Or perhaps painful. _Just like package development._[^deep]
+I also got to admire the creativity of [the names in the named-colour set](https://cpb-us-e1.wpmucdn.com/sites.ucsc.edu/dist/d/276/files/2015/10/colorbynames.png). 'Papayawhip' sounds really appealing. Or perhaps painful. _Just like package development?_[^deep]
 
 ---
 <details><summary>Session info</summary>

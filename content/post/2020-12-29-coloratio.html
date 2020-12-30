@@ -1,7 +1,7 @@
 ---
 title: 'Accessible colour contrasts with {coloratio}'
 author: Matt Dray
-date: '2020-12-31'
+date: '2020-12-30'
 slug: coloratio
 categories:
   - data-viz
@@ -14,7 +14,7 @@ tags:
   - ggplot2
   - r
   - savonliquide
-draft: yes
+draft: no
 ---
 
 <script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
@@ -22,7 +22,12 @@ draft: yes
 <script src="/rmarkdown-libs/anchor-sections/anchor-sections.js"></script>
 
 
-<p><img src="/post/2020-12-29-coloratio_files/figure-html/unnamed-chunk-1-1.png" width="768" /></p>
+<div class="figure">
+<img src="/post/2020-12-29-coloratio_files/coloratio.png" alt="The word 'coloratio' in green text on a black background and vice versa to its right." width="100%"/>
+<p class="caption">
+This blog’s theme: insufficient contrast!
+</p>
+</div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
 <p>I made <a href="https://github.com/matt-dray/coloratio">a small R package called {coloratio}</a> to evaluate <a href="https://accessibility.blog.gov.uk/2016/06/17/colour-contrast-why-does-it-matter/">colour-contrast ratios for accessibility</a>. Then I found out that <a href="https://github.com/feddelegrand7/savonliquide">{savonliquide}</a> already exists to do this.</p>
@@ -30,14 +35,15 @@ draft: yes
 <div id="accessible-charts" class="section level1">
 <h1>Accessible charts</h1>
 <p>The UK government’s website, <a href="https://www.gov.uk/">GOV.UK</a>, was developed with user needs and accessibility in mind. I’ve been using {ggplot2} to recreate <a href="https://www.gov.uk/government/publications/examples-of-visual-content-to-use-on-govuk/examples-of-visual-content-to-use-on-govuk">the simple, accessible chart styles</a> suggested for use on GOV.UK by <a href="https://gss.civilservice.gov.uk/">the Government Statistical Service</a>.</p>
-<p>But I wondered: is it possible to programmatically select a high-contrast text colour to overlay the fill colours of a {ggplot2} barplot? You would want black text over white and vice versa, for example. It isn’t a big deal to program this ‘manually’, but that’s not fun.</p>
+<p>But I wondered: is it possible to programmatically select a high-contrast text colour to overlay the fill colours of a {ggplot2} barplot? You would want black text over white and vice versa, for example.</p>
 <p>What is ‘high contrast’ anyway? GOV.UK’s <a href="https://design-system.service.gov.uk/styles/colour/">Design System</a> refers to <a href="https://www.w3.org/TR/WCAG21/#contrast-minimum">W3C’s contrast guidance from WCAG 2.1</a>, which suggests a ratio of 4.5:1 for regular text on a block-coloured background.</p>
+<p>It isn’t a big deal to program this ‘manually’, but that’s not fun.</p>
 </div>
 <div id="ratio-calculation" class="section level1">
 <h1>Ratio calculation</h1>
 <div id="is-the-contrast-accessible" class="section level2">
 <h2>Is the contrast accessible?</h2>
-<p>This problem calls for a small package with some functions to derive colour contrast ratios. Introducing <a href="https://github.com/matt-dray/coloratio">{coloratio}</a>.</p>
+<p>How about a small package with some functions to derive colour contrast ratios? Introducing <a href="https://github.com/matt-dray/coloratio">{coloratio}</a>.</p>
 <pre class="r"><code>remotes::install_github(&quot;matt-dray/coloratio&quot;)</code></pre>
 <p>Pass two colours to <code>cr_get_ratio()</code> as hex values or named colours—see <code>colors()</code>—and it performs the necessary calculations to derive <a href="https://www.w3.org/TR/WCAG/#dfn-relative-luminance">relative luminance</a> and return a <a href="https://www.w3.org/TR/WCAG/#dfn-contrast-ratio">colour contrast ratio</a>.</p>
 <pre class="r"><code>library(coloratio)  # attach package
@@ -46,7 +52,7 @@ cr_get_ratio(
   &quot;papayawhip&quot;, &quot;#000000&quot;,  # colours to compare
   view = TRUE  # optional demo of colours 
 )</code></pre>
-<p><img src="/post/2020-12-29-coloratio_files/figure-html/unnamed-chunk-3-1.png" width="480" /></p>
+<p><img src="/post/2020-12-29-coloratio_files/figure-html/unnamed-chunk-2-1.png" width="480" /></p>
 <pre><code>## [1] 18.55942</code></pre>
 <p>This contrast value is above the 4.5 threshold, so we’re good to go. You’ll get a warning if the contrast is insufficient.</p>
 <pre class="r"><code>cr_get_ratio(&quot;olivedrab&quot;, &quot;olivedrab2&quot;)</code></pre>
@@ -93,7 +99,7 @@ d  # preview</code></pre>
   theme_minimal(base_size = 16) +  # clean up the theme
   theme(axis.text.x = element_blank(), axis.title = element_blank(), 
         legend.title = element_blank(), panel.grid = element_blank())</code></pre>
-<p><img src="/post/2020-12-29-coloratio_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p><img src="/post/2020-12-29-coloratio_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
 <p>As desired: black on the lighter fill; white on the darker fill. The default would be black text, which would provide insufficient contrast for darker fills.</p>
 </div>
 <div id="aside-cr_choose_bw-in-geom_text" class="section level2">
@@ -122,9 +128,10 @@ p + geom_text(
 {{% tweet "1342160455557668866" %}}
 <p>I soon realised my error. Merry Christmas!</p>
 {{% tweet "1342267391007477762" %}}
-<p>Whoops. <a href="https://github.com/feddelegrand7/savonliquide">{savonliquide}</a> by <a href="https://twitter.com/moh_fodil">Ihaddaden M. EL Fodil</a> can query the <a href="https://webaim.org/resources/contrastchecker/">WebAIM contrast checker API</a> to get the contrast ratio for two colours. And it’s on CRAN. Perhaps I missed it because of the name, which translates to ‘hand soap’?</p>
+<p>Whoops. <a href="https://github.com/feddelegrand7/savonliquide">{savonliquide}</a> by <a href="https://twitter.com/moh_fodil">Ihaddaden M. EL Fodil</a> can query the <a href="https://webaim.org/resources/contrastchecker/">WebAIM contrast checker API</a> to get the contrast ratio for two colours. And it’s on CRAN.</p>
 <pre class="r"><code>install.packages(&quot;savonliquide&quot;)</code></pre>
-<p>Like <code>coloratio::cr_get_ratio()</code>, you can pass two hex values or named colours to {savonliquide}’s <code>check_contrast()</code> function.</p>
+<p>Maybe I missed it because of the name, which translates to ‘hand soap’?</p>
+<p>Anyway, like <code>coloratio::cr_get_ratio()</code>, you can pass two hex values or named colours to {savonliquide}’s <code>check_contrast()</code> function.</p>
 <pre class="r"><code>savonliquide::check_contrast(&quot;blanchedalmond&quot;, &quot;bisque2&quot;)</code></pre>
 <pre><code>## 
 ## * The Contrast Ratio is 1.04
@@ -136,16 +143,15 @@ p + geom_text(
 ## * The result for the AAA check is : FAIL
 ## 
 ## * The result for the AAALarge check is : FAIL</code></pre>
-<p>You get a more informative output than for <code>coloratio::cr_get_ratio()</code>: it provides results from testing against <a href="https://www.w3.org/TR/WCAG21/#contrast-minimum">additional accessibility checks in WCAG 2.1</a> that involve larger text and more a stringent contrast threshold.</p>
-<p>The two provided colours above are so similar that they fail the tests across the board.</p>
+<p>The output is richer than <code>coloratio::cr_get_ratio()</code>. You can see here that the supplied colours fail <a href="https://www.w3.org/TR/WCAG21/#contrast-minimum">additional accessibility checks from WCAG 2.1</a> that involve large text and more stringent contrast thresholds.</p>
 <p>Handily, there’s also the <code>savonliquide::check_contrast_raw()</code> variant that returns a list with each result as an element.</p>
 </div>
 <div id="acceptance" class="section level1">
 <h1>Acceptance</h1>
 <p>So… should you wash your hands of {coloratio}?<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> Well, it fills the micro-niche of an R package that doesn’t require an internet connection to fetch colour contrast ratios. But it’s probably never going to go on CRAN, so you should use {savonliquide}.</p>
-<p>I certainly learnt a lesson about due diligence during package development. Especially because I also <a href="https://twitter.com/mattdray/status/1343289157565689856?s=20">discovered recently</a> that I had also somehow managed to reinvent <a href="https://github.com/GuangchuangYu/badger">the {badger} package</a> with <a href="https://www.rostrum.blog/2020/05/08/readme-badge/">my own {badgr} package</a>.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>I certainly learnt a lesson about due diligence during package development. Especially because I also <a href="https://twitter.com/mattdray/status/1343289157565689856?s=20">discovered recently</a> that I had also somehow managed to reinvent <a href="https://github.com/GuangchuangYu/badger">the {badger} package</a> with <a href="https://www.rostrum.blog/2020/05/08/readme-badge/">my own {badgr} package</a>.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> Whoops again.</p>
 <p>At worst, I got to learn more about accessibility, practice some package building, and solve my initial problem (kinda).</p>
-<p>I also got to admire the creativity of <a href="https://cpb-us-e1.wpmucdn.com/sites.ucsc.edu/dist/d/276/files/2015/10/colorbynames.png">the names in the named-colour set</a>. ‘Papayawhip’ sounds really appealing. Or perhaps painful. <em>Just like package development.</em><a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<p>I also got to admire the creativity of <a href="https://cpb-us-e1.wpmucdn.com/sites.ucsc.edu/dist/d/276/files/2015/10/colorbynames.png">the names in the named-colour set</a>. ‘Papayawhip’ sounds really appealing. Or perhaps painful. <em>Just like package development?</em><a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
 <hr />
 <details>
 <summary>
