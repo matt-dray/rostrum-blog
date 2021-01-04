@@ -1,0 +1,236 @@
+---
+title: "Play Pokémon's Safari Zone in R"
+author: Matt Dray
+date: '2021-01-04'
+slug: safar6
+categories:
+  - code
+  - package
+tags:
+  - oop
+  - pokemon
+  - r
+  - r6
+  - safar6
+draft: no
+---
+
+<div class="figure">
+<img src="https://raw.githubusercontent.com/matt-dray/gamelad/main/img/rstudio-safar6-gamelad-vt323.png" alt="Screenshot of Rstudio showing only the console pane with green text and background, showing text that describes an encounter with a Pokemon." width="75%"/>
+<p class="caption">An original Nintendo Game Boy playing _Pokémon_... if you squint.</p>
+</div>
+
+# tl;dr
+
+I created [the R package {safar6}](https://github.com/matt-dray/safar6), which contains an R6-class object to simulate a simplified, text-based version of [the Safari Zone](https://bulbapedia.bulbagarden.net/wiki/Kanto_Safari_Zone) sub-area from [_Pokémon Blue_](https://en.wikipedia.org/wiki/Pok%C3%A9mon_Red_and_Blue).
+
+I also made [the 'gamelad' RStudio theme](https://github.com/matt-dray/gamelad) to mimic a pukey-green original Game Boy. Pair with a blocky monospace font like [VT323](https://fonts.google.com/specimen/VT323) for that 8-bit experience.
+
+# _Kangaskhan_ you believe it?
+
+Did you know you can [play games in R](https://lucidmanager.org/data-science/games-in-r/)? 
+
+I particularly like the text adventures [The Secret of Landusia](https://lucidmanager.org/data-science/text-adventure/) by [Peter Prevos](https://twitter.com/lucidmanager) and [Castle of R](http://giorasimchoni.com/2017/09/10/2017-09-10-you-re-in-a-room-the-castleofr-package/) by [Giora Simchoni](https://twitter.com/GioraSimchoni)
+
+The latter uses object-oriented programming (OOP) for handling game elements, thanks to [{R6}](https://r6.r-lib.org/). So, a room in the castle is an R6-class object with specific fields (variables) like whether the door is `$open` and methods (functions) like `$openDoor()`.
+
+# A _Chansey_ to learn
+
+[I wrote a post about using {R6} to simulate an Automatic Bell Dispenser](https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/) (an ATM, basically) from Nintendo's _Animal Crossing: New Horizons_ (2020). Fields include `$savings` and methods include `$withdraw`, for example.
+
+Obviously the next step was try and get to grips with {R6} for games, but I wanted to start small. The original _Pokémon_ games were effectively text adventures with some random-number generation and simple calculations going on in the background. Would it be possible to simulate some aspects of it?
+
+[The Safari Zone](https://bulbapedia.bulbagarden.net/wiki/Kanto_Safari_Zone) is a sub-area of the main game and the mechanics here are simpler: you're only allowed 500 steps, you have to use a special type of ball to capture wild Pokémon (of which you only have 30) and you can't reduce a wild Pokémon's health (hit points, HP).
+
+<div class="figure">
+<img src="/post/2021-01-04-safar6_files/sz-screenshot.png" alt="A composite screenshot of the Safari Zone from the original Pokemon game." width="50%"/>
+<p class="caption">'Would you like to join the hunt?' Via [Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/File:Safari_Zone_entrance_RBY.png)</p>
+</div>
+
+So I went ahead and made a simple {R6} class to mimic the Safari Zone and bundled it in [the {safar6} R package](https://www.github.com/matt-dray/safar6/).[^safar6]
+
+# A quick _Tauros_ of the game
+
+Install [from GitHub](https://www.github.com/matt-dray/safar6/) with:
+
+```{r install, eval=FALSE}
+remotes::install_github("matt-dray/safar6")
+```
+
+Basically, the package contains an R6-class object `SafariZone`, which you initialise and assign like `x <- safar6::SafariZone$new()`. This starts a routine with some text from the game and some interactive elements.
+
+```{r init, eval=FALSE}
+library(safar6)
+# {safar6}
+# Start game: x <- SafariZone$new()
+# Take a step: x$step()
+x <- SafariZone$new()
+# ------------------------
+# First, what is your name?
+# NEW NAME (1)
+# BLUE (2)
+# GARY (3)
+# JOHN (4)
+# ------------------------
+# Select 1, 2, 3 or 4:
+1
+# Your name: 
+THEW
+# Welcome to the SAFARI ZONE!
+# For just P500, you can catch all the
+# Pokemon you want in the park!
+# Would you like to join the hunt?
+# ------------------------
+# MONEY: P500
+# YES (1) or NO (2)
+# ------------------------
+# Select 1 or 2: 
+1
+# That'll be P500 please!
+# ------------------------
+# MONEY: P0
+# ------------------------
+# We only use a special POKe BALL here.
+# THEW received 30 SAFARI BALLs!
+# We'll call you on the PA when you run out of time or SAFARI BALLs!
+```
+
+You can then `x$step()` through the Safari Zone. You'll likely need to do this a number of times before you encounter a wild Pokémon, given the Safari Zone's encounter rate.
+
+```{r step, eval=FALSE}
+x$step()
+# 499/500
+```
+
+There's a weighted chance of encountering certain Pokémon at certain levels. Each wild Pokémon also has (hidden) randomised individual variation in its stats.
+
+```{r step-encounter, eval=FALSE}
+x$step()
+# 498/500
+x$step()
+# 497/500
+# Wild VENONAT L22 appeared!
+# ------------------------
+# BALLx30 (1)     BAIT (2)
+# THROW ROCK (3)  RUN (4)
+# ------------------------
+```
+
+During an encounter you can throw rocks to raise the catch chance (but you'll also increase the flee chance) and throw bait to reduce the chance of fleeing (but that'll also decrease the catch chance). The Pokémon will be angry or eating for one to five turns.
+
+```{r rock, eval=FALSE}
+# Wild VENONAT L22 appeared!
+# ------------------------
+# BALLx30 (1)     BAIT (2)
+# THROW ROCK (3)  RUN (4)
+# ------------------------
+# Select 1, 2, 3 or 4: 
+3
+# THEW threw a ROCK.
+# Wild VENONAT is angry!
+```
+
+You can throw a ball to attempt a capture. Success is determined by several factors, like the Pokémon's HP, its level and its catch rate (possibly modified by rocks and bait). It may also run away given factors like its speed.
+
+```{r ball-fail, eval=FALSE}
+# THEW threw a ROCK.
+# Wild VENONAT is angry!
+# ------------------------
+# BALLx30 (1)     BAIT (2)
+# THROW ROCK (3)  RUN (4)
+# ------------------------
+# Select 1, 2, 3 or 4: 
+1
+# THEW used SAFARI BALL!
+# Wobble...
+# Darn! The POKeMON broke free!
+```
+
+You may want to change your strategy. More rocks, or some bait? While it's still angry, you could take advantage of its heightened catch rate by throwing another ball.
+
+```{r ball-success, eval=FALSE}
+# Wild VENONAT is angry!
+# ------------------------
+# BALLx29 (1)     BAIT (2)
+# THROW ROCK (3)  RUN (4)
+# ------------------------
+# Select 1, 2, 3 or 4: 
+1
+# THEW used SAFARI BALL!
+# Wobble... Wobble... Wobble...
+# All right!
+# VENONAT was caught!
+```
+
+You can choose to give your 'captured friend' a nickname.
+
+```{r nickname, eval=FALSE}
+# ------------------------
+# Do you want to give a nickname to VENONAT?
+# YES (1) or NO (2)
+# ------------------------
+# Select 1 or 2:
+1
+# Nickname: 
+Tajiri
+# Tajiri was transferred to BILL's PC!
+```
+
+Try to catch as many as you can before you run out of steps or balls. You can `x$pause()` the game at any point to see your remaining stats and you can check out `x$bills_pc` to see what you've captured[^bill].
+
+```{r pause, eval=FALSE}
+x$pause()
+# 497/500
+# BALLx28
+# BILL's PC: 1
+x$bills_pc
+#   nickname species level
+# 1   Tajiri VENONAT    22
+```
+
+When the game is over, you'll see an endscreen with your results. 
+
+```{r end, eval=FALSE}
+# ------------------------
+# PA: Ding-dong!
+# Time's up!
+# PA: Your SAFARI GAME is over!
+# Did you get a good haul?
+# Come again!
+# ------------------------
+# Result: 1 transferred to BILL's PC
+#   nickname species level
+# 1   Tajiri VENONAT    22
+```
+
+The original game was pretty tricky. The Pokémon were pretty flighty and it was especially hard to trap rare encounters like Chansey, which had a huge number of HP. The most I've got on a playthrough of {safar6} is three(!), so use that as a yardstick.
+
+# _Exeggcute_-ing the class
+
+I tried to keep things simple, so there's a number of omissions compared to the original game. For example, there's no visuals or sounds; I've simulated only the 'Center' hub area of the Safari Zone; you walk around as though you're always in tall grass; you can't fish or use different rod types; you're restricted to the catch rates and Pokémon identities of the _Blue_ game (not _Red_ or _Yellow_, which are different).
+
+On the flipside, I tried to maintain some subtle true-to-the-original elements. For example, you'll be prompted to enter your name; you can nickname your Pokémon; there's 'wobble logic' for deciding how many times the ball should shake before a capture; and the majority of the text is as it appears in the game.
+
+# Disen-_Tangela_-ing game mechanics
+
+The first generation of *Pokémon* games were developed for [the Nintendo
+Game Boy](https://en.wikipedia.org/wiki/Game_Boy) by [Game
+Freak](https://www.gamefreak.co.jp/) and published by
+[Nintendo](https://www.nintendo.com). Pokémon as a property is owned by
+[The Pokémon Company](https://www.pokemon.co.jp/). 
+
+Information about game mechanics and values were relatively tricky to come by. The following resources were really important:
+
+* [Bulbapedia](https://bulbapedia.bulbagarden.net/) for Pokémon stats and formulae for things like catch chance
+* [The Cave of Dragonflies](https://www.dragonflycave.com/) has some excellent breakdowns of game mechanics, particularly in capture and Safari Zone logic 
+* the [Pokémon Slots](https://sites.google.com/site/pokemonslots) website for base encounter rates by area
+* the [pret/pokered GitHub repo](https://github.com/pret/pokered) for a disassembly of the games
+
+# Don't _Marowak_ living creatures
+
+Obviously this is for fun and learning. Play at your own risk. Feel free to report any bugs (as in code problems, not bug-type Pokémon) as [GitHub issues](https://github.com/matt-dray/safar6/issues). 
+
+And do not, I repeat, _do not_ throw rocks at animals IRL.
+
+[^safar6]: You know, like 'safari' and 'R6' mashed together?
+[^bill]: 'Bill's PC' is the original game's in-game Pokémon-storage system. Yes, they're stored on a computer. In particular, _Bill's_ computer. Don't think about it too hard.

@@ -1,0 +1,200 @@
+---
+title: "Play Pokémon's Safari Zone in R"
+author: Matt Dray
+date: '2021-01-04'
+slug: safar6
+categories:
+  - code
+  - package
+tags:
+  - oop
+  - pokemon
+  - r
+  - r6
+  - safar6
+draft: no
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+<link href="/rmarkdown-libs/anchor-sections/anchor-sections.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/anchor-sections/anchor-sections.js"></script>
+
+
+<div class="figure">
+<img src="https://raw.githubusercontent.com/matt-dray/gamelad/main/img/rstudio-safar6-gamelad-vt323.png" alt="Screenshot of Rstudio showing only the console pane with green text and background, showing text that describes an encounter with a Pokemon." width="75%"/>
+<p class="caption">
+An original Nintendo Game Boy playing <em>Pokémon</em>… if you squint.
+</p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I created <a href="https://github.com/matt-dray/safar6">the R package {safar6}</a>, which contains an R6-class object to simulate a simplified, text-based version of <a href="https://bulbapedia.bulbagarden.net/wiki/Kanto_Safari_Zone">the Safari Zone</a> sub-area from <a href="https://en.wikipedia.org/wiki/Pok%C3%A9mon_Red_and_Blue"><em>Pokémon Blue</em></a>.</p>
+<p>I also made <a href="https://github.com/matt-dray/gamelad">the ‘gamelad’ RStudio theme</a> to mimic a pukey-green original Game Boy. Pair with a blocky monospace font like <a href="https://fonts.google.com/specimen/VT323">VT323</a> for that 8-bit experience.</p>
+</div>
+<div id="kangaskhan-you-believe-it" class="section level1">
+<h1><em>Kangaskhan</em> you believe it?</h1>
+<p>Did you know you can <a href="https://lucidmanager.org/data-science/games-in-r/">play games in R</a>?</p>
+<p>I particularly like the text adventures <a href="https://lucidmanager.org/data-science/text-adventure/">The Secret of Landusia</a> by <a href="https://twitter.com/lucidmanager">Peter Prevos</a> and <a href="http://giorasimchoni.com/2017/09/10/2017-09-10-you-re-in-a-room-the-castleofr-package/">Castle of R</a> by <a href="https://twitter.com/GioraSimchoni">Giora Simchoni</a></p>
+<p>The latter uses object-oriented programming (OOP) for handling game elements, thanks to <a href="https://r6.r-lib.org/">{R6}</a>. So, a room in the castle is an R6-class object with specific fields (variables) like whether the door is <code>$open</code> and methods (functions) like <code>$openDoor()</code>.</p>
+</div>
+<div id="a-chansey-to-learn" class="section level1">
+<h1>A <em>Chansey</em> to learn</h1>
+<p><a href="https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/">I wrote a post about using {R6} to simulate an Automatic Bell Dispenser</a> (an ATM, basically) from Nintendo’s <em>Animal Crossing: New Horizons</em> (2020). Fields include <code>$savings</code> and methods include <code>$withdraw</code>, for example.</p>
+<p>Obviously the next step was try and get to grips with {R6} for games, but I wanted to start small. The original <em>Pokémon</em> games were effectively text adventures with some random-number generation and simple calculations going on in the background. Would it be possible to simulate some aspects of it?</p>
+<p><a href="https://bulbapedia.bulbagarden.net/wiki/Kanto_Safari_Zone">The Safari Zone</a> is a sub-area of the main game and the mechanics here are simpler: you’re only allowed 500 steps, you have to use a special type of ball to capture wild Pokémon (of which you only have 30) and you can’t reduce a wild Pokémon’s health (hit points, HP).</p>
+<div class="figure">
+<img src="/post/2021-01-04-safar6_files/sz-screenshot.png" alt="A composite screenshot of the Safari Zone from the original Pokemon game." width="50%"/>
+<p class="caption">
+‘Would you like to join the hunt?’ Via <a href="https://bulbapedia.bulbagarden.net/wiki/File:Safari_Zone_entrance_RBY.png">Bulbapedia</a>
+</p>
+</div>
+<p>So I went ahead and made a simple {R6} class to mimic the Safari Zone and bundled it in <a href="https://www.github.com/matt-dray/safar6/">the {safar6} R package</a>.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+</div>
+<div id="a-quick-tauros-of-the-game" class="section level1">
+<h1>A quick <em>Tauros</em> of the game</h1>
+<p>Install <a href="https://www.github.com/matt-dray/safar6/">from GitHub</a> with:</p>
+<pre class="r"><code>remotes::install_github(&quot;matt-dray/safar6&quot;)</code></pre>
+<p>Basically, the package contains an R6-class object <code>SafariZone</code>, which you initialise and assign like <code>x &lt;- safar6::SafariZone$new()</code>. This starts a routine with some text from the game and some interactive elements.</p>
+<pre class="r"><code>library(safar6)
+# {safar6}
+# Start game: x &lt;- SafariZone$new()
+# Take a step: x$step()
+x &lt;- SafariZone$new()
+# ------------------------
+# First, what is your name?
+# NEW NAME (1)
+# BLUE (2)
+# GARY (3)
+# JOHN (4)
+# ------------------------
+# Select 1, 2, 3 or 4:
+1
+# Your name: 
+THEW
+# Welcome to the SAFARI ZONE!
+# For just P500, you can catch all the
+# Pokemon you want in the park!
+# Would you like to join the hunt?
+# ------------------------
+# MONEY: P500
+# YES (1) or NO (2)
+# ------------------------
+# Select 1 or 2: 
+1
+# That&#39;ll be P500 please!
+# ------------------------
+# MONEY: P0
+# ------------------------
+# We only use a special POKe BALL here.
+# THEW received 30 SAFARI BALLs!
+# We&#39;ll call you on the PA when you run out of time or SAFARI BALLs!</code></pre>
+<p>You can then <code>x$step()</code> through the Safari Zone. You’ll likely need to do this a number of times before you encounter a wild Pokémon, given the Safari Zone’s encounter rate.</p>
+<pre class="r"><code>x$step()
+# 499/500</code></pre>
+<p>There’s a weighted chance of encountering certain Pokémon at certain levels. Each wild Pokémon also has (hidden) randomised individual variation in its stats.</p>
+<pre class="r"><code>x$step()
+# 498/500
+x$step()
+# 497/500
+# Wild VENONAT L22 appeared!
+# ------------------------
+# BALLx30 (1)     BAIT (2)
+# THROW ROCK (3)  RUN (4)
+# ------------------------</code></pre>
+<p>During an encounter you can throw rocks to raise the catch chance (but you’ll also increase the flee chance) and throw bait to reduce the chance of fleeing (but that’ll also decrease the catch chance). The Pokémon will be angry or eating for one to five turns.</p>
+<pre class="r"><code># Wild VENONAT L22 appeared!
+# ------------------------
+# BALLx30 (1)     BAIT (2)
+# THROW ROCK (3)  RUN (4)
+# ------------------------
+# Select 1, 2, 3 or 4: 
+3
+# THEW threw a ROCK.
+# Wild VENONAT is angry!</code></pre>
+<p>You can throw a ball to attempt a capture. Success is determined by several factors, like the Pokémon’s HP, its level and its catch rate (possibly modified by rocks and bait). It may also run away given factors like its speed.</p>
+<pre class="r"><code># THEW threw a ROCK.
+# Wild VENONAT is angry!
+# ------------------------
+# BALLx30 (1)     BAIT (2)
+# THROW ROCK (3)  RUN (4)
+# ------------------------
+# Select 1, 2, 3 or 4: 
+1
+# THEW used SAFARI BALL!
+# Wobble...
+# Darn! The POKeMON broke free!</code></pre>
+<p>You may want to change your strategy. More rocks, or some bait? While it’s still angry, you could take advantage of its heightened catch rate by throwing another ball.</p>
+<pre class="r"><code># Wild VENONAT is angry!
+# ------------------------
+# BALLx29 (1)     BAIT (2)
+# THROW ROCK (3)  RUN (4)
+# ------------------------
+# Select 1, 2, 3 or 4: 
+1
+# THEW used SAFARI BALL!
+# Wobble... Wobble... Wobble...
+# All right!
+# VENONAT was caught!</code></pre>
+<p>You can choose to give your ‘captured friend’ a nickname.</p>
+<pre class="r"><code># ------------------------
+# Do you want to give a nickname to VENONAT?
+# YES (1) or NO (2)
+# ------------------------
+# Select 1 or 2:
+1
+# Nickname: 
+Tajiri
+# Tajiri was transferred to BILL&#39;s PC!</code></pre>
+<p>Try to catch as many as you can before you run out of steps or balls. You can <code>x$pause()</code> the game at any point to see your remaining stats and you can check out <code>x$bills_pc</code> to see what you’ve captured<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>.</p>
+<pre class="r"><code>x$pause()
+# 497/500
+# BALLx28
+# BILL&#39;s PC: 1
+x$bills_pc
+#   nickname species level
+# 1   Tajiri VENONAT    22</code></pre>
+<p>When the game is over, you’ll see an endscreen with your results.</p>
+<pre class="r"><code># ------------------------
+# PA: Ding-dong!
+# Time&#39;s up!
+# PA: Your SAFARI GAME is over!
+# Did you get a good haul?
+# Come again!
+# ------------------------
+# Result: 1 transferred to BILL&#39;s PC
+#   nickname species level
+# 1   Tajiri VENONAT    22</code></pre>
+<p>The original game was pretty tricky. The Pokémon were pretty flighty and it was especially hard to trap rare encounters like Chansey, which had a huge number of HP. The most I’ve got on a playthrough of {safar6} is three(!), so use that as a yardstick.</p>
+</div>
+<div id="exeggcute-ing-the-class" class="section level1">
+<h1><em>Exeggcute</em>-ing the class</h1>
+<p>I tried to keep things simple, so there’s a number of omissions compared to the original game. For example, there’s no visuals or sounds; I’ve simulated only the ‘Center’ hub area of the Safari Zone; you walk around as though you’re always in tall grass; you can’t fish or use different rod types; you’re restricted to the catch rates and Pokémon identities of the <em>Blue</em> game (not <em>Red</em> or <em>Yellow</em>, which are different).</p>
+<p>On the flipside, I tried to maintain some subtle true-to-the-original elements. For example, you’ll be prompted to enter your name; you can nickname your Pokémon; there’s ‘wobble logic’ for deciding how many times the ball should shake before a capture; and the majority of the text is as it appears in the game.</p>
+</div>
+<div id="disen-tangela-ing-game-mechanics" class="section level1">
+<h1>Disen-<em>Tangela</em>-ing game mechanics</h1>
+<p>The first generation of <em>Pokémon</em> games were developed for <a href="https://en.wikipedia.org/wiki/Game_Boy">the Nintendo
+Game Boy</a> by <a href="https://www.gamefreak.co.jp/">Game
+Freak</a> and published by
+<a href="https://www.nintendo.com">Nintendo</a>. Pokémon as a property is owned by
+<a href="https://www.pokemon.co.jp/">The Pokémon Company</a>.</p>
+<p>Information about game mechanics and values were relatively tricky to come by. The following resources were really important:</p>
+<ul>
+<li><a href="https://bulbapedia.bulbagarden.net/">Bulbapedia</a> for Pokémon stats and formulae for things like catch chance</li>
+<li><a href="https://www.dragonflycave.com/">The Cave of Dragonflies</a> has some excellent breakdowns of game mechanics, particularly in capture and Safari Zone logic</li>
+<li>the <a href="https://sites.google.com/site/pokemonslots">Pokémon Slots</a> website for base encounter rates by area</li>
+<li>the <a href="https://github.com/pret/pokered">pret/pokered GitHub repo</a> for a disassembly of the games</li>
+</ul>
+</div>
+<div id="dont-marowak-living-creatures" class="section level1">
+<h1>Don’t <em>Marowak</em> living creatures</h1>
+<p>Obviously this is for fun and learning. Play at your own risk. Feel free to report any bugs (as in code problems, not bug-type Pokémon) as <a href="https://github.com/matt-dray/safar6/issues">GitHub issues</a>.</p>
+<p>And do not, I repeat, <em>do not</em> throw rocks at animals IRL.</p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>You know, like ‘safari’ and ‘R6’ mashed together?<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>‘Bill’s PC’ is the original game’s in-game Pokémon-storage system. Yes, they’re stored on a computer. In particular, <em>Bill’s</em> computer. Don’t think about it too hard.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
