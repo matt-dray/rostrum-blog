@@ -38,7 +38,7 @@ The latter uses object-oriented programming (OOP) for handling game elements, th
 
 [I wrote a post about using {R6} to simulate an Automatic Bell Dispenser](https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/) (an ATM, basically) from Nintendo's _Animal Crossing: New Horizons_ (2020). Fields include `$savings` and methods include `$withdraw`, for example.
 
-Obviously the next step was try and get to grips with {R6} for games, but I wanted to start small. The original _Pokémon_ games were effectively text adventures with some random-number generation and simple calculations going on in the background. Would it be possible to simulate some aspects of it?
+Obviously the next step was try and get to grips with {R6} for games, but I wanted to start small. The original _Pokémon_[^ref] games were effectively text adventures with some random-number generation and simple calculations going on in the background. Would it be possible to simulate some aspects of it?
 
 [The Safari Zone](https://bulbapedia.bulbagarden.net/wiki/Kanto_Safari_Zone) is a sub-area of the main game and the mechanics here are simpler: you're only allowed 500 steps, you have to use a special type of ball to capture wild Pokémon (of which you only have 30) and you can't reduce a wild Pokémon's health (hit points, HP).
 
@@ -203,7 +203,9 @@ When the game is over, you'll see an endscreen with your results.
 # 1   Tajiri VENONAT    22
 ```
 
-The original game was pretty tricky. The Pokémon were pretty flighty and it was especially hard to trap rare encounters like Chansey, which had a huge number of HP. The most I've got on a playthrough of {safar6} is three(!), so use that as a yardstick.
+The Safari Zone in the original game was pretty tricky. The Pokémon were flighty and it was especially hard to trap rare encounters like Chansey, Pinsir and Scyther. 
+
+The most captures I've made on a playthrough of {safar6} is three (!), so use that as a yardstick.
 
 # _Exeggcute_-ing the class
 
@@ -211,20 +213,24 @@ I tried to keep things simple, so there's a number of omissions compared to the 
 
 On the flipside, I tried to maintain some subtle true-to-the-original elements. For example, you'll be prompted to enter your name; you can nickname your Pokémon; there's 'wobble logic' for deciding how many times the ball should shake before a capture; and the majority of the text is as it appears in the game.
 
-# Disen-_Tangela_-ing game mechanics
+In particular, I've tried to keep the various hidden and non-hidden Pokémon stats and calculations true to _Pokémon Blue_. For example, I built in:
 
-The first generation of *Pokémon* games were developed for [the Nintendo
-Game Boy](https://en.wikipedia.org/wiki/Game_Boy) by [Game
-Freak](https://www.gamefreak.co.jp/) and published by
-[Nintendo](https://www.nintendo.com). Pokémon as a property is owned by
-[The Pokémon Company](https://www.pokemon.co.jp/). 
+* original encounter rates, both for the Safari Zone and the wild Pokémon in it
+* wild Pokémon base statistics and calculation of randomised individual values
+* catch rates based on factors like ball type and HP, and any modifications during the encounter
+* tracking of 'eating' and 'anger' statuses and the effects on catch rates
+* the calculation for whether a wild Pokémon will flee
+
+There's no guarantee I've got these things completely right, but the gameplay appears similar to the original, so I think it's close enough.
+
+# Disen-_Tangela_-ing game mechanics
 
 Information about game mechanics and values were relatively tricky to come by. The following resources were really important:
 
-* [Bulbapedia](https://bulbapedia.bulbagarden.net/) for Pokémon stats and formulae for things like catch chance
+* [Bulbapedia](https://bulbapedia.bulbagarden.net/) is the Bible of Pokémon and hosts various stats and formulae
 * [The Cave of Dragonflies](https://www.dragonflycave.com/) has some excellent breakdowns of game mechanics, particularly in capture and Safari Zone logic 
-* the [Pokémon Slots](https://sites.google.com/site/pokemonslots) website for base encounter rates by area
-* the [pret/pokered GitHub repo](https://github.com/pret/pokered) for a disassembly of the games
+* the [Pokémon Slots](https://sites.google.com/site/pokemonslots) website is a convenient lookup for base encounter rates for wild Pokémon by area
+* the [pret/pokered GitHub repo](https://github.com/pret/pokered) contains a disassembly of the games, where you can see the raw game mechanics and stats
 
 # Don't _Marowak_ living creatures
 
@@ -232,5 +238,6 @@ Obviously this is for fun and learning. Play at your own risk. Feel free to repo
 
 And do not, I repeat, _do not_ throw rocks at animals IRL.
 
+[^ref]: The first generation of *Pokémon* games were developed for [the Nintendo Game Boy](https://en.wikipedia.org/wiki/Game_Boy) by [Game Freak](https://www.gamefreak.co.jp/) and published by [Nintendo](https://www.nintendo.com). Pokémon as a property is owned by [The Pokémon Company](https://www.pokemon.co.jp/). 
 [^safar6]: You know, like 'safari' and 'R6' mashed together?
 [^bill]: 'Bill's PC' is the original game's in-game Pokémon-storage system. Yes, they're stored on a computer. In particular, _Bill's_ computer. Don't think about it too hard.

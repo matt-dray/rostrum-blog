@@ -40,7 +40,7 @@ An original Nintendo Game Boy playing <em>Pokémon</em>… if you squint.
 <div id="a-chansey-to-learn" class="section level1">
 <h1>A <em>Chansey</em> to learn</h1>
 <p><a href="https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/">I wrote a post about using {R6} to simulate an Automatic Bell Dispenser</a> (an ATM, basically) from Nintendo’s <em>Animal Crossing: New Horizons</em> (2020). Fields include <code>$savings</code> and methods include <code>$withdraw</code>, for example.</p>
-<p>Obviously the next step was try and get to grips with {R6} for games, but I wanted to start small. The original <em>Pokémon</em> games were effectively text adventures with some random-number generation and simple calculations going on in the background. Would it be possible to simulate some aspects of it?</p>
+<p>Obviously the next step was try and get to grips with {R6} for games, but I wanted to start small. The original <em>Pokémon</em><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> games were effectively text adventures with some random-number generation and simple calculations going on in the background. Would it be possible to simulate some aspects of it?</p>
 <p><a href="https://bulbapedia.bulbagarden.net/wiki/Kanto_Safari_Zone">The Safari Zone</a> is a sub-area of the main game and the mechanics here are simpler: you’re only allowed 500 steps, you have to use a special type of ball to capture wild Pokémon (of which you only have 30) and you can’t reduce a wild Pokémon’s health (hit points, HP).</p>
 <div class="figure">
 <img src="/post/2021-01-04-safar6_files/sz-screenshot.png" alt="A composite screenshot of the Safari Zone from the original Pokemon game." width="50%"/>
@@ -48,7 +48,7 @@ An original Nintendo Game Boy playing <em>Pokémon</em>… if you squint.
 ‘Would you like to join the hunt?’ Via <a href="https://bulbapedia.bulbagarden.net/wiki/File:Safari_Zone_entrance_RBY.png">Bulbapedia</a>
 </p>
 </div>
-<p>So I went ahead and made a simple {R6} class to mimic the Safari Zone and bundled it in <a href="https://www.github.com/matt-dray/safar6/">the {safar6} R package</a>.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>So I went ahead and made a simple {R6} class to mimic the Safari Zone and bundled it in <a href="https://www.github.com/matt-dray/safar6/">the {safar6} R package</a>.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
 </div>
 <div id="a-quick-tauros-of-the-game" class="section level1">
 <h1>A quick <em>Tauros</em> of the game</h1>
@@ -145,7 +145,7 @@ x$step()
 # Nickname: 
 Tajiri
 # Tajiri was transferred to BILL&#39;s PC!</code></pre>
-<p>Try to catch as many as you can before you run out of steps or balls. You can <code>x$pause()</code> the game at any point to see your remaining stats and you can check out <code>x$bills_pc</code> to see what you’ve captured<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>.</p>
+<p>Try to catch as many as you can before you run out of steps or balls. You can <code>x$pause()</code> the game at any point to see your remaining stats and you can check out <code>x$bills_pc</code> to see what you’ve captured<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>.</p>
 <pre class="r"><code>x$pause()
 # 497/500
 # BALLx28
@@ -164,26 +164,31 @@ x$bills_pc
 # Result: 1 transferred to BILL&#39;s PC
 #   nickname species level
 # 1   Tajiri VENONAT    22</code></pre>
-<p>The original game was pretty tricky. The Pokémon were pretty flighty and it was especially hard to trap rare encounters like Chansey, which had a huge number of HP. The most I’ve got on a playthrough of {safar6} is three(!), so use that as a yardstick.</p>
+<p>The Safari Zone in the original game was pretty tricky. The Pokémon were flighty and it was especially hard to trap rare encounters like Chansey, Pinsir and Scyther.</p>
+<p>The most captures I’ve made on a playthrough of {safar6} is three (!), so use that as a yardstick.</p>
 </div>
 <div id="exeggcute-ing-the-class" class="section level1">
 <h1><em>Exeggcute</em>-ing the class</h1>
 <p>I tried to keep things simple, so there’s a number of omissions compared to the original game. For example, there’s no visuals or sounds; I’ve simulated only the ‘Center’ hub area of the Safari Zone; you walk around as though you’re always in tall grass; you can’t fish or use different rod types; you’re restricted to the catch rates and Pokémon identities of the <em>Blue</em> game (not <em>Red</em> or <em>Yellow</em>, which are different).</p>
 <p>On the flipside, I tried to maintain some subtle true-to-the-original elements. For example, you’ll be prompted to enter your name; you can nickname your Pokémon; there’s ‘wobble logic’ for deciding how many times the ball should shake before a capture; and the majority of the text is as it appears in the game.</p>
+<p>In particular, I’ve tried to keep the various hidden and non-hidden Pokémon stats and calculations true to <em>Pokémon Blue</em>. For example, I built in:</p>
+<ul>
+<li>original encounter rates, both for the Safari Zone and the wild Pokémon in it</li>
+<li>wild Pokémon base statistics and calculation of randomised individual values</li>
+<li>catch rates based on factors like ball type and HP, and any modifications during the encounter</li>
+<li>tracking of ‘eating’ and ‘anger’ statuses and the effects on catch rates</li>
+<li>the calculation for whether a wild Pokémon will flee</li>
+</ul>
+<p>There’s no guarantee I’ve got these things completely right, but the gameplay appears similar to the original, so I think it’s close enough.</p>
 </div>
 <div id="disen-tangela-ing-game-mechanics" class="section level1">
 <h1>Disen-<em>Tangela</em>-ing game mechanics</h1>
-<p>The first generation of <em>Pokémon</em> games were developed for <a href="https://en.wikipedia.org/wiki/Game_Boy">the Nintendo
-Game Boy</a> by <a href="https://www.gamefreak.co.jp/">Game
-Freak</a> and published by
-<a href="https://www.nintendo.com">Nintendo</a>. Pokémon as a property is owned by
-<a href="https://www.pokemon.co.jp/">The Pokémon Company</a>.</p>
 <p>Information about game mechanics and values were relatively tricky to come by. The following resources were really important:</p>
 <ul>
-<li><a href="https://bulbapedia.bulbagarden.net/">Bulbapedia</a> for Pokémon stats and formulae for things like catch chance</li>
+<li><a href="https://bulbapedia.bulbagarden.net/">Bulbapedia</a> is the Bible of Pokémon and hosts various stats and formulae</li>
 <li><a href="https://www.dragonflycave.com/">The Cave of Dragonflies</a> has some excellent breakdowns of game mechanics, particularly in capture and Safari Zone logic</li>
-<li>the <a href="https://sites.google.com/site/pokemonslots">Pokémon Slots</a> website for base encounter rates by area</li>
-<li>the <a href="https://github.com/pret/pokered">pret/pokered GitHub repo</a> for a disassembly of the games</li>
+<li>the <a href="https://sites.google.com/site/pokemonslots">Pokémon Slots</a> website is a convenient lookup for base encounter rates for wild Pokémon by area</li>
+<li>the <a href="https://github.com/pret/pokered">pret/pokered GitHub repo</a> contains a disassembly of the games, where you can see the raw game mechanics and stats</li>
 </ul>
 </div>
 <div id="dont-marowak-living-creatures" class="section level1">
@@ -194,7 +199,8 @@ Freak</a> and published by
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>You know, like ‘safari’ and ‘R6’ mashed together?<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>‘Bill’s PC’ is the original game’s in-game Pokémon-storage system. Yes, they’re stored on a computer. In particular, <em>Bill’s</em> computer. Don’t think about it too hard.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn1"><p>The first generation of <em>Pokémon</em> games were developed for <a href="https://en.wikipedia.org/wiki/Game_Boy">the Nintendo Game Boy</a> by <a href="https://www.gamefreak.co.jp/">Game Freak</a> and published by <a href="https://www.nintendo.com">Nintendo</a>. Pokémon as a property is owned by <a href="https://www.pokemon.co.jp/">The Pokémon Company</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>You know, like ‘safari’ and ‘R6’ mashed together?<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>‘Bill’s PC’ is the original game’s in-game Pokémon-storage system. Yes, they’re stored on a computer. In particular, <em>Bill’s</em> computer. Don’t think about it too hard.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
