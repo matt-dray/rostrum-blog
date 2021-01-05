@@ -35,31 +35,33 @@ An original Nintendo Game Boy playing <em>Pokémon</em>… if you squint.
 <h1><em>Kangaskhan</em> you believe it?</h1>
 <p>Did you know you can <a href="https://lucidmanager.org/data-science/games-in-r/">play games in R</a>?</p>
 <p>I particularly like the text adventures <a href="https://lucidmanager.org/data-science/text-adventure/">The Secret of Landusia</a> by <a href="https://twitter.com/lucidmanager">Peter Prevos</a> and <a href="http://giorasimchoni.com/2017/09/10/2017-09-10-you-re-in-a-room-the-castleofr-package/">Castle of R</a> by <a href="https://twitter.com/GioraSimchoni">Giora Simchoni</a></p>
-<p>The latter uses object-oriented programming (OOP) for handling game elements, thanks to <a href="https://r6.r-lib.org/">{R6}</a>. So, a room in the castle is an R6-class object with specific fields (variables) like whether the door is <code>$open</code> and methods (functions) like <code>$openDoor()</code>.</p>
+<p>The latter uses object-oriented programming (OOP) for handling game elements, thanks to the <a href="https://r6.r-lib.org/">{R6}</a> package. So, a room in the castle is an R6-class object with specific fields (variables), like whether the door is <code>$open</code>, and methods (functions) like <code>$openDoor()</code> that can change the door state.</p>
+<p>This is interesting because R is better known for being a function- rather than an object-oriented language. You can learn more about OOP in R from <a href="https://adv-r.hadley.nz/oo.html">Hadley Wickham’s Advanced R book</a> and more about the R6-class from <a href="https://r6.r-lib.org/index.html">the {R6} website</a>.</p>
 </div>
 <div id="a-chansey-to-learn" class="section level1">
 <h1>A <em>Chansey</em> to learn</h1>
-<p><a href="https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/">I wrote a post about using {R6} to simulate an Automatic Bell Dispenser</a> (an ATM, basically) from Nintendo’s <em>Animal Crossing: New Horizons</em> (2020). Fields include <code>$savings</code> and methods include <code>$withdraw</code>, for example.</p>
-<p>Obviously the next step was try and get to grips with {R6} for games, but I wanted to start small. The original <em>Pokémon</em><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> games were effectively text adventures with some random-number generation and simple calculations going on in the background. Would it be possible to simulate some aspects of it?</p>
-<p><a href="https://bulbapedia.bulbagarden.net/wiki/Kanto_Safari_Zone">The Safari Zone</a> is a sub-area of the main game and the mechanics here are simpler: you’re only allowed 500 steps, you have to use a special type of ball to capture wild Pokémon (of which you only have 30) and you can’t reduce a wild Pokémon’s health (hit points, HP).</p>
+<p><a href="https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/">I wrote a post about using {R6} to simulate an Automatic Bell Dispenser</a> (an ATM, basically) from Nintendo’s <em>Animal Crossing: New Horizons</em> (2020). Fields include <code>$savings</code> and methods include <code>$withdraw()</code>, for example.</p>
+<p>Obviously my next step was try and get to grips with {R6} for games, but I wanted to start small. The original <em>Pokémon</em><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> games were effectively text adventures with some random-number generation and simple calculations going on in the background. Would it be possible to simulate some aspects of it?</p>
+<p>Let’s start small. <a href="https://bulbapedia.bulbagarden.net/wiki/Kanto_Safari_Zone">The Safari Zone</a> is a sub-area of the main game and the mechanics here are simpler: you’re only allowed 500 steps, you have to use a special type of ball to capture wild Pokémon (of which you only have 30) and you can’t reduce a wild Pokémon’s health (hit points, HP).</p>
 <div class="figure">
 <img src="/post/2021-01-04-safar6_files/sz-screenshot.png" alt="A composite screenshot of the Safari Zone from the original Pokemon game." width="50%"/>
 <p class="caption">
 ‘Would you like to join the hunt?’ Via <a href="https://bulbapedia.bulbagarden.net/wiki/File:Safari_Zone_entrance_RBY.png">Bulbapedia</a>
 </p>
 </div>
-<p>So I went ahead and made a simple {R6} class to mimic the Safari Zone and bundled it in <a href="https://www.github.com/matt-dray/safar6/">the {safar6} R package</a>.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>So I went ahead and wrote an R6-class object to mimic the Safari Zone and bundled it in <a href="https://www.github.com/matt-dray/safar6/">the {safar6} R package</a>.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
 </div>
 <div id="a-quick-tauros-of-the-game" class="section level1">
 <h1>A quick <em>Tauros</em> of the game</h1>
-<p>Install <a href="https://www.github.com/matt-dray/safar6/">from GitHub</a> with:</p>
-<pre class="r"><code>remotes::install_github(&quot;matt-dray/safar6&quot;)</code></pre>
-<p>Basically, the package contains an R6-class object <code>SafariZone</code>, which you initialise and assign like <code>x &lt;- safar6::SafariZone$new()</code>. This starts a routine with some text from the game and some interactive elements.</p>
-<pre class="r"><code>library(safar6)
+<p>You can install the package <a href="https://www.github.com/matt-dray/safar6/">from GitHub</a>. Loading the package provides a reminder of how to play.</p>
+<pre class="r"><code>remotes::install_github(&quot;matt-dray/safar6&quot;)
+
+library(safar6)
 # {safar6}
 # Start game: x &lt;- SafariZone$new()
-# Take a step: x$step()
-x &lt;- SafariZone$new()
+# Take a step: x$step()</code></pre>
+<p>Basically, the package contains an R6-class object <code>SafariZone</code>, which you initialise and assign like <code>x &lt;- safar6::SafariZone$new()</code>. This starts a routine with some text from the game and some interactive elements. Type a value and hit enter when prompted.</p>
+<pre class="r"><code>x &lt;- SafariZone$new()
 # ------------------------
 # First, what is your name?
 # NEW NAME (1)
@@ -88,10 +90,10 @@ THEW
 # We only use a special POKe BALL here.
 # THEW received 30 SAFARI BALLs!
 # We&#39;ll call you on the PA when you run out of time or SAFARI BALLs!</code></pre>
-<p>You can then <code>x$step()</code> through the Safari Zone. You’ll likely need to do this a number of times before you encounter a wild Pokémon, given the Safari Zone’s encounter rate.</p>
+<p>You can then <code>x$step()</code> through the Safari Zone. This method does a lot of the hard work, since it contains all the logic required for a wild Pokémon encounter. There’s an encounter rate built in, so you’ll likely need to <code>x$step()</code> a number of times before you find a Pokémon.</p>
 <pre class="r"><code>x$step()
 # 499/500</code></pre>
-<p>There’s a weighted chance of encountering certain Pokémon at certain levels. Each wild Pokémon also has (hidden) randomised individual variation in its stats.</p>
+<p>Each step is treated as though you’re walking through the tall grass, which is where you find wild Pokémon. There’s a weighted chance of encountering certain Pokémon at certain levels, but each wild Pokémon also has (hidden) randomised individual variation in its stats (HP, speed, etc) that impact your ability to catch it.</p>
 <pre class="r"><code>x$step()
 # 498/500
 x$step()
@@ -111,7 +113,7 @@ x$step()
 3
 # THEW threw a ROCK.
 # Wild VENONAT is angry!</code></pre>
-<p>You can throw a ball to attempt a capture. Success is determined by several factors, like the Pokémon’s HP, its level and its catch rate (possibly modified by rocks and bait). It may also run away given factors like its speed.</p>
+<p>You can also throw a ball to attempt a capture. Success is determined by several factors, like the Pokémon’s HP, its level and its catch rate (possibly modified by rocks and bait). It may also run away given factors like its speed.</p>
 <pre class="r"><code># THEW threw a ROCK.
 # Wild VENONAT is angry!
 # ------------------------

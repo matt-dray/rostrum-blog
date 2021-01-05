@@ -32,38 +32,41 @@ Did you know you can [play games in R](https://lucidmanager.org/data-science/gam
 
 I particularly like the text adventures [The Secret of Landusia](https://lucidmanager.org/data-science/text-adventure/) by [Peter Prevos](https://twitter.com/lucidmanager) and [Castle of R](http://giorasimchoni.com/2017/09/10/2017-09-10-you-re-in-a-room-the-castleofr-package/) by [Giora Simchoni](https://twitter.com/GioraSimchoni)
 
-The latter uses object-oriented programming (OOP) for handling game elements, thanks to [{R6}](https://r6.r-lib.org/). So, a room in the castle is an R6-class object with specific fields (variables) like whether the door is `$open` and methods (functions) like `$openDoor()`.
+The latter uses object-oriented programming (OOP) for handling game elements, thanks to the [{R6}](https://r6.r-lib.org/) package. So, a room in the castle is an R6-class object with specific fields (variables), like whether the door is `$open`, and methods (functions) like `$openDoor()` that can change the door state.
+
+This is interesting because R is better known for being a function- rather than an object-oriented language. You can learn more about OOP in R from [Hadley Wickham's Advanced R book](https://adv-r.hadley.nz/oo.html) and more about the R6-class from [the {R6} website](https://r6.r-lib.org/index.html).
 
 # A _Chansey_ to learn
 
-[I wrote a post about using {R6} to simulate an Automatic Bell Dispenser](https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/) (an ATM, basically) from Nintendo's _Animal Crossing: New Horizons_ (2020). Fields include `$savings` and methods include `$withdraw`, for example.
+[I wrote a post about using {R6} to simulate an Automatic Bell Dispenser](https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/) (an ATM, basically) from Nintendo's _Animal Crossing: New Horizons_ (2020). Fields include `$savings` and methods include `$withdraw()`, for example.
 
-Obviously the next step was try and get to grips with {R6} for games, but I wanted to start small. The original _Pokémon_[^ref] games were effectively text adventures with some random-number generation and simple calculations going on in the background. Would it be possible to simulate some aspects of it?
+Obviously my next step was try and get to grips with {R6} for games, but I wanted to start small. The original _Pokémon_[^ref] games were effectively text adventures with some random-number generation and simple calculations going on in the background. Would it be possible to simulate some aspects of it?
 
-[The Safari Zone](https://bulbapedia.bulbagarden.net/wiki/Kanto_Safari_Zone) is a sub-area of the main game and the mechanics here are simpler: you're only allowed 500 steps, you have to use a special type of ball to capture wild Pokémon (of which you only have 30) and you can't reduce a wild Pokémon's health (hit points, HP).
+Let's start small. [The Safari Zone](https://bulbapedia.bulbagarden.net/wiki/Kanto_Safari_Zone) is a sub-area of the main game and the mechanics here are simpler: you're only allowed 500 steps, you have to use a special type of ball to capture wild Pokémon (of which you only have 30) and you can't reduce a wild Pokémon's health (hit points, HP).
 
 <div class="figure">
 <img src="/post/2021-01-04-safar6_files/sz-screenshot.png" alt="A composite screenshot of the Safari Zone from the original Pokemon game." width="50%"/>
 <p class="caption">'Would you like to join the hunt?' Via [Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/File:Safari_Zone_entrance_RBY.png)</p>
 </div>
 
-So I went ahead and made a simple {R6} class to mimic the Safari Zone and bundled it in [the {safar6} R package](https://www.github.com/matt-dray/safar6/).[^safar6]
+So I went ahead and wrote an R6-class object to  mimic the Safari Zone and bundled it in [the {safar6} R package](https://www.github.com/matt-dray/safar6/).[^safar6] 
 
 # A quick _Tauros_ of the game
 
-Install [from GitHub](https://www.github.com/matt-dray/safar6/) with:
+You can install the package [from GitHub](https://www.github.com/matt-dray/safar6/). Loading the package provides a reminder of how to play.
 
 ```{r install, eval=FALSE}
 remotes::install_github("matt-dray/safar6")
-```
 
-Basically, the package contains an R6-class object `SafariZone`, which you initialise and assign like `x <- safar6::SafariZone$new()`. This starts a routine with some text from the game and some interactive elements.
-
-```{r init, eval=FALSE}
 library(safar6)
 # {safar6}
 # Start game: x <- SafariZone$new()
 # Take a step: x$step()
+```
+
+Basically, the package contains an R6-class object `SafariZone`, which you initialise and assign like `x <- safar6::SafariZone$new()`. This starts a routine with some text from the game and some interactive elements. Type a value and hit enter when prompted.
+
+```{r init, eval=FALSE}
 x <- SafariZone$new()
 # ------------------------
 # First, what is your name?
@@ -95,14 +98,14 @@ THEW
 # We'll call you on the PA when you run out of time or SAFARI BALLs!
 ```
 
-You can then `x$step()` through the Safari Zone. You'll likely need to do this a number of times before you encounter a wild Pokémon, given the Safari Zone's encounter rate.
+You can then `x$step()` through the Safari Zone. This method does a lot of the hard work, since it contains all the logic required for a wild Pokémon encounter. There's an encounter rate built in, so you'll likely need to `x$step()` a number of times before you find a Pokémon.
 
 ```{r step, eval=FALSE}
 x$step()
 # 499/500
 ```
 
-There's a weighted chance of encountering certain Pokémon at certain levels. Each wild Pokémon also has (hidden) randomised individual variation in its stats.
+Each step is treated as though you're walking through the tall grass, which is where you find wild Pokémon. There's a weighted chance of encountering certain Pokémon at certain levels, but each wild Pokémon also has (hidden) randomised individual variation in its stats (HP, speed, etc) that impact your ability to catch it.
 
 ```{r step-encounter, eval=FALSE}
 x$step()
@@ -130,7 +133,7 @@ During an encounter you can throw rocks to raise the catch chance (but you'll al
 # Wild VENONAT is angry!
 ```
 
-You can throw a ball to attempt a capture. Success is determined by several factors, like the Pokémon's HP, its level and its catch rate (possibly modified by rocks and bait). It may also run away given factors like its speed.
+You can also throw a ball to attempt a capture. Success is determined by several factors, like the Pokémon's HP, its level and its catch rate (possibly modified by rocks and bait). It may also run away given factors like its speed.
 
 ```{r ball-fail, eval=FALSE}
 # THEW threw a ROCK.
