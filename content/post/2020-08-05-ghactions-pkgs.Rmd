@@ -60,7 +60,7 @@ You could set these up manually, but actually you can shortcut the process with 
 
 {usethis} helps to shortcut the tedious setup steps of R packages and projects. It also includes functions to add GitHub Actions to your R package for you.
 
-In particular, `usethis::use_github_action()` will add a GitHub Action YAML file; you just supply the name of a pre-written action.
+In particular, `usethis::use_github_action()` will add a YAML file to `.github/workflows/` where GitHub Actions will find it; you just supply the name of a pre-written action.
 
 Where do these pre-written actions come from? Well, the kind folks at [r-lib](https://github.com/r-lib){target="_blank"} have made [a repo of R-focused examples](https://github.com/r-lib/actions/tree/master/examples){target="_blank"} that you can use.
 
@@ -68,17 +68,15 @@ Where do these pre-written actions come from? Well, the kind folks at [r-lib](ht
 
 I recently used this method to set up GitHub Actions for the [in-development {r2eng} package](https://github.com/matt-dray/r2eng){target="_blank"}.
 
-The first step was to create the folder `.github/workflows/` where the YAML files will be added for GitHub Actions to find them.
-
 {r2eng} has [three actions in the workflow folder](https://github.com/matt-dray/r2eng/tree/master/.github/workflows){target="_blank"}:
 
-* `R-CMD-check.yaml` ([see the YAML file](https://github.com/matt-dray/r2eng/blob/master/.github/workflows/R-CMD-check.yaml){target="_blank"})
-* `test-coverage.yaml` ([YAML](https://github.com/matt-dray/r2eng/blob/master/.github/workflows/test-coverage.yaml){target="_blank"})
-* `pkgdown.yaml` ([YAML](https://github.com/matt-dray/r2eng/blob/master/.github/workflows/pkgdown.yaml){target="_blank"})
+1. `R-CMD-check.yaml` ([see the YAML file](https://github.com/matt-dray/r2eng/blob/master/.github/workflows/R-CMD-check.yaml){target="_blank"}) to run a build check
+1. `test-coverage.yaml` ([YAML](https://github.com/matt-dray/r2eng/blob/master/.github/workflows/test-coverage.yaml){target="_blank"}) to assess how much of the code is protected by testing
+1. `pkgdown.yaml` ([YAML](https://github.com/matt-dray/r2eng/blob/master/.github/workflows/pkgdown.yaml){target="_blank"}) to build the package's website with {pkgdown}
 
 This is a typical, minimal set of actions that suit me when developing R packages. Let's talk them through.
 
-### Build check
+### 1. Build check
 
 An R CMD check[^check] runs a bunch of tests on your package (including your own unit tests) and returns errors, notes and warnings. You're aiming for a passing build to prove the package is up to scratch.
 
@@ -90,9 +88,11 @@ Run this line to add the `R-CMD-check.yaml` action to the `.github/workflows/` f
 usethis::use_github_action_check_standard()
 ```
 
-On a push or PR, GitHub Actions will automatically set up and run the build check on each OS to make sure the package meets the requirements. 
+Note that this function will create `.github/workflows/` if it doesn't already exist.
 
-### Coverage
+Folllowing a push or PR, GitHub Actions will now automatically set up and run a build check on each OS to make sure the package meets the requirements. 
+
+### 2. Test coverage
 
 The R CMD check runs your unit tests, but it doesn't calculate how much of your code is actually [covered](https://en.wikipedia.org/wiki/Code_coverage){target="_blank"} by testing. Ideally you want this to be 100%, but also bear in mind that the metric doesn't take account of the volume or quality of tests. 
 
@@ -116,21 +116,22 @@ usethis::use_github_action("test-coverage")
 
 The 'test-coverage' GitHub Action will recheck coverage when you next push to the repo, with the results being updated on your coverage service of choice.
 
-### {pkgdown} site
+### 3. Build {pkgdown} site
 
-[{pkgdown} is yet another r-lib package](https://pkgdown.r-lib.org/){target="_blank"} that makes it easy to turn your package's documentation into a customisable website. People can then access the help files and vignettes online.
+[{pkgdown}, also from r-lib,](https://pkgdown.r-lib.org/){target="_blank"} can automatically and painlessly generate a simple website from your package's documentation, which you are free to customise. You can serve the site on the web via GitHub Pages so users can access the docs easily online.
 
-The steps for setting up a {pkgdown} site with GitHub Actions are laid out clearly in [the GitHub Actions with R book](https://ropenscilabs.github.io/actions_sandbox/websites-using-pkgdown-bookdown-and-blogdown.html){target="_blank"}. In short, you don't want the files associated with your site to be part of the R package itself, so you set them up in an empty 'gh-pages' branch instead.
+For example, here's [the {pkgdown} website for the {r2eng} package](https://matt-dray.github.io/r2eng/){target="_blank"}, which uses default settings at time of writing. You can see that the README has become the home page and there are 'Reference' and 'Changelog' tabs that autopoulate with the function documentation and NEWS file. Additional tabs are added here depending on the contents of your repo; for example, vignettes are added to an 'Articles' tab if they exist.
 
-The site files can be added to this branch with `usethis::use_pkgdown()`. To serve with GitHub pages, go to that section in the repo settings and set the source to the 'gh-pages' branch. Here's [the example website for the {r2eng} package](https://matt-dray.github.io/r2eng/){target="_blank"}.
+[The GitHub Actions with R book has a section on {pkgdown}](https://ropenscilabs.github.io/actions_sandbox/websites-using-pkgdown-bookdown-and-blogdown.html){target="_blank"}. In short, the steps are:
 
-The GitHub Action can then be added to the main branch of your repo with:
+1. Set-up an empty 'gh-pages' branch in your repo ([the book has some code to do this from the command line](https://ropenscilabs.github.io/actions_sandbox/websites-using-pkgdown-bookdown-and-blogdown.html){target="_blank"})
+1. Back in the main branch, run the {usethis} `usethis::use_pkgdown()` to activate {pkgdown} for your package repo
+1. Run `usethis::use_github_action("pkgdown")` to add the YAML file that tells GitHub Actions to build the website on push
+1. Push to your repo and GitHub Actions will generate the website files in the gh-pages branch
+1. From your repo settings, set GitHub Pages to serve from the root of the gh-pages branch
+1. Wait a few minutes and navigate to your site (in the form 'username.github.io/reponame')
 
-```{r, pkgdown, eval=FALSE}
-usethis::use_github_action("pkgdown")
-```
-
-On push, the site will be rebuilt in the 'gh-pages' branch and the site will be updated when you navigate to it online.
+GitHub Actions will now rebuild the site automatically every time you make changes and push them.
 
 # Tickety-boo
 
