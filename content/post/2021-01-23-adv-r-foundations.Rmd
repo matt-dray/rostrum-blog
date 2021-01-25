@@ -1,0 +1,154 @@
+---
+title: 'Advanced R: anchovy pizza'
+author: 'Matt Dray'
+date: '2021-01-23'
+slug: adv-r-names
+  - code
+tags:
+  - advanced-r
+  - book
+  - food
+  - learning
+  - r
+draft: yes
+---
+
+# tl;dr
+
+R is quirky. I bought [Hadley Wickham](http://hadley.nz/)'s [Advanced R](https://adv-r.hadley.nz/) book[^buy] to help me better understand it. I plan to write about some thought technologies as I go.
+
+Today: names and values (chapter 2) as pizza recipes.[^royale]
+
+# Binding basics
+
+Welcome to the pizzeria. We store our toppings as character-vector objects.
+
+```{r}
+pizza_napoletana <- c("mozzarella", "tomato", "anchovy")
+```
+
+The English version of the menu calls it 'Neapolitan pizza', but it's exactly the same thing.
+
+```{r}
+neapolitan_pizza <- pizza_napoletana
+```
+
+To reflect this, our recipe book uses a unique code for each toppings object and we can bind as many names to it as we want.
+
+In other words, the pizzaiolos don't care whether you asked for a 'pizza alla napoletana' or a 'Neapolitan pizza'. The recipe is exactly the same one.
+
+In our pizzeria we store the recipes with a special code. Both pizza names point to the same underlying recipe.
+
+```{r}
+lobstr::obj_addr(pizza_napoletana)
+lobstr::obj_addr(neapolitan_pizza)
+```
+
+<div class="tip"> `r emo::ji("key")` <b>Key point</b>
+<br>
+The object is real. The name points to it.
+</div>
+
+# Copy on modify
+
+Pizza from Puglia is being introduced to the restaurant. It has the same basic toppings as the one from Napoli, but it has onion instead of anchovies.
+
+We can just copy the Neapolitan recipe and make the change.
+
+```{r}
+pizza_pugliese <- pizza_napoletana
+pizza_pugliese[[3]] <- "onion"
+```
+
+Even though we copied the mozzarella and tomato from another recipe, the switch to onion means we actually have an entirely new recipe that warrants an entirely new code.
+
+```{r}
+lobstr::obj_addr(pizza_napoletana)
+lobstr::obj_addr(pizza_pugliese)
+```
+Here's how the menu might look for these pizzas.[^damichele] Same underlying object for the first two regardless of the name, while the third is entirely different even though it was made by copying the first.
+
+```{r}
+tibble::tribble(
+  ~language, ~pizza, ~code,
+  "ITA", "Pizza alla napoletana", lobstr::obj_addr(pizza_napoletana), 
+  "ENG", "Neapolitan pizza", lobstr::obj_addr(neapolitan_pizza), 
+  "ITA", "Pizza pugliese", lobstr::obj_addr(pizza_pugliese)
+)
+```
+
+# Lists
+
+This knowledge management system is a bit inefficient: the 'mozzarella' and 'tomato' toppings  exist twice in our recipe book, once for each pizza.
+
+We could store our recipes as lists instead so that each unique topping is stored once and each recipe refers to that one instance.
+
+```{r}
+pizza_napoletana <- list("mozzarella", "tomato", "anchovy")
+pizza_pugliese <- pizza_napoletana
+pizza_pugliese[[3]] <- "onion"
+```
+
+In our recipe book, the pizza alla napoletana (`1` in the diagram below) and pizza pugliese (`5`) recipes now make the same reference to mozzarella (`2`) and tomatoes (`3`), as well as separate references to their additional toppings of anchovies (`4`) and onions (`6`).
+
+```{r}
+lobstr::ref(pizza_napoletana, pizza_pugliese)
+```
+
+# Data frames
+
+Let's say the waiter is taking orders. A couple have ordered a napoletana and a pugliese. The waiter stores these as columns in a `data.frame`.
+
+```{r}
+order <- data.frame(
+  napoletana = c("mozzarella", "tomato", "anchovy"),
+  pugliese = c("mozzarella", "tomato", "onion")
+)
+
+order
+```
+
+The customer who ordered the napoletana changed their mind — more anchovies!
+
+```{r}
+order_update <- order
+order_update[3, 1] <- "anchovies (extra)" 
+order_update
+```
+
+The waiter copies the napoletana order and changes the `anchovies` to `anchovies (extra)`. 
+
+Since a data.frame is a list of vectors, the napoletana vector (`2` in the diagram below) in the initial order (`1`) is modified on copy (`5`) in the updated order (`2`). The pugliese order (`3`) didn't change between orders.
+
+
+```{r}
+lobstr::ref(order, order_update)
+```
+
+The other customer is jealous and chooses to add extra cheese to their order.
+
+```{r}
+order_final <- order_update
+order_final[1, 2] <- "mozzarella (extra)"
+order_final
+```
+
+The napoletana (`2`) and pugliese (`3`) vectors in the original order (`1`) have both changed (`5`, `6`) in the final order (`4`).
+
+```{r}
+lobstr::ref(order, order_final)
+```
+A data.frame holds pointers to vectors. The initial order and the updated order are different objects that point to the same pugliese vector, but different napoletana vectors.
+
+The final order is a different data.frame object again, and it points to two entirely different napoletana and pugliese vectors compared to the initial order.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^buy]: You can [buy the book](https://www.amazon.com/gp/product/0815384572/ref=as_li_tl?ie=UTF8&tag=hadlwick-20&camp=1789&creative=9325&linkCode=as2&creativeASIN=0815384572&linkId=9f8b9df5da858c12a5e9905aea66bf08), or [view it for free online](https://adv-r.hadley.nz/).
+[^royale]: Initially I went with a metaphor about how a Quarter Pounder with Cheese is called a Royale with Cheese in Paris (or indeed, a Krusty Burger with Cheese is called a Quarter Pounder with Cheese at McDonald's) despite them being the same thing, but the pop culture reference was better than the actual utility of the metaphor. 
+[^damichele]: Of course, if you're really serious about pizza, you only offer marianara and margherita [as per L'antica Pizzeria Da Michele](http://www.damichele.net/le-nostre-pizze/), which is where I took the photos that are in this post.

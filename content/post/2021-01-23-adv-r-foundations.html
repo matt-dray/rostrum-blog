@@ -1,0 +1,201 @@
+---
+title: 'Advanced R: anchovy pizza'
+author: 'Matt Dray'
+date: '2021-01-23'
+slug: adv-r-names
+  - code
+tags:
+  - advanced-r
+  - book
+  - food
+  - learning
+  - r
+draft: yes
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>R is quirky. I bought <a href="http://hadley.nz/">Hadley Wickham</a>’s <a href="https://adv-r.hadley.nz/">Advanced R</a> book<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> to help me better understand it. I plan to write about some thought technologies as I go.</p>
+<p>Today: names and values (chapter 2) as pizza recipes.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+</div>
+<div id="binding-basics" class="section level1">
+<h1>Binding basics</h1>
+<p>Welcome to the pizzeria. We store our toppings as character-vector objects.</p>
+<pre class="r"><code>pizza_napoletana &lt;- c(&quot;mozzarella&quot;, &quot;tomato&quot;, &quot;anchovy&quot;)</code></pre>
+<p>The English version of the menu calls it ‘Neapolitan pizza’, but it’s exactly the same thing.</p>
+<pre class="r"><code>neapolitan_pizza &lt;- pizza_napoletana</code></pre>
+<p>To reflect this, our recipe book uses a unique code for each toppings object and we can bind as many names to it as we want.</p>
+<p>In other words, the pizzaiolos don’t care whether you asked for a ‘pizza alla napoletana’ or a ‘Neapolitan pizza’. The recipe is exactly the same one.</p>
+<p>In our pizzeria we store the recipes with a special code. Both pizza names point to the same underlying recipe.</p>
+<pre class="r"><code>lobstr::obj_addr(pizza_napoletana)</code></pre>
+<pre><code>## [1] &quot;0x7febfa34c3d8&quot;</code></pre>
+<pre class="r"><code>lobstr::obj_addr(neapolitan_pizza)</code></pre>
+<pre><code>## [1] &quot;0x7febfa34c3d8&quot;</code></pre>
+<div class="tip">
+<p>🔑 <b>Key point</b>
+<br>
+The object is real. The name points to it.</p>
+</div>
+</div>
+<div id="copy-on-modify" class="section level1">
+<h1>Copy on modify</h1>
+<p>Pizza from Puglia is being introduced to the restaurant. It has the same basic toppings as the one from Napoli, but it has onion instead of anchovies.</p>
+<p>We can just copy the Neapolitan recipe and make the change.</p>
+<pre class="r"><code>pizza_pugliese &lt;- pizza_napoletana
+pizza_pugliese[[3]] &lt;- &quot;onion&quot;</code></pre>
+<p>Even though we copied the mozzarella and tomato from another recipe, the switch to onion means we actually have an entirely new recipe that warrants an entirely new code.</p>
+<pre class="r"><code>lobstr::obj_addr(pizza_napoletana)</code></pre>
+<pre><code>## [1] &quot;0x7febfa34c3d8&quot;</code></pre>
+<pre class="r"><code>lobstr::obj_addr(pizza_pugliese)</code></pre>
+<pre><code>## [1] &quot;0x7febfd7ac248&quot;</code></pre>
+<p>Here’s how the menu might look for these pizzas.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> Same underlying object for the first two regardless of the name, while the third is entirely different even though it was made by copying the first.</p>
+<pre class="r"><code>tibble::tribble(
+  ~language, ~pizza, ~code,
+  &quot;ITA&quot;, &quot;Pizza alla napoletana&quot;, lobstr::obj_addr(pizza_napoletana), 
+  &quot;ENG&quot;, &quot;Neapolitan pizza&quot;, lobstr::obj_addr(neapolitan_pizza), 
+  &quot;ITA&quot;, &quot;Pizza pugliese&quot;, lobstr::obj_addr(pizza_pugliese)
+)</code></pre>
+<pre><code>## # A tibble: 3 x 3
+##   language pizza                 code          
+##   &lt;chr&gt;    &lt;chr&gt;                 &lt;chr&gt;         
+## 1 ITA      Pizza alla napoletana 0x7febfa34c3d8
+## 2 ENG      Neapolitan pizza      0x7febfa34c3d8
+## 3 ITA      Pizza pugliese        0x7febfd7ac248</code></pre>
+</div>
+<div id="lists" class="section level1">
+<h1>Lists</h1>
+<p>This knowledge management system is a bit inefficient: the ‘mozzarella’ and ‘tomato’ toppings exist twice in our recipe book, once for each pizza.</p>
+<p>We could store our recipes as lists instead so that each unique topping is stored once and each recipe refers to that one instance.</p>
+<pre class="r"><code>pizza_napoletana &lt;- list(&quot;mozzarella&quot;, &quot;tomato&quot;, &quot;anchovy&quot;)
+pizza_pugliese &lt;- pizza_napoletana
+pizza_pugliese[[3]] &lt;- &quot;onion&quot;</code></pre>
+<p>In our recipe book, the pizza alla napoletana (<code>1</code> in the diagram below) and pizza pugliese (<code>5</code>) recipes now make the same reference to mozzarella (<code>2</code>) and tomatoes (<code>3</code>), as well as separate references to their additional toppings of anchovies (<code>4</code>) and onions (<code>6</code>).</p>
+<pre class="r"><code>lobstr::ref(pizza_napoletana, pizza_pugliese)</code></pre>
+<pre><code>## █ [1:0x7febfdde60b8] &lt;list&gt; 
+## ├─[2:0x7febfca43238] &lt;chr&gt; 
+## ├─[3:0x7febfca43200] &lt;chr&gt; 
+## └─[4:0x7febfca431c8] &lt;chr&gt; 
+##  
+## █ [5:0x7febfdb94c28] &lt;list&gt; 
+## ├─[2:0x7febfca43238] 
+## ├─[3:0x7febfca43200] 
+## └─[6:0x7febfca430e8] &lt;chr&gt;</code></pre>
+</div>
+<div id="data-frames" class="section level1">
+<h1>Data frames</h1>
+<p>Let’s say the waiter is taking orders. A couple have ordered a napoletana and a pugliese. The waiter stores these as columns in a <code>data.frame</code>.</p>
+<pre class="r"><code>order &lt;- data.frame(
+  napoletana = c(&quot;mozzarella&quot;, &quot;tomato&quot;, &quot;anchovy&quot;),
+  pugliese = c(&quot;mozzarella&quot;, &quot;tomato&quot;, &quot;onion&quot;)
+)
+
+order</code></pre>
+<pre><code>##   napoletana   pugliese
+## 1 mozzarella mozzarella
+## 2     tomato     tomato
+## 3    anchovy      onion</code></pre>
+<p>The customer who ordered the napoletana changed their mind — more anchovies!</p>
+<pre class="r"><code>order_update &lt;- order
+order_update[3, 1] &lt;- &quot;anchovies (extra)&quot; 
+order_update</code></pre>
+<pre><code>##          napoletana   pugliese
+## 1        mozzarella mozzarella
+## 2            tomato     tomato
+## 3 anchovies (extra)      onion</code></pre>
+<p>The waiter copies the napoletana order and changes the <code>anchovies</code> to <code>anchovies (extra)</code>.</p>
+<p>Since a data.frame is a list of vectors, the napoletana vector (<code>2</code> in the diagram below) in the initial order (<code>1</code>) is modified on copy (<code>5</code>) in the updated order (<code>2</code>). The pugliese order (<code>3</code>) didn’t change between orders.</p>
+<pre class="r"><code>lobstr::ref(order, order_update)</code></pre>
+<pre><code>## █ [1:0x7febfe00b048] &lt;df[,2]&gt; 
+## ├─napoletana = [2:0x7febfe148e68] &lt;chr&gt; 
+## └─pugliese = [3:0x7febfe148e18] &lt;chr&gt; 
+##  
+## █ [4:0x7febfadc8608] &lt;df[,2]&gt; 
+## ├─napoletana = [5:0x7febfe19dad8] &lt;chr&gt; 
+## └─pugliese = [3:0x7febfe148e18]</code></pre>
+<p>The other customer is jealous and chooses to add extra cheese to their order.</p>
+<pre class="r"><code>order_final &lt;- order_update
+order_final[1, 2] &lt;- &quot;mozzarella (extra)&quot;
+order_final</code></pre>
+<pre><code>##          napoletana           pugliese
+## 1        mozzarella mozzarella (extra)
+## 2            tomato             tomato
+## 3 anchovies (extra)              onion</code></pre>
+<p>The napoletana (<code>2</code>) and pugliese (<code>3</code>) vectors in the original order (<code>1</code>) have both changed (<code>5</code>, <code>6</code>) in the final order (<code>4</code>).</p>
+<pre class="r"><code>lobstr::ref(order, order_final)</code></pre>
+<pre><code>## █ [1:0x7febfe00b048] &lt;df[,2]&gt; 
+## ├─napoletana = [2:0x7febfe148e68] &lt;chr&gt; 
+## └─pugliese = [3:0x7febfe148e18] &lt;chr&gt; 
+##  
+## █ [4:0x7febfe1bf048] &lt;df[,2]&gt; 
+## ├─napoletana = [5:0x7febfe19dad8] &lt;chr&gt; 
+## └─pugliese = [6:0x7febfe1c38c8] &lt;chr&gt;</code></pre>
+<p>A data.frame holds pointers to vectors. The initial order and the updated order are different objects that point to the same pugliese vector, but different napoletana vectors.</p>
+<p>The final order is a different data.frame object again, and it points to two entirely different napoletana and pugliese vectors compared to the initial order.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.0.2 (2020-06-22)
+##  os       macOS  10.16                
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2021-01-25                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version    date       lib source                            
+##  assertthat    0.2.1      2019-03-21 [1] CRAN (R 4.0.0)                    
+##  blogdown      1.0.5      2021-01-17 [1] Github (rstudio/blogdown@fa67a87) 
+##  bookdown      0.21       2020-10-13 [1] CRAN (R 4.0.2)                    
+##  cli           2.2.0      2020-11-20 [1] CRAN (R 4.0.2)                    
+##  crayon        1.3.4      2017-09-16 [1] CRAN (R 4.0.0)                    
+##  digest        0.6.27     2020-10-24 [1] CRAN (R 4.0.2)                    
+##  ellipsis      0.3.1      2020-05-15 [1] CRAN (R 4.0.0)                    
+##  emo           0.0.0.9000 2020-05-24 [1] Github (hadley/emo@3f03b11)       
+##  evaluate      0.14       2019-05-28 [1] CRAN (R 4.0.0)                    
+##  fansi         0.4.1      2020-01-08 [1] CRAN (R 4.0.0)                    
+##  generics      0.1.0      2020-10-31 [1] CRAN (R 4.0.2)                    
+##  glue          1.4.2      2020-08-27 [1] CRAN (R 4.0.2)                    
+##  htmltools     0.5.1.9000 2021-01-17 [1] Github (rstudio/htmltools@11cfbf3)
+##  knitr         1.30       2020-09-22 [1] CRAN (R 4.0.2)                    
+##  lifecycle     0.2.0      2020-03-06 [1] CRAN (R 4.0.0)                    
+##  lobstr        1.1.1      2019-07-02 [1] CRAN (R 4.0.2)                    
+##  lubridate     1.7.9.2    2020-11-13 [1] CRAN (R 4.0.2)                    
+##  magrittr      2.0.1      2020-11-17 [1] CRAN (R 4.0.2)                    
+##  pillar        1.4.7      2020-11-20 [1] CRAN (R 4.0.2)                    
+##  pkgconfig     2.0.3      2019-09-22 [1] CRAN (R 4.0.0)                    
+##  purrr         0.3.4      2020-04-17 [1] CRAN (R 4.0.0)                    
+##  Rcpp          1.0.6      2021-01-15 [1] CRAN (R 4.0.2)                    
+##  rlang         0.4.10     2020-12-30 [1] CRAN (R 4.0.2)                    
+##  rmarkdown     2.6        2020-12-14 [1] CRAN (R 4.0.2)                    
+##  rstudioapi    0.13       2020-11-12 [1] CRAN (R 4.0.2)                    
+##  sessioninfo   1.1.1      2018-11-05 [1] CRAN (R 4.0.0)                    
+##  stringi       1.5.3      2020-09-09 [1] CRAN (R 4.0.2)                    
+##  stringr       1.4.0      2019-02-10 [1] CRAN (R 4.0.0)                    
+##  tibble        3.0.4      2020-10-12 [1] CRAN (R 4.0.2)                    
+##  utf8          1.1.4      2018-05-24 [1] CRAN (R 4.0.0)                    
+##  vctrs         0.3.6      2020-12-17 [1] CRAN (R 4.0.2)                    
+##  withr         2.4.0      2021-01-16 [1] CRAN (R 4.0.2)                    
+##  xfun          0.20       2021-01-06 [1] CRAN (R 4.0.2)                    
+##  yaml          2.2.1      2020-02-01 [1] CRAN (R 4.0.0)                    
+## 
+## [1] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
+</details>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>You can <a href="https://www.amazon.com/gp/product/0815384572/ref=as_li_tl?ie=UTF8&amp;tag=hadlwick-20&amp;camp=1789&amp;creative=9325&amp;linkCode=as2&amp;creativeASIN=0815384572&amp;linkId=9f8b9df5da858c12a5e9905aea66bf08">buy the book</a>, or <a href="https://adv-r.hadley.nz/">view it for free online</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>Initially I went with a metaphor about how a Quarter Pounder with Cheese is called a Royale with Cheese in Paris (or indeed, a Krusty Burger with Cheese is called a Quarter Pounder with Cheese at McDonald’s) despite them being the same thing, but the pop culture reference was better than the actual utility of the metaphor.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>Of course, if you’re really serious about pizza, you only offer marianara and margherita <a href="http://www.damichele.net/le-nostre-pizze/">as per L’antica Pizzeria Da Michele</a>, which is where I took the photos that are in this post.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
