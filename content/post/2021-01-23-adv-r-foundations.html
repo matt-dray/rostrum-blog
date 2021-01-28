@@ -1,7 +1,7 @@
 ---
-title: 'Advanced R: anchovy pizza'
+title: "R's names and values as anchovy pizza?"
 author: 'Matt Dray'
-date: '2021-01-23'
+date: '2021-01-28'
 slug: adv-r-names
 categories:
   - code
@@ -11,65 +11,69 @@ tags:
   - learning
   - pizza
   - r
-draft: yes
+draft: no
 ---
 
 <script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
 
 
 <div class="figure">
-<p><img src="/post/2021-01-23-adv-r-foundations_files/pizza.gif" alt="Bird's-eye view of five large margherita pizzas on a table before and after consumption" width="75%"/></p>
+<img src="/post/2021-01-23-adv-r-foundations_files/pizza.gif" alt="Bird's-eye view of five large margherita pizzas on a table before and after consumption" width="75%"/>
+<p class="caption">
+Queued two hours for this. R’s names and values system is faster to learn, but not as delicious.
+</p>
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>I bought <a href="http://hadley.nz/">Hadley Wickham</a>’s <a href="https://adv-r.hadley.nz/">Advanced R</a> book<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> to help me better understand R’s quirks. Can names and values (chapter 2) be explained with a contrived pizzeria analogy?<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>I bought <a href="http://hadley.nz/">Hadley Wickham</a>’s <a href="https://adv-r.hadley.nz/"><em>Advanced R</em></a> book<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> to help me better understand R’s quirks. Can names and values (chapter 2) be explained with a contrived pizzeria analogy?<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
 </div>
 <div id="a-pizza-by-any-other-name" class="section level1">
 <h1>A pizza by any other name</h1>
-<p>Welcome to the pizzeria. Our specialty is <em>pizza alla napoletana</em> topped with mozzarella, tomatoes and anchovies.</p>
+<p>Welcome to the pizzeria. It’s called ‘La PizzRia’ because our owner likes to code but is really lazy at puns.</p>
+<p>Our specialty (and only!) pizza is <em>pizza alla napoletana</em>, which is topped with mozzarella, tomatoes and anchovies.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
 <pre class="r"><code># Create a character-vector object
+# Emoji are unicode strings, like &quot;\U0001f41f&quot;
 napoletana &lt;- c(&quot;🧀&quot;, &quot;🍅&quot;, &quot;🐟&quot;)</code></pre>
-<p>The English version of the menu calls it ‘Neapolitan’ pizza.</p>
-<pre class="r"><code># Copy the character-vector object
-neapolitan &lt;- napoletana
+<p>The English version of the menu calls it ‘Neapolitan’ pizza, but it’s the same thing.</p>
+<pre class="r"><code>neapolitan &lt;- napoletana       # copy the object
 all(neapolitan == napoletana)  # they&#39;re equal</code></pre>
 <pre><code>## [1] TRUE</code></pre>
-<p>We store our unique pizza topping sets in a recipe book. If you look up ‘napoletana’ and ‘Neapolitan’ in the index of the book, you’ll see they point to the same recipe.</p>
+<p>We store our unique sets of pizza toppings in a special recipe book. If you look up ‘napoletana’ and ‘Neapolitan’ in the book’s index, you’ll see they point to the same recipe.</p>
 <pre class="r"><code># The {lobstr} package helps understand object structure
 library(lobstr)  # after install.packages(&quot;lobstr&quot;)
 
 # Get the specific object &#39;address&#39; in your computer&#39;s memory
 # Both names point to the same object
 obj_addr(napoletana)</code></pre>
-<pre><code>## [1] &quot;0x7fbdd75bfd28&quot;</code></pre>
+<pre><code>## [1] &quot;0x7f94ae79d3d8&quot;</code></pre>
 <pre class="r"><code>obj_addr(neapolitan)</code></pre>
-<pre><code>## [1] &quot;0x7fbdd75bfd28&quot;</code></pre>
-<p>The pizzaiolos don’t care: different names, same pizza. Their ‘recipe codes’ are the same.</p>
+<pre><code>## [1] &quot;0x7f94ae79d3d8&quot;</code></pre>
+<p>Basically, the pizzaiolos don’t care: different names, same pizza. The recipe codes are the same.</p>
 <div class="tip">
 <p>📖 “The object, or value, doesn’t have a name; it’s actually <em>the name that has a value</em>” (page 19)</p>
 </div>
 </div>
 <div id="copying-a-recipe-modifying-it" class="section level1">
 <h1>Copying a recipe, modifying it</h1>
-<p>We recently added <em>pizza pugliese</em> to the menu. The napoletana was copied and then modified to produce the pugliese, which has onions instead of anchovies.</p>
+<p>We recently added <em>pizza pugliese</em> to the menu. We copied our napoletana in the recipe book and then modified it to have onions instead of anchovies.</p>
 <pre class="r"><code>pugliese &lt;- napoletana       # copy the object
 all(pugliese == napoletana)  # the objects are the same</code></pre>
 <pre><code>## [1] TRUE</code></pre>
 <pre class="r"><code>pugliese[[3]] &lt;- &quot;🧅&quot;   # modify the third element
 pugliese == napoletana  # they&#39;re no longer the same</code></pre>
 <pre><code>## [1]  TRUE  TRUE FALSE</code></pre>
-<p>When we look up these names in the index of our recipe book, we see that they point to different places.</p>
+<p>When we look up these names in the index of our recipe book, we see that they point to different places, despite having copied the napoletana to get the pugliese.</p>
 <pre class="r"><code># Now the names point to different objects
 # We modified the copy, so it becomes a new object in memory
 obj_addr(napoletana)</code></pre>
-<pre><code>## [1] &quot;0x7fbdd75bfd28&quot;</code></pre>
+<pre><code>## [1] &quot;0x7f94ae79d3d8&quot;</code></pre>
 <pre class="r"><code>obj_addr(pugliese)</code></pre>
-<pre><code>## [1] &quot;0x7fbddaf8c768&quot;</code></pre>
+<pre><code>## [1] &quot;0x7f94ac7a9d18&quot;</code></pre>
 <div class="tip">
 <p>📖 “This behaviour is called <em>copy-on-modify</em>” (page 22)</p>
 </div>
-<p>Here’s how our menu looks.</p>
-<pre class="r"><code>apulian &lt;- pugliese  # copy pugliese object, English name
+<p>So, here’s our full pizza lineup in Italian and English.</p>
+<pre class="r"><code>apulian &lt;- pugliese  # specify English name for the pugliese
 
 # A comparison of the pizza object structures
 knitr::kable(
@@ -95,36 +99,36 @@ knitr::kable(
 <td align="left">ITA</td>
 <td align="left">Pizza alla napoletana</td>
 <td align="left">🧀, 🍅, 🐟</td>
-<td align="left">0x7fbdd75bfd28</td>
+<td align="left">0x7f94ae79d3d8</td>
 </tr>
 <tr class="even">
 <td align="left">ENG</td>
 <td align="left">Neapolitan pizza</td>
 <td align="left">🧀, 🍅, 🐟</td>
-<td align="left">0x7fbdd75bfd28</td>
+<td align="left">0x7f94ae79d3d8</td>
 </tr>
 <tr class="odd">
 <td align="left">ITA</td>
 <td align="left">Pizza pugliese</td>
 <td align="left">🧀, 🍅, 🧅</td>
-<td align="left">0x7fbddaf8c768</td>
+<td align="left">0x7f94ac7a9d18</td>
 </tr>
 <tr class="even">
 <td align="left">ENG</td>
 <td align="left">Apulian pizza</td>
 <td align="left">🧀, 🍅, 🧅</td>
-<td align="left">0x7fbddaf8c768</td>
+<td align="left">0x7f94ac7a9d18</td>
 </tr>
 </tbody>
 </table>
 <p>Pizza alla napoletana and its copy, Neapolitan pizza, point to the same recipe code.</p>
 <p>Pizza pugliese was a copy of pizza alla napoletana, but it now points to a different recipe code. Why? An element was changed, anchovies to onions, so a new recipe code was required.</p>
-<p>Apulian pizza is a copy of the pizza pugliese recipe, so they point to the same unique topping set.</p>
+<p>Finally, Apulian pizza is a copy of the pizza pugliese recipe, so they both point to the same unique topping set.</p>
 </div>
 <div id="efficient-recipe-management-with-lists" class="section level1">
 <h1>Efficient recipe management with lists</h1>
-<p>Our knowledge management system was, however, a bit inefficient: the mozzarella and tomato toppings existed twice in our recipe book, once for each pizza.</p>
-<p>So we updated our recipe system to store each topping separately with their own special reference codes too.</p>
+<p>Our knowledge management system was, however, a bit inefficient: the mozzarella and tomato toppings existed twice in our recipe book; once for each pizza.</p>
+<p>So we decided to update our recipe system to store each topping separately, each with its own special reference code too.</p>
 <p>Again, we wrote down the pizza napoletana toppings, copied them, then switched the anchovies for onions. Like in our old system, the two pizzas differ in their third element.</p>
 <pre class="r"><code>napoletana &lt;- list(&quot;🧀&quot;, &quot;🍅&quot;, &quot;🐟&quot;)  # toppings as list elements
 pugliese &lt;- napoletana  # make a copy
@@ -133,38 +137,42 @@ identical(pugliese, napoletana) # they&#39;re the same</code></pre>
 <pre class="r"><code>pugliese[[3]] &lt;- &quot;🧅&quot;   # make a change
 identical(pugliese, napoletana) # now they&#39;re different</code></pre>
 <pre><code>## [1] FALSE</code></pre>
-<p>In the new system, each topping also has its own unique ingredient code. This means both pizza recipes point to the same ingredient codes for tomato and mozzarella.</p>
+<p>So in the new system, each topping has its own unique ingredient code. This means both pizza recipes point to the same ingredient codes for tomato and mozzarella.</p>
 <pre class="r"><code># Compare addresses in memory for the lists
 # Each &#39;block&#39; below is a list object (pizza)
 # Each element is a character vector (topping)
 ref(napoletana, pugliese)</code></pre>
-<pre><code>## █ [1:0x7fbddd6b6d88] &lt;list&gt; 
-## ├─[2:0x7fbddccd41b8] &lt;chr&gt; 
-## ├─[3:0x7fbddccd4148] &lt;chr&gt; 
-## └─[4:0x7fbddccd40d8] &lt;chr&gt; 
+<pre><code>## █ [1:0x7f94b236d6e8] &lt;list&gt; 
+## ├─[2:0x7f94b072e900] &lt;chr&gt; 
+## ├─[3:0x7f94b072e890] &lt;chr&gt; 
+## └─[4:0x7f94b072e820] &lt;chr&gt; 
 ##  
-## █ [5:0x7fbddd6bb198] &lt;list&gt; 
-## ├─[2:0x7fbddccd41b8] 
-## ├─[3:0x7fbddccd4148] 
-## └─[6:0x7fbddccd3f88] &lt;chr&gt;</code></pre>
-<p>So our pizza names point to pizza recipes that themselves point out to toppings.</p>
+## █ [5:0x7f94b22f90f8] &lt;list&gt; 
+## ├─[2:0x7f94b072e900] 
+## ├─[3:0x7f94b072e890] 
+## └─[6:0x7f94b072e6d0] &lt;chr&gt;</code></pre>
+<p>basically, our pizza names point to pizza recipes that themselves point out to toppings.</p>
 <div class="tip">
 <p>📖
 “This list is more complex [than a vector] because instead of storing the values itself, it stores <em>references to them</em>” (page 25)</p>
 </div>
-<p>This means we can be more efficient in storing our pizza recipes, particularly if we expand our menu to more than two pizzas.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<p>This means we can be more efficient in storing our pizza recipes: we write down ‘mozzarella’ and ‘tomatoes’ only once. This could become much more efficient when storing more than the two pizzas we have on La PizzRia’s menu.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
 </div>
 <div id="customer-orders-in-data-frames" class="section level1">
 <h1>Customer orders in data frames</h1>
-<p>How do we manage orders? Wait staff write down each order in a column, with a row for each topping.</p>
+<p>How do we manage orders? Wait-staff write down each order in a column, with a row for each topping.</p>
+<div class="tip">
+<p>📖 “Data frames are lists of vectors” (page 26)</p>
+</div>
 <p>Let’s say a couple orders a pizza napoletana and a pizza pugliese.</p>
 <pre class="r"><code># Create a data.frame, which is a list of vectors
+# Column behaviour is vector behaviour
 order &lt;- data.frame(
   napoletana = c(&quot;🧀&quot;, &quot;🍅&quot;, &quot;🐟&quot;),
   pugliese = c(&quot;🧀&quot;, &quot;🍅&quot;, &quot;🧅&quot;)
 )
 
-knitr::kable(order)</code></pre>
+knitr::kable(order)  # print as HTML table</code></pre>
 <table>
 <thead>
 <tr class="header">
@@ -187,13 +195,11 @@ knitr::kable(order)</code></pre>
 </tr>
 </tbody>
 </table>
-<div class="tip">
-<p>📖 “Data frames are lists of vectors” (page 26)</p>
-</div>
+<p>As we know, these pizzas both have mozzarella and tomatoes, but the third topping is different.</p>
 <p>But wait: the customer who ordered the napoletana is hungry for more anchovies!</p>
 <pre class="r"><code>order_update &lt;- order  # copy the data.frame object
 order_update[3, 1] &lt;- &quot;🐟🐟&quot;  # modify the new object
-knitr::kable(order_update)</code></pre>
+knitr::kable(order_update)   # print as HTML table</code></pre>
 <table>
 <thead>
 <tr class="header">
@@ -217,28 +223,28 @@ knitr::kable(order_update)</code></pre>
 </tbody>
 </table>
 <p>We use a code reference system for our orders too and it works just like our old recipe system.</p>
-<p>The napoletana was modified after it was copied, so the recipe code for that pizza was updated. The pugliese didn’t change, so its code was maintained.</p>
 <p>Since one of the pizza orders was changed, our reference code for the entire order was changed too.</p>
+<p>The napoletana was modified after it was copied, so the recipe code for that pizza was updated. The pugliese didn’t change, so its code was maintained.</p>
 <pre class="r"><code># Compare the data.frame structures
 # Modified column gets new code, object gets new code
 # Second column unchanged, code stays the same
 ref(order, order_update)</code></pre>
-<pre><code>## █ [1:0x7fbdd95f1f88] &lt;df[,2]&gt; 
-## ├─napoletana = [2:0x7fbdd95c1628] &lt;chr&gt; 
-## └─pugliese = [3:0x7fbdd95c15d8] &lt;chr&gt; 
+<pre><code>## █ [1:0x7f94b168e4c8] &lt;df[,2]&gt; 
+## ├─napoletana = [2:0x7f94b168c2a8] &lt;chr&gt; 
+## └─pugliese = [3:0x7f94b168c258] &lt;chr&gt; 
 ##  
-## █ [4:0x7fbdd97572c8] &lt;df[,2]&gt; 
-## ├─napoletana = [5:0x7fbdd9764078] &lt;chr&gt; 
-## └─pugliese = [3:0x7fbdd95c15d8]</code></pre>
+## █ [4:0x7f94b16cd448] &lt;df[,2]&gt; 
+## ├─napoletana = [5:0x7f94b16e1798] &lt;chr&gt; 
+## └─pugliese = [3:0x7f94b168c258]</code></pre>
 <div class="tip">
 <p>📖
 “If you modify a column, only that column needs to be modified” (page 26)</p>
 </div>
-<p>The buffala mozzarella is especially bountiful this year; the waiter suggests both patrons add some more.</p>
-<p>The order is copied once more and the waiter modifies the ‘cheese row’ for both pizzas.</p>
+<p>The mozzarella is especially bountiful this year; the waiter suggests both patrons take advantage.</p>
+<p>They strongly agree. The order is copied once more and the waiter modifies the ‘cheese row’ for both pizzas.</p>
 <pre class="r"><code>order_final &lt;- order_update  # copy the object
 order_final[1, 1:2] &lt;- &quot;🧀🧀&quot;  # modify row one of both columns
-knitr::kable(order_final)</code></pre>
+knitr::kable(order_final)   # print as HTML table</code></pre>
 <table>
 <thead>
 <tr class="header">
@@ -266,13 +272,13 @@ knitr::kable(order_final)</code></pre>
 # All columns modified, so copies made
 # data.frame and column memory locations all differ
 ref(order, order_final)</code></pre>
-<pre><code>## █ [1:0x7fbdd95f1f88] &lt;df[,2]&gt; 
-## ├─napoletana = [2:0x7fbdd95c1628] &lt;chr&gt; 
-## └─pugliese = [3:0x7fbdd95c15d8] &lt;chr&gt; 
+<pre><code>## █ [1:0x7f94b168e4c8] &lt;df[,2]&gt; 
+## ├─napoletana = [2:0x7f94b168c2a8] &lt;chr&gt; 
+## └─pugliese = [3:0x7f94b168c258] &lt;chr&gt; 
 ##  
-## █ [4:0x7fbdda1d9a48] &lt;df[,2]&gt; 
-## ├─napoletana = [5:0x7fbdd950ff88] &lt;chr&gt; 
-## └─pugliese = [6:0x7fbdd950ff38] &lt;chr&gt;</code></pre>
+## █ [4:0x7f94ae77a348] &lt;df[,2]&gt; 
+## ├─napoletana = [5:0x7f94ac738538] &lt;chr&gt; 
+## └─pugliese = [6:0x7f94ac7384e8] &lt;chr&gt;</code></pre>
 <div class="tip">
 <p>📖 “If you modify a row, every column is modified, which means every column must be copied” (page 27)</p>
 </div>
@@ -280,7 +286,15 @@ ref(order, order_final)</code></pre>
 </div>
 <div id="il-conto" class="section level1">
 <h1>Il conto</h1>
-<p>So the analogy is too contrived.</p>
+<p>So can names and values be explained with this analogy?</p>
+<p>Kinda? The basic premise is there: names and pizzas, names and values, etc. But it’s definitely contrived. Why are wait staff writing down pizza orders in a dataframe, etc?</p>
+<p>I’ve also deceived you with some ‘polite fiction’, in Hadley’s words. In a numeric vector, the name points to the values. In a character vector, the name actually points to a vector of pointers, which themselves reference unique character strings.</p>
+<div class="tip">
+<p>📖 “R actually uses a global string pool where each element of a character vector is a pointer to a unique string in the pool” (page 27)</p>
+</div>
+<p>But I don’t think that’s a big deal for getting the point across.</p>
+<p>Anyway, your order’s here.</p>
+<p><em>Mangia! Mangia!</em></p>
 <hr />
 <details>
 <summary>
@@ -342,7 +356,8 @@ Session info
 <hr />
 <ol>
 <li id="fn1"><p>You can <a href="https://www.amazon.com/gp/product/0815384572/ref=as_li_tl?ie=UTF8&amp;tag=hadlwick-20&amp;camp=1789&amp;creative=9325&amp;linkCode=as2&amp;creativeASIN=0815384572&amp;linkId=9f8b9df5da858c12a5e9905aea66bf08">buy the book</a>, or <a href="https://adv-r.hadley.nz/">view it for free online</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>Initially I went with a metaphor about how a Quarter Pounder with Cheese is called a Royale with Cheese in Paris (or indeed, a Krusty Burger with Cheese is called a Quarter Pounder with Cheese at McDonald’s), but the pop culture reference was better than the actual utility of the metaphor.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
-<li id="fn3"><p>Of course, if you’re really serious about pizza, you only offer marianara and margherita <a href="http://www.damichele.net/le-nostre-pizze/">as per L’antica Pizzeria Da Michele</a>, which is where I took the photos that are in this post.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>Initially I went with the pop-culture reference about how a Quarter Pounder with Cheese is called a Royale with Cheese in Paris (or indeed, a Krusty Burger with Cheese is called a Quarter Pounder with Cheese at McDonald’s), but the reference was better than the actual utility of the metaphor.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>You’re thinking: ‘this cheese emoji 🧀 doesn’t look like mozzarrella’. A white circle emoji ⚪ looks more like it, but hard to see when the page background is white. And the buffalo emoji 🐃 implies the pizza has buffalo meat on, maybe. I would probably try that.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>Of course, if you’re really serious about pizza, you only offer two options. <a href="http://www.damichele.net/le-nostre-pizze/"><em>L’antica Pizzeria Da Michele</em></a>, which is where I took the photos at the top of this post, offers only marinara and margherita. Do the simple things well.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>

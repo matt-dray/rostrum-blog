@@ -1,7 +1,7 @@
 ---
-title: 'Advanced R: anchovy pizza'
+title: "R's names and values as anchovy pizza?"
 author: 'Matt Dray'
-date: '2021-01-23'
+date: '2021-01-28'
 slug: adv-r-names
 categories:
   - code
@@ -11,35 +11,38 @@ tags:
   - learning
   - pizza
   - r
-draft: yes
+draft: no
 ---
 
 <div class="figure">
 <img src="/post/2021-01-23-adv-r-foundations_files/pizza.gif" alt="Bird's-eye view of five large margherita pizzas on a table before and after consumption" width="75%"/>
+<p class="caption">Queued two hours for this. R's names and values system is faster to learn, but not as delicious.</p>
 </div>
 
 # tl;dr
 
-I bought [Hadley Wickham](http://hadley.nz/)'s [Advanced R](https://adv-r.hadley.nz/) book[^buy] to help me better understand R's quirks. Can names and values (chapter 2) be explained with a contrived pizzeria analogy?[^royale]
+I bought [Hadley Wickham](http://hadley.nz/)'s [_Advanced R_](https://adv-r.hadley.nz/) book[^buy] to help me better understand R's quirks. Can names and values (chapter 2) be explained with a contrived pizzeria analogy?[^royale]
 
 # A pizza by any other name
 
-Welcome to the pizzeria. Our specialty is _pizza alla napoletana_ topped with mozzarella, tomatoes and anchovies.
+Welcome to the pizzeria. It's called 'La PizzRia' because our owner likes to code but is really lazy at puns.
+
+Our specialty (and only!) pizza is _pizza alla napoletana_, which is topped with mozzarella, tomatoes and anchovies.[^mozzarella]
 
 ```{r}
 # Create a character-vector object
+# Emoji are unicode strings, like "\U0001f41f"
 napoletana <- c("🧀", "🍅", "🐟")
 ```
 
-The English version of the menu calls it 'Neapolitan' pizza.
+The English version of the menu calls it 'Neapolitan' pizza, but it's the same thing.
 
 ```{r}
-# Copy the character-vector object
-neapolitan <- napoletana
+neapolitan <- napoletana       # copy the object
 all(neapolitan == napoletana)  # they're equal
 ```
 
-We store our unique pizza topping sets in a recipe book. If you look up 'napoletana' and 'Neapolitan' in the index of the book, you'll see they point to the same recipe. 
+We store our unique sets of pizza toppings in a special recipe book. If you look up 'napoletana' and 'Neapolitan' in the book's index, you'll see they point to the same recipe. 
 
 ```{r}
 # The {lobstr} package helps understand object structure
@@ -51,7 +54,7 @@ obj_addr(napoletana)
 obj_addr(neapolitan)
 ```
 
-The pizzaiolos don't care: different names, same pizza. Their 'recipe codes' are the same.
+Basically, the pizzaiolos don't care: different names, same pizza. The recipe codes are the same.
 
 <div class="tip">
 `r emo::ji("book")`  "The object, or value, doesn't have a name; it's actually _the name that has a value_" (page 19)
@@ -59,7 +62,7 @@ The pizzaiolos don't care: different names, same pizza. Their 'recipe codes' are
 
 # Copying a recipe, modifying it
 
-We recently added _pizza pugliese_ to the menu. The napoletana was copied and then modified to produce the pugliese, which has onions instead of anchovies.
+We recently added _pizza pugliese_ to the menu. We copied our napoletana in the recipe book and then modified it to have onions instead of anchovies.
 
 ```{r}
 pugliese <- napoletana       # copy the object
@@ -68,7 +71,7 @@ pugliese[[3]] <- "🧅"   # modify the third element
 pugliese == napoletana  # they're no longer the same
 ```
 
-When we look up these names in the index of our recipe book, we see that they point to different places.
+When we look up these names in the index of our recipe book, we see that they point to different places, despite having copied the napoletana to get the pugliese.
 
 ```{r}
 # Now the names point to different objects
@@ -81,10 +84,10 @@ obj_addr(pugliese)
 `r emo::ji("book")` "This behaviour is called _copy-on-modify_" (page 22)
 </div>
 
-Here's how our menu looks.
+So, here's our full pizza lineup in Italian and English.
 
 ```{r}
-apulian <- pugliese  # copy pugliese object, English name
+apulian <- pugliese  # specify English name for the pugliese
 
 # A comparison of the pizza object structures
 knitr::kable(
@@ -102,13 +105,13 @@ Pizza alla napoletana and its copy, Neapolitan pizza, point to the same recipe c
 
 Pizza pugliese was a copy of pizza alla napoletana, but it now points to a different recipe code. Why? An element was changed, anchovies to onions, so a new recipe code was required.
 
-Apulian pizza is a copy of the pizza pugliese recipe, so they point to the same unique topping set.
+Finally, Apulian pizza is a copy of the pizza pugliese recipe, so they both point to the same unique topping set.
 
 # Efficient recipe management with lists
 
-Our knowledge management system was, however, a bit inefficient: the mozzarella and tomato toppings existed twice in our recipe book, once for each pizza.
+Our knowledge management system was, however, a bit inefficient: the mozzarella and tomato toppings existed twice in our recipe book; once for each pizza.
 
-So we updated our recipe system to store each topping separately with their own special reference codes too.
+So we decided to update our recipe system to store each topping separately, each with its own special reference code too.
 
 Again, we wrote down the pizza napoletana toppings, copied them, then switched the anchovies for onions. Like in our old system, the two pizzas differ in their third element.
 
@@ -120,7 +123,7 @@ pugliese[[3]] <- "🧅"   # make a change
 identical(pugliese, napoletana) # now they're different
 ```
 
-In the new system, each topping also has its own unique ingredient code. This means both pizza recipes point to the same ingredient codes for tomato and mozzarella.
+So in the new system, each topping  has its own unique ingredient code. This means both pizza recipes point to the same ingredient codes for tomato and mozzarella.
 
 ```{r}
 # Compare addresses in memory for the lists
@@ -129,48 +132,51 @@ In the new system, each topping also has its own unique ingredient code. This me
 ref(napoletana, pugliese)
 ```
 
-So our pizza names point to pizza recipes that themselves point out to toppings.
+basically, our pizza names point to pizza recipes that themselves point out to toppings.
 
 <div class="tip"> 
 `r emo::ji("book")`
 "This list is more complex [than a vector] because instead of storing the values itself, it stores _references to them_" (page 25)
 </div>
 
-This means we can be more efficient in storing our pizza recipes, particularly if we expand our menu to more than two pizzas.[^damichele]
+This means we can be more efficient in storing our pizza recipes: we write down 'mozzarella' and 'tomatoes' only once. This could become much more efficient when storing more than the two pizzas we have on La PizzRia's menu.[^damichele]
 
 # Customer orders in data frames
 
-How do we manage orders? Wait staff write down each order in a column, with a row for each topping.
+How do we manage orders? Wait-staff write down each order in a column, with a row for each topping.
+
+<div class="tip"> 
+`r emo::ji("book")` "Data frames are lists of vectors" (page 26) 
+</div>
 
 Let's say a couple orders a pizza napoletana and a pizza pugliese.
 
 ```{r}
 # Create a data.frame, which is a list of vectors
+# Column behaviour is vector behaviour
 order <- data.frame(
   napoletana = c("🧀", "🍅", "🐟"),
   pugliese = c("🧀", "🍅", "🧅")
 )
 
-knitr::kable(order)
+knitr::kable(order)  # print as HTML table
 ```
 
-<div class="tip"> 
-`r emo::ji("book")` "Data frames are lists of vectors" (page 26) 
-</div>
+As we know, these pizzas both have mozzarella and tomatoes, but the third topping is different.
 
 But wait: the customer who ordered the napoletana is hungry for more anchovies!
 
 ```{r}
 order_update <- order  # copy the data.frame object
 order_update[3, 1] <- "🐟🐟"  # modify the new object
-knitr::kable(order_update)
+knitr::kable(order_update)   # print as HTML table
 ```
 
 We use a code reference system for our orders too and it works just like our old recipe system.
 
-The napoletana was modified after it was copied, so the recipe code for that pizza was updated. The pugliese didn't change, so its code was maintained.
-
 Since one of the pizza orders was changed, our reference code for the entire order was changed too.
+
+The napoletana was modified after it was copied, so the recipe code for that pizza was updated. The pugliese didn't change, so its code was maintained.
 
 ```{r}
 # Compare the data.frame structures
@@ -184,14 +190,14 @@ ref(order, order_update)
 "If you modify a column, only that column needs to be modified" (page 26)
 </div>
 
-The buffala mozzarella is especially bountiful this year; the waiter suggests both patrons add some more.
+The mozzarella is especially bountiful this year; the waiter suggests both patrons take advantage.
 
-The order is copied once more and the waiter modifies the 'cheese row' for both pizzas.
+They strongly agree. The order is copied once more and the waiter modifies the 'cheese row' for both pizzas.
 
 ```{r}
 order_final <- order_update  # copy the object
 order_final[1, 1:2] <- "🧀🧀"  # modify row one of both columns
-knitr::kable(order_final)
+knitr::kable(order_final)   # print as HTML table
 ```
 
 Altering the cheese row means both pizza columns are copied and given new codes. Of course, the order gets a whole new code of its own because the toppings were changed.
@@ -211,7 +217,21 @@ _Buon appetito_.
 
 # Il conto
 
-So the analogy is too contrived.
+So can names and values be explained with this analogy? 
+
+Kinda? The basic premise is there: names and pizzas, names and values, etc. But it's definitely contrived. Why are wait staff writing down pizza orders in a dataframe, etc?
+
+I've also deceived you with some 'polite fiction', in Hadley's words. In a numeric vector, the name points to the values. In a character vector, the name actually points to a vector of pointers, which themselves reference unique character strings.
+
+<div class="tip"> 
+`r emo::ji("book")` "R actually uses a global string pool where each element of a character vector is a pointer to a unique string in the pool" (page 27) 
+</div>
+
+But I don't think that's a big deal for getting the point across.
+
+Anyway, your order's here.
+
+_Mangia! Mangia!_
 
 ---
 <details><summary>Session info</summary>
@@ -221,5 +241,6 @@ sessioninfo::session_info()
 </details>
 
 [^buy]: You can [buy the book](https://www.amazon.com/gp/product/0815384572/ref=as_li_tl?ie=UTF8&tag=hadlwick-20&camp=1789&creative=9325&linkCode=as2&creativeASIN=0815384572&linkId=9f8b9df5da858c12a5e9905aea66bf08), or [view it for free online](https://adv-r.hadley.nz/).
-[^royale]: Initially I went with a metaphor about how a Quarter Pounder with Cheese is called a Royale with Cheese in Paris (or indeed, a Krusty Burger with Cheese is called a Quarter Pounder with Cheese at McDonald's), but the pop culture reference was better than the actual utility of the metaphor.
-[^damichele]: Of course, if you're really serious about pizza, you only offer marianara and margherita [as per L'antica Pizzeria Da Michele](http://www.damichele.net/le-nostre-pizze/), which is where I took the photos that are in this post.
+[^royale]: Initially I went with the pop-culture reference about how a Quarter Pounder with Cheese is called a Royale with Cheese in Paris (or indeed, a Krusty Burger with Cheese is called a Quarter Pounder with Cheese at McDonald's), but the reference was better than the actual utility of the metaphor.
+[^damichele]: Of course, if you're really serious about pizza, you only offer two options. [_L'antica Pizzeria Da Michele_](http://www.damichele.net/le-nostre-pizze/), which is where I took the photos at the top of this post, offers only marinara and margherita. Do the simple things well.
+[^mozzarella]: You're thinking: 'this cheese emoji `r emo::ji("cheese")` doesn't look like mozzarrella'. A white circle emoji `r emo::ji("white_circle")` looks more like it, but hard to see when the page background is white. And the buffalo emoji `r emo::ji("buffalo")` implies the pizza has buffalo meat on, maybe. I would probably try that.
