@@ -27,12 +27,11 @@ I bought [Hadley Wickham](http://hadley.nz/)'s [_Advanced R_](https://adv-r.hadl
 
 Welcome to the pizzeria. It's called 'La PizzRia' because our owner likes to code but is really lazy at puns.
 
-Our specialty (and only!) pizza is _pizza alla napoletana_, which is topped with mozzarella, tomatoes and anchovies.[^mozzarella]
+Our specialty (and only!) pizza is _pizza alla napoletana_, which is topped with mozzarella, tomatoes and anchovies.
 
 ```{r}
 # Create a character-vector object
-# Emoji are unicode strings, like "\U0001f41f"
-napoletana <- c("🧀", "🍅", "🐟")
+napoletana <- c("mozzarella", "tomato", "anchovy")
 ```
 
 The English version of the menu calls it 'Neapolitan' pizza, but it's the same thing.
@@ -50,8 +49,8 @@ library(lobstr)  # after install.packages("lobstr")
 
 # Get the specific object 'address' in your computer's memory
 # Both names point to the same object
-obj_addr(napoletana)
-obj_addr(neapolitan)
+obj_addr(napoletana)  # original object
+obj_addr(neapolitan)  # the copy
 ```
 
 Basically, the pizzaiolos don't care: different names, same pizza. The recipe codes are the same.
@@ -67,8 +66,8 @@ We recently added _pizza pugliese_ to the menu. We copied our napoletana in the 
 ```{r}
 pugliese <- napoletana       # copy the object
 all(pugliese == napoletana)  # the objects are the same
-pugliese[[3]] <- "🧅"   # modify the third element
-pugliese == napoletana  # they're no longer the same
+pugliese[[3]] <- "onion"  # modify the third element
+pugliese == napoletana    # they're no longer the same
 ```
 
 When we look up these names in the index of our recipe book, we see that they point to different places, despite having copied the napoletana to get the pugliese.
@@ -76,8 +75,8 @@ When we look up these names in the index of our recipe book, we see that they po
 ```{r}
 # Now the names point to different objects
 # We modified the copy, so it becomes a new object in memory
-obj_addr(napoletana)
-obj_addr(pugliese)
+obj_addr(napoletana)  # original object
+obj_addr(pugliese)    # the modified copy
 ```
 
 <div class="tip">
@@ -116,10 +115,11 @@ So we decided to update our recipe system to store each topping separately, each
 Again, we wrote down the pizza napoletana toppings, copied them, then switched the anchovies for onions. Like in our old system, the two pizzas differ in their third element.
 
 ```{r}
-napoletana <- list("🧀", "🍅", "🐟")  # toppings as list elements
-pugliese <- napoletana  # make a copy
+# Toppings now as list elements
+napoletana <- list("mozzarella", "tomato", "anchovy")
+pugliese <- napoletana          # make a copy
 identical(pugliese, napoletana) # they're the same
-pugliese[[3]] <- "🧅"   # make a change
+pugliese[[3]] <- "onion"        # make a change
 identical(pugliese, napoletana) # now they're different
 ```
 
@@ -155,11 +155,11 @@ Let's say a couple orders a pizza napoletana and a pizza pugliese.
 # Create a data.frame, which is a list of vectors
 # Column behaviour is vector behaviour
 order <- data.frame(
-  napoletana = c("🧀", "🍅", "🐟"),
-  pugliese = c("🧀", "🍅", "🧅")
+  napoletana = c("mozzarella", "tomato", "anchovy"),
+  pugliese = c("mozzarella", "tomato", "onion")
 )
 
-knitr::kable(order)  # print as HTML table
+order
 ```
 
 As we know, these pizzas both have mozzarella and tomatoes, but the third topping is different.
@@ -168,8 +168,8 @@ But wait: the customer who ordered the napoletana is hungry for more anchovies!
 
 ```{r}
 order_update <- order  # copy the data.frame object
-order_update[3, 1] <- "🐟🐟"  # modify the new object
-knitr::kable(order_update)   # print as HTML table
+order_update[3, 1] <- "anchovy (extra)"  # modify the new object
+order_update
 ```
 
 We use a code reference system for our orders too and it works just like our old recipe system.
@@ -196,8 +196,8 @@ They strongly agree. The order is copied once more and the waiter modifies the '
 
 ```{r}
 order_final <- order_update  # copy the object
-order_final[1, 1:2] <- "🧀🧀"  # modify row one of both columns
-knitr::kable(order_final)   # print as HTML table
+order_final[1, 1:2] <- "mozzarella (extra)"  # modify row one of both columns
+order_final
 ```
 
 Altering the cheese row means both pizza columns are copied and given new codes. Of course, the order gets a whole new code of its own because the toppings were changed.
@@ -243,4 +243,3 @@ sessioninfo::session_info()
 [^buy]: You can [buy the book](https://www.amazon.com/gp/product/0815384572/ref=as_li_tl?ie=UTF8&tag=hadlwick-20&camp=1789&creative=9325&linkCode=as2&creativeASIN=0815384572&linkId=9f8b9df5da858c12a5e9905aea66bf08), or [view it for free online](https://adv-r.hadley.nz/).
 [^royale]: Initially I went with the pop-culture reference about how a Quarter Pounder with Cheese is called a Royale with Cheese in Paris (or indeed, a Krusty Burger with Cheese is called a Quarter Pounder with Cheese at McDonald's), but the reference was better than the actual utility of the metaphor.
 [^damichele]: Of course, if you're really serious about pizza, you only offer two options. [_L'antica Pizzeria Da Michele_](http://www.damichele.net/le-nostre-pizze/), which is where I took the photos at the top of this post, offers only marinara and margherita. Do the simple things well.
-[^mozzarella]: You're thinking: 'this cheese emoji `r emo::ji("cheese")` doesn't look like mozzarrella'. A white circle emoji `r emo::ji("white_circle")` looks more like it, but hard to see when the page background is white. And the buffalo emoji `r emo::ji("buffalo")` implies the pizza has buffalo meat on, maybe. I would probably try that.
