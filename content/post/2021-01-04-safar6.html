@@ -58,10 +58,10 @@ library(safar6)
 # {safar6}
 # Start game: x &lt;- safari_zone$new()
 # Take a step: x$step()</code></pre>
-<p>Basically, the package contains an R6-class object <code>SafariZone</code>, which you initialise and assign like <code>x &lt;- safar6::safari_zone$new()</code>. This starts a routine with some text from the game and some interactive elements. Type a value and hit enter when prompted.</p>
+<p>Basically, the package contains an R6-class object <code>SafariZone</code>, which you initialise and assign like <code>x &lt;- safar6::safari_zone$new()</code>. This starts a routine with some text from the game and some interactive elements. Sometimes you’ll prompted to provide a response; type a value and hit enter to make a choice.</p>
 <pre class="r"><code>x &lt;- safari_zone$new()
-# ------------------------
 # First, what is your name?
+# ------------------------
 # NEW NAME (1)
 # BLUE (2)
 # GARY (3)
@@ -88,7 +88,8 @@ THEW
 # We only use a special POKe BALL here.
 # THEW received 30 SAFARI BALLs!
 # We&#39;ll call you on the PA when you run out of time or SAFARI BALLs!</code></pre>
-<p>You can then <code>x$step()</code> through the Safari Zone. This method does a lot of the hard work, since it contains all the logic required for a wild Pokémon encounter. There’s an encounter rate built in, so you’ll likely need to <code>x$step()</code> a number of times before you find a Pokémon.</p>
+<p>You can then ‘move around’ by using the <code>step()</code> method on your <code>SafariZone</code> object. This method does most of the hard work {safar6}, since it contains all the logic required for a wild Pokémon encounter.
+The underlying values and calculations in <code>step()</code> are all true to the original game. That includes the encounter rate, which is less than 1, so you’ll likely have to <code>step()</code> a number of times before you find a Pokémon.</p>
 <pre class="r"><code>x$step()
 # 499/500</code></pre>
 <p>Each step is treated as though you’re walking through the tall grass, which is where you find wild Pokémon. There’s a weighted chance of encountering certain Pokémon at certain levels, but each wild Pokémon also has (hidden) randomised individual variation in its stats (HP, speed, etc) that impact your ability to catch it.</p>
@@ -170,7 +171,13 @@ x$bills_pc
 <div id="exeggcute-ing-the-class" class="section level1">
 <h1><em>Exeggcute</em>-ing the class</h1>
 <p>I tried to keep things simple, so there’s a number of omissions compared to the original game. For example, there’s no visuals or sounds; I’ve simulated only the ‘Center’ hub area of the Safari Zone; you walk around as though you’re always in tall grass; you can’t fish or use different rod types; you’re restricted to the catch rates and Pokémon identities of the <em>Blue</em> game (not <em>Red</em> or <em>Yellow</em>, which are different).</p>
-<p>On the flipside, I tried to maintain some subtle true-to-the-original elements. For example, you’ll be prompted to enter your name; you can nickname your Pokémon; there’s ‘wobble logic’ for deciding how many times the ball should shake before a capture; and the majority of the text is as it appears in the game.</p>
+<p>On the flipside, I tried to maintain some subtle true-to-the-original elements. For example, you’ll be prompted to enter your name; you can nickname your Pokémon; there’s ‘wobble logic’ for deciding how many times the ball should shake before a capture; and the majority of the text is as it appears in the game. I’ve also made it so the text is progressively revealed, character by character.</p>
+<div class="figure">
+<img src="/post/2021-01-04-safar6_files/safar6-progressive-text.gif" alt="Demonstaration of progressive text reveal in the R console, showing individual characters being printed with a slight delay between them." width="100%"/>
+<p class="caption">
+Progressive text reveal. Takes longer to print but is more authentic!
+</p>
+</div>
 <p>In particular, I’ve tried to keep the various hidden and non-hidden Pokémon stats and calculations true to <em>Pokémon Blue</em>. For example, I built in:</p>
 <ul>
 <li>original encounter rates, both for the Safari Zone and the wild Pokémon in it</li>
@@ -188,8 +195,9 @@ x$bills_pc
 <li><a href="https://bulbapedia.bulbagarden.net/">Bulbapedia</a> is the Bible of Pokémon and hosts various stats and formulae</li>
 <li><a href="https://www.dragonflycave.com/">The Cave of Dragonflies</a> has some excellent breakdowns of game mechanics, particularly in capture and Safari Zone logic</li>
 <li>the <a href="https://sites.google.com/site/pokemonslots">Pokémon Slots</a> website is a convenient lookup for base encounter rates for wild Pokémon by area</li>
-<li>the <a href="https://github.com/pret/pokered">pret/pokered GitHub repo</a> contains a disassembly of the games, where you can see the raw game mechanics and stats</li>
+<li>the <a href="https://github.com/pret/pokered">pret/pokered GitHub repo</a> contains a disassembly of the games, where you can see the raw game mechanics and stats<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></li>
 </ul>
+<p>I later saw on YouTube some interesting attempts at building small text-based Pokémon games like {safar6}. For example, <a href="https://www.youtube.com/watch?v=Pbs6jQZrZA4">one in Python by Rylan Fowers</a><a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> and one for the <a href="https://www.youtube.com/watch?v=TBMS8lsgzrU">TI-84 calculator (of course) by Aeri</a>.</p>
 </div>
 <div id="dont-marowak-living-creatures" class="section level1">
 <h1>Don’t <em>Marowak</em> living creatures</h1>
@@ -210,31 +218,31 @@ Session info
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2021-01-10                  
+##  date     2021-01-31                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
-##  package     * version date       lib source                           
-##  assertthat    0.2.1   2019-03-21 [1] CRAN (R 4.0.0)                   
-##  blogdown      0.21.76 2021-01-05 [1] Github (rstudio/blogdown@f5c7f89)
-##  bookdown      0.21    2020-10-13 [1] CRAN (R 4.0.2)                   
-##  cli           2.2.0   2020-11-20 [1] CRAN (R 4.0.2)                   
-##  crayon        1.3.4   2017-09-16 [1] CRAN (R 4.0.0)                   
-##  digest        0.6.27  2020-10-24 [1] CRAN (R 4.0.2)                   
-##  evaluate      0.14    2019-05-28 [1] CRAN (R 4.0.0)                   
-##  fansi         0.4.1   2020-01-08 [1] CRAN (R 4.0.0)                   
-##  glue          1.4.2   2020-08-27 [1] CRAN (R 4.0.2)                   
-##  htmltools     0.5.0   2020-06-16 [1] CRAN (R 4.0.2)                   
-##  knitr         1.30    2020-09-22 [1] CRAN (R 4.0.2)                   
-##  magrittr      2.0.1   2020-11-17 [1] CRAN (R 4.0.2)                   
-##  rlang         0.4.10  2020-12-30 [1] CRAN (R 4.0.2)                   
-##  rmarkdown     2.6     2020-12-14 [1] CRAN (R 4.0.2)                   
-##  safar6      * 0.1.0   2021-01-10 [1] Github (matt-dray/safar6@94907a9)
-##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.0.0)                   
-##  stringi       1.5.3   2020-09-09 [1] CRAN (R 4.0.2)                   
-##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.0.0)                   
-##  withr         2.3.0   2020-09-22 [1] CRAN (R 4.0.2)                   
-##  xfun          0.19    2020-10-30 [1] CRAN (R 4.0.2)                   
-##  yaml          2.2.1   2020-02-01 [1] CRAN (R 4.0.0)                   
+##  package     * version    date       lib source                            
+##  assertthat    0.2.1      2019-03-21 [1] CRAN (R 4.0.0)                    
+##  blogdown      1.0.5      2021-01-17 [1] Github (rstudio/blogdown@fa67a87) 
+##  bookdown      0.21       2020-10-13 [1] CRAN (R 4.0.2)                    
+##  cli           2.2.0      2020-11-20 [1] CRAN (R 4.0.2)                    
+##  crayon        1.3.4      2017-09-16 [1] CRAN (R 4.0.0)                    
+##  digest        0.6.27     2020-10-24 [1] CRAN (R 4.0.2)                    
+##  evaluate      0.14       2019-05-28 [1] CRAN (R 4.0.0)                    
+##  fansi         0.4.1      2020-01-08 [1] CRAN (R 4.0.0)                    
+##  glue          1.4.2      2020-08-27 [1] CRAN (R 4.0.2)                    
+##  htmltools     0.5.1.9000 2021-01-17 [1] Github (rstudio/htmltools@11cfbf3)
+##  knitr         1.30       2020-09-22 [1] CRAN (R 4.0.2)                    
+##  magrittr      2.0.1      2020-11-17 [1] CRAN (R 4.0.2)                    
+##  rlang         0.4.10     2020-12-30 [1] CRAN (R 4.0.2)                    
+##  rmarkdown     2.6        2020-12-14 [1] CRAN (R 4.0.2)                    
+##  safar6      * 0.1.1      2021-01-31 [1] Github (matt-dray/safar6@a87a115) 
+##  sessioninfo   1.1.1      2018-11-05 [1] CRAN (R 4.0.0)                    
+##  stringi       1.5.3      2020-09-09 [1] CRAN (R 4.0.2)                    
+##  stringr       1.4.0      2019-02-10 [1] CRAN (R 4.0.0)                    
+##  withr         2.4.0      2021-01-16 [1] CRAN (R 4.0.2)                    
+##  xfun          0.20       2021-01-06 [1] CRAN (R 4.0.2)                    
+##  yaml          2.2.1      2020-02-01 [1] CRAN (R 4.0.0)                    
 ## 
 ## [1] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
 </details>
@@ -245,5 +253,7 @@ Session info
 <li id="fn1"><p>The first generation of <em>Pokémon</em> games were developed for <a href="https://en.wikipedia.org/wiki/Game_Boy">the Nintendo Game Boy</a> by <a href="https://www.gamefreak.co.jp/">Game Freak</a> and published by <a href="https://www.nintendo.com">Nintendo</a>. Pokémon as a property is owned by <a href="https://www.pokemon.co.jp/">The Pokémon Company</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
 <li id="fn2"><p>You know, like ‘safari’ and ‘R6’ mashed together?<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 <li id="fn3"><p>‘Bill’s PC’ is the original game’s in-game Pokémon-storage system. Yes, they’re stored on a computer. In particular, <em>Bill’s</em> computer. Don’t think about it too hard.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>It’s interesting to see how the game actually worked. There’s a few investigations of this on YouTube: <a href="https://www.youtube.com/watch?v=f5R8mcmlbFQ">Shane Lee demonstrates how it works by editing the code (like making Mew a starter Pokémon) and booting it</a> and <a href="https://www.youtube.com/watch?v=XGFBtVbBgnM">TheHappieCat explains how Red and Blue were written in Assembly and maximised memory to an extreme degree</a>.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>This is what prompted me to include <code>safar6:::cat_tw()</code>, a function for progressive text reveal, in {safar6}.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>

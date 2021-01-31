@@ -68,12 +68,12 @@ library(safar6)
 # Take a step: x$step()
 ```
 
-Basically, the package contains an R6-class object `SafariZone`, which you initialise and assign like `x <- safar6::safari_zone$new()`. This starts a routine with some text from the game and some interactive elements. Type a value and hit enter when prompted.
+Basically, the package contains an R6-class object `SafariZone`, which you initialise and assign like `x <- safar6::safari_zone$new()`. This starts a routine with some text from the game and some interactive elements. Sometimes you'll prompted to provide a response; type a value and hit enter to make a choice.
 
 ```{r init, eval=FALSE}
 x <- safari_zone$new()
-# ------------------------
 # First, what is your name?
+# ------------------------
 # NEW NAME (1)
 # BLUE (2)
 # GARY (3)
@@ -102,7 +102,8 @@ THEW
 # We'll call you on the PA when you run out of time or SAFARI BALLs!
 ```
 
-You can then `x$step()` through the Safari Zone. This method does a lot of the hard work, since it contains all the logic required for a wild Pokémon encounter. There's an encounter rate built in, so you'll likely need to `x$step()` a number of times before you find a Pokémon.
+You can then 'move around' by using the `step()` method on your `SafariZone` object. This method does most of the hard work {safar6}, since it contains all the logic required for a wild Pokémon encounter. 
+The underlying values and calculations in `step()` are all true to the original game. That includes the encounter rate, which is less than 1, so you'll likely have to `step()` a number of times before you find a Pokémon.
 
 ```{r step, eval=FALSE}
 x$step()
@@ -218,7 +219,12 @@ The most captures I've made on a playthrough of {safar6} is three (!), so use th
 
 I tried to keep things simple, so there's a number of omissions compared to the original game. For example, there's no visuals or sounds; I've simulated only the 'Center' hub area of the Safari Zone; you walk around as though you're always in tall grass; you can't fish or use different rod types; you're restricted to the catch rates and Pokémon identities of the _Blue_ game (not _Red_ or _Yellow_, which are different).
 
-On the flipside, I tried to maintain some subtle true-to-the-original elements. For example, you'll be prompted to enter your name; you can nickname your Pokémon; there's 'wobble logic' for deciding how many times the ball should shake before a capture; and the majority of the text is as it appears in the game.
+On the flipside, I tried to maintain some subtle true-to-the-original elements. For example, you'll be prompted to enter your name; you can nickname your Pokémon; there's 'wobble logic' for deciding how many times the ball should shake before a capture; and the majority of the text is as it appears in the game. I've also made it so the text is progressively revealed, character by character.
+
+<div class="figure">
+<img src="/post/2021-01-04-safar6_files/safar6-progressive-text.gif" alt="Demonstaration of progressive text reveal in the R console, showing individual characters being printed with a slight delay between them." width="100%"/>
+<p class="caption">Progressive text reveal. Takes longer to print but is more authentic!</p>
+</div>
 
 In particular, I've tried to keep the various hidden and non-hidden Pokémon stats and calculations true to _Pokémon Blue_. For example, I built in:
 
@@ -237,7 +243,9 @@ Information about game mechanics and values were relatively tricky to come by. T
 * [Bulbapedia](https://bulbapedia.bulbagarden.net/) is the Bible of Pokémon and hosts various stats and formulae
 * [The Cave of Dragonflies](https://www.dragonflycave.com/) has some excellent breakdowns of game mechanics, particularly in capture and Safari Zone logic 
 * the [Pokémon Slots](https://sites.google.com/site/pokemonslots) website is a convenient lookup for base encounter rates for wild Pokémon by area
-* the [pret/pokered GitHub repo](https://github.com/pret/pokered) contains a disassembly of the games, where you can see the raw game mechanics and stats
+* the [pret/pokered GitHub repo](https://github.com/pret/pokered) contains a disassembly of the games, where you can see the raw game mechanics and stats[^pret]
+
+I later saw on YouTube some interesting attempts at building small text-based Pokémon games like {safar6}. For example, [one in Python by Rylan Fowers](https://www.youtube.com/watch?v=Pbs6jQZrZA4)[^prog-text] and one for the [TI-84 calculator (of course) by Aeri](https://www.youtube.com/watch?v=TBMS8lsgzrU).
 
 # Don't _Marowak_ living creatures
 
@@ -255,3 +263,5 @@ sessioninfo::session_info()
 [^ref]: The first generation of *Pokémon* games were developed for [the Nintendo Game Boy](https://en.wikipedia.org/wiki/Game_Boy) by [Game Freak](https://www.gamefreak.co.jp/) and published by [Nintendo](https://www.nintendo.com). Pokémon as a property is owned by [The Pokémon Company](https://www.pokemon.co.jp/). 
 [^safar6]: You know, like 'safari' and 'R6' mashed together?
 [^bill]: 'Bill's PC' is the original game's in-game Pokémon-storage system. Yes, they're stored on a computer. In particular, _Bill's_ computer. Don't think about it too hard.
+[^prog-text]: This is what prompted me to include `safar6:::cat_tw()`, a function for progressive text reveal, in {safar6}.
+[^pret]: It's interesting to see how the game actually worked. There's a few investigations of this on YouTube: [Shane Lee demonstrates how it works by editing the code (like making Mew a starter Pokémon) and booting it](https://www.youtube.com/watch?v=f5R8mcmlbFQ) and [TheHappieCat explains how Red and Blue were written in Assembly and maximised memory to an extreme degree](https://www.youtube.com/watch?v=XGFBtVbBgnM).
