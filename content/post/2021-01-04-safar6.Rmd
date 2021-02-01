@@ -28,7 +28,7 @@ suppressPackageStartupMessages(library(safar6))
 
 I created [the R package {safar6}](https://github.com/matt-dray/safar6), which contains an R6-class object to simulate a simplified, text-based version of [the Safari Zone](https://bulbapedia.bulbagarden.net/wiki/Kanto_Safari_Zone) sub-area from [_Pokémon Blue_](https://en.wikipedia.org/wiki/Pok%C3%A9mon_Red_and_Blue).
 
-I also made [the 'gamelad' RStudio theme](https://github.com/matt-dray/gamelad) to mimic a pukey-green original Game Boy. Pair with a blocky monospace font like [VT323](https://fonts.google.com/specimen/VT323) for that 8-bit experience.
+I also made [the 'gamelad' RStudio theme](https://github.com/matt-dray/gamelad) to mimic the screen of a pukey-green original Game Boy. Pair with a blocky monospace font like [VT323](https://fonts.google.com/specimen/VT323) for that 8-bit experience.
 
 # _Kangaskhan_ you believe it?
 
@@ -36,22 +36,22 @@ Did you know you can [play games in R](https://lucidmanager.org/data-science/gam
 
 I particularly like the text adventures [The Secret of Landusia](https://lucidmanager.org/data-science/text-adventure/) by [Peter Prevos](https://twitter.com/lucidmanager) and [Castle of R](http://giorasimchoni.com/2017/09/10/2017-09-10-you-re-in-a-room-the-castleofr-package/) by [Giora Simchoni](https://twitter.com/GioraSimchoni)
 
-The latter uses object-oriented programming (OOP) for handling game elements, thanks to the [{R6}](https://r6.r-lib.org/) package. So, a room in the castle is an R6-class object with specific fields (variables), like whether the door is `$open`, and methods (functions) like `$openDoor()` that can change the door state.
+The latter uses [object-oriented programming](https://www.freecodecamp.org/news/object-oriented-programming-concepts-21bb035f7260/) (OOP) for handling game elements, thanks to the [{R6}](https://r6.r-lib.org/) package. So, a room in the castle is an R6-class object with specific fields (variables), like whether the door is `$open`, and methods (functions) like `$openDoor()` that can change the door state.
 
 This is interesting because R is better known for being a function- rather than an object-oriented language. You can learn more about OOP in R from [Hadley Wickham's Advanced R book](https://adv-r.hadley.nz/oo.html) and more about the R6-class from [the {R6} website](https://r6.r-lib.org/index.html).
 
 # A _Chansey_ to learn
 
-[I wrote a post about using {R6} to simulate an Automatic Bell Dispenser](https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/) (an ATM, basically) from Nintendo's _Animal Crossing: New Horizons_ (2020). Fields include `$savings` and methods include `$withdraw()`, for example.
+[I wrote a post about using {R6} to simulate an Automatic Bell Dispenser](https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/) (an ATM, basically) from Nintendo's [_Animal Crossing: New Horizons_](https://en.wikipedia.org/wiki/Animal_Crossing:_New_Horizons) (2020) game. Fields include `savings` and methods include `withdraw()`, for example.
 
-Obviously my next step was try and get to grips with {R6} for games, but I wanted to start small. The original _Pokémon_[^ref] games were effectively text adventures with some random-number generation and simple calculations going on in the background. Would it be possible to simulate some aspects of it?
-
-Let's start small. [The Safari Zone](https://bulbapedia.bulbagarden.net/wiki/Kanto_Safari_Zone) is a sub-area of the main game and the mechanics here are simpler: you're only allowed 500 steps, you have to use a special type of ball to capture wild Pokémon (of which you only have 30) and you can't reduce a wild Pokémon's health (hit points, HP).
+Obviously my next step was to use {R6} for a game, but I wanted to start small. The original _Pokémon_[^ref] games were effectively text adventures with some random-number generation and simple calculations going on in the background. Would it be possible to simulate some aspects of it?
 
 <div class="figure">
 <img src="/post/2021-01-04-safar6_files/sz-screenshot.png" alt="A composite screenshot of the Safari Zone from the original Pokemon game." width="50%"/>
 <p class="caption">'Would you like to join the hunt?' Via [Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/File:Safari_Zone_entrance_RBY.png)</p>
 </div>
+
+Luckily, there's an in-game sub-area that's self-contained and much simpler than the mechanics in the rest of the world. In the [The Safari Zone](https://bulbapedia.bulbagarden.net/wiki/Kanto_Safari_Zone) you're only allowed to take 500 steps, you can only use a special type of ball to capture wild Pokémon (of which you only have 30) and you can't reduce a wild Pokémon's health (hit points, HP).
 
 So I went ahead and wrote an R6-class object to  mimic the Safari Zone and bundled it in [the {safar6} R package](https://www.github.com/matt-dray/safar6/).[^safar6] 
 
@@ -60,6 +60,7 @@ So I went ahead and wrote an R6-class object to  mimic the Safari Zone and bundl
 You can install the package [from GitHub](https://www.github.com/matt-dray/safar6/). Loading the package provides a reminder of how to play.
 
 ```{r install, eval=FALSE}
+# Install first the the {remotes} package
 remotes::install_github("matt-dray/safar6")
 
 library(safar6)
@@ -68,7 +69,9 @@ library(safar6)
 # Take a step: x$step()
 ```
 
-Basically, the package contains an R6-class object `SafariZone`, which you initialise and assign like `x <- safar6::safari_zone$new()`. This starts a routine with some text from the game and some interactive elements. Sometimes you'll prompted to provide a response; type a value and hit enter to make a choice.
+Basically, the package contains an R6-class object `SafariZone`, which you initialise like `safari_zone$new()`. Make sure to assign a name to it (`x` in these examples). This starts a routine with some text from the game and some interactive elements. Sometimes you'll be prompted for a response; type a value and hit enter to make a choice.
+
+Here's the opening sequence, which asks for your name and invites you to play:
 
 ```{r init, eval=FALSE}
 x <- safari_zone$new()
@@ -102,8 +105,11 @@ THEW
 # We'll call you on the PA when you run out of time or SAFARI BALLs!
 ```
 
-You can then 'move around' by using the `step()` method on your `SafariZone` object. This method does most of the hard work {safar6}, since it contains all the logic required for a wild Pokémon encounter. 
+You can then 'move around' by using the `step()` method on your `SafariZone` object. This method does most of the hard work in {safar6}, since it contains all the logic required for a wild Pokémon encounter. 
+
 The underlying values and calculations in `step()` are all true to the original game. That includes the encounter rate, which is less than 1, so you'll likely have to `step()` a number of times before you find a Pokémon.
+
+For convenience, the step method prints the number of steps remaining:
 
 ```{r step, eval=FALSE}
 x$step()
@@ -112,9 +118,9 @@ x$step()
 
 Each step is treated as though you're walking through the tall grass, which is where you find wild Pokémon. There's a weighted chance of encountering certain Pokémon at certain levels, but each wild Pokémon also has (hidden) randomised individual variation in its stats (HP, speed, etc) that impact your ability to catch it.
 
+Here's an encounter:
+
 ```{r step-encounter, eval=FALSE}
-x$step()
-# 498/500
 x$step()
 # 497/500
 # Wild VENONAT L22 appeared!
@@ -124,7 +130,9 @@ x$step()
 # ------------------------
 ```
 
-During an encounter you can throw rocks to raise the catch chance (but you'll also increase the flee chance) and throw bait to reduce the chance of fleeing (but that'll also decrease the catch chance). The Pokémon will be angry or eating for one to five turns.
+You're prompted to make a selection. You can throw a Safari ball straight away to attempt a catch, or you can run away from teh encounter.
+
+You can also influence the Pokémon's state. Throw rocks to raise the catch chance (but you'll also increase the flee chance) and throw bait to reduce the chance of fleeing (but that'll also decrease the catch chance). The Pokémon will be angry or eating for one to five turns.
 
 ```{r rock, eval=FALSE}
 # Wild VENONAT L22 appeared!
@@ -138,7 +146,7 @@ During an encounter you can throw rocks to raise the catch chance (but you'll al
 # Wild VENONAT is angry!
 ```
 
-You can also throw a ball to attempt a capture. Success is determined by several factors, like the Pokémon's HP, its level and its catch rate (possibly modified by rocks and bait). It may also run away given factors like its speed.
+The success of a capture attempt is determined by several factors, like the Pokémon's HP, its level and its catch rate (possibly modified by rocks and bait). It may also run away given factors like its speed.
 
 ```{r ball-fail, eval=FALSE}
 # THEW threw a ROCK.
@@ -170,7 +178,7 @@ You may want to change your strategy. More rocks, or some bait? While it's still
 # VENONAT was caught!
 ```
 
-You can choose to give your 'captured friend' a nickname.
+Success! You can choose to give your 'captured friend' a nickname.
 
 ```{r nickname, eval=FALSE}
 # ------------------------
@@ -222,8 +230,8 @@ I tried to keep things simple, so there's a number of omissions compared to the 
 On the flipside, I tried to maintain some subtle true-to-the-original elements. For example, you'll be prompted to enter your name; you can nickname your Pokémon; there's 'wobble logic' for deciding how many times the ball should shake before a capture; and the majority of the text is as it appears in the game. I've also made it so the text is progressively revealed, character by character.
 
 <div class="figure">
-<img src="/post/2021-01-04-safar6_files/safar6-progressive-text.gif" alt="Demonstaration of progressive text reveal in the R console, showing individual characters being printed with a slight delay between them." width="100%"/>
-<p class="caption">Progressive text reveal. Takes longer to print but is more authentic!</p>
+<img src="/post/2021-01-04-safar6_files/safar6-progressive-text.gif" alt="Demonstaration of progressive text reveal in the R console, showing individual characters being printed with a slight delay between them." width="75%"/>
+<p class="caption">Progressive text reveal. Takes longer to print but is more authentic.</p>
 </div>
 
 In particular, I've tried to keep the various hidden and non-hidden Pokémon stats and calculations true to _Pokémon Blue_. For example, I built in:
@@ -264,4 +272,4 @@ sessioninfo::session_info()
 [^safar6]: You know, like 'safari' and 'R6' mashed together?
 [^bill]: 'Bill's PC' is the original game's in-game Pokémon-storage system. Yes, they're stored on a computer. In particular, _Bill's_ computer. Don't think about it too hard.
 [^prog-text]: This is what prompted me to include `safar6:::cat_tw()`, a function for progressive text reveal, in {safar6}.
-[^pret]: It's interesting to see how the game actually worked. There's a few investigations of this on YouTube: [Shane Lee demonstrates how it works by editing the code (like making Mew a starter Pokémon) and booting it](https://www.youtube.com/watch?v=f5R8mcmlbFQ) and [TheHappieCat explains how Red and Blue were written in Assembly and maximised memory to an extreme degree](https://www.youtube.com/watch?v=XGFBtVbBgnM).
+[^pret]: It's interesting to see how the game actually worked. There's a few investigations of this on YouTube: [Shane Lee](https://www.youtube.com/watch?v=f5R8mcmlbFQ) demonstrates how it works by editing the code (like making Mew a starter Pokémon) and booting it and [TheHappieCat](https://www.youtube.com/watch?v=XGFBtVbBgnM) explains how Red and Blue were written in Assembly and maximised memory to an extreme degree.
