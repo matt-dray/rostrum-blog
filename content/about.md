@@ -13,9 +13,9 @@ Check out <a href='https://rweekly.org/' target="_blank">R Weekly</a> for more R
 
 ## Us
 
-### Matt Dray
+### Matt Dray <img src="https://raw.githubusercontent.com/matt-dray/postcard/master/favicon.ico" alt="A 16-by-16 pixel favicon gif of the author, whose eyebrows are bobbing up and down."/>
 
-<a href='https://www.matt-dray.com' target="_blank">Site</a> | <a href='https://twitter.com/mattdray' target="_blank">Twitter</a> | <a href='https://github.com/matt-dray' target="_blank">GitHub</a> | <img src="https://raw.githubusercontent.com/matt-dray/postcard/master/favicon.ico" alt="A 16-by-16 pixel favicon gif of the author, whose eyebrows are bobbing up and down."/>
+<a href='https://www.matt-dray.com' target="_blank">Site</a> | <a href='https://twitter.com/mattdray' target="_blank">Twitter</a> | <a href='https://github.com/matt-dray' target="_blank">GitHub</a>
 
 I like using R to learn and teach, particularly if it involves important pop-culture references like Pokémon and Dawson's Creek. I'm a datapoint influencer in the UK Civil Service and have a PhD in watching leaves rot (Cardiff) and an Entomology MSc (Imperial). I'm not [the rapper](https://en.wikipedia.org/wiki/Dr._Dre). 
 
