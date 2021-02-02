@@ -1,5 +1,5 @@
 ---
-title: "R's names and values as anchovy pizza?"
+title: "R's names and values as anchovy pizza"
 author: 'Matt Dray'
 date: '2021-01-28'
 slug: adv-r-names
@@ -14,7 +14,6 @@ tags:
 draft: no
 ---
 
-<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
 
 
 <div class="figure">
@@ -46,9 +45,9 @@ library(lobstr)  # after install.packages(&quot;lobstr&quot;)
 # Get the specific object &#39;address&#39; in your computer&#39;s memory
 # Both names point to the same object
 obj_addr(napoletana)  # original object</code></pre>
-<pre><code>## [1] &quot;0x7fe801fa7db8&quot;</code></pre>
+<pre><code>## [1] &quot;0x7ff1fe4e4a28&quot;</code></pre>
 <pre class="r"><code>obj_addr(neapolitan)  # the copy</code></pre>
-<pre><code>## [1] &quot;0x7fe801fa7db8&quot;</code></pre>
+<pre><code>## [1] &quot;0x7ff1fe4e4a28&quot;</code></pre>
 <p>Basically, the pizzaiolos don’t care: different names, same pizza. The recipe codes are the same.</p>
 <div class="tip">
 <p>📖 <em>Advanced R</em>, p19<br>
@@ -68,9 +67,9 @@ pugliese == napoletana    # they&#39;re no longer the same</code></pre>
 <pre class="r"><code># Now the names point to different objects
 # We modified the copy, so it becomes a new object in memory
 obj_addr(napoletana)  # original object</code></pre>
-<pre><code>## [1] &quot;0x7fe801fa7db8&quot;</code></pre>
+<pre><code>## [1] &quot;0x7ff1fe4e4a28&quot;</code></pre>
 <pre class="r"><code>obj_addr(pugliese)    # the modified copy</code></pre>
-<pre><code>## [1] &quot;0x7fe802519fe8&quot;</code></pre>
+<pre><code>## [1] &quot;0x7ff200240c98&quot;</code></pre>
 <div class="tip">
 <p>📖 <em>Advanced R</em>, p22<br>
 “This behaviour is called <em>copy-on-modify</em>”</p>
@@ -102,25 +101,25 @@ knitr::kable(
 <td align="left">ITA</td>
 <td align="left">Pizza alla napoletana</td>
 <td align="left">mozzarella, tomato , anchovy</td>
-<td align="left">0x7fe801fa7db8</td>
+<td align="left">0x7ff1fe4e4a28</td>
 </tr>
 <tr class="even">
 <td align="left">ENG</td>
 <td align="left">Neapolitan pizza</td>
 <td align="left">mozzarella, tomato , anchovy</td>
-<td align="left">0x7fe801fa7db8</td>
+<td align="left">0x7ff1fe4e4a28</td>
 </tr>
 <tr class="odd">
 <td align="left">ITA</td>
 <td align="left">Pizza pugliese</td>
 <td align="left">mozzarella, tomato , onion</td>
-<td align="left">0x7fe802519fe8</td>
+<td align="left">0x7ff200240c98</td>
 </tr>
 <tr class="even">
 <td align="left">ENG</td>
 <td align="left">Apulian pizza</td>
 <td align="left">mozzarella, tomato , onion</td>
-<td align="left">0x7fe802519fe8</td>
+<td align="left">0x7ff200240c98</td>
 </tr>
 </tbody>
 </table>
@@ -146,15 +145,15 @@ identical(pugliese, napoletana) # now they&#39;re different</code></pre>
 # Each &#39;block&#39; below is a list object (pizza)
 # Each element is a character vector (topping)
 ref(napoletana, pugliese)</code></pre>
-<pre><code>## █ [1:0x7fe804ab0358] &lt;list&gt; 
-## ├─[2:0x7fe80279d190] &lt;chr&gt; 
-## ├─[3:0x7fe80279d158] &lt;chr&gt; 
-## └─[4:0x7fe80279d120] &lt;chr&gt; 
+<pre><code>## █ [1:0x7ff200cceaa8] &lt;list&gt; 
+## ├─[2:0x7ff200ac04d8] &lt;chr&gt; 
+## ├─[3:0x7ff200ac04a0] &lt;chr&gt; 
+## └─[4:0x7ff200ac0468] &lt;chr&gt; 
 ##  
-## █ [5:0x7fe804a58968] &lt;list&gt; 
-## ├─[2:0x7fe80279d190] 
-## ├─[3:0x7fe80279d158] 
-## └─[6:0x7fe80279d008] &lt;chr&gt;</code></pre>
+## █ [5:0x7ff1ff999cb8] &lt;list&gt; 
+## ├─[2:0x7ff200ac04d8] 
+## ├─[3:0x7ff200ac04a0] 
+## └─[6:0x7ff200ac0350] &lt;chr&gt;</code></pre>
 <p>basically, our pizza names point to pizza recipes that themselves point out to toppings.</p>
 <div class="tip">
 <p>📖 <em>Advanced R</em>, p25<br>
@@ -198,13 +197,13 @@ order_update</code></pre>
 # Modified column gets new code, object gets new code
 # Second column unchanged, code stays the same
 ref(order, order_update)</code></pre>
-<pre><code>## █ [1:0x7fe804bae748] &lt;df[,2]&gt; 
-## ├─napoletana = [2:0x7fe804bb07e8] &lt;chr&gt; 
-## └─pugliese = [3:0x7fe804bb0798] &lt;chr&gt; 
+<pre><code>## █ [1:0x7ff20111cc88] &lt;df[,2]&gt; 
+## ├─napoletana = [2:0x7ff201184168] &lt;chr&gt; 
+## └─pugliese = [3:0x7ff201184118] &lt;chr&gt; 
 ##  
-## █ [4:0x7fe80469af48] &lt;df[,2]&gt; 
-## ├─napoletana = [5:0x7fe80469ec88] &lt;chr&gt; 
-## └─pugliese = [3:0x7fe804bb0798]</code></pre>
+## █ [4:0x7ff1ffb1fa08] &lt;df[,2]&gt; 
+## ├─napoletana = [5:0x7ff1ffb294a8] &lt;chr&gt; 
+## └─pugliese = [3:0x7ff201184118]</code></pre>
 <div class="tip">
 <p>📖 <em>Advanced R</em>, p26<br>
 “If you modify a column, only that column needs to be modified”</p>
@@ -223,13 +222,13 @@ order_final</code></pre>
 # All columns modified, so copies made
 # data.frame and column memory locations all differ
 ref(order, order_final)</code></pre>
-<pre><code>## █ [1:0x7fe804bae748] &lt;df[,2]&gt; 
-## ├─napoletana = [2:0x7fe804bb07e8] &lt;chr&gt; 
-## └─pugliese = [3:0x7fe804bb0798] &lt;chr&gt; 
+<pre><code>## █ [1:0x7ff20111cc88] &lt;df[,2]&gt; 
+## ├─napoletana = [2:0x7ff201184168] &lt;chr&gt; 
+## └─pugliese = [3:0x7ff201184118] &lt;chr&gt; 
 ##  
-## █ [4:0x7fe7fe2bde88] &lt;df[,2]&gt; 
-## ├─napoletana = [5:0x7fe8024a0ee8] &lt;chr&gt; 
-## └─pugliese = [6:0x7fe8024a0e98] &lt;chr&gt;</code></pre>
+## █ [4:0x7ff1feab7808] &lt;df[,2]&gt; 
+## ├─napoletana = [5:0x7ff200921628] &lt;chr&gt; 
+## └─pugliese = [6:0x7ff2009215d8] &lt;chr&gt;</code></pre>
 <div class="tip">
 <p>📖 <em>Advanced R</em>, p27<br>
 “If you modify a row, every column is modified, which means every column must be copied”</p>
@@ -250,59 +249,60 @@ ref(order, order_final)</code></pre>
 <p><em>Mangia! Mangia!</em></p>
 <hr />
 <details>
-<summary>
-Session info
-</summary>
+<p><summary>Session info</summary></p>
+<pre><code>## Warning in file(con, &quot;r&quot;): cannot open file &#39;/var/db/timezone/zoneinfo/
+## +VERSION&#39;: No such file or directory</code></pre>
 <pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
 ##  setting  value                       
-##  version  R version 4.0.2 (2020-06-22)
-##  os       macOS  10.16                
+##  version  R version 4.0.3 (2020-10-10)
+##  os       macOS Sierra 10.12.6        
 ##  system   x86_64, darwin17.0          
 ##  ui       X11                         
 ##  language (EN)                        
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2021-01-30                  
+##  date     2021-02-02                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
-##  package     * version    date       lib source                            
-##  assertthat    0.2.1      2019-03-21 [1] CRAN (R 4.0.0)                    
-##  blogdown      1.0.5      2021-01-17 [1] Github (rstudio/blogdown@fa67a87) 
-##  bookdown      0.21       2020-10-13 [1] CRAN (R 4.0.2)                    
-##  cli           2.2.0      2020-11-20 [1] CRAN (R 4.0.2)                    
-##  crayon        1.3.4      2017-09-16 [1] CRAN (R 4.0.0)                    
-##  digest        0.6.27     2020-10-24 [1] CRAN (R 4.0.2)                    
-##  ellipsis      0.3.1      2020-05-15 [1] CRAN (R 4.0.0)                    
-##  emo           0.0.0.9000 2020-05-24 [1] Github (hadley/emo@3f03b11)       
-##  evaluate      0.14       2019-05-28 [1] CRAN (R 4.0.0)                    
-##  fansi         0.4.1      2020-01-08 [1] CRAN (R 4.0.0)                    
-##  generics      0.1.0      2020-10-31 [1] CRAN (R 4.0.2)                    
-##  glue          1.4.2      2020-08-27 [1] CRAN (R 4.0.2)                    
-##  highr         0.8        2019-03-20 [1] CRAN (R 4.0.0)                    
-##  htmltools     0.5.1.9000 2021-01-17 [1] Github (rstudio/htmltools@11cfbf3)
-##  knitr         1.30       2020-09-22 [1] CRAN (R 4.0.2)                    
-##  lifecycle     0.2.0      2020-03-06 [1] CRAN (R 4.0.0)                    
-##  lobstr      * 1.1.1      2019-07-02 [1] CRAN (R 4.0.2)                    
-##  lubridate     1.7.9.2    2020-11-13 [1] CRAN (R 4.0.2)                    
-##  magrittr      2.0.1      2020-11-17 [1] CRAN (R 4.0.2)                    
-##  pillar        1.4.7      2020-11-20 [1] CRAN (R 4.0.2)                    
-##  pkgconfig     2.0.3      2019-09-22 [1] CRAN (R 4.0.0)                    
-##  purrr         0.3.4      2020-04-17 [1] CRAN (R 4.0.0)                    
-##  Rcpp          1.0.6      2021-01-15 [1] CRAN (R 4.0.2)                    
-##  rlang         0.4.10     2020-12-30 [1] CRAN (R 4.0.2)                    
-##  rmarkdown     2.6        2020-12-14 [1] CRAN (R 4.0.2)                    
-##  rstudioapi    0.13       2020-11-12 [1] CRAN (R 4.0.2)                    
-##  sessioninfo   1.1.1      2018-11-05 [1] CRAN (R 4.0.0)                    
-##  stringi       1.5.3      2020-09-09 [1] CRAN (R 4.0.2)                    
-##  stringr       1.4.0      2019-02-10 [1] CRAN (R 4.0.0)                    
-##  tibble        3.0.4      2020-10-12 [1] CRAN (R 4.0.2)                    
-##  vctrs         0.3.6      2020-12-17 [1] CRAN (R 4.0.2)                    
-##  withr         2.4.0      2021-01-16 [1] CRAN (R 4.0.2)                    
-##  xfun          0.20       2021-01-06 [1] CRAN (R 4.0.2)                    
-##  yaml          2.2.1      2020-02-01 [1] CRAN (R 4.0.0)                    
+##  package     * version    date       lib source        
+##  assertthat    0.2.1      2019-03-21 [1] CRAN (R 4.0.2)
+##  blogdown      0.21       2020-10-11 [1] CRAN (R 4.0.2)
+##  bookdown      0.21       2020-10-13 [1] CRAN (R 4.0.2)
+##  cli           2.2.0      2020-11-20 [1] CRAN (R 4.0.2)
+##  crayon        1.3.4      2017-09-16 [1] CRAN (R 4.0.2)
+##  digest        0.6.27     2020-10-24 [1] CRAN (R 4.0.2)
+##  ellipsis      0.3.1      2020-05-15 [1] CRAN (R 4.0.2)
+##  emo           0.0.0.9000 2020-12-17 [1] local         
+##  evaluate      0.14       2019-05-28 [1] CRAN (R 4.0.1)
+##  fansi         0.4.1      2020-01-08 [1] CRAN (R 4.0.2)
+##  generics      0.1.0      2020-10-31 [1] CRAN (R 4.0.2)
+##  glue          1.4.2      2020-08-27 [1] CRAN (R 4.0.2)
+##  highr         0.8        2019-03-20 [1] CRAN (R 4.0.2)
+##  htmltools     0.5.0      2020-06-16 [1] CRAN (R 4.0.2)
+##  knitr         1.31       2021-01-27 [1] CRAN (R 4.0.2)
+##  lifecycle     0.2.0      2020-03-06 [1] CRAN (R 4.0.2)
+##  lobstr      * 1.1.1      2019-07-02 [1] CRAN (R 4.0.2)
+##  lubridate     1.7.9.2    2020-11-13 [1] CRAN (R 4.0.2)
+##  magrittr      2.0.1      2020-11-17 [1] CRAN (R 4.0.2)
+##  pillar        1.4.7      2020-11-20 [1] CRAN (R 4.0.2)
+##  pkgconfig     2.0.3      2019-09-22 [1] CRAN (R 4.0.2)
+##  purrr         0.3.4      2020-04-17 [1] CRAN (R 4.0.2)
+##  Rcpp          1.0.5      2020-07-06 [1] CRAN (R 4.0.2)
+##  rlang         0.4.10     2020-12-30 [1] CRAN (R 4.0.2)
+##  rmarkdown     2.6        2020-12-14 [1] CRAN (R 4.0.2)
+##  rstudioapi    0.13       2020-11-12 [1] CRAN (R 4.0.2)
+##  sessioninfo   1.1.1      2018-11-05 [1] CRAN (R 4.0.2)
+##  stringi       1.5.3      2020-09-09 [1] CRAN (R 4.0.2)
+##  stringr       1.4.0      2019-02-10 [1] CRAN (R 4.0.2)
+##  tibble        3.0.4      2020-10-12 [1] CRAN (R 4.0.2)
+##  vctrs         0.3.6      2020-12-17 [1] CRAN (R 4.0.2)
+##  withr         2.3.0      2020-09-22 [1] CRAN (R 4.0.2)
+##  xfun          0.20       2021-01-06 [1] CRAN (R 4.0.2)
+##  yaml          2.2.1      2020-02-01 [1] CRAN (R 4.0.2)
 ## 
-## [1] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
+## [1] /Users/matt.dray/Library/R/4.0/library
+## [2] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
 </details>
 </div>
 </div>
