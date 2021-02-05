@@ -13,6 +13,7 @@ tags:
 draft: no
 ---
 
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
 
 
 <div class="figure">
@@ -23,25 +24,25 @@ Landing page of <a href="https://coronavirus.data.gov.uk">coronavirus.data.gov.u
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>I used <a href="https://CRAN.R-project.org/package=sonify">the {sonify} package</a> in R to represent a year of <a href="https://coronavirus.data.gov.uk/">the UK’s COVID-19 data</a> as audio. You can <a href="#sonified">jump straight to the audio</a>.</p>
+<p>I used <a href="https://CRAN.R-project.org/package=sonify">the {sonify} package</a> in R to represent a year of <a href="https://coronavirus.data.gov.uk/">the UK’s COVID-19 data</a> in audio format. You can <a href="#sonified">jump straight to the audio</a>.</p>
 </div>
 <div id="listen-to-your-data" class="section level1">
 <h1>Listen to your data</h1>
 <p>I watched an excellent talk at the <a href="https://resources.rstudio.com/resources/rstudioglobal-2021/">rstudio::global(2021)</a> conference by <a href="https://twitter.com/seo_jooyoung">JooYoung Seo</a> titled ‘Accessible Data Science Beyond Visual Models: Non-Visual Interactions with R and RStudio Packages’. You can access <a href="https://resources.rstudio.com/resources/rstudioglobal-2021/accessible-data-science-beyond-visual-models-non-visual-interactions-with-r-and-rstudio-packages/">the video</a> or <a href="https://jooyoungseo.com/post/ds4blind/">his blog</a> on the subject.</p>
 <p>In the talk he mentioned <a href="https://CRAN.R-project.org/package=sonify">the {sonify} package</a> for R, which lets you represent data with sound rather than with visuals. For example, values of x and y that increase linearly can be represented by a sound that rises in pitch.</p>
-<p>I wondered: given it’s been a year, what would COVID-19 data sound like?</p>
+<p>I wondered: what would COVID-19 data sound like, given it’s been a year since the UK’s first cases?</p>
 </div>
 <div id="covid-19-data" class="section level1">
 <h1>COVID-19 data</h1>
-<p>GOV.UK, the UK government’s website, has <a href="https://coronavirus.data.gov.uk/">a ‘daily dashboard’</a> of COVID-19 statistics. There are four prominent statistics:</p>
+<p>GOV.UK, the UK government’s website, has <a href="https://coronavirus.data.gov.uk/">a ‘daily dashboard’ of COVID-19 statistics</a>. There are four prominent statistics:</p>
 <ol style="list-style-type: decimal">
 <li><a href="https://coronavirus.data.gov.uk/details/cases">Cases</a> (people tested positive)</li>
 <li><a href="https://coronavirus.data.gov.uk/details/deaths">Deaths</a> (deaths within 28 days of a positive test)</li>
 <li><a href="https://coronavirus.data.gov.uk/details/healthcare">Healthcare</a> (patients admitted to hospital)</li>
 <li><a href="https://coronavirus.data.gov.uk/details/testing">Testing</a> (virus tests conducted)</li>
 </ol>
-<p>The <a href="https://coronavirus.data.gov.uk/details/download">downloads page</a> contains these data and more, both UK-wide and at local levels. This post isn’t an analysis, but I implore you to take a look a the data yourself and <a href="https://coronavirus.data.gov.uk/details/about-data">read the details</a>.</p>
-<p>Helpfully, you can generate a permanent link from which to fetch data<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>. Here I’m grabbing the UK-wide stats mentioned above:</p>
+<p>The <a href="https://coronavirus.data.gov.uk/details/download">downloads page</a> contains these data and more, both UK-wide and at local levels. This post isn’t an analysis, but I implore you to take a look a the data yourself and <a href="https://coronavirus.data.gov.uk/details/about-data">read the details</a> about how the data were collected.</p>
+<p>Helpfully, you can generate a permanent API link from which to fetch data<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>. Here I’m grabbing the UK-wide stats mentioned above:</p>
 <pre class="r"><code>data &lt;- read.csv(
   paste0(
     &quot;https://api.coronavirus.data.gov.uk/v2/data&quot;,
@@ -60,47 +61,58 @@ data &lt;- data[1:365, ]  # first year
 range(data$date)</code></pre>
 <pre><code>## [1] &quot;2020-01-30&quot; &quot;2021-01-28&quot;</code></pre>
 <p>I read this into R as a <code>data.frame</code> object with one row per day.</p>
-<pre class="r"><code>str(data)</code></pre>
-<pre><code>## &#39;data.frame&#39;:    365 obs. of  8 variables:
-##  $ date                      : chr  &quot;2020-01-30&quot; &quot;2020-01-31&quot; &quot;2020-02-01&quot; &quot;2020-02-02&quot; ...
-##  $ areaType                  : chr  &quot;overview&quot; &quot;overview&quot; &quot;overview&quot; &quot;overview&quot; ...
-##  $ areaCode                  : chr  &quot;K02000001&quot; &quot;K02000001&quot; &quot;K02000001&quot; &quot;K02000001&quot; ...
-##  $ areaName                  : chr  &quot;United Kingdom&quot; &quot;United Kingdom&quot; &quot;United Kingdom&quot; &quot;United Kingdom&quot; ...
-##  $ newCasesBySpecimenDate    : int  2 1 1 0 0 0 1 0 0 4 ...
-##  $ newDeaths28DaysByDeathDate: int  NA NA NA NA NA NA NA NA NA NA ...
-##  $ newAdmissions             : int  NA NA NA NA NA NA NA NA NA NA ...
-##  $ newVirusTests             : int  NA NA NA NA NA NA NA NA NA NA ...</code></pre>
+<pre class="r"><code>tail(data[, c(1, 5:8)])</code></pre>
+<pre><code>##          date newCasesBySpecimenDate newDeaths28DaysByDeathDate newAdmissions
+## 13 2021-01-23                  21841                       1139          3098
+## 12 2021-01-24                  17190                       1126          3107
+## 11 2021-01-25                  29879                       1141          2917
+## 10 2021-01-26                  27033                       1020          3127
+## 9  2021-01-27                  25709                       1044          3043
+## 8  2021-01-28                  24049                       1028          3029
+##    newVirusTests
+## 13        484485
+## 12        412204
+## 11        542893
+## 10        596845
+## 9         771710
+## 8         753031</code></pre>
 <p>How quickly a year goes.</p>
 </div>
 <div id="av-functions" class="section level1">
 <h1>AV functions</h1>
+<p>You can <a href="#sonified">skip to the next section</a> if you aren’t interested in the code that will be producing the audio and plots.</p>
 <div id="audio" class="section level2">
 <h2>Audio</h2>
-<p>To simplify things, I’ve written a function using <code>sonify::sonify()</code> to generate a five-second audio clip representing a COVID-19 variable over time. It uses <code>tuneR::writeWav()</code> to write each file.</p>
+<p>I’ve written a small function using <code>sonify::sonify()</code> to generate audio clips that represent each COVID-19 variable over time.</p>
+<p>You pass <code>sonify()</code> your x and y points as you would the <code>plot()</code> function. It has a number of audio-related arguments that let you modify things like the waveform and interpolation, but I’m sticking to the defaults here. This produces a five-second clip in stereo, so you’ll hear the sound move from left to right as you listen.</p>
+<p>The {tuneR} package has the function <code>tuneR::writeWav()</code> to write out the audio to a local .wav file (my desktop in this case).</p>
 <pre class="r"><code>sonify_covid &lt;- function(y, out_dir = &quot;~/Desktop&quot;) {
 
     tuneR::writeWave(
       sonify::sonify(
         x = as.Date(data$date), y = data[[y]],
-        play = FALSE
+        play = FALSE  # suppress audio from playing
       ),
       file.path(out_dir, paste0(y, &quot;.wav&quot;))
     )
   
-}</code></pre>
-<p>I ran this function over each variable in the dataset, like <code>sonify_covid(newAdmissions)</code>, to write the data to my machine. I’ve embedded each clip alongside the plots in the sections below. The audio is in stereo, so you’ll hear the sound move from left to right as you listen.</p>
+}
+
+# Apply the function each variable
+purrr::walk(names(data[5:8]), sonify_covid)</code></pre>
+<p>These clips are embedded above the plots in the section below. A download link is included on the player. If you have trouble playing or downloading any of the clips, you can also access them in <a href="https://soundcloud.com/user-860586053/sets/a-year-of-covid-19-data-sonified">a playlist on SoundCloud</a>.</p>
 </div>
 <div id="visual" class="section level2">
 <h2>Visual</h2>
-<p>The plots are going to be intentionally sparse because the focus of the post is the <em>sound</em> the data make. This function takes a COVID-19 variable from our dataset and plots it over time with {gpplot2}.</p>
-<pre class="r"><code>library(ggplot2)
+<p>The plots are going to be intentionally sparse because the focus of the post is the <em>sound</em> the data make. You’ll be able to follow how the visuals map to the sound The function takes a COVID-19 variable from our dataset and plots it over time with {gpplot2}.</p>
+<pre class="r"><code>library(ggplot2)  # attach plotting package
 
 plot_covid &lt;- function(y) {
 
   ggplot() +
     geom_point(
       aes(as.Date(data$date), data[[y]] / 1000),
-      shape = 21
+      shape = 21  # empty-circle character
     ) +
     labs(
       caption = &quot;Data: https://coronavirus.data.gov.uk/&quot;,
@@ -109,51 +121,53 @@ plot_covid &lt;- function(y) {
     theme_minimal()
   
 }</code></pre>
-<p>I’ve hidden the code in the section below, but this function generates the plots we want like <code>plot_covid(newAdmissions)</code>.</p>
+<p>You can then pass in the variable like <code>plot_covid(newAdmissions)</code>, although I’ve hidden this code in the next section.</p>
 </div>
 </div>
 <div id="sonified" class="section level1">
 <h1>COVID-19 sonified</h1>
-<p>If you have trouble playing any of the embedded audio clips, you can also access them as <a href="https://soundcloud.com/user-860586053/sets/a-year-of-covid-19-data-sonified">a playlist on SoundCloud</a>.</p>
+<p>In each clip, a higher pitch indicates a higher value; a more continuous tone indicates that the points are tightly distributed; and the sound moving from the left to right audio channel indicates change over time.</p>
+<p>All of these datasets start on the same date, 30 January 2020, which is when the first cases were recorded according to the <code>newCasesBySpecimenDate</code> variable. They all end 365 days later on 28 January 2021.</p>
+<p>These data are quite well suited to sonification, given the spikes and troughs through time. In particular, the death and healthcare variables spike quickly, fall back down, rise again, drop slightly and then peak once more. You won’t notice that initial spike for the cases variable, given the relatively lower testing rate at the time.</p>
 <div id="cases" class="section level2">
 <h2>Cases</h2>
-<p><a href="https://coronavirus.data.gov.uk/details/cases">People who have tested positive</a>.</p>
+<p>This audio and plot show the number of <a href="https://coronavirus.data.gov.uk/details/cases">people who have tested positive</a> over time.</p>
 <html>
 <audio controls>
 <source src="/output/sonify-covid/newCasesBySpecimenDate.wav" type="audio/wav">
 </audio>
 </html>
-<p><img src="/post/2021-02-02-sonify-covid_files/figure-html/unnamed-chunk-6-1.png" title="Scatter chart of COVID-19 cases over time. There's a small bump to about 5000 cases per day in early April 2020 and then a peak around 30,000 cases in November, before a large spike to around 80,000 cases at the start of 2021." alt="Scatter chart of COVID-19 cases over time. There's a small bump to about 5000 cases per day in early April 2020 and then a peak around 30,000 cases in November, before a large spike to around 80,000 cases at the start of 2021." width="672" /></p>
+<p><img src="/post/2021-02-02-sonify-covid_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
 </div>
 <div id="death" class="section level2">
 <h2>Death</h2>
-<p><a href="https://coronavirus.data.gov.uk/details/deaths">Deaths within 28 days of a positive test</a>.</p>
+<p>This audio and plot show the number of recorded <a href="https://coronavirus.data.gov.uk/details/deaths">deaths within 28 days of a positive test</a> over time.</p>
 <html>
 <audio controls>
 <source src="/output/sonify-covid/newDeaths28DaysByDeathDate.wav" type="audio/wav">
 </audio>
 </html>
-<p><img src="/post/2021-02-02-sonify-covid_files/figure-html/unnamed-chunk-7-1.png" title="Scatter chart of COVID-19 deaths over time. There's a spike at 1000 cases at the start of April 2020, before it comes back down to almost zero by September, before rising to 500 before December, then spiking at 1500 at the start of 2021." alt="Scatter chart of COVID-19 deaths over time. There's a spike at 1000 cases at the start of April 2020, before it comes back down to almost zero by September, before rising to 500 before December, then spiking at 1500 at the start of 2021." width="672" /></p>
+<p><img src="/post/2021-02-02-sonify-covid_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
 </div>
 <div id="healthcare" class="section level2">
 <h2>Healthcare</h2>
-<p><a href="https://coronavirus.data.gov.uk/details/healthcare">Patients admitted to hospital</a>.</p>
+<p>This audio and plot show the number of <a href="https://coronavirus.data.gov.uk/details/healthcare">patients admitted to hospital</a> over time.</p>
 <html>
 <audio controls>
 <source src="/output/sonify-covid/newAdmissions.wav" type="audio/wav">
 </audio>
 </html>
-<p><img src="/post/2021-02-02-sonify-covid_files/figure-html/unnamed-chunk-8-1.png" title="Scatter chart of COVID-19 hospital admissions over time. There's a spike at 3500 cases at the start of April 2020, before it comes back down to almost zero by September, before rising to 2000 before December, then spiking at 4500 at the start of 2021." alt="Scatter chart of COVID-19 hospital admissions over time. There's a spike at 3500 cases at the start of April 2020, before it comes back down to almost zero by September, before rising to 2000 before December, then spiking at 4500 at the start of 2021." width="672" /></p>
+<p><img src="/post/2021-02-02-sonify-covid_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
 </div>
 <div id="testing" class="section level2">
 <h2>Testing</h2>
-<p><a href="https://coronavirus.data.gov.uk/details/testing">Virus tests conducted</a>.</p>
+<p>This audio and plot show the number of <a href="https://coronavirus.data.gov.uk/details/testing">virus tests conducted</a> over time.</p>
 <html>
 <audio controls>
 <source src="/output/sonify-covid/newVirusTests.wav" type="audio/wav">
 </audio>
 </html>
-<p><img src="/post/2021-02-02-sonify-covid_files/figure-html/unnamed-chunk-9-1.png" title="Scatter chart of COVID-19 tests over time. The value climbs from zero at the end of April 2020 to nearly 800 by the end of January 2021." alt="Scatter chart of COVID-19 tests over time. The value climbs from zero at the end of April 2020 to nearly 800 by the end of January 2021." width="672" /></p>
+<p><img src="/post/2021-02-02-sonify-covid_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
 </div>
 </div>
 <div id="coda" class="section level1">

@@ -20,7 +20,7 @@ draft: no
 
 # tl;dr
 
-I used [the {sonify} package](https://CRAN.R-project.org/package=sonify) in R to represent a year of [the UK's COVID-19 data](https://coronavirus.data.gov.uk/) as audio. You can [jump straight to the audio](#sonified).
+I used [the {sonify} package](https://CRAN.R-project.org/package=sonify) in R to represent a year of [the UK's COVID-19 data](https://coronavirus.data.gov.uk/) in audio format. You can [jump straight to the audio](#sonified).
 
 # Listen to your data
 
@@ -28,20 +28,20 @@ I watched an excellent talk at the [rstudio::global(2021)](https://resources.rst
 
 In the talk he mentioned [the {sonify} package](https://CRAN.R-project.org/package=sonify) for R, which lets you represent data with sound rather than with visuals. For example, values of x and y that increase linearly can be represented by a sound that rises in pitch.
 
-I wondered: given it's been a year, what would COVID-19 data sound like? 
+I wondered: what would COVID-19 data sound like, given it's been a year since the UK's first cases? 
 
 # COVID-19 data
 
-GOV.UK, the UK government's website, has [a 'daily dashboard'](https://coronavirus.data.gov.uk/) of COVID-19 statistics. There are four prominent statistics:
+GOV.UK, the UK government's website, has [a 'daily dashboard' of COVID-19 statistics](https://coronavirus.data.gov.uk/). There are four prominent statistics:
 
 1. [Cases](https://coronavirus.data.gov.uk/details/cases) (people tested positive)
 1. [Deaths](https://coronavirus.data.gov.uk/details/deaths) (deaths within 28 days of a positive test)
 1. [Healthcare](https://coronavirus.data.gov.uk/details/healthcare) (patients admitted to hospital)
 1. [Testing](https://coronavirus.data.gov.uk/details/testing) (virus tests conducted)
 
-The [downloads page](https://coronavirus.data.gov.uk/details/download) contains these data and more, both UK-wide and at local levels. This post isn't an analysis, but I implore you to take a look a the data yourself and [read the details](https://coronavirus.data.gov.uk/details/about-data).
+The [downloads page](https://coronavirus.data.gov.uk/details/download) contains these data and more, both UK-wide and at local levels. This post isn't an analysis, but I implore you to take a look a the data yourself and [read the details](https://coronavirus.data.gov.uk/details/about-data) about how the data were collected.
 
-Helpfully, you can generate a permanent link from which to fetch data[^fair]. Here I'm grabbing the UK-wide stats mentioned above:
+Helpfully, you can generate a permanent API link from which to fetch data[^fair]. Here I'm grabbing the UK-wide stats mentioned above:
 
 ```{r}
 data <- read.csv(
@@ -69,46 +69,55 @@ range(data$date)
 I read this into R as a `data.frame` object with one row per day.
 
 ```{r}
-str(data)
+tail(data[, c(1, 5:8)])
 ```
 
 How quickly a year goes.
 
 # AV functions
 
+You can [skip to the next section](#sonified) if you aren't interested in the code that will be producing the audio and plots.
+
 ## Audio
 
-To simplify things, I've written a function using `sonify::sonify()` to generate a five-second audio clip representing a COVID-19 variable over time. It uses `tuneR::writeWav()` to write each file.
+I've written a small function using `sonify::sonify()` to generate audio clips that represent each COVID-19 variable over time.
 
-```{r}
+You pass `sonify()` your x and y points as you would the `plot()` function. It has a number of audio-related arguments that let you modify things like the waveform and interpolation, but I'm sticking to the defaults here. This produces a five-second clip in stereo, so you'll hear the sound move from left to right as you listen.
+
+The {tuneR} package has the function `tuneR::writeWav()` to write out the audio to a local .wav file (my desktop in this case).
+
+```{r, eval=FALSE}
 sonify_covid <- function(y, out_dir = "~/Desktop") {
 
     tuneR::writeWave(
       sonify::sonify(
         x = as.Date(data$date), y = data[[y]],
-        play = FALSE
+        play = FALSE  # suppress audio from playing
       ),
       file.path(out_dir, paste0(y, ".wav"))
     )
   
 }
+
+# Apply the function each variable
+purrr::walk(names(data[5:8]), sonify_covid)
 ```
 
-I ran this function over each variable in the dataset, like `sonify_covid(newAdmissions)`, to write the data to my machine. I've embedded each clip alongside the plots in the sections below. The audio is in stereo, so you'll hear the sound move from left to right as you listen.
+These clips are embedded above the plots in the section below. A download link is included on the player. If you have trouble playing or downloading any of the clips, you can also access them in [a playlist on SoundCloud](https://soundcloud.com/user-860586053/sets/a-year-of-covid-19-data-sonified).
 
 ## Visual
 
-The plots are going to be intentionally sparse because the focus of the post is the _sound_ the data make. This function takes a COVID-19 variable from our dataset and plots it over time with {gpplot2}.
+The plots are going to be intentionally sparse because the focus of the post is the _sound_ the data make. You'll be able to follow how the visuals map to the sound The function takes a COVID-19 variable from our dataset and plots it over time with {gpplot2}.
 
 ```{r warning=FALSE}
-library(ggplot2)
+library(ggplot2)  # attach plotting package
 
 plot_covid <- function(y) {
 
   ggplot() +
     geom_point(
       aes(as.Date(data$date), data[[y]] / 1000),
-      shape = 21
+      shape = 21  # empty-circle character
     ) +
     labs(
       caption = "Data: https://coronavirus.data.gov.uk/",
@@ -119,15 +128,19 @@ plot_covid <- function(y) {
 }
 ```
 
-I've hidden the code in the section below, but this function generates the plots we want like `plot_covid(newAdmissions)`.
+You can then pass in the variable like `plot_covid(newAdmissions)`, although I've hidden this code in the next section. I also used the new `fig.alt` chunk option in R Markdown to provide a short piece of alt text to describe the plot content.
 
 # COVID-19 sonified {#sonified}
 
-If you have trouble playing any of the embedded audio clips, you can also access them as [a playlist on SoundCloud](https://soundcloud.com/user-860586053/sets/a-year-of-covid-19-data-sonified).
+In each clip, a higher pitch indicates a higher value; a more continuous tone indicates that the points are tightly distributed; and the sound moving from the left to right audio channel indicates change over time.
+
+All of these datasets start on the same date, 30 January 2020, which is when the first cases were recorded according to the `newCasesBySpecimenDate` variable. They all end 365 days later on 28 January 2021.
+
+These data are quite well suited to sonification, given the peaks and troughs. In particular, the death and healthcare variables spike quickly, fall back down, rise again, drop slightly and then peak once more. You won't notice that initial spike for the cases variable, given the relatively lower testing rate at the time.
 
 ## Cases
 
-[People who have tested positive](https://coronavirus.data.gov.uk/details/cases).
+This audio and plot show the number of [people who have tested positive](https://coronavirus.data.gov.uk/details/cases) over time.
 
 <html><audio controls><source src="/output/sonify-covid/newCasesBySpecimenDate.wav" type="audio/wav"></audio></html>
 
@@ -137,7 +150,7 @@ plot_covid("newCasesBySpecimenDate")
 
 ## Death
 
-[Deaths within 28 days of a positive test](https://coronavirus.data.gov.uk/details/deaths).
+This audio and plot show the number of recorded [deaths within 28 days of a positive test](https://coronavirus.data.gov.uk/details/deaths) over time.
 
 <html><audio controls><source src="/output/sonify-covid/newDeaths28DaysByDeathDate.wav" type="audio/wav"></audio></html>
 
@@ -147,7 +160,7 @@ plot_covid("newDeaths28DaysByDeathDate")
 
 ## Healthcare
 
-[Patients admitted to hospital](https://coronavirus.data.gov.uk/details/healthcare).
+This audio and plot show the number of [patients admitted to hospital](https://coronavirus.data.gov.uk/details/healthcare) over time.
 
 <html><audio controls><source src="/output/sonify-covid/newAdmissions.wav" type="audio/wav"></audio></html>
 
@@ -157,7 +170,7 @@ plot_covid("newAdmissions")
 
 ## Testing
 
-[Virus tests conducted](https://coronavirus.data.gov.uk/details/testing).
+This audio and plot show the number of [virus tests conducted](https://coronavirus.data.gov.uk/details/testing) over time.
 
 <html><audio controls><source src="/output/sonify-covid/newVirusTests.wav" type="audio/wav"></audio></html>
 
