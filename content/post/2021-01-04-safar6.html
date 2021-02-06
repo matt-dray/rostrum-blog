@@ -15,7 +15,8 @@ tags:
 draft: no
 ---
 
-<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+<script src="/rmarkdown-libs/jquery/jquery.min.js"></script>
+<script src="/rmarkdown-libs/elevate-section-attrs/elevate-section-attrs.js"></script>
 
 
 <div class="figure">
@@ -27,19 +28,19 @@ An original Nintendo Game Boy playing <em>Pokémon</em>… if you squint.
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
 <p>I created <a href="https://github.com/matt-dray/safar6">the R package {safar6}</a>, which contains an R6-class object to simulate a simplified, text-based version of <a href="https://bulbapedia.bulbagarden.net/wiki/Kanto_Safari_Zone">the Safari Zone</a> sub-area from <a href="https://en.wikipedia.org/wiki/Pok%C3%A9mon_Red_and_Blue"><em>Pokémon Blue</em></a>.</p>
-<p>I also made <a href="https://github.com/matt-dray/gamelad">the ‘gamelad’ RStudio theme</a> to mimic the screen of a pukey-green original Game Boy. Pair with a blocky monospace font like <a href="https://fonts.google.com/specimen/VT323">VT323</a> for that 8-bit experience.</p>
+<p>I also made <a href="https://github.com/matt-dray/gamelad">the ‘gamelad’ RStudio theme</a> to mimic the screen of a pukey-green original Game Boy. Pair with a blocky monospace font like <a href="https://fonts.google.com/specimen/VT323">VT323</a> for that 8-bit experience.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
 </div>
 <div id="kangaskhan-you-believe-it" class="section level1">
 <h1><em>Kangaskhan</em> you believe it?</h1>
 <p>Did you know you can <a href="https://lucidmanager.org/data-science/games-in-r/">play games in R</a>?</p>
 <p>I particularly like the text adventures <a href="https://lucidmanager.org/data-science/text-adventure/">The Secret of Landusia</a> by <a href="https://twitter.com/lucidmanager">Peter Prevos</a> and <a href="http://giorasimchoni.com/2017/09/10/2017-09-10-you-re-in-a-room-the-castleofr-package/">Castle of R</a> by <a href="https://twitter.com/GioraSimchoni">Giora Simchoni</a></p>
-<p>The latter uses <a href="https://www.freecodecamp.org/news/object-oriented-programming-concepts-21bb035f7260/">object-oriented programming</a> (OOP) for handling game elements, thanks to the <a href="https://r6.r-lib.org/">{R6}</a> package. So, a room in the castle is an R6-class object with specific fields (variables), like whether the door is <code>$open</code>, and methods (functions) like <code>$openDoor()</code> that can change the door state.</p>
+<p>The latter uses <a href="https://www.freecodecamp.org/news/object-oriented-programming-concepts-21bb035f7260/">object-oriented programming</a> (OOP) for handling game elements, thanks to the <a href="https://r6.r-lib.org/">{R6}</a> package. So, a room in the castle is an R6-class object with specific fields (variables), like whether the door is <code>open</code>, and methods (functions) like <code>openDoor()</code> that can change the door state.</p>
 <p>This is interesting because R is better known for being a function- rather than an object-oriented language. You can learn more about OOP in R from <a href="https://adv-r.hadley.nz/oo.html">Hadley Wickham’s Advanced R book</a> and more about the R6-class from <a href="https://r6.r-lib.org/index.html">the {R6} website</a>.</p>
 </div>
 <div id="a-chansey-to-learn" class="section level1">
 <h1>A <em>Chansey</em> to learn</h1>
 <p><a href="https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/">I wrote a post about using {R6} to simulate an Automatic Bell Dispenser</a> (an ATM, basically) from Nintendo’s <a href="https://en.wikipedia.org/wiki/Animal_Crossing:_New_Horizons"><em>Animal Crossing: New Horizons</em></a> (2020) game. Fields include <code>savings</code> and methods include <code>withdraw()</code>, for example.</p>
-<p>Obviously my next step was to use {R6} for a game, but I wanted to start small. The original <em>Pokémon</em><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> games were effectively text adventures with some random-number generation and simple calculations going on in the background. Would it be possible to simulate some aspects of it?</p>
+<p>Obviously my next step was to use {R6} for a game, but I wanted to start small. The original <em>Pokémon</em><a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> games were effectively text adventures with some random-number generation and simple calculations going on in the background. Would it be possible to simulate some aspects of it?</p>
 <div class="figure">
 <img src="/post/2021-01-04-safar6_files/sz-screenshot.png" alt="A composite screenshot of the Safari Zone from the original Pokemon game." width="50%"/>
 <p class="caption">
@@ -47,7 +48,7 @@ An original Nintendo Game Boy playing <em>Pokémon</em>… if you squint.
 </p>
 </div>
 <p>Luckily, there’s an in-game sub-area that’s self-contained and much simpler than the mechanics in the rest of the world. In the <a href="https://bulbapedia.bulbagarden.net/wiki/Kanto_Safari_Zone">The Safari Zone</a> you’re only allowed to take 500 steps, you can only use a special type of ball to capture wild Pokémon (of which you only have 30) and you can’t reduce a wild Pokémon’s health (hit points, HP).</p>
-<p>So I went ahead and wrote an R6-class object to mimic the Safari Zone and bundled it in <a href="https://www.github.com/matt-dray/safar6/">the {safar6} R package</a>.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>So I went ahead and wrote an R6-class object to mimic the Safari Zone and bundled it in <a href="https://www.github.com/matt-dray/safar6/">the {safar6} R package</a>.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
 </div>
 <div id="a-quick-tauros-of-the-game" class="section level1">
 <h1>A quick <em>Tauros</em> of the game</h1>
@@ -150,7 +151,7 @@ THEW
 # Nickname: 
 Tajiri
 # Tajiri was transferred to BILL&#39;s PC!</code></pre>
-<p>Try to catch as many as you can before you run out of steps or balls. You can <code>x$pause()</code> the game at any point to see your remaining stats and you can check out <code>x$bills_pc</code> to see what you’ve captured<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>.</p>
+<p>Try to catch as many as you can before you run out of steps or balls. You can <code>x$pause()</code> the game at any point to see your remaining stats and you can check out <code>x$bills_pc</code> to see what you’ve captured<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>.</p>
 <pre class="r"><code>x$pause()
 # 497/500
 # BALLx28
@@ -199,9 +200,9 @@ Progressive text reveal. Takes longer to print but is more authentic.
 <li><a href="https://bulbapedia.bulbagarden.net/">Bulbapedia</a> is the Bible of Pokémon and hosts various stats and formulae</li>
 <li><a href="https://www.dragonflycave.com/">The Cave of Dragonflies</a> has some excellent breakdowns of game mechanics, particularly in capture and Safari Zone logic</li>
 <li>the <a href="https://sites.google.com/site/pokemonslots">Pokémon Slots</a> website is a convenient lookup for base encounter rates for wild Pokémon by area</li>
-<li>the <a href="https://github.com/pret/pokered">pret/pokered GitHub repo</a> contains a disassembly of the games, where you can see the raw game mechanics and stats<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></li>
+<li>the <a href="https://github.com/pret/pokered">pret/pokered GitHub repo</a> contains a disassembly of the games, where you can see the raw game mechanics and stats<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a></li>
 </ul>
-<p>I later saw on YouTube some interesting attempts at building small text-based Pokémon games like {safar6}. For example, <a href="https://www.youtube.com/watch?v=Pbs6jQZrZA4">one in Python by Rylan Fowers</a><a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> and one for the <a href="https://www.youtube.com/watch?v=TBMS8lsgzrU">TI-84 calculator (of course) by Aeri</a>.</p>
+<p>I later saw on YouTube some interesting attempts at building small text-based Pokémon games like {safar6}. For example, <a href="https://www.youtube.com/watch?v=Pbs6jQZrZA4">one in Python by Rylan Fowers</a><a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a> and one for the <a href="https://www.youtube.com/watch?v=TBMS8lsgzrU">TI-84 calculator (of course) by Aeri</a>.</p>
 </div>
 <div id="dont-marowak-living-creatures" class="section level1">
 <h1>Don’t <em>Marowak</em> living creatures</h1>
@@ -214,50 +215,52 @@ Session info
 </summary>
 <pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
 ##  setting  value                       
-##  version  R version 4.0.2 (2020-06-22)
+##  version  R version 3.6.0 (2019-04-26)
 ##  os       macOS  10.16                
-##  system   x86_64, darwin17.0          
+##  system   x86_64, darwin15.6.0        
 ##  ui       X11                         
 ##  language (EN)                        
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2021-02-01                  
+##  date     2021-02-06                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
-##  package     * version    date       lib source                            
-##  assertthat    0.2.1      2019-03-21 [1] CRAN (R 4.0.0)                    
-##  blogdown      1.0.5      2021-01-17 [1] Github (rstudio/blogdown@fa67a87) 
-##  bookdown      0.21       2020-10-13 [1] CRAN (R 4.0.2)                    
-##  cli           2.2.0      2020-11-20 [1] CRAN (R 4.0.2)                    
-##  crayon        1.3.4      2017-09-16 [1] CRAN (R 4.0.0)                    
-##  digest        0.6.27     2020-10-24 [1] CRAN (R 4.0.2)                    
-##  evaluate      0.14       2019-05-28 [1] CRAN (R 4.0.0)                    
-##  fansi         0.4.1      2020-01-08 [1] CRAN (R 4.0.0)                    
-##  glue          1.4.2      2020-08-27 [1] CRAN (R 4.0.2)                    
-##  htmltools     0.5.1.9000 2021-01-17 [1] Github (rstudio/htmltools@11cfbf3)
-##  knitr         1.30       2020-09-22 [1] CRAN (R 4.0.2)                    
-##  magrittr      2.0.1      2020-11-17 [1] CRAN (R 4.0.2)                    
-##  rlang         0.4.10     2020-12-30 [1] CRAN (R 4.0.2)                    
-##  rmarkdown     2.6        2020-12-14 [1] CRAN (R 4.0.2)                    
-##  safar6      * 0.1.1      2021-01-31 [1] Github (matt-dray/safar6@a87a115) 
-##  sessioninfo   1.1.1      2018-11-05 [1] CRAN (R 4.0.0)                    
-##  stringi       1.5.3      2020-09-09 [1] CRAN (R 4.0.2)                    
-##  stringr       1.4.0      2019-02-10 [1] CRAN (R 4.0.0)                    
-##  withr         2.4.0      2021-01-16 [1] CRAN (R 4.0.2)                    
-##  xfun          0.20       2021-01-06 [1] CRAN (R 4.0.2)                    
-##  yaml          2.2.1      2020-02-01 [1] CRAN (R 4.0.0)                    
+##  package     * version date       lib source                           
+##  assertthat    0.2.1   2019-03-21 [1] CRAN (R 3.6.0)                   
+##  blogdown      0.12    2019-05-01 [1] CRAN (R 3.6.0)                   
+##  bookdown      0.10    2019-05-10 [1] CRAN (R 3.6.0)                   
+##  cli           2.0.2   2020-02-28 [1] CRAN (R 3.6.0)                   
+##  crayon        1.3.4   2017-09-16 [1] CRAN (R 3.6.0)                   
+##  digest        0.6.25  2020-02-23 [1] CRAN (R 3.6.0)                   
+##  evaluate      0.14    2019-05-28 [1] CRAN (R 3.6.0)                   
+##  fansi         0.4.1   2020-01-08 [1] CRAN (R 3.6.0)                   
+##  glue          1.4.1   2020-05-13 [1] CRAN (R 3.6.2)                   
+##  htmltools     0.4.0   2019-10-04 [1] CRAN (R 3.6.0)                   
+##  knitr         1.26    2019-11-12 [1] CRAN (R 3.6.0)                   
+##  magrittr      1.5     2014-11-22 [1] CRAN (R 3.6.0)                   
+##  Rcpp          1.0.3   2019-11-08 [1] CRAN (R 3.6.0)                   
+##  rlang         0.4.6   2020-05-02 [1] CRAN (R 3.6.2)                   
+##  rmarkdown     2.0     2019-12-12 [1] CRAN (R 3.6.0)                   
+##  safar6      * 0.1.1   2021-02-06 [1] Github (matt-dray/safar6@a87a115)
+##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 3.6.0)                   
+##  stringi       1.4.5   2020-01-11 [1] CRAN (R 3.6.0)                   
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 3.6.0)                   
+##  withr         2.2.0   2020-04-20 [1] CRAN (R 3.6.2)                   
+##  xfun          0.11    2019-11-12 [1] CRAN (R 3.6.0)                   
+##  yaml          2.2.1   2020-02-01 [1] CRAN (R 3.6.0)                   
 ## 
-## [1] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
+## [1] /Library/Frameworks/R.framework/Versions/3.6/Resources/library</code></pre>
 </details>
 </div>
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>The first generation of <em>Pokémon</em> games were developed for <a href="https://en.wikipedia.org/wiki/Game_Boy">the Nintendo Game Boy</a> by <a href="https://www.gamefreak.co.jp/">Game Freak</a> and published by <a href="https://www.nintendo.com">Nintendo</a>. Pokémon as a property is owned by <a href="https://www.pokemon.co.jp/">The Pokémon Company</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>You know, like ‘safari’ and ‘R6’ mashed together?<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
-<li id="fn3"><p>‘Bill’s PC’ is the original game’s in-game Pokémon-storage system. Yes, they’re stored on a computer. In particular, <em>Bill’s</em> computer. Don’t think about it too hard.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
-<li id="fn4"><p>It’s interesting to see how the game actually worked. There’s a few investigations of this on YouTube: <a href="https://www.youtube.com/watch?v=f5R8mcmlbFQ">Shane Lee</a> demonstrates how it works by editing the code (like making Mew a starter Pokémon) and booting it and <a href="https://www.youtube.com/watch?v=XGFBtVbBgnM">TheHappieCat</a> explains how Red and Blue were written in Assembly and maximised memory to an extreme degree.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
-<li id="fn5"><p>This is what prompted me to include <code>safar6:::cat_tw()</code>, a function for progressive text reveal, in {safar6}.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+<li id="fn1"><p>RStudio only accepts monospace fonts, so the <a href="https://fonts.google.com/specimen/Press+Start+2P?query=2p&amp;preview.text_type=custom">Press Start 2P</a> font—which mimics Namco’s fonts of the 80s—sadly misses out because it’s a ‘display’ font.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>The first generation of <em>Pokémon</em> games were developed for <a href="https://en.wikipedia.org/wiki/Game_Boy">the Nintendo Game Boy</a> by <a href="https://www.gamefreak.co.jp/">Game Freak</a> and published by <a href="https://www.nintendo.com">Nintendo</a>. Pokémon as a property is owned by <a href="https://www.pokemon.co.jp/">The Pokémon Company</a>.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>You know, like ‘safari’ and ‘R6’ mashed together?<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>‘Bill’s PC’ is the original game’s in-game Pokémon-storage system. Yes, they’re stored on a computer. In particular, <em>Bill’s</em> computer. Don’t think about it too hard.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>It’s interesting to see how the game actually worked. There’s a few investigations of this on YouTube: <a href="https://www.youtube.com/watch?v=f5R8mcmlbFQ">Shane Lee</a> demonstrates how it works by editing the code (like making Mew a starter Pokémon) and booting it and <a href="https://www.youtube.com/watch?v=XGFBtVbBgnM">TheHappieCat</a> explains how Red and Blue were written in Assembly and maximised memory to an extreme degree.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+<li id="fn6"><p>This is what prompted me to include <code>safar6:::cat_tw()</code>, a function for progressive text reveal, in {safar6}.<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
