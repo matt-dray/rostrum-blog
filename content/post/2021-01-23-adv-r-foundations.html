@@ -14,6 +14,9 @@ tags:
 draft: no
 ---
 
+<script src="/rmarkdown-libs/jquery/jquery.min.js"></script>
+<script src="/rmarkdown-libs/elevate-section-attrs/elevate-section-attrs.js"></script>
+<link href="/rmarkdown-libs/font-awesome/css/fontawesome-all.min.css" rel="stylesheet" />
 
 
 <div class="figure">
@@ -45,13 +48,13 @@ library(lobstr)  # after install.packages(&quot;lobstr&quot;)
 # Get the specific object &#39;address&#39; in your computer&#39;s memory
 # Both names point to the same object
 obj_addr(napoletana)  # original object</code></pre>
-<pre><code>## [1] &quot;0x7ff1fe4e4a28&quot;</code></pre>
+<pre><code>## [1] &quot;0x7fd9967f00f8&quot;</code></pre>
 <pre class="r"><code>obj_addr(neapolitan)  # the copy</code></pre>
-<pre><code>## [1] &quot;0x7ff1fe4e4a28&quot;</code></pre>
+<pre><code>## [1] &quot;0x7fd9967f00f8&quot;</code></pre>
 <p>Basically, the pizzaiolos don’t care: different names, same pizza. The recipe codes are the same.</p>
 <div class="tip">
-<p>📖 <em>Advanced R</em>, p19<br>
-“The object, or value, doesn’t have a name; it’s actually the name that has a value”</p>
+<p><i class="fas  fa-book-open "></i> <em>Advanced R</em>, p19<br>
+“The object, or value, doesn’t have a name; it’s actually the name that has a value.”</p>
 </div>
 </div>
 <div id="copying-a-recipe-modifying-it" class="section level2">
@@ -67,12 +70,12 @@ pugliese == napoletana    # they&#39;re no longer the same</code></pre>
 <pre class="r"><code># Now the names point to different objects
 # We modified the copy, so it becomes a new object in memory
 obj_addr(napoletana)  # original object</code></pre>
-<pre><code>## [1] &quot;0x7ff1fe4e4a28&quot;</code></pre>
+<pre><code>## [1] &quot;0x7fd9967f00f8&quot;</code></pre>
 <pre class="r"><code>obj_addr(pugliese)    # the modified copy</code></pre>
-<pre><code>## [1] &quot;0x7ff200240c98&quot;</code></pre>
+<pre><code>## [1] &quot;0x7fd9973f7c78&quot;</code></pre>
 <div class="tip">
-<p>📖 <em>Advanced R</em>, p22<br>
-“This behaviour is called <em>copy-on-modify</em>”</p>
+<p><i class="fas  fa-book-open "></i> <em>Advanced R</em>, p22<br>
+“This behaviour is called copy-on-modify.”</p>
 </div>
 <p>So, here’s our full pizza lineup in Italian and English.</p>
 <pre class="r"><code>apulian &lt;- pugliese  # specify English name for the pugliese
@@ -101,25 +104,25 @@ knitr::kable(
 <td align="left">ITA</td>
 <td align="left">Pizza alla napoletana</td>
 <td align="left">mozzarella, tomato , anchovy</td>
-<td align="left">0x7ff1fe4e4a28</td>
+<td align="left">0x7fd9967f00f8</td>
 </tr>
 <tr class="even">
 <td align="left">ENG</td>
 <td align="left">Neapolitan pizza</td>
 <td align="left">mozzarella, tomato , anchovy</td>
-<td align="left">0x7ff1fe4e4a28</td>
+<td align="left">0x7fd9967f00f8</td>
 </tr>
 <tr class="odd">
 <td align="left">ITA</td>
 <td align="left">Pizza pugliese</td>
 <td align="left">mozzarella, tomato , onion</td>
-<td align="left">0x7ff200240c98</td>
+<td align="left">0x7fd9973f7c78</td>
 </tr>
 <tr class="even">
 <td align="left">ENG</td>
 <td align="left">Apulian pizza</td>
 <td align="left">mozzarella, tomato , onion</td>
-<td align="left">0x7ff200240c98</td>
+<td align="left">0x7fd9973f7c78</td>
 </tr>
 </tbody>
 </table>
@@ -145,19 +148,19 @@ identical(pugliese, napoletana) # now they&#39;re different</code></pre>
 # Each &#39;block&#39; below is a list object (pizza)
 # Each element is a character vector (topping)
 ref(napoletana, pugliese)</code></pre>
-<pre><code>## █ [1:0x7ff200cceaa8] &lt;list&gt; 
-## ├─[2:0x7ff200ac04d8] &lt;chr&gt; 
-## ├─[3:0x7ff200ac04a0] &lt;chr&gt; 
-## └─[4:0x7ff200ac0468] &lt;chr&gt; 
+<pre><code>## █ [1:0x7fd999b5ff28] &lt;list&gt; 
+## ├─[2:0x7fd99a186ab8] &lt;chr&gt; 
+## ├─[3:0x7fd99a186a80] &lt;chr&gt; 
+## └─[4:0x7fd99a186a48] &lt;chr&gt; 
 ##  
-## █ [5:0x7ff1ff999cb8] &lt;list&gt; 
-## ├─[2:0x7ff200ac04d8] 
-## ├─[3:0x7ff200ac04a0] 
-## └─[6:0x7ff200ac0350] &lt;chr&gt;</code></pre>
+## █ [5:0x7fd99a1d00d8] &lt;list&gt; 
+## ├─[2:0x7fd99a186ab8] 
+## ├─[3:0x7fd99a186a80] 
+## └─[6:0x7fd99a186930] &lt;chr&gt;</code></pre>
 <p>basically, our pizza names point to pizza recipes that themselves point out to toppings.</p>
 <div class="tip">
-<p>📖 <em>Advanced R</em>, p25<br>
-“This list is more complex [than a vector] because instead of storing the values itself, it stores <em>references to them</em>”</p>
+<p><i class="fas  fa-book-open "></i> <em>Advanced R</em>, p25<br>
+“This list is more complex [than a vector] because instead of storing the values itself, it stores references to them.”</p>
 </div>
 <p>This means we can be more efficient in storing our pizza recipes: we write down ‘mozzarella’ and ‘tomatoes’ only once. This could become much more efficient when storing more than the two pizzas we have on La PizzRia’s menu.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
 </div>
@@ -165,8 +168,8 @@ ref(napoletana, pugliese)</code></pre>
 <h2>Customer orders as data frames</h2>
 <p>How do we manage orders? Wait-staff write down each order in a column, with a row for each topping.</p>
 <div class="tip">
-<p>📖 <em>Advanced R</em>, p26<br>
-“Data frames are lists of vectors”</p>
+<p><i class="fas  fa-book-open "></i> <em>Advanced R</em>, p26<br>
+“Data frames are lists of vectors.”</p>
 </div>
 <p>Let’s say a couple orders a pizza napoletana and a pizza pugliese.</p>
 <pre class="r"><code># Create a data.frame, which is a list of vectors
@@ -184,12 +187,14 @@ order</code></pre>
 <p>As we know, these pizzas both have mozzarella and tomatoes, but the third topping is different.</p>
 <p>But wait: the customer who ordered the napoletana is hungry for more anchovies!</p>
 <pre class="r"><code>order_update &lt;- order  # copy the data.frame object
-order_update[3, 1] &lt;- &quot;anchovy (extra)&quot;  # modify the new object
-order_update</code></pre>
-<pre><code>##        napoletana   pugliese
-## 1      mozzarella mozzarella
-## 2          tomato     tomato
-## 3 anchovy (extra)      onion</code></pre>
+order_update[3, 1] &lt;- &quot;anchovy (extra)&quot;  # modify the new object</code></pre>
+<pre><code>## Warning in `[&lt;-.factor`(`*tmp*`, iseq, value = &quot;anchovy (extra)&quot;): invalid
+## factor level, NA generated</code></pre>
+<pre class="r"><code>order_update</code></pre>
+<pre><code>##   napoletana   pugliese
+## 1 mozzarella mozzarella
+## 2     tomato     tomato
+## 3       &lt;NA&gt;      onion</code></pre>
 <p>We use a code reference system for our orders too and it works just like our old recipe system.</p>
 <p>Since one of the pizza orders was changed, our reference code for the entire order was changed too.</p>
 <p>The napoletana was modified after it was copied, so the recipe code for that pizza was updated. The pugliese didn’t change, so its code was maintained.</p>
@@ -197,41 +202,46 @@ order_update</code></pre>
 # Modified column gets new code, object gets new code
 # Second column unchanged, code stays the same
 ref(order, order_update)</code></pre>
-<pre><code>## █ [1:0x7ff20111cc88] &lt;df[,2]&gt; 
-## ├─napoletana = [2:0x7ff201184168] &lt;chr&gt; 
-## └─pugliese = [3:0x7ff201184118] &lt;chr&gt; 
+<pre><code>## █ [1:0x7fd9950c0cc8] &lt;df[,2]&gt; 
+## ├─napoletana = [2:0x7fd99359ad08] &lt;fct&gt; 
+## └─pugliese = [3:0x7fd99359bbc8] &lt;fct&gt; 
 ##  
-## █ [4:0x7ff1ffb1fa08] &lt;df[,2]&gt; 
-## ├─napoletana = [5:0x7ff1ffb294a8] &lt;chr&gt; 
-## └─pugliese = [3:0x7ff201184118]</code></pre>
+## █ [4:0x7fd9975b0708] &lt;df[,2]&gt; 
+## ├─napoletana = [5:0x7fd9975af148] &lt;fct&gt; 
+## └─pugliese = [3:0x7fd99359bbc8]</code></pre>
 <div class="tip">
-<p>📖 <em>Advanced R</em>, p26<br>
-“If you modify a column, only that column needs to be modified”</p>
+<p><i class="fas  fa-book-open "></i> <em>Advanced R</em>, p26<br>
+“If you modify a column, only that column needs to be modified.”</p>
 </div>
 <p>The mozzarella is especially bountiful this year; the waiter suggests both patrons take advantage.</p>
 <p>They strongly agree. The order is copied once more and the waiter modifies the ‘cheese row’ for both pizzas.</p>
 <pre class="r"><code>order_final &lt;- order_update  # copy the object
-order_final[1, 1:2] &lt;- &quot;mozzarella (extra)&quot;  # modify row one of both columns
-order_final</code></pre>
-<pre><code>##           napoletana           pugliese
-## 1 mozzarella (extra) mozzarella (extra)
-## 2             tomato             tomato
-## 3    anchovy (extra)              onion</code></pre>
+order_final[1, 1:2] &lt;- &quot;mozzarella (extra)&quot;  # modify row one of both columns</code></pre>
+<pre><code>## Warning in `[&lt;-.factor`(`*tmp*`, iseq, value = &quot;mozzarella (extra)&quot;): invalid
+## factor level, NA generated
+
+## Warning in `[&lt;-.factor`(`*tmp*`, iseq, value = &quot;mozzarella (extra)&quot;): invalid
+## factor level, NA generated</code></pre>
+<pre class="r"><code>order_final</code></pre>
+<pre><code>##   napoletana pugliese
+## 1       &lt;NA&gt;     &lt;NA&gt;
+## 2     tomato   tomato
+## 3       &lt;NA&gt;    onion</code></pre>
 <p>Altering the cheese row means both pizza columns are copied and given new codes. Of course, the order gets a whole new code of its own because the toppings were changed.</p>
 <pre class="r"><code># Compare data.frame structures again
 # All columns modified, so copies made
 # data.frame and column memory locations all differ
 ref(order, order_final)</code></pre>
-<pre><code>## █ [1:0x7ff20111cc88] &lt;df[,2]&gt; 
-## ├─napoletana = [2:0x7ff201184168] &lt;chr&gt; 
-## └─pugliese = [3:0x7ff201184118] &lt;chr&gt; 
+<pre><code>## █ [1:0x7fd9950c0cc8] &lt;df[,2]&gt; 
+## ├─napoletana = [2:0x7fd99359ad08] &lt;fct&gt; 
+## └─pugliese = [3:0x7fd99359bbc8] &lt;fct&gt; 
 ##  
-## █ [4:0x7ff1feab7808] &lt;df[,2]&gt; 
-## ├─napoletana = [5:0x7ff200921628] &lt;chr&gt; 
-## └─pugliese = [6:0x7ff2009215d8] &lt;chr&gt;</code></pre>
+## █ [4:0x7fd99917ea08] &lt;df[,2]&gt; 
+## ├─napoletana = [5:0x7fd99917e4c8] &lt;fct&gt; 
+## └─pugliese = [6:0x7fd99917df08] &lt;fct&gt;</code></pre>
 <div class="tip">
-<p>📖 <em>Advanced R</em>, p27<br>
-“If you modify a row, every column is modified, which means every column must be copied”</p>
+<p><i class="fas  fa-book-open "></i> <em>Advanced R</em>, p27<br>
+“If you modify a row, every column is modified, which means every column must be copied.”</p>
 </div>
 <p><em>Buon appetito</em>!</p>
 </div>
@@ -241,68 +251,62 @@ ref(order, order_final)</code></pre>
 <p>Kinda? The basic premise is there: names and pizzas, names and values, etc. But it’s definitely contrived. Why are wait staff writing down pizza orders in a dataframe, etc?</p>
 <p>I’ve also deceived you with some ‘polite fiction’, in Hadley’s words. In a numeric vector, the name points to the values. In a character vector, the name actually points to a vector of pointers, which themselves reference unique character strings.</p>
 <div class="tip">
-<p>📖 <em>Advanced R</em>, p27<br>
-“R actually uses a global string pool where each element of a character vector is a pointer to a unique string in the pool”</p>
+<p><i class="fas  fa-book-open "></i> <em>Advanced R</em>, p27<br>
+“R actually uses a global string pool where each element of a character vector is a pointer to a unique string in the pool.”</p>
 </div>
 <p>But I don’t think that’s a big deal for getting the point across.</p>
 <p>Anyway, your order’s here.</p>
 <p><em>Mangia! Mangia!</em></p>
 <hr />
 <details>
-<p><summary>Session info</summary></p>
-<pre><code>## Warning in file(con, &quot;r&quot;): cannot open file &#39;/var/db/timezone/zoneinfo/
-## +VERSION&#39;: No such file or directory</code></pre>
+<summary>
+Session info
+</summary>
 <pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
 ##  setting  value                       
-##  version  R version 4.0.3 (2020-10-10)
-##  os       macOS Sierra 10.12.6        
-##  system   x86_64, darwin17.0          
+##  version  R version 3.6.3 (2020-02-29)
+##  os       macOS  10.16                
+##  system   x86_64, darwin15.6.0        
 ##  ui       X11                         
 ##  language (EN)                        
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2021-02-02                  
+##  date     2021-02-08                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
-##  package     * version    date       lib source        
-##  assertthat    0.2.1      2019-03-21 [1] CRAN (R 4.0.2)
-##  blogdown      0.21       2020-10-11 [1] CRAN (R 4.0.2)
-##  bookdown      0.21       2020-10-13 [1] CRAN (R 4.0.2)
-##  cli           2.2.0      2020-11-20 [1] CRAN (R 4.0.2)
-##  crayon        1.3.4      2017-09-16 [1] CRAN (R 4.0.2)
-##  digest        0.6.27     2020-10-24 [1] CRAN (R 4.0.2)
-##  ellipsis      0.3.1      2020-05-15 [1] CRAN (R 4.0.2)
-##  emo           0.0.0.9000 2020-12-17 [1] local         
-##  evaluate      0.14       2019-05-28 [1] CRAN (R 4.0.1)
-##  fansi         0.4.1      2020-01-08 [1] CRAN (R 4.0.2)
-##  generics      0.1.0      2020-10-31 [1] CRAN (R 4.0.2)
-##  glue          1.4.2      2020-08-27 [1] CRAN (R 4.0.2)
-##  highr         0.8        2019-03-20 [1] CRAN (R 4.0.2)
-##  htmltools     0.5.0      2020-06-16 [1] CRAN (R 4.0.2)
-##  knitr         1.31       2021-01-27 [1] CRAN (R 4.0.2)
-##  lifecycle     0.2.0      2020-03-06 [1] CRAN (R 4.0.2)
-##  lobstr      * 1.1.1      2019-07-02 [1] CRAN (R 4.0.2)
-##  lubridate     1.7.9.2    2020-11-13 [1] CRAN (R 4.0.2)
-##  magrittr      2.0.1      2020-11-17 [1] CRAN (R 4.0.2)
-##  pillar        1.4.7      2020-11-20 [1] CRAN (R 4.0.2)
-##  pkgconfig     2.0.3      2019-09-22 [1] CRAN (R 4.0.2)
-##  purrr         0.3.4      2020-04-17 [1] CRAN (R 4.0.2)
-##  Rcpp          1.0.5      2020-07-06 [1] CRAN (R 4.0.2)
-##  rlang         0.4.10     2020-12-30 [1] CRAN (R 4.0.2)
-##  rmarkdown     2.6        2020-12-14 [1] CRAN (R 4.0.2)
-##  rstudioapi    0.13       2020-11-12 [1] CRAN (R 4.0.2)
-##  sessioninfo   1.1.1      2018-11-05 [1] CRAN (R 4.0.2)
-##  stringi       1.5.3      2020-09-09 [1] CRAN (R 4.0.2)
-##  stringr       1.4.0      2019-02-10 [1] CRAN (R 4.0.2)
-##  tibble        3.0.4      2020-10-12 [1] CRAN (R 4.0.2)
-##  vctrs         0.3.6      2020-12-17 [1] CRAN (R 4.0.2)
-##  withr         2.3.0      2020-09-22 [1] CRAN (R 4.0.2)
-##  xfun          0.20       2021-01-06 [1] CRAN (R 4.0.2)
-##  yaml          2.2.1      2020-02-01 [1] CRAN (R 4.0.2)
+##  package     * version date       lib source                            
+##  assertthat    0.2.1   2019-03-21 [1] CRAN (R 3.6.0)                    
+##  blogdown      0.12    2019-05-01 [1] CRAN (R 3.6.0)                    
+##  bookdown      0.10    2019-05-10 [1] CRAN (R 3.6.0)                    
+##  cli           2.3.0   2021-01-31 [1] CRAN (R 3.6.2)                    
+##  crayon        1.4.0   2021-01-30 [1] CRAN (R 3.6.2)                    
+##  digest        0.6.27  2020-10-24 [1] CRAN (R 3.6.2)                    
+##  ellipsis      0.3.1   2020-05-15 [1] CRAN (R 3.6.2)                    
+##  evaluate      0.14    2019-05-28 [1] CRAN (R 3.6.0)                    
+##  glue          1.4.2   2020-08-27 [1] CRAN (R 3.6.2)                    
+##  highr         0.8     2019-03-20 [1] CRAN (R 3.6.0)                    
+##  htmltools     0.4.0   2019-10-04 [1] CRAN (R 3.6.0)                    
+##  icon          0.1.0   2019-10-09 [1] Github (ropenscilabs/icon@a5bc1cc)
+##  knitr         1.31    2021-01-27 [1] CRAN (R 3.6.2)                    
+##  lifecycle     0.2.0   2020-03-06 [1] CRAN (R 3.6.0)                    
+##  lobstr      * 1.1.1   2019-07-02 [1] CRAN (R 3.6.0)                    
+##  magrittr      2.0.1   2020-11-17 [1] CRAN (R 3.6.2)                    
+##  pillar        1.4.7   2020-11-20 [1] CRAN (R 3.6.2)                    
+##  pkgconfig     2.0.3   2019-09-22 [1] CRAN (R 3.6.0)                    
+##  Rcpp          1.0.3   2019-11-08 [1] CRAN (R 3.6.0)                    
+##  rlang         0.4.10  2020-12-30 [1] CRAN (R 3.6.2)                    
+##  rmarkdown     2.0     2019-12-12 [1] CRAN (R 3.6.0)                    
+##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 3.6.0)                    
+##  stringi       1.5.3   2020-09-09 [1] CRAN (R 3.6.2)                    
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 3.6.0)                    
+##  tibble        3.0.6   2021-01-29 [1] CRAN (R 3.6.2)                    
+##  vctrs         0.3.6   2020-12-17 [1] CRAN (R 3.6.2)                    
+##  withr         2.4.1   2021-01-26 [1] CRAN (R 3.6.2)                    
+##  xfun          0.20    2021-01-06 [1] CRAN (R 3.6.2)                    
+##  yaml          2.2.1   2020-02-01 [1] CRAN (R 3.6.0)                    
 ## 
-## [1] /Users/matt.dray/Library/R/4.0/library
-## [2] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
+## [1] /Library/Frameworks/R.framework/Versions/3.6/Resources/library</code></pre>
 </details>
 </div>
 </div>

@@ -19,54 +19,63 @@ draft: no
 
 <div class="figure">
 <img src="https://media.giphy.com/media/Dym2LTuxGJJSw/giphy.gif" alt="A walrus vomiting a cartoon rainbow.">
-<p class="caption">'Walrus rainbow vomit' is a sentence I'd never thought I'd type ([via Giphy](https://giphy.com/gifs/rainbow-vomit-walrus-Dym2LTuxGJJSw?utm_source=media-link&utm_medium=landing&utm_campaign=Media%20Links&utm_term=){target='_blank'})</p>
+<p class="caption">'Walrus rainbow vomit' is a sentence I'd never thought I'd type ([via Giphy](https://giphy.com/gifs/rainbow-vomit-walrus-Dym2LTuxGJJSw?utm_source=media-link&utm_medium=landing&utm_campaign=Media%20Links&utm_term=))</p>
 </div>
+
+<div class="tip"> `r icon::fa("exclamation-circle")` <b>Note</b>
+
+I later learnt about [{colorfindr}](https://github.com/zumbov2/colorfindr) by [David Zumbach](https://twitter.com/DavidZumbach), which can extract colours from images, provide composition details and generate palettes. Check it out.
+</div>
+
+# tl;dr
+
+I used [the {magick} package](https://docs.ropensci.org/magick/articles/intro.html) in R to map an image's colours to their nearest match from a simplified palette, then quantified how much of the image was covered by each colour in that palette.
 
 # Colour search
 
-Lots of online services let you sort images by colour. Some examples:
+As a side project at work, we wanted users to be able to search images of artwork by their prevalence of colours from a small simple palette (red, blue, yellow, etc).
 
-* [Google Arts & Culture](https://artsexperiments.withgoogle.com/artpalette/colors/a46053-433932-c2ad8f-b5996a-746251){target='_blank'}
-* [Designspiration](https://www.designspiration.net/search/saves/?q=%2389ebd7%20%23afff11%20%23e5ff91%20%23ff9775%20%23f38d00){target='_blank'}
-* [TinEye Multicolr](https://labs.tineye.com/multicolr/){target='_blank'}
+Lots of online services let you sort images by colour. Our inspiration included:
 
-These services must have extracted and quantified each image's colours. There's probably a way of doing this in R, so let's give it a go.
-
-By 'simple' I mean we're not going to do any hard work or consider any colour theory.[^theory] And we're going to use colours like 'green' instead of 'olive drab'.[^drab]
+* [Google Arts & Culture](https://artsexperiments.withgoogle.com/artpalette/colors/a46053-433932-c2ad8f-b5996a-746251)
+* [Designspiration](https://www.designspiration.net/search/saves/?q=%2389ebd7%20%23afff11%20%23e5ff91%20%23ff9775%20%23f38d00)
+* [TinEye Multicolr](https://labs.tineye.com/multicolr/)
 
 # Art of the possible
 
-Well do the following:
+What might be a relatively simple and straightforward way to do this in R? 
+
+By 'simple' I mean we don't want to do any hard work. We don't want to consider any colour theory[^theory] and we want to stick to simple, easily-named colours like 'green'.[^drab]
+
+So, we want to do the following:
 
 1. Read in an image
 2. Prepare a set of 'simple colours'
 3. Map the simple colours to the image
 4. Quantify the colours
 
-There's also a step 5 that I'm not covering here: create a tool where the user chooses a colour and images are returned in order of dominance for that colour. We could also write this all into a function that takes a folder of images and returns the percentage of each colour in each image. 
-
 # It's a kind of ImageMagick
 
-The {magick} R package is an implementation of [ImageMagick, an open-source software suite whose emphasis is image manipulation from the command line](https://www.imagemagick.org/script/index.php){target='_blank'}. The flexibility of {magick} can be seen in the [vignette](https://cran.r-project.org/web/packages/magick/vignettes/intro.html){target='_blank'}.
+The [{magick}](https://docs.ropensci.org/magick/articles/intro.html) R package is an implementation of [ImageMagick](https://www.imagemagick.org/script/index.php), an open-source software suite whose emphasis is image manipulation from the command line. The flexibility of {magick} can be seen in its [vignette](https://cran.r-project.org/web/packages/magick/vignettes/intro.html).
 
-The package was created and is maintained by [Jeroen Ooms](https://twitter.com/opencpu?lang=en){target='_blank'}, a software engineer and postdoc at [ROpenSci](https://ropensci.org/){target='_blank'}, a collective that seeks [to develop tools for open and reproducible research](https://ropensci.org/packages/){target='_blank'}.
+The package was created and is maintained by [Jeroen Ooms](https://twitter.com/opencpu?lang=en), a software engineer and postdoc at [rOpenSci](https://ropensci.org/), a collective that seeks [to develop tools for open and reproducible research](https://ropensci.org/packages/).
 
-[ROpenSci hosted a workshop](https://ropensci.org/blog/2018/10/24/commcall-nov2018/){target='_blank'} from Ooms about working with images in R and th ([presentation slides](https://jeroen.github.io/munster2018/){target='_blank'}) caught my attention. I've used some of Jeroen's code below.
+[rOpenSci hosted a workshop](https://ropensci.org/blog/2018/10/24/commcall-nov2018/) from Ooms about working with images in R and the [presentation slides](https://jeroen.github.io/munster2018/) caught my attention. I've used some of Jeroen's code below.
 
 # Code
 
-First we need to load our packages.
+First we need to load our packages. {magick} is available from CRAN.
 
 ```{r packages, message=FALSE}
-# Use install.packages("package") if not yet installed
+# All available from CRAN with install.packages()
 library(dplyr)   # tidy data manipulation
 library(tibble)  # tidy tables
 library(magick)  # image manipulation
 ```
 
-## Read the test image
+## Read a test image
 
-I've chosen a colourful image to use for our test case: it's a picture of a bunch of [Lego Duplo bricks](https://www.lego.com/en-gb/themes/duplo){target='_blank'}.[^duplo]
+I've chosen a colourful image to use for our test case: it's a picture of a bunch of [Lego Duplo bricks](https://www.lego.com/en-gb/themes/duplo).[^duplo]
 
 We'll use `image_read()` to read the JPEG as an object of class 'magick' and then `image_scale()` to reduce the image size and save some space.
 
@@ -97,7 +106,7 @@ cols_vec <- setNames(
 )
 ```
 
-Then we can plot squares of these colours, using `image_graph()` to read them as magick-class objects.[^magickclass] My method here is notthe most efficient, but you can see the output is an image that contains our six colours.
+Then we can plot squares of these colours, using `image_graph()` to read them as magick-class objects.[^magickclass] My method here is not the most efficient, but you can see the output is an image that contains our six colours.
 
 <details><summary>Click for code</summary>
 ```{r colour-squares}
@@ -150,7 +159,11 @@ And we can use `image_animate()` to see the difference between the two.
 image_animate(c(duplo, duplo_mapped), fps = 1)
 ```
 
-Great. You can see where the original colours have been replaced by the 'closest' simple colours. Note in particular where the more reflective surfaces are mapped to white than the actual brick colour. This is okay: the brick may be blue, but  we've only defined _one_ shade of blue. If a particular shade is closer to white, then so be it.
+Great. You can see where the original colours have been replaced by the 'closest' simple colours. 
+
+Note in particular where the more reflective surfaces are mapped to white than the actual brick colour. 
+
+This is okay: the brick may be blue, but we've only defined _one_ shade of blue. If a particular shade is closer to white, then so be it.
 
 ## Quantify the colours
 
@@ -185,15 +198,21 @@ duplo_mapped  # see mapped image again
 knitr::kable(duplo_col_freq)  # quantify colour
 ```
 
-So red makes up almost a quarter with white and black just behind. Many of the bricks are red and much of the shadow areas of yellow bricks were rendered as red. Black and white make up much of the shadowed and reflective surfaces elsewhere in the image.
+So red makes up almost a quarter of the image, with white and black just behind. This makes sense: many of the bricks are red and much of the shadow areas of yellow bricks were rendered as red, while black and white make up many of the other shadows and reflective surfaces.
 
-# Gallery: more examples
+# And so we must p-art
+
+So, you can map a simple colour set to an image with {magick} and then quantify how much of the image is covered by that simple set.
+
+Of course, there are many possibilities beyond what's been achieved here. For example, you could create a tool where the user chooses a colour and images are returned in order of dominance for that colour. You could also write this all into a function that takes a folder of images and returns the percentage of each colour in each image.
+
+Below are some additional examples of the approach taken in this post.
 
 ## Reef fish
 
 <details><summary>Click for details</summary>
 
-Image by [Richard L Pyle from Wikimedia Commons, CC0 1.0.](https://commons.wikimedia.org/wiki/File:100%25_reef-fish_Endemism_at_90_m_off_Kure_Atoll.jpg){target='_blank'}
+Image by [Richard L Pyle from Wikimedia Commons, CC0 1.0.](https://commons.wikimedia.org/wiki/File:100%25_reef-fish_Endemism_at_90_m_off_Kure_Atoll.jpg)
 
 ```{r reef}
 reef_path <- "https://upload.wikimedia.org/wikipedia/commons/0/05/100%25_reef-fish_Endemism_at_90_m_off_Kure_Atoll.jpg"
@@ -232,7 +251,7 @@ knitr::kable(reef_col_freq)
 
 <details><summary>Click for details</summary>
 
-Image by [Daniel Case from Wikimedia Commons, CC BY-SA 3.0](https://commons.wikimedia.org/wiki/File:Neon_lights,_Nathan_Road,_Hong_Kong.jpg){target='_blank'}
+Image by [Daniel Case from Wikimedia Commons, CC BY-SA 3.0](https://commons.wikimedia.org/wiki/File:Neon_lights,_Nathan_Road,_Hong_Kong.jpg)
 
 ```{r neon-lights}
 neon_path <- "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Neon_lights%2C_Nathan_Road%2C_Hong_Kong.jpg/900px-Neon_lights%2C_Nathan_Road%2C_Hong_Kong.jpg"
@@ -271,7 +290,7 @@ knitr::kable(neon_col_freq)
 
 <details><summary>Click for details</summary>
 
-Image by [Elena Andreeva from Wikimedia Commons, CC0 1.0.](https://commons.wikimedia.org/wiki/File:Erysimum_Cheiranthoides_(215134987){target='_blank'}.jpeg)
+Image by [Elena Andreeva from Wikimedia Commons, CC0 1.0.](https://commons.wikimedia.org/wiki/File:Erysimum_Cheiranthoides_(215134987).jpeg)
 
 ```{r lbird}
 lbird_path <- "https://upload.wikimedia.org/wikipedia/commons/d/d5/Erysimum_Cheiranthoides_%28215134987%29.jpeg"
@@ -315,6 +334,6 @@ sessioninfo::session_info()
 </details>
 
 [^theory]: Just as well, because I'm colourblind.
-[^drab]: There are [five named versions of olive drab](http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf){target='_blank'} in R.
-[^duplo]: [Photo by Arto Alanenpää](https://commons.wikimedia.org/wiki/Lego#/media/File:Lego_dublo_arto_alanenpaa_2.JPG){target='_blank'}, CC0-BY-4.0 from Wikimedia Creative Commons.
+[^drab]: There are [five named versions of olive drab](http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf) in R's named palette.
+[^duplo]: [Photo by Arto Alanenpää](https://commons.wikimedia.org/wiki/Lego#/media/File:Lego_dublo_arto_alanenpaa_2.JPG), CC0-BY-4.0 from Wikimedia Creative Commons.
 [^magickclass]: Artefacts introduced during compression of PNGs and JPGs might mean that your set of six colours ends up being _more_ than six. It's preferable to generate our colour set within R, inside `image_graph()`, so that we have only our six defined colours.
