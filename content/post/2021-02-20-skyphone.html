@@ -1,0 +1,182 @@
+---
+title: '#GithubSkyline but hear me out'
+author: Matt Dray
+date: '2021-02-20'
+slug: skyphone
+categories:
+  - code
+  - package
+tags:
+  - ggplot2
+  - github
+  - r
+  - skyline
+  - skyphone
+  - sonify
+draft: yes
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div class="figure">
+<img src="/post/2021-02-20-skyphone_files/skyline.png" alt="A screenshot of the GitHub Skyline website showing a blocky 3D rendering of a user's contribution count over time." width="100%"/>
+<p class="caption">
+My city clearly has a Central Business District with development in the suburbs.
+</p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I made <a href="https://github.com/matt-dray/skyphone">the R package {skyphone}</a> to download your GitHub contributions data from <a href="https://skyline.github.com/">GitHub Skyline</a>. It generates a tidy tibble and has functions for sonifying and plotting the data.</p>
+</div>
+<div id="skyline" class="section level1">
+<h1>Skyline</h1>
+<p><a href="https://skyline.github.com/">Skyline</a> is a web-based ‘service’ (read ‘toy’) where you input a GitHub username and it creates a 3D rendering of that user’s contributions on the platform. ‘Skyline’ because the output looks like a city skyline, maybe.</p>
+<p>Think Spotify Wrapped, which summarises users’ listening habits at the end of the year. It’s a low-investment—but highly-successful—marketing ploy that gets the company a lot of free exposure on social media.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+</div>
+<div id="hear-the-skyline" class="section level1">
+<h1>Hear the skyline</h1>
+<p><a href="https://www.rostrum.blog/2021/02/02/sonify-covid/">I wrote recently</a> about expressing a year’s worth of COVID-19 data in audio form. This process, called sonification, is made simple in R thanks to <a href="https://cran.r-project.org/web/packages/sonify/index.html">the {sonify} package</a>.</p>
+<p>Obviously it’s far lower stakes, but there’s no reason we can’t take a user’s GitHub contributions data and sonify that too.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>It <a href="https://den.dev/blog/get-github-contributions-api/">turns out</a> that Skyline has a simple API. Requests are just in the form:</p>
+<pre><code>https://skyline.github.com/api/contributions?username=username&amp;year=2020</code></pre>
+<p>This lends itself nicely to a simple function to grab the data for a given user in a given year. The counts over time can then be passed to sonification and plotting functions.</p>
+<p>So… <a href="https://github.com/matt-dray/skyphone">{skyphone}</a>.</p>
+</div>
+<div id="introducing-skyphone" class="section level1">
+<h1>Introducing {skyphone}</h1>
+<p>You can install the package from GitHub. It’s probably never going to CRAN.</p>
+<pre class="r"><code># install.packages(&quot;remotes&quot;)
+remotes::install_github(&quot;matt-dray/skyphone&quot;)</code></pre>
+<p>There’s three functions in the package at time of writing: one to get the data, one to sonify it and one to plot it. All functions are prefaced by <code>sky_</code> for easy tab completion.</p>
+<p>The <code>sky_get()</code> function takes a username and a year, which are used to generate an API string. The function fetches and tidies the resulting JSON from the call, generating a tidy tibble with a row of contributions per day.</p>
+<pre class="r"><code>library(skyphone)
+md &lt;- sky_get(user = &quot;matt-dray&quot;, year = 2020)
+md</code></pre>
+<pre><code>## # A tibble: 366 x 6
+##    user       year  week   day date       count
+##    &lt;chr&gt;     &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;date&gt;     &lt;int&gt;
+##  1 matt-dray  2020     1     1 2020-01-01     5
+##  2 matt-dray  2020     1     2 2020-01-02     5
+##  3 matt-dray  2020     1     3 2020-01-03     8
+##  4 matt-dray  2020     1     4 2020-01-04     3
+##  5 matt-dray  2020     2     5 2020-01-05     0
+##  6 matt-dray  2020     2     6 2020-01-06     7
+##  7 matt-dray  2020     2     7 2020-01-07    10
+##  8 matt-dray  2020     2     8 2020-01-08     2
+##  9 matt-dray  2020     2     9 2020-01-09     6
+## 10 matt-dray  2020     2    10 2020-01-10     0
+## # … with 356 more rows</code></pre>
+<p>This is useful enough in itself for the casual R user who doesn’t want to handle the JSON themselves.</p>
+<p>The output can be passed to <code>sky_sonify()</code>, which converts into audio the count of contributions for each day of the year.</p>
+<pre class="r"><code>sky_sonify(md, play = FALSE)</code></pre>
+<pre><code>## 
+## WaveMC Object
+##  Number of Samples:      220500
+##  Duration (seconds):     5
+##  Samplingrate (Hertz):   44100
+##  Number of channels:     2
+##  PCM (integer format):   TRUE
+##  Bit (8/16/24/32/64):    16</code></pre>
+<p>If you set the <code>play</code> argument to <code>TRUE</code> then you will hear the sonified result over your speakers. You can also provide a directory path to the <code>out_dir</code> argument to save the audio file as a .wav to a specified location.</p>
+<p>In this example, the output sounds like the following:</p>
+<html>
+<audio controls>
+<source src="/output/skyphone/skyphone_matt-dray_2020.wav" type="audio/wav">
+</audio>
+</html>
+<p>And what does it look like? There’s a simple, opinionated plotting function in the package that you are welcome to use, called <code>sky_plot()</code>. Again, you can pass the earlier object from <code>sky_get()</code>.</p>
+<pre class="r"><code>p &lt;- sky_plot(md)
+p</code></pre>
+<p><img src="/post/2021-02-20-skyphone_files/figure-html/plot-1.png" title="A bar chart of contributions to GitHub in 2020 by user matt-dray, which peaks in the summer months." alt="A bar chart of contributions to GitHub in 2020 by user matt-dray, which peaks in the summer months." width="672" /></p>
+<p>See how this looks like a skyline, but in 2D this time? Admittedly the ‘buildings’ are a little weird. Use your imagination!</p>
+<p>For a final flourish, we can apply a ridiculous <a href="https://en.wikipedia.org/wiki/Vaporwave">vaporwave</a>-inspired theme to the plot. This retro aesthetic has been rinsed to death of late, so no wonder it was used in the Skyline interface.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<p><a href="https://github.com/moldach/vapoRwave">The {vapoRwave} package</a> has a number of themes we can choose.</p>
+<pre class="r"><code># remotes::install_github(&quot;moldach/vapoRwave&quot;)
+library(vapoRwave)
+p + new_retro()</code></pre>
+<p><img src="/post/2021-02-20-skyphone_files/figure-html/plot-vaporwave-1.png" title="A bar chart of contributions to GitHub in 2020 by user matt-dray, using a 'vaporwave' aesthetic for its colours and fonts." alt="A bar chart of contributions to GitHub in 2020 by user matt-dray, using a 'vaporwave' aesthetic for its colours and fonts." width="672" /></p>
+<p>Now, quickly, share all this output on social media! Although I’m not sure how you share audio on any of the platforms.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.0.2 (2020-06-22)
+##  os       macOS  10.16                
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2021-02-20                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version    date       lib source                             
+##  assertthat    0.2.1      2019-03-21 [1] CRAN (R 4.0.0)                     
+##  blob          1.2.1      2020-01-20 [1] CRAN (R 4.0.2)                     
+##  blogdown      0.21       2020-10-11 [1] CRAN (R 4.0.2)                     
+##  bookdown      0.21       2020-10-13 [1] CRAN (R 4.0.2)                     
+##  cli           2.3.0      2021-01-31 [1] CRAN (R 4.0.2)                     
+##  colorspace    2.0-0      2020-11-11 [1] CRAN (R 4.0.2)                     
+##  crayon        1.4.1      2021-02-08 [1] CRAN (R 4.0.2)                     
+##  curl          4.3        2019-12-02 [1] CRAN (R 4.0.0)                     
+##  DBI           1.1.1      2021-01-15 [1] CRAN (R 4.0.2)                     
+##  digest        0.6.27     2020-10-24 [1] CRAN (R 4.0.2)                     
+##  dplyr         1.0.4      2021-02-02 [1] CRAN (R 4.0.2)                     
+##  ellipsis      0.3.1      2020-05-15 [1] CRAN (R 4.0.0)                     
+##  evaluate      0.14       2019-05-28 [1] CRAN (R 4.0.0)                     
+##  fansi         0.4.2      2021-01-15 [1] CRAN (R 4.0.2)                     
+##  farver        2.0.3      2020-01-16 [1] CRAN (R 4.0.0)                     
+##  generics      0.1.0      2020-10-31 [1] CRAN (R 4.0.2)                     
+##  ggplot2       3.3.3      2020-12-30 [1] CRAN (R 4.0.2)                     
+##  glue          1.4.2      2020-08-27 [1] CRAN (R 4.0.2)                     
+##  gtable        0.3.0      2019-03-25 [1] CRAN (R 4.0.0)                     
+##  highr         0.8        2019-03-20 [1] CRAN (R 4.0.0)                     
+##  htmltools     0.5.1.9000 2021-01-17 [1] Github (rstudio/htmltools@11cfbf3) 
+##  jsonlite      1.7.2      2020-12-09 [1] CRAN (R 4.0.2)                     
+##  knitr         1.31       2021-01-27 [1] CRAN (R 4.0.2)                     
+##  labeling      0.4.2      2020-10-20 [1] CRAN (R 4.0.2)                     
+##  lifecycle     1.0.0      2021-02-15 [1] CRAN (R 4.0.2)                     
+##  magrittr      2.0.1      2020-11-17 [1] CRAN (R 4.0.2)                     
+##  MASS          7.3-51.6   2020-04-26 [1] CRAN (R 4.0.2)                     
+##  munsell       0.5.0      2018-06-12 [1] CRAN (R 4.0.0)                     
+##  pillar        1.4.7      2020-11-20 [1] CRAN (R 4.0.2)                     
+##  pkgconfig     2.0.3      2019-09-22 [1] CRAN (R 4.0.0)                     
+##  purrr         0.3.4      2020-04-17 [1] CRAN (R 4.0.0)                     
+##  R6            2.5.0      2020-10-28 [1] CRAN (R 4.0.2)                     
+##  rlang         0.4.10     2020-12-30 [1] CRAN (R 4.0.2)                     
+##  rmarkdown     2.6        2020-12-14 [1] CRAN (R 4.0.2)                     
+##  scales        1.1.1      2020-05-11 [1] CRAN (R 4.0.0)                     
+##  sessioninfo   1.1.1      2018-11-05 [1] CRAN (R 4.0.0)                     
+##  signal        0.7-6      2015-07-30 [1] CRAN (R 4.0.2)                     
+##  skyphone    * 0.0.0.9000 2021-02-20 [1] Github (matt-dray/skyphone@e8e2644)
+##  sonify        0.0-1      2017-02-01 [1] CRAN (R 4.0.2)                     
+##  stringi       1.5.3      2020-09-09 [1] CRAN (R 4.0.2)                     
+##  stringr       1.4.0      2019-02-10 [1] CRAN (R 4.0.0)                     
+##  tibble        3.0.6      2021-01-29 [1] CRAN (R 4.0.2)                     
+##  tidyr         1.1.2      2020-08-27 [1] CRAN (R 4.0.2)                     
+##  tidyselect    1.1.0      2020-05-11 [1] CRAN (R 4.0.0)                     
+##  tuneR         1.3.3      2018-07-08 [1] CRAN (R 4.0.2)                     
+##  utf8          1.1.4      2018-05-24 [1] CRAN (R 4.0.0)                     
+##  vapoRwave   * 0.0.0.9000 2021-02-20 [1] Github (moldach/vapoRwave@a1d336e) 
+##  vctrs         0.3.6      2020-12-17 [1] CRAN (R 4.0.2)                     
+##  withr         2.4.1      2021-01-26 [1] CRAN (R 4.0.2)                     
+##  xfun          0.21       2021-02-10 [1] CRAN (R 4.0.2)                     
+##  yaml          2.2.1      2020-02-01 [1] CRAN (R 4.0.0)                     
+## 
+## [1] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
+</details>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>I prefer <a href="https://pudding.cool/2020/12/judge-my-spotify/">The Pudding</a>’s highly judgmental bot.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>I promise I have other ideas, too!<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>How do you do, fellow kids?<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>How do you do, fellow kids?<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
