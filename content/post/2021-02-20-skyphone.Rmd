@@ -1,10 +1,11 @@
 ---
 title: '#GithubSkyline but hear me out'
 author: Matt Dray
-date: '2021-02-20'
+date: '2021-02-21'
 slug: skyphone
 categories:
   - code
+  - data-viz
   - package
 tags:
   - ggplot2
@@ -13,50 +14,59 @@ tags:
   - skyline
   - skyphone
   - sonify
-draft: yes
+draft: no
 ---
 
 <div class="figure">
-<img src="/post/2021-02-20-skyphone_files/skyline.png" alt="A screenshot of the GitHub Skyline website showing a blocky 3D rendering of a user's contribution count over time." width="100%"/>
-<p class="caption">My city clearly has a Central Business District with development in the suburbs.</p>
+<img src="/post/2021-02-20-skyphone_files/matt-dray_skyline.png" alt="A screenshot of the GitHub Skyline website showing a blocky 3D rendering of a user's contribution count over time." width="100%"/>
+<p class="caption">[My city skyline](https://skyline.github.com/matt-dray/2020) clearly has a Central Business District with development in the suburbs.</p>
 </div>
 
 # tl;dr
 
-I made [the R package {skyphone}](https://github.com/matt-dray/skyphone) to download your GitHub contributions data from [GitHub Skyline](https://skyline.github.com/). It generates a tidy tibble and has functions for sonifying and plotting the data.
+I made [the R package {skyphone}](https://github.com/matt-dray/skyphone) to get GitHub contributions data from [GitHub Skyline](https://skyline.github.com/) and sonify it.
 
-# Skyline
+# Reach for the skyline
 
-[Skyline](https://skyline.github.com/) is a web-based 'service' (read 'toy') where you input a GitHub username and it creates a 3D rendering of that user's contributions on the platform. 'Skyline' because the output looks like a city skyline, maybe.
+[Skyline](https://skyline.github.com/) is an online curio from GitHub that lets you input a user's name and get a 3D rendering of that user's contributions to the platform. You can even download the object to 3D print it, I guess?
 
-Think Spotify Wrapped, which summarises users' listening habits at the end of the year. It's a low-investment---but highly-successful---marketing ploy that gets the company a lot of free exposure on social media.[^bot]
+It's basically the contributions heatmap from your profile, but with a bonus third dimension. And it's on a plinth! That spins! And it's happening inside Tron!
 
-# Hear the skyline
+<div class="figure">
+<img src="/post/2021-02-20-skyphone_files/contributions.png" alt="A heatmap of contributions to GitHub from a user's profile, where brighter colours indicate more contributions." width="100%"/>
+<p class="caption">Delicious green waffle.</p>
+</div>
+
+Why does it exist? Think Spotify Wrapped---a summary of users' listening habits at the end of each year[^bot]---which results in lots of social-media shares and free marketing.[^irony] _Or maybe 'Big 3D Printer' are behind all this?_
+
+# Sounds of the city
 
 [I wrote recently](https://www.rostrum.blog/2021/02/02/sonify-covid/) about expressing a year's worth of COVID-19 data in audio form. This process, called sonification, is made simple in R thanks to [the {sonify} package](https://cran.r-project.org/web/packages/sonify/index.html).
 
-Obviously it's far lower stakes, but there's no reason we can't take a user's GitHub contributions data and sonify that too.[^stahp]
+Obviously it's far lower stakes, but there's no reason we can't take a user's GitHub contributions data and sonify that too.[^why] Is that useful? Maybe. Is it it much effort? Not really. 
 
-It [turns out](https://den.dev/blog/get-github-contributions-api/) that Skyline has a simple API. Requests are just in the form:
+It [turns out](https://den.dev/blog/get-github-contributions-api/) that Skyline has a simple API. Provide a URL in this form to get a JSON back:
 
 ```
 https://skyline.github.com/api/contributions?username=username&year=2020
 ```
 
-This lends itself nicely to a simple function to grab the data for a given user in a given year. The counts over time can then be passed to sonification and plotting functions.
+This lends itself nicely to a simple R function that grabs the data for a given user in a given year. The counts over time can then be passed to sonification and plotting functions.
 
 So... [{skyphone}](https://github.com/matt-dray/skyphone).
 
-# Introducing {skyphone}
+# Pick up the {skyphone}
 
-You can install the package from GitHub. It's probably never going to CRAN.
+You can install the package from GitHub. It's never going on CRAN.
 
 ```{r, eval=FALSE}
 # install.packages("remotes")
 remotes::install_github("matt-dray/skyphone")
 ```
 
-There's three functions in the package at time of writing: one to get  the data, one to sonify it and one to plot it. All functions are prefaced by `sky_` for easy tab completion.
+There's three functions: one to get the data, one to sonify it, and one to plot it. All functions are prefaced by `sky_` for easy tab completion.
+
+## Get a dial tone
 
 The `sky_get()` function takes a username and a year, which are used to generate an API string. The function fetches and tidies the resulting JSON from the call, generating a tidy tibble with a row of contributions per day.
 
@@ -66,9 +76,11 @@ md <- sky_get(user = "matt-dray", year = 2020)
 md
 ```
 
-This is useful enough in itself for the casual R user who doesn't want to handle the JSON themselves.
+By itself this is useful enough little function the casual R user who doesn't want to handle the JSON themselves.
 
-The output can be passed to `sky_sonify()`, which converts into audio the count of contributions for each day of the year.
+## Hello?
+
+The output from `sky_get()` can be passed to `sky_sonify()`, which converts the count of contributions over time to audio form: a WaveMC object.
 
 ```{r}
 sky_sonify(md, play = FALSE)
@@ -76,20 +88,35 @@ sky_sonify(md, play = FALSE)
 
 If you set the `play` argument to `TRUE` then you will hear the sonified result over your speakers. You can also provide a directory path to the `out_dir` argument to save the audio file as a .wav to a specified location.
 
-In this example, the output sounds like the following:
+The data I collected sound like this:
 
 <html><audio controls><source src="/output/skyphone/skyphone_matt-dray_2020.wav" type="audio/wav"></audio></html>
 
-And what does it look like? There's a simple, opinionated plotting function in the package that you are welcome to use, called `sky_plot()`. Again, you can pass the earlier object from `sky_get()`.
+For amusement's sake, 2016 is the year I joined GitHub and, well, that's all that happened. 
+
+```{r eval=FALSE}
+sky_get("matt-dray", 2016) %>% 
+  sky_sonify(play = FALSE, out_dir = "~/Desktop")
+```
+
+<html><audio controls><source src="/output/skyphone/skyphone_matt-dray_2016.wav" type="audio/wav"></audio></html>
+
+Did you hear the momentous day on April 2?
+
+## Videophone
+
+We've seen what a 3D skyline plot looks like; what about a good old fashioned 2D chart?
+
+There's a simple, opinionated plotting function in the package that you are welcome to use, called `sky_plot()`. Again, you can pass the earlier object from `sky_get()`.
 
 ```{r plot, fig.alt="A bar chart of contributions to GitHub in 2020 by user matt-dray, which peaks in the summer months."}
 p <- sky_plot(md)
 p
 ```
 
-See how this looks like a skyline, but in 2D this time? Admittedly the 'buildings' are a little weird. Use your imagination!
+See how this looks like a skyline, but in 2D this time? Admittedly the 'buildings' are a little weird. [Radio towers](https://en.wikipedia.org/wiki/List_of_tallest_structures)? Use your imagination, buddy.
 
-For a final flourish, we can apply a ridiculous [vaporwave](https://en.wikipedia.org/wiki/Vaporwave)-inspired theme to the plot. This retro aesthetic has been rinsed to death of late, so no wonder it was used in the Skyline interface.[^fellow]
+For a final flourish, we can apply a ridiculous [vaporwave](https://en.wikipedia.org/wiki/Vaporwave)-inspired theme to the plot. This retro aesthetic has been rinsed to death of late, so naturally it was used in the Skyline interface.[^fellow]
 
 [The {vapoRwave} package](https://github.com/moldach/vapoRwave) has a number of themes we can choose. 
 
@@ -99,7 +126,7 @@ library(vapoRwave)
 p + new_retro()
 ```
 
-Now, quickly, share all this output on social media! Although I'm not sure how you share audio on any of the platforms.[^fellow]
+So... that's it. But do join me in waiting for the first hospital admission of someone who trod on their 3D-printed skyline. It's the risk you take.
 
 ---
 <details><summary>Session info</summary>
@@ -109,5 +136,6 @@ sessioninfo::session_info()
 </details>
 
 [^bot]: I prefer [The Pudding](https://pudding.cool/2020/12/judge-my-spotify/)'s highly judgmental bot.
-[^stahp]: I promise I have other ideas, too!
+[^irony]: And here I am, blogging about it.
+[^why]: I promise I have other ideas.
 [^fellow]: How do you do, fellow kids?
