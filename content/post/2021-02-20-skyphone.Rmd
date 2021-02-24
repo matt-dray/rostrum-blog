@@ -17,9 +17,19 @@ tags:
 draft: no
 ---
 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval=FALSE)
+```
+
 <div class="figure">
 <img src="/post/2021-02-20-skyphone_files/matt-dray_skyline.png" alt="A screenshot of the GitHub Skyline website showing a blocky 3D rendering of a user's contribution count over time." width="100%"/>
-<p class="caption">[My city skyline](https://skyline.github.com/matt-dray/2020) clearly has a Central Business District with development in the suburbs.</p>
+<p class="caption">[My skyline](https://skyline.github.com/matt-dray/2020) clearly has a Central Business District with development in the suburbs.</p>
+</div>
+
+<div class="tip"> `r icon::fa("exclamation-circle")` <b>Note</b>
+
+The [GitHub Skyline](https://skyline.github.com/) API--on which [the {skyphone} package](https://github.com/matt-dray/skyphone) depends--stopped responding (i.e. it 404s) soon after this post was published. I may fix {skyphone} in future [to work via {gh} instead](https://gh.r-lib.org/); feel free to contribute.
 </div>
 
 # tl;dr
@@ -37,7 +47,7 @@ It's basically the contributions heatmap from your profile, but with a bonus thi
 <p class="caption">Delicious green waffle.</p>
 </div>
 
-Why does it exist? Think Spotify Wrapped---a summary of users' listening habits at the end of each year[^bot]---which results in lots of social-media shares and free marketing.[^irony] _Or maybe 'Big 3D Printer' are behind all this?_
+Why does it exist? Think Spotify Wrapped---a summary of users' listening habits at the end of each year[^bot]---which results in lots of social-media shares and free marketing.[^irony] 
 
 # Sounds of the city
 
@@ -75,8 +85,24 @@ library(skyphone)
 md <- sky_get(user = "matt-dray", year = 2020)
 md
 ```
+```
+## # A tibble: 366 x 6
+##    user       year  week   day date       count
+##    <chr>     <int> <int> <int> <date>     <int>
+##  1 matt-dray  2020     1     1 2020-01-01     5
+##  2 matt-dray  2020     1     2 2020-01-02     5
+##  3 matt-dray  2020     1     3 2020-01-03     8
+##  4 matt-dray  2020     1     4 2020-01-04     3
+##  5 matt-dray  2020     2     5 2020-01-05     0
+##  6 matt-dray  2020     2     6 2020-01-06     7
+##  7 matt-dray  2020     2     7 2020-01-07    10
+##  8 matt-dray  2020     2     8 2020-01-08     2
+##  9 matt-dray  2020     2     9 2020-01-09     6
+## 10 matt-dray  2020     2    10 2020-01-10     0
+## # … with 356 more rows
+```
 
-By itself this is useful enough little function the casual R user who doesn't want to handle the JSON themselves.
+By itself, this is a useful little function for the casual R user who doesn't want to handle the JSON.
 
 ## Hello?
 
@@ -85,6 +111,16 @@ The output from `sky_get()` can be passed to `sky_sonify()`, which converts the 
 ```{r}
 sky_sonify(md, play = FALSE)
 ```
+```
+## 
+## WaveMC Object
+##  Number of Samples:      220500
+##  Duration (seconds):     5
+##  Samplingrate (Hertz):   44100
+##  Number of channels:     2
+##  PCM (integer format):   TRUE
+##  Bit (8/16/24/32/64):    16
+```
 
 If you set the `play` argument to `TRUE` then you will hear the sonified result over your speakers. You can also provide a directory path to the `out_dir` argument to save the audio file as a .wav to a specified location.
 
@@ -92,9 +128,11 @@ The data I collected sound like this:
 
 <html><audio controls><source src="/output/skyphone/skyphone_matt-dray_2020.wav" type="audio/wav"></audio></html>
 
-For amusement's sake, 2016 is the year I joined GitHub and, well, that's all that happened. 
+For amusement's sake, 2016 is the year I joined GitHub and, well, that's all that happened. We can fetch that year with `sky_get()` and then pipe that into `sky_sonify()`. I've saved the output file to my dekstop in this example.
 
 ```{r eval=FALSE}
+library(magrittr)  # to demo pipes in {skyphone}
+
 sky_get("matt-dray", 2016) %>% 
   sky_sonify(play = FALSE, out_dir = "~/Desktop")
 ```
@@ -114,6 +152,10 @@ p <- sky_plot(md)
 p
 ```
 
+<div class="figure">
+<img src="/post/2021-02-20-skyphone_files/figure-html/plot-1.png" alt="A bar chart of contributions to GitHub in 2020 by user matt-dray, which peaks in the summer months." width="100%"/>
+</div>
+
 See how this looks like a skyline, but in 2D this time? Admittedly the 'buildings' are a little weird. [Radio towers](https://en.wikipedia.org/wiki/List_of_tallest_structures)? Use your imagination, buddy.
 
 For a final flourish, we can apply a ridiculous [vaporwave](https://en.wikipedia.org/wiki/Vaporwave)-inspired theme to the plot. This retro aesthetic has been rinsed to death of late, so naturally it was used in the Skyline interface.[^fellow]
@@ -125,6 +167,10 @@ For a final flourish, we can apply a ridiculous [vaporwave](https://en.wikipedia
 library(vapoRwave)
 p + new_retro()
 ```
+
+<div class="figure">
+<img src="/post/2021-02-20-skyphone_files/figure-html/plot-vaporwave-1.png" alt="A bar chart of contributions to GitHub in 2020 by user matt-dray, using a 'vaporwave' aesthetic for its colours and fonts." width="100%"/>
+</div>
 
 So... that's it. But do join me in waiting for the first hospital admission of someone who trod on their 3D-printed skyline. It's the risk you take.
 
