@@ -17,7 +17,7 @@ Check out [R Weekly](https://rweekly.org/) for more R blog content.
 
 [Personal site](https://www.matt-dray.com) | [Twitter](https://twitter.com/mattdray) | [Github](https://github.com/matt-dray)
 
-I like using R to learn and teach, particularly if it involves important pop-culture references like Pokémon and Dawson's Creek. I'm a datapoint influencer in the UK Civil Service and have a PhD in watching leaves rot (Cardiff) and an Entomology MSc (Imperial). I'm not [the rapper](https://en.wikipedia.org/wiki/Dr._Dre). <img src="https://raw.githubusercontent.com/matt-dray/postcard/master/favicon.ico" alt="A 16-by-16 pixel favicon gif of the author, whose eyebrows are bobbing up and down."/>
+I like using R to learn and teach, particularly if it involves important pop-culture references like Pokémon and Dawson's Creek. I'm a datapoint influencer in the UK's public sector and have a PhD in watching leaves rot (Cardiff) and an Entomology MSc (Imperial). I'm not [the rapper](https://en.wikipedia.org/wiki/Dr._Dre). <img src="https://raw.githubusercontent.com/matt-dray/postcard/master/favicon.ico" alt="A 16-by-16 pixel favicon gif of the author, whose eyebrows are bobbing up and down."/>
 
 ### Adriana De Palma
 
