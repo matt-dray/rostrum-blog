@@ -1,0 +1,152 @@
+---
+title: 'Typo-shaming my Git commits'
+author: Matt Dray
+date: '2021-02-27'
+slug: typos
+categories:
+  - code
+tags:
+  - gh
+  - git
+  - purrr
+  - r
+draft: no
+---
+
+<div class="figure">
+<img src="/post/2021-02-27-typos_files/Typing_monkey_768px.png" alt="A line-drawn monkey poking a typewriter." width="75%"/>
+<p class="caption">The author at work ([CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/deed.en) [KaterBegemot](https://commons.wikimedia.org/wiki/File:Typing_monkey_768px.png))</p>
+</div>
+
+# tl;dr
+
+Eight per cent (!) of the commits to [this blog's source](https://github.com/matt-dray/rostrum-blog) involve typo fixes, according to a function I wrote to search commit messages via [the {gh} package](https://github.com/r-lib/gh). 
+
+# Not my typo
+
+I'm sure you've seen consecutive Git commits from jaded developers like 'fix problem', 'actually fix problem?', 'the fix broke something else', 'burn it all down'. Sometimes a few swear words will be thrown in for good measure (look no further than ['Developers Swearing'](https://twitter.com/gitlost?lang=en) on Twitter).
+
+The more obvious problem from reading the commits for this blog is my incessant keyboard mashing; I think a lot of my commits are there to fix typos.[^check]
+
+So I've prepared a little R function to grab the commit messages for a specified repo and find the ones that contain a given search term, like 'typo'.[^typi]
+
+# Search commits
+
+[{gh}](https://github.com/r-lib/gh) is a handy R package from Gábor Csárdi, Jenny Bryan and Hadley Wickham that we can use to interact with [GitHub's REST API](https://docs.github.com/en/rest).[^dump]  We can also use [{purrr}](https://purrr.tidyverse.org/) for iterating over the returned API object.
+
+```{r pkgs}
+library(gh)    # CRAN v1.2.0
+library(purrr) # CRAN v0.3.4
+```
+
+So, here's one way of forming a function to search commit messages:
+
+```{r fn}
+search_commits <- function(owner, repo, string = "typo") {
+  
+  commits <- gh::gh(
+    "GET /repos/{owner}/{repo}/commits",
+    owner = owner, repo = repo,
+    .limit = Inf
+  )
+
+  messages <- purrr::map_chr(
+    commits, ~purrr::pluck(.x, "commit", "message")
+  )
+  
+  matches <- messages[grepl(string, messages, ignore.case = TRUE)]
+  
+  out <- list(
+    meta = list(owner, repo),
+    counts = list(
+      match_count = length(matches),
+      commit_count = length(messages),
+      match_ratio = length(matches) / length(messages)
+    ),
+    matches = matches,
+    messages = messages
+  )
+  
+  return(out)
+  
+}
+```
+
+First we pass a `GET` request to the GitHub API via `gh::gh()`. The [API documentation](https://docs.github.com/en/rest) tells us the form needed to [get commits for a given `owner`'s `repo`](https://docs.github.com/en/rest/reference/repos#list-commits).
+
+Beware: the API returns results in batches of some maximum size, but the `.limit = Inf` argument automatically creates additional requests until everything is returned. That might mean a lot of API calls.
+
+Next we can use {purrr} to iteratively `pluck()` out the commit messages from the list returned by `gh::gh()`. It's then a case of finding which ones contain a search string of interest (defaulting to the word 'typo').
+
+The object returned `search_commits()` is a list with four elements: `meta` repeats the user and repo names; `counts` is a list with the commit count, the count of messages containing the search term, and their ratio; and the `messages` and `matches` elements contain all messages and the ones containing the search term, respectively.
+
+# Fniding my typoes
+
+Here's an example where I look for commit messages to this blog that contain the word 'typo'. Since the function contains the `.limit = Inf` argument in `gh::gh()`, we'll get an output message for each separate request that's been made to the API.
+
+```{r ex_blog}
+blog_typos <- search_commits("matt-dray", "rostrum-blog")
+```
+
+Here's a preview of the structure of the returned object. You can see how it's a list that contains the values and other list elements that we expected.
+
+```{r str}
+str(blog_typos)
+```
+
+You can see there were `r blog_typos$counts$commit_count` commit messages returned, of which `r blog_typos$counts$match_count` contained the string 'typo'. That's `r 100 * round(blog_typos$counts$match_ratio, 2)` per cent.
+
+Here's a sample of those commit messages that contained the word 'typo': 
+
+```{r ex_blog_msg}
+set.seed(1066)
+sample(blog_typos$matches, 5)
+```
+
+It seems the typos are often corrected with general improvements to a post's copy. This usually happens when I read the post the next day with fresh eyes and groan at my ineptitude.[^inept]
+
+# Exposing others
+
+I think typos are probably most often referenced in repos that involve a lot of documentation, or a book or something. 
+
+To make myself feel better, I had a quick look at the repo for the {bookdown} project [_R for Data Science_](http://r4ds.had.co.nz/) by Hadley Wickham and Garrett Grolemund.
+
+```{r ex_other, include=FALSE}
+typos_r4ds <- search_commits("hadley", "r4ds")
+```
+```{r ex_other_fake, eval=FALSE}
+typos_r4ds <- search_commits("hadley", "r4ds")
+```
+
+The result:
+
+```{r ex_other_out}
+str(typos_r4ds)
+```
+
+Surprise: typos happen to all of us. I'm guessing the percentage is quite high because the book has a lot of readers scouring it, finding small issues and providing quick fixes.
+
+# In other words
+
+Of course, you can change the `string` argument of `search_commits()` to find terms other than the default 'typo'. Use your imagination. 
+
+Here's a meta example: messages containing emoji (expressed as `:thing:`) in the commits to [the {emo} package](https://github.com/hadley/emo) by Hadley Wickham, Romain François and Lucy D'Agostino McGowan.
+
+```{r ex_emo}
+emo_emoji <- search_commits("hadley", "emo", ":.*:")
+str(emo_emoji)
+```
+
+Only `r 100 * round(emo_emoji$counts$match_ratio, 2)`? Son, I am disappoint. `r emo::ji("face_with_raised_eyebrow")`
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^dump]: I used it most recently in [my little {ghdump} package](https://www.rostrum.blog/2020/06/14/ghdump/) for downloading or cloning a user's repos en masse.
+[^check]: Yes, I'm aware of Git hooks and various GitHub Actions that could prevent this.
+[^typi]: Though obviously you'll miss messages containing the word 'typo' if you have a typo in the word 'typo' in one of your commits...
+[^inept]: I wonder how many typos I'll need to correct in _this_ post after publishing.
