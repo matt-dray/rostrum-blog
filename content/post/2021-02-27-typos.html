@@ -69,7 +69,7 @@ library(purrr) # CRAN v0.3.4</code></pre>
 <p>First we pass a <code>GET</code> request to the GitHub API via <code>gh::gh()</code>. The <a href="https://docs.github.com/en/rest">API documentation</a> tells us the form needed to <a href="https://docs.github.com/en/rest/reference/repos#list-commits">get commits for a given <code>owner</code>’s <code>repo</code></a>.</p>
 <p>Beware: the API returns results in batches of some maximum size, but the <code>.limit = Inf</code> argument automatically creates additional requests until everything is returned. That might mean a lot of API calls.</p>
 <p>Next we can use {purrr} to iteratively <code>pluck()</code> out the commit messages from the list returned by <code>gh::gh()</code>. It’s then a case of finding which ones contain a search string of interest (defaulting to the word ‘typo’).</p>
-<p>The object returned <code>search_commits()</code> is a list with four elements: <code>meta</code> repeats the user and repo names; <code>counts</code> is a list with the commit count, the count of messages containing the search term, and their ratio; and the <code>messages</code> and <code>matches</code> elements contain all messages and the ones containing the search term, respectively.</p>
+<p>The object returned by <code>search_commits()</code> is a list with four elements: <code>meta</code> repeats the user and repo names; <code>counts</code> is a list with the commit count, the count of messages containing the search term, and their ratio; and the <code>messages</code> and <code>matches</code> elements contain all messages and the ones containing the search term, respectively.</p>
 </div>
 <div id="fniding-my-typoes" class="section level1">
 <h1>Fniding my typoes</h1>
@@ -89,20 +89,18 @@ library(purrr) # CRAN v0.3.4</code></pre>
 ##   ..$ : chr &quot;matt-dray&quot;
 ##   ..$ : chr &quot;rostrum-blog&quot;
 ##  $ counts  :List of 3
-##   ..$ match_count : int 56
-##   ..$ commit_count: int 680
-##   ..$ match_ratio : num 0.0824
-##  $ matches : chr [1:56] &quot;Correct typos in sonify post&quot; &quot;Add colorfindr to magick post, fix typos, better flow&quot; &quot;Further typo cleaning, clarification in safar6 post&quot; &quot;Correct typos, add info to safar6 post&quot; ...
-##  $ messages: chr [1:680] &quot;Adjust About wording&quot; &quot;Add note about Skyline API, hardcode chunk outputs&quot; &quot;Undraft skyphone post&quot; &quot;Add skyphone draft&quot; ...</code></pre>
-<p>You can see there were 680 commit messages returned, of which 56 contained the string ‘typo’. That’s 8 per cent.</p>
+##   ..$ match_count : int 57
+##   ..$ commit_count: int 682
+##   ..$ match_ratio : num 0.0836
+##  $ matches : chr [1:57] &quot;Publish typo post&quot; &quot;Correct typos in sonify post&quot; &quot;Add colorfindr to magick post, fix typos, better flow&quot; &quot;Further typo cleaning, clarification in safar6 post&quot; ...
+##  $ messages: chr [1:682] &quot;Merge branch &#39;master&#39; of github.com:matt-dray/rostrum-blog&quot; &quot;Publish typo post&quot; &quot;Adjust About wording&quot; &quot;Add note about Skyline API, hardcode chunk outputs&quot; ...</code></pre>
+<p>You can see there were 682 commit messages returned, of which 57 contained the string ‘typo’. That’s 8 per cent.</p>
 <p>Here’s a sample of those commit messages that contained the word ‘typo’:</p>
 <pre class="r"><code>set.seed(1066)
 sample(blog_typos$matches, 5)</code></pre>
-<pre><code>## [1] &quot;fix typos in rmarkdown post&quot;                          
-## [2] &quot;Add gifs, tweets, fix typos&quot;                          
-## [3] &quot;Add colorfindr to magick post, fix typos, better flow&quot;
-## [4] &quot;tidied wording in sections and changed typos&quot;         
-## [5] &quot;Complete text, add gif and image, fix typos&quot;</code></pre>
+<pre><code>## [1] &quot;fix typos, expand descriptions&quot; &quot;Correct spelling and typos&quot;    
+## [3] &quot;edit: typos, grammar&quot;           &quot;Correct typos in sonify post&quot;  
+## [5] &quot;fix typos&quot;</code></pre>
 <p>It seems the typos are often corrected with general improvements to a post’s copy. This usually happens when I read the post the next day with fresh eyes and groan at my ineptitude.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
 </div>
 <div id="exposing-others" class="section level1">
@@ -142,7 +140,7 @@ sample(blog_typos$matches, 5)</code></pre>
 ##   ..$ match_ratio : num 0.188
 ##  $ matches : chr [1:21] &quot;need emo:: prefix in that case, bc ji_glue might be called without emo being attached. ping @batpigandme&quot; &quot;rm emoji keyboard (saved in separate branch) but eventually might just go in a separate :package:&quot; &quot;emo::ji_rx a meta regex to catch all emojis. closes #14&quot; &quot;bring in some extra modules (for emo::ji_rx)&quot; ...
 ##  $ messages: chr [1:112] &quot;Imports CRAN glue (#54)&quot; &quot;no longer importing dplyr. #24&quot; &quot;less dependency on dplyr&quot; &quot;clock no longer depends on dplyr&quot; ...</code></pre>
-<p>Only 19? Son, I am disappoint. 🤨</p>
+<p>Only 19 per cent? Son, I am disappoint. 🤨</p>
 <hr />
 <details>
 <summary>
@@ -203,6 +201,6 @@ Session info
 <li id="fn1"><p>Yes, I’m aware of Git hooks and various GitHub Actions that could prevent this.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
 <li id="fn2"><p>Though obviously you’ll miss messages containing the word ‘typo’ if you have a typo in the word ‘typo’ in one of your commits…<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 <li id="fn3"><p>I used it most recently in <a href="https://www.rostrum.blog/2020/06/14/ghdump/">my little {ghdump} package</a> for downloading or cloning a user’s repos en masse.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
-<li id="fn4"><p>I wonder how many typos I’ll need to correct in <em>this</em> post after publishing.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>I wonder how many typos I’ll need to correct in <em>this</em> post after publishing. (Edit: turns out I accidentally missed a couple of words, lol.)<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
