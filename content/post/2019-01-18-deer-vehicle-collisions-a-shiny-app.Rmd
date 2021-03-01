@@ -1,5 +1,5 @@
 ---
-title: 'Deer-vehicle collisions: a Shiny app'
+title: 'Map deer-vehicle colisions with {shiny}'
 author: Matt Dray
 date: '2019-01-18'
 categories:
@@ -9,7 +9,7 @@ tags:
   - animals
   - DT
   - leaflet
-  - open data
+  - open-data
   - r
   - scotland
   - shiny
@@ -18,14 +18,9 @@ slug: deer-collisions
 draft: no
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-library(icon)
-```
-
 <div class="figure">
-<img src="/post/2019-01-18-deer-vehicle-collisions-a-shiny-app_files/Capreolus_capreolus_2_(Marek_Szczepanek).jpg" alt="A roe deer in profile"/>
-<p class="caption">[Roe deer by Marek Szczepanek](https://commons.wikimedia.org/wiki/Capreolus_capreolus#/media/File:Capreolus_capreolus_2_(Marek_Szczepanek).jpg), CC BY-SA 4.0</p>
+<img src="/post/2019-01-18-deer-vehicle-collisions-a-shiny-app_files/Capreolus_capreolus_2_(Marek_Szczepanek).jpg" alt="A roe deer in profile."/>
+<p class="caption">Oh dear, roe deer [(Marek Szczepanek](https://commons.wikimedia.org/wiki/Capreolus_capreolus#/media/File:Capreolus_capreolus_2_(Marek_Szczepanek).jpg), [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/))</p>
 </div>
 
 # Open data
@@ -36,34 +31,54 @@ Deer roam Scotland. So do humans. It's a problem when they meet at high speed.
 
 The data are open. I found the data set when skimming through [data.gov.uk](https://data.gov.uk/dataset/838b88d8-7509-435c-9649-90f1881b5ad7/deer-vehicle-collisions) (a classic weekend activity for all the family). It links to the [SNH Natural Spaces site](https://gateway.snh.gov.uk/natural-spaces/dataset.jsp?dsid=DVC) where you can download the data as shapefile, GML or KML under the [Open Government Licence](http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
 
-I couldn't find an interactive visualisation of these data and I don't spend much time working with R Shiny,[^wc-18] so why not.
+I couldn't find an interactive visualisation of these data and I want to spend more time working with the {shiny} package,[^wc-18] so why not.
 
 # A simple Shiny app
 
-I recommend you check out [the full-screen app live at mattdray.shinyapps.io/scot-deer-collisions/](https://mattdray.shinyapps.io/scot-deer-collisions/).
-
-I've embedded a compact version of it below (it'll take a moment to load). Click the `r icon::fa_bars()` for the options menu to start filtering the data.
-
-<iframe src="https://mattdray.shinyapps.io/scot-deer-collisions/" width="700" height="525" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
-
-The [code for the app is available on GitHub](https://github.com/matt-dray/scot-deer-collisions). You can also [download the cleaned data in CSV or RDS format](https://github.com/matt-dray/scot-deer-collisions/tree/master/data).
-
-It was built in R with:
-
-* the [`shinydashboard` package](https://rstudio.github.io/shinydashboard/) for a nice layout and value boxes
-* the [`leaflet` package](https://rstudio.github.io/leaflet/) for the interactive map
-* the [`DT` package](https://rstudio.github.io/DT/) for the interactive datatable
-
-Here's a gif with a preview of the full app in action.
+Here's a preview of the app in action:
 
 <img src="https://media.giphy.com/media/ZvK6zz5E4agAL2gf6u/giphy.gif" alt="A gif showing selections of some years, months and locations; hovering over points on the map; and showing the interactive datatable.">
 
+Along with {shiny}, the app was built primarily with the R packages:
+
+* [{shinydashboard}](https://rstudio.github.io/shinydashboard/) for a nice layout and value boxes
+* [{leaflet}](https://rstudio.github.io/leaflet/) for the interactive map
+* [{DT}](https://rstudio.github.io/DT/) for the interactive datatable
+
+The interface is a simple dashboard in three parts: a sidebar, a main panel and three value boxes.
+
+The sidebar contains three collapsible sections with an 'about' section, a 'how to' section and a section with interactive filters. You can type or select collisions from a specified time (year and/or month) and place (the local authority in which it happened).
+
+The main panel has two tabs. One is an interactive map that indicates the collisions with clickable markers. The second tab contains an interactive table. The data shown in these views is a result of the filters that have been applied via the sidebar. The interactive table also allows for further data filtering and you can download the results.
+
+The value boxes each show one statistic related to the filtered data: the number of collisions; total collisions for the given local authorities and years; and the total collisions in the selected years. These update as you change your selections.
+
+# Run the app
+
+The [code for the app is available on GitHub](https://github.com/matt-dray/scot-deer-collisions). You can also [download the cleaned data in CSV or RDS format](https://github.com/matt-dray/scot-deer-collisions/tree/master/data).
+
+You can run the app from an R session by installing {shiny} from CRAN and then executing the following lines: 
+
+```{r eval=FALSE}
+shiny::runGitHub(
+  repo = "scot-deer-collisions", 
+  username = "matt-dray"
+)
+```
+
 # Limitations
 
-I may update the app in future or take it down entirely. It's hosted for free at [shinyapps.io](http://www.shinyapps.io/), which means that it can only receive a fixed number of visits each month before it becomes unavailable. [The code will continue to exist on GitHub](https://www.github.com/matt-dray/scot-deer-collisions) where you can leave an issue or fork it to make it better.
+I used to host the app for free on [shinyapps.io](https://www.shinyapps.io/), but it's since made way for other projects. That means you'll have to download it to run it. [The code will continue to exist on GitHub](https://www.github.com/matt-dray/scot-deer-collisions) though, where you can leave an issue or fork it to make it better.
 
-I limited the filters to year, month and local authority. I could have included deer species and road, but the data are sparse and the formatting wasn't great. I cleaned these variables up a bit and they're available as filterable columns in the interactive table.
+In terms of app design, I limited the filters to year, month and local authority. I could have included deer species and road, but the data are sparse and the formatting wasn't great. I cleaned these variables up a bit and they're available as filterable columns in the interactive table.
 
-There's a large number of points and it doesn't make sense to show them all at once because it slows the app down. There are methods for improving this, but I assume most people will be looking at specific local authorities or roads rather than the country as a whole.
+There's also a large number of data points and it doesn't make sense to show them all at once because it slows the app down. There are methods for improving this, but I assume most people will be looking at specific local authorities or roads rather than the country as a whole.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
 
 [^wc-18]: But see [this post about a Shiny app](https://www.rostrum.blog/2018/07/17/world-cup-age-app/) I made that that one colleague described as 'very depressing'.

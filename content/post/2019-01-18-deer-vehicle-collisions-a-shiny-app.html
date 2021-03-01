@@ -1,5 +1,5 @@
 ---
-title: 'Deer-vehicle collisions: a Shiny app'
+title: 'Map deer-vehicle colisions with {shiny}'
 author: Matt Dray
 date: '2019-01-18'
 categories:
@@ -9,7 +9,7 @@ tags:
   - animals
   - DT
   - leaflet
-  - open data
+  - open-data
   - r
   - scotland
   - shiny
@@ -18,13 +18,13 @@ slug: deer-collisions
 draft: no
 ---
 
-<link href="/rmarkdown-libs/font-awesome/css/fontawesome-all.min.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
 
 
 <div class="figure">
-<img src="/post/2019-01-18-deer-vehicle-collisions-a-shiny-app_files/Capreolus_capreolus_2_(Marek_Szczepanek).jpg" alt="A roe deer in profile"/>
+<img src="/post/2019-01-18-deer-vehicle-collisions-a-shiny-app_files/Capreolus_capreolus_2_(Marek_Szczepanek).jpg" alt="A roe deer in profile."/>
 <p class="caption">
-<a href="https://commons.wikimedia.org/wiki/Capreolus_capreolus#/media/File:Capreolus_capreolus_2_(Marek_Szczepanek).jpg">Roe deer by Marek Szczepanek</a>, CC BY-SA 4.0
+Oh dear, roe deer <a href="https://commons.wikimedia.org/wiki/Capreolus_capreolus#/media/File:Capreolus_capreolus_2_(Marek_Szczepanek).jpg">(Marek Szczepanek</a>, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>)
 </p>
 </div>
 <div id="open-data" class="section level1">
@@ -32,33 +32,81 @@ draft: no
 <p>Deer roam Scotland. So do humans. It’s a problem when they meet at high speed.</p>
 <p><a href="http://www.deercollisions.co.uk/">The National Deer-Vehicle Collisions Project</a>, administered by <a href="http://www.thedeerinitiative.co.uk/">The Deer Initiative</a>, has been monitoring data on deer-vehicle collisions in the UK.</p>
 <p>The data are open. I found the data set when skimming through <a href="https://data.gov.uk/dataset/838b88d8-7509-435c-9649-90f1881b5ad7/deer-vehicle-collisions">data.gov.uk</a> (a classic weekend activity for all the family). It links to the <a href="https://gateway.snh.gov.uk/natural-spaces/dataset.jsp?dsid=DVC">SNH Natural Spaces site</a> where you can download the data as shapefile, GML or KML under the <a href="http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/">Open Government Licence</a>.</p>
-<p>I couldn’t find an interactive visualisation of these data and I don’t spend much time working with R Shiny,<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> so why not.</p>
+<p>I couldn’t find an interactive visualisation of these data and I want to spend more time working with the {shiny} package,<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> so why not.</p>
 </div>
 <div id="a-simple-shiny-app" class="section level1">
 <h1>A simple Shiny app</h1>
-<p>I recommend you check out <a href="https://mattdray.shinyapps.io/scot-deer-collisions/">the full-screen app live at mattdray.shinyapps.io/scot-deer-collisions/</a>.</p>
-<p>I’ve embedded a compact version of it below (it’ll take a moment to load). Click the <i class="fas  fa-bars "></i> for the options menu to start filtering the data.</p>
-<iframe src="https://mattdray.shinyapps.io/scot-deer-collisions/" width="700" height="525" frameborder="0" allowtransparency="true" allow="encrypted-media">
-</iframe>
-<p>The <a href="https://github.com/matt-dray/scot-deer-collisions">code for the app is available on GitHub</a>. You can also <a href="https://github.com/matt-dray/scot-deer-collisions/tree/master/data">download the cleaned data in CSV or RDS format</a>.</p>
-<p>It was built in R with:</p>
-<ul>
-<li>the <a href="https://rstudio.github.io/shinydashboard/"><code>shinydashboard</code> package</a> for a nice layout and value boxes</li>
-<li>the <a href="https://rstudio.github.io/leaflet/"><code>leaflet</code> package</a> for the interactive map</li>
-<li>the <a href="https://rstudio.github.io/DT/"><code>DT</code> package</a> for the interactive datatable</li>
-</ul>
-<p>Here’s a gif with a preview of the full app in action.</p>
+<p>Here’s a preview of the app in action:</p>
 <p><img src="https://media.giphy.com/media/ZvK6zz5E4agAL2gf6u/giphy.gif" alt="A gif showing selections of some years, months and locations; hovering over points on the map; and showing the interactive datatable."></p>
+<p>Along with {shiny}, the app was built primarily with the R packages:</p>
+<ul>
+<li><a href="https://rstudio.github.io/shinydashboard/">{shinydashboard}</a> for a nice layout and value boxes</li>
+<li><a href="https://rstudio.github.io/leaflet/">{leaflet}</a> for the interactive map</li>
+<li><a href="https://rstudio.github.io/DT/">{DT}</a> for the interactive datatable</li>
+</ul>
+<p>The interface is a simple dashboard in three parts: a sidebar, a main panel and three value boxes.</p>
+<p>The sidebar contains three collapsible sections with an ‘about’ section, a ‘how to’ section and a section with interactive filters. You can type or select collisions from a specified time (year and/or month) and place (the local authority in which it happened).</p>
+<p>The main panel has two tabs. One is an interactive map that indicates the collisions with clickable markers. The second tab contains an interactive table. The data shown in these views is a result of the filters that have been applied via the sidebar. The interactive table also allows for further data filtering and you can download the results.</p>
+<p>The value boxes each show one statistic related to the filtered data: the number of collisions; total collisions for the given local authorities and years; and the total collisions in the selected years. These update as you change your selections.</p>
+</div>
+<div id="run-the-app" class="section level1">
+<h1>Run the app</h1>
+<p>The <a href="https://github.com/matt-dray/scot-deer-collisions">code for the app is available on GitHub</a>. You can also <a href="https://github.com/matt-dray/scot-deer-collisions/tree/master/data">download the cleaned data in CSV or RDS format</a>.</p>
+<p>You can run the app from an R session by installing {shiny} from CRAN and then executing the following lines:</p>
+<pre class="r"><code>shiny::runGitHub(
+  repo = &quot;scot-deer-collisions&quot;, 
+  username = &quot;matt-dray&quot;
+)</code></pre>
 </div>
 <div id="limitations" class="section level1">
 <h1>Limitations</h1>
-<p>I may update the app in future or take it down entirely. It’s hosted for free at <a href="http://www.shinyapps.io/">shinyapps.io</a>, which means that it can only receive a fixed number of visits each month before it becomes unavailable. <a href="https://www.github.com/matt-dray/scot-deer-collisions">The code will continue to exist on GitHub</a> where you can leave an issue or fork it to make it better.</p>
-<p>I limited the filters to year, month and local authority. I could have included deer species and road, but the data are sparse and the formatting wasn’t great. I cleaned these variables up a bit and they’re available as filterable columns in the interactive table.</p>
-<p>There’s a large number of points and it doesn’t make sense to show them all at once because it slows the app down. There are methods for improving this, but I assume most people will be looking at specific local authorities or roads rather than the country as a whole.</p>
+<p>I used to host the app for free on <a href="https://www.shinyapps.io/">shinyapps.io</a>, but it’s since made way for other projects. That means you’ll have to download it to run it. <a href="https://www.github.com/matt-dray/scot-deer-collisions">The code will continue to exist on GitHub</a> though, where you can leave an issue or fork it to make it better.</p>
+<p>In terms of app design, I limited the filters to year, month and local authority. I could have included deer species and road, but the data are sparse and the formatting wasn’t great. I cleaned these variables up a bit and they’re available as filterable columns in the interactive table.</p>
+<p>There’s also a large number of data points and it doesn’t make sense to show them all at once because it slows the app down. There are methods for improving this, but I assume most people will be looking at specific local authorities or roads rather than the country as a whole.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.0.2 (2020-06-22)
+##  os       macOS  10.16                
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2021-03-01                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version    date       lib source                            
+##  assertthat    0.2.1      2019-03-21 [1] CRAN (R 4.0.0)                    
+##  blogdown      0.21       2020-10-11 [1] CRAN (R 4.0.2)                    
+##  bookdown      0.21       2020-10-13 [1] CRAN (R 4.0.2)                    
+##  cli           2.3.0      2021-01-31 [1] CRAN (R 4.0.2)                    
+##  digest        0.6.27     2020-10-24 [1] CRAN (R 4.0.2)                    
+##  evaluate      0.14       2019-05-28 [1] CRAN (R 4.0.0)                    
+##  glue          1.4.2      2020-08-27 [1] CRAN (R 4.0.2)                    
+##  htmltools     0.5.1.9000 2021-01-17 [1] Github (rstudio/htmltools@11cfbf3)
+##  knitr         1.31       2021-01-27 [1] CRAN (R 4.0.2)                    
+##  magrittr      2.0.1      2020-11-17 [1] CRAN (R 4.0.2)                    
+##  rlang         0.4.10     2020-12-30 [1] CRAN (R 4.0.2)                    
+##  rmarkdown     2.6        2020-12-14 [1] CRAN (R 4.0.2)                    
+##  sessioninfo   1.1.1      2018-11-05 [1] CRAN (R 4.0.0)                    
+##  stringi       1.5.3      2020-09-09 [1] CRAN (R 4.0.2)                    
+##  stringr       1.4.0      2019-02-10 [1] CRAN (R 4.0.0)                    
+##  withr         2.4.1      2021-01-26 [1] CRAN (R 4.0.2)                    
+##  xfun          0.21       2021-02-10 [1] CRAN (R 4.0.2)                    
+##  yaml          2.2.1      2020-02-01 [1] CRAN (R 4.0.0)                    
+## 
+## [1] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
+</details>
 </div>
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>But see <a href="https://www.rostrum.blog/2018/07/17/world-cup-age-app/">this post about a Shiny app</a> I made that that one colleague described as ‘very depressing’.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn1"><p>But see <a href="https://www.rostrum.blog/2018/07/17/world-cup-age-app/">this post about a Shiny app</a> I made that that one colleague described as ‘very depressing’.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
