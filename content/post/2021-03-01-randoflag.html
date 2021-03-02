@@ -8,49 +8,52 @@ categories:
   - code
 tags:
   - bslib
+  - emo
   - r
   - shiny
   - shinyjs
-draft: yes
+draft: no
 ---
 
 <script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
 
 
 <div class="figure">
-<img src="/post/2021-03-01-randoflag_files/guadeloupe.png" alt="App interface showing a flag and two buttons saying 'reveal' and refresh'; it says 'Guadeloupe' under the 'reveal' button." width="50%"/>
+<img src="/post/2021-03-01-randoflag_files/randoflag-300x450.gif" alt="An animation showing a flag whose nation is revealed by clicking a 'reveal' button and a new flag is presented by pressing a 'refresh' button." width="30%"/>
 <p class="caption">
-I was thrown for a Guadeloupe by this one.
+The gif loops; I promise there’s more flags than this.
 </p>
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>I wrote <a href="https://github.com/matt-dray/randoflag">a little Shiny app</a> to serve me a flag challenge whenever I open a new browser tab.</p>
+<p>I wrote <a href="https://github.com/matt-dray/randoflag">a teeny-weeny R Shiny app</a> to serve me a flag challenge whenever I open a new browser tab.</p>
 </div>
-<div id="vexatious-request" class="section level1">
-<h1>Vexatious request</h1>
-<p>My browser tabs open with <a href="https://www.thiscatdoesnotexist.com/">thiscatdoesnotexist.com</a>, which serves me a terrifying ersatz ‘cat’, as hallucinated by a <a href="https://en.wikipedia.org/wiki/Generative_adversarial_network">GAN</a>. It’s kind of terrifying and time for a change.</p>
-<p>Learning is fun and flags are too. My needs were simple: open a browser tab, show a mystery flag, reveal who it belongs to, refresh.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
-<p>R makes this quite straightforward with the Shiny framework.</p>
+<div id="a-vexatious-request" class="section level1">
+<h1>A vexatious request</h1>
+<p>I thought it would be fun to set my browser tabs to open with <a href="https://www.thiscatdoesnotexist.com/">thiscatdoesnotexist.com</a>, which serves a random ersatz ‘cat’ as hallucinated by <a href="https://arxiv.org/abs/1912.04958">StyleGAN</a>.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> It’s kind of terrifying and time for a change.</p>
+<p>We probably accumulate hours of time looking at fresh browser tabs, so why not exploit that for fun and learning? I wanted something visual, quick and low stakes, so… world flags?</p>
+<p>My needs were simple: show a mystery flag; reveal who it belongs to; refresh.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> So I built a little <a href="https://shiny.rstudio.com/">{shiny}</a> app, it in <a href="https://github.com/matt-dray/randoflag">a GitHub repo</a> and <a href="https://www.mattdray.shinyapps.io/randoflag/">served it</a>.</p>
+<p>On the front-end you’re presented one of <a href="https://emojiflags.com/">over 250 (!) emoji flags</a><a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> at random. There’s a button to reveal the country it represents and another button to refresh the page via <a href="https://deanattali.com/shinyjs/">{shinyjs}</a>. The back-end just samples a flag from the <a href="https://github.com/hadley/emo">{emo}</a> package and waits for you to hit refresh. The <a href="https://rstudio.github.io/bslib/">{bslib}</a> package made it easy to generate a theme that keeps focus on the flag.</p>
+<p>I’ve only tested it on Firefox, Chrome and Safari on iOS 14.</p>
 </div>
 <div id="hoisting-the-app" class="section level1">
 <h1>Hoisting the app</h1>
-<p>The app is currently <a href="https://www.mattdray.shinyapps.io/randoflag/">available online</a> and I’ve embedded it below.</p>
+<p>The app is currently <a href="https://www.mattdray.shinyapps.io/randoflag/">hosted online via shinyapps.io</a> and I’ve embedded it below. It’s highly likely I’ll take it down at some point.</p>
 <iframe src="https://mattdray.shinyapps.io/randoflag/" width="364" height="538" frameborder="0" allowtransparency="true" allow="encrypted-media">
 </iframe>
-<p>I’ll probably take the app down at some point. Regardless, you can run the app from an R session at any point by executing the following:</p>
-<pre class="r"><code>shiny::runGitHub(
-  repo = &quot;randoflag&quot;, 
-  username = &quot;matt-dray&quot;,
-  ref = &quot;main&quot;
-)</code></pre>
-<p>The app uses a few R packages that you’ll need to install:</p>
-<ul>
-<li><a href="https://shiny.rstudio.com/">{shiny}</a> for the app framework</li>
-<li><a href="https://rstudio.github.io/bslib/">{bslib}</a> for easy, tweakable theming</li>
-<li><a href="https://github.com/hadley/emo">{emo}</a> for the emoji flags</li>
-<li><a href="https://deanattali.com/shinyjs/">{shinyjs}</a> for its helpful <code>refresh()</code> implementation</li>
-</ul>
+<p>Regardless, you can install and run the app from your R session:</p>
+<pre class="r"><code>shiny::runGitHub(&quot;randoflag&quot;, &quot;matt-dray&quot;, &quot;main&quot;)</code></pre>
+<p>You’ll need {shiny}, {bslib} and {shinyjs} installed from CRAN and you can get {emo} using <code>remotes::install_github("hadley/emo")</code>.</p>
+</div>
+<div id="half-mastery" class="section level1">
+<h1>Half-mastery</h1>
+<p>Beware: some emoji flags are shared by more than one geographic entity…</p>
+<div class="figure">
+<img src="/post/2021-03-01-randoflag_files/randoflag-france-300x450.gif" alt="An animation where the French tricolore flag is revealed to be labelled as 'St Martin'." width="30%"/>
+<p class="caption">
+Bof!
+</p>
+</div>
 <hr />
 <details>
 <summary>
@@ -95,6 +98,8 @@ Session info
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>See <a href="https://www.sporcle.com/games/g/worldflags?sc=flags">Sporcle</a> if you want an actual quiz.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn1"><p>Yeah, but <a href="https://www.thispersondoesnotexist.com">thispersondoesnotexist.com</a> is even creepier.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>See <a href="https://www.sporcle.com/games/g/worldflags?sc=flags">Sporcle</a> if you want an actual quiz.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>Why <em>emoji</em> flags? I don’t have to store hundreds of flags as images in the app’s files and {emo} exists to make things very easy. Also I want to practice for when <a href="https://emoj.li/">Emojli</a> inevitably returns.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
