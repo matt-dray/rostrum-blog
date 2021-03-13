@@ -1,0 +1,113 @@
+---
+title: Protect yourself from equals assignment!
+author: Matt Dray
+date: '2021-03-13'
+slug: assign
+categories:
+  - code
+tags:
+  - flamewar
+  - lintr
+  - r
+draft: no
+---
+
+<div class="figure">
+<img src="/post/2021-03-12-assign_files/cmm.png" alt="A man sits at a table with a banner that has R's left assignment operator and underneath says 'change my mind'." width="75%"/>
+</div>
+
+# tl;dr
+
+I present you a function that warns if an R script contains the Assignment Operator That Shall Not Be Named.
+
+# Assign of the times
+
+So, it's been confirmed with [extremely robust and objective evidence](https://twitter.com/kevcunningham/status/1370382498795040769?s=20): the left-assignment arrow (`x <- 1`) is better than equals (`x = 1`) for assignment in R.[^actually]
+
+So, unless you hate democracy, you should protect yourself from aberrant code that uses the cursed symbol.
+
+But what if a nefarious colleague still sends you their scuffed code? 
+
+# Assignment refinement
+
+I've created the `appraise_assignment()` function that will peek at a suspect script and warn you if it contains the foul mark.
+
+```{r}
+appraise_assignment <- function(file, destroy = FALSE) {
+  
+  trees <- lintr::get_source_expressions(file)  # parse code
+  expr_len <- length(trees[[1]])  # we want the final element
+  tokens <-  # extract tokens used in script
+    trees$expressions[[expr_len]]$full_parsed_content[, "token"]
+  
+  if (any(tokens == "EQ_ASSIGN")) {  # '='
+    warning("\nme = 'disgusted'\n") 
+    if (destroy == TRUE) {
+      answer <- readlines("Destroy file? y/n")
+      if (answer == "y") cat("Have mercy! This time...")
+    }
+  } else if (any(tokens == "RIGHT_ASSIGN")) {  # '<-'
+    cat("'unorthodox' -> you\n")
+  } else if (any(tokens == "LEFT_ASSIGN")) {  # '->'
+    cat("you <- 'hero'\n")
+  } else {
+    cat("anyway(assignment(is(even('what'))))\n")
+  }
+  
+}
+```
+
+It uses [Jim Hester's {lintr} package](https://github.com/jimhester/lintr) to parse R expressions and identify each 'token' that's used (maths symbols, special operators, variables, etc).
+
+In particular, it spots the token called `EQ_ASSIGN`, which is when `=` is used in the context of assignment.
+
+# I saw the assign
+
+For demonstration purposes, I've written four temporary files containing left assign (`<-`), right assign (`->`, inferior mirror-copy of `<-`), equals (`=`), and no assignment at all.[^global] Our function will catch even a single deviation, even if proper assignment has also been used.
+
+```{r}
+temp <- tempdir()  # temp location to store files
+purrr::walk2(
+  c("x <- 1", "x <- 1; y -> 1", "x <- 1; y = 1", "x"),
+  c("left", "right", "equals", "none"),
+  ~writeLines(.x, file.path(temp, paste0(.y, ".R")))
+)
+```
+
+First, let's pass the file containing the unquestionably correct assignment operator.
+
+```{r}
+appraise_assignment(file.path(temp, "left.R"))
+```
+
+Right-assignment is left-assignment's less-handsome sibling.
+
+```{r}
+appraise_assignment(file.path(temp, "right.R"))
+```
+
+Hold steady...
+
+```{r}
+appraise_assignment(file.path(temp, "equals.R"))
+```
+
+Phew, we got a warning, so we know the file is dangerous and should never be opened.
+
+In fact, if you set the argument `destroy = TRUE` in `appraise_assignment()`, you'll be prompted to irrecoverably annihilate the rotten file forever.[^destroy]
+
+For completeness, is it really an R script if it doesn't contain any assignment at all?
+
+```{r}
+appraise_assignment(file.path(temp, "none.R"))
+```
+
+# Assigning off
+
+In conclusion, some assignment operators were created more equal than others. See [Colin Fay's round-up](https://colinfay.me/r-assignment/) to learn more about the history and plethora of these symbols (and be happy that the underscore is no longer legitimate).
+
+Anyway, welcome to the best timeline, where we all recognise `<-` unequivocally as the champion and `=` can get rekt!
+
+[^actually]: Actually, I don't really care which one you use, but that's less of a funny take. I prefer the left assignment operator because look! It's a little arrow! Quirky! Esoteric! An extra keystroke to exercise your fingers!
+[^destroy]: Well, not really, because I don't want you to delete any of your files. But rest assured I've included `file.remove()` in my local version of the function and I'm not afraid to use it.
+[^global]: We do not talk about `<<-`.
