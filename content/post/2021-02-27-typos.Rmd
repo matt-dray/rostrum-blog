@@ -20,7 +20,7 @@ draft: no
 
 # tl;dr
 
-Eight per cent (!) of the commits to [this blog's source](https://github.com/matt-dray/rostrum-blog) involve typo fixes, according to a function I wrote to search commit messages via [the {gh} package](https://github.com/r-lib/gh). 
+Nearly 10 per cent of the commits to [this blog's source](https://github.com/matt-dray/rostrum-blog) involve typo fixes, according to a function I wrote to search commit messages via [the {gh} package](https://github.com/r-lib/gh). 
 
 # Not my typo
 
@@ -84,7 +84,7 @@ The object returned by `search_commits()` is a list with four elements: `meta` r
 
 Here's an example where I look for commit messages to this blog that contain the word 'typo'. Since the function contains the `.limit = Inf` argument in `gh::gh()`, we'll get an output message for each separate request that's been made to the API.
 
-```{r ex_blog}
+```{r ex_blog, warning=FALSE}
 blog_typos <- search_commits("matt-dray", "rostrum-blog")
 ```
 
@@ -99,7 +99,7 @@ You can see there were `r blog_typos$counts$commit_count` commit messages return
 Here's a sample of those commit messages that contained the word 'typo': 
 
 ```{r ex_blog_msg}
-set.seed(1066)
+set.seed(1337)
 sample(blog_typos$matches, 5)
 ```
 
@@ -130,7 +130,9 @@ Surprise: typos happen to all of us. I'm guessing the percentage is quite high b
 
 Of course, you can change the `string` argument of `search_commits()` to find terms other than the default 'typo'. Use your imagination. 
 
-Here's a meta example: messages containing emoji (expressed as `:thing:`) in the commits to [the {emo} package](https://github.com/hadley/emo) by Hadley Wickham, Romain François and Lucy D'Agostino McGowan.
+Here's a meta example: messages containing emoji in the commits to [the {emo} package](https://github.com/hadley/emo) by Hadley Wickham, Romain François and Lucy D'Agostino McGowan. 
+
+Emoji are expressed in commit messages like `:dog:`, so we can capture them with a relatively simple regular expression like `":.*:"` (match wherever there are two colons with anything in between).
 
 ```{r ex_emo}
 emo_emoji <- search_commits("hadley", "emo", ":.*:")
