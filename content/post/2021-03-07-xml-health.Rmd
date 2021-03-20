@@ -16,6 +16,9 @@ draft: yes
 
 
 ```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(eval = FALSE)
+
 # https://bookdown.org/yihui/rmarkdown-cookbook/hook-truncate.html
 
 # save the built-in output hook
@@ -271,6 +274,33 @@ p3 <- ggplot(workouts_out) +
 ```
 
 You can see I started with a lot of 5 km runs in April and May 2020, before branching out to 10 km or more. I've been pretty consistent in running every two or three days and that's reflected in the chart of cumulative distance. The histogram shows that most runs have been just above 5 km, with another peak just above 10 km. That makes sense: I intentionally set out to run at least these distances.
+
+How about a calendar?
+
+```{r, eval=FALSE}
+library(calendR)
+
+run_days <- left_join(
+  tibble(date = as_date(ymd("2020-03-23"):ymd("2021-03-22"))),
+  workouts_out %>% 
+    filter(km > 1, date > "2020-03-23" & date < "2021-03-22") %>%
+    distinct(date) %>%
+    mutate(run = 1),
+  by = "date"
+) %>% replace_na(list(run = 0))
+
+calendR(
+  start_date = "2020-03-23", end_date = "2021-03-22",
+  start = "M", special.days = run_days$run,
+  gradient = TRUE, low.col = "white", special.col = "red",
+  title = "Running days", subtitle = "2020-03-23 to 2021-03-22 inclusive",
+  day.size = 1, weeknames.size = 2.5
+)
+
+```
+
+
+
 
 # Cool down
 

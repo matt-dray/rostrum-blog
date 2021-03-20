@@ -14,7 +14,8 @@ tags:
 draft: yes
 ---
 
-<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+<script src="/rmarkdown-libs/jquery/jquery.min.js"></script>
+<script src="/rmarkdown-libs/elevate-section-attrs/elevate-section-attrs.js"></script>
 
 
 <div id="tldr" class="section level1">
@@ -58,14 +59,6 @@ library(patchwork)  # arrange plots</code></pre>
 <pre class="r"><code>xml_in &lt;- read_xml(&quot;~/Desktop/export/apple_health_export/export.xml&quot;)</code></pre>
 <p>Here’s a truncated view of the file’s structure:</p>
 <pre class="r"><code>xml_in</code></pre>
-<pre><code>## {xml_document}
-## &lt;HealthData locale=&quot;en_GB&quot;&gt;
-##  [1] &lt;ExportDate value=&quot;2021-03-04 21:46:37 +0000&quot;/&gt;
-##  [2] &lt;Me HKCharacteristicTypeIdentifierDateOfBirth=&quot;&quot; HKCharacteristicTypeIde ...
-##  [3] &lt;Record type=&quot;HKQuantityTypeIdentifierStepCount&quot; sourceName=&quot;MD’s phone&quot; ...
-##  [4] &lt;Record type=&quot;HKQuantityTypeIdentifierStepCount&quot; sourceName=&quot;MD’s phone&quot; ...
-##  [5] &lt;Record type=&quot;HKQuantityTypeIdentifierStepCount&quot; sourceName=&quot;MD’s phone&quot; ...
-....</code></pre>
 <p>You can see metadata in the first few rows and then we get into the parts of the document that store the data.</p>
 <p>In this preview you can see each information stored in <code>&lt;Record&gt;</code> nodes. Each record is an individual entry in our activity log and has attributes like <code>type</code> (e.g. step count), <code>sourceName</code> (i.e. the device name) and <code>unit</code> (e.g. a count).</p>
 <p>We’re interested in extracting data from two types of node:</p>
@@ -81,8 +74,6 @@ library(patchwork)  # arrange plots</code></pre>
 <p>So, let’s grab all the record nodes and preview the first one.</p>
 <pre class="r"><code>records &lt;- xml_find_all(xml_in, &quot;.//Record&quot;)
 records[[1]]</code></pre>
-<pre><code>## {xml_node}
-## &lt;Record type=&quot;HKQuantityTypeIdentifierStepCount&quot; sourceName=&quot;MD’s phone&quot; unit=&quot;count&quot; creationDate=&quot;2015-06-21 16:57:31 +0000&quot; startDate=&quot;2015-06-21 16:31:17 +0000&quot; endDate=&quot;2015-06-21 16:33:00 +0000&quot; value=&quot;28&quot;&gt;</code></pre>
 <p>Each record is a single ‘bout’ of activity as perceived by the app. You can see the first record is a step count from my phone on 21 June 2015, which lasted about two minutes and consisted of 28 steps.</p>
 <p>For my purposes I only care about three attributes: the date<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>, the type of activity and the associated value. We can pass a named vector of each of attribute to <code>xml2::xml_attr()</code> using <code>purrr::map_dfr()</code> to collate the output into a rectangle.</p>
 <pre class="r"><code>records_df &lt;- map_dfr(  # rowbind to dataframe
@@ -91,27 +82,8 @@ records[[1]]</code></pre>
 )
 
 glimpse(records_df)  # preview</code></pre>
-<pre><code>## Rows: 469,493
-## Columns: 3
-## $ date  &lt;chr&gt; &quot;2015-06-21 16:57:31 +0000&quot;, &quot;2015-06-21 16:57:31 +0000&quot;, &quot;2015-…
-## $ type  &lt;chr&gt; &quot;HKQuantityTypeIdentifierStepCount&quot;, &quot;HKQuantityTypeIdentifierSt…
-## $ steps &lt;chr&gt; &quot;28&quot;, &quot;15&quot;, &quot;44&quot;, &quot;69&quot;, &quot;80&quot;, &quot;95&quot;, &quot;1&quot;, &quot;33&quot;, &quot;41&quot;, &quot;15&quot;, &quot;24&quot;,…</code></pre>
 <p>So what <code>type</code> of activity has been logged?</p>
 <pre class="r"><code>distinct(records_df, type)</code></pre>
-<pre><code>## # A tibble: 11 x 1
-##    type                                                  
-##    &lt;chr&gt;                                                 
-##  1 HKQuantityTypeIdentifierStepCount                     
-##  2 HKQuantityTypeIdentifierDistanceWalkingRunning        
-##  3 HKQuantityTypeIdentifierActiveEnergyBurned            
-##  4 HKQuantityTypeIdentifierFlightsClimbed                
-##  5 HKQuantityTypeIdentifierHeadphoneAudioExposure        
-##  6 HKQuantityTypeIdentifierWalkingDoubleSupportPercentage
-##  7 HKQuantityTypeIdentifierWalkingSpeed                  
-##  8 HKQuantityTypeIdentifierWalkingStepLength             
-##  9 HKQuantityTypeIdentifierWalkingAsymmetryPercentage    
-## 10 HKCategoryTypeIdentifierSleepAnalysis                 
-## 11 HKCategoryTypeIdentifierMindfulSession</code></pre>
 <p>Aha, so we can isolate <code>HKQuantityTypeIdentifierStepCount</code>, then convert the date to datetime class and summarise the number of steps per day. I’ve also creating a new column that generates a ‘point’ value that my healthcare provider assigns to meeting certain step-count thresholds.</p>
 <pre class="r"><code>records_out &lt;- records_df %&gt;% 
   filter(type == &quot;HKQuantityTypeIdentifierStepCount&quot;) %&gt;%
@@ -128,11 +100,6 @@ glimpse(records_df)  # preview</code></pre>
   )
 
 glimpse(records_out)</code></pre>
-<pre><code>## Rows: 2,077
-## Columns: 3
-## $ date   &lt;date&gt; 2015-06-21, 2015-06-22, 2015-06-23, 2015-06-24, 2015-06-25, 20…
-## $ steps  &lt;int&gt; 647, 11273, 10071, 3586, 5206, 10362, 19036, 3980, 11850, 15937…
-## $ points &lt;int&gt; 0, 5, 5, 0, 0, 5, 8, 0, 5, 8, 3, 5, 5, 0, 0, 5, 5, 3, 0, 8, 8, …</code></pre>
 <p>Excellent. Now I, tiny David, can sling this evidence into the eye of the behemoth cyclops that is my healthcare provider.</p>
 <div id="on-a-walkabout" class="section level2">
 <h2>On a walkabout</h2>
@@ -151,7 +118,6 @@ glimpse(records_out)</code></pre>
   facet_grid(~fct_rev(covid_year)) +
   labs(x = &quot;Steps (thousands)&quot;, y = &quot;Count&quot;) +
   theme_minimal()</code></pre>
-<p><img src="/post/2021-03-07-xml-health_files/figure-html/wo-plot-1.png" title="Side-by-side histograms of step counts before and after lockdown. Before lockdown, a bimodal distribution with peaks at about 3k and 10k steps. After lockdown, a big peak at about 1k and a peak at about 6k with a tail to about 20k." alt="Side-by-side histograms of step counts before and after lockdown. Before lockdown, a bimodal distribution with peaks at about 3k and 10k steps. After lockdown, a big peak at about 1k and a peak at about 6k with a tail to about 20k." width="672" /></p>
 <p>Not a surprise, but interesting to see it visually: there’s been a far higher proportion of days with a very small number of steps in the lockdown year. The second peak of the bimodal distribution has also regressed to a lower value. This is understandable: I used to walk on parts of my commute and lunchtimes, whereas my</p>
 </div>
 </div>
@@ -160,10 +126,6 @@ glimpse(records_out)</code></pre>
 <p>Ideally this would come directly out of the Nike Run App, but you can’t have it all. Remember that the run data is stored in the <code>&lt;Workout&gt;</code> node.</p>
 <pre class="r"><code>workouts &lt;- xml_find_all(xml_in, &quot;.//Workout&quot;)
 workouts[[1]]</code></pre>
-<pre><code>## {xml_node}
-## &lt;Workout workoutActivityType=&quot;HKWorkoutActivityTypeRunning&quot; duration=&quot;24.81425000031789&quot; durationUnit=&quot;min&quot; totalDistance=&quot;5.043024469383905&quot; totalDistanceUnit=&quot;km&quot; totalEnergyBurned=&quot;384.382&quot; totalEnergyBurnedUnit=&quot;kcal&quot; sourceName=&quot;Nike Run Club&quot; sourceVersion=&quot;2003161908&quot; creationDate=&quot;2020-03-23 08:01:39 +0000&quot; startDate=&quot;2020-03-23 07:36:45 +0000&quot; endDate=&quot;2020-03-23 08:01:39 +0000&quot;&gt;
-## [1] &lt;MetadataEntry key=&quot;HKIndoorWorkout&quot; value=&quot;0&quot;/&gt;
-## [2] &lt;WorkoutEvent type=&quot;HKWorkoutEventTypePause&quot; date=&quot;2020-03-23 08:01:34 +0 ...</code></pre>
 <p>The attributes are slightly different for workouts compared to records, and there’s also some child nodes with further information. This time I care about the activity type (just runs), the date, the distance and the time taken. Unfortunately there isn’t any data on splits, which means I can’t calculate my record times for each distance. Ah well, we can pass the attributes we do have into the mapping function.</p>
 <pre class="r"><code>workouts_df &lt;- map_dfr(
   c(date = &quot;creationDate&quot;, type = &quot;workoutActivityType&quot;,
@@ -172,12 +134,6 @@ workouts[[1]]</code></pre>
 ) 
 
 glimpse(workouts_df)</code></pre>
-<pre><code>## Rows: 207
-## Columns: 4
-## $ date &lt;chr&gt; &quot;2020-03-23 08:01:39 +0000&quot;, &quot;2020-03-25 08:14:38 +0000&quot;, &quot;2020-0…
-## $ type &lt;chr&gt; &quot;HKWorkoutActivityTypeRunning&quot;, &quot;HKWorkoutActivityTypeRunning&quot;, &quot;…
-## $ km   &lt;chr&gt; &quot;5.043024469383905&quot;, &quot;5.0160254470843&quot;, &quot;5.014558848776319&quot;, &quot;5.0…
-## $ dur  &lt;chr&gt; &quot;24.81425000031789&quot;, &quot;24.46356666882833&quot;, &quot;24.37278333504995&quot;, &quot;2…</code></pre>
 <p>Notice something awkward? The duration is in minutes, but it has a decimal value. I wrangled this by taking the decimal part and converting it to seconds, then adding it back to the seconds into the whole number minutes. Speaking of time, I’ve also computed a rough time per distance metric. In both these cases I used <code>lubridate::seconds_to_period()</code> to generate a period-class value that converts to days, hours, minutes and seconds as required.</p>
 <pre class="r"><code>workouts_out &lt;- workouts_df %&gt;% 
   filter(type == &quot;HKWorkoutActivityTypeRunning&quot;) %&gt;% 
@@ -196,15 +152,6 @@ glimpse(workouts_df)</code></pre>
   )
 
 tail(workouts_out)</code></pre>
-<pre><code>## # A tibble: 6 x 5
-##   date          km     s mins     avg_pace
-##   &lt;date&gt;     &lt;dbl&gt; &lt;dbl&gt; &lt;Period&gt; &lt;Period&gt;
-## 1 2021-02-19 11.0   3256 54M 16S  4M 55S  
-## 2 2021-02-21 10.2   2981 49M 41S  4M 52S  
-## 3 2021-02-23  5.48  1550 25M 50S  4M 43S  
-## 4 2021-02-26  8.91  2624 43M 44S  4M 55S  
-## 5 2021-02-28 10.1   2822 47M 2S   4M 40S  
-## 6 2021-03-03  6.68  1877 31M 17S  4M 41S</code></pre>
 <p>You can see the last few trips in the preview. The period-class columns gives us the timings in minutes (<code>M</code>) and seconds (<code>S</code>), which is more convenient that looking at the number of seconds alone.</p>
 <div id="high-vis-apparel" class="section level2">
 <h2>High-vis apparel</h2>
@@ -223,44 +170,6 @@ tail(workouts_out)</code></pre>
   mutate(across(everything(), as.character)) %&gt;% 
   pivot_longer(everything(), names_to = &quot;Summary&quot;, values_to = &quot;Value&quot;) %&gt;% 
   knitr::kable()</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="left">Summary</th>
-<th align="left">Value</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">Interval (days)</td>
-<td align="left">345</td>
-</tr>
-<tr class="even">
-<td align="left">Total count</td>
-<td align="left">156</td>
-</tr>
-<tr class="odd">
-<td align="left">Days per run</td>
-<td align="left">2.2</td>
-</tr>
-<tr class="even">
-<td align="left">Total time</td>
-<td align="left">4d 8H 50M 42S</td>
-</tr>
-<tr class="odd">
-<td align="left">Total distance (km)</td>
-<td align="left">1233</td>
-</tr>
-<tr class="even">
-<td align="left">Furthest distance (km)</td>
-<td align="left">21.57</td>
-</tr>
-<tr class="odd">
-<td align="left">Best average pace</td>
-<td align="left">4M 22S</td>
-</tr>
-</tbody>
-</table>
 <p>I’m interested in what my pattern of run distance looks like.</p>
 <p>On the left are plots for run distances by date (above) and cumulative distance by date (below). The histogram on the right shows the frequency of run distances in 1 km bins.</p>
 <pre class="r"><code>p1 &lt;- ggplot(workouts_out) + 
@@ -280,8 +189,26 @@ p3 &lt;- ggplot(workouts_out) +
   theme_light()
 
 (p1 / p2) | p3</code></pre>
-<p><img src="/post/2021-03-07-xml-health_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
 <p>You can see I started with a lot of 5 km runs in April and May 2020, before branching out to 10 km or more. I’ve been pretty consistent in running every two or three days and that’s reflected in the chart of cumulative distance. The histogram shows that most runs have been just above 5 km, with another peak just above 10 km. That makes sense: I intentionally set out to run at least these distances.</p>
+<p>How about a calendar?</p>
+<pre class="r"><code>library(calendR)
+
+run_days &lt;- left_join(
+  tibble(date = as_date(ymd(&quot;2020-03-23&quot;):ymd(&quot;2021-03-22&quot;))),
+  workouts_out %&gt;% 
+    filter(km &gt; 1, date &gt; &quot;2020-03-23&quot; &amp; date &lt; &quot;2021-03-22&quot;) %&gt;%
+    distinct(date) %&gt;%
+    mutate(run = 1),
+  by = &quot;date&quot;
+) %&gt;% replace_na(list(run = 0))
+
+calendR(
+  start_date = &quot;2020-03-23&quot;, end_date = &quot;2021-03-22&quot;,
+  start = &quot;M&quot;, special.days = run_days$run,
+  gradient = TRUE, low.col = &quot;white&quot;, special.col = &quot;red&quot;,
+  title = &quot;Running days&quot;, subtitle = &quot;2020-03-23 to 2021-03-22 inclusive&quot;,
+  day.size = 1, weeknames.size = 2.5
+)</code></pre>
 </div>
 </div>
 <div id="cool-down" class="section level1">
