@@ -9,22 +9,17 @@ categories:
 tags:
   - apple
   - health
+  - r
+  - running
   - tidyverse
   - xml2
-draft: yes
+draft: no
 ---
 
-
 ```{r setup, include=FALSE}
-
-knitr::opts_chunk$set(eval = FALSE)
-
 # https://bookdown.org/yihui/rmarkdown-cookbook/hook-truncate.html
-
-# save the built-in output hook
+# save built-in output hook then set a new output hook to truncate text output
 hook_output <- knitr::knit_hooks$get("output")
-
-# set a new output hook to truncate text output
 knitr::knit_hooks$set(output = function(x, options) {
   if (!is.null(n <- options$out.lines)) {
     x <- xfun::split_lines(x)
@@ -38,59 +33,63 @@ knitr::knit_hooks$set(output = function(x, options) {
 })
 ```
 
+<div class="figure">
+<img src="/post/2021-03-07-xml-health_files/barcode.png" alt="A one-dimensional plot of days represented by vertical lines, with run distance coloured on a scale of white to black." width="100%"/>
+<p class="caption">Run barcode: one year of runs, darker bands are longer distances.</p>
+</div>
+
 # tl;dr
 
 You can export your [Apple Health](https://www.apple.com/uk/ios/health/) data as an XML file. This includes workouts linked from other apps, like [Nike Run Club](https://www.nike.com/nrc-app). I used the R packages [{xml2}](https://xml2.r-lib.org/index.html) and [the tidyverse](https://www.tidyverse.org/) to extract and clean my step counts and running activity.
 
-# Positive reinforcement
+# App storage
 
-My healthcare provider peeks at [the Apple Health app](https://www.apple.com/uk/ios/health/) and rewards me if I meet daily step-count targets. That's been trickier than usual during our serial lockdowns.
+My healthcare provider peeks at [the Apple Health app](https://www.apple.com/uk/ios/health/) and rewards me if I meet daily step-count targets. I know my usual pattern of steps has been disrupted since the start of COVID-19 lockdowns, [which began in the UK a year ago today](https://fullfact.org/health/coronavirus-lockdown-hancock-claim/).
 
-I took up running a year ago to help keep active and to keep the step counter ticking over. I record these runs on [the Nike Run Club app](https://www.nike.com/nrc-app), which I've linked to Apple Health.
+To keep the step counter ticking over, I took up a new hobby on lockdown day one: running. I've recorded this activity on [the Nike Run Club app](https://www.nike.com/nrc-app), which I've linked to Apple Health.
 
-I've in excess of 99 problems and at least two of them are related specifically to health data:
+I've in excess of 99 problems and at least two of them are related specifically to these health data:
 
 1. I don't think my healthcare supplier is rewarding my step counts correctly and I need evidence[^duncan]
 1. It's not easy to get data out of the Nike Run Club app for further analysis
 
-Luckily, you can export your Health app data, including any workouts linked from other apps. It's provided as XML, which is a sensible, structured storage format, but not necessarily that familiar to R users. 
+Luckily, you can export the data---which is stored locally on your iPhone---including any workouts linked from other apps. It's provided as XML, which is a sensible, structured storage format, but not necessarily that familiar to the general R user.
 
 This post looks at how to extract the data of interest and do something useful with it.
 
 # Warm up
 
-To export activity data from the Health app, as of iOS 14.4:
+To export activity data from the Health app (iOS 14.4):
 
 1. Open the Health app and tap your icon in the top right corner
 1. Scroll down and tap 'Export All Health Data'
 1. Tap 'Export' in the pop-up and the sharing tray will slide up for you to choose where to send the data
 
-You'll get a zipped folder containing two XML files, `export_cda.xml` and `export.xml`, the latter of which contains your data. I stored and unzipped mine locally for the purposes of this post.
+You'll get a zipped folder containing two XML files, `export_cda.xml` and `export.xml`, the latter of which contains your data. I stored and unzipped my folder locally for the purposes of this post.
 
 ```{r unzip}
-unzip(zipfile = "~/Downloads/export.zip", exdir = "~/Desktop/export/")
+temp <- tempdir()
+unzip(zipfile = "~/Downloads/export.zip", exdir = temp)
 ```
 
 My unzipped folder was about 140 MB and contained about 5 years of data. 
 
-# The right gear
-
-[The {xml2} package](https://xml2.r-lib.org/index.html)[^xml2] is on CRAN and has the tools you need to read and reshape XML files. It may be familiar if you've ever done any webscraping with R.[^scrape]
+We'll also need a few R packages. [The {xml2} package](https://xml2.r-lib.org/index.html)[^xml2] is on CRAN and has the tools you need to read and reshape XML files. It may be familiar if you've ever done any webscraping with R.[^scrape]
 
 We'll also iterate to accumulate with [the {purrr} package](https://purrr.tidyverse.org/) and do the ol' wrangle-jangle with some [other tidyverse packages](https://www.tidyverse.org/). 
 
-```{r, library, message = FALSE}
+```{r, library, message=FALSE}
 library(xml2)       # read and wrangle XML
-library(tidyverse)  # {purrr}, {dplyr}, {tidyr}
+library(tidyverse)  # {purrr}, {dplyr}, {ggplot2}, {forcats}
 library(lubridate)  # date/time handling
-library(forcats)    # handle factors
-library(patchwork)  # arrange plots
 ```
+
+# X-tract
 
 The aptly named `xml2::read_xml()` function will let you read your `export.xml` file. 
 
 ```{r, read}
-xml_in <- read_xml("~/Desktop/export/apple_health_export/export.xml")
+xml_in <- read_xml(file.path(temp, "apple_health_export/export.xml"))
 ```
 
 Here's a truncated view of the file's structure:
@@ -99,31 +98,31 @@ Here's a truncated view of the file's structure:
 xml_in
 ```
 
-You can see metadata in the first few rows and then we get into the parts of the document that store the data. 
-
-In this preview you can see each information stored in `<Record>` nodes. Each record is an individual entry in our activity log and has attributes like `type` (e.g. step count), `sourceName` (i.e. the device name) and `unit` (e.g. a count).
+The object has the class `xml_document`. You can see metadata in the first few rows and then you can see the actual data is stored in a series of 'nodes'. Each record is an individual entry in our activity log and has attributes like `type` (e.g. step count), `sourceName` (i.e. the device name) and `unit` (e.g. a count).
 
 We're interested in extracting data from two types of node:
 
-* `<Record>` for the step counts, as previewed above
-* `<Workouts>`, which is where the Nike Run Club app data is stored
+* `Record` for the step counts, as previewed above
+* `Workouts`, which is where the Nike Run Club app data is stored
 
-We can extract each of the records and workouts nodes by supplying to `xml2::xml_find_all()` the relevant xpaths, which are like addresses to different elements in the structure of the XML. We need only supply the simple xpaths `.//Record` and `.//Workouts` for our needs, which are at a high level in the structure of the file.
+You can extract specific parts of an XML file by reference to their [xpaths](https://www.w3schools.com/xml/xpath_intro.asp), which are special regex-like strings that point to specific places in the document. The function `xml2::xml_find_all()` takes an xpath and returns the matching information.
 
-Once extracted, we can get the attributes---`type`, `sourceName`, etc, in our preview above---of each node using `xml2::xml_attr()`.
+We need only supply the simple high-level xpaths `//Record` and `//Workouts` for our needs. The forward slashes [read like](https://www.w3schools.com/xml/xpath_syntax.asp) 'select all the nodes in the document with the following name'.
+
+Once extracted, we can get the attributes---like `type`, `sourceName`, etc---of each node using `xml2::xml_attr()`.
 
 # Step to it
 
-So, let's grab all the record nodes and preview the first one.
+So, let's grab all the 'record' nodes and preview the first one.
 
 ```{r rcds-find}
-records <- xml_find_all(xml_in, ".//Record")
+records <- xml_find_all(xml_in, "//Record")
 records[[1]]
 ```
 
 Each record is a single 'bout' of activity as perceived by the app. You can see the first record is a step count from my phone on 21 June 2015, which lasted about two minutes and consisted of 28 steps.
 
-For my purposes I only care about three attributes: the date[^time], the type of activity and the associated value. We can pass a named vector of each of attribute to `xml2::xml_attr()` using `purrr::map_dfr()` to collate the output into a rectangle.
+For my purposes I only care about three attributes: the date[^time], the type of activity and the associated value. We can pass a named vector of each attribute to `xml2::xml_attr()` using `purrr::map_dfr()` to collate the output into a tidy rectangle.
 
 ```{r rcds-attrs}
 records_df <- map_dfr(  # rowbind to dataframe
@@ -134,13 +133,13 @@ records_df <- map_dfr(  # rowbind to dataframe
 glimpse(records_df)  # preview
 ```
 
-So what `type` of activity has been logged?
+So what `type` of activity has been logged in the `Record` nodes?
 
 ```{r rcds-types}
-distinct(records_df, type)
+pull(distinct(records_df, type))
 ```
 
-Aha, so we can isolate `HKQuantityTypeIdentifierStepCount`, then convert the date to datetime class and summarise the number of steps per day. I've also creating a new column that generates a 'point' value that my healthcare provider assigns to meeting certain step-count thresholds.
+I'm interested in step counts, so I'll isolate `HKQuantityTypeIdentifierStepCount`, convert the date to datetime class and then summarise the number of steps per day. 
 
 ```{r rcds-wrangle}
 records_out <- records_df %>% 
@@ -150,9 +149,7 @@ records_out <- records_df %>%
   summarise(steps = sum(steps), .groups = "drop") %>% 
   mutate(
     points = case_when(
-      steps > 12500 ~ 8L,
-      steps > 10000 ~ 5L,
-      steps > 7000 ~ 3L,
+      steps > 12500 ~ 8L, steps > 10000 ~ 5L, steps > 7000 ~ 3L,
       TRUE ~ 0L
     )
   )
@@ -160,18 +157,22 @@ records_out <- records_df %>%
 glimpse(records_out)
 ```
 
-Excellent. Now I, tiny David, can sling this evidence into the eye of the behemoth cyclops that is my healthcare provider.
+I also created a new column that generates a 'points' value that my healthcare provider assigns to meeting certain step-count thresholds. Now I, tiny David, can sling this evidence into the eye of the behemoth cyclops that is my healthcare provider.
+
+I recommend checking first if the data look sensible, because my highest step count was apparently `r format(max(records_out$steps), big.mark = ",")`. I don't recall walking to Chicago and back to London on that day.
 
 ## On a walkabout
 
-There's a million ways to explore these data, but I first wondered how the frequency of step counts might have changed in the year up to 23 March 2020---[the announcement of the UK's first lockdown](https://fullfact.org/health/coronavirus-lockdown-hancock-claim/)---and in the year since.
+There's so many ways you could investigate the step count data, like how frequency changes by day of the week or time of year, for example. 
 
-```{r wo-plot, fig.alt="Side-by-side histograms of step counts before and after lockdown. Before lockdown, a bimodal distribution with peaks at about 3k and 10k steps. After lockdown, a big peak at about 1k and a peak at about 6k with a tail to about 20k."}
+Here's a quick exploration: how did my step-count frequency change in the year up to 23 March 2020---the announcement of the UK's first lockdown---and in the year since?
+
+```{r wo-plot, fig.alt='Side-by-side histograms of step counts before and after lockdown. Before lockdown, a bimodal distribution with peaks at about 3 and 10 km steps. After lockdown, a big peak at about 1 km and a peak at about 6 km with a tail to about 20 km.'}
 records_out %>% 
   mutate(
     covid_year = case_when(
-      date >= "2020-03-23" & date < "2021-03-23" ~ "After COVID lockdown",
-      date >= "2019-03-23" & date < "2020-03-23" ~ "Before COVID lockdown", 
+      date >= "2020-03-23" & date < "2021-03-23" ~ "Year post-lockdown",
+      date >= "2019-03-23" & date < "2020-03-23" ~ "Year pre-lockdown", 
       TRUE ~ NA_character_
     )
   ) %>% 
@@ -179,22 +180,22 @@ records_out %>%
   ggplot() + 
   geom_histogram(aes(steps / 1000), binwidth = 1) + 
   facet_grid(~fct_rev(covid_year)) +
-  labs(x = "Steps (thousands)", y = "Count") +
+  labs(x = "Steps (thousands)", y = "Frequency") +
   theme_minimal()
 ```
 
-Not a surprise, but interesting to see it visually: there's been a far higher proportion of days with a very small number of steps in the lockdown year. The second peak of the bimodal distribution has also regressed to a lower value. This is understandable: I used to walk on parts of my commute and lunchtimes, whereas my
+Ha, not a surprise, but interesting to see it visually: there's been a far higher proportion of days with a very small number of steps in the lockdown year. The second peak of the bimodal distribution has also fallen to a lower value with a more gradual tail. This is understandable: I used to walk on parts of my commute and lunchtimes, whereas my lockdown days have involved running or basically nothing.
 
 # Jog on
 
-Ideally this would come directly out of the Nike Run App, but you can't have it all. Remember that the run data is stored in the `<Workout>` node.
+Now let's look at the year's worth of running data from the `Workout` nodes of the XML.
 
 ```{r wo-find}
-workouts <- xml_find_all(xml_in, ".//Workout")
+workouts <- xml_find_all(xml_in, "//Workout")
 workouts[[1]]
 ```
 
-The attributes are slightly different for workouts compared to records, and there's also some child nodes with further information. This time I care about the activity type (just runs), the date, the distance and the time taken. Unfortunately there isn't any data on splits, which means I can't calculate my record times for each distance. Ah well, we can pass the attributes we do have into the mapping function.
+The attributes are slightly different for workouts compared to records. This time I care about the activity type (just runs), the date, the distance and the time taken. Unfortunately there isn't any data on split times in this file, which means I can't calculate record times, nor is there other detail like altitude gained.
 
 ```{r wo-attrs}
 workouts_df <- map_dfr(
@@ -206,15 +207,14 @@ workouts_df <- map_dfr(
 glimpse(workouts_df)
 ```
 
-Notice something awkward? The duration is in minutes, but it has a decimal value. I wrangled this by taking the decimal part and converting it to seconds, then adding it back to the seconds into the whole number minutes. Speaking of time, I've also computed a rough time per distance metric. In both these cases I used `lubridate::seconds_to_period()` to generate a period-class value that converts to days, hours, minutes and seconds as required.
+We can do a bit of light wrangling to convert 'decimal minutes' to seconds, compute a rough pace, and round the values for readability. I used `lubridate::seconds_to_period()` to generate a `period`-class value that presents the data in days, hours, minutes and seconds.
 
 ```{r wo-wrangle}
 workouts_out <- workouts_df %>% 
-  filter(type == "HKWorkoutActivityTypeRunning") %>% 
+  filter(type == "HKWorkoutActivityTypeRunning", km > 1) %>% 
   mutate(
     date = as.Date(date),
-    across(c(dur, km), as.numeric),
-    dur = round(dur, 3)
+    across(c(dur, km), as.numeric), dur = round(dur, 3)
   ) %>% 
   separate(col = dur, into = c("mins", "mins_dec"), sep = "\\.") %>% 
   transmute(
@@ -225,88 +225,95 @@ workouts_out <- workouts_df %>%
     s = round(s), km = round(km, 2)
   )
 
-tail(workouts_out)
+glimpse(workouts_out)
 ```
-You can see the last few trips in the preview. The period-class columns gives us the timings in minutes (`M`) and seconds (`S`), which is more convenient that looking at the number of seconds alone.
 
 ## High-vis apparel
 
-There's even more ways to explore these data to compared ot the steps data. Here's some ideas for how you might delve in.
+The data are now quite rich and there's many ways to explore it. As a starter, here's some basic summaries for the year to 23 March 2021:
 
 ```{r wo-summarise}
 workouts_out %>% 
-  filter(km > 1) %>% 
   summarise(
-    `Interval (days)` = max(date) - min(date),
-    `Total count` = n(),
-    `Days per run` = round(`Interval (days)` / `Total count`, 1),
-    `Total time` = seconds_to_period(sum(s)), 
+    `Total runs` = n(),
     `Total distance (km)` = round(sum(km)),
-    `Furthest distance (km)` = max(km),
-    `Best average pace` = seconds_to_period(min(round(s / km)))
+    `Total time` = seconds_to_period(sum(s)),
+    `Days per run` = round((max(date) - min(date)) / `Total runs`, 1),
+    `Best average pace` = seconds_to_period(min(round(s / km))),
+    `Total runs of 5 to 10 km` = nrow(filter(., km >= 5 & km < 10)),
+    `Total runs of 10 to 21.1 km` = nrow(filter(., km >= 10 & km < 21.1)),
+    `Total runs of over 21.1 km` = nrow(filter(., km > 21.1))
   ) %>% 
   mutate(across(everything(), as.character)) %>% 
   pivot_longer(everything(), names_to = "Summary", values_to = "Value") %>% 
   knitr::kable()
 ```
-I'm interested in what my pattern of run distance looks like.
 
-On the left are plots for run distances by date (above) and cumulative distance by date (below). The histogram on the right shows the frequency of run distances in 1 km bins.
+In terms of visualisation, I'm interested in what my pattern of run distance looks like. The code below produces plots for run distances by date (top left), cumulative distance by date (bottom left), and a histogram of run distances in 1 km bins (right).
 
-```{r}
+```{r wo-plots, fig.alt='Three plots: distance over time scatterplot, cumulative distance over time line chart, and a histogram of run distance. Patterns show high frequency of 5 and 10 km runs and consistency of run days over time.'}
 p1 <- ggplot(workouts_out) + 
   geom_point(aes(date, km), shape = 1) +
-  labs(y = "") +
+  labs(x = "", y = "Distance (km)") +
   theme_light()
 
 p2 <- workouts_out %>% 
   mutate(km_cum = cumsum(km)) %>% 
   ggplot() +
   geom_line(aes(date, km_cum)) +
-  labs(x = "km", y = "") +
+  labs(x = "", y = "Cumulative distance (km)") +
   theme_light()
 
 p3 <- ggplot(workouts_out) +
   geom_histogram(aes(km), binwidth = 1) +
+  labs(x = "Distance (1 km bins)", y = "Frequency") +
   theme_light()
 
+library(patchwork)  # easy plot layouts
 (p1 / p2) | p3
 ```
 
 You can see I started with a lot of 5 km runs in April and May 2020, before branching out to 10 km or more. I've been pretty consistent in running every two or three days and that's reflected in the chart of cumulative distance. The histogram shows that most runs have been just above 5 km, with another peak just above 10 km. That makes sense: I intentionally set out to run at least these distances.
 
-How about a calendar?
+Another idea is that you you could use [the {calendR} package](https://github.com/R-CoderDotCom/calendR) to plot a calendar of your activity[^duncan]. Or you could do something more abstract: here's a 'run barcode' with a line per run for the full year. The darker the line, the further the distance travelled.
 
-```{r, eval=FALSE}
-library(calendR)
-
+```{r wo-barcode, fig.height=1, fig.width=10, fig.alt='A one-dimensional plot of days represented by vertical lines, with run distance coloured on a scale of white to black.'}
 run_days <- left_join(
   tibble(date = as_date(ymd("2020-03-23"):ymd("2021-03-22"))),
   workouts_out %>% 
-    filter(km > 1, date > "2020-03-23" & date < "2021-03-22") %>%
-    distinct(date) %>%
-    mutate(run = 1),
+    filter(date >= "2020-03-23" & date < "2021-03-23") %>%
+    group_by(date) %>% summarise(km = sum(km), .groups = "drop"),
   by = "date"
 ) %>% replace_na(list(run = 0))
 
-calendR(
-  start_date = "2020-03-23", end_date = "2021-03-22",
-  start = "M", special.days = run_days$run,
-  gradient = TRUE, low.col = "white", special.col = "red",
-  title = "Running days", subtitle = "2020-03-23 to 2021-03-22 inclusive",
-  day.size = 1, weeknames.size = 2.5
-)
-
+par(mar = rep(0, 4))
+image(matrix(run_days$km), col = grey.colors(11, 0.8, 0))
+box(col = "white")
 ```
 
-
-
+A few things stick out to me when scanning this barcode. The three black bands are the half-marathons; the white space (i.e. no runs) after the first of these indicates the rest my knees needed afterwards. There's a thick grey band after halfway, which is when I tried to run seven days in a row (the app is gamified and you get a special badge for doing that). You can also see how the pattern was more regular at the start, but I've since settled into a routine of just trying to fit in three runs and about 25 km per week.
 
 # Cool down
 
-After starting this post, I noticed that Mark Koester has awritten a [more in-depth post](http://www.markwk.com/data-analysis-for-apple-health.html) about Apple Health data, with a focus on Python code for achieving a similar goal. It notes third-party tools like [QS Access](https://apps.apple.com/gb/app/qs-access/id920297614) for extracting data into a friendlier CSV format, for example.
+So the premise was quite simple: download your Apple Health data, read the XML file, extract the nodes of interest, wrangle lightly and present it. I've only done a basic exploration of the data, but there's so much more you could do.
+
+After starting this post, I noticed that [Mark Koester has written an in-depth post](http://www.markwk.com/data-analysis-for-apple-health.html) about Apple Health data, with a focus on Python code for achieving a similar goal. It notes third-party tools like [QS Access](https://apps.apple.com/gb/app/qs-access/id920297614) for extracting data into a friendlier CSV format, for example.
+
+If you're an R user and you're interested in running, [Colin Fay has organised a GitHub-based system](https://twitter.com/_ColinFay/status/1373704738626273280?s=20) for holding yourself accountable in ramping up to runs of 5 km. A new session starts on 5 April.
+
+I also noticed that [Huong Ly Tong will be giving a talk](https://twitter.com/RLadiesBrisbane/status/1373854449777602566) at R Ladies Brisbane later in the month, with a focus on using R to analyse step count data.
+
+It'll be interesting to revisit this in another year's time to see how a 'return to normality' (whatever that means) might impact these patterns of activity.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
 
 [^duncan]: In this vein, you can also [use your Google Maps data to convince the church to marry you](https://nacnudus.github.io/duncangarmonsway/posts/2019-04-22-get-me-to-the-church-on-time-with-r-spatial/), as per Duncan Garmonsway. 
 [^xml2]: '2' because it's a binding to [libxml2](http://xmlsoft.org/), but perhaps also because it's the spiritual successor to [{XML}](https://CRAN.R-project.org/package=XML), which is R's veteran package for XML handling.
 [^scrape]: For example, see previous posts about [travelling the NBA](https://www.rostrum.blog/2018/12/24/nba-travel/) and [polite webscraping](https://www.rostrum.blog/2019/03/04/polite-webscrape/).
 [^time]: Luckily, I live at +0000, so no time-related data wrangling is required for me.
+[^duncan2]: Another reference to [Duncan's post]  (https://nacnudus.github.io/duncangarmonsway/posts/2019-04-22-get-me-to-the-church-on-time-with-r-spatial/).
