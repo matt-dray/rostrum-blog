@@ -1,0 +1,146 @@
+---
+title: Make a {shiny} app README badge
+author: Matt Dray
+date: '2021-03-23'
+slug: shiny-badge
+categories:
+  - code
+  - tutorial
+tags:
+  - badgr
+  - r
+  - shiny
+draft: no
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div class="figure">
+<img src="/post/2021-03-23-shiny-badge_files/randoflag-badges.png" alt="A GitHub repo showing some README badge, including one that has an RStudio logo and says 'shiny' on one half and 'shinyapps.io' on the other half." width="100%"/>
+<p class="caption">
+A <a href="https://shields.io/">shields.io</a> badge built with <a href="https://github.com/matt-dray/badgr">{badgr}</a> in the <a href="https://github.com/matt-dray/randoflag/">‘randoflag’ repo</a> on GitHub
+</p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>Use the {badgr} package to make a clickable README badge for a repo that contains an R Shiny app:
+<a href="https://matt.dray.shinyapps.io/randoflag/"><img src="https://img.shields.io/badge/Shiny-shinyapps.io-blue?style=flat&amp;labelColor=white&amp;logo=RStudio&amp;logoColor=blue" /></a></p>
+</div>
+<div id="badgr-badgr-badgr" class="section level1">
+<h1>Badgr badgr badgr</h1>
+<p>I made the {badgr} R package to take advantage of the full flexibility of <a href="https://shields.io/">shields.io</a>—a service that builds README badges from a supplied URL string—from within R itself.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> You can find <a href="https://github.com/matt-dray/badgr">the source for the package on GitHub</a>, visit its <a href="https://matt-dray.github.io/badgr/">site built with {pkgdown}</a>, or read <a href="https://www.rostrum.blog/2020/05/08/readme-badge/">a blog post about its inception</a>.</p>
+<p>Wait, what’s a README badge? It’s one of those little clickable buttons that provides at-a-glance info about a code repository, like its test coverage or build status.</p>
+<p>Turns out you can make custom badges by building a special URL to shields.io. For example, I use custom badges to tell people that a repo has an associated blog post. This one goes to the post about {badgr}:</p>
+<p><a href="https://www.rostrum.blog/2020/05/08/readme-badge/"><img src="https://img.shields.io/badge/rostrum.blog-post-008900?style=flat&amp;labelColor=black&amp;logo=data:image/gif;base64,R0lGODlhEAAQAPEAAAAAABWCBAAAAAAAACH5BAlkAAIAIf8LTkVUU0NBUEUyLjADAQAAACwAAAAAEAAQAAAC55QkISIiEoQQQgghRBBCiCAIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAAh+QQJZAACACwAAAAAEAAQAAAC55QkIiESIoQQQgghhAhCBCEIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAA7" alt="rostrum.blog post" /></a></p>
+<p>Recently I added a badge to each of my GitHub repositories that contain a Shiny app. The purpose is to let visitors:</p>
+<ul>
+<li>know that the repo contains a Shiny app</li>
+<li>know whether the app is hosted on the internet</li>
+<li>click the badge to go directly to the live app</li>
+</ul>
+<p>I put out <a href="https://twitter.com/mattdray/status/1370373844670746628?s=20">a tweet about this</a> that got a little traction, so I figured it would be worthwhile to record the idea more permanently.</p>
+</div>
+<div id="install" class="section level1">
+<h1>Install</h1>
+<p>First, you can install the {badgr} package from GitHub using the {remotes} package.</p>
+<pre class="r"><code># install.packages(&quot;remotes&quot;)
+remotes::install_github(&quot;matt-dray/badgr&quot;)</code></pre>
+<p>At time of writing, the package should ‘just work’, though it’s dependent ultimately on the shields.io service, of course. <a href="https://github.com/matt-dray/badgr/issues">Leave an issue</a> if you find something wrong.</p>
+</div>
+<div id="template" class="section level1">
+<h1>Template</h1>
+<p><a href="https://gist.github.com/matt-dray/cda4a3facb6b1ca848a8ddbcc885a669">The code is in a GitHub Gist</a>, should you want to access or bookmark it there. It’s a call to the <code>get_badge()</code> function:</p>
+<pre class="r"><code>badgr::get_badge(
+  # Badge label
+  label = &quot;Shiny&quot;,  # left-side text
+  label_color = &quot;white&quot;,  # left-side colour
+  # Badge message
+  message = &quot;shinyapps.io&quot;,  # right-side text
+  color = &quot;blue&quot;,  # right-side colour
+  # Logo
+  logo_simple = &quot;RStudio&quot;,  # named icon from simpleicons.org
+  logo_color = &quot;blue&quot;,  # colour of simpleicons.org icon
+  # Markdown link
+  md_link = &quot;https://matt.dray.shinyapps.io/randoflag/&quot;,  # clickable link URL
+  # Convenience arguments
+  browser_preview = TRUE, # preview badge in your browser
+  to_clipboard = TRUE  # copies markdown to paste into readme
+)</code></pre>
+<pre><code># Opening browser to display badge preview
+# Badge Markdown added to clipboard
+# [1] &quot;[![](https://img.shields.io/badge/Shiny-shinyapps.io-blue?style=flat&amp;labelColor=white&amp;logo=RStudio&amp;logoColor=blue)](https://matt.dray.shinyapps.io/randoflag/)&quot;</code></pre>
+<p>The output is a Markdown string that you can paste into your README. You can see the string is actually a link within a link: the URL to the shields.io badge is wrapped by a link to the Shiny app itself.</p>
+<p>Conveniently, the <code>to_clipboard = TRUE</code> argument copies the string to your clipboard and <code>browser_preview = TRUE</code> opens a browser window with a preview of your badge in a new tab. You’ll notice these outcomes are referenced in the output from the function.</p>
+<p>Pasting that string into your Markdown or R Markdown README results in this badge when rendered:</p>
+<p><a href="https://matt.dray.shinyapps.io/randoflag/"><img src="https://img.shields.io/badge/Shiny-shinyapps.io-blue?style=flat&amp;labelColor=white&amp;logo=RStudio&amp;logoColor=blue" /></a></p>
+<p>In this example, the badge is from <a href="https://github.com/matt-dray/randoflag/blob/main/README.md">the repo for ‘randoflag’</a>, which is a guessing-game Shiny app hosted on shinyapps.io, which serves a random emoji flag. You can <a href="https://www.rostrum.blog/2021/03/02/randoflag/">read about that app</a> in an earlier blog post.</p>
+<p>Note also that {badgr} is capable of incorporating bespoke icons, but we didn’t need to provide a custom RStudio logo because shields.io can easily display any icon that’s <a href="https://simpleicons.org/?q=rstudio">already part of simpleicons.org</a>.</p>
+</div>
+<div id="variants" class="section level1">
+<h1>Variants</h1>
+<p>I think the badge is a useful at-a-glance recognition that the repo contains a Shiny app, whether it’s hosted or not, and a convenient clickable link to the app itself.</p>
+<p>I think the wording on the right-hand side of the badge is a good place to indicate the app’s status. Text variants could, for example, be:</p>
+<ul>
+<li><code>shinyapps.io</code> (the app is live on RStudio’s shinyapps.io service)</li>
+<li><code>not hosted</code> (the repo contains a Shiny app, but it’s not hosted online)</li>
+<li><code>not yet hosted</code> (the Shiny app in the repo is in development, but not yet live on the internet)</li>
+</ul>
+<p>I’ve used all three of these so far, but you can use whatever text you want, really.</p>
+<p>I’ve already got use out of custom Shiny badges for my repos. I look forward to seeing some more in the wild.</p>
+<div class="figure">
+<img src="/post/2021-03-23-shiny-badge_files/AmericanBadger.JPG" alt="An American badger pokes its head out of a hole." width="50%"/>
+<p class="caption">
+Bonus: American badger in the actual wild (<a href="https://commons.wikimedia.org/wiki/File:AmericanBadger.JPG">Jonathunder</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>)
+</p>
+</div>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.0.4 (2021-02-15)
+##  os       macOS Big Sur 10.16         
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2021-03-23                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version    date       lib source                            
+##  assertthat    0.2.1      2019-03-21 [1] CRAN (R 4.0.0)                    
+##  badgr       * 0.1        2021-03-13 [1] Github (matt-dray/badgr@97ae19c)  
+##  base64enc     0.1-3      2015-07-28 [1] CRAN (R 4.0.0)                    
+##  blogdown      1.2        2021-03-04 [1] CRAN (R 4.0.2)                    
+##  bookdown      0.21       2020-10-13 [1] CRAN (R 4.0.2)                    
+##  cli           2.3.1      2021-02-23 [1] CRAN (R 4.0.2)                    
+##  clipr         0.7.1      2020-10-08 [1] CRAN (R 4.0.2)                    
+##  digest        0.6.27     2020-10-24 [1] CRAN (R 4.0.2)                    
+##  evaluate      0.14       2019-05-28 [1] CRAN (R 4.0.0)                    
+##  glue          1.4.2      2020-08-27 [1] CRAN (R 4.0.2)                    
+##  htmltools     0.5.1.9000 2021-03-11 [1] Github (rstudio/htmltools@ac43afe)
+##  knitr         1.31       2021-01-27 [1] CRAN (R 4.0.2)                    
+##  magrittr      2.0.1      2020-11-17 [1] CRAN (R 4.0.2)                    
+##  rlang         0.4.10     2020-12-30 [1] CRAN (R 4.0.2)                    
+##  rmarkdown     2.6        2020-12-14 [1] CRAN (R 4.0.2)                    
+##  sessioninfo   1.1.1      2018-11-05 [1] CRAN (R 4.0.0)                    
+##  stringi       1.5.3      2020-09-09 [1] CRAN (R 4.0.2)                    
+##  stringr       1.4.0      2019-02-10 [1] CRAN (R 4.0.0)                    
+##  withr         2.4.1      2021-01-26 [1] CRAN (R 4.0.2)                    
+##  xfun          0.21       2021-02-10 [1] CRAN (R 4.0.2)                    
+##  yaml          2.2.1      2020-02-01 [1] CRAN (R 4.0.0)                    
+## 
+## [1] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
+</details>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>See also on CRAN <a href="https://github.com/GuangchuangYu/badger">the {badger} R package</a> from Guangchuang Yu, which has a number of pre-baked badges for simplicity.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
