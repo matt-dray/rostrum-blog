@@ -1,0 +1,80 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r attach-pkgs, message=FALSE}
+# Load packages
+library(dplyr)
+library(rvest)
+library(stringr)
+library(lubridate)
+library(ggplot2)
+```
+
+```{r scrape-blog}
+# Scrape the rostrum.blog home page
+html <- read_html("https://rostrum.blog/")  # the site's homepage lists the posts
+
+# Extract the post titles
+title <- html %>%
+  html_nodes(".archive-item-link") %>%  # node identified with SelectorGadget 
+  html_text()  # extract the text from the node
+
+# Extract the post dates
+date <- html %>%
+  html_nodes(".archive-item-date") %>%  # element with the data we care about
+  html_text() %>%  # convert to text
+  str_replace_all("\n|[:space:]", "")  # replace newline-space with blank
+
+# Dataframe of titles and dates
+posts <- tibble(title = title, publish_date = date) %>% 
+  mutate(
+    publish_date = ymd(date),
+    year_month  = format(publish_date, "%Y-%m")
+  ) %>%
+  arrange(publish_date)
+```
+
+```{r plot}
+# Create plot object
+p <- posts %>%
+  mutate(count = 1) %>%   # dummy to indicate a post was made
+  ggplot(aes(x = publish_date, y = count)) +
+  geom_point(color = "#1D8016") +  # match the rostrum.blog green
+  theme_void()  # strip plot elements
+```
+
+<img src="https://raw.githubusercontent.com/matt-dray/stickers/master/output/rostrum_hex.png" alt="Hexagonal design containing the text 'rostrum.blog' and the blog's logo of a 16-bit insect." width="150" align="right">
+
+# rostrum-blog
+
+<!-- badges: start -->
+[![rostrum.blog
+post](https://img.shields.io/badge/rostrum-blog-008900?style=flat&labelColor=black&logo=data:image/gif;base64,R0lGODlhEAAQAPEAAAAAABWCBAAAAAAAACH5BAlkAAIAIf8LTkVUU0NBUEUyLjADAQAAACwAAAAAEAAQAAAC55QkISIiEoQQQgghRBBCiCAIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAAh+QQJZAACACwAAAAAEAAQAAAC55QkIiESIoQQQgghhAhCBCEIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAA7)](https://www.rostrum.blog/)
+[![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/ebfbdae4-a903-43e8-9f53-75becd95b42e/deploy-status)](https://app.netlify.com/sites/rostrum/deploys)
+<!-- badges: end -->
+
+These are the source files for [rostrum.blog](https://www.rostrum.blog/), a blog about fun and learning with the R language. Read more on the [about](https://www.rostrum.blog/about/) page.
+
+# Stats
+
+There have been `r nrow(posts)` posts on the blog between `r min(posts$publish_date)` (the first post) and `r max(posts$publish_date)` (the most recent).
+
+That means a new post roughly every `r round((as.numeric(max(posts$publish_date) - min(posts$publish_date))) / nrow(posts))` days, or about `r round(((nrow(posts) / (as.numeric(max(posts$publish_date) - min(posts$publish_date)))) * 30), 1)` posts per month.
+
+Each dot in this chart is a published post:
+
+```{r plot-out, fig.height=0.5, fig.width=10}
+p
+```
+
+# Infrastructure
+
+The site is generated with [{blogdown}](https://bookdown.org/yihui/blogdown/) and uses a customised version of [the Lithium theme](https://github.com/jrutheiser/hugo-lithium-theme) modified by [Yihui Xie](https://github.com/yihui/hugo-lithium-theme). The site is hosted with [Netlify](https://www.netlify.com/).
