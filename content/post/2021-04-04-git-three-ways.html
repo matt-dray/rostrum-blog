@@ -1,0 +1,170 @@
+---
+title: '{gert} going with Git'
+author: Matt Dray
+date: '2021-05-05'
+slug: gert
+categories:
+  - code
+  - tutorial
+tags:
+  - gert
+  - git
+  - github
+  - r
+draft: yes
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>Learning Git on the command line is an extra burden for users switching from point-and-click workflows to R-led reproducible and version-controlled workflows. The {gert} package uses R functions and objects to interact with Git instead, which might make version control easier to use consistently for these users.</p>
+</div>
+<div id="different-version-control-versions" class="section level1">
+<h1>Different version control versions</h1>
+<p>I try to help people transition their analysis from point-and-click workflows to reproducible and version-controlled code-based projects.</p>
+<p>I think it’s relatively easy to sell the idea of version control. It’s harder, in my experience, to make the process stick. I think a big part of that is how daunting it can be to learn R and then also have to learn Git and the command line.</p>
+<p>If you’re already learning R, then why not use an R interface to Git?</p>
+<p>I’m advocating for a code-led version control process that’s . It would be strange to pry people away from point-and-click workflows and then use the point-and-click GUI available in RStudio, for example, though I can see how such tools minimise friction versus writing on the command line.</p>
+</div>
+<div id="summary" class="section level1">
+<h1>Summary</h1>
+<p>There’s a lot of git commands and a lot of {gert} funcitons that replicate them. For purposes of this post, and the focus on simple add-commit-push Git workflows, there’s a few main commands to consider:</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Command</th>
+<th align="left">Git</th>
+<th align="left">{gert}</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Initiate Git</td>
+<td align="left"><code>git init</code></td>
+<td align="left"><code>git_init("&lt;url&gt;")</code></td>
+</tr>
+<tr class="even">
+<td align="left">Clone a repo</td>
+<td align="left"><code>git clone &lt;url&gt;</code></td>
+<td align="left"><code>git_clone("&lt;url&gt;")</code></td>
+</tr>
+<tr class="odd">
+<td align="left">Pull changes</td>
+<td align="left"><code>git pull</code></td>
+<td align="left"><code>git_pull()</code></td>
+</tr>
+<tr class="even">
+<td align="left">Check for changes</td>
+<td align="left"><code>git status</code></td>
+<td align="left"><code>git_status()</code></td>
+</tr>
+<tr class="odd">
+<td align="left">Stage changes</td>
+<td align="left"><code>git add &lt;file&gt;</code></td>
+<td align="left"><code>git_add()</code></td>
+</tr>
+<tr class="even">
+<td align="left">Commit</td>
+<td align="left"><code>git commit -m "&lt;message&gt;"</code></td>
+<td align="left"><code>git_commit("&lt;message&gt;")</code></td>
+</tr>
+<tr class="odd">
+<td align="left">Push</td>
+<td align="left"><code>git push</code></td>
+<td align="left"><code>git_push()</code></td>
+</tr>
+<tr class="even">
+<td align="left">Check current branch</td>
+<td align="left"><code>git branch</code></td>
+<td align="left"><code>gert::git_branch()</code></td>
+</tr>
+<tr class="odd">
+<td align="left">Create branch</td>
+<td align="left"><code>git branch -b &lt;branch&gt;</code></td>
+<td align="left"><code>git_branch_create("&lt;branch&gt;")</code></td>
+</tr>
+<tr class="even">
+<td align="left">Switch to branch</td>
+<td align="left"><code>git checkout &lt;branch&gt;</code></td>
+<td align="left"><code>git_branch_checkout("&lt;branch&gt;")</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="approaches" class="section level1">
+<h1>Approaches</h1>
+<p>This post also isn’t about setting up Git and GitHub. I recommend you check out the <a href="https://happygitwithr.com/">Happy Git and GitHub for the UseR</a> book by Jenny Bryan, the STAT545 TAs and Jim Hester. I’ve also written an earlier post about Git and GitHub that explains <a href="https://www.rostrum.blog/2019/10/21/git-github/#one-time">the one-time setup tasks</a> you’ll need to do.</p>
+<div id="command-line-workflow" class="section level2">
+<h2>Command-line workflow</h2>
+<p>Remember, these are being typed directly into the command line in an interactive session. I’ve used the shell prompt <code>$</code> as a reminder.</p>
+<pre><code>$ git init</code></pre>
+<pre><code></code></pre>
+<pre><code>$ git remote add(&quot;&lt;url&gt;&quot;)</code></pre>
+<pre><code></code></pre>
+<pre><code>$ git status</code></pre>
+<pre><code></code></pre>
+<pre><code>$ git add &quot;&lt;file&gt;&quot;</code></pre>
+<pre><code></code></pre>
+<pre><code>$ git commit -m &quot;&lt;message&gt;&quot;</code></pre>
+<pre><code></code></pre>
+<pre><code>$ git push origin main</code></pre>
+<pre><code></code></pre>
+</div>
+<div id="gert-workflow" class="section level2">
+<h2>{gert} workflow</h2>
+<p>Instead of opening a terminal to write git commands, {gert} lets you write functions in the R console.</p>
+<p>This is good for beginners or people not confident with the command line.</p>
+<p>This means you can write R functions</p>
+<p>You’re returned familiar R objects with the Git information, which you can further interrogate with R code. You don’t have to understand how to write at the command line to explore the information.</p>
+<p>{gert} doesn’t have functions to replicate all Git commands, but that’s not really a problem for the simpler status-add-commit-push workflow.</p>
+<p>Remember, these are being typed directly into the R console in an interactive session. I’ve used the R prompt <code>&gt;</code> as a reminder.</p>
+<pre class="r"><code>&gt; install.packages(&quot;gert&quot;)
+&gt; library(gert)</code></pre>
+<pre class="r"><code># Linking to libgit2 v1.1.0, ssh support: YES
+# Global config: /Users/matt/.gitconfig
+# Default user: Matt Dray &lt;email&gt;</code></pre>
+<p>After attaching the package, you get some information: SSH support is active, the filepath of the global git config file and the name and email address of the user to whom any commits will be ascribed.</p>
+<p>The function names pretty much replicate Git commands, so <code>git status</code> is <code>git_status()</code>. There’s some handy additional funcitons like <code>git_commit_all("&lt;message&gt;")</code> that automatically stages and commits all changes, i.e. it runs <code>git add .</code> and <code>git commit -m &lt;message&gt;</code> in one go.</p>
+<pre class="r"><code>&gt; git_init()</code></pre>
+<pre class="r"><code>&gt; git_remote_add(&quot;git@github.com:matt-dray/test.git&quot;)</code></pre>
+<pre class="r"><code>&gt; usethis::use_git_ignore(c(&quot;.Rproj.user&quot;, &quot;.DS_Store&quot;))</code></pre>
+<pre class="r"><code># ✓ Adding &#39;.Rproj.user&#39;, &#39;.DS_Store&#39; to &#39;.gitignore&#39;</code></pre>
+<pre class="r"><code>&gt; git_status()</code></pre>
+<pre class="r"><code># # A tibble: 2 x 3
+#   file       status staged
+#   &lt;chr&gt;      &lt;chr&gt;  &lt;lgl&gt; 
+# 1 .gitignore new    FALSE 
+# 2 test.Rproj new    FALSE </code></pre>
+<pre class="r"><code>&gt; git_add(c(&quot;.gitignore&quot;, &quot;test.Rproj&quot;))</code></pre>
+<pre class="r"><code># A tibble: 2 x 3
+#   file       status staged
+#   &lt;chr&gt;      &lt;chr&gt;  &lt;lgl&gt; 
+# 1 .gitignore new    TRUE  
+# 2 test.Rproj new    TRUE </code></pre>
+<pre class="r"><code>&gt; git_commit(&quot;Add gitignore&quot;)</code></pre>
+<pre class="r"><code># [1] &quot;38608b0fe0cd7258919d05acd94934013ad04333&quot;</code></pre>
+<pre class="r"><code>&gt; git_push()</code></pre>
+<pre class="r"><code># Trying to authenticate &#39;git&#39; using ssh-agent...
+# Trying to authenticate &#39;git&#39; using provided ssh-key...
+# Transferred 4 of 4 objects...done!
+# [status] refs/heads/master: unchanged
+# [new]     38608b0fe0cd7258919d refs/remotes/origin/master</code></pre>
+</div>
+</div>
+<div id="bonus" class="section level1">
+<h1>Bonus</h1>
+<div id="git-prompt" class="section level2">
+<h2>Git prompt</h2>
+<p>Sometimes you forget what branch you’re on or if any changes have been made since the last commit. To prevent you from checking <code>git status</code> continually, you can customise your R prompt like this, where the asterisk indicates a change:</p>
+<pre><code>main* &gt;</code></pre>
+<p><a href="https://github.com/gaborcsardi/prompt">The {prompt} package</a> has functions to do this. You can run {prompt} code on startup by adding it to your RProfile file. The {usethis} package will help you find and open your RProfile if you don’t know where it is.</p>
+<pre class="r"><code>install.packages(c(&quot;prompt&quot;, &quot;usethis&quot;))
+usethis::edit_r_profile()</code></pre>
+<p>Your RProfile file will open. Add the following:</p>
+<pre class="r"><code>if (interactive()) prompt::set_prompt(prompt::prompt_git())</code></pre>
+<p>After refreshing, you’ll see the prompt has changed. This will happen for every R instance you open from now on. You can <code>prompt::suspend()</code> to return to the classic prompt, but you can <code>prompt::restore()</code> it at any time.</p>
+<p>You can set even more informative prompts, like <code>prompt::prompt_fancy()</code>, or create your own, as per <a href="https://lapsedgeographer.london/2020-11/custom-r-prompt/">Matt Kerlogue’s walkthrough</a>.</p>
+</div>
+</div>

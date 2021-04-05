@@ -1,0 +1,211 @@
+---
+title: '{gert} going with Git'
+author: Matt Dray
+date: '2021-05-05'
+slug: gert
+categories:
+  - code
+  - tutorial
+tags:
+  - gert
+  - git
+  - github
+  - r
+draft: yes
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+library(gert)
+```
+
+# tl;dr
+
+
+
+
+
+Learning Git on the command line is an extra burden for users switching from point-and-click workflows to R-led reproducible and version-controlled workflows. The {gert} package uses R functions and objects to interact with Git instead, which might make version control easier to use consistently for these users.
+
+
+# Different version control versions
+
+I try to help people transition their analysis from point-and-click workflows to reproducible and version-controlled code-based projects. 
+
+I think it's relatively easy to sell the idea of version control. It's harder, in my experience, to make the process stick. I think a big part of that is how daunting it can be to learn R and then also have to learn Git and the command line.
+
+If you're already learning R, then why not use an R interface to Git?
+
+I'm advocating for a code-led version control process that's . It would be strange to pry people away from point-and-click workflows and then use the point-and-click GUI available in RStudio, for example, though I can see how such tools minimise friction versus writing on the command line.
+
+# Summary
+
+There's a lot of git commands and a lot of {gert} funcitons that replicate them. For purposes of this post, and the focus on simple add-commit-push Git workflows, there's a few main commands to consider:
+
+| Command | Git | {gert} |
+| :---- | :---- | :---- |
+| Initiate Git | `git init` | `git_init("<url>")` |
+| Clone a repo | `git clone <url>` | `git_clone("<url>")` |
+| Pull changes | `git pull` | `git_pull()` |
+| Check for changes | `git status` | `git_status()` |
+| Stage changes | `git add <file>` | `git_add()` |
+| Commit | `git commit -m "<message>"` | `git_commit("<message>")` |
+| Push | `git push` | `git_push()` |
+| Check current branch | `git branch` | `gert::git_branch()` |
+| Create branch | `git branch -b <branch>` | `git_branch_create("<branch>")` |
+| Switch to branch | `git checkout <branch>` | `git_branch_checkout("<branch>")` |
+
+# Approaches
+
+This post also isn't about setting up Git and GitHub. I recommend you check out the [Happy Git and GitHub for the UseR](https://happygitwithr.com/) book by Jenny Bryan, the STAT545 TAs and Jim Hester. I've also written an earlier post about Git and GitHub that explains [the one-time setup tasks](https://www.rostrum.blog/2019/10/21/git-github/#one-time) you'll need to do.
+
+## Command-line workflow
+
+Remember, these are being typed directly into the command line in an interactive session. I've used the shell prompt `$` as a reminder.
+
+```
+$ git init
+```
+```
+```
+
+```
+$ git remote add("<url>")
+```
+```
+```
+
+```
+$ git status
+```
+```
+```
+
+```
+$ git add "<file>"
+```
+```
+```
+
+```
+$ git commit -m "<message>"
+```
+```
+```
+
+```
+$ git push origin main
+```
+```
+```
+
+## {gert} workflow
+
+Instead of opening a terminal to write git commands, {gert} lets you write functions in the R console.
+
+This is good for beginners or people not confident with the command line.
+
+This means you can write R functions
+
+You're returned familiar R objects with the Git information, which you can further interrogate with R code. You don't have to understand how to write at the command line to explore the information.
+
+{gert} doesn't have functions to replicate all Git commands, but that's not really a problem for the simpler status-add-commit-push workflow.
+
+Remember, these are being typed directly into the R console in an interactive session. I've used the R prompt `>` as a reminder.
+
+```{r}
+> install.packages("gert")
+> library(gert)
+```
+```{r}
+# Linking to libgit2 v1.1.0, ssh support: YES
+# Global config: /Users/matt/.gitconfig
+# Default user: Matt Dray <email>
+```
+
+After attaching the package, you get some information: SSH support is active, the filepath of the global git config file and the name and email address of the user to whom any commits will be ascribed.
+
+The function names pretty much replicate Git commands, so `git status` is `git_status()`. There's some handy additional funcitons like `git_commit_all("<message>")` that automatically stages and commits all changes, i.e. it runs `git add .` and `git commit -m <message>` in one go.
+
+```{r}
+> git_init()
+```
+
+```{r}
+> git_remote_add("git@github.com:matt-dray/test.git")
+```
+
+```{r}
+> usethis::use_git_ignore(c(".Rproj.user", ".DS_Store"))
+```
+```{r}
+# ✓ Adding '.Rproj.user', '.DS_Store' to '.gitignore'
+```
+
+
+```{r}
+> git_status()
+```
+```{r}
+# # A tibble: 2 x 3
+#   file       status staged
+#   <chr>      <chr>  <lgl> 
+# 1 .gitignore new    FALSE 
+# 2 test.Rproj new    FALSE 
+```
+
+```{r}
+> git_add(c(".gitignore", "test.Rproj"))
+```
+```{r}
+# A tibble: 2 x 3
+#   file       status staged
+#   <chr>      <chr>  <lgl> 
+# 1 .gitignore new    TRUE  
+# 2 test.Rproj new    TRUE 
+```
+
+```{r}
+> git_commit("Add gitignore")
+```
+```{r}
+# [1] "38608b0fe0cd7258919d05acd94934013ad04333"
+```
+
+```{r}
+> git_push()
+```
+```{r}
+# Trying to authenticate 'git' using ssh-agent...
+# Trying to authenticate 'git' using provided ssh-key...
+# Transferred 4 of 4 objects...done!
+# [status] refs/heads/master: unchanged
+# [new]     38608b0fe0cd7258919d refs/remotes/origin/master
+```
+
+# Bonus
+
+## Git prompt
+
+Sometimes you forget what branch you're on or if any changes have been made since the last commit. To prevent you from checking `git status` continually, you can  customise your R prompt like this, where the asterisk indicates a change:
+
+```
+main* >
+```
+
+[The {prompt} package](https://github.com/gaborcsardi/prompt) has functions to do this. You can run {prompt} code on startup by adding it to your RProfile file. The {usethis} package will help you find and open your RProfile if you don't know where it is.
+
+```{r}
+install.packages(c("prompt", "usethis"))
+usethis::edit_r_profile()
+```
+
+Your RProfile file will open. Add the following:
+
+```{r}
+if (interactive()) prompt::set_prompt(prompt::prompt_git())
+```
+
+After refreshing, you'll see the prompt has changed. This will happen for every R instance you open from now on. You can `prompt::suspend()` to return to the classic prompt, but you can `prompt::restore()` it at any time.
+
+You can set even more informative prompts, like `prompt::prompt_fancy()`, or create your own, as per [Matt Kerlogue's walkthrough](https://lapsedgeographer.london/2020-11/custom-r-prompt/).
