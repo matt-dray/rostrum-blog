@@ -6,8 +6,8 @@ output: github_document
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(echo = FALSE)
-```
 
+```
 ```{r attach-pkgs, message=FALSE}
 # Load packages
 library(dplyr)
@@ -34,10 +34,8 @@ date <- html %>%
   str_replace_all("\n|[:space:]", "")  # replace newline-space with blank
 
 # Dataframe of titles and dates
-posts <- tibble(title = title, publish_date = date) %>% 
-  mutate(publish_date = ymd(date)) %>%
-  arrange(publish_date) %>% 
-  mutate(n = dplyr::row_number())
+posts <- tibble(title = title, publish_date = ymd(date)) %>% 
+  transmute(n = nrow(.):1, publish_date, title)
 ```
 
 ```{r plot-obj}
@@ -68,7 +66,7 @@ These are the source files for [rostrum.blog](https://www.rostrum.blog/), a blog
 
 # Stats
 
-There have been `r nrow(posts)` posts on the blog between `r min(posts$publish_date)` (the first post) and `r max(posts$publish_date)` (the most recent).
+There have been `r nrow(posts)` posts on the blog between `r min(posts$publish_date)` (the first) and `r max(posts$publish_date)` (the most recent).
 
 That means a new post roughly every `r round((as.numeric(max(posts$publish_date) - min(posts$publish_date))) / nrow(posts))` days, or about `r round(((nrow(posts) / (as.numeric(max(posts$publish_date) - min(posts$publish_date)))) * 30), 1)` posts per month.
 
@@ -81,7 +79,7 @@ p
 <details><summary>Click for full list of posts</summary>
 ```{r}
 posts %>%
-  select(n, `Publish date` = publish_date, Title = title) %>%
+  rename(`Number` = n, Date = publish_date, Title = title) %>% 
   kable()
 ```
 </details>
