@@ -15,6 +15,7 @@ library(rvest)
 library(stringr)
 library(lubridate)
 library(ggplot2)
+library(knitr)
 ```
 
 ```{r scrape-blog}
@@ -34,11 +35,9 @@ date <- html %>%
 
 # Dataframe of titles and dates
 posts <- tibble(title = title, publish_date = date) %>% 
-  mutate(
-    publish_date = ymd(date),
-    year_month  = format(publish_date, "%Y-%m")
-  ) %>%
-  arrange(publish_date)
+  mutate(publish_date = ymd(date)) %>%
+  arrange(publish_date) %>% 
+  mutate(n = dplyr::row_number())
 ```
 
 ```{r plot-obj}
@@ -78,6 +77,15 @@ Each dot in this chart is a published post:
 ```{r plot-out, fig.height=0.5, fig.width=10}
 p
 ```
+
+<details><summary>Click for full list of posts</summary>
+```{r}
+posts %>%
+  select(n, `Publish date` = publish_date, Title = title) %>%
+  kable()
+```
+</details>
+
 
 # Infrastructure
 
