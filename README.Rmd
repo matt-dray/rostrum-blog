@@ -6,16 +6,16 @@ output: github_document
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(echo = FALSE)
-
 ```
+
 ```{r attach-pkgs, message=FALSE}
-# Load packages
-library(dplyr)
-library(rvest)
-library(stringr)
-library(lubridate)
-library(ggplot2)
-library(knitr)
+# Attach packages
+library(tidyverse) # CRAN v1.3.0
+library(rvest)     # CRAN v1.0.0
+library(lubridate) # CRAN v1.7.10
+library(knitr)     # CRAN v1.31
+library(sonify)    # CRAN v0.0-1
+library(tuneR)     # CRAN v1.3.3
 ```
 
 ```{r scrape-blog}
@@ -39,16 +39,41 @@ posts <- tibble(title = title, publish_date = ymd(date)) %>%
 ```
 
 ```{r plot-obj}
-# Create plot object
+rostrum_green <- "#1D8016"
+
+                   # Create plot object
 p <- posts %>%
   mutate(count = 1) %>%   # dummy to indicate a post was made
   ggplot(aes(x = publish_date, y = count)) +
-  geom_point(color = "#1D8016") +  # match the rostrum.blog green
-  theme_void() +  # strip plot elements
+  geom_point(
+    shape = "|", size = 8, stroke = 1,
+    color = rostrum_green,
+    fill = "transparent"
+  ) +
   theme(
-    panel.background = element_rect(fill = "transparent",colour = NA),
-    plot.background = element_rect(fill = "transparent", colour = NA)
+    panel.background = element_rect(fill = "transparent"),
+    plot.background = element_rect(fill = "transparent", color = NA),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(color = rostrum_green, size = 12),
+    axis.ticks.x = element_line(color = rostrum_green)
   )
+```
+
+```{r sonify}
+posts_per_day <- left_join(
+  as_tibble(as_date(ymd("2020-03-23"):today())),
+  count(posts, publish_date),
+  by = c("value" = "publish_date")
+) %>% 
+  replace_na(list(n = 0))
+
+sonified_posts <- sonify(posts_per_day$n, play = FALSE)
+
+writeWave(sonified_posts, "README_files/audio/posts.wav")
 ```
 
 <img src="https://raw.githubusercontent.com/matt-dray/stickers/master/output/rostrum_hex.png" alt="Hexagonal design containing the text 'rostrum.blog' and the blog's logo of a 16-bit insect." width="150" align="right">
@@ -66,17 +91,11 @@ These are the source files for [rostrum.blog](https://www.rostrum.blog/), a blog
 
 # Stats
 
-There have been `r nrow(posts)` posts on the blog between `r min(posts$publish_date)` (the first) and `r max(posts$publish_date)` (the most recent).
+There have been `r nrow(posts)` posts on the blog since the first was published on `r min(posts$publish_date)`.
 
-That means a new post roughly every `r round((as.numeric(max(posts$publish_date) - min(posts$publish_date))) / nrow(posts))` days, or about `r round(((nrow(posts) / (as.numeric(max(posts$publish_date) - min(posts$publish_date)))) * 30), 1)` posts per month.
+That means a new post roughly every `r round((as.numeric(today() - min(posts$publish_date))) / nrow(posts))` days, or about `r round(((nrow(posts) / (as.numeric(today() - min(posts$publish_date)))) * 30))` posts per month.
 
-Each dot in this chart is a published post:
-
-```{r plot-out, fig.height=0.5, fig.width=10}
-p
-```
-
-<details><summary>Click for full list of posts</summary>
+<details><summary>Click to expand a full list of posts</summary>
 ```{r}
 posts %>%
   rename(`Number` = n, Date = publish_date, Title = title) %>% 
@@ -84,6 +103,17 @@ posts %>%
 ```
 </details>
 
+Each vertical line in this chart is a published post:
+
+```{r plot-out, fig.height=1, fig.width=10}
+p
+```
+
+Here's an audio representation of the posts over time:
+
+<html><audio controls><source src="README_files/audio/posts.wav" type="audio/wav"></audio></html>
+
+_Stats last updated `r today()`._
 
 # Infrastructure
 
