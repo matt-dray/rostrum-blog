@@ -9,8 +9,8 @@
 
 [![rostrum.blog
 post](https://img.shields.io/badge/rostrum-blog-008900?style=flat&labelColor=black&logo=data:image/gif;base64,R0lGODlhEAAQAPEAAAAAABWCBAAAAAAAACH5BAlkAAIAIf8LTkVUU0NBUEUyLjADAQAAACwAAAAAEAAQAAAC55QkISIiEoQQQgghRBBCiCAIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAAh+QQJZAACACwAAAAAEAAQAAAC55QkIiESIoQQQgghhAhCBCEIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAA7)](https://www.rostrum.blog/)
-[![License: CC
-BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+[![License: CC BY-NC-SA
+4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 [![Netlify
 Status](https://api.netlify.com/api/v1/badges/ebfbdae4-a903-43e8-9f53-75becd95b42e/deploy-status)](https://app.netlify.com/sites/rostrum/deploys)
 <!-- badges: end -->
@@ -25,37 +25,24 @@ with the R language. Read more on the
 There have been 83 posts on the blog since the first one was published
 on 2018-04-14.
 
-That’s a post roughly every 13 days, or about 2 posts per month.
+That’s a post roughly every 13 days, or about 2.3 posts per month.
 
-The latest post was published 15 days ago on on 2021-03-23.
+The latest post was published 15 day(s) ago on on 2021-03-23.
 
 This plot shows posts over time:
 
-![](README_files/figure-gfm/plot-out-1.png)<!-- -->
-
-Press play to hear a sonified version of the chart:
-
-<html>
-
-<audio controls>
-
-<source src="README_files/audio/posts.wav" type="audio/wav">
-
-</audio>
-
-</html>
-
-<br> <br>
+<img src="README_files/figure-gfm/plot-out-1.png" title="A 2D chart where each point represents a post on an axis of time spanning from 2018 to the present. There are some gaps, but posts have been relatively consistent over time." alt="A 2D chart where each point represents a post on an axis of time spanning from 2018 to the present. There are some gaps, but posts have been relatively consistent over time."  />
 
 <details>
-
-<summary>Click to expand a full list of posts</summary>
+<summary>
+Click to expand a full list of posts
+</summary>
 
 | Number | Date       | Title                                             |
-| -----: | :--------- | :------------------------------------------------ |
+|-------:|:-----------|:--------------------------------------------------|
 |     83 | 2021-03-23 | Make a {shiny} app README badge                   |
 |     82 | 2021-03-23 | Apple Health and Nike Run Club with {xml2}        |
-|     81 | 2021-03-13 | Protect yourself from equals assignment\!         |
+|     81 | 2021-03-13 | Protect yourself from equals assignment!          |
 |     80 | 2021-03-02 | A tiny {shiny} flag challenge                     |
 |     79 | 2021-02-27 | Typo-shaming my Git commits                       |
 |     78 | 2021-02-21 | \#GithubSkyline but hear me out                   |
@@ -148,6 +135,6 @@ theme](https://github.com/jrutheiser/hugo-lithium-theme) modified by
 [Yihui Xie](https://github.com/yihui/hugo-lithium-theme). The site is
 hosted with [Netlify](https://www.netlify.com/).
 
------
+------------------------------------------------------------------------
 
 *Last updated 2021-04-07*
