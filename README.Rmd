@@ -4,7 +4,7 @@ output: github_document
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-```{r, include = FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
@@ -42,7 +42,7 @@ posts <- tibble(title = title, publish_date = ymd(date)) %>%
 ```{r plot-obj}
 rostrum_green <- "#1D8016"
 
-                   # Create plot object
+# Create plot object
 p <- posts %>%
   mutate(count = 1) %>%   # dummy to indicate a post was made
   ggplot(aes(x = publish_date, y = count)) +
@@ -56,25 +56,25 @@ p <- posts %>%
     plot.background = element_rect(fill = "transparent", color = NA),
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
+    axis.text.x = element_text(color = rostrum_green, size = 10),
+    axis.ticks.x = element_line(color = rostrum_green),
     axis.title = element_blank(),
     axis.ticks.y = element_blank(),
-    axis.text.y = element_blank(),
-    axis.text.x = element_text(color = rostrum_green, size = 10),
-    axis.ticks.x = element_line(color = rostrum_green)
+    axis.text.y = element_blank()
   )
 ```
 
-```{r sonify}
-posts_per_day <- left_join(
-  as_tibble(as_date(ymd("2020-03-23"):today())),
-  count(posts, publish_date),
-  by = c("value" = "publish_date")
-) %>% 
-  replace_na(list(n = 0))
-
-sonified_posts <- sonify(posts_per_day$n, play = FALSE)
-
-writeWave(sonified_posts, "README_files/audio/posts.wav")
+```{r sonify, eval=FALSE}
+# posts_per_day <- left_join(
+#   as_tibble(as_date(ymd("2020-03-23"):today())),
+#   count(posts, publish_date),
+#   by = c("value" = "publish_date")
+# ) %>% 
+#   replace_na(list(n = 0))
+# 
+# sonified_posts <- sonify(posts_per_day$n, play = FALSE)
+# 
+# writeWave(sonified_posts, "README_files/audio/posts.wav")
 ```
 
 <img src="https://raw.githubusercontent.com/matt-dray/stickers/master/output/rostrum_hex.png" alt="Hexagonal design containing the text 'rostrum.blog' and the blog's logo of a 16-bit insect." width="150" align="right">
@@ -104,11 +104,6 @@ This plot shows posts over time:
 p
 ```
 
-Press play to hear a sonified version of the chart:
-
-<html><audio controls><source src="README_files/audio/posts.wav" type="audio/wav"></audio></html>
-<br>
-<br>
 <details><summary>Click to expand a full list of posts</summary>
 ```{r}
 posts %>%
