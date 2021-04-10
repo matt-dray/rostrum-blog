@@ -1,0 +1,39 @@
+---
+title: 'Render blog stats with a GitHub Action'
+author: Matt Dray
+date: '2021-04-14'
+slug: gha-readme
+categories:
+  - code
+  - meta
+tags:
+  - github-actions
+  - r
+  - rmarkdown  
+draft: yes
+---
+
+# tl;dr
+
+Display up-to-date stats in your blog's GitHub repo with a scheduled GitHub Action.
+
+# Happy birthday
+
+This blog has been knocking around for three years now. I wrote [a post on its first birthday(https://www.rostrum.blog/2019/04/14/one-year/) with a simple 2D plot of the posts to date.
+
+Only now, two years later, have I thought to put this info into the blog's README on GitHub--- along with some other little stats, like total number of posts---and have it update on schedule with a GitHub Action.
+
+# Overview
+
+A GitHub Action[^gha] is scheduled for the early hours of each day. [The YAML](https://github.com/matt-dray/rostrum-blog/blob/master/.github/workflows/render-rmarkdown.yaml) for the Action reads like 'at the specified time[^cron], set up a remote environment with R and some dependencies, then render the R Markdown file and push the changes to GitHub.'
+
+Basically, the repo's [README.Rmd](https://github.com/matt-dray/rostrum-blog/blob/master/README.Rmd) (R Markdown format) is knitted to a counterpart [README.md](https://github.com/matt-dray/rostrum-blog/blob/master/README.md) (GitHub-flavoured markdown), which is displayed when you visit the repo.
+
+The real magic is in some R code chunks at the top of [the README.Rmd file](https://github.com/matt-dray/rostrum-blog/blob/master/README.md) itself. There's some R code there that uses {rvest} to scrape the archive page of the blog and create a dataframe of post titles and their publish dates.
+
+That information can be cajoled to show some basic stats like the current number of posts, posts per month, days since last post, etc, which can be displayed with inline R code. I also added a dropdown with a table of all the posts to date and, of course, a plot showing the distribution of posts over time can be created too.
+
+I added a line at the bottom with `lubridate::today()` so it's obvious when the stats were last updated.
+
+[^gha]: I've written before about GitHub Actions to create [a Twitter bot](https://www.rostrum.blog/2020/09/21/londonmapbot/) and for [continuous integration of R packages](https://www.rostrum.blog/2020/08/09/ghactions-pkgs/).
+[^cron]: I wrote about cron strings in [an earlier post](https://www.rostrum.blog/2021/04/10/dialga/), which details [the {dialga} package](https://github.com/matt-dray/dialga) for translating from R to cron to English.
