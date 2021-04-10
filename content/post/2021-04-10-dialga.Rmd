@@ -1,0 +1,169 @@
+---
+title: 'Convert R to cron to English with {dialga}'
+author: Matt Dray
+date: '2021-04-10'
+slug: dialga
+categories:
+  - code
+  - package
+  - tutorial
+tags:
+  - cron
+  - dialga
+  - pokemon
+  - r
+draft: no
+---
+
+```{r, include=FALSE}
+library(dialga)
+```
+
+<div class="figure">
+<img src="https://raw.githubusercontent.com/matt-dray/stickers/master/output/dialga_hex.png" alt="Hexagonal logo for the dialga package showing the package name underneath the five asterisks of a cron string that represents an 'every minute' schedule." width=300/>
+
+# tl;dr
+
+I made the small and simple [R package {dialga}](https://www.github.com/matt-dray/dialga/) to help build and interpret standard [cron expressions](https://en.wikipedia.org/wiki/Cron) using familiar R syntax.
+
+# Cron
+
+You can schedule scripts to run at specific times using [software on your computer called 'cron'](https://en.wikipedia.org/wiki/Cron). You can set up 'cron jobs' to specify what needs to be run. A key part of the recipe is a short [cron string](https://en.wikipedia.org/wiki/Cron#CRON_expression) that provides instructions about when to run it.
+
+The problem: cron strings are a bit cryptic if you're not a sysadmin and don't set up cron jobs very often. Here's a contrived example: `"0/15 * 1,3,20 6 2,3"`. What the heck does that mean?
+
+Case study: me. I've been setting up scheduled GitHub Actions to run code related to a given repo. For example, I set up a Twitter bot called [londonmapbot](https://twitter.com/londonmapbot) that [currently tweets a random aerial image every half-hour](https://github.com/matt-dray/londonmapbot/blob/76204c9ad78e268897535449ec1587347630ca66/.github/workflows/londonmapbot.yml#L5).
+
+There's a bunch of webservices like [crontab.guru](https://crontab.guru/) that help you construct cron expressions. I wondered if I could build one in R. It's basically just a bunch of string handling and if statements, right? And while you're at it, why not offer translation the other way? You have a cron string and you want to 'translate' it to English.
+
+# New development paradigm
+
+An aside. Two things: it's a package involving time; I've been looking recently at [Repokémon](https://cheeaun.github.io/repokemon/), a site that tracks which Pokémon have GitHub repos named after them. 
+
+Therefore the package is called Dialga,[^pokemon] named for [the 'temporal Pokémon'](https://bulbapedia.bulbagarden.net/wiki/Dialga_(Pok%C3%A9mon)), which is the legendary game mascot of [the Pokémon Diamond game](https://en.wikipedia.org/wiki/Pok%C3%A9mon_Diamond_and_Pearl). The hex logo uses colours from the game's sprite.
+
+<div class="figure">
+<img src="/post/2021-04-10-dialga_files/dialga.png" alt="A sprite of dialga from the Diamond variant of the game." width="200px"/>
+<p class="caption">Dialga sprite from Pokémon Diamond, via [Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/Dialga_(Pok%C3%A9mon))</p>
+</div>
+
+We've been here before. Consider [{safar6}](https://www.rostrum.blog/2021/01/04/safar6/), my [R package](https://github.com/matt-dray/safar6) that contains an R6-class object that lets you play a text version of the Safari Zone from Pokémon Red and Blue. Or a [Pokémon carousel widget with {slickr}](https://www.rostrum.blog/2020/02/05/slickr/). Or [Pokéballs in Super Smash Bros](https://www.rostrum.blog/2018/05/19/pokeballs-in-super-smash-bros/).
+
+I call this approach Pokémon-Driven Development (PDD). I think PDD has real promise in the development of pointless side-projects like this one. Use it wisely.
+
+# Demo
+
+The package is [available on GitHub](https://www.github.com/matt-dray/dialga/); there are no plans for it to go on CRAN. You can use the {remotes} package to help you download {dialga} easily from the web.
+
+```{r install, eval=FALSE}
+install.packages("remotes")  # if not already installed
+remotes::install_github("matt-dray/dialga")
+library(dialga)
+```
+
+In the same vein as [the {r2eng} package](https://www.rostrum.blog/2020/11/14/hello-r2eng/), the two functions are named `r2cron()` and `cron2eng()`. This is pretty self-explanatory: `r2cron()` takes R inputs as integer vectors and spits out a cron string, and `cron2eng()` takes a valid cron string and prints out a readable English version.
+
+As ever, it was banged-out in a  couple of days and I can't promise it's bug-free. [Let me know](https://github.com/matt-dray/dialga/issues) if you find anything broken horribly.
+
+## A primer
+
+But first, a quick demo on standard cron expressions. Their format is a string of five time-period 'slots' separated by spaces. The slots from left to right specify the minutes, hours, days of the month, months and days of the week that you want to schedule your script to run.
+
+The format required for the values in these slots can be expressed relatively easily as R code, which is what `dialga::r2cron{}` uses as input. For example, this table shows how cron translates to R for the minutes slot: 
+
+| Description | Cron | R |
+| :------ | :--- | :--- |
+| Every minute (minutes 0 to 59) | `*` | `0:59` |
+| A single minute | `5` | `5` |
+| A consecutive sequence of minutes | `1-3` | `1:3` |
+| Several irregularly-spaced minutes | `1,15,17` | `c(1, 15, 17)` |
+| A sequence of minutes at regular intervals | `0/10` | `seq(0, 59, 15)` |
+
+The same principles extend to the other time-period slots, but the ranges will obviously differ. For example, the hour slot can take values 1 to 23 (i.e. a 24-hour clock), while the days of the week are zero-indexed from 0 (Sunday) to 6 (Saturday).
+
+This means 'every 30 mins past the hour' would be `"30 * * * *"`. The contrived example string from the opening of this post---`"0/15 * 1,3,20 6 2,3"`---translates as 'every 15 minutes starting from minute 0 of every hour, on the 1st, 3rd and 20th of June; and Mondays and Tuesdays'.
+
+To help simplify things, the `dialga::r2cron()` function lets you specify each slot in turn as arguments. Each input is an R expression like in the table above. You don't have to worry about cron-specific symbols.
+
+## Simple example
+
+How would you specify the 28th minute past 11PM every day with `r2cron()`? You pass the value 28 to the minutes argument and 23 to the hours argument. The resulting cron string has a `28` in the minutes slot and a `23` in the hours slot, as expected.
+
+```{r r2cron-simple}
+x <- dialga::r2cron(
+  minutes = 28, 
+  hours = 23,  # 24-hour clock
+  clip = FALSE
+)
+
+x
+```
+
+You may have noticed that there's also a `clip` argument. This is for your convenience; when set to `TRUE`, the output will be copied to the clipboard for you to paste elsewhere, like into the YAML of a GitHub Action.
+
+To confirm the output is what we wanted, we could pass the cron string into `cron2eng()`. 
+
+```{r cron2eng-simple}
+dialga::cron2eng(x)
+```
+
+This output isn't sophisticated, but it communicates the point. I've chosen to keep it simple by breaking it into bullet points, rather than wrestling the output into a potentially confusing single sentence.
+
+Of course, this means you could pipe these functions together to go from R to cron to English in one go.
+
+```{r simple-pipe, message=FALSE}
+library(magrittr)  # for %>%
+
+dialga::r2cron(minutes = 28, hours = 23, clip = FALSE) %>% 
+  dialga::cron2eng()
+```
+
+## More complex
+
+We can see the flexibility of `r2cron()` with an unlikely scheduling request like 'every 20 minutes from the top of the hour (minute 0) of 3PM, 4PM and 5PM, on the 1st days of April, October and November, plus every weekend'. Again, we can specify these as R integer vectors. 
+
+```{r r2cron-complex}
+y <- dialga::r2cron(
+ minutes = seq(0, 59, 20),
+ hours = 15:17,  # 24-hr clock
+ days_month = 1,
+ months = c(4, 10, 11),
+ days_week = c(1, 7),  # Sunday is '1'
+ clip = FALSE
+)
+
+y
+```
+
+Note that the input to the `days_week` argument isn't zero-indexed; Sunday is `1` in `r2cron()`, not `0`. This is to conform better to the fact that R isn't zero-indexed. `r2cron()` converts `days_week = 1` into `0` for this slot automatically.
+
+And of course, we can express the output cron string in English:
+
+```{r cron2eng-complex}
+dialga::cron2eng(y)
+```
+
+## Warnings
+
+As a courtesy, you'll be warned when unlikely dates arise. Some are impossible, like 31 September and others are rare, like 29 February. It's important that these are warnings and not errors though, since you might legitimately want the job to run on 31sts when available, or the 29 February only (i.e. every four years).
+
+This example hits all the warnings:
+
+```{r}
+dialga::r2cron(days_month = 28:31, months = 2, clip = FALSE)
+```
+
+# R's scheduling tools
+
+Of course, {dialga} just handles strings and doesn't help you set up schedules. If on Unix/Linux, you can use [the {cronR} package](https://github.com/bnosac/cronR) to schedule tasks from R. The Windows alternative is [the {taskscheduleR} package](https://github.com/bnosac/taskscheduleR). These have their own tools, including a Shiny app, to help you with scheduling.
+
+As for {dialga}, I'll probably use it every now and again for setting up a scheduled GitHub Action. Whatever its use, {dialga} is really just another exercise in package writing and another classic example of PDD (I hope you haven't forgotten that acronym already).
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^pokemon]: © 1995-2021 Nintendo/Creatures Inc./GAME FREAK inc. TM, ® and Pokémon character names are trademarks of Nintendo.
