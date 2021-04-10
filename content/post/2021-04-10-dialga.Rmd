@@ -24,7 +24,7 @@ library(dialga)
 
 # tl;dr
 
-I made the small and simple [R package {dialga}](https://www.github.com/matt-dray/dialga/) to help build and interpret standard [cron expressions](https://en.wikipedia.org/wiki/Cron) using familiar R syntax.
+I made the small proof-of-concept [R package {dialga}](https://www.github.com/matt-dray/dialga/) to help build and interpret standard [cron expressions](https://en.wikipedia.org/wiki/Cron) using familiar R syntax. `r2cron()` converts R to cron; `cron2eng()` converts cron to English.
 
 # Cronwhat?
 
@@ -32,15 +32,15 @@ You can schedule scripts to run at specific times using [software on your comput
 
 The problem: cron strings are a bit cryptic if you're not a sysadmin and don't set up cron jobs very often. Here's a contrived example: `"0/15 * 1,3,20 6 2,3"`. What the heck does that mean?
 
-Case study: me. I've been setting up scheduled GitHub Actions to run code related to a given repo. For example, I set up a Twitter bot called [londonmapbot](https://twitter.com/londonmapbot) that [currently tweets a random aerial image every half-hour](https://github.com/matt-dray/londonmapbot/blob/76204c9ad78e268897535449ec1587347630ca66/.github/workflows/londonmapbot.yml#L5).
+Case study: me. I've been scheduling [GitHub Actions](https://github.com/features/actions) using cron strings to specify when the actions should be triggered. For example, I set up a Twitter bot called [londonmapbot](https://twitter.com/londonmapbot) that currently tweets a random aerial image [every half-hour](https://github.com/matt-dray/londonmapbot/blob/76204c9ad78e268897535449ec1587347630ca66/.github/workflows/londonmapbot.yml#L5).
 
-There's a bunch of webservices like [crontab.guru](https://crontab.guru/) that help you construct cron expressions. I wondered if I could build one in R. It's basically just a bunch of string handling and if statements, right? And while you're at it, why not offer translation the other way? You have a cron string and you want to 'translate' it to English.
+There's a bunch of webservices like [crontab.guru](https://crontab.guru/) that help you construct cron expressions. I wondered if I could build one in R. It's basically just a bunch of string handling and `if` statements, right? And while you're at it, why not offer translation the other way? You have a cron string and you want to 'translate' it to English. Could be helpful.
 
 # New development paradigm
 
-An aside. Two things: it's a package involving time; I've been looking recently at [Repokémon](https://cheeaun.github.io/repokemon/), a site that tracks which Pokémon have GitHub repos named after them. 
+An aside. Two things: the package is about time and I've been looking recently at [Repokémon](https://cheeaun.github.io/repokemon/), a site that tracks which Pokémon have GitHub repos named after them. 
 
-Therefore the package is called Dialga,[^pokemon] named for [the 'temporal Pokémon'](https://bulbapedia.bulbagarden.net/wiki/Dialga_(Pok%C3%A9mon)), which is the legendary game mascot of [the Pokémon Diamond game](https://en.wikipedia.org/wiki/Pok%C3%A9mon_Diamond_and_Pearl). The hex logo uses colours from the game's sprite.
+Therefore the package is called Dialga,[^pokemon] named for [the 'temporal Pokémon'](https://bulbapedia.bulbagarden.net/wiki/Dialga_(Pok%C3%A9mon)), which is the legendary mascot of [the Pokémon Diamond game](https://en.wikipedia.org/wiki/Pok%C3%A9mon_Diamond_and_Pearl). The [hex logo](https://raw.githubusercontent.com/matt-dray/stickers/master/output/dialga_hex.png) uses colours from the game's sprite.
 
 <div class="figure">
 <img src="/post/2021-04-10-dialga_files/dialga.png" alt="A sprite of dialga from the Diamond variant of the game." width="200px"/>
@@ -51,7 +51,7 @@ We've been here before. Consider [{safar6}](https://www.rostrum.blog/2021/01/04/
 
 I call this approach Pokémon-Driven Development (PDD). I think PDD has real promise in the development of pointless side-projects like this one. Use it wisely.
 
-# Demo
+# {dialga} demo
 
 The package is [available on GitHub](https://www.github.com/matt-dray/dialga/); there are no plans for it to go on CRAN. You can use the {remotes} package to help you download {dialga} easily from the web.
 
@@ -69,21 +69,21 @@ As ever, it was banged-out in a  couple of days and I can't promise it's bug-fre
 
 But first, a quick demo on standard cron expressions. Their format is a string of five time-period 'slots' separated by spaces. The slots from left to right specify the minutes, hours, days of the month, months and days of the week that you want to schedule your script to run.
 
-The format required for the values in these slots can be expressed relatively easily as R code, which is what `dialga::r2cron{}` uses as input. For example, this table shows how cron translates to R for the minutes slot: 
+The format required for the values in these slots can be expressed relatively easily as R code, which is what `r2cron()` uses as input. For example, this table shows how cron translates to R for the minutes slot: 
 
 | Description | Cron | R |
 | :------ | :--- | :--- |
 | Every minute (minutes 0 to 59) | `*` | `0:59` |
-| A single minute | `5` | `5` |
-| A consecutive sequence of minutes | `1-3` | `1:3` |
-| Several irregularly-spaced minutes | `1,15,17` | `c(1, 15, 17)` |
-| A sequence of minutes at regular intervals | `0/10` | `seq(0, 59, 15)` |
+| A single minute (5) | `5` | `5` |
+| A consecutive sequence of minutes (1, 2 and 3) | `1-3` | `1:3` |
+| Several irregularly-spaced minutes (1, 15 and 17) | `1,15,17` | `c(1, 15, 17)` |
+| A sequence of minutes at regular intervals for the whole hour, starting with some value (every 15 minutes starting at minute 0) | `0/15` | `seq(0, 59, 15)` |
 
-The same principles extend to the other time-period slots, but the ranges will obviously differ. For example, the hour slot can take values 1 to 23 (i.e. a 24-hour clock), while the days of the week are zero-indexed from 0 (Sunday) to 6 (Saturday).
+The same principles extend to the other time-period slots, but the ranges will obviously differ. For example, the hour slot can take values 1 to 23 (i.e. a 24-hour clock), while the days of the week are zero-indexed from 0 (Sunday) to 6 (Saturday). An asterisk is a special character meaning every unit of that time period, like every minute and every hour.
 
-This means 'every 30 mins past the hour' would be `"30 * * * *"`. The contrived example string from the opening of this post---`"0/15 * 1,3,20 6 2,3"`---translates as 'every 15 minutes starting from minute 0 of every hour, on the 1st, 3rd and 20th of June; and Mondays and Tuesdays'.
+So 'every 30th minute past the hour' would be `"30 * * * *"`. The contrived example string from the opening of this post---`"0/15 * 1,3,20 6 2,3"`---translates as 'every 15 minutes starting from minute 0 of every hour, on the 1st, 3rd and 20th of June; and Mondays and Tuesdays'.
 
-To help simplify things, the `dialga::r2cron()` function lets you specify each slot in turn as arguments. Each input is an R expression like in the table above. You don't have to worry about cron-specific symbols.
+To help simplify things, the `r2cron()` function lets you specify each slot in turn as arguments. Each input is an R expression like in the table above. You don't have to worry about cron-specific symbols, you just provide the appropriate integer vector.
 
 ## Simple example
 
@@ -99,15 +99,15 @@ x <- dialga::r2cron(
 x
 ```
 
-You may have noticed that there's also a `clip` argument. This is for your convenience; when set to `TRUE`, the output will be copied to the clipboard for you to paste elsewhere, like into the YAML of a GitHub Action.
+You may have noticed that there's also a `clip` argument. This is for your convenience; when set to `TRUE`, the output will be copied to the clipboard for you to paste elsewhere, like into the YAML of a GitHub Action in my case.
 
-To confirm the output is what we wanted, we could pass the cron string into `cron2eng()`. 
+Cool, but how do we know this worked? We could pass the cron string into `cron2eng()` to confirm it. 
 
 ```{r cron2eng-simple}
 dialga::cron2eng(x)
 ```
 
-This output isn't sophisticated, but it communicates the point. I've chosen to keep it simple by breaking it into bullet points, rather than wrestling the output into a potentially confusing single sentence.
+This text output isn't sophisticated, but it communicates the point. I've chosen to keep it simple by breaking it into bullet points, rather than wrestling the output into a potentially confusing single sentence.
 
 Of course, this means you could pipe these functions together to go from R to cron to English in one go.
 
@@ -118,7 +118,9 @@ dialga::r2cron(minutes = 28, hours = 23, clip = FALSE) %>%
   dialga::cron2eng()
 ```
 
-## More complex
+It might be nice to produce eventually an `eng2cron()` function that goes directly from a text description to the appropriate cron string, but I think that would be a fair amount of effort.
+
+## More complex example
 
 We can see the flexibility of `r2cron()` with an unlikely scheduling request like 'every 20 minutes from the top of the hour (minute 0) of 3PM, 4PM and 5PM, on the 1st days of April, October and November, plus every weekend'. Again, we can specify these as R integer vectors. 
 
@@ -135,9 +137,9 @@ y <- dialga::r2cron(
 y
 ```
 
-Note that the input to the `days_week` argument isn't zero-indexed; Sunday is `1` in `r2cron()`, not `0`. This is to conform better to the fact that R isn't zero-indexed. `r2cron()` converts `days_week = 1` into `0` for this slot automatically.
+Note that the input to the `days_week` argument isn't zero-indexed even though the cron format is zero-indexed; Sunday is `1` in `r2cron()`, not `0`. This is to conform better to the fact that R doesn't typically zero-index things. `r2cron()` converts `days_week = 1` into `0` for this slot automatically.
 
-And of course, we can express the output cron string in English:
+And of course, we can express the output of this complicated cron string in English:
 
 ```{r cron2eng-complex}
 dialga::cron2eng(y)
@@ -157,7 +159,7 @@ dialga::r2cron(days_month = 28:31, months = 2, clip = FALSE)
 
 Of course, {dialga} just handles strings and doesn't help you set up schedules. If on Unix/Linux, you can use [the {cronR} package](https://github.com/bnosac/cronR) to schedule tasks from R. The Windows alternative is [the {taskscheduleR} package](https://github.com/bnosac/taskscheduleR). These have their own tools, including a Shiny app, to help you with scheduling.
 
-As for {dialga}, I'll probably use it every now and again for setting up a scheduled GitHub Action. Whatever its use, {dialga} is really just another exercise in package writing and another classic example of PDD (I hope you haven't forgotten that acronym already).
+As for {dialga}, I'll probably use it every now and again to help set up a scheduled GitHub Action. Whatever its use, {dialga} is really just another exercise in package writing and another classic example of PDD (I hope you haven't forgotten that acronym already).
 
 ---
 <details><summary>Session info</summary>
