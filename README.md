@@ -22,12 +22,12 @@ with the R language. Read more on the
 
 # Stats
 
-There have been 83 posts on the blog since the first one was published
+There have been 84 posts on the blog since the first one was published
 on 2018-04-14.
 
 That’s a post roughly every 13 days, or about 2.3 posts per month.
 
-The latest post was published 18 day(s) ago on on 2021-03-23.
+The latest post was published 1 day(s) ago on on 2021-04-10.
 
 This plot shows posts over time:
 
@@ -39,6 +39,7 @@ This plot shows posts over time:
 
 | Number | Date       | Title                                             |
 | -----: | :--------- | :------------------------------------------------ |
+|     84 | 2021-04-10 | Convert R to cron to English with {dialga}        |
 |     83 | 2021-03-23 | Make a {shiny} app README badge                   |
 |     82 | 2021-03-23 | Apple Health and Nike Run Club with {xml2}        |
 |     81 | 2021-03-13 | Protect yourself from equals assignment\!         |
@@ -136,4 +137,4 @@ hosted with [Netlify](https://www.netlify.com/).
 
 -----
 
-*Last updated 2021-04-10*
+*Last updated 2021-04-11*
