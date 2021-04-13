@@ -19,7 +19,7 @@ Source files for [rostrum.blog](https://www.rostrum.blog/): fun and
 learning with the R language. Read more on the
 [about](https://www.rostrum.blog/about/) page.
 
-Built with [{blogdown}](https://bookdown.org/yihui/blogdown/) and
+Built with [{blogdown}](https://bookdown.org/yihui/blogdown/) and a
 customised [Lithium](https://github.com/jrutheiser/hugo-lithium-theme)
 theme. Deployed with [Netlify](https://www.netlify.com/).
 

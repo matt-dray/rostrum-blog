@@ -19,46 +19,39 @@ library(emo)       # [github::hadley/emo] v0.0.0.9000
 
 ```{r scrape-blog}
 # Scrape the rostrum.blog home page
-html <- read_html("https://rostrum.blog/")  # the site's homepage lists the posts
+html <- read_html("https://rostrum.blog/")
 
 # Extract the post titles
 title <- html %>%
-  html_nodes(".archive-item-link") %>%  # node identified with SelectorGadget 
-  html_text()  # extract the text from the node
-
-# Extract the post dates
-date <- html %>%
-  html_nodes(".archive-item-date") %>%  # element with the data we care about
-  html_text() %>%  # convert to text
-  str_replace_all("\n|[:space:]", "")  # replace newline-space with blank
+  html_nodes(".archive-item-link") %>%  # extract title node
+  html_text()                           # extract text
 
 # Extract the post URLs
 link <- html %>% 
-  html_nodes(".archive-item-link") %>%  # node identified with SelectorGadget 
-  html_attr("href")  # extract the href attribute from the node
+  html_nodes(".archive-item-link") %>%  # extract title node
+  html_attr("href")                     # extract href attribute
+
+# Extract the post dates
+date <- html %>%
+  html_nodes(".archive-item-date") %>%  # extract date nodes only
+  html_text() %>%                       # extract text
+  str_replace_all("[:space:]", "")      # remove newline/space
 
 # Dataframe of titles and dates
-posts <- tibble(title, publish_date = ymd(date), link) %>% 
+posts <- tibble(date, title, link) %>% 
   transmute(
-    n = nrow(.):1,
-    publish_date,
-    title,
-    link = paste0("https://www.rostrum.blog", link)  # create  full URL
+    n = nrow(.):1,             # number starting from first post
+    publish_date = ymd(date),  # convert to date class
+    title,                     # title text
+    link = paste0("https://www.rostrum.blog", link)  # create full URL
   )
 ```
 
 ```{r plot-obj}
-rostrum_green <- "#1D8016"
-
 # Create plot object
 p <- posts %>%
-  mutate(count = 1) %>%   # dummy to indicate a post was made
-  ggplot(aes(x = publish_date, y = count)) +
-  geom_point(
-    shape = "|", size = 10, stroke = 1,
-    color = rostrum_green,
-    fill = "transparent"
-  ) + 
+  ggplot(aes(x = publish_date, y = 1)) +
+  geom_point(shape = "|", size = 10, stroke = 1, color = "#1D8016") + 
   theme_void()
 ```
 
@@ -75,7 +68,7 @@ post](https://img.shields.io/badge/rostrum-blog-008900?style=flat&labelColor=bla
 
 Source files for [rostrum.blog](https://www.rostrum.blog/): fun and learning with the R language. Read more on the [about](https://www.rostrum.blog/about/) page.
 
-Built with [{blogdown}](https://bookdown.org/yihui/blogdown/) and customised [Lithium](https://github.com/jrutheiser/hugo-lithium-theme) theme. Deployed with [Netlify](https://www.netlify.com/).
+Built with [{blogdown}](https://bookdown.org/yihui/blogdown/) and a customised [Lithium](https://github.com/jrutheiser/hugo-lithium-theme) theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
