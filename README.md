@@ -27,7 +27,7 @@ on 2018-04-14.
 
 That’s a post roughly every 13 days, or about 2.3 posts per month.
 
-The latest post was published 2 day(s) ago on on 2021-04-10.
+The latest post was published 3 day(s) ago on on 2021-04-10.
 
 This plot shows posts over time:
 
@@ -137,4 +137,4 @@ hosted with [Netlify](https://www.netlify.com/).
 
 -----
 
-*Last updated 2021-04-12*
+*Last updated 2021-04-13*
