@@ -32,9 +32,19 @@ date <- html %>%
   html_text() %>%  # convert to text
   str_replace_all("\n|[:space:]", "")  # replace newline-space with blank
 
+# Extract the post URLs
+link <- html %>% 
+  html_nodes(".archive-item-link") %>%  # node identified with SelectorGadget 
+  html_attr("href")  # extract the href attribute from the node
+
 # Dataframe of titles and dates
-posts <- tibble(title = title, publish_date = ymd(date)) %>% 
-  transmute(n = nrow(.):1, publish_date, title)
+posts <- tibble(title, publish_date = ymd(date), link) %>% 
+  transmute(
+    n = nrow(.):1,
+    publish_date,
+    title,
+    link = paste0("https://www.rostrum.blog", link)  # create  full URL
+  )
 ```
 
 ```{r plot-obj}
@@ -45,21 +55,11 @@ p <- posts %>%
   mutate(count = 1) %>%   # dummy to indicate a post was made
   ggplot(aes(x = publish_date, y = count)) +
   geom_point(
-    shape = "|", size = 8, stroke = 1,
+    shape = "|", size = 10, stroke = 1,
     color = rostrum_green,
     fill = "transparent"
-  ) +
-  theme(
-    panel.background = element_rect(fill = "transparent"),
-    plot.background = element_rect(fill = "transparent", color = NA),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    axis.text.x = element_text(color = rostrum_green, size = 10),
-    axis.ticks.x = element_line(color = rostrum_green),
-    axis.title = element_blank(),
-    axis.ticks.y = element_blank(),
-    axis.text.y = element_blank()
-  )
+  ) + 
+  theme_void()
 ```
 
 <img src="https://raw.githubusercontent.com/matt-dray/stickers/master/output/rostrum_hex.png" alt="Hexagonal design containing the text 'rostrum.blog' and the blog's logo of a 16-bit insect." width="150" align="right">
@@ -73,34 +73,37 @@ post](https://img.shields.io/badge/rostrum-blog-008900?style=flat&labelColor=bla
 [![Netlify Status](https://api.netlify.com/api/v1/badges/ebfbdae4-a903-43e8-9f53-75becd95b42e/deploy-status)](https://app.netlify.com/sites/rostrum/deploys)
 <!-- badges: end -->
 
-These are the source files for [rostrum.blog](https://www.rostrum.blog/), a blog about fun and learning with the R language. Read more on the [about](https://www.rostrum.blog/about/) page.
+Source files for [rostrum.blog](https://www.rostrum.blog/): fun and learning with the R language. Read more on the [about](https://www.rostrum.blog/about/) page.
+
+Built with [{blogdown}](https://bookdown.org/yihui/blogdown/) and customised [Lithium](https://github.com/jrutheiser/hugo-lithium-theme) theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-There have been `r nrow(posts)` posts on the blog since the first one was published on `r min(posts$publish_date)`. `r if (format(today(), "%m-%d") == format(min(posts$publish_date), "%m-%d")) emo::ji("balloon")`
+`r emo::ji("1234")` There have been `r nrow(posts)` posts on [the blog](https://www.rostrum.blog/) since `r min(posts$publish_date)`. `r if (format(today(), "%m-%d") == format(min(posts$publish_date), "%m-%d")) emo::ji("balloon")`
 
-That's a post roughly every `r round((as.numeric(today() - min(posts$publish_date))) / nrow(posts))` days, or about `r round(((nrow(posts) / (as.numeric(today() - min(posts$publish_date)))) * 30), 1)` posts per month.
+`r emo::ji("date")` That's a post roughly every `r round((as.numeric(today() - min(posts$publish_date))) / nrow(posts))` days, or about `r round(((nrow(posts) / (as.numeric(today() - min(posts$publish_date)))) * 30), 1)` posts per month.
 
-The latest post was published `r today() - max(posts$publish_date)` day(s) ago on on `r max(posts$publish_date)`.
+`r emo::ji("new")` The latest post was published `r today() - max(posts$publish_date)` day(s) ago: [`r posts$title[1]`](`r posts$link[1]`).
 
-This plot shows posts over time:
+`r emo::ji("chart_with_upwards_trend")` This 2D plot shows posts over time:
 
 ```{r plot-out, fig.height=1, fig.width=10, fig.alt="A 2D chart where each point represents a post on an axis of time spanning from 2018 to the present. There are some gaps, but posts have been relatively consistent over time."}
 p
 ```
 
-<details><summary>Click to expand a full list of posts</summary>
-```{r}
+<details><summary>`r emo::ji("open_file_folder")` Click to expand a full list of posts</summary>
+```{r posts-table}
 posts %>%
-  rename(`Number` = n, Date = publish_date, Title = title) %>% 
+  transmute(
+    Number = n, 
+    Date = publish_date, 
+    Title = paste0("[", title, "](", link, ")")
+  ) %>% 
   kable()
 ```
 </details>
 
-# Infrastructure
-
-The site is generated with [{blogdown}](https://bookdown.org/yihui/blogdown/) and uses a customised version of [the Lithium theme](https://github.com/jrutheiser/hugo-lithium-theme) modified by [Yihui Xie](https://github.com/yihui/hugo-lithium-theme). The site is hosted with [Netlify](https://www.netlify.com/).
 
 ---
 
-_Last updated `r today()`_
+_Updated `r today()`_
