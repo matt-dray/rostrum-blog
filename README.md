@@ -9,8 +9,8 @@
 
 [![rostrum.blog
 post](https://img.shields.io/badge/rostrum-blog-008900?style=flat&labelColor=black&logo=data:image/gif;base64,R0lGODlhEAAQAPEAAAAAABWCBAAAAAAAACH5BAlkAAIAIf8LTkVUU0NBUEUyLjADAQAAACwAAAAAEAAQAAAC55QkISIiEoQQQgghRBBCiCAIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAAh+QQJZAACACwAAAAAEAAQAAAC55QkIiESIoQQQgghhAhCBCEIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAA7)](https://www.rostrum.blog/)
-[![License: CC BY-NC-SA
-4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+[![License: CC
+BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 [![Netlify
 Status](https://api.netlify.com/api/v1/badges/ebfbdae4-a903-43e8-9f53-75becd95b42e/deploy-status)](https://app.netlify.com/sites/rostrum/deploys)
 <!-- badges: end -->
@@ -25,29 +25,29 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 84 posts on [the blog](https://www.rostrum.blog/)
-since 2018-04-14.
+🔢 There have been 85 posts on [the blog](https://www.rostrum.blog/)
+since 2018-04-14. 🎈
 
 📅 That’s a post roughly every 13 days, or about 2.3 posts per month.
 
-🆕 The latest post was published 3 day(s) ago: [Convert R to cron to
-English with {dialga}](https://www.rostrum.blog/2021/04/10/dialga/).
+🆕 The latest post was published 0 day(s) ago: [Up-to-date blog stats in
+your README](https://www.rostrum.blog/2021/04/14/gha-readme/).
 
 📈 This 2D plot shows posts over time:
 
 <img src="README_files/figure-gfm/plot-out-1.png" title="A 2D chart where each point represents a post on an axis of time spanning from 2018 to the present. There are some gaps, but posts have been relatively consistent over time." alt="A 2D chart where each point represents a post on an axis of time spanning from 2018 to the present. There are some gaps, but posts have been relatively consistent over time."  />
 
 <details>
-<summary>
-📂 Click to expand a full list of posts
-</summary>
+
+<summary>📂 Click to expand a full list of posts</summary>
 
 | Number | Date       | Title                                                                                                                     |
-|-------:|:-----------|:--------------------------------------------------------------------------------------------------------------------------|
+| -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|     85 | 2021-04-14 | [Up-to-date blog stats in your README](https://www.rostrum.blog/2021/04/14/gha-readme/)                                   |
 |     84 | 2021-04-10 | [Convert R to cron to English with {dialga}](https://www.rostrum.blog/2021/04/10/dialga/)                                 |
 |     83 | 2021-03-23 | [Make a {shiny} app README badge](https://www.rostrum.blog/2021/03/23/shiny-badge/)                                       |
 |     82 | 2021-03-23 | [Apple Health and Nike Run Club with {xml2}](https://www.rostrum.blog/2021/03/23/xml-health/)                             |
-|     81 | 2021-03-13 | [Protect yourself from equals assignment!](https://www.rostrum.blog/2021/03/13/assign/)                                   |
+|     81 | 2021-03-13 | [Protect yourself from equals assignment\!](https://www.rostrum.blog/2021/03/13/assign/)                                  |
 |     80 | 2021-03-02 | [A tiny {shiny} flag challenge](https://www.rostrum.blog/2021/03/02/randoflag/)                                           |
 |     79 | 2021-02-27 | [Typo-shaming my Git commits](https://www.rostrum.blog/2021/02/27/typos/)                                                 |
 |     78 | 2021-02-21 | [\#GithubSkyline but hear me out](https://www.rostrum.blog/2021/02/21/skyphone/)                                          |
@@ -131,6 +131,6 @@ English with {dialga}](https://www.rostrum.blog/2021/04/10/dialga/).
 
 </details>
 
-------------------------------------------------------------------------
+-----
 
-*Updated 2021-04-13*
+*Updated 2021-04-14*
