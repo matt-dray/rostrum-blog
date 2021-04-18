@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.3 posts per month.
 
-🆕 The latest post was published 3 day(s) ago: [Up-to-date blog stats in
+🆕 The latest post was published 4 day(s) ago: [Up-to-date blog stats in
 your README](https://www.rostrum.blog/2021/04/14/gha-readme/).
 
 📈 This 2D plot shows posts over time:
@@ -133,4 +133,4 @@ your README](https://www.rostrum.blog/2021/04/14/gha-readme/).
 
 -----
 
-*Updated 2021-04-17*
+*Updated 2021-04-18*
