@@ -1,5 +1,5 @@
 ---
-title: 'The simplest possible R package'
+title: 'Make the simplest R package with {pico}'
 author: Matt Dray
 date: '2021-04-18'
 slug: pico-pkg
@@ -9,7 +9,8 @@ categories:
 tags:
   - pico
   - r
-draft: yes
+  - usethis
+draft: no
 ---
 
 ```{r setup, include=FALSE}
@@ -23,29 +24,29 @@ if (any(as.data.frame(installed.packages())$Package == "mypkg")) {
 
 # tl;dr
 
-I made [{pico}](https://github.com/matt-dray/pico), an R package that lets you generate your own functioning R package with the absolute minimum structure and content. 
+I made [{pico}](https://github.com/matt-dray/pico), an R package for creating R packages with the absolute minimum structure and content. You probably shouldn't use it.
 
 # Function in a haystack
 
-I saw [a tweet](https://twitter.com/WeAreRLadies/status/1383135972926296064) from [\@ShreyaLouis](https://twitter.com/ShreyaLouis), who was curating the [\@WeAreRLadies](https://twitter.com/WeAreRLadies) Twitter feed. The gist was 'how can you be more organised when recalling and reusing your own R code?'
+I saw [a \@WeAreRLadies tweet](https://twitter.com/WeAreRLadies/status/1383135972926296064) from last week's curator, [\@ShreyaLouis](https://twitter.com/ShreyaLouis). The gist was 'how can you be more organised when recalling and reusing your own R code?'
 
-See [the thread](https://twitter.com/WeAreRLadies/status/1383135972926296064) for ideas, but I had [the same thought as Fabio](https://twitter.com/favstats/status/1383138145491943425?s=20): create a personal package of your frequently-used functions.
-
-Of course, this is easier said than done: [packages are daunting](https://twitter.com/WeAreRLadies/status/1383142336050384896?s=20), particularly if you haven't made one before. (Source: me, not that long ago.)
+See [the thread](https://twitter.com/WeAreRLadies/status/1383135972926296064) for ideas, but I had [the same thought as Fabio](https://twitter.com/favstats/status/1383138145491943425?s=20): create a personal package of your frequently-used functions so you can invoke them whenever you want.[^onetweet]
 
 # What's the problem?
 
-My initial idea was to write a single tweet that contained the code required to make a basic package. I absolutely think that's possible with `usethis::create_package()` and `usethis::use_r()`, but there's a bit of exposition required to explain what's happening.
+[Packages are daunting](https://twitter.com/WeAreRLadies/status/1383142336050384896?s=20), particularly if you haven't made one before. I'm written a number of packages for fun and I still have no idea of the full ins and outs.
 
-What's the real problem with package writing for a beginner? I think part of it is the esoteric structure and content. Like, what is the `man/` folder and what's an `.Rd` file? Have you ever looked at a chonky package repo on GitHub, like [{dplyr}](https://github.com/tidyverse/dplyr/), and despaired?
+The esoteric structure and content of R packages are a barrier to beginners. Like, what is the `man/` folder and what's an `.Rd` file? It's easy to look at a chonky package repo on GitHub, like the popular [{dplyr}](https://github.com/tidyverse/dplyr/), and despair.
 
-What if---for teaching purposes---we strip back to the barest of package requirements to demystify the process and make it easier to get started? 
+Yes, you could RTFM ('Read the Hecking Manual'), but have you [looked at it](http://www.hep.by/gnu/r-patched/r-exts/R-exts.html#SEC_Top) before? And it's not even necessary if you don't have dreams of submitting to CRAN.
+
+What if---for teaching purposes---we strip back to the absolute barest of package requirements with the goal of demystification and to make it easier to get started? 
 
 # Minimalism
 
-So what's the least we need for a functioning package? Well, following [Karl Broman](http://kbroman.org/pkg_primer/pages/minimal.html), it's just two files and a subfolder. 
+So what's the least we need for a functioning package? Well, following [Karl Broman](http://kbroman.org/pkg_primer/pages/minimal.html), all you need is two files and a subfolder.
 
-Here's that minimal required structure for an imaginary package called {mypkg}:
+Here's how it looks for an imaginary package called {mypkg}:
 
 ```
 mypkg/
@@ -54,7 +55,7 @@ mypkg/
 └── DESCRIPTION
 ```
 
-The `R/functions.R` file is a script where you put your function definitions, like:
+The `mypkg/R/functions.R` file is a normal R script where you put your function definitions, like:
 
 ```{r eval=FALSE}
 say_hi <- function(name = "buddy") {
@@ -62,24 +63,23 @@ say_hi <- function(name = "buddy") {
 }
 ```
 
-The `DESCRIPTION` file might not be familiar. This is an extension-free text file that basically signals to R that this is indeed a package. It needs at least two lines, with the package name and a version number.
+The `DESCRIPTION` file might not be as familiar, but it's basically a text file with two lines: the package name and a version number. You don't need to worry too much about the version number for now; a suffix of `9000` indicates a package in development.
 
 ```
 Package: mypkg
 Version: 0.0.0.9000
 ```
 
-You don't even need to worry too much about the version number. Here I've defaulted to one ending with `.9000`, which typically indicates a package under development.
+...and that's all that's required.
 
+# Introducing {pico}
 
-# {pico}
-
-So, you could point-and-click to create a folder with the structure and content, but I've also created the package {pico} to do it for you. The basic process is:
+So, you could point-and-click to create a folder with the structure and content outlined above, but I've also created [the {pico} package](https://github.com/matt-dray/pico) to do it for you. The basic process is:
 
 1. Install {pico} with `remotes::install_github("matt-dray/pico")`
-1. Create your package with `pico::create("mypkg", "~/Documents/")`
-1. Add new function definitions to `R/functions.R`
-1. Install your package with `remotes::install_local("~/Documents/mypkg")`
+1. Create your package with e.g. `pico::create("mypkg", "~/Documents/")`
+1. Add new function definitions to `mypkg/R/functions.R`
+1. Install your package with `remotes::install_local("~/Documents/mypkg")` and attach like usual with `library(mypkg)`
 
 Later you can add more functions to `R/functions.R` and can reinstall the package with `install_local()`, using the `force = TRUE` argument to overwrite the old version.
 
@@ -87,38 +87,67 @@ Let's take a look at those steps in a bit more depth.
 
 ## Install {pico}
 
-First, you can install {pico} from GitHub with help from the {remotes} package.
+First, you can install {pico} [from GitHub](https://github.com/matt-dray/pico) with help from the {remotes} package.
 
 ```{r eval=FALSE}
 install.packages("remotes")
 remotes::install_github("matt-dray/pico")
 ```
 
+You can look up the help files with `?pico::create()` at any time.
+
+It's a really small package, but let me know if you [find any bugs](https://github.com/matt-dray/pico/issues) or you want to contribute.
+
 ## Create
 
-There's only one function in {pico}: `create()`. It generates a ‘pico package’ with the minimum required content. You supply a package `name` and a `dir`ectory where the package folder will be generated.
+There's only one function in {pico}: `create()`. It generates a 'pico package' with the minimum required content. You supply a package `name` and a `dir`ectory where you want your package folder to be generated.
 
-As a demonstration, here’s how to create a pico package called {mypkg} in a temporary folder (you may want to put yours somewhere more convenient like `~/Documents` on macOS, for example):
+As a demonstration, here’s how to create a pico package called {mypkg} in a temporary folder (put yours somewhere more permanent and convenient like `~/Documents` on macOS, for example):
 
 ```{r}
 tmp <- tempdir()
 pico::create(name = "mypkg", dir = tmp)
 ```
 
-Of course, you could just create these files and folders manually, but there are some benefits to using `create()`. 
+There's some output confirming your new package has been written to the location you specified (my example path here is nonstandard because it's a temporary location).
 
-First, you don't have to remember anything. Second, the name will be checked against R-package naming standards: it should contain alphanumeric characters or periods only, must have at least two characters, and can't start with a number nor end with a period. Third, the provided directory also will be checked for existence and—--if it already contains a folder with the proposed name of your package—--you’ll be asked interactively if you want to overwrite it.
+The name will be checked against R-package naming standards: it should contain alphanumeric characters or periods only, must have at least two characters, and can't start with a number nor end with a period. The provided directory also will be checked for existence and—--if it already contains a folder with the proposed name of your package—--you’ll be asked interactively if you want to overwrite it.
 
 ## Install your package
 
-So, your package now exists on your computer. How do you use it?
+So, your package now exists on your computer. Now how do you use it?
 
-Normally, you would use `install.packages()` to fetch a package from CRAN and install it to your computer's R package library. We can do something similar, but instead of fetching from CRAN, we can fetch it from your computer.
+Normally, you would use `install.packages()` to fetch a package from CRAN and install it to your computer's R package library. We can do something similar, but instead of fetching from CRAN, we can fetch the package 'locally', i.e. from your computer.
 
-To do this, we can use the {remotes} package, which we installed earlier. It contains an `install_local()` function to which you pass the package’s filepath:
+To do this, we can use the {remotes} package, which we installed earlier. It contains an `install_local()` function to which you pass the package’s filepath on your computer:
 
-```{r}
+```{r echo=TRUE, results='hide'}
 remotes::install_local(path = file.path(tmp, "mypkg"))
+```
+
+```{r echo=FALSE}
+cat(
+  "✓  checking for file ", paste0("‘private", tmp, "/mypkg"), "’ ...\n",
+  "─  preparing ‘mypkg’:\n",
+  "✓  checking DESCRIPTION meta-information\n",
+  "─  checking for LF line-endings in source and make files and shell scripts\n",
+  "─  checking for empty or unneeded directories\n",
+  "─  creating default NAMESPACE file\n",
+  "─  building ‘mypkg_0.0.9000.tar.gz’\n",
+  "\n",
+  "* installing *source* package ‘mypkg’ ...\n",
+  "** using staged installation\n",
+  "** R\n",
+  "** byte-compile and prepare package for lazy loading\n",
+  "** help\n",
+  "No man pages found in package  ‘mypkg’ \n",
+  "*** installing help indices\n",
+  "** building package indices\n",
+  "** testing if installed package can be loaded from temporary location\n",
+  "** testing if installed package can be loaded from final location\n",
+  "** testing if installed package keeps a record of temporary installation path\n",
+  "* DONE (mypkg)\n"
+)
 ```
 
 You'll see some output that describes the installation process, ending with `DONE`.
@@ -129,23 +158,23 @@ The package is now installed into your R package library and can be attached lik
 library(mypkg)
 ```
 
-Now the functions from the package are available for use. By default, the `pico::create()` adds a dummy function called `say_hi()` to `R/functions.R`, so we can no use it:
+Now the functions from the package are available for use. By default, `create()` adds a dummy function called `say_hi()` to `R/functions.R`, so we can use it now:
 
 ```{r}
-say_hi()
+say_hi("chums")
 ```
 
 This means that all those functions you wanted to reuse---that you forget or are stored across multiple locations---are available from within this one package with very simple structure. And all it required was `install_github()`, `create()` and `install_local()`.
 
 # Add new functions
 
-Of course, you can add your own functions to the package.
+Of course, you can add your own functions to your pico package. The basic steps are:
 
-1. Open the `mypkg/R/functions.R` file
-1. Paste in your function definitions
-1. Save the file
+1. Open the `mypkg/R/functions.R` script
+1. Paste in your function definitions and save the file
+1. Rerun `remotes::install_local()` with the argument `force = TRUE`, then restart R
 
-So for example, you might add the function `say_bye()`. You would add this to the `functions.R` file:
+Here's what this might look like for our example package. First, you might add the function `say_bye()` by adding these lines to the `functions.R` file:
 
 ```{r}
 say_bye <- function(name = "folks") {
@@ -153,7 +182,7 @@ say_bye <- function(name = "folks") {
 }
 ```
 
-After you saved the updated file, you can re-run `install_local()` with `force = TRUE`, which will overwrite the old version in the package library.
+After you saved the updated file, you can re-run `install_local()` with the file path and `force = TRUE`, which will overwrite the old version in the package library.
 
 ```{r eval=FALSE}
 # Not run
@@ -163,13 +192,14 @@ remotes::install_local(
 )
 ```
 
-After restarting R, your new functions will be available from your package, much like the dummy `say_hi()` function was.
+You must restart R after you've done this.
+
+Your new functions will then be available from your package, much like the dummy `say_hi()` function was. Here's `say_bye()`:
 
 ```{r}
 library(mypkg)
-say_bye()
+say_bye("friends")
 ```
-
 
 # Huge limitations
 
@@ -191,6 +221,7 @@ There's a vast array of free web-based resources out there for package building.
 * [Karl Broman’s _R Package Primer_ site](https://kbroman.org/pkg_primer/), a primer for package development
 * [Hadley Wickham’s _R Packages_ book](http://r-pkgs.had.co.nz/)
 
+You should make use of those resources, for sure. Do not use {pico} for any serious work. {pico}'s purpose here is to think about how we might demystify package development. At worst I think it's an interesting curiosity. 
 
 ---
 <details><summary>Session info</summary>
@@ -207,3 +238,4 @@ if (any(as.data.frame(installed.packages())$Package == "mypkg")) {
 }
 ```
 
+[^onetweet]: My initial thought was to try and respond---in a single tweet---with the code required to build a package. That might help show how little code is required, especially with shortcuts like `usethis::create_package()` and `usethis::use_r()`. But I think there's a little too much extra explanation required for this to be a viable, helpful response.
