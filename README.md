@@ -25,13 +25,14 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 85 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 86 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.3 posts per month.
 
-🆕 The latest post was published 4 day(s) ago: [Up-to-date blog stats in
-your README](https://www.rostrum.blog/2021/04/14/gha-readme/).
+🆕 The latest post was published 1 day(s) ago: [Make the simplest
+possible R package with
+{pico}](https://www.rostrum.blog/2021/04/18/pico-pkg/).
 
 📈 This 2D plot shows posts over time:
 
@@ -43,6 +44,7 @@ your README](https://www.rostrum.blog/2021/04/14/gha-readme/).
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|     86 | 2021-04-18 | [Make the simplest possible R package with {pico}](https://www.rostrum.blog/2021/04/18/pico-pkg/)                         |
 |     85 | 2021-04-14 | [Up-to-date blog stats in your README](https://www.rostrum.blog/2021/04/14/gha-readme/)                                   |
 |     84 | 2021-04-10 | [Convert R to cron to English with {dialga}](https://www.rostrum.blog/2021/04/10/dialga/)                                 |
 |     83 | 2021-03-23 | [Make a {shiny} app README badge](https://www.rostrum.blog/2021/03/23/shiny-badge/)                                       |
@@ -133,4 +135,4 @@ your README](https://www.rostrum.blog/2021/04/14/gha-readme/).
 
 -----
 
-*Updated 2021-04-18*
+*Updated 2021-04-19*
