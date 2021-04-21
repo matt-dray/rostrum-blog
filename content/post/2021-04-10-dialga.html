@@ -52,10 +52,14 @@ remotes::install_github(&quot;matt-dray/dialga&quot;)
 library(dialga)</code></pre>
 <p>In the same vein as <a href="https://www.rostrum.blog/2020/11/14/hello-r2eng/">the {r2eng} package</a>, the two functions are named <code>r2cron()</code> and <code>cron2eng()</code>. This is pretty self-explanatory: <code>r2cron()</code> takes R inputs as integer vectors and spits out a cron string, and <code>cron2eng()</code> takes a valid cron string and prints out a readable English version.</p>
 <p>As ever, it was banged-out in a couple of days and I can’t promise it’s bug-free. <a href="https://github.com/matt-dray/dialga/issues">Let me know</a> if you find anything broken horribly.</p>
+<div class="tip">
+<p><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="rfa" style="height:0.75em;fill:currentColor;position:relative;"><path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"/></svg> <b>Note</b></p>
+<p>A v0.1 is underway (2021-04-22) that removes all dependencies, improves the documentation, clarifies the outputs, sets clipboard-copying behaviour to FALSE by default, and refactors the codebase in general. Further ideas very welcome.</p>
+</div>
 <div id="a-primer" class="section level2">
 <h2>A primer</h2>
 <p>But first, a quick demo on standard cron expressions. Their format is a string of five time-period ‘slots’ separated by spaces. The slots from left to right specify the minutes, hours, days of the month, months and days of the week that you want to schedule your script to run.</p>
-<p>The format required for the values in these slots can be expressed relatively easily as R code, which is what <code>r2cron()</code> uses as input. For example, this table shows how cron translates to R for the minutes slot:</p>
+<p>The format required for the values in these slots can be expressed relatively easily as R code, which is what <code>r2cron()</code> uses as input. For example, this table shows how cron translates to R integer vectors for the minutes slot:</p>
 <table>
 <colgroup>
 <col width="46%" />
@@ -192,7 +196,7 @@ Session info
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2021-04-10                  
+##  date     2021-04-22                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
 ##  package     * version    date       lib source                            
@@ -200,12 +204,13 @@ Session info
 ##  blogdown      1.2        2021-03-04 [1] CRAN (R 4.0.2)                    
 ##  bookdown      0.21       2020-10-13 [1] CRAN (R 4.0.2)                    
 ##  cli           2.3.1      2021-02-23 [1] CRAN (R 4.0.2)                    
-##  dialga      * 0.0.0.9002 2021-04-10 [1] local                             
+##  dialga      * 0.0.0.9002 2021-04-21 [1] Github (matt-dray/dialga@bd8645f) 
 ##  digest        0.6.27     2020-10-24 [1] CRAN (R 4.0.2)                    
 ##  evaluate      0.14       2019-05-28 [1] CRAN (R 4.0.0)                    
+##  fontawesome   0.1.0      2021-02-22 [1] CRAN (R 4.0.2)                    
 ##  glue          1.4.2      2020-08-27 [1] CRAN (R 4.0.2)                    
 ##  htmltools     0.5.1.9000 2021-03-11 [1] Github (rstudio/htmltools@ac43afe)
-##  knitr         1.31       2021-01-27 [1] CRAN (R 4.0.2)                    
+##  knitr         1.32       2021-04-14 [1] CRAN (R 4.0.2)                    
 ##  magrittr    * 2.0.1      2020-11-17 [1] CRAN (R 4.0.2)                    
 ##  rlang         0.4.10     2020-12-30 [1] CRAN (R 4.0.2)                    
 ##  rmarkdown     2.6        2020-12-14 [1] CRAN (R 4.0.2)                    
@@ -213,7 +218,7 @@ Session info
 ##  stringi       1.5.3      2020-09-09 [1] CRAN (R 4.0.2)                    
 ##  stringr       1.4.0      2019-02-10 [1] CRAN (R 4.0.0)                    
 ##  withr         2.4.1      2021-01-26 [1] CRAN (R 4.0.2)                    
-##  xfun          0.21       2021-02-10 [1] CRAN (R 4.0.2)                    
+##  xfun          0.22       2021-03-11 [1] CRAN (R 4.0.2)                    
 ##  yaml          2.2.1      2020-02-01 [1] CRAN (R 4.0.0)                    
 ## 
 ## [1] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
