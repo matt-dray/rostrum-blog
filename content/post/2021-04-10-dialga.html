@@ -15,7 +15,6 @@ tags:
 draft: no
 ---
 
-<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
 
 
 <div class="figure">
@@ -54,12 +53,12 @@ library(dialga)</code></pre>
 <p>As ever, it was banged-out in a couple of days and I can’t promise it’s bug-free. <a href="https://github.com/matt-dray/dialga/issues">Let me know</a> if you find anything broken horribly.</p>
 <div class="tip">
 <p><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="rfa" style="height:0.75em;fill:currentColor;position:relative;"><path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"/></svg> <b>Note</b></p>
-<p>A v0.1 is underway (2021-04-22) that removes all dependencies, improves the documentation, clarifies the outputs, sets clipboard-copying behaviour to FALSE by default, and refactors the codebase in general. Further ideas very welcome.</p>
+<p>The package moved to v0.1 since this post was published. The update removed all dependencies, improved the documentation and set clipboard-copying behaviour to <code>FALSE</code> by default. Feel free to offer more improvements.</p>
 </div>
 <div id="a-primer" class="section level2">
 <h2>A primer</h2>
-<p>But first, a quick demo on standard cron expressions. Their format is a string of five time-period ‘slots’ separated by spaces. The slots from left to right specify the minutes, hours, days of the month, months and days of the week that you want to schedule your script to run.</p>
-<p>The format required for the values in these slots can be expressed relatively easily as R code, which is what <code>r2cron()</code> uses as input. For example, this table shows how cron translates to R integer vectors for the minutes slot:</p>
+<p>But first, a quick demo on standard cron expressions. Their format is a string of five time-period ‘slots’ separated by spaces. The slots from left to right specify the minutes, hours, days of the month, months, and days of the week that you want to schedule your script to run.</p>
+<p>The format required for the values in these slots can be expressed relatively easily as R code, which is what <code>r2cron()</code> uses as input. For example, this table shows cron-string formats for the minutes slot and the corresponding R integer vector for them:</p>
 <table>
 <colgroup>
 <col width="46%" />
@@ -110,13 +109,13 @@ library(dialga)</code></pre>
 <p>How would you specify the 28th minute past 11PM every day with <code>r2cron()</code>? You pass the value 28 to the minutes argument and 23 to the hours argument. The resulting cron string has a <code>28</code> in the minutes slot and a <code>23</code> in the hours slot, as expected.</p>
 <pre class="r"><code>x &lt;- dialga::r2cron(
   minutes = 28, 
-  hours = 23,  # 24-hour clock
-  clip = FALSE
+  hours = 23  # 24-hour clock
 )
 
 x</code></pre>
 <pre><code>## [1] &quot;28 23 * * *&quot;</code></pre>
-<p>You may have noticed that there’s also a <code>clip</code> argument. This is for your convenience; when set to <code>TRUE</code>, the output will be copied to the clipboard for you to paste elsewhere, like into the YAML of a GitHub Action in my case.</p>
+<p>Great, there’s our cron string!</p>
+<p>You may have noticed from the documentation that there’s also a <code>clip</code> argument. This is for your convenience; when set to <code>TRUE</code>, the output will be copied to the clipboard for you to paste elsewhere, like into the YAML of a GitHub Action in my case. You will need separately to install {clipr} yourself from CRAN if you want this functionality in {dialga}.</p>
 <p>Cool, but how do we know this worked? We could pass the cron string into <code>cron2eng()</code> to confirm it.</p>
 <pre class="r"><code>dialga::cron2eng(x)</code></pre>
 <pre><code>## Cron string &#39;28 23 * * *&#39; means:
@@ -124,19 +123,19 @@ x</code></pre>
 ##   - hour(s) 11PM
 ##   - every day(s) of the month
 ##   - every month(s)
-##   - every day(s) of the week</code></pre>
+##   - any day(s) of the week</code></pre>
 <p>This text output isn’t sophisticated, but it communicates the point. I’ve chosen to keep it simple by breaking it into bullet points, rather than wrestling the output into a potentially confusing single sentence.</p>
 <p>Of course, this means you could pipe these functions together to go from R to cron to English in one go.</p>
 <pre class="r"><code>library(magrittr)  # for %&gt;%
 
-dialga::r2cron(minutes = 28, hours = 23, clip = FALSE) %&gt;% 
+dialga::r2cron(minutes = 28, hours = 23) %&gt;% 
   dialga::cron2eng()</code></pre>
 <pre><code>## Cron string &#39;28 23 * * *&#39; means:
 ##   - minute(s) 28
 ##   - hour(s) 11PM
 ##   - every day(s) of the month
 ##   - every month(s)
-##   - every day(s) of the week</code></pre>
+##   - any day(s) of the week</code></pre>
 <p>It might be nice to produce eventually an <code>eng2cron()</code> function that goes directly from a text description to the appropriate cron string, but I think that would be a fair amount of effort.</p>
 </div>
 <div id="more-complex-example" class="section level2">
@@ -147,8 +146,7 @@ dialga::r2cron(minutes = 28, hours = 23, clip = FALSE) %&gt;%
  hours = 15:17,  # 24-hr clock
  days_month = 1,
  months = c(4, 10, 11),
- days_week = c(1, 7),  # Sunday is &#39;1&#39;
- clip = FALSE
+ days_week = c(1, 7)  # Sunday is &#39;1&#39;
 )
 
 y</code></pre>
@@ -160,19 +158,19 @@ y</code></pre>
 ##   - every 20 minute(s) starting from minute(s) 0
 ##   - hour(s) 3PM to 5PM
 ##   - day(s) of the month 1
-##   - month(s) April, October, and November
-##   - day(s) of the week Sunday and Saturday</code></pre>
+##   - month(s) April, October and November
+##   - and day(s) of the week Sunday and Saturday</code></pre>
 </div>
 <div id="warnings" class="section level2">
 <h2>Warnings</h2>
 <p>As a courtesy, you’ll be warned when unlikely dates arise. Some are impossible, like 31 September and others are rare, like 29 February. It’s important that these are warnings and not errors though, since you might legitimately want the job to run on 31sts when available, or the 29 February only (i.e. every four years).</p>
 <p>This example hits all the warnings:</p>
-<pre class="r"><code>dialga::r2cron(days_month = 28:31, months = 2, clip = FALSE)</code></pre>
-<pre><code>## Warning in dialga::r2cron(days_month = 28:31, months = 2, clip = FALSE): 
+<pre class="r"><code>dialga::r2cron(days_month = 28:31, months = 2)</code></pre>
+<pre><code>## Warning in dialga::r2cron(days_month = 28:31, months = 2): 
 ##   Sure? There&#39;s no 31st in Feb, Apr, Jun, Sept nor Nov.</code></pre>
-<pre><code>## Warning in dialga::r2cron(days_month = 28:31, months = 2, clip = FALSE): 
+<pre><code>## Warning in dialga::r2cron(days_month = 28:31, months = 2): 
 ##   Sure? There&#39;s no 30th in Feb.</code></pre>
-<pre><code>## Warning in dialga::r2cron(days_month = 28:31, months = 2, clip = FALSE): 
+<pre><code>## Warning in dialga::r2cron(days_month = 28:31, months = 2): 
 ##   Sure? 29 Feb is only in leap years.</code></pre>
 <pre><code>## [1] &quot;* * 28-31 2 *&quot;</code></pre>
 </div>
@@ -183,45 +181,48 @@ y</code></pre>
 <p>As for {dialga}, I’ll probably use it every now and again to help set up a scheduled GitHub Action. Whatever its use, {dialga} is really just another exercise in package writing and another classic example of PDD (I hope you haven’t forgotten that acronym already).</p>
 <hr />
 <details>
-<summary>
-Session info
-</summary>
+<p><summary>Session info</summary></p>
 <pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
 ##  setting  value                       
-##  version  R version 4.0.4 (2021-02-15)
-##  os       macOS Big Sur 10.16         
+##  version  R version 4.0.3 (2020-10-10)
+##  os       macOS Mojave 10.14.6        
 ##  system   x86_64, darwin17.0          
 ##  ui       X11                         
 ##  language (EN)                        
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2021-04-22                  
+##  date     2021-04-23                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
-##  package     * version    date       lib source                            
-##  assertthat    0.2.1      2019-03-21 [1] CRAN (R 4.0.0)                    
-##  blogdown      1.2        2021-03-04 [1] CRAN (R 4.0.2)                    
-##  bookdown      0.21       2020-10-13 [1] CRAN (R 4.0.2)                    
-##  cli           2.3.1      2021-02-23 [1] CRAN (R 4.0.2)                    
-##  dialga      * 0.0.0.9002 2021-04-21 [1] Github (matt-dray/dialga@bd8645f) 
-##  digest        0.6.27     2020-10-24 [1] CRAN (R 4.0.2)                    
-##  evaluate      0.14       2019-05-28 [1] CRAN (R 4.0.0)                    
-##  fontawesome   0.1.0      2021-02-22 [1] CRAN (R 4.0.2)                    
-##  glue          1.4.2      2020-08-27 [1] CRAN (R 4.0.2)                    
-##  htmltools     0.5.1.9000 2021-03-11 [1] Github (rstudio/htmltools@ac43afe)
-##  knitr         1.32       2021-04-14 [1] CRAN (R 4.0.2)                    
-##  magrittr    * 2.0.1      2020-11-17 [1] CRAN (R 4.0.2)                    
-##  rlang         0.4.10     2020-12-30 [1] CRAN (R 4.0.2)                    
-##  rmarkdown     2.6        2020-12-14 [1] CRAN (R 4.0.2)                    
-##  sessioninfo   1.1.1      2018-11-05 [1] CRAN (R 4.0.0)                    
-##  stringi       1.5.3      2020-09-09 [1] CRAN (R 4.0.2)                    
-##  stringr       1.4.0      2019-02-10 [1] CRAN (R 4.0.0)                    
-##  withr         2.4.1      2021-01-26 [1] CRAN (R 4.0.2)                    
-##  xfun          0.22       2021-03-11 [1] CRAN (R 4.0.2)                    
-##  yaml          2.2.1      2020-02-01 [1] CRAN (R 4.0.0)                    
+##  package     * version date       lib source                           
+##  blogdown      0.21    2020-10-11 [1] CRAN (R 4.0.2)                   
+##  bookdown      0.21    2020-10-13 [1] CRAN (R 4.0.2)                   
+##  bslib         0.2.4   2021-01-25 [1] CRAN (R 4.0.2)                   
+##  cli           2.4.0   2021-04-05 [1] CRAN (R 4.0.2)                   
+##  dialga      * 0.1     2021-04-23 [1] Github (matt-dray/dialga@b378721)
+##  digest        0.6.27  2020-10-24 [1] CRAN (R 4.0.2)                   
+##  evaluate      0.14    2019-05-28 [1] CRAN (R 4.0.1)                   
+##  fontawesome   0.1.0   2021-02-22 [1] CRAN (R 4.0.2)                   
+##  glue          1.4.2   2020-08-27 [1] CRAN (R 4.0.2)                   
+##  htmltools     0.5.1.1 2021-01-22 [1] CRAN (R 4.0.2)                   
+##  jquerylib     0.1.3   2020-12-17 [1] CRAN (R 4.0.2)                   
+##  jsonlite      1.7.2   2020-12-09 [1] CRAN (R 4.0.2)                   
+##  knitr         1.32    2021-04-14 [1] CRAN (R 4.0.2)                   
+##  magrittr    * 2.0.1   2020-11-17 [1] CRAN (R 4.0.2)                   
+##  R6            2.5.0   2020-10-28 [1] CRAN (R 4.0.2)                   
+##  rlang         0.4.10  2020-12-30 [1] CRAN (R 4.0.2)                   
+##  rmarkdown     2.7     2021-02-19 [1] CRAN (R 4.0.2)                   
+##  sass          0.3.1   2021-01-24 [1] CRAN (R 4.0.2)                   
+##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.0.2)                   
+##  stringi       1.5.3   2020-09-09 [1] CRAN (R 4.0.2)                   
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.0.2)                   
+##  withr         2.4.2   2021-04-18 [1] CRAN (R 4.0.2)                   
+##  xfun          0.22    2021-03-11 [1] CRAN (R 4.0.2)                   
+##  yaml          2.2.1   2020-02-01 [1] CRAN (R 4.0.2)                   
 ## 
-## [1] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
+## [1] /Users/matt.dray/Library/R/4.0/library
+## [2] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
 </details>
 </div>
 <div class="footnotes">
