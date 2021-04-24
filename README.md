@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.3 posts per month.
 
-🆕 The latest post was published 5 day(s) ago: [Make the simplest R
+🆕 The latest post was published 6 day(s) ago: [Make the simplest R
 package with {pico}](https://www.rostrum.blog/2021/04/18/pico-pkg/).
 
 📈 This 2D plot shows posts over time:
@@ -122,7 +122,7 @@ package with {pico}](https://www.rostrum.blog/2021/04/18/pico-pkg/).
 |     10 | 2018-07-17 | [Footballers are younger than you](https://www.rostrum.blog/2018/07/17/world-cup-age-app/)                                |
 |      9 | 2018-07-12 | [How accessible is my post about accessibility?](https://www.rostrum.blog/2018/07/12/accessible-accessibility/)           |
 |      8 | 2018-06-30 | [Markov-chaining my PhD thesis](https://www.rostrum.blog/2018/06/30/markov-chain-phd/)                                    |
-|      7 | 2018-06-26 | [Mail merge with R and Dawson’s Creek](https://www.rostrum.blog/2018/06/26/mail-merge/)                                   |
+|      7 | 2018-06-26 | [Iterative R Markdown reports for Dawson’s Creek](https://www.rostrum.blog/2018/06/26/mail-merge/)                        |
 |      6 | 2018-06-05 | [Tid-ye-text with geniusr](https://www.rostrum.blog/2018/06/05/tid-ye-text/)                                              |
 |      5 | 2018-05-25 | [Cloudy with a chance of pie](https://www.rostrum.blog/2018/05/25/cloud-pie/)                                             |
 |      4 | 2018-05-19 | [Pokéballs in Super Smash Bros](https://www.rostrum.blog/2018/05/19/pokeballs-in-super-smash-bros/)                       |
@@ -134,4 +134,4 @@ package with {pico}](https://www.rostrum.blog/2021/04/18/pico-pkg/).
 
 -----
 
-*Updated 2021-04-23*
+*Updated 2021-04-24*
