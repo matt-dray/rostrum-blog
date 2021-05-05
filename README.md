@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.3 posts per month.
 
-🆕 The latest post was published 16 day(s) ago: [Make the simplest R
+🆕 The latest post was published 17 day(s) ago: [Make the simplest R
 package with {pico}](https://www.rostrum.blog/2021/04/18/pico-pkg/).
 
 📈 This 2D plot shows posts over time:
@@ -134,4 +134,4 @@ package with {pico}](https://www.rostrum.blog/2021/04/18/pico-pkg/).
 
 -----
 
-*Updated 2021-05-04*
+*Updated 2021-05-05*
