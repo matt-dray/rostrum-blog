@@ -1,5 +1,5 @@
 ---
-title: 'Encrypt and host R Markdown'
+title: 'Encrypt and host a knitted R Markdown file'
 author: Matt Dray
 date: '2021-05-07'
 slug: encrypted-rmd
@@ -11,37 +11,46 @@ tags:
   - github-pages
   - r
   - rmarkdown
-draft: yes
+draft: no
 ---
 
 <script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
 
 
+<div class="figure">
+<img src="/post/2021-05-06-encrypt-rmd_files/stitch.png" alt="Several plastic stitch markers, for keeping track of knit counts, on a mousemat that has a tidyverse hex design by Amelia McNamara." width="100%"/>
+<p class="caption">
+An attempted knitting/padlock visual pun with stitch markers.
+</p>
+</div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>You can knit an R Markdown file to an encrypted HTML with {encryptedRmd} and put it online with GitHub Pages. Users must enter the decryption key to download and view the content.</p>
+<p>You can knit an R Markdown file to an encrypted HTML with <a href="https://github.com/dirkschumacher/encryptedRmd">{encryptedRmd}</a> and put it online with <a href="https://pages.github.com/">GitHub Pages</a>. Users must enter the decryption key to download and view the content.</p>
 </div>
 <div id="tinkr-tailr" class="section level1">
 <h1>TinkR TailR</h1>
-<p>I’m working on a personal project that outputs an HTML document rendered from <a href="https://rmarkdown.rstudio.com/">an R Markdown file</a>. I want to share it with a specific person.</p>
-<p>I don’t want to send them the file as an email attachment every time I update it. It would be convenient to give them a URL that always points to the latest version.</p>
-<p>So maybe a password protected file? Encryption might be good too.</p>
-<p>(There’s no big secret here. I just happened to watch <a href="https://m.imdb.com/title/tt1340800/">Tinker Tailor Soldier Spy</a> over the weekend.)</p>
+<p>I’m working on a personal project that outputs an HTML document rendered from <a href="https://rmarkdown.rstudio.com/">an R Markdown file</a>. I want to password-protect and share it with a specific person somehow. Also, sharing a hard copy by email is tedious; I’d rather they always had the latest version from a URL.</p>
+<p>More importantly, I watched <a href="https://m.imdb.com/title/tt1340800/"><em>Tinker Tailor Soldier Spy</em></a><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> over the weekend and I wanted to feign top-secret document handling.</p>
 </div>
 <div id="invest-in-encrypto" class="section level1">
 <h1>Invest in encrypto</h1>
-<p>I’m a simple fellow. I don’t want to download or handle any software outside of R packages; I don’t want to configure anything; I like ‘free’ as in ‘I don’t have to pay for it’; I want minimal friction for users who are trying to access the content.</p>
-<p>There’s definitely many ways to achieve this, but I decided to try out <a href="https://github.com/dirkschumacher/encryptedRmd">Dirk Schumacher’s {encryptedRmd} R package</a>, which I starred on GitHub a while ago and then forgot about.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> I’ve used <a href="https://pages.github.com/">GitHub Pages</a> for hosting a bunch of stuff out of GitHub repos; might as well try hosting it there.</p>
+<p>I’m a simple fellow. I don’t want to download or handle any extra software; I don’t want to configure anything; I like ‘free’ as in ‘I don’t have to pay for it’; I want minimal friction for the person accessing the content; I want the file to be standalone and self-contained.</p>
+<p>There’s probably many ways to achieve this with R, but I decided to try out <a href="https://github.com/dirkschumacher/encryptedRmd">Dirk Schumacher’s {encryptedRmd} package</a>, which I starred on GitHub a while ago and then forgot about.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> I’ve used <a href="https://pages.github.com/">GitHub Pages</a> for hosting a bunch of stuff at no cost; might as well pop it there.</p>
 <div id="example" class="section level2">
 <h2>Example</h2>
-<p>I made <a href="https://github.com/matt-dray/encrypt-rmd-test">a simple GitHub repo</a> containing a demo of this approach.</p>
-<p>The encrypted HTML output is <a href="https://matt-dray.github.io/encrypt-rmd-test/encrypt-test.html.enc.html">available online</a>,</p>
-<p>You’ll be asked for a key to decrypt it. For this demo, the key is: <code>9ebf5d40b061c59330b9fce16703e4c2fb2fbf90a773996e43e49d562ea17039</code> (try it).</p>
+<p>I made <a href="https://github.com/matt-dray/encrypt-rmd-test">a simple GitHub repo</a> containing a demo of this approach. The encrypted HTML output is <a href="https://matt-dray.github.io/encrypt-rmd-test/encrypt-test.html.enc.html">available online</a>. I’ve embedded it below as well.</p>
+<p>You’ll be asked for a key to decrypt it. For this demo, the key is: <code>9ebf5d40b061c59330b9fce16703e4c2fb2fbf90a773996e43e49d562ea17039</code>.</p>
+<iframe src="https://matt-dray.github.io/encrypt-rmd-test/encrypt-test.html.enc.html" width="100%" height="200" frameborder="1" allowtransparency="true" allow="encrypted-media">
+</iframe>
+<p>Your browser will prompt you to save and view the decrypted document if you enter the correct key. Prepare to see some extremely top secret information when you open that file.</p>
+</div>
+<div id="how-to" class="section level2">
+<h2>How to</h2>
 <p>How was this created? In short, you knit an R Markdown as usual, but replace the output type in the YAML header. Here’s the steps:</p>
 <ol style="list-style-type: decimal">
 <li>Install {encryptedRmd} from CRAN if you haven’t already, using <code>install.packages("encryptedRmd")</code></li>
 <li>Write an R Markdown file (i.e. extension .Rmd) where the <code>output:</code> field in the YAML header is set to <code>encryptedRmd::encrypted_html_document</code></li>
-<li>Knit the file to render (i) an unencrypted ‘normal’ version HTML, (ii) an encrypted HTML version, and (iii) a text file containing the decryption key, all of which are generated by default in the same folder that the Rmd is in</li>
+<li>Knit the file to render (i) an unencrypted ‘normal’ version HTML, (ii) an encrypted HTML version, and (iii) a text file containing a randomised decryption key, all of which are generated by default in the same folder that the Rmd is in</li>
 <li>To serve, commit and push only the encrypted file to GitHub and then activate GitHub Pages for the repo (go to ‘Settings’ &gt; ‘Pages’)</li>
 </ol>
 <p>Of course, you should add the R Markdown file, the unencrypted HTML and the decryption key to your .gitignore file, otherwise the content will be available for people to see.</p>
@@ -51,13 +60,15 @@ draft: yes
 ├── encrypt-test.html
 ├── encrypt-test.enc.html
 └── encrypt-test.enc.html.key</code></pre>
-<p>I told GitHub Pages to serve this <code>docs/</code> folder from the <code>main</code> branch, so that the URL ends up as <a href="https://matt-dray.github.io/encrypt-rmd-test/encrypt-test.html.enc.html">https://matt-dray.github.io/encrypt-rmd-test/encrypt-test.html.enc.html</a>.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>I told GitHub Pages to serve this <code>docs/</code> folder from the <code>main</code> branch, so that the URL ends up as <a href="https://matt-dray.github.io/encrypt-rmd-test/encrypt-test.html.enc.html">https://matt-dray.github.io/encrypt-rmd-test/encrypt-test.html.enc.html</a>.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<p>Now I can share the URL with someone and send them the key via a separate means of communication, like via a fax or a pigeon.</p>
 </div>
 </div>
 <div id="get-a-job-in-cyber" class="section level1">
 <h1>‘Get a job in cyber’</h1>
-<p>Surprise, I am not a cyber security expert. The outlined approach does what I need and does so painlessly. I have no intention to share actually-sensitive information via this method, so I have little to worry about.</p>
+<p>Surprise, I am not a cyber security expert. You can read more about <a href="https://doc.libsodium.org/">the libsodium encryption method</a> underlying {encryptedRmd} if you’re wondering how it works, etc.</p>
 <p>As noted by Dirk in <a href="https://github.com/dirkschumacher/encryptedRmd/blob/master/README.md#password-protected-html-markdown-documents">the {encryptedRmd} README</a>: use at your own risk.</p>
+<p>For me, the outlined approach does what I need and does it painlessly. I have no intention to share actually-sensitive information via this method, so I have little to worry about. I’m Smiley as George Smiley in <em>Tinker Tailor Soldier Spy</em>.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
 <hr />
 <details>
 <summary>
@@ -73,7 +84,7 @@ Session info
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2021-05-06                  
+##  date     2021-05-07                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
 ##  package     * version    date       lib source                            
@@ -102,7 +113,9 @@ Session info
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>All too often I ‘discover’ a cool-sounding project on GitHub only to find I’ve already starred it. Partly I’m forgetful. Partly it’s because I’ve starred so many things. (I think this phenomenon should have a word. Possibly a compound German word. Or like ‘<a href="https://en.wikipedia.org/wiki/Brown_dwarf">brown dwarf</a>’, because it’s a celestial object that had potential to begin fusion but didn’t quite make it? Rubbish analogy.) The {encryptedRmd} case is especially amusing because apparently I gave a thumbs-up to <a href="https://github.com/dirkschumacher/encryptedRmd/issues/2">an issue in the repo</a> posted by <a href="https://twitter.com/nacnudus">my colleague Duncan</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>You could simplify this by renaming your encrypted output file to <code>index.html</code>, which means you can refer to it with a shortened URL in the form <code>user.github.io/repo-name/</code>.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn1"><p>Starring the adjective-name actors Strong Mark, Hurt John and Oldman Gary.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>All too often I ‘discover’ a cool-sounding project on GitHub only to find I’ve already starred it. Partly I’m forgetful. Partly it’s because I’ve starred so many things. (I think this phenomenon should have a word. Possibly a compound German word. Or like ‘<a href="https://en.wikipedia.org/wiki/Brown_dwarf">brown dwarf</a>’, because it’s a celestial object that had potential to begin fusion but didn’t quite make it? Rubbish analogy.) The {encryptedRmd} case is especially amusing because apparently I gave a thumbs-up to <a href="https://github.com/dirkschumacher/encryptedRmd/issues/2">an issue in the repo</a> posted by <a href="https://twitter.com/nacnudus">my colleague Duncan</a>.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>You could simplify this by renaming your encrypted output file to <code>index.html</code>, which means you can refer to it with a shortened URL in the form <code>user.github.io/repo-name/</code>.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>Spoiler: <a href="https://www.imdb.com/title/tt1340800/mediaviewer/rm846678528/?ft0=name&amp;fv0=nm0000198&amp;ft1=image_type&amp;fv1=still_frame">he didn’t actually smile very much</a>.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>

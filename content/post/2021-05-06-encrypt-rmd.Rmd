@@ -1,5 +1,5 @@
 ---
-title: 'Encrypt and host R Markdown'
+title: 'Encrypt and host a knitted R Markdown file'
 author: Matt Dray
 date: '2021-05-07'
 slug: encrypted-rmd
@@ -11,42 +11,47 @@ tags:
   - github-pages
   - r
   - rmarkdown
-draft: yes
+draft: no
 ---
+
+<div class="figure">
+<img src="/post/2021-05-06-encrypt-rmd_files/stitch.png" alt="Several plastic stitch markers, for keeping track of knit counts, on a mousemat that has a tidyverse hex design by Amelia McNamara." width="100%"/>
+<p class="caption">An attempted knitting/padlock visual pun with stitch markers.</p>
+</div>
 
 # tl;dr
 
-You can knit an R Markdown file to an encrypted HTML with {encryptedRmd} and put it online with GitHub Pages. Users must enter the decryption key to download and view the content.
+You can knit an R Markdown file to an encrypted HTML with [{encryptedRmd}](https://github.com/dirkschumacher/encryptedRmd) and put it online with [GitHub Pages](https://pages.github.com/). Users must enter the decryption key to download and view the content.
 
 # TinkR TailR
 
-I'm working on a personal project that outputs an HTML document rendered from [an R Markdown file](https://rmarkdown.rstudio.com/). I want to share it with a specific person.
+I'm working on a personal project that outputs an HTML document rendered from [an R Markdown file](https://rmarkdown.rstudio.com/). I want to password-protect and share it with a specific person somehow. Also, sharing a hard copy by email is tedious; I'd rather they always had the latest version from a URL.
 
-I don't want to send them the file as an email attachment every time I update it. It would be convenient to give them a URL that always points to the latest version. 
-
-So maybe a password protected file? Encryption might be good too.
-
-(There's no big secret here. I just happened to watch [Tinker Tailor Soldier Spy](https://m.imdb.com/title/tt1340800/) over the weekend.)
+More importantly, I watched [_Tinker Tailor Soldier Spy_](https://m.imdb.com/title/tt1340800/)[^actors] over the weekend and I wanted to feign top-secret document handling.
 
 # Invest in encrypto
 
-I'm a simple fellow. I don't want to download or handle any software outside of R packages; I don't want to configure anything; I like 'free' as in 'I don't have to pay for it'; I want minimal friction for users who are trying to access the content.
+I'm a simple fellow. I don't want to download or handle any extra software; I don't want to configure anything; I like 'free' as in 'I don't have to pay for it'; I want minimal friction for the person accessing the content; I want the file to be standalone and self-contained.
 
-There's definitely many ways to achieve this, but I decided to try out [Dirk Schumacher's {encryptedRmd} R package](https://github.com/dirkschumacher/encryptedRmd), which I starred on GitHub a while ago and then forgot about.[^star] I've used [GitHub Pages](https://pages.github.com/) for hosting a bunch of stuff out of GitHub repos; might as well try hosting it there.
+There's probably many ways to achieve this with R, but I decided to try out [Dirk Schumacher's {encryptedRmd} package](https://github.com/dirkschumacher/encryptedRmd), which I starred on GitHub a while ago and then forgot about.[^star] I've used [GitHub Pages](https://pages.github.com/) for hosting a bunch of stuff at no cost; might as well pop it there.
 
 ## Example
 
-I made [a simple GitHub repo](https://github.com/matt-dray/encrypt-rmd-test) containing a demo of this approach. 
+I made [a simple GitHub repo](https://github.com/matt-dray/encrypt-rmd-test) containing a demo of this approach. The encrypted HTML output is [available online](https://matt-dray.github.io/encrypt-rmd-test/encrypt-test.html.enc.html). I've embedded it below as well.
 
-The encrypted HTML output is [available online](https://matt-dray.github.io/encrypt-rmd-test/encrypt-test.html.enc.html), 
+You'll be asked for a key to decrypt it. For this demo, the key is: `9ebf5d40b061c59330b9fce16703e4c2fb2fbf90a773996e43e49d562ea17039`.
 
-You'll be asked for a key to decrypt it. For this demo, the key is: `9ebf5d40b061c59330b9fce16703e4c2fb2fbf90a773996e43e49d562ea17039` (try it).
+<iframe src="https://matt-dray.github.io/encrypt-rmd-test/encrypt-test.html.enc.html" width="100%" height="200" frameborder="1" allowtransparency="true" allow="encrypted-media"></iframe>
+
+Your browser will prompt you to save and view the decrypted document if you enter the correct key. Prepare to see some extremely top secret information when you open that file.
+
+## How to
 
 How was this created? In short, you knit an R Markdown as usual, but replace the output type in the YAML header. Here's the steps:
 
 1. Install {encryptedRmd} from CRAN if you haven't already, using `install.packages("encryptedRmd")`
 1. Write an R Markdown file (i.e. extension .Rmd) where the `output:` field in the YAML header is set to `encryptedRmd::encrypted_html_document`
-1. Knit the file to render (i) an unencrypted 'normal' version HTML, (ii) an encrypted HTML version, and (iii) a text file containing the decryption key, all of which are generated by default in the same folder that the Rmd is in
+1. Knit the file to render (i) an unencrypted 'normal' version HTML, (ii) an encrypted HTML version, and (iii) a text file containing a randomised decryption key, all of which are generated by default in the same folder that the Rmd is in
 1. To serve, commit and push only the encrypted file to GitHub and then activate GitHub Pages for the repo (go to 'Settings' > 'Pages')
 
 Of course, you should add the R Markdown file, the unencrypted HTML and the decryption key to your .gitignore file, otherwise the content will be available for people to see. 
@@ -63,11 +68,15 @@ docs/
 
 I told GitHub Pages to serve this `docs/` folder from the `main` branch, so that the URL ends up as [https://matt-dray.github.io/encrypt-rmd-test/encrypt-test.html.enc.html](https://matt-dray.github.io/encrypt-rmd-test/encrypt-test.html.enc.html).[^index]
 
+Now I can share the URL with someone and send them the key via a separate means of communication, like via a fax or a pigeon.
+
 # 'Get a job in cyber'
 
-Surprise, I am not a cyber security expert. The outlined approach does what I need and does so painlessly. I have no intention to share actually-sensitive information via this method, so I have little to worry about.
+Surprise, I am not a cyber security expert. You can read more about [the libsodium encryption method](https://doc.libsodium.org/) underlying {encryptedRmd} if you're wondering how it works, etc.
 
 As noted by Dirk in [the {encryptedRmd} README](https://github.com/dirkschumacher/encryptedRmd/blob/master/README.md#password-protected-html-markdown-documents): use at your own risk.
+
+For me, the outlined approach does what I need and does it painlessly. I have no intention to share actually-sensitive information via this method, so I have little to worry about. I'm Smiley as George Smiley in _Tinker Tailor Soldier Spy_.[^smile]
 
 ---
 <details><summary>Session info</summary>
@@ -76,5 +85,7 @@ sessioninfo::session_info()
 ```
 </details>
 
+[^actors]: Starring the adjective-name actors Strong Mark, Hurt John and Oldman Gary.
 [^star]: All too often I 'discover' a cool-sounding project on GitHub only to find I've already starred it. Partly I'm forgetful. Partly it's because I've starred so many things. (I think this phenomenon should have a word. Possibly a compound German word. Or like '[brown dwarf](https://en.wikipedia.org/wiki/Brown_dwarf)', because it's a celestial object that had potential to begin fusion but didn't quite make it? Rubbish analogy.) The {encryptedRmd} case is especially amusing because apparently I gave a thumbs-up to [an issue in the repo](https://github.com/dirkschumacher/encryptedRmd/issues/2) posted by [my colleague Duncan](https://twitter.com/nacnudus).
 [^index]: You could simplify this by renaming your encrypted output file to `index.html`, which means you can refer to it with a shortened URL in the form `user.github.io/repo-name/`.
+[^smile]: Spoiler: [he didn't actually smile very much](https://www.imdb.com/title/tt1340800/mediaviewer/rm846678528/?ft0=name&fv0=nm0000198&ft1=image_type&fv1=still_frame).
