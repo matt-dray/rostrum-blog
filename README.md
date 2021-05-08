@@ -25,13 +25,14 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 86 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 87 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.3 posts per month.
 
-🆕 The latest post was published 19 day(s) ago: [Make the simplest R
-package with {pico}](https://www.rostrum.blog/2021/04/18/pico-pkg/).
+🆕 The latest post was published 1 day(s) ago: [Encrypt and host a
+knitted R Markdown
+file](https://www.rostrum.blog/2021/05/07/encrypted-rmd/).
 
 📈 This 2D plot shows posts over time:
 
@@ -43,6 +44,7 @@ package with {pico}](https://www.rostrum.blog/2021/04/18/pico-pkg/).
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|     87 | 2021-05-07 | [Encrypt and host a knitted R Markdown file](https://www.rostrum.blog/2021/05/07/encrypted-rmd/)                          |
 |     86 | 2021-04-18 | [Make the simplest R package with {pico}](https://www.rostrum.blog/2021/04/18/pico-pkg/)                                  |
 |     85 | 2021-04-14 | [Up-to-date blog stats in your README](https://www.rostrum.blog/2021/04/14/gha-readme/)                                   |
 |     84 | 2021-04-10 | [Convert R to cron to English with {dialga}](https://www.rostrum.blog/2021/04/10/dialga/)                                 |
@@ -134,4 +136,4 @@ package with {pico}](https://www.rostrum.blog/2021/04/18/pico-pkg/).
 
 -----
 
-*Updated 2021-05-07*
+*Updated 2021-05-08*
