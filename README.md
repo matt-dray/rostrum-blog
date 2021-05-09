@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.3 posts per month.
 
-🆕 The latest post was published 1 day(s) ago: [Encrypt and host a
+🆕 The latest post was published 2 day(s) ago: [Encrypt and host a
 knitted R Markdown
 file](https://www.rostrum.blog/2021/05/07/encrypted-rmd/).
 
@@ -136,4 +136,4 @@ file](https://www.rostrum.blog/2021/05/07/encrypted-rmd/).
 
 -----
 
-*Updated 2021-05-08*
+*Updated 2021-05-09*
