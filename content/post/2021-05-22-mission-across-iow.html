@@ -1,0 +1,375 @@
+---
+title: 'Misson Across the Isle of Wight'
+author: Matt Dray
+date: '2021-05-22'
+slug: mission-across-iow
+categories:
+  - code
+  - tutorial
+tags:
+  - geospatial
+  - leaflet
+  - osmextract
+  - r
+  - sf
+draft: no
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+<script src="/rmarkdown-libs/htmlwidgets/htmlwidgets.js"></script>
+<script src="/rmarkdown-libs/jquery/jquery.min.js"></script>
+<link href="/rmarkdown-libs/leaflet/leaflet.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/leaflet/leaflet.js"></script>
+<link href="/rmarkdown-libs/leafletfix/leafletfix.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/proj4/proj4.min.js"></script>
+<script src="/rmarkdown-libs/Proj4Leaflet/proj4leaflet.js"></script>
+<link href="/rmarkdown-libs/rstudio_leaflet/rstudio_leaflet.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/leaflet-binding/leaflet.js"></script>
+<script src="/rmarkdown-libs/leaflet-providers/leaflet-providers_1.9.0.js"></script>
+<script src="/rmarkdown-libs/leaflet-providers-plugin/leaflet-providers-plugin.js"></script>
+<link href="/rmarkdown-libs/leaflet-awesomemarkers/leaflet.awesome-markers.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/leaflet-awesomemarkers/leaflet.awesome-markers.min.js"></script>
+<link href="/rmarkdown-libs/fontawesome/font-awesome.min.css" rel="stylesheet" />
+<link href="/rmarkdown-libs/leaflet-measure/leaflet-measure.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/leaflet-measure/leaflet-measure.min.js"></script>
+<link href="/rmarkdown-libs/lfx-fullscreen/lfx-fullscreen-prod.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/lfx-fullscreen/lfx-fullscreen-prod.js"></script>
+
+
+<div class="figure">
+<img src="/post/2021-05-22-mission-across-iow_files/maw.png" alt="A preview of an interactive map showing the Isle of Wight, UK, with a straight line across it. The start and endpoints are marked and there are coloured lines crossing the straight line. There are panels with options to turn on and off map layers and zoom in. Two large emoji boots are shown above the line." width="100%"/>
+<p class="caption">
+Isle of Wight, coloured off-white.
+</p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I used R to identify and map hazards on a potential straight-line walking route across the Isle of Wight, mimicking <a href="https://www.youtube.com/watch?v=M7w986ni7_g&amp;list=PL_japiE6QKWphPxjqn0KJjfoRnuVSELaI">Tom ‘GeoWizard’ Davies’s ‘Mission Across’ series of YouTube videos</a>. You can <a href="#map">jump straight to the interactive map</a>.</p>
+</div>
+<div id="geowizard" class="section level1">
+<h1>GeoWizard</h1>
+<p>Tom ‘GeoWizard’ Davies is perhaps best known for <a href="https://www.youtube.com/c/GeoWizard">his YouTube channel</a>, where he posts <a href="https://www.twitch.tv/geowizardstreams">Twitch stream</a> highlights of <a href="https://www.geoguessr.com/">Geoguessr</a>, a game where you pinpoint a randomised location based only <a href="https://www.google.com/streetview/">Google StreetView</a>.</p>
+<p>He also chronicles real-life trekking adventures, usually with a twist. Particularly captivating are the ‘Mission Across’ videos, where Tom attempts to cross a country in a straight line on foot. That includes having to clamber over hedges, swim across ponds, get stuck in bogs and risk the wrath of local farmers and landowners. So far this has covered <a href="https://www.youtube.com/watch?v=M7w986ni7_g&amp;list=PL_japiE6QKWphPxjqn0KJjfoRnuVSELaI">Wales</a>, <a href="https://www.youtube.com/watch?v=Jk84QaNEOFw&amp;list=PL_japiE6QKWo358zmUkEydTjyLzd1yBh5">Wales again</a> and <a href="https://www.youtube.com/watch?v=CDPhdkdR9qI&amp;list=PL_japiE6QKWoP-qPQ3wXuOtLkZeYumJRH">Norway</a>, with a Scotland series due this month.</p>
+<p>Of course, this requires a lot of planning to decide what the best route is and to make sure you don’t traipse directly through someone’s living room in your muddy boots. Typically this might involve lots of time in GIS software and various online mapping services.</p>
+<p>I learnt recently of <a href="https://docs.ropensci.org/osmextract/">the {osmextract} package</a> for <a href="https://www.r-project.org/">the R language</a>, which fetches geographic features from <a href="https://www.openstreetmap.org/">OpenStreetMap</a>, and wondered how easy it would be to use R to do a light-touch assessment of straight line routes in a ‘Mission Across’ style. Basically, can we work out the number and type of obstructions we’d face on a given route?</p>
+<p>You can <a href="#map">jump straight to an interactive map</a> with my example for the Isle of Wight, or keep reading for the code and an explanation.</p>
+<p>As an aside, Tom has also made the album ‘16 Bit Adventure’ under the moniker ‘Amynedd’; music which accompanies the ‘Mission Across’ videos. Press play here for inspiration as you read on.</p>
+<iframe src="https://open.spotify.com/embed/track/0F5DtplpuR54PvREsb8sKP" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media">
+</iframe>
+</div>
+<div id="code-walkthrough" class="section level1">
+<h1>Code walkthrough</h1>
+<div id="packages" class="section level2">
+<h2>Packages</h2>
+<p>R is very capable as a code-led tool for geospatial manipulation and mapping. Along with {tidyverse} for data wrangling, there’s a few geospatial packages we need: <a href="https://docs.ropensci.org/geojsonio/">{geojsonio}</a> lets us read GeoJSON files, <a href="https://r-spatial.github.io/sf/">{sf}</a> is for handling ‘special features’ geometry in a ‘tidy’ way, and <a href="https://rstudio.github.io/leaflet/">{leaflet}</a> lets us create interactive maps. <a href="https://docs.ropensci.org/osmextract/">{osmextract}</a> was the main motivation for this post; it fetches OpenStreetMap features pretty painlessly.</p>
+<pre class="r"><code>library(geojsonio)
+library(leaflet)
+library(leaflet.extras)
+library(osmextract)
+library(sf)
+library(tidyverse)</code></pre>
+<p>All these packages can all be downloaded from CRAN with <code>install.packages()</code>.</p>
+</div>
+<div id="the-boundary" class="section level2">
+<h2>The boundary</h2>
+<p>For purposes of this post, I wanted to look at a small, contained, ‘regularly-shaped’ geographic area to keep things simple. It didn’t have to be a country.</p>
+<p>I settled on <a href="https://en.wikipedia.org/wiki/Isle_of_Wight">the Isle of Wight</a> (IOW)<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>, a small island off the south-coast of England. It’s mostly rural, with farms, hedges and waterways to cross, but there are certainly more built-up areas. It also helps that the IOW is featured in <a href="https://docs.ropensci.org/osmextract/index.html">the {osmextract} documentation</a>!</p>
+<div class="figure">
+<img src="/post/2021-05-22-mission-across-iow_files/flag.png" alt="The flag of the Isle of White. The lower half is dark blue and white alternating wavy lines to indicate the sea The upper half is light blue with a white geometric shape to represent the island, which is a diamond with a triangular portion cut from the uppermost corner." width="50%"/>
+<p class="caption">
+The Isle of Wight: a vexillologist’s delight.
+</p>
+</div>
+<p>First thing is to fetch a polygon that represents the extent of the island. Fortunately, Local Authority District (LAD) boundaries for the UK are available to download from the Official for National Statistics (ONS) in GeoJSON form. We can filter for the IOW, specifically.</p>
+<pre class="r"><code># LAD boundaries (December 2020) UK BGC from the ONS Open Geography Portal
+# Generalised (20m) - clipped to the coastline (Mean High Water mark)
+# https://geoportal.statistics.gov.uk/datasets/local-authority-districts-december-2020-uk-bgc
+geojson_path &lt;- 
+  &quot;https://opendata.arcgis.com/datasets/db23041df155451b9a703494854c18c4_0.geojson&quot;
+
+# Read LAD boundaries, filter to IOW
+iow_extent &lt;- geojson_read(geojson_path, what = &quot;sp&quot;) %&gt;% 
+  st_as_sf(crs = 4326) %&gt;%
+  filter(LAD20NM == &quot;Isle of Wight&quot;)</code></pre>
+<p>I’ve used boundaries that are ‘clipped to the coastline’ because I don’t think you should have to swim out to the low-water mark to complete such a challenge.</p>
+</div>
+<div id="openstreetmap-features" class="section level2">
+<h2>OpenStreetMap features</h2>
+<p>We want to identify features like hedgerows, buildings and waterways that will become obstructions for our imaginary walk across the island. The <code>oe_get()</code> function from {osmextra} is an easy way to pull features from OpenStreetMap en masse. You can supply a location and receive features within that area.</p>
+<p>First, the polygonal features, which you can get with argument <code>layer = "multipolygons"</code>. You can see that a geometry column is returned, which contains the coordinates for the polygons.</p>
+<pre class="r"><code># Fetch polygonal features for IoW
+osm_polys &lt;- oe_get(
+  &quot;Isle of Wight&quot;, # geographic area of interest
+  layer = &quot;multipolygons&quot;,  # fetch polygons
+  stringsAsFactors = FALSE,  # return character-class
+  quiet = TRUE  # don&#39;t print info
+) %&gt;%
+  st_transform(crs = 4326)  # latlong coord reference system
+
+# Limited preview
+glimpse(select(osm_polys, osm_id, name, type, geometry))</code></pre>
+<pre><code>## Rows: 77,337
+## Columns: 4
+## $ osm_id   &lt;chr&gt; &quot;4763&quot;, &quot;5922&quot;, &quot;6022&quot;, &quot;7141&quot;, &quot;7316&quot;, &quot;29744&quot;, &quot;70978&quot;, &quot;71…
+## $ name     &lt;chr&gt; NA, NA, NA, NA, NA, &quot;Ryde Canoe Lake&quot;, &quot;Quarr Abbey&quot;, NA, &quot;Is…
+## $ type     &lt;chr&gt; &quot;multipolygon&quot;, &quot;multipolygon&quot;, &quot;multipolygon&quot;, &quot;multipolygon…
+## $ geometry &lt;MULTIPOLYGON [°]&gt; MULTIPOLYGON (((-1.251425 5..., MULTIPOLYGON (((…</code></pre>
+<p>Of course, we can grab line features too. The default for <code>layer</code> is lines, so we don’t need to supply this argument.</p>
+<pre class="r"><code># Fetch line features for IoW
+osm_lines &lt;-  oe_get(
+  &quot;Isle of Wight&quot;, 
+  stringsAsFactors = FALSE,
+  quiet = TRUE
+) %&gt;%
+  st_transform(crs = 4326)</code></pre>
+<p>For convenience, I’m simplifying the features down to the ones we care about. For Tom, hedgerows were a constant nuisance, waterways were cold and perilous, and buildings could contain angry landowners. We want to avoid them all, ideally.</p>
+<p>We can create a function to extract named features (we want rows containing ‘barriers’, ‘buildings’, ‘natural’ and ‘waterway’ features), and then iterate over our lines and polygons to isolate them. I’ve put them into a single object so it’s easier to reference them later.</p>
+<pre class="r"><code># Filter for a single feature type from oe_get() output
+# &#39;sf_in&#39; is output from oe_get(); &#39;feature&#39; is the feature we want
+isolate_feature &lt;- function(sf_in, feature) {
+  sf_in %&gt;% 
+    filter(!is.na(sf_in[[feature]])) %&gt;%  # filter for feature
+    select(osm_id, type = all_of(feature), geometry)  # simplify object
+}
+
+# Get all the features as a list object with one element per feature
+features &lt;- map2(
+  list(osm_lines, osm_polys, osm_polys, osm_lines),
+  list(&quot;barrier&quot;, &quot;building&quot;, &quot;natural&quot;, &quot;waterway&quot;),
+  isolate_feature
+) %&gt;% 
+  set_names(&quot;barrs&quot;, &quot;bldgs&quot;, &quot;natur&quot;, &quot;wways&quot;)
+
+# Limited preview of the waterways data
+glimpse(features$wways)</code></pre>
+<pre><code>## Rows: 2,689
+## Columns: 3
+## $ osm_id   &lt;chr&gt; &quot;3027797&quot;, &quot;3127808&quot;, &quot;4680059&quot;, &quot;5171926&quot;, &quot;5171930&quot;, &quot;51722…
+## $ type     &lt;chr&gt; &quot;river&quot;, &quot;river&quot;, &quot;river&quot;, &quot;stream&quot;, &quot;ditch&quot;, &quot;river&quot;, &quot;strea…
+## $ geometry &lt;LINESTRING [°]&gt; LINESTRING (-1.272943 50.62..., LINESTRING (-1.290…</code></pre>
+</div>
+<div id="the-line" class="section level2">
+<h2>The line</h2>
+<p>Of course, we need to specify a straight line route.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> For this demonstration, and in interests fo speed, I’ve just chosen one that looks alright by eye in terms of obstructions.</p>
+<p>Of course, you can use the approach outlined in this post to try other lines and discover quantitatively which ones have the fewest obstructions. That’s the subject of <a href="https://github.com/matt-dray/mission-across-iow">an upcoming Shiny app</a>, which will allow the user to provide a line and get feedback on the number and count of hazards.</p>
+<p>Crucially, the line is clipped to the boundary of the island, so it goes from coast to coast.</p>
+<pre class="r"><code># Create a straight line
+# &#39;x1&#39;, etc, are start/end latlongs; &#39;boundary_poly&#39; is the GeoJSON
+make_line &lt;- function(x1, y1, x2, y2, boundary_poly) {
+  x &lt;- st_linestring(matrix(c(y1, y2, x1, x2), ncol = 2))  # to matrix
+  y &lt;- st_sfc(x, crs = 4326)  # set coord reference system
+  st_intersection(y, boundary_poly)  # clip line to island boundary
+}
+
+# Hard-coded start/end latlongs
+start_x &lt;- 50.658; start_y &lt;- -1.472
+end_x &lt;- 50.707; end_y &lt;- -1.101
+
+# Build line between the points, clip to IOW boundary
+line &lt;- make_line(start_x, start_y, end_x, end_y, iow_extent)</code></pre>
+<pre><code>## although coordinates are longitude/latitude, st_intersection assumes that they are planar</code></pre>
+<pre class="r"><code># Preview
+glimpse(line)</code></pre>
+<pre><code>## sfc_LINESTRING of length 1; first list element:  &#39;XY&#39; num [1:2, 1:2] -1.47 -1.1 50.66 50.71</code></pre>
+<p>You’ll notice we get a warning about ‘planar’ coordinates. As far as I know (as a non-geospatial analyst), this is related to working with data that assume the earth is flat (!) versus curved. Of course, calculations will be slightly off if you assume no curvature. I’m not bothered with that on the scale of the IOW, so I’m ignoring it (and suppressing subsequent warnings in this post).</p>
+<p>Here’s a quick preview of where our line is:</p>
+<pre class="r"><code>ggplot() +
+  geom_sf(data = iow_extent) +
+  geom_sf(data = line) +
+  ggthemes::theme_map()</code></pre>
+<p><img src="/post/2021-05-22-mission-across-iow_files/figure-html/line-map-1.png" title="A simple map of the Isle of Wight, UK, with a line drawn from the east to west coasts, passing roughly throught the middle." alt="A simple map of the Isle of Wight, UK, with a line drawn from the east to west coasts, passing roughly throught the middle." width="672" /></p>
+</div>
+<div id="the-platinum-zone" class="section level2">
+<h2>The platinum zone</h2>
+<p>In practice it’s very difficult to keep exactly to the line and some deviation may be required at a landowner’s request, for example. What’s an acceptable amount of wiggle room?</p>
+<p>Tom spoke in one of his videos about assigning scores to a mission based on minimal deviation from the line. For example, staying within 25 m of the line either side would be a ‘platinum’ standard.</p>
+<p>We can build a buffer around our line to create a platinum zone, which will be a useful visual aid in the final map.</p>
+<pre class="r"><code># Create a buffer around the straight line
+# &#39;line&#39; as created with make_line(); 25m is &#39;platinum&#39; standard
+make_buffer &lt;- function(straight_line, buffer_size = 25) { 
+  x &lt;- st_transform(straight_line, crs = 27700)  # line to draw buffer around
+  y &lt;- st_buffer(x, dist = buffer_size)
+  st_transform(y, crs = 4326)  # reset coord reference system
+}
+
+# Generate a 25m buffer (&#39;platinum standard&#39;) around the line
+buffer &lt;- make_buffer(line)
+
+# Preview
+glimpse(buffer)</code></pre>
+<pre><code>## sfc_POLYGON of length 1; first list element: List of 1
+##  $ : num [1:123, 1:2] -1.1 -1.1 -1.1 -1.1 -1.1 ...
+##  - attr(*, &quot;class&quot;)= chr [1:3] &quot;XY&quot; &quot;POLYGON&quot; &quot;sfg&quot;</code></pre>
+</div>
+<div id="obstructions" class="section level2">
+<h2>Obstructions</h2>
+<p>Our <code>features</code> object currently has all the lines and polygons within the IOW boundary, but we only want the ones that come in contact with (i.e. intersect) with our proposed route. The <code>st_intersects()</code> fcuntion from {sf} does exactly that.</p>
+<pre class="r"><code># Extract features that intersect with the line or buffer geometry
+# &#39;features_sf&#39; contains the features; &#39;path_sf&#39; for what to intersect
+find_obs &lt;- function(features_sf, path_sf) { 
+  row_nums &lt;- st_intersects(path_sf, features_sf)[[1]]  # rows with obstruction
+  slice(features_sf, row_nums)  # extract matching rows
+}
+
+# Find intersection between features and line
+obstructions &lt;- map(features, ~find_obs(.x, line)) %&gt;% 
+  set_names(&quot;barrs&quot;, &quot;bldgs&quot;, &quot;natur&quot;, &quot;wways&quot;)
+
+# Limited preview
+glimpse(obstructions$wways)</code></pre>
+<pre><code>## Rows: 11
+## Columns: 3
+## $ osm_id   &lt;chr&gt; &quot;471224575&quot;, &quot;552565448&quot;, &quot;552565555&quot;, &quot;552565565&quot;, &quot;55650679…
+## $ type     &lt;chr&gt; &quot;stream&quot;, &quot;stream&quot;, &quot;stream&quot;, &quot;stream&quot;, &quot;ditch&quot;, &quot;ditch&quot;, &quot;di…
+## $ geometry &lt;LINESTRING [°]&gt; LINESTRING (-1.289448 50.67..., LINESTRING (-1.216…</code></pre>
+<p>We can create a quick table to see what the obstructions are for this route.</p>
+<pre class="r"><code>tribble(
+  ~Type, ~Count,
+  &quot;Barriers&quot;, nrow(obstructions$barrs),
+  &quot;Buildings&quot;, nrow(obstructions$bldgs),
+  &quot;Waterways&quot;, nrow(obstructions$wways),
+  &quot;Water bodies&quot;, nrow(filter(obstructions$natur, type == &quot;water&quot;)
+  )
+) %&gt;% knitr::kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Type</th>
+<th align="right">Count</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Barriers</td>
+<td align="right">91</td>
+</tr>
+<tr class="even">
+<td align="left">Buildings</td>
+<td align="right">6</td>
+</tr>
+<tr class="odd">
+<td align="left">Waterways</td>
+<td align="right">11</td>
+</tr>
+<tr class="even">
+<td align="left">Water bodies</td>
+<td align="right">4</td>
+</tr>
+</tbody>
+</table>
+<p>You can see how this information is useful if you wanted to try other straight-line paths and see how they stack up against each other. Maybe you want to reduce the number of barriers (typically hedgerows); maybe you don’t mind swimming across a large water body.</p>
+</div>
+<div id="map" class="section level2">
+<h2>Map</h2>
+<p>So we have the objects we need: our straight-line route, the platinum-zone buffer and all the features that cross our path. Now to map it. We can use the {leaflet} package to layer these up on an interactive map, allowing the user to inspect the route and the hazards along the way.</p>
+<details>
+<summary>
+Click to expand the full mapping code
+</summary>
+<p>The basic approach here is to <code>addproviderTiles()</code> for underlying maps (I’ve chosen these to help add extra context to the route); use <code>addPolygons</code> and <code>addPolylines()</code> to supply the line, buffer and the features as separate ‘layers’ that can be turned on or off; use <code>addAwesomeMarkers()</code> for clickable pop-up feature labels; and supply additional mapping conveniences with <code>addMeasure()</code> and, from {leaflet.extras}, <code>addFullscreenControl()</code> (both functions do what their names suggest).</p>
+<pre class="r"><code># Set multi-use variables
+marker_fill &lt;- &quot;darkblue&quot;
+icon_fill &lt;- &quot;white&quot;
+col_line &lt;- &quot;#000&quot;
+col_artifical &lt;- &quot;#F00&quot;
+col_water &lt;- &quot;#00F&quot;
+weight_line &lt;- 1
+weight_obstruction &lt;- 2
+alpha_all &lt;- 0.5
+
+# Interactive map
+leaflet() %&gt;% 
+  # Base groups: map tiles
+  addProviderTiles(&quot;CartoDB.PositronNoLabels&quot;, group = &quot;Simple&quot;) %&gt;%
+  addProviderTiles(&quot;Esri.WorldTopoMap&quot;, group = &quot;Terrain&quot;) %&gt;%
+  addProviderTiles(&quot;Esri.WorldImagery&quot;, group = &quot;Satellite&quot;) %&gt;%
+  # Overlay groups: line and buffer
+  addPolygons(
+    data = buffer, group = &quot;Line/buffer&quot;, 
+    color = col_line, weight = weight_line, dashArray = 4, 
+    fill = TRUE, opacity = alpha_all
+  ) %&gt;% 
+  addPolylines(
+    data = line, group = &quot;Line/buffer&quot;,
+    color = col_line, weight = weight_line, 
+    fill = FALSE
+  ) %&gt;%
+  # Overlay groups: start and end points
+  addAwesomeMarkers(
+    lng = start_y, lat = start_x, group = &quot;Start/end&quot;,
+    icon = awesomeIcons(
+      markerColor = &quot;blue&quot;,
+      icon = &quot;play&quot;, library = &quot;fa&quot;, iconColor = &quot;#FFF&quot;
+    ),
+    popup = paste0(&quot;&lt;center&gt;Start&lt;br&gt;&quot;, start_x, &quot;, &quot;, start_y, &quot;&lt;center&gt;&quot;)
+  ) %&gt;% 
+  addAwesomeMarkers(
+    lng = end_y, lat = end_x, group = &quot;Start/end&quot;,
+    icon = awesomeIcons(
+      markerColor = &quot;blue&quot;,
+      icon = &quot;stop&quot;, library = &quot;fa&quot;, iconColor = &quot;#FFF&quot;
+    ),
+    popup = paste0(&quot;&lt;center&gt;End&lt;br&gt;&quot;, end_x, &quot;, &quot;, end_y, &quot;&lt;center&gt;&quot;)
+  ) %&gt;% 
+  # Overlay groups: features in buffer
+  addPolylines(
+    data = obstructions$barrs, group = &quot;Barriers&quot;,
+    color = col_artifical, weight = weight_obstruction,
+    label = paste(&quot;Barrier:&quot;, obstructions$barrs$type)
+  ) %&gt;% 
+  addPolygons(
+    data = obstructions$bldgs, group = &quot;Buildings&quot;,
+    color = col_artifical, weight = weight_obstruction, 
+    fillColor = col_artifical, fillOpacity = alpha_all,
+    label = paste(&quot;Building:&quot;, obstructions$bldgs$type)
+  ) %&gt;%
+  addPolygons(
+    data = filter(obstructions$natur, type == &quot;water&quot;), group = &quot;Water&quot;,
+    color = col_water, weight = weight_obstruction, 
+    fillColor = col_water, fillOpacity = alpha_all,
+    label = &quot;Water body&quot;
+  ) %&gt;% 
+  addPolylines(
+    data = obstructions$wways, group = &quot;Water&quot;,
+    color = col_water, weight = weight_obstruction,
+    label = paste(&quot;Waterway:&quot;, obstructions$wways$type)
+  ) %&gt;% 
+  # Control which layers are shown
+  addLayersControl(
+    baseGroups = c(&quot;Simple&quot;, &quot;Terrain&quot;, &quot;Satellite&quot;),  # radio button
+    overlayGroups = c(  # checkboxes
+      &quot;Line/buffer&quot;, &quot;Start/end&quot;,  # line-related
+      &quot;Water&quot;, &quot;Barriers&quot;, &quot;Buildings&quot;  # obstructions
+    ),
+    position = &quot;topright&quot;,
+    options = layersControlOptions(collapsed = FALSE)
+  ) %&gt;% 
+  # Other map features
+  addMeasure(  # tool for users to measure distances
+    position = &quot;topleft&quot;,
+    primaryLengthUnit = &quot;meters&quot;,
+    primaryAreaUnit = &quot;sqmeters&quot;
+  ) %&gt;% 
+  addFullscreenControl()  # clickable full-screen button</code></pre>
+</details>
+<div id="htmlwidget-1" style="width:672px;height:480px;" class="leaflet html-widget"></div>
+<script type="application/json" data-for="htmlwidget-1">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}},"fullscreenControl":{"position":"topleft","pseudoFullscreen":false}},"calls":[{"method":"addProviderTiles","args":["CartoDB.PositronNoLabels",null,"Simple",{"errorTileUrl":"","noWrap":false,"detectRetina":false}]},{"method":"addProviderTiles","args":["Esri.WorldTopoMap",null,"Terrain",{"errorTileUrl":"","noWrap":false,"detectRetina":false}]},{"method":"addProviderTiles","args":["Esri.WorldImagery",null,"Satellite",{"errorTileUrl":"","noWrap":false,"detectRetina":false}]},{"method":"addPolygons","args":[[[[{"lng":[-1.10124114866304,-1.10122290116517,-1.10120450855578,-1.10118602124842,-1.10116748991625,-1.10114896535309,-1.10113049833421,-1.10111213947712,-1.1010939391029,-1.10107594709816,-1.10105821277838,-1.10104078475272,-1.10102371079071,-1.10100703769142,-1.1009908111551,-1.10097507565793,-1.10095987433013,-1.10094524883775,-1.10093123926839,-1.10091788402143,-1.10090521970268,-1.10089328102411,-1.10088210070867,-1.10087170940064,-1.10086213558158,-1.10085340549233,-1.10084554306104,-1.10083856983762,-1.10083250493466,-1.10082736497507,-1.1008231640465,-1.10081991366275,-1.1008176227322,-1.10081629753343,-1.10081594169801,-1.10081655620051,-1.10081813935591,-1.10082068682417,-1.10082419162216,-1.10082864414279,-1.10083403218138,-1.10084034096909,-1.1008475532134,-1.10085564914557,-1.10086460657475,-1.10087440094887,-1.10088500542192,-1.10089639092752,-1.10090852625863,-1.10092137815304,-1.1009349113846,-1.1009490888597,-1.10096387171899,-1.1009792194439,-1.10099508996765,-1.10101143979059,-1.1010282240994,-1.10104539688991,-1.10106291109325,-1.10108071870475,-1.10109877091563,-1.47092518830268,-1.47094340082433,-1.47096176309744,-1.47098022479298,-1.47099873530946,-1.47101724391155,-1.4710356998692,-1.47105405259662,-1.47107225179095,-1.47109024757016,-1.47110799060969,-1.47112543227773,-1.47114252476843,-1.47115922123296,-1.47117547590794,-1.47119124424082,-1.47120648301201,-1.47122115045337,-1.47123520636263,-1.47124861221363,-1.47126133126189,-1.47127332864536,-1.4712845714799,-1.47129502894951,-1.47130467239071,-1.47131347537117,-1.47132141376213,-1.47132846580455,-1.47133461216876,-1.47133983600743,-1.47134412300176,-1.47134746140077,-1.47134984205343,-1.47135125843386,-1.47135170665913,-1.47135118549997,-1.4713496963841,-1.47134724339238,-1.47134383324758,-1.47133947529601,-1.47133418148185,-1.47132796631448,-1.47132084682869,-1.47131284253797,-1.47130397538109,-1.47129426966191,-1.4712837519828,-1.47127245117175,-1.47126039820331,-1.47124762611372,-1.47123416991036,-1.47122006647578,-1.47120535446665,-1.47119007420776,-1.47117426758149,-1.47115797791304,-1.47114124985167,-1.4711241292483,-1.47110666302981,-1.47108889907047,-1.47107088606067,-1.10124114866304],"lat":[50.7071977600532,50.7071998241036,50.7072012789018,50.70720212046,50.7072023464718,50.7072019563175,50.7072009510667,50.7071993334746,50.7071971079751,50.7071942806681,50.7071908593032,50.7071868532583,50.7071822735139,50.7071771326228,50.7071714446761,50.7071652252642,50.7071584914343,50.7071512616435,50.7071435557085,50.707135394751,50.7071268011397,50.7071177984294,50.7071084112961,50.7070986654695,50.7070885876625,50.7070782054978,50.7070675474324,50.7070566426795,50.7070455211284,50.7070342132627,50.7070227500765,50.7070111629898,50.706999483762,50.7069877444051,50.706975977096,50.7069642140879,50.7069524876225,50.7069408298412,50.706929272697,50.7069178478672,50.7069065866664,50.7068955199605,50.7068846780825,50.7068740907492,50.7068637869793,50.7068537950147,50.7068441422425,50.7068348551199,50.7068259591022,50.7068174785724,50.7068094367749,50.7068018557515,50.7067947562809,50.7067881578222,50.706782078461,50.7067765348603,50.7067715422144,50.7067671142077,50.7067632629769,50.7067599990779,50.7067573314565,50.6579123335134,50.6579102114782,50.6579086982461,50.6579077979647,50.6579075131016,50.6579078444375,50.6579087910644,50.6579103503875,50.6579125181331,50.6579152883594,50.6579186534737,50.6579226042524,50.6579271298671,50.6579322179133,50.6579378544454,50.6579440240141,50.6579507097093,50.6579578932063,50.6579655548157,50.6579736735378,50.6579822271201,50.6579911921179,50.6580005439591,50.6580102570111,50.6580203046514,50.6580306593403,50.6580412926964,50.6580521755747,50.6580632781461,50.6580745699793,50.6580860201245,50.6580975971975,50.6581092694666,50.6581210049389,50.6581327714484,50.6581445367438,50.6581562685773,50.6581679347927,50.6581795034137,50.6581909427314,50.6582022213913,50.6582133084792,50.6582241736061,50.6582347869913,50.658245119544,50.6582551429432,50.6582648297153,50.6582741533093,50.6582830881697,50.6582916098063,50.6582996948618,50.6583073211753,50.6583144678434,50.6583211152775,50.658327245257,50.65833284098,50.6583378871088,50.6583423698122,50.6583462768031,50.6583495973726,50.6583523224193,50.7071977600532]}]]],null,"Line/buffer",{"interactive":true,"className":"","stroke":true,"color":"#000","weight":1,"opacity":0.5,"fill":true,"fillColor":"#000","fillOpacity":0.2,"dashArray":4,"smoothFactor":1,"noClip":false},null,null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]},{"method":"addPolylines","args":[[[[{"lng":[-1.47099804823461,-1.1011699710597],"lat":[50.658132333252,50.7069775509921]}]]],null,"Line/buffer",{"interactive":true,"className":"","stroke":true,"color":"#000","weight":1,"opacity":0.5,"fill":false,"fillColor":"#000","fillOpacity":0.2,"smoothFactor":1,"noClip":false},null,null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]},{"method":"addAwesomeMarkers","args":[50.658,-1.472,{"icon":"play","markerColor":"blue","iconColor":"#FFF","spin":false,"squareMarker":false,"iconRotate":0,"font":"monospace","prefix":"fa"},null,"Start/end",{"interactive":true,"draggable":false,"keyboard":true,"title":"","alt":"","zIndexOffset":0,"opacity":1,"riseOnHover":false,"riseOffset":250},"<center>Start<br>50.658, -1.472<center>",null,null,null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]},{"method":"addAwesomeMarkers","args":[50.707,-1.101,{"icon":"stop","markerColor":"blue","iconColor":"#FFF","spin":false,"squareMarker":false,"iconRotate":0,"font":"monospace","prefix":"fa"},null,"Start/end",{"interactive":true,"draggable":false,"keyboard":true,"title":"","alt":"","zIndexOffset":0,"opacity":1,"riseOnHover":false,"riseOffset":250},"<center>End<br>50.707, -1.101<center>",null,null,null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]},{"method":"addPolylines","args":[[[[{"lng":[-1.1983929,-1.1982882,-1.1981052,-1.198025,-1.1987285,-1.1990455],"lat":[50.6937574,50.6940003,50.6948198,50.6952671,50.6952457,50.69523]}]],[[{"lng":[-1.1957503,-1.1945218,-1.193642,-1.1928267],"lat":[50.6941775,50.6960515,50.6973988,50.6986509]}]],[[{"lng":[-1.1987799,-1.1986765,-1.1985907,-1.1985894,-1.1986282,-1.1985049,-1.1984083,-1.1983386,-1.1980838,-1.1978813,-1.1977365,-1.1974133,-1.1970726,-1.1968514,-1.196681,-1.1964906,-1.1962934,-1.1962036,-1.196154,-1.1961392,-1.1964074,-1.1967427,-1.1971399,-1.1976332,-1.1976801,-1.1975205,-1.1974129,-1.197287],"lat":[50.6916476,50.6917809,50.6920239,50.6921811,50.6923085,50.6925685,50.6926679,50.6927112,50.6926789,50.692639,50.6925974,50.6925523,50.6925591,50.692972,50.6931589,50.693328,50.6934622,50.6935404,50.6936245,50.6936916,50.6937179,50.6937936,50.6938616,50.6939065,50.6939337,50.694203,50.6947262,50.6951492]}]],[[{"lng":[-1.1248594,-1.1250016,-1.1253208,-1.1256587,-1.1264151,-1.1272386,-1.1275887,-1.1279158,-1.1280969,-1.1280593,-1.1276945,-1.1274987,-1.1269274,-1.1264017,-1.1263132,-1.1260718,-1.1254495,-1.1247066,-1.1235265,-1.1239449,-1.1241487,-1.1245483,-1.1246797,-1.1247535],"lat":[50.7043708,50.7042944,50.7041925,50.7041364,50.7040345,50.7040141,50.7040323,50.704032,50.7039869,50.703795,50.7032412,50.7032123,50.7033244,50.7034875,50.7033941,50.7027825,50.7028063,50.7027706,50.7039665,50.7042078,50.7042944,50.7043929,50.7044014,50.704398]}]],[[{"lng":[-1.1313048,-1.1312753,-1.1313048,-1.1312592,-1.1311734,-1.1311519,-1.131168,-1.1316025,-1.1319432,-1.1299127,-1.1299204,-1.1298787,-1.1297785,-1.1280593],"lat":[50.6999693,50.7001154,50.700586,50.7008952,50.7012383,50.7013776,50.7014116,50.7018686,50.7022933,50.7028692,50.7030136,50.7032427,50.7033359,50.703795]}]],[[{"lng":[-1.1364732,-1.135835,-1.1358216,-1.1358404,-1.1358645,-1.1359987,-1.1361167],"lat":[50.7029114,50.702966,50.7025787,50.7022457,50.7018754,50.7014235,50.7010175]}]],[[{"lng":[-1.1922516,-1.1898666,-1.1871744],"lat":[50.6951937,50.6950926,50.6949972]}]],[[{"lng":[-1.1840813,-1.1842131],"lat":[50.6931413,50.6961488]}]],[[{"lng":[-1.1586102,-1.1583273,-1.1582768,-1.1582583,-1.158092,-1.1584032,-1.1585695,-1.1587304,-1.1588645,-1.158902,-1.1587733],"lat":[50.6981941,50.6999174,50.700307,50.70045,50.7013844,50.7014149,50.7014489,50.7015203,50.7016154,50.7018396,50.7021998]}]],[[{"lng":[-1.1100645,-1.1081226,-1.1063006],"lat":[50.706457,50.7060119,50.7057595]}]],[[{"lng":[-1.1203022,-1.1202459,-1.1199938,-1.1198857,-1.1198436,-1.1198919,-1.1201494,-1.1202888,-1.1204275,-1.1206582,-1.1208061],"lat":[50.7067618,50.7063449,50.7060187,50.7056669,50.7053019,50.7051048,50.7047651,50.7045239,50.7042604,50.7041381,50.7040365]}]],[[{"lng":[-1.1613506,-1.1615627,-1.1616522],"lat":[50.698605,50.6999065,50.700189]}]],[[{"lng":[-1.1772188,-1.1769291],"lat":[50.6966323,50.6972303]}]],[[{"lng":[-1.1735148,-1.1738474,-1.1740747,-1.1745709,-1.1747659,-1.17511,-1.1751427],"lat":[50.6981294,50.6980411,50.6976712,50.6973579,50.697013,50.6964439,50.6961912]}]],[[{"lng":[-1.3122117,-1.3130502,-1.3140893,-1.3145587,-1.3157807,-1.3160462,-1.3164083,-1.3164818,-1.3166481,-1.3166443,-1.3172838,-1.3170612,-1.3170199,-1.3171524,-1.3176713],"lat":[50.6786218,50.6781729,50.6774728,50.6772723,50.6780913,50.6782902,50.6781083,50.6781068,50.6782564,50.6783055,50.6791062,50.6795226,50.6799116,50.6800886,50.6804534]}]],[[{"lng":[-1.3221708,-1.3253411,-1.3249591,-1.3246491,-1.3241797,-1.3236959,-1.3232101,-1.321613,-1.3208057,-1.3199515],"lat":[50.6746071,50.6774949,50.6781267,50.6782896,50.6786771,50.6791519,50.6795337,50.6804948,50.6809162,50.6810011]}]],[[{"lng":[-1.3188315,-1.3173429,-1.3186974,-1.320752,-1.321475],"lat":[50.6802269,50.6791402,50.6783363,50.6770343,50.6764137]}]],[[{"lng":[-1.3241797,-1.3232141,-1.3233161,-1.3232839,-1.3230495,-1.3222378,-1.321475,-1.3209238,-1.3203606],"lat":[50.6786771,50.6778911,50.6777823,50.6776838,50.6774183,50.6768373,50.6764137,50.6761336,50.6756509]}]],[[{"lng":[-1.3166443,-1.3158139,-1.315594,-1.3147786,-1.3146177,-1.3145131,-1.3142261,-1.3133517],"lat":[50.6783055,50.6786847,50.6786677,50.678994,50.6789396,50.6789362,50.6790484,50.6796365]}]],[[{"lng":[-1.3462262,-1.3451975,-1.3448052,-1.3444471],"lat":[50.6740346,50.6754927,50.6759814,50.6761025]}]],[[{"lng":[-1.3517179,-1.3477883,-1.3455107],"lat":[50.6751771,50.6742442,50.6763977]}]],[[{"lng":[-1.3566291,-1.3540595,-1.3535553,-1.3527318,-1.3519835,-1.3517179,-1.3507604,-1.3500641],"lat":[50.6717344,50.6733085,50.6735839,50.6742517,50.6749471,50.6751771,50.675984,50.6766991]}]],[[{"lng":[-1.2875845,-1.2861566,-1.2854846,-1.2844079,-1.2825318],"lat":[50.6821921,50.6825598,50.6826813,50.6828267,50.6831299]}]],[[{"lng":[-1.220108,-1.2201661,-1.220214,-1.2202733],"lat":[50.6921097,50.6914119,50.6908588,50.6906121]}]],[[{"lng":[-1.2270888,-1.2283347,-1.2285564,-1.2286975,-1.2288425,-1.2290627,-1.2291392,-1.2292895,-1.229398,-1.2296089,-1.2305774,-1.2313353],"lat":[50.6878998,50.6877573,50.6885028,50.6888987,50.6891919,50.6901842,50.6903204,50.6903755,50.6903649,50.6903009,50.6897384,50.6892659]}]],[[{"lng":[-1.226993,-1.2255896,-1.2252524,-1.2251981,-1.225171,-1.2251542,-1.225281,-1.2251404,-1.2251553],"lat":[50.6879112,50.6880593,50.6881458,50.6888791,50.6891485,50.6894586,50.6903457,50.691444,50.6916213]}]],[[{"lng":[-1.1870916,-1.1869808,-1.1869386,-1.1867567,-1.1863716,-1.1858416,-1.1855199,-1.1852977,-1.1850736,-1.1847908,-1.1845864],"lat":[50.6935982,50.6950214,50.6952436,50.6954791,50.6958065,50.6960754,50.6961874,50.6962441,50.6962738,50.696298,50.696308]}]],[[{"lng":[-1.2178248,-1.2178139,-1.214177],"lat":[50.6918599,50.6919271,50.6917145]}]],[[{"lng":[-1.2062444,-1.2061511,-1.2059124,-1.2059833],"lat":[50.6916766,50.6918987,50.6928555,50.693439]}]],[[{"lng":[-1.2508153,-1.2506922,-1.2505152,-1.2500186,-1.2499114,-1.2498502,-1.2497932],"lat":[50.6867701,50.6871394,50.6878097,50.68941,50.6896409,50.6897725,50.6901184]}]],[[{"lng":[-1.2521603,-1.2524682,-1.2526868,-1.2527619,-1.2528786,-1.2530074,-1.2530965,-1.253124,-1.2506922],"lat":[50.6890407,50.6889322,50.6888056,50.6887292,50.6882967,50.6877877,50.6873042,50.6871552,50.6871394]}]],[[{"lng":[-1.1739828,-1.1737716,-1.1731681,-1.1728435,-1.172755,-1.1722481,-1.1724124,-1.1725711],"lat":[50.6963607,50.6962638,50.6966919,50.6970402,50.6970045,50.6973919,50.6974774,50.6975599]}]],[[{"lng":[-1.203309,-1.2033025,-1.2025656,-1.2024652],"lat":[50.6935867,50.6928296,50.6928413,50.6928429]}]],[[{"lng":[-1.2945827,-1.2938572,-1.2926958,-1.2924877],"lat":[50.6814401,50.6812387,50.6815565,50.6811597]}]],[[{"lng":[-1.170005,-1.1694739,-1.1692807],"lat":[50.6977844,50.6980426,50.6981874]}]],[[{"lng":[-1.2766434,-1.2756363,-1.2747411],"lat":[50.684407,50.6840765,50.6837668]}]],[[{"lng":[-1.2759889,-1.2766434,-1.2773274],"lat":[50.6855932,50.684407,50.6832106]}]],[[{"lng":[-1.2629722,-1.2632862,-1.2642865,-1.265477,-1.2664502],"lat":[50.6874876,50.6865046,50.6837204,50.6837475,50.6837022]}]],[[{"lng":[-1.2954531,-1.2950696,-1.2948623,-1.2947014,-1.2946395,-1.294438,-1.2940222],"lat":[50.6821819,50.6819763,50.6817072,50.681487,50.6814142,50.6811807,50.6805352]}]],[[{"lng":[-1.4579262,-1.4579468,-1.457953,-1.4581534,-1.4581649,-1.4580609,-1.4577685,-1.4575459,-1.4572763,-1.4568727,-1.4563376,-1.4562652,-1.4563094,-1.4563523,-1.4564046,-1.4564247,-1.4564019],"lat":[50.6625015,50.6622151,50.6620033,50.6605835,50.660502,50.6604865,50.6604346,50.6603836,50.6603283,50.6602586,50.6602178,50.6602161,50.6599951,50.6598735,50.6598165,50.6597664,50.6597205]}]],[[{"lng":[-1.2790177,-1.2790067,-1.2790033,-1.2790455,-1.2791226,-1.2794284],"lat":[50.6821071,50.6823382,50.6825863,50.6827991,50.6830082,50.6834555]}]],[[{"lng":[-1.1502181,-1.1516909,-1.1525725,-1.153227,-1.1534201,-1.1535595,-1.1537124,-1.1538211,-1.1539901,-1.1542053,-1.1543602,-1.1544734,-1.1546325,-1.1549275,-1.1551179,-1.1554559,-1.1557255,-1.1561144],"lat":[50.6982409,50.7012844,50.7030679,50.7044846,50.7050761,50.7057072,50.7066678,50.7073251,50.7082636,50.7094636,50.7100456,50.7103928,50.7108512,50.7114415,50.7117574,50.7122109,50.7125752,50.7129361]}]],[[{"lng":[-1.1550979,-1.1551034,-1.1550675,-1.1550809,-1.1551194,-1.1550459,-1.1549006,-1.1548785,-1.1548224,-1.1547163,-1.1545621,-1.1544528,-1.1543232,-1.1542629,-1.1539794,-1.1538497,-1.1537214,-1.1535837,-1.1533691,-1.1527079,-1.1523746,-1.1518572,-1.1506824,-1.1505141],"lat":[50.7112089,50.7112222,50.7112298,50.7112662,50.7113709,50.711386,50.7111342,50.7110992,50.7109963,50.7108016,50.7103879,50.7100394,50.7094731,50.7091465,50.7073598,50.7065106,50.7057219,50.7051293,50.7044719,50.7030466,50.7023496,50.7012564,50.6987395,50.6981859]}]],[[{"lng":[-1.2345235,-1.2346531,-1.2350528,-1.234751,-1.2341583,-1.2336955],"lat":[50.6884338,50.6884981,50.6894158,50.6895465,50.6897402,50.6897903]}]],[[{"lng":[-1.2323585,-1.2327367,-1.2329901,-1.2331766,-1.2332664,-1.2333396,-1.2333746],"lat":[50.6893494,50.6895261,50.6896162,50.6897232,50.6897912,50.6898445,50.6898633]}]],[[{"lng":[-1.2318664,-1.2311073,-1.230969,-1.2307625,-1.2303212,-1.229856],"lat":[50.6896493,50.6901965,50.6902755,50.6904403,50.6907784,50.6910826]}]],[[{"lng":[-1.1836564,-1.1833084,-1.1826807,-1.1817849,-1.1806208,-1.1798215,-1.1793709,-1.1789203,-1.1785099,-1.1783195,-1.1780942,-1.1779225,-1.1782358,-1.1787991,-1.179302,-1.1796597,-1.1803977,-1.1810871,-1.1814259,-1.1816999,-1.1819574,-1.1822011,-1.1824576],"lat":[50.6962543,50.6961373,50.6958332,50.6953626,50.6947034,50.6942412,50.6939456,50.6935956,50.6932286,50.6929193,50.6924724,50.6922091,50.6919673,50.6916598,50.691484,50.6914513,50.6913896,50.6913046,50.6912211,50.6911271,50.6910396,50.6909271,50.690755]}]],[[{"lng":[-1.1824654,-1.1817305,-1.181009,-1.179515,-1.1789866,-1.1782617,-1.1769291,-1.1763636,-1.1757785,-1.1746435,-1.1741057,-1.1730261,-1.1725502],"lat":[50.696267,50.6963197,50.6964165,50.6966714,50.6967631,50.6968961,50.6972303,50.6973934,50.6975994,50.6980622,50.6982976,50.6988161,50.699045]}]],[[{"lng":[-1.2625912,-1.2622935,-1.2622342,-1.2623763,-1.2624625,-1.2612045,-1.2608532,-1.2608154,-1.2607751,-1.2607056,-1.2604841,-1.2602414,-1.2596458,-1.2584472,-1.2546851,-1.2546918,-1.2547085,-1.2547133,-1.254726,-1.2547502],"lat":[50.688363,50.6878464,50.6877427,50.6876221,50.6873876,50.6864631,50.6860009,50.6857525,50.6856185,50.6855302,50.6854273,50.6853583,50.6851988,50.6850255,50.6849112,50.6851572,50.6854477,50.6856737,50.6858004,50.685952]}]],[[{"lng":[-1.1673054,-1.1679307,-1.1684714,-1.1688318,-1.1692398,-1.1693304,-1.1695415,-1.1698951,-1.1705708,-1.1711017],"lat":[50.6952719,50.695803,50.6962727,50.696629,50.6970759,50.6971491,50.6972633,50.6974094,50.6976314,50.6977885]}]],[[{"lng":[-1.2880765,-1.2878414,-1.2876448,-1.2873811,-1.2873344,-1.2870863,-1.286652,-1.2860216,-1.2858046,-1.2876136,-1.2887283,-1.2887748,-1.2887932,-1.2888823],"lat":[50.6825544,50.6823148,50.6821307,50.6818817,50.6818353,50.6815883,50.6811327,50.6806526,50.6804575,50.6800762,50.6798076,50.6797992,50.6799142,50.6801656]}]],[[{"lng":[-1.4506556,-1.4506739,-1.4506887,-1.4507288,-1.451436],"lat":[50.6592744,50.6596327,50.6598177,50.6599292,50.6607469]}]],[[{"lng":[-1.3323404,-1.3340579,-1.3346755,-1.3342755,-1.3331599,-1.3316855,-1.3305572,-1.3296973,-1.3296406],"lat":[50.6758707,50.6768423,50.677233,50.6775592,50.6783506,50.6791551,50.6797005,50.6802166,50.6801725]}]],[[{"lng":[-1.3343084,-1.3372636],"lat":[50.6768317,50.6750656]}]],[[{"lng":[-1.3324223,-1.3342113],"lat":[50.6758415,50.6768529]}]],[[{"lng":[-1.2329526,-1.2322323,-1.2321357,-1.2319145,-1.2311688,-1.2311542],"lat":[50.6896544,50.6894686,50.6895399,50.6896773,50.6902146,50.6902466]}]],[[{"lng":[-1.3415236,-1.3415046,-1.3416384,-1.341767,-1.3419056,-1.341993,-1.3420493],"lat":[50.6759576,50.6758871,50.6757026,50.6754635,50.6751333,50.6748586,50.6745199]}]],[[{"lng":[-1.4034444,-1.4023317,-1.4020658],"lat":[50.6675917,50.6672883,50.6672157]}]],[[{"lng":[-1.4032244,-1.4034444,-1.4040419,-1.4044555,-1.4050698,-1.4061609,-1.4065503],"lat":[50.66793,50.6675917,50.6677471,50.6673639,50.6668995,50.665945,50.6653425]}]],[[{"lng":[-1.3070666,-1.3067859,-1.3064745,-1.3059917,-1.3056752,-1.3056591,-1.3057557,-1.3057262,-1.3056511,-1.305238],"lat":[50.6782562,50.6782812,50.6783089,50.6783021,50.6783378,50.6784704,50.679327,50.6794681,50.6796006,50.6800459]}]],[[{"lng":[-1.303916,-1.305238,-1.3055384,-1.3058442,-1.3060212,-1.3066757,-1.3074884],"lat":[50.6797784,50.6800459,50.6800697,50.6800731,50.6799576,50.679587,50.6802377]}]],[[{"lng":[-1.2489709,-1.2487376,-1.2485528,-1.2484117,-1.2482951,-1.2481606,-1.2480539,-1.247928,-1.2477159,-1.2473205,-1.2472022,-1.247137],"lat":[50.6897298,50.6895787,50.6894449,50.6893138,50.689115,50.6887722,50.6886159,50.6884562,50.6882477,50.6878939,50.6877651,50.6876701]}]],[[{"lng":[-1.1152264,-1.1150879,-1.1151066,-1.1150513,-1.115022,-1.1149514,-1.1148981,-1.1157018,-1.115933,-1.1163367,-1.1168906,-1.1169589],"lat":[50.7035361,50.7035757,50.7037098,50.7041341,50.7043342,50.704828,50.7052064,50.7053499,50.7045606,50.7046097,50.7046825,50.7046932]}]],[[{"lng":[-1.1164377,-1.1164905,-1.1169589],"lat":[50.706555,50.7060187,50.7046932]}]],[[{"lng":[-1.4534368,-1.4533858,-1.4531511,-1.4529969,-1.4529084,-1.4528561,-1.4528371],"lat":[50.6614939,50.6614284,50.6610612,50.6606021,50.6601855,50.6598489,50.6595903]}]],[[{"lng":[-1.4536366,-1.453652,-1.4537103,-1.4537452,-1.4534555,-1.4532262,-1.4530693,-1.4530125,-1.45297,-1.4529657,-1.4529312,-1.4529137],"lat":[50.6621502,50.6621106,50.6619495,50.6617481,50.6614165,50.6610578,50.6605944,50.6603482,50.6601643,50.6601296,50.6598514,50.6595972]}]],[[{"lng":[-1.2016398,-1.2016789,-1.2017143,-1.2022951,-1.2023071,-1.202351,-1.202392,-1.2024047],"lat":[50.6963822,50.6955558,50.6954253,50.693914,50.6938817,50.6937635,50.6936074,50.6934466]}]],[[{"lng":[-1.2108783,-1.2107165,-1.2105229,-1.2104626,-1.2107244],"lat":[50.693126,50.6926777,50.6921611,50.691942,50.6914477]}]],[[{"lng":[-1.2179607,-1.2178329],"lat":[50.6904351,50.6917767]}]],[[{"lng":[-1.293707,-1.2942019,-1.2945827],"lat":[50.6811248,50.6810076,50.6814401]}]],[[{"lng":[-1.2953621,-1.2956564,-1.2959751,-1.2963317],"lat":[50.6805269,50.6809634,50.681436,50.6819649]}]],[[{"lng":[-1.2954535,-1.2957499,-1.2960586,-1.2964082],"lat":[50.6805067,50.6809535,50.681419,50.681946]}]],[[{"lng":[-1.1935351,-1.1922516,-1.191043],"lat":[50.692142,50.6951937,50.6979206]}]],[[{"lng":[-1.2397411,-1.2394515],"lat":[50.6885533,50.688917]}]],[[{"lng":[-1.3751806,-1.3750473,-1.3750129,-1.3749465,-1.3730617,-1.372717],"lat":[50.6720232,50.6720813,50.6720979,50.6720651,50.6708709,50.6706531]}]],[[{"lng":[-1.3724024,-1.3714599,-1.3708644,-1.367434,-1.3666936,-1.3665986,-1.3664937,-1.3644179,-1.3612519],"lat":[50.67046,50.6719912,50.671818,50.6708897,50.6706796,50.6706796,50.6706853,50.6711286,50.6717936]}]],[[{"lng":[-1.360419,-1.3605397,-1.360725,-1.3612519,-1.3613655,-1.3617118,-1.3619889,-1.362166,-1.3624068,-1.3631245,-1.3633196,-1.363483,-1.3637796,-1.3640925,-1.3644567,-1.3650101,-1.3655332,-1.3660072],"lat":[50.6698018,50.6699667,50.6706306,50.6717936,50.6720297,50.6726122,50.6730382,50.6732311,50.6733664,50.6737003,50.6737377,50.6737406,50.6736651,50.6735542,50.6734728,50.6733529,50.6730599,50.6726678]}]],[[{"lng":[-1.3661496,-1.3661473,-1.3660165,-1.3661099],"lat":[50.6728572,50.672576,50.6720684,50.6717088]}]],[[{"lng":[-1.3644179,-1.3649449,-1.3640773,-1.3644567],"lat":[50.6711286,50.6723321,50.6724991,50.6734728]}]],[[{"lng":[-1.3421871,-1.3420542,-1.3419367,-1.3418557,-1.3417171,-1.341587,-1.3414516,-1.3414114],"lat":[50.6733963,50.6742059,50.6748533,50.6751323,50.675452,50.675685,50.6758668,50.6759089]}]],[[{"lng":[-1.4440235,-1.447843,-1.4477934],"lat":[50.6613332,50.6612193,50.6616256]}]],[[{"lng":[-1.4419554,-1.4405568],"lat":[50.6620786,50.6620516]}]],[[{"lng":[-1.4581534,-1.4578718,-1.4578583,-1.4575473,-1.4572039,-1.4569491,-1.4566809,-1.4562073,-1.4561579,-1.4561324,-1.4561431,-1.45606,-1.455887,-1.45394,-1.45297],"lat":[50.6605835,50.6605749,50.6605726,50.6605205,50.6604899,50.6605052,50.6605392,50.6605115,50.6605086,50.6605103,50.6604125,50.6604057,50.6603343,50.6602208,50.6601643]}]],[[{"lng":[-1.2420988,-1.2421337,-1.2421247,-1.2420291,-1.2417474],"lat":[50.6881811,50.6883494,50.6884142,50.6887725,50.6889696]}]],[[{"lng":[-1.2721225,-1.2718204,-1.2716196,-1.271861,-1.2724242,-1.2733372,-1.2738937],"lat":[50.6835968,50.6838104,50.6841874,50.6846786,50.684891,50.6849409,50.684966]}]],[[{"lng":[-1.2751074,-1.2750417,-1.2747359,-1.2759791,-1.2760164,-1.2760496,-1.2765478,-1.2756363,-1.2743309,-1.2739769],"lat":[50.683394,50.6833821,50.6837075,50.6831544,50.6831614,50.6831694,50.6833413,50.6840765,50.6849864,50.6849694]}]],[[{"lng":[-1.2560067,-1.2559095,-1.2553764,-1.255384,-1.2554736,-1.2560067],"lat":[50.6865573,50.6863455,50.6864437,50.6864602,50.6866555,50.6865573]}]],[[{"lng":[-1.2834608,-1.2842322,-1.2842322,-1.2844079,-1.2846836],"lat":[50.6821698,50.682411,50.6824121,50.6828267,50.6839536]}]],[[{"lng":[-1.2815223,-1.2825318],"lat":[50.6818183,50.6831299]}]],[[{"lng":[-1.1212385,-1.1217776,-1.1225474,-1.1238188,-1.123859,-1.1241835,-1.1261576,-1.1289471,-1.129733,-1.1306101,-1.1306959,-1.1309977,-1.1310983,-1.1310767,-1.1310044,-1.1315221,-1.1298081,-1.1296526,-1.1288559,-1.1280245,-1.127767,-1.1274907,-1.1268872,-1.1264876,-1.1263374,-1.1263159,-1.1246395,-1.1235157,-1.1227244,-1.1235344,-1.1237088,-1.1237651,-1.1234003,-1.1233896,-1.1224213,-1.121614,-1.1212385,-1.1212009,-1.1210135],"lat":[50.6999031,50.6998793,50.699621,50.6996652,50.7002292,50.700355,50.7008391,50.7001069,50.6998045,50.6998215,50.7000594,50.7001332,50.7001647,50.7008614,50.7014133,50.7023188,50.7028199,50.7032514,50.7034705,50.7034569,50.7031325,50.7031155,50.7032497,50.703355,50.7029847,50.7026925,50.7026772,50.7037236,50.7032973,50.702752,50.7025005,50.7017667,50.7017548,50.7024734,50.7031902,50.7031699,50.6999031,50.699864,50.699714]}]],[[{"lng":[-1.171841,-1.1724124],"lat":[50.6978916,50.6974774]}]]],null,"Barriers",{"interactive":true,"className":"","stroke":true,"color":"#F00","weight":2,"opacity":0.5,"fill":false,"fillColor":"#F00","fillOpacity":0.2,"smoothFactor":1,"noClip":false},null,null,["Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: fence","Barrier: hedge","Barrier: fence","Barrier: fence","Barrier: hedge","Barrier: hedge","Barrier: fence","Barrier: hedge","Barrier: fence","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: fence","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: hedge","Barrier: fence","Barrier: fence","Barrier: hedge","Barrier: hedge","Barrier: fence","Barrier: fence","Barrier: fence","Barrier: fence","Barrier: fence","Barrier: hedge","Barrier: fence","Barrier: fence","Barrier: fence","Barrier: hedge","Barrier: fence","Barrier: fence","Barrier: fence","Barrier: fence","Barrier: fence","Barrier: fence","Barrier: hedge"],{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]},{"method":"addPolygons","args":[[[[{"lng":[-1.2541315,-1.2539671,-1.2539606,-1.2537867,-1.2537648,-1.2541031,-1.2541315],"lat":[50.6867878,50.6868028,50.686774,50.6867898,50.6866931,50.6866624,50.6867878]}]],[[{"lng":[-1.2442778,-1.2442412,-1.2443145,-1.244351,-1.2442778],"lat":[50.6881082,50.6880323,50.6880182,50.688094,50.6881082]}]],[[{"lng":[-1.2444597,-1.2443774,-1.2443487,-1.2444022,-1.2444844,-1.2445132,-1.2444597],"lat":[50.688098,50.6880889,50.6880393,50.6879987,50.6880077,50.6880574,50.688098]}]],[[{"lng":[-1.2308761,-1.2311411,-1.2308998,-1.2306348,-1.2308761],"lat":[50.6899039,50.689744,50.6895835,50.6897434,50.6899039]}]],[[{"lng":[-1.2549837,-1.2549627,-1.2548443,-1.2548397,-1.2548984,-1.254887,-1.2548087,-1.2548012,-1.2546963,-1.2547027,-1.254372,-1.2544,-1.2546236,-1.2546156,-1.2547228,-1.2547326,-1.2548449,-1.254853,-1.2549837],"lat":[50.6867494,50.6866279,50.6866362,50.6866099,50.6866058,50.6865401,50.6865456,50.6865023,50.6865096,50.6865469,50.6865699,50.6867319,50.6867163,50.6866702,50.6866627,50.6867193,50.6867114,50.6867584,50.6867494]}]],[[{"lng":[-1.245339,-1.2452917,-1.2451227,-1.24517,-1.245339],"lat":[50.6879602,50.6879228,50.6880084,50.6880459,50.6879602]}]]],null,"Buildings",{"interactive":true,"className":"","stroke":true,"color":"#F00","weight":2,"opacity":0.5,"fill":true,"fillColor":"#F00","fillOpacity":0.5,"smoothFactor":1,"noClip":false},null,null,["Building: yes","Building: yes","Building: yes","Building: yes","Building: yes","Building: yes"],{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]},{"method":"addPolygons","args":[[[[{"lng":[-1.2914113,-1.2913657,-1.2910761,-1.2908883,-1.2907623,-1.290655,-1.2905933,-1.2905799,-1.2906094,-1.2906281,-1.2905691,-1.2904699,-1.2903814,-1.2902312,-1.2901695,-1.2901105,-1.2901266,-1.2901641,-1.2902446,-1.2903867,-1.2904887,-1.2910032,-1.2910702,-1.2910037,-1.2909929,-1.2909554,-1.2909688,-1.29106,-1.2908933,-1.290899,-1.2910948,-1.291186,-1.2912531,-1.2913443,-1.2913926,-1.2914113],"lat":[50.6830303,50.6830728,50.6831306,50.6831476,50.6831323,50.6829334,50.6828009,50.6826343,50.6825188,50.6823998,50.6823029,50.6822332,50.6820616,50.6816316,50.6811863,50.6809144,50.6807988,50.6807665,50.6807699,50.6808532,50.680877,50.6808688,50.6810966,50.6812135,50.681341,50.6814498,50.6817081,50.6820225,50.6820668,50.6821721,50.6822162,50.6822553,50.6824083,50.682755,50.6829096,50.6830303]},{"lng":[-1.290754,-1.2908237,-1.2908237,-1.2907969,-1.2908049,-1.2907647,-1.2907674,-1.2907432,-1.2907057,-1.290593,-1.2904482,-1.2904294,-1.2904831,-1.2904911,-1.2904643,-1.2905153,-1.2905796,-1.2905743,-1.290644,-1.2906333,-1.2905582,-1.2905743,-1.2906681,-1.290754],"lat":[50.6819892,50.6819297,50.6818532,50.6817886,50.6817325,50.6816527,50.6815813,50.681515,50.6814419,50.6813926,50.6814164,50.6814725,50.6814912,50.6815422,50.6816017,50.6816493,50.6816714,50.6817444,50.6818124,50.681843,50.681877,50.6819518,50.6819994,50.6819892]}]],[[{"lng":[-1.1618485,-1.1619772,-1.1621757,-1.1622186,-1.1620899,-1.1619665,-1.1618431,-1.1617251,-1.1617466,-1.1618485],"lat":[50.6993507,50.6993575,50.699259,50.6990449,50.6988988,50.6988275,50.6988784,50.6990993,50.699276,50.6993507]},{"lng":[-1.162004,-1.1619128,-1.1618753,-1.1618753,-1.1619128,-1.1620148,-1.1620631,-1.162047,-1.162004],"lat":[50.699259,50.6992454,50.6991774,50.6991265,50.6990993,50.6990823,50.6991231,50.6992148,50.699259]}]],[[{"lng":[-1.3023755,-1.3025498,-1.3026437,-1.302641,-1.302582,-1.3025069,-1.3024371,-1.302362,-1.3022038,-1.3021287,-1.3020724,-1.3021046,-1.3021662,-1.3022413,-1.3023755],"lat":[50.6803171,50.6803273,50.6803596,50.6804106,50.6805279,50.6805806,50.6806316,50.6806622,50.6806486,50.6806248,50.6805721,50.6805228,50.6804565,50.6803987,50.6803171]}]],[[{"lng":[-1.2249859,-1.224825,-1.2243315,-1.2243422,-1.2243898,-1.2242524,-1.2242348,-1.2243476,-1.2243095,-1.2243395,-1.2244497,-1.2246748,-1.2249215,-1.2250829,-1.2250775,-1.2249913,-1.2249859],"lat":[50.6912463,50.6913211,50.6912871,50.6909336,50.6904387,50.6903434,50.6902334,50.6901608,50.6899955,50.6898561,50.6897903,50.6897306,50.6897442,50.6901268,50.6904055,50.6906584,50.6912463]}]]],null,"Water",{"interactive":true,"className":"","stroke":true,"color":"#00F","weight":2,"opacity":0.5,"fill":true,"fillColor":"#00F","fillOpacity":0.5,"smoothFactor":1,"noClip":false},null,null,"Water body",{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]},{"method":"addPolylines","args":[[[[{"lng":[-1.2894483,-1.2896855,-1.2898196,-1.2899108,-1.2900234,-1.2901227,-1.2902192,-1.2900717],"lat":[50.6796341,50.6801598,50.6806339,50.6810622,50.681567,50.682048,50.682517,50.68263]}]],[[{"lng":[-1.2165258,-1.2160575,-1.2155362,-1.2147939,-1.2139545,-1.2138926,-1.2134243,-1.2130267,-1.212903,-1.2127351,-1.2125584,-1.2120724,-1.2119398,-1.2116394,-1.2112064,-1.2112064,-1.2110297,-1.2109944,-1.2109325,-1.2108265,-1.210853,-1.2107735,-1.210853,-1.2108,-1.2109502,-1.2108972,-1.2110209,-1.2113036,-1.2113478,-1.2115687,-1.2116129],"lat":[50.6893028,50.6900698,50.6903049,50.6905792,50.6912173,50.6914916,50.6917771,50.6922249,50.6929358,50.6938761,50.6942064,50.6947045,50.6948501,50.6950572,50.6956729,50.6957904,50.6958184,50.6960647,50.6963949,50.69663,50.6967475,50.6969434,50.6970721,50.6971841,50.6973632,50.6975143,50.6977102,50.6978837,50.6979621,50.6980348,50.6984994]}]],[[{"lng":[-1.2851308,-1.2850633,-1.2851874,-1.2853617,-1.286381,-1.2869791,-1.2874646,-1.288162,-1.2886823,-1.2892349,-1.2894763,-1.2895943,-1.2898249,-1.2900717],"lat":[50.6751804,50.6752664,50.6753812,50.6755341,50.6764231,50.6769857,50.677465,50.6781483,50.6787125,50.6796201,50.6801351,50.6805277,50.6815984,50.68263]}]],[[{"lng":[-1.1625418,-1.1625418,-1.162515,-1.1624158,-1.1622441,-1.1619437,-1.1618927,-1.1622146,-1.162464,-1.162507,-1.1624319,-1.1624426,-1.1624828,-1.1627349,-1.1630032,-1.1631319,-1.1632188,-1.1632526,-1.1632177,-1.1630085,-1.1629012,-1.1627564,-1.1626438,-1.1624587,-1.1625338,-1.1623192,-1.1623541,-1.1623568,-1.162456,-1.1625499,-1.1626652,-1.1627752,-1.1627752,-1.1628825,-1.1629254,-1.1628744,-1.1629495,-1.1630702,-1.1631158,-1.1632043,-1.1633894,-1.163612,-1.163722,-1.1638212,-1.1638393],"lat":[50.6981445,50.698204,50.6982617,50.6983212,50.6984384,50.6985658,50.6986287,50.698836,50.6990161,50.6992964,50.6994985,50.6996735,50.6998128,50.7002002,50.7006266,50.700844,50.7011401,50.7013231,50.7014454,50.701493,50.7015524,50.7015779,50.7015643,50.7018905,50.7020077,50.7020859,50.7021521,50.7022642,50.7022948,50.7024341,50.7024936,50.7025564,50.7026702,50.7027399,50.7027841,50.7028928,50.7029675,50.702959,50.7028911,50.7028418,50.7027722,50.7027603,50.7028078,50.7030185,50.7030573]}]],[[{"lng":[-1.2098104,-1.2099069,-1.2098801,-1.2098855,-1.2097997,-1.2098131,-1.2098412,-1.2098613,-1.2098332,-1.2097219,-1.2096065,-1.2095676,-1.2095167,-1.2094711,-1.2093785,-1.2091036,-1.2089762,-1.208763,-1.2086771,-1.2086691,-1.2086852,-1.2086798,-1.2086624,-1.2087107,-1.2087134,-1.2088984,-1.2088877,-1.208822,-1.2088649,-1.2088595,-1.2089963,-1.2090902,-1.2091801,-1.2091988],"lat":[50.68786,50.6880265,50.688193,50.6884411,50.6886484,50.6889186,50.6890469,50.6891523,50.689193,50.6892882,50.6894318,50.6895915,50.6897317,50.6897733,50.6898031,50.6900902,50.6902831,50.6905524,50.6907461,50.6908872,50.6911174,50.6913935,50.6916705,50.6918005,50.6919177,50.6923068,50.6923782,50.6924929,50.6926628,50.6928658,50.693204,50.6934359,50.6934673,50.6936168]}]],[[{"lng":[-1.4615196,-1.4617127,-1.4619327,-1.4619353,-1.4620507,-1.4621687,-1.4625818,-1.4637324,-1.463775,-1.4637968],"lat":[50.6598931,50.6597876,50.6592316,50.6589902,50.6584486,50.6583645,50.6581349,50.6562228,50.6561675,50.6561382]}]],[[{"lng":[-1.1465156,-1.148765],"lat":[50.7008714,50.7008152]}]],[[{"lng":[-1.1463118,-1.1463552,-1.1465156,-1.1465639,-1.1473846,-1.1480284,-1.1485809,-1.1488974,-1.1490154],"lat":[50.700338,50.7004516,50.7008714,50.7012723,50.7012519,50.7012655,50.7012417,50.7013335,50.7013607]}]],[[{"lng":[-1.1469233,-1.1462045,-1.1461294,-1.1461508,-1.1460757,-1.1459523],"lat":[50.7036336,50.7019145,50.7013369,50.7010515,50.7007627,50.7005112]}]],[[{"lng":[-1.149627,-1.1493578,-1.1493427,-1.1490154,-1.148765,-1.1486821,-1.1485755,-1.1485124,-1.1482644],"lat":[50.703406,50.7025053,50.7024547,50.7013607,50.7008152,50.7006347,50.7004025,50.7002833,50.6998147]}]],[[{"lng":[-1.1747365,-1.174719,-1.1745366,-1.1740485,-1.1739492,-1.1736918,-1.1735067,-1.1730909,-1.1723721],"lat":[50.6969894,50.6970285,50.6973343,50.6976503,50.6977998,50.6980479,50.6980852,50.6983639,50.6988871]}]]],null,"Water",{"interactive":true,"className":"","stroke":true,"color":"#00F","weight":2,"opacity":0.5,"fill":false,"fillColor":"#00F","fillOpacity":0.2,"smoothFactor":1,"noClip":false},null,null,["Waterway: stream","Waterway: stream","Waterway: stream","Waterway: stream","Waterway: ditch","Waterway: ditch","Waterway: ditch","Waterway: ditch","Waterway: ditch","Waterway: ditch","Waterway: ditch"],{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]},{"method":"addLayersControl","args":[["Simple","Terrain","Satellite"],["Line/buffer","Start/end","Water","Barriers","Buildings"],{"collapsed":false,"autoZIndex":true,"position":"topright"}]},{"method":"addMeasure","args":[{"position":"topleft","primaryLengthUnit":"meters","primaryAreaUnit":"sqmeters","activeColor":"#ABE67E","completedColor":"#C8F2BE","popupOptions":{"className":"leaflet-measure-resultpopup","autoPanPadding":[10,10]},"captureZIndex":10000,"localization":"en","decPoint":".","thousandsSep":","}]}],"limits":{"lat":[50.6561382,50.7129361],"lng":[-1.472,-1.10081594169801]}},"evals":[],"jsHooks":[]}</script>
+<p>So, you can inspect the route interactively by zoom and dragging, by hovering over highlighted features to see what they are, and by turning on and off the different map and feature layers for more or less context.</p>
+</div>
+</div>
+<div id="next" class="section level1">
+<h1>Next</h1>
+<p>There’s a lot of stuff missing from this approach to make it useful for actually planning a straight-line route. For example, I haven’t included elevation or land-use type (you don’t want to spend a few kilometres in a marsh). You’re also restricted to a two-dimensional overhead view.</p>
+<p>Of course, I also hard-coded the start and end points for this demo. The real power of this approach would be to let the user choose where they want to start and end and feed back on the identity and number of obstructions for each line suggested. To this end, I’ve started developing <a href="https://github.com/matt-dray/mission-across-iow">a simple Shiny app</a>.</p>
+</div>
+<div id="disclaimer" class="section level1">
+<h1>Disclaimer</h1>
+<p>Am I encouraging you to trespass? No. Am I encouraging you to take advantage of {osmextra}, {sf} and {leaflet} for mapping in R? Yes.</p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>As far as I know this does not relate to the island hosting any wights in the Game of Thrones sense. Might want to factor that into your planning if you do decide to cross the island. Maybe do it in summer.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>I’m not sure that Tom has ever defined what it means to ‘cross a country’, exactly. Clearly doing it at a narrow point makes sense. But couldn’t you just find a kink in the border and cross it? Your straight line could be 1 m long!<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>

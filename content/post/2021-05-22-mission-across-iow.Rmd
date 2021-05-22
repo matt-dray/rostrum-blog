@@ -1,0 +1,440 @@
+---
+title: 'Misson Across the Isle of Wight'
+author: Matt Dray
+date: '2021-05-22'
+slug: mission-across-iow
+categories:
+  - code
+  - tutorial
+tags:
+  - geospatial
+  - leaflet
+  - osmextract
+  - r
+  - sf
+draft: no
+---
+
+<div class="figure">
+<img src="/post/2021-05-22-mission-across-iow_files/maw.png" alt="A preview of an interactive map showing the Isle of Wight, UK, with a straight line across it. The start and endpoints are marked and there are coloured lines crossing the straight line. There are panels with options to turn on and off map layers and zoom in. Two large emoji boots are shown above the line." width="100%"/>
+<p class="caption">Isle of Wight, coloured off-white.</p>
+</div>
+
+# tl;dr
+
+I used R to identify and map hazards on a potential straight-line walking route across the Isle of Wight, mimicking [Tom 'GeoWizard' Davies's 'Mission Across' series of YouTube videos](https://www.youtube.com/watch?v=M7w986ni7_g&list=PL_japiE6QKWphPxjqn0KJjfoRnuVSELaI). You can [jump straight to the interactive map](#map).
+
+# GeoWizard
+
+Tom 'GeoWizard' Davies is perhaps best known for [his YouTube channel](https://www.youtube.com/c/GeoWizard), where he posts [Twitch stream](https://www.twitch.tv/geowizardstreams) highlights of [Geoguessr](https://www.geoguessr.com/), a game where you pinpoint a randomised location based only [Google StreetView](https://www.google.com/streetview/). 
+
+He also chronicles real-life trekking adventures, usually with a twist. Particularly captivating are the 'Mission Across' videos, where Tom attempts to cross a country in a straight line on foot. That includes having to clamber over hedges, swim across ponds, get stuck in bogs and risk the wrath of local farmers and landowners. So far this has covered [Wales](https://www.youtube.com/watch?v=M7w986ni7_g&list=PL_japiE6QKWphPxjqn0KJjfoRnuVSELaI), [Wales again](https://www.youtube.com/watch?v=Jk84QaNEOFw&list=PL_japiE6QKWo358zmUkEydTjyLzd1yBh5) and [Norway](https://www.youtube.com/watch?v=CDPhdkdR9qI&list=PL_japiE6QKWoP-qPQ3wXuOtLkZeYumJRH), with a Scotland series due this month.
+
+Of course, this requires a lot of planning to decide what the best route is and to make sure you don't traipse directly through someone's living room in your muddy boots. Typically this might involve lots of time in GIS software and various online mapping services.
+
+I learnt recently of [the {osmextract} package](https://docs.ropensci.org/osmextract/) for [the R language](https://www.r-project.org/), which fetches geographic features from [OpenStreetMap](https://www.openstreetmap.org/), and wondered how easy it would be to use R to do a light-touch assessment of straight line routes in a 'Mission Across' style. Basically, can we work out the number and type of obstructions we'd face on a given route?
+
+You can [jump straight to an interactive map](#map) with my example for the Isle of Wight, or keep reading for the code and an explanation.
+
+As an aside, Tom has also made the album '16 Bit Adventure' under the moniker 'Amynedd'; music which accompanies the 'Mission Across' videos. Press play here for inspiration as you read on.
+
+<iframe src="https://open.spotify.com/embed/track/0F5DtplpuR54PvREsb8sKP" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+
+# Code walkthrough
+
+## Packages
+
+R is very capable as a code-led tool for geospatial manipulation and mapping. Along with {tidyverse} for data wrangling, there's a few geospatial packages we need: [{geojsonio}](https://docs.ropensci.org/geojsonio/) lets us read GeoJSON files, [{sf}](https://r-spatial.github.io/sf/) is for handling 'special features' geometry in a 'tidy' way, and [{leaflet}](https://rstudio.github.io/leaflet/) lets us create interactive maps. [{osmextract}](https://docs.ropensci.org/osmextract/) was the main motivation for this post; it fetches OpenStreetMap features pretty painlessly.
+
+```{r, attach-pkgs, message=FALSE}
+library(geojsonio)
+library(leaflet)
+library(leaflet.extras)
+library(osmextract)
+library(sf)
+library(tidyverse)
+```
+
+All these packages can all be downloaded from CRAN with `install.packages()`.
+
+## The boundary
+
+For purposes of this post, I wanted to look at a small, contained, 'regularly-shaped' geographic area to keep things simple. It didn't have to be a country.
+
+I settled on [the Isle of Wight](https://en.wikipedia.org/wiki/Isle_of_Wight) (IOW)[^wight], a small island off the south-coast of England. It's mostly rural, with farms, hedges and waterways to cross, but there are certainly more built-up areas. It also helps that the IOW is featured in [the {osmextract} documentation](https://docs.ropensci.org/osmextract/index.html)!
+
+<div class="figure">
+<img src="/post/2021-05-22-mission-across-iow_files/flag.png" alt="The flag of the Isle of White. The lower half is dark blue and white alternating wavy lines to indicate the sea The upper half is light blue with a white geometric shape to represent the island, which is a diamond with a triangular portion cut from the uppermost corner." width="50%"/>
+<p class="caption">The Isle of Wight: a vexillologist's delight.</p>
+</div>
+
+First thing is to fetch a polygon that represents the extent of the island. Fortunately, Local Authority District (LAD) boundaries for the UK are available to download from the Official for National Statistics (ONS) in GeoJSON form. We can filter for the IOW, specifically.
+
+```{r, boundary-geojson}
+# LAD boundaries (December 2020) UK BGC from the ONS Open Geography Portal
+# Generalised (20m) - clipped to the coastline (Mean High Water mark)
+# https://geoportal.statistics.gov.uk/datasets/local-authority-districts-december-2020-uk-bgc
+geojson_path <- 
+  "https://opendata.arcgis.com/datasets/db23041df155451b9a703494854c18c4_0.geojson"
+
+# Read LAD boundaries, filter to IOW
+iow_extent <- geojson_read(geojson_path, what = "sp") %>% 
+  st_as_sf(crs = 4326) %>%
+  filter(LAD20NM == "Isle of Wight")
+```
+
+I've used boundaries that are 'clipped to the coastline' because I don't think you should have to swim out to the low-water mark to complete such a challenge.
+
+## OpenStreetMap features
+
+We want to identify features like hedgerows, buildings and waterways that will become obstructions for our imaginary walk across the island. The `oe_get()` function from {osmextra} is an easy way to pull features from OpenStreetMap en masse. You can supply a location and receive features within that area.
+
+First, the polygonal features, which you can get with argument `layer = "multipolygons"`. You can see that a geometry column is returned, which contains the coordinates for the polygons.
+
+```{r, fetch-polys}
+# Fetch polygonal features for IoW
+osm_polys <- oe_get(
+  "Isle of Wight", # geographic area of interest
+  layer = "multipolygons",  # fetch polygons
+  stringsAsFactors = FALSE,  # return character-class
+  quiet = TRUE  # don't print info
+) %>%
+  st_transform(crs = 4326)  # latlong coord reference system
+
+# Limited preview
+glimpse(select(osm_polys, osm_id, name, type, geometry))
+```
+
+Of course, we can grab line features too. The default for `layer` is lines, so we don't need to supply this argument.
+
+```{r, fetch-lines}
+# Fetch line features for IoW
+osm_lines <-  oe_get(
+  "Isle of Wight", 
+  stringsAsFactors = FALSE,
+  quiet = TRUE
+) %>%
+  st_transform(crs = 4326)
+```
+
+For convenience, I'm simplifying the features down to the ones we care about. For Tom, hedgerows were a constant nuisance, waterways were cold and perilous, and buildings could contain angry landowners. We want to avoid them all, ideally.
+
+We can create a function to extract named features (we want rows containing 'barriers', 'buildings', 'natural' and 'waterway' features), and then iterate over our lines and polygons to isolate them. I've put them into a single object so it's easier to reference them later.
+
+```{r, feature-object}
+# Filter for a single feature type from oe_get() output
+# 'sf_in' is output from oe_get(); 'feature' is the feature we want
+isolate_feature <- function(sf_in, feature) {
+  sf_in %>% 
+    filter(!is.na(sf_in[[feature]])) %>%  # filter for feature
+    select(osm_id, type = all_of(feature), geometry)  # simplify object
+}
+
+# Get all the features as a list object with one element per feature
+features <- map2(
+  list(osm_lines, osm_polys, osm_polys, osm_lines),
+  list("barrier", "building", "natural", "waterway"),
+  isolate_feature
+) %>% 
+  set_names("barrs", "bldgs", "natur", "wways")
+
+# Limited preview of the waterways data
+glimpse(features$wways)
+```
+
+## The line
+
+Of course, we need to specify a straight line route.[^def] For this demonstration, and in interests fo speed, I've just chosen one that looks alright by eye in terms of obstructions. 
+
+Of course, you can use the approach outlined in this post to try other lines and discover quantitatively which ones have the fewest obstructions. That's the subject of [an upcoming Shiny app](https://github.com/matt-dray/mission-across-iow), which will allow the user to provide a line and get feedback on the number and count of hazards.
+
+Crucially, the line is clipped to the boundary of the island, so it goes from coast to coast.
+
+```{r, make-line}
+# Create a straight line
+# 'x1', etc, are start/end latlongs; 'boundary_poly' is the GeoJSON
+make_line <- function(x1, y1, x2, y2, boundary_poly) {
+  x <- st_linestring(matrix(c(y1, y2, x1, x2), ncol = 2))  # to matrix
+  y <- st_sfc(x, crs = 4326)  # set coord reference system
+  st_intersection(y, boundary_poly)  # clip line to island boundary
+}
+
+# Hard-coded start/end latlongs
+start_x <- 50.658; start_y <- -1.472
+end_x <- 50.707; end_y <- -1.101
+
+# Build line between the points, clip to IOW boundary
+line <- make_line(start_x, start_y, end_x, end_y, iow_extent)
+
+# Preview
+glimpse(line)
+```
+
+You'll notice we get a warning about 'planar' coordinates. As far as I know (as a non-geospatial analyst), this is related to working with data that assume the earth is flat (!) versus curved. Of course, calculations will be slightly off if you assume no curvature. I'm not bothered with that on the scale of the IOW, so I'm ignoring it (and suppressing subsequent warnings in this post).
+
+Here's a quick preview of where our line is:
+
+```{r, line-map, fig.alt="A simple map of the Isle of Wight, UK, with a line drawn from the east to west coasts, passing roughly throught the middle."}
+ggplot() +
+  geom_sf(data = iow_extent) +
+  geom_sf(data = line) +
+  ggthemes::theme_map()
+```
+
+## The platinum zone
+
+In practice it's very difficult to keep exactly to the line and some deviation may be required at a landowner's request, for example. What's an acceptable amount of wiggle room?
+
+Tom spoke in one of his videos about assigning scores to a mission based on minimal deviation from the line. For example, staying within 25 m of the line either side would be a 'platinum' standard.
+
+We can build a buffer around our line to create a platinum zone, which will be a useful visual aid in the final map.
+
+```{r, make-buffer}
+# Create a buffer around the straight line
+# 'line' as created with make_line(); 25m is 'platinum' standard
+make_buffer <- function(straight_line, buffer_size = 25) { 
+  x <- st_transform(straight_line, crs = 27700)  # line to draw buffer around
+  y <- st_buffer(x, dist = buffer_size)
+  st_transform(y, crs = 4326)  # reset coord reference system
+}
+
+# Generate a 25m buffer ('platinum standard') around the line
+buffer <- make_buffer(line)
+
+# Preview
+glimpse(buffer)
+```
+
+## Obstructions
+
+Our `features` object currently has all the lines and polygons within the IOW boundary, but we only want the ones that come in contact with (i.e. intersect) with our proposed route. The `st_intersects()` fcuntion from {sf} does exactly that.
+
+```{r, find-obstructions, message=FALSE}
+# Extract features that intersect with the line or buffer geometry
+# 'features_sf' contains the features; 'path_sf' for what to intersect
+find_obs <- function(features_sf, path_sf) { 
+  row_nums <- st_intersects(path_sf, features_sf)[[1]]  # rows with obstruction
+  slice(features_sf, row_nums)  # extract matching rows
+}
+
+# Find intersection between features and line
+obstructions <- map(features, ~find_obs(.x, line)) %>% 
+  set_names("barrs", "bldgs", "natur", "wways")
+
+# Limited preview
+glimpse(obstructions$wways)
+```
+
+We can create a quick table to see what the obstructions are for this route.
+
+```{r, obstruction-table}
+tribble(
+  ~Type, ~Count,
+  "Barriers", nrow(obstructions$barrs),
+  "Buildings", nrow(obstructions$bldgs),
+  "Waterways", nrow(obstructions$wways),
+  "Water bodies", nrow(filter(obstructions$natur, type == "water")
+  )
+) %>% knitr::kable()
+```
+
+You can see how this information is useful if you wanted to try other straight-line paths and see how they stack up against each other. Maybe you want to reduce the number of barriers (typically hedgerows); maybe you don't mind swimming across a large water body.
+
+## Map {#map}
+
+So we have the objects we need: our straight-line route, the platinum-zone buffer and all the features that cross our path. Now to map it. We can use the {leaflet} package to layer these up on an interactive map, allowing the user to inspect the route and the hazards along the way. 
+
+<details><summary>Click to expand the full mapping code</summary>
+
+The basic approach here is to `addproviderTiles()` for underlying maps (I've chosen these to help add extra context to the route); use `addPolygons` and `addPolylines()` to supply the line, buffer and the features as separate 'layers' that can be turned on or off; use `addAwesomeMarkers()` for clickable pop-up feature labels; and supply additional mapping conveniences with `addMeasure()` and, from {leaflet.extras}, `addFullscreenControl()` (both functions do what their names suggest).
+
+```{r, map-eval-false, eval=FALSE}
+# Set multi-use variables
+marker_fill <- "darkblue"
+icon_fill <- "white"
+col_line <- "#000"
+col_artifical <- "#F00"
+col_water <- "#00F"
+weight_line <- 1
+weight_obstruction <- 2
+alpha_all <- 0.5
+
+# Interactive map
+leaflet() %>% 
+  # Base groups: map tiles
+  addProviderTiles("CartoDB.PositronNoLabels", group = "Simple") %>%
+  addProviderTiles("Esri.WorldTopoMap", group = "Terrain") %>%
+  addProviderTiles("Esri.WorldImagery", group = "Satellite") %>%
+  # Overlay groups: line and buffer
+  addPolygons(
+    data = buffer, group = "Line/buffer", 
+    color = col_line, weight = weight_line, dashArray = 4, 
+    fill = TRUE, opacity = alpha_all
+  ) %>% 
+  addPolylines(
+    data = line, group = "Line/buffer",
+    color = col_line, weight = weight_line, 
+    fill = FALSE
+  ) %>%
+  # Overlay groups: start and end points
+  addAwesomeMarkers(
+    lng = start_y, lat = start_x, group = "Start/end",
+    icon = awesomeIcons(
+      markerColor = "blue",
+      icon = "play", library = "fa", iconColor = "#FFF"
+    ),
+    popup = paste0("<center>Start<br>", start_x, ", ", start_y, "<center>")
+  ) %>% 
+  addAwesomeMarkers(
+    lng = end_y, lat = end_x, group = "Start/end",
+    icon = awesomeIcons(
+      markerColor = "blue",
+      icon = "stop", library = "fa", iconColor = "#FFF"
+    ),
+    popup = paste0("<center>End<br>", end_x, ", ", end_y, "<center>")
+  ) %>% 
+  # Overlay groups: features in buffer
+  addPolylines(
+    data = obstructions$barrs, group = "Barriers",
+    color = col_artifical, weight = weight_obstruction,
+    label = paste("Barrier:", obstructions$barrs$type)
+  ) %>% 
+  addPolygons(
+    data = obstructions$bldgs, group = "Buildings",
+    color = col_artifical, weight = weight_obstruction, 
+    fillColor = col_artifical, fillOpacity = alpha_all,
+    label = paste("Building:", obstructions$bldgs$type)
+  ) %>%
+  addPolygons(
+    data = filter(obstructions$natur, type == "water"), group = "Water",
+    color = col_water, weight = weight_obstruction, 
+    fillColor = col_water, fillOpacity = alpha_all,
+    label = "Water body"
+  ) %>% 
+  addPolylines(
+    data = obstructions$wways, group = "Water",
+    color = col_water, weight = weight_obstruction,
+    label = paste("Waterway:", obstructions$wways$type)
+  ) %>% 
+  # Control which layers are shown
+  addLayersControl(
+    baseGroups = c("Simple", "Terrain", "Satellite"),  # radio button
+    overlayGroups = c(  # checkboxes
+      "Line/buffer", "Start/end",  # line-related
+      "Water", "Barriers", "Buildings"  # obstructions
+    ),
+    position = "topright",
+    options = layersControlOptions(collapsed = FALSE)
+  ) %>% 
+  # Other map features
+  addMeasure(  # tool for users to measure distances
+    position = "topleft",
+    primaryLengthUnit = "meters",
+    primaryAreaUnit = "sqmeters"
+  ) %>% 
+  addFullscreenControl()  # clickable full-screen button
+```
+</details>
+
+
+```{r, map-echo-false, echo=FALSE, fig.alt="An interactive map showing a line across the Isle of Wight, UK, and features that intersect it, like buildings and waterways. There are panels to turn on and off map and feature layers and to zoom in and out."}
+# Set multi-use variables
+marker_fill <- "darkblue"
+icon_fill <- "white"
+col_line <- "#000"
+col_artifical <- "#F00"
+col_water <- "#00F"
+weight_line <- 1
+weight_obstruction <- 2
+alpha_all <- 0.5
+
+# Interactive map
+leaflet() %>% 
+  # Base groups: map tiles
+  addProviderTiles("CartoDB.PositronNoLabels", group = "Simple") %>%
+  addProviderTiles("Esri.WorldTopoMap", group = "Terrain") %>%
+  addProviderTiles("Esri.WorldImagery", group = "Satellite") %>%
+  # Overlay groups: line and buffer
+  addPolygons(
+    data = buffer, group = "Line/buffer", 
+    color = col_line, weight = weight_line, dashArray = 4, 
+    fill = TRUE, opacity = alpha_all
+  ) %>% 
+  addPolylines(
+    data = line, group = "Line/buffer",
+    color = col_line, weight = weight_line, 
+    fill = FALSE
+  ) %>%
+  # Overlay groups: start and end points
+  addAwesomeMarkers(
+    lng = start_y, lat = start_x, group = "Start/end",
+    icon = awesomeIcons(
+      markerColor = "blue",
+      icon = "play", library = "fa", iconColor = "#FFF"
+    ),
+    popup = paste0("<center>Start<br>", start_x, ", ", start_y, "<center>")
+  ) %>% 
+  addAwesomeMarkers(
+    lng = end_y, lat = end_x, group = "Start/end",
+    icon = awesomeIcons(
+      markerColor = "blue",
+      icon = "stop", library = "fa", iconColor = "#FFF"
+    ),
+    popup = paste0("<center>End<br>", end_x, ", ", end_y, "<center>")
+  ) %>% 
+  # Overlay groups: features in buffer
+  addPolylines(
+    data = obstructions$barrs, group = "Barriers",
+    color = col_artifical, weight = weight_obstruction,
+    label = paste("Barrier:", obstructions$barrs$type)
+  ) %>% 
+  addPolygons(
+    data = obstructions$bldgs, group = "Buildings",
+    color = col_artifical, weight = weight_obstruction, 
+    fillColor = col_artifical, fillOpacity = alpha_all,
+    label = paste("Building:", obstructions$bldgs$type)
+  ) %>%
+  addPolygons(
+    data = filter(obstructions$natur, type == "water"), group = "Water",
+    color = col_water, weight = weight_obstruction, 
+    fillColor = col_water, fillOpacity = alpha_all,
+    label = "Water body"
+  ) %>% 
+  addPolylines(
+    data = obstructions$wways, group = "Water",
+    color = col_water, weight = weight_obstruction,
+    label = paste("Waterway:", obstructions$wways$type)
+  ) %>% 
+  # Control which layers are shown
+  addLayersControl(
+    baseGroups = c("Simple", "Terrain", "Satellite"),  # radio button
+    overlayGroups = c(  # checkboxes
+      "Line/buffer", "Start/end",  # line-related
+      "Water", "Barriers", "Buildings"  # obstructions
+    ),
+    position = "topright",
+    options = layersControlOptions(collapsed = FALSE)
+  ) %>% 
+  # Other map features
+  addMeasure(  # tool for users to measure distances
+    position = "topleft",
+    primaryLengthUnit = "meters",
+    primaryAreaUnit = "sqmeters"
+  ) %>% 
+  addFullscreenControl()  # clickable full-screen button
+```
+
+So, you can inspect the route interactively by zoom and dragging, by hovering over highlighted features to see what they are, and by turning on and off the different map and feature layers for more or less context.
+
+# Next
+
+There's a lot of stuff missing from this approach to make it useful for actually planning a straight-line route. For example, I haven't included elevation or land-use type (you don't want to spend a few kilometres in a marsh). You're also restricted to a two-dimensional overhead view.
+
+Of course, I also hard-coded the start and end points for this demo. The real power of this approach would be to let the user choose where they want to start and end and feed back on the identity and number of obstructions for each line suggested. To this end, I've started developing [a simple Shiny app](https://github.com/matt-dray/mission-across-iow).
+
+# Disclaimer
+
+Am I encouraging you to trespass? No. Am I encouraging you to take advantage of {osmextra}, {sf} and {leaflet} for mapping in R? Yes.
+
+[^wight]: As far as I know this does not relate to the island hosting any wights in the Game of Thrones sense. Might want to factor that into your planning if you do decide to cross the island. Maybe do it in summer.
+[^def]: I'm not sure that Tom has ever defined what it means to 'cross a country', exactly. Clearly doing it at a narrow point makes sense. But couldn't you just find a kink in the border and cross it? Your straight line could be 1 m long!
