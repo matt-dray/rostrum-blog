@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.3 posts per month.
 
-🆕 The latest post was published 1 day(s) ago: [Misson Across the Isle of
+🆕 The latest post was published 2 day(s) ago: [Misson Across the Isle of
 Wight](https://www.rostrum.blog/2021/05/22/mission-across-iow/).
 
 📈 This 2D plot shows posts over time:
@@ -136,4 +136,4 @@ Wight](https://www.rostrum.blog/2021/05/22/mission-across-iow/).
 
 -----
 
-*Updated 2021-05-23*
+*Updated 2021-05-24*
