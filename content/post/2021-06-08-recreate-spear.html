@@ -1,5 +1,5 @@
 ---
-title: "Recreating Spear's #CottonViz plot in base R"
+title: "Recreating Spear's #CottonViz in base R"
 author: Matt Dray
 date: '2021-06-08'
 slug: recreate-spear
@@ -18,31 +18,24 @@ draft: no
 
 
 <div class="figure">
-<img src="/post/2021-06-08-recreate-spear_files/cottonviz.gif" alt="Gif where each frame shows the progression of recreating an original plot about cotton supplies in 1940s USA. Axes and lines are added to a plot on the left, then crosshatching, bars and axes are added to a plot on the right, and finally some titles and captions are added. The original plot is shown in the final frame to compare it to the recreation." width="100%"/>
-<p class="caption">
-Progression of plot creation, finishing with the original.
-</p>
+<p><img src="/post/2021-06-08-recreate-spear_files/cottonviz.gif" alt="Gif where each frame shows the progression of recreating an original plot about cotton supplies in 1940s USA. Axes and lines are added to a plot on the left, then crosshatching, bars and axes are added to a plot on the right, and finally some titles and captions are added. The original plot is shown in the final frame to compare it to the recreation." width="100%"/></p>
 </div>
 <div id="cottonviz" class="section level1">
 <h1>#CottonViz</h1>
-<p>The <a href="https://rss.org.uk/">Royal Statistical Society</a> (RSS) has <a href="https://rss.org.uk/news-publication/news-publications/2021/section-group-reports/mary-eleanor-spear-dataviz-competition-for-childre/">challenged people</a> to recreate or remix <a href="https://en.wikipedia.org/wiki/Mary_Eleanor_Spear">Mary Eleanor Spear’s</a> visualisation of cotton supplies in the United States in the 1940s. Spear might be best known for the box plot, which she originated as the range plot in her book <a href="https://archive.org/details/ChartingStatistics_201801">Charting Statistics</a>.</p>
-<p>Here’s her original cotton visualisation:</p>
+<p>The <a href="https://statsyss.wordpress.com/">Young Statistician’s Section (YSS)</a> of the <a href="https://rss.org.uk/">Royal Statistical Society</a> (RSS) has <a href="https://rss.org.uk/news-publication/news-publications/2021/section-group-reports/mary-eleanor-spear-dataviz-competition-for-childre/">challenged people</a> to recreate<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> or remix <a href="https://en.wikipedia.org/wiki/Mary_Eleanor_Spear">Mary Eleanor Spear’s</a> visualisation of cotton supplies in the United States in the 1940s:<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
 <div class="figure">
-<img src="/post/2021-06-08-recreate-spear_files/4_original.jpg" alt="Mary Eleanor Spear's original plot of cotton supplies in 1940s USA. On the left is a line plot showing that carry-over stocks fell from 1942 to 1948, while consumption dropped slightly and exports rose slightly. A bar plot to the right shows the same data as a stacked bar chart. There are titles and captions around the plots." width="100%"/>
-<p class="caption">
-Spear’s original visualisation
-</p>
+<p><img src="/post/2021-06-08-recreate-spear_files/4_original.jpg" alt="Mary Eleanor Spear's original plot of cotton supplies in 1940s USA. On the left is a line plot showing that carry-over stocks fell from 1942 to 1948, while consumption dropped slightly and exports rose slightly. A bar plot to the right shows the same data as a stacked bar chart. There are titles and captions around the plots." width="100%"/></p>
 </div>
-<p>I thought it would be interesting to recreate it using only R’s built-in base graphics. This might be a nice demo of zero-dependency plotting for R users who are more familiar with {ggplot2}.</p>
-<p>Long-story short, here’s my attempt:</p>
+<p>I thought it would be interesting to recreate it using only R’s built-in base graphics. This might be a nice demo of zero-dependency plotting for R users who are more familiar with {ggplot2}.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<p>Long-story short, here’s what popped out at the end of my scripting:</p>
 <div class="figure">
 <p><img src="/post/2021-06-08-recreate-spear_files/3_final.png" alt="A recreation of Spear's original plot, with line plot, bar plot, labels and titles. It's not an identical match. The title font is not the same, for example." width="100%"/></p>
 </div>
+<p>It’s certainly not an identical match to the original, but it gets most of the way there.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
 <p>You can find the code for this in <a href="https://www.ffonts.net/Hussar-Bold-Condensed.font">a GitHub Gist</a>, or read on.</p>
-<p>The rest of this post is a walkthrough of the code used to create the final output. It’s in five sections: (1) set-up, (2) line plot, (3) bar plot, (4) margin labels and (5) saving, with a closing section reflecting on tricky parts and potential improvements.</p>
-<p>As an aside, I’ve also been inspired of late by <a href="#recreationthursday">#RecreationThursday on Twitter</a>. It’s a community challenge to <a href="https://twitter.com/_natalie_oshea/status/1400526683170541570?s=20">recreate an art piece</a> selected each fortnight by a rotating curator.</p>
+<p>The rest of this post is a walkthrough of the code used to create the final output. It’s in five sections: (1) <a href="#setup">set-up</a>, (2) <a href="#lineplot">line plot</a>, (3) <a href="#barplot">bar plot</a>, (4) <a href="#marginlabels">margin labels</a> and (5) <a href="#saving">saving</a>, with a closing section reflecting on tricky parts and potential improvements.</p>
 </div>
-<div id="set-up" class="section level1">
+<div id="setup" class="section level1">
 <h1>1. Set-up</h1>
 <div id="data" class="section level2">
 <h2>Data</h2>
@@ -55,22 +48,23 @@ Spear’s original visualisation
   `Total supply`   = c(23297, 21876, 22864, 20362, 16147, 14422, 17901),
   check.names = FALSE  # allows for spaces in variable names
 )</code></pre>
+<p>I’ve maintained the same</p>
 </div>
 <div id="fonts" class="section level2">
 <h2>Fonts</h2>
 <p>I’ve used two font families that weren’t pre-installed on my system:</p>
 <ul>
-<li><a href="https://webonastick.com/fonts/routed-gothic/">Routed Gothic</a> for the majority of the text</li>
-<li><a href="https://www.ffonts.net/Hussar-Bold-Condensed.font">Hussar Bold Condensed</a> for the title</li>
+<li><a href="https://webonastick.com/fonts/routed-gothic/">Routed Gothic</a> for the majority of the text (a very close match for the general text of the plot)</li>
+<li><a href="https://www.ffonts.net/Hussar-Bold-Condensed.font">Hussar Bold Condensed</a> for the title (a not-that-great match for the main title)</li>
 </ul>
-<p>I’m using macOS Big Sur and R v4.0.5. It was sufficient for me to install these fonts on my system and invoke them by name as you’ll see through the rest of this walkthrough. Your mileage may vary.</p>
+<p>It was sufficient for me to install these fonts on my system (macOS Big Sur running R v4.0.5) and invoke them by name, as you’ll see through the rest of this walkthrough. Your mileage may vary.</p>
 </div>
 <div id="constants" class="section level2">
 <h2>Constants</h2>
-<p>I’ve set a few values as objects so they can be reused and changed more easily without having to copy-paste. Note that I’ve used the convention here that constants are <code>ALL_CAPS</code>, so they’re easier to spot in the plotting code.</p>
+<p>I’ve set a few values as objects so they can be reused and changed more easily without having to copy-paste in the body of the scrip. Note that I’ve used the convention here that constants are <code>ALL_CAPS</code>, so they’re easier to spot in the plotting code.</p>
 <details>
 <summary>
-Click for constants
+Click for constants (I hid this because it’s dull)
 </summary>
 <pre class="r"><code># Constants: general
 CEX       &lt;- 0.8
@@ -124,16 +118,16 @@ par(
 <p>I’ve selected ‘<a href="https://webonastick.com/fonts/routed-gothic/">Routed Gothic</a>’ as the font family and I think it’s a great match. It’s based on the Leroy lettering set that was often used for hand-labelling technical drawings.</p>
 </div>
 </div>
-<div id="line-plot" class="section level1">
+<div id="lineplot" class="section level1">
 <h1>2. Line plot</h1>
 <p>So, here’s the first ‘hack’. I’m going to set up a ‘fake’ scatter plot with no content and then we’re going to add content to it sequentially. This provides the correct plot dimensions to which we can add bespoke details.</p>
 <pre class="r"><code># Dummy x-y scatter plot
 plot(
   x = cotton$Year,
-  y = cotton$`US consumption` / YDIV,
+  y = cotton$`US consumption` / YDIV,  # i.e. divide by 1000
   axes = FALSE,  # no axes
   pch = &quot;&quot;,   # expunge axes/points
-  ylim = LP_YLIM,
+  ylim = LP_YLIM,  # y-axis min/max limits
   xaxs = &quot;i&quot;,  # set &#39;absolute origin&#39; on x-axis
   yaxs = &quot;i&quot;   # set &#39;absolute origin&#39; on y-axis
 )</code></pre>
@@ -145,7 +139,7 @@ axis(
   side = 1,
   at = 1942:1948,
   labels = c(1942, paste0(&quot;&#39;&quot;, 43:48)),  # i.e. 1942, &#39;43, &#39;44, etc
-  tck = XTICK_LEN,
+  tck = XTICK_LEN,  # tick length
   col = WHITE,  # i.e. axis isn&#39;t visible
   col.ticks = BLACK  # i.e. axis ticks are visible
 )
@@ -163,7 +157,7 @@ axis(
 # Manual y-axis (just labels)
 axis(
   side = 2,
-  at = c(0.2, LP_YTICK_SEQ, 11.8),  # origin/max labels above/below tick
+  at = c(0.2, LP_YTICK_SEQ, 11.8),  # min/max labels above/below tick
   labels = LP_YLAB_SEQ, 
   las = 1,
   tck = 0,
@@ -180,7 +174,7 @@ axis(
   col = WHITE,
   col.ticks = BLACK
 )</code></pre>
-<p>I don’t know of a way to make the y-axis label appear horizontally at the top of the axis, so I’ve used <code>mtext()</code> to place a label in the margin (hence the ‘m’ in <code>mtext()</code>) space above the plot.</p>
+<p>I don’t know of a way to make the y-axis label appear horizontally at the top of the axis, so I’ve used <code>mtext()</code> to place a label in the margin (hence the ‘m’ in <code>mtext</code>) space above the plot.</p>
 <pre class="r"><code># Y-axis label: horizontal at top of axis
 mtext(&quot;Millions of Boles&quot;, side = 3, cex = CEX - 0.1, adj = -0.07)</code></pre>
 <p>This gives us all the ticks and labels, but we’re missing the axes themselves. Spear used a box around the whole plot; you can do this in R with a call to <code>box()</code>.</p>
@@ -203,23 +197,23 @@ mapply(
   y = c(11, 3.2, 6.8),
   label = c(&quot;U. S. Consumption&quot;, &quot;Exports&quot;, &quot;Carry – over\nstocks&quot;)
 )</code></pre>
-<p>I would normally do iterative things with the <code>map()</code> family of functions from the {purrr} package, so I welcome suggestions on appropriate use of the various base <code>*apply()</code> functions in this scenario.</p>
-<p>The final thing is the arrows that point to the lines from the labels. Base R has a handy <code>arrows()</code> function to which you supply start and end coordinates and parameters for the arrowhead.</p>
+<p>I would normally do iterative things with the <code>map()</code> family of functions from <a href="https://purrr.tidyverse.org/">the {purrr} package</a> By Lionel Henry and Hadley Wickham, so I welcome suggestions on appropriate use of the various base <code>*apply()</code> functions in this scenario.</p>
+<p>Finally we can add the arrows that point to the lines from the labels. Base R has a handy <code>arrows()</code> function to which you supply start and end coordinates and parameters for the arrowhead. I used an advanced-coder technique called ‘trial-and-error’ for this.</p>
 <pre class="r"><code># Add arrows from labels to lines
 arrows(
   x0 = c(1945.4, 1944.2, 1945.5),  # Consumption, Exports, Stocks
   y0 = c(10.8, 3.2, 7.1),
   x1 = c(1945, 1944.4, 1945.2),
   y1 = c(9.6, 3, 6.8),
-  angle = 12,
-  length = 0.07
+  angle = 12,  # pointy-ness
+  length = 0.07  # arrowhead length
 )</code></pre>
 <p>Excellent, that’s the line plot completed:</p>
 <div class="figure">
 <p><img src="/post/2021-06-08-recreate-spear_files/1_lp_2.png" alt="The recreated plot in progress: the line plot has axes, labels, data and arrows." width="100%"/></p>
 </div>
 </div>
-<div id="bar-plot" class="section level1">
+<div id="barplot" class="section level1">
 <h1>3. Bar plot</h1>
 <p>The <code>barplot()</code> function is a little different to the <code>plot()</code> function.</p>
 <p>It doesn’t take the data as <code>x</code> and <code>y</code> arguments; we can instead pass it a single object that contains our data with each column corresponding to columns in the plot.</p>
@@ -243,14 +237,14 @@ barplot(
   space = BP_SPACE,  # space between bars
   border = WHITE,  # border around bars
   col = BLACK,
-  density = rep(c(BP_HATCH_HI, 0, BP_HATCH_LO), 7),
+  density = rep(c(BP_HATCH_HI, 0, BP_HATCH_LO), 7),  # line &#39;closeness&#39;
   angle = 360 - BP_HATCH_ANGLE  # top-left to bottom-right
 )</code></pre>
 <p>This is the bar plot with only the first layer of hatching:</p>
 <div class="figure">
 <p><img src="/post/2021-06-08-recreate-spear_files/2_bp_1.png" alt="The recreated plot in progress: the line plot is completed; the first layer of bar plot hatching has been added." width="100%"/></p>
 </div>
-<p>Note that this layer of hatching is only required in the bottom and top bars because they will end up being crosshatched.</p>
+<p>Note that this layer of hatching is only required in the bottom and top bars of the stack because they will end up being crosshatched. The middle bar is only hatched, not crosshatched.</p>
 <pre class="r"><code># Barplot layer with features
 barplot(
   cotton_transpose, 
@@ -262,7 +256,7 @@ barplot(
   angle = BP_HATCH_ANGLE, # bottom-left to upper-right
   add = TRUE  # add as layer on top of existing plot
 )</code></pre>
-<p>And now we have both layers of hatching:</p>
+<p>And now we have both layers of hatching, the bar boundaries and the x-axis bar labels:</p>
 <div class="figure">
 <p><img src="/post/2021-06-08-recreate-spear_files/2_bp_2.png" alt="The recreated plot in progress: the line plot is completed; the bar plot has bars with hatching and outlines, and axis labels." width="100%"/></p>
 </div>
@@ -305,7 +299,7 @@ mtext(&quot;1942&quot;, side = 1, line = 0.2, adj = -0.06, cex = CEX)
 
 # Bounding box around plot boundary
 box()</code></pre>
-<p>Awkwardly, the first x-axis label in the bar plot had to be created manually because it’s placed under the origin point in the original chart, rather than under the bar itself.</p>
+<p>Awkwardly, the first x-axis label in the bar plot (<code>1942</code>) had to be created manually because it’s placed under the origin point in the original chart, rather than under the bar itself.</p>
 <p>Finally we can add the labels over the top of the bars. I’ve done this in a similar iterative manner as the line plot, where there’s a call to create a white box with <code>rect()</code>, over which a <code>text()</code> label can be applied.</p>
 <pre class="r"><code># Apply labels iteratively
 mapply(
@@ -326,7 +320,7 @@ mapply(
 <p><img src="/post/2021-06-08-recreate-spear_files/2_bp_3.png" alt="The recreated plot in progress: both the line plot on the left and the bar plot on the right are completed with axes, data, labels and arrows." width="100%"/></p>
 </div>
 </div>
-<div id="margin-labels" class="section level1">
+<div id="marginplot" class="section level1">
 <h1>4. Margin labels</h1>
 <p>With both charts completed, we can add with <code>mtext()</code> the titles and captions that exist for the plot as a whole.</p>
 <p>The main title uses a different font family than was specified in <code>par()</code>, so we override it with the <code>family</code> argument.</p>
@@ -399,10 +393,7 @@ mtext(
 </div>
 <p>And a gif of the steps of the chart’s creation, ending with the original image:</p>
 <div class="figure">
-<img src="/post/2021-06-08-recreate-spear_files/cottonviz.gif" alt="Gif where each frame shows the progression of recreating an original plot about cotton supplies in 1940s USA. Axes and lines are added to a plot on the left, then crosshatching, bars and axes are added to a plot on the right, and finally some titles and captions are added. The original plot is shown in the final frame to compare it to the recreation." width="100%"/>
-<p class="caption">
-Progression of plot creation, finishing with the original.
-</p>
+<p><img src="/post/2021-06-08-recreate-spear_files/cottonviz.gif" alt="Gif where each frame shows the progression of recreating an original plot about cotton supplies in 1940s USA. Axes and lines are added to a plot on the left, then crosshatching, bars and axes are added to a plot on the right, and finally some titles and captions are added. The original plot is shown in the final frame to compare it to the recreation." width="100%"/></p>
 </div>
 </div>
 <div id="saving" class="section level1">
@@ -416,30 +407,41 @@ Progression of plot creation, finishing with the original.
 <p>The final output certainly isn’t a perfect match for the original, but I think it gets 90% of the way there without the need for endless tweaking. There were some particularly tricky things I was able to deal with, but also some things that I need to improve to make the recreation identical to the original.</p>
 <div id="tricky-parts" class="section level2">
 <h2>Tricky parts</h2>
-<p>There were a few ‘hacks’ I employed to try and match the original image.</p>
+<p>There were a few non-standard plot elements that needed to be dealt with, but are relatively trivial with base R functions. To review:</p>
 <ul>
-<li>The minimum and maximum labels on the y axis are not on the ticks, they’re slightly above and below them, respectively.</li>
-<li>Hatching can only be done in one direction, so it requires an ‘under-layer’ of hatching in the opposite direction to that of the main plot itself.</li>
-<li>There’s no function in base to apply a text label with a filled box under it; you need to use <code>text()</code> and <code>rect()</code> together.</li>
-<li>The x-axis labels aren’t all the same: the first is <code>1942</code> and the rest are in the form <code>'43</code> .</li>
-<li>The first x-axis label on the bar chart, <code>1942</code> is not actually under the bar, but under the origin.</li>
+<li>the minimum and maximum labels on the y axis are not on the ticks, they’re slightly above and below them, respectively</li>
+<li>hatching can only be done in one direction, so it requires an ‘under-layer’ of hatching in the opposite direction to that of the main plot itself</li>
+<li>there’s no function in base to apply a text label with a filled box under it; you need to use <code>text()</code> and <code>rect()</code> together</li>
+<li>the x-axis labels aren’t all the same: the first is <code>1942</code> and the rest are in the form <code>'43</code> .</li>
+<li>the first x-axis label on the bar chart, <code>1942</code> is not actually under the bar, but under the origin.</li>
 </ul>
 </div>
 <div id="improvements" class="section level2">
 <h2>Improvements</h2>
-<p>There’s a lot of things I could do, but there would be a few things to prioritise.</p>
+<p>There’s a lot of things I could do, but there would be a few things to prioritise:</p>
 <ul>
-<li>I haven’t really optimised the code or tried to tidy it up; there may be some unecessary that were part of development that don’t need to be in the final script.</li>
-<li>I’ve tried to match the font families as best I can, but the font used in the main title is particularly difficult to find a (free) match for.</li>
-<li>I’ve used a lot of manual adjustments to get the chart elements in the right place. That’s fine for a one-off chart like this, but isn’t that useful for making this code more generic.</li>
-<li>R’s built-in line dashes aren’t quite the same as Spear’s, but I think they’re close enough.</li>
-<li>Of course, we can save our plot with maximum resolution, etc, but for fun we can invoke some of the artefacts that are present in Spear’s plot with some help from the {magick} image-processing package (e.g. see below for how to add blur).</li>
+<li>I’ve used a lot of manual adjustments to get the chart elements in roughly the right place; that’s fine for a one-off chart like this, but isn’t that useful for making this code more generic</li>
+<li>I didn’t get the ruler out and measure everything, so there are slight differences when the original and recreation are overlaid</li>
+<li>I haven’t really optimised the code or tried to tidy it up; there may be some unecessary liens that were part of development that don’t need to be in the final script</li>
+<li>I’ve tried to match the font families as best I can, but the font used in the main title is particularly difficult to find a (free) match for</li>
+<li>R’s built-in line dashes aren’t quite the same as Spear’s, but I think they’re close enough</li>
 </ul>
+<p>And finally a bonus improvement, though it requires you to download a package. We can save our plot with maximum resolution, etc, but for fun we can invoke some of the artefacts that are present in Spear’s plot with some help from <a href="https://docs.ropensci.org/magick/index.html">the {magick} image-processing package</a> via Jeroen Ooms and rOpenSci (e.g. see below for how to add blur).</p>
 <pre class="r"><code>library(magick)  # install from CRAN
 
-image_blur(
-  image_read(&quot;&quot;),  # path to where you wrote the image
+# Read the plot PNG
+cottonviz &lt;- image_read(&quot;~/Desktop/cottonviz.png&quot;)  # set to your path
+
+# Apply blurring parameters
+cottonviz_blur &lt;- image_blur(
+  cottonviz,
   radius = 14, sigma = 7  # blur parameters
+)
+
+# Save the image
+image_write(
+  cottonviz_blur,
+  &quot;~/Desktop/cottonviz_blur.png&quot;  # set to your path
 )</code></pre>
 <p>That would end up looking like this:</p>
 <div class="figure">
@@ -451,6 +453,54 @@ image_blur(
 <summary>
 Session info
 </summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.0.5 (2021-03-31)
+##  os       macOS Big Sur 10.16         
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2021-06-08                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date       lib source        
+##  blogdown      1.3     2021-04-14 [1] CRAN (R 4.0.2)
+##  bookdown      0.22    2021-04-22 [1] CRAN (R 4.0.2)
+##  bslib         0.2.5   2021-05-12 [1] CRAN (R 4.0.5)
+##  cli           2.5.0   2021-04-26 [1] CRAN (R 4.0.2)
+##  digest        0.6.27  2020-10-24 [1] CRAN (R 4.0.2)
+##  evaluate      0.14    2019-05-28 [1] CRAN (R 4.0.1)
+##  htmltools     0.5.1.1 2021-01-22 [1] CRAN (R 4.0.2)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.0.2)
+##  jsonlite      1.7.2   2020-12-09 [1] CRAN (R 4.0.2)
+##  knitr         1.33    2021-04-24 [1] CRAN (R 4.0.2)
+##  magick      * 2.7.2   2021-05-02 [1] CRAN (R 4.0.2)
+##  magrittr      2.0.1   2020-11-17 [1] CRAN (R 4.0.2)
+##  R6            2.5.0   2020-10-28 [1] CRAN (R 4.0.2)
+##  Rcpp          1.0.6   2021-01-15 [1] CRAN (R 4.0.2)
+##  rlang         0.4.11  2021-04-30 [1] CRAN (R 4.0.2)
+##  rmarkdown     2.8     2021-05-07 [1] CRAN (R 4.0.5)
+##  sass          0.4.0   2021-05-12 [1] CRAN (R 4.0.2)
+##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.0.2)
+##  stringi       1.6.2   2021-05-17 [1] CRAN (R 4.0.2)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.0.2)
+##  withr         2.4.2   2021-04-18 [1] CRAN (R 4.0.2)
+##  xfun          0.23    2021-05-15 [1] CRAN (R 4.0.5)
+##  yaml          2.2.1   2020-02-01 [1] CRAN (R 4.0.2)
+## 
+## [1] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
 </details>
 </div>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>As an aside, I’ve also been inspired of late by <a href="#recreationthursday">#RecreationThursday on Twitter</a>. It’s a community challenge to <a href="https://twitter.com/_natalie_oshea/status/1400526683170541570?s=20">recreate an art piece</a> selected each fortnight by a rotating curator (as in the curator changes, not that they’re physically spinning).<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>I admit to not knowing much about Spear, so I’m glad that she was selected as the subject of the challenge. One thing I learnt is that Spear might be best known for the box plot, which she originated as the ‘range plot’ in her book <a href="https://archive.org/details/ChartingStatistics_201801">Charting Statistics</a>.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>I haven’t spent much time with base plotting in the last five years (!) and I’m getting increasingly agitated by mounting dependencies in my projects. Locals have been confused recently by a strange fellow walking the streets, repeating <a href="http://www.tinyverse.org/">the tinyverse</a> mantra of ‘lightweight is the right weight’.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>You may have noticed that the ‘US consumption’ line appears a little different to that in Spear’s original, where the line is flatter. I don’t yet know if this is an issue with the supplied data.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+</ol>
 </div>
