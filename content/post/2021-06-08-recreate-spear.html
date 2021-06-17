@@ -55,34 +55,35 @@ draft: no
 <li><a href="https://webonastick.com/fonts/routed-gothic/">Routed Gothic</a>, a very close match for the general text of the plot</li>
 <li><a href="https://www.ffonts.net/Hussar-Bold-Condensed.font">Hussar Bold Condensed</a>, a not-that-great match for the main title</li>
 </ul>
+<p>Do let me know if you have better alternatives, particularly for the main title.</p>
 <p>It was sufficient for me to install these fonts on my system (macOS Big Sur running R v4.0.5) and invoke them by name, as you’ll see through the rest of this walkthrough. Your mileage may vary.</p>
 </div>
 <div id="constants" class="section level2">
 <h2>Constants</h2>
-<p>I’ve set a few values as objects so they can be reused and changed more easily without having to copy-paste in the body of the scrip. Note that I’ve used the convention here that constants are <code>ALL_CAPS</code>, so they’re easier to spot in the plotting code.</p>
+<p>I’ve set a few values as objects so they can be reused and changed more easily without having to copy-paste in the body of the script. Note that I’ve used the convention here that constants are <code>ALL_CAPS</code>, so they’re easier to spot in the plotting code.</p>
 <details>
 <p><summary>Click for constants (I hid this because it’s dull)</summary></p>
 <pre class="r"><code># Constants: general
-CEX       &lt;- 0.8
-YDIV      &lt;- 1000
-BLACK     &lt;- &quot;black&quot;
+CEX       &lt;- 0.8      # font size
+YDIV      &lt;- 1000     # division for y-axis
+BLACK     &lt;- &quot;black&quot;  # easy to supply off-black instead
 WHITE     &lt;- &quot;white&quot;
+XTICK_LEN &lt;- 0.02     # x axis tick length
 YTICK_LEN &lt;- 0.03
-XTICK_LEN &lt;- 0.02
 
 # Constants: lineplot (LP)
-LP_YLIM      &lt;- c(0, 12)
-LP_WIDTH     &lt;- 3
-LP_YTICK_SEQ &lt;- seq(2, 10, 2)
-LP_YLAB_SEQ  &lt;- seq(0, 12, 2)
+LP_YLIM      &lt;- c(0, 12)  # y-axis limite
+LP_WIDTH     &lt;- 3         # width of lines
+LP_YTICK_SEQ &lt;- seq(2, 10, 2)  # y tick locations 
+LP_YLAB_SEQ  &lt;- seq(0, 12, 2)  # y label locations
 
 # Constants: barplot (BP)
 BP_YLIM        &lt;- c(0, 25)
 BP_YTICK_SEQ   &lt;- seq(5, 20, 5)
 BP_YLAB_SEQ    &lt;- seq(0, 25, 5)
-BP_SPACE       &lt;- 0.5
-BP_HATCH_ANGLE &lt;- 45
-BP_HATCH_HI    &lt;- 25
+BP_SPACE       &lt;- 0.5  # space between bars
+BP_HATCH_ANGLE &lt;- 45   # hatchmark angle
+BP_HATCH_HI    &lt;- 25   # hatchmark density
 BP_HATCH_MID   &lt;- 22
 BP_HATCH_LO    &lt;- 12</code></pre>
 </details>
@@ -90,6 +91,7 @@ BP_HATCH_LO    &lt;- 12</code></pre>
 <div id="start-a-graphics-device" class="section level2">
 <h2>Start a graphics device</h2>
 <p>With base plotting you first open a new ‘device’ so that your plotting calls can be captured. You specify things here like the write path and dimensions. When you’ve finished your plotting code, you run <code>dev.off()</code> to close the device and save the output.</p>
+<p>Here I’m using <code>png()</code> so the output is a PNG file. This function is part of the suite of in-built graphics devices from the {grDevices} package, which also includes things like the lossless <code>tiff()</code> format.</p>
 <pre class="r"><code>png(
   &quot;~/Desktop/cottonviz.png&quot;,  # set to a path of your choice
   width  = 20,
@@ -97,18 +99,19 @@ BP_HATCH_LO    &lt;- 12</code></pre>
   units  = &quot;cm&quot;,
   res    = 1200
 )</code></pre>
-<p>You can think of this as setting up a canvas and then you’re going to layer plot objects over the top of it. Beware: things like units and placement of elements will be related to the <code>height</code> and <code>width</code> that you’ve declared here. That means you shouldn’t rely on the graphics windows opened by R or RStudio when previewing the final output; you should rely only on a saved output.</p>
+<p>You can think of this as setting up a canvas and then you’re going to layer plot objects over the top of it (perhaps not too dissimilar to {ggplot2}). Beware: things like units and placement of elements will be related to the <code>height</code> and <code>width</code> that you’ve declared here.</p>
+<p>That means you shouldn’t necessarily rely on the graphics windows opened by R or RStudio when previewing the final output; you should rely only on a saved output.</p>
 </div>
 <div id="plotting-parameters" class="section level2">
 <h2>Plotting parameters</h2>
 <p>With base R you can set various <code>par()</code>ameters that apply to your plot as a whole. The chart we’re recreating is one row of two plots, so we can use <code>mfrow = c(1, 2)</code>, for example. We can also set some global things like the font family.</p>
 <pre class="r"><code># Set plotting parameters
 par(
-  mgp = c(0, 0.2, 0),  # gap to tick labels
+  mgp = c(0, 0.2, 0),   # gap to tick labels
   mar = c(3, 2, 4, 1),  # margins
-  mfrow = c(1, 2),  # plot layout
-  ann = FALSE,  # annotation
-  cex.axis = CEX,  # font size
+  mfrow = c(1, 2),      # plot layout
+  ann = FALSE,          # annotation
+  cex.axis = CEX,       # axis font size
   family = &quot;Routed Gothic&quot;  # font family
 )</code></pre>
 <p>I’ve selected ‘<a href="https://webonastick.com/fonts/routed-gothic/">Routed Gothic</a>’ as the font family and I think it’s a great match. It’s based on the Leroy lettering set that was often used for hand-labelling technical drawings.</p>
@@ -116,16 +119,16 @@ par(
 </div>
 <div id="lineplot" class="section level1">
 <h1>2. Line plot</h1>
-<p>So, here’s the first ‘hack’. I’m going to set up a ‘fake’ scatter plot with no content and then we’re going to add content to it sequentially. This provides the correct plot dimensions to which we can add bespoke details.</p>
+<p>So, here’s the first ‘hack’. I’m going to set up a ‘fake’ scatter plot with no content and then we’re going to add our desired content to it sequentially. This provides the correct plot dimensions to which we can add bespoke details.</p>
 <pre class="r"><code># Dummy x-y scatter plot
 plot(
   x = cotton$Year,
-  y = cotton$`US consumption` / YDIV,  # i.e. divide by 1000
-  axes = FALSE,  # no axes
-  pch = &quot;&quot;,   # expunge axes/points
+  y = cotton$`US consumption` / YDIV,
+  axes = FALSE,    # no axes
+  pch = &quot;&quot;,        # expunge axes/points
   ylim = LP_YLIM,  # y-axis min/max limits
-  xaxs = &quot;i&quot;,  # set &#39;absolute origin&#39; on x-axis
-  yaxs = &quot;i&quot;   # set &#39;absolute origin&#39; on y-axis
+  xaxs = &quot;i&quot;,      # set &#39;absolute origin&#39;
+  yaxs = &quot;i&quot;
 )</code></pre>
 <p>Note the use of <code>yaxs</code> and <code>xaxs = "i"</code> which ensures that the axis limits are exactly at the minimum and maximum values for the axis (e.g. it forces [0,0] to be in the extreme lower-left.)</p>
 <p>Now we can build up the plot axes with manual calls to <code>axis()</code>.</p>
@@ -135,8 +138,8 @@ axis(
   side = 1,
   at = 1942:1948,
   labels = c(1942, paste0(&quot;&#39;&quot;, 43:48)),  # i.e. 1942, &#39;43, &#39;44, etc
-  tck = XTICK_LEN,  # tick length
-  col = WHITE,  # i.e. axis isn&#39;t visible
+  tck = XTICK_LEN,   # tick length
+  col = WHITE,       # i.e. axis isn&#39;t visible
   col.ticks = BLACK  # i.e. axis ticks are visible
 )
 
@@ -193,18 +196,18 @@ mapply(
   y = c(11, 3.2, 6.8),
   label = c(&quot;U. S. Consumption&quot;, &quot;Exports&quot;, &quot;Carry – over\nstocks&quot;)
 )</code></pre>
-<p>I would normally do iterative things with the <code>map()</code> family of functions from <a href="https://purrr.tidyverse.org/">the {purrr} package</a> By Lionel Henry and Hadley Wickham, so I welcome suggestions on appropriate use of the various base <code>*apply()</code> functions in this scenario.</p>
+<p>I would normally do iterative things with the <code>map()</code> family of functions from <a href="https://purrr.tidyverse.org/">the {purrr} package</a> by Lionel Henry and Hadley Wickham, so I welcome suggestions on appropriate use of the various base <code>*apply()</code> functions in this scenario.</p>
 <p>Finally we can add the arrows that point to the lines from the labels. Base R has a handy <code>arrows()</code> function to which you supply start and end coordinates and parameters for the arrowhead. I used an advanced-coder technique called ‘trial-and-error’ for this.</p>
 <pre class="r"><code># Add arrows from labels to lines
 arrows(
-  x0 = c(1945.4, 1944.2, 1945.5),  # Consumption, Exports, Stocks
+  x0 = c(1945.4, 1944.2, 1945.5),  # arrow origin
   y0 = c(10.8, 3.2, 7.1),
-  x1 = c(1945, 1944.4, 1945.2),
+  x1 = c(1945, 1944.4, 1945.2),    # arrowhead
   y1 = c(9.6, 3, 6.8),
-  angle = 12,  # pointy-ness
+  angle = 12,    # &#39;pointy-ness&#39;
   length = 0.07  # arrowhead length
 )</code></pre>
-<p>Excellent, that’s the line plot completed:</p>
+<p>Excellent, that’s the line plot completed. The plot now looks like this:</p>
 <div class="figure">
 <p><img src="/post/2021-06-08-recreate-spear_files/1_lp_2.png" alt="The recreated plot in progress: the line plot has axes, labels, data and arrows." width="100%"/></p>
 </div>
@@ -221,17 +224,17 @@ cotton_transpose</code></pre>
 ## US consumption 11.160  9.993  9.693 9.423 10.072 9.374 7.833
 ## Exports         1.480  1.139  2.007 3.613  3.545 1.968 4.785
 ## Stocks         10.657 10.744 11.164 7.326  2.530 3.080 5.283</code></pre>
-<p>Note that I’ve supplied column names here in the form they’ll appear on the plot (e.g. <code>'43</code>), except for the first column, which I’ve left blank because the axis label needs to be applied separately for that one case.</p>
+<p>Note that I’ve supplied column names here in the form they’ll appear on the plot (e.g. <code>'43</code>), except for the first column, which I’ve left blank because the axis label needs to be applied separately for that one case (<code>1942</code>).</p>
 <p>Spear’s cotton barplot uses hatching (i.e. parallel lines in one direction) and crosshatching (i.e. perpendicular lines laid over each other) to ‘shade’ the bars. This approach was used a lot in manual charting because colour wasn’t necessarily available, and it was easy enough to achieve with a set square and rule.</p>
 <p>R lets you control the <code>density</code> and <code>angle</code> of shading in a <code>barplot()</code>, but the angle can only take one value. To create a crosshatch, you need to lay down a separate <code>barplot()</code> layer that is composed only of hatching in one direction. You can then supply a second <code>barplot()</code> call with the hatching in the other direction.</p>
 <pre class="r"><code># Barplot layer with hatching only (allows for crosshatching)
 barplot(
   cotton_transpose, 
-  axes = FALSE,  # no axes
-  xaxt = &quot;n&quot;,  # no x-axis bar labels
+  axes = FALSE,      # suppress axes
+  xaxt = &quot;n&quot;,        # suppress x-axis bar labels
   ylim = BP_YLIM,
   space = BP_SPACE,  # space between bars
-  border = WHITE,  # border around bars
+  border = WHITE,    # border around bars
   col = BLACK,
   density = rep(c(BP_HATCH_HI, 0, BP_HATCH_LO), 7),  # line &#39;closeness&#39;
   angle = 360 - BP_HATCH_ANGLE  # top-left to bottom-right
@@ -240,7 +243,8 @@ barplot(
 <div class="figure">
 <p><img src="/post/2021-06-08-recreate-spear_files/2_bp_1.png" alt="The recreated plot in progress: the line plot is completed; the first layer of bar plot hatching has been added." width="100%"/></p>
 </div>
-<p>Note that this layer of hatching is only required in the bottom and top bars of the stack because they will end up being crosshatched. The middle bar is only hatched, not crosshatched.</p>
+<p>Note that this layer of hatching is only required in the bottom and top bars of the stack because they will end up being crosshatched, specifically. The middle bar will only be hatched, not crosshatched, so it’s blank in this first layer.</p>
+<p>Now we can apply the rest of the bar plot. Since we want to add this <code>barplot()</code> call on top of the previous one, we need to use the argument <code>add = TRUE</code>.</p>
 <pre class="r"><code># Barplot layer with features
 barplot(
   cotton_transpose, 
@@ -250,13 +254,13 @@ barplot(
   col = BLACK,
   density = rep(c(BP_HATCH_HI, BP_HATCH_MID, BP_HATCH_LO), 7),
   angle = BP_HATCH_ANGLE, # bottom-left to upper-right
-  add = TRUE  # add as layer on top of existing plot
+  add = TRUE              # add as layer on top of existing plot
 )</code></pre>
 <p>And now we have both layers of hatching, the bar boundaries and the x-axis bar labels:</p>
 <div class="figure">
 <p><img src="/post/2021-06-08-recreate-spear_files/2_bp_2.png" alt="The recreated plot in progress: the line plot is completed; the bar plot has bars with hatching and outlines, and axis labels." width="100%"/></p>
 </div>
-<p>You’ll notice I suppressed the axes again. The approach to building the bar plot axes is very similar to that of the line plot, using <code>axis()</code>, <code>box()</code> and <code>mtext()</code>.</p>
+<p>You’ll notice I suppressed the axes again. The approach to building the bespoke bar plot axes is very similar to that of the line plot, using <code>axis()</code>, <code>box()</code> and <code>mtext()</code>.</p>
 <pre class="r"><code># Manual y-axis (just ticks)
 axis(
   side = 2,
@@ -295,7 +299,7 @@ mtext(&quot;1942&quot;, side = 1, line = 0.2, adj = -0.06, cex = CEX)
 
 # Bounding box around plot boundary
 box()</code></pre>
-<p>Awkwardly, the first x-axis label in the bar plot (<code>1942</code>) had to be created manually because it’s placed under the origin point in the original chart, rather than under the bar itself.</p>
+<p>Awkwardly, the first x-axis label in the bar plot (<code>1942</code>) has to be created manually because it’s placed under the origin point in the original chart, rather than under the bar itself, which is the default.</p>
 <p>Finally we can add the labels over the top of the bars. I’ve done this in a similar iterative manner as the line plot, where there’s a call to create a white box with <code>rect()</code>, over which a <code>text()</code> label can be applied.</p>
 <pre class="r"><code># Apply labels iteratively
 mapply(
@@ -320,17 +324,18 @@ mapply(
 <h1>4. Margin labels</h1>
 <p>With both charts completed, we can add with <code>mtext()</code> the titles and captions that exist for the plot as a whole.</p>
 <p>The main title uses a different font family than was specified in <code>par()</code>, so we override it with the <code>family</code> argument.</p>
-<p>I couldn’t find a good (free) approximation of the font family that Spear used, so I’ve used one that has a similar ‘feel’, even if many of the typographical features are wrong (e.g. single-storey ‘a’). Here I’ve settled with ‘<a href="https://www.ffonts.net/Hussar-Bold-Condensed.font">Hussar Bold Condensed</a>’. Let me know if you recognise Spear’s font.</p>
+<p>I couldn’t find a good (free) approximation of the font family that Spear used, so I’ve used one that has a similar ‘feel’, even if many of the typographical features are wrong (e.g. single-storey ‘a’). Here I’ve settled with ‘<a href="https://www.ffonts.net/Hussar-Bold-Condensed.font">Hussar Bold Condensed</a>’. Let me know if you recognise Spear’s actual font.</p>
 <pre class="r"><code># Main title
 mtext(
   text = &quot;Distribution   of   United   States   Cotton&quot;,
   outer = TRUE,  # outer plot margin
-  side = 3,  # top
-  line = -3,  # relative to outside to plot limit
+  side = 3,      # i.e. the top
+  line = -3,     # relative to outside to plot limit
   cex = CEX + 0.5,
   family = &quot;Hussar Bold Condensed&quot;,
-  font = 2  # bold
+  font = 2       # bold type
 )</code></pre>
+<p>I left extra spaces between the words in the title text to approximate their placement in Spear’s image.</p>
 <p>The remaining labels were just a case of fiddling with the <code>line</code> and <code>at</code> arguments to get them in the right place.</p>
 <pre class="r"><code># &#39;Subtitle&#39; for line plot
 mtext(
@@ -394,7 +399,7 @@ mtext(
 </div>
 <div id="saving" class="section level1">
 <h1>5. Saving</h1>
-<p>Having opened a graphics device earlier with <code>png()</code> and then added out plotting elements, we can close the graphics device and save the output.</p>
+<p>Having opened a graphics device earlier with <code>png()</code> and then added out plotting elements, we can now close the graphics device and save the output.</p>
 <pre class="r"><code>dev.off()</code></pre>
 <p>You’ll want to run all the code from start to finish to encompass the <code>png()</code> call at the start and the <code>dev.off()</code> call at the end. I’ve <a href="https://gist.github.com/matt-dray/379ea4303ba7ec6c6757a5d6e3722e95">put all the code in a GitHub Gist</a> to make it easier to copy-paste, should you want to recreate it.</p>
 </div>
@@ -408,8 +413,8 @@ mtext(
 <li>the minimum and maximum labels on the y axis are not on the ticks, they’re slightly above and below them, respectively</li>
 <li>hatching can only be done in one direction, so it requires an ‘under-layer’ of hatching in the opposite direction to that of the main plot itself</li>
 <li>there’s no function in base to apply a text label with a filled box under it; you need to use <code>text()</code> and <code>rect()</code> together</li>
-<li>the x-axis labels aren’t all the same: the first is <code>1942</code> and the rest are in the form <code>'43</code> .</li>
-<li>the first x-axis label on the bar chart, <code>1942</code> is not actually under the bar, but under the origin.</li>
+<li>the x-axis labels aren’t all the same: the first is <code>1942</code> and the rest are in the form <code>'43</code></li>
+<li>the first x-axis label on the bar chart, <code>1942</code> is not actually under the bar, but under the origin</li>
 </ul>
 </div>
 <div id="improvements" class="section level2">
@@ -418,7 +423,7 @@ mtext(
 <ul>
 <li>I’ve used a lot of manual adjustments to get the chart elements in roughly the right place; that’s fine for a one-off chart like this, but isn’t that useful for making this code more generic</li>
 <li>I didn’t get the ruler out and measure everything, so there are slight differences when the original and recreation are overlaid</li>
-<li>I haven’t really optimised the code or tried to tidy it up; there may be some unecessary liens that were part of development that don’t need to be in the final script</li>
+<li>I haven’t really optimised the code or tried to tidy it up; there may be some unnecessary lines that were part of development that don’t need to be in the final script</li>
 <li>I’ve tried to match the font families as best I can, but the font used in the main title is particularly difficult to find a (free) match for</li>
 <li>R’s built-in line dashes aren’t quite the same as Spear’s, but I think they’re close enough</li>
 </ul>
@@ -457,7 +462,7 @@ image_write(
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2021-06-09                  
+##  date     2021-06-17                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
 ##  package     * version date       lib source        
