@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.3 posts per month.
 
-🆕 The latest post was published 12 day(s) ago: [Recreating Spear’s
+🆕 The latest post was published 13 day(s) ago: [Recreating Spear’s
 \#CottonViz in base
 R](https://www.rostrum.blog/2021/06/08/recreate-spear/).
 
@@ -138,4 +138,4 @@ R](https://www.rostrum.blog/2021/06/08/recreate-spear/).
 
 -----
 
-*Updated 2021-06-20*
+*Updated 2021-06-21*
