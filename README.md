@@ -25,14 +25,13 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 89 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 90 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.3 posts per month.
 
-🆕 The latest post was published 13 day(s) ago: [Recreating Spear’s
-\#CottonViz in base
-R](https://www.rostrum.blog/2021/06/08/recreate-spear/).
+🆕 The latest post was published 1 day(s) ago: [\#RecreationThursday:
+Hlito with base R](https://www.rostrum.blog/2021/06/21/recreate-hlito/).
 
 📈 This 2D plot shows posts over time:
 
@@ -44,6 +43,7 @@ R](https://www.rostrum.blog/2021/06/08/recreate-spear/).
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|     90 | 2021-06-21 | [\#RecreationThursday: Hlito with base R](https://www.rostrum.blog/2021/06/21/recreate-hlito/)                            |
 |     89 | 2021-06-08 | [Recreating Spear’s \#CottonViz in base R](https://www.rostrum.blog/2021/06/08/recreate-spear/)                           |
 |     88 | 2021-05-22 | [Misson Across the Isle of Wight](https://www.rostrum.blog/2021/05/22/mission-across-iow/)                                |
 |     87 | 2021-05-07 | [Encrypt and host a knitted R Markdown file](https://www.rostrum.blog/2021/05/07/encrypted-rmd/)                          |
@@ -138,4 +138,4 @@ R](https://www.rostrum.blog/2021/06/08/recreate-spear/).
 
 -----
 
-*Updated 2021-06-21*
+*Updated 2021-06-22*
