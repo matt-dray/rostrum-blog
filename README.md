@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.3 posts per month.
 
-🆕 The latest post was published 2 day(s) ago: [\#RecreationThursday:
+🆕 The latest post was published 3 day(s) ago: [\#RecreationThursday:
 Hlito with base R](https://www.rostrum.blog/2021/06/21/recreate-hlito/).
 
 📈 This 2D plot shows posts over time:
@@ -138,4 +138,4 @@ Hlito with base R](https://www.rostrum.blog/2021/06/21/recreate-hlito/).
 
 -----
 
-*Updated 2021-06-23*
+*Updated 2021-06-24*
