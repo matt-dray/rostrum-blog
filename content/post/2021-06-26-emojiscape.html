@@ -1,0 +1,407 @@
+---
+title: "Generate an {emojiscape}"
+author: Matt Dray
+date: '2021-06-26'
+slug: emojiscape
+categories:
+  - code
+  - package
+tags:
+  - emoji
+  - r
+draft: no
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div class="figure">
+<p><img src="/post/2021-06-26-emojiscape_files/emojiscape.gif" alt="Animation of an RStudio window where the generate function from emojiscape is being used to render to the console a 10 by 10 grid of emoji with a city theme, followed by an undergrowth scene with a smaller grid size, followed by the printing of a dataframe showing the set of emoji associated with the liminal scene, which are a large white square, a door and a lightbulb." width="75%"/></p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>You can print a little emoji scene to your R console with <a href="https://github.com/matt-dray/emojiscape">the {emojiscape} package</a>.</p>
+</div>
+<div id="why" class="section level1">
+<h1>Why?</h1>
+<p>Regular readers will know that this blog is where I implement whismical daydreams in R. Today is no exception: I’ve made a tiny package to print a little randomised emoji scene to my console.</p>
+<p>I’ve seen people make <a href="https://botwiki.org/?s=emoji&amp;search-filters-options%5B%5D=bots">emoji-based bots</a>, which I’ve been interested in after making <a href="https://twitter.com/londonmapbot">the @londonmapbot Twitter bot</a> (<a href="https://www.rostrum.blog/2020/09/21/londonmapbot/">post</a>, <a href="https://github.com/matt-dray/londonmapbot">source</a>, <a href="https://botwiki.org/bot/londonmapbot/">BotWiki</a>),</p>
+<p>I’ve made this completely for my own amusement, so no guarantees whatsoever.</p>
+</div>
+<div id="play-god" class="section level1">
+<h1>Play god</h1>
+<div id="install" class="section level2">
+<h2>Install</h2>
+<p>You can install {emojiscape} <a href="https://github.com/matt-dray/emojiscape">from GitHub</a>.</p>
+<pre class="r"><code>## remotes::install_github(&quot;matt-dray/emojiscape&quot;)
+library(emojiscape)</code></pre>
+<p>The package has one dependency: <a href="https://github.com/hadley/emo">the GitHub-hosted {emo} package</a><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> by Hadley Wickham. It implements emoji in R like <code>emo::ji("sauropod")</code> 🦕.</p>
+<p>There’s no guarantee that these particular emoji will display correctly on your device and they <a href="https://emojipedia.org/grimacing-face/">may have different designs</a> if you’re using another operating system.</p>
+</div>
+<div id="generate" class="section level2">
+<h2>Generate</h2>
+<p>Let’s <code>generate()</code> a scene.</p>
+<p>The first one is <em>nuts</em>, lol: a classic deciduous <code>woods</code>.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<pre class="r"><code>generate(&quot;woods&quot;)</code></pre>
+<pre><code>## 🌳 🐿 🌰 🌰 🌳 🐿 🌰 🌳 🐿 🌰 
+## 🌳 🐿 🌳 🌳 🌰 🌳 🌳 🌰 🌰 🌳 
+## 🌳 🌰 🌳 🌳 🌳 🌳 🌰 🌳 🌳 🌳 
+## 🌳 🌳 🌳 🌳 🌳 🌳 🌰 🌳 🌳 🌳 
+## 🌳 🐿 🌳 🌰 🌳 🌰 🌳 🌳 🌳 🌳 
+## 🌳 🌳 🐿 🌳 🌳 🌳 🌳 🌳 🌰 🌳 
+## 🌰 🐿 🌰 🐿 🌳 🌳 🐿 🌳 🌳 🌳 
+## 🌳 🌰 🌰 🌳 🌳 🌳 🌳 🌳 🌳 🌳 
+## 🌳 🌳 🌳 🌳 🌳 🌳 🌳 🌳 🌳 🌳 
+## 🌳 🌳 🐿 🌳 🌳 🌳 🌳 🌳 🌰 🐿</code></pre>
+<p>Hold your breath, we’re going to <code>space</code>. You can resize the output, but space is basically infinite and my console is not.</p>
+<pre class="r"><code>generate(
+  terrain = &quot;space&quot;,
+  grid_size = 7  # i.e. a 7x7 grid
+)</code></pre>
+<pre><code>## ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ 
+## ⭐ ⬛ ⬛ ⬛ ⭐ ⬛ ⬛ 
+## ⭐ ⭐ ⬛ ⭐ ⬛ ⬛ ⬛ 
+## ⬛ ⬛ ⭐ ⬛ ⭐ ⬛ ⬛ 
+## ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ 
+## ⬛ ⬛ ⬛ ⭐ 🛰 ⬛ ⬛ 
+## ⬛ ⬛ ⭐ ⭐ ⬛ ⬛ ⭐</code></pre>
+<p>Here’s a little raccoon <code>city</code>. Perhaps the <em>residents</em> are <em>evil</em>. (That is a gamer joke, gg.)</p>
+<pre class="r"><code>generate(&quot;city&quot;, 5)</code></pre>
+<pre><code>## 🏬 🏢 🏢 🏢 🏢 
+## 🏢 🏬 🏬 🏢 🏢 
+## 🏢 🏢 🏬 🏢 🏢 
+## 🏢 🏢 🏢 🏬 🏢 
+## 🏢 🏢 🦝 🏢 🏢</code></pre>
+<p>I have a PhD in dead leaves, so I had to add <code>undergrowth</code>. <em>Ant</em> you glad I included it?</p>
+<pre class="r"><code>generate(&quot;undergrowth&quot;, 5)</code></pre>
+<pre><code>## 🍂 🐜 🍂 🐜 🍂 
+## 🐜 🍄 🍂 🍂 🍂 
+## 🍂 🍂 🍂 🍂 🍂 
+## 🍂 🍂 🐜 🍂 🐜 
+## 🍂 🍂 🍂 🍂 🍂</code></pre>
+</div>
+<div id="terrains" class="section level2">
+<h2>Terrains</h2>
+<p>So what are all the available terrain options?</p>
+<pre class="r"><code>paste(as.list(args(generate))$terrain)[-1]</code></pre>
+<pre><code>##  [1] &quot;arable&quot;      &quot;city&quot;        &quot;desert&quot;      &quot;forest&quot;      &quot;garden&quot;     
+##  [6] &quot;liminal&quot;     &quot;mountains&quot;   &quot;ocean&quot;       &quot;pastoral&quot;    &quot;polar&quot;      
+## [11] &quot;rainforest&quot;  &quot;sky&quot;         &quot;space&quot;       &quot;suburbs&quot;     &quot;traffic&quot;    
+## [16] &quot;undergrowth&quot; &quot;woods&quot;</code></pre>
+<p>This list may go out of date if more options are added in future.</p>
+<p>Expand the sections below to see previews of each terrain and their full emoji sets.</p>
+<details>
+<summary>
+Click for all previews
+</summary>
+<pre><code>## 
+## terrain = &quot;arable&quot;
+## 🌽 🌽 🌽 🌽 🌽 🚜 🌽 🌽 🌽 🌽 
+## 🌽 🌽 🐭 🌽 🚜 🌽 🌽 🌽 🌽 🌽 
+## 🌽 🌽 🌽 🌽 🌽 🌽 🌽 🚜 🌽 🌽 
+## 🌽 🌽 🌽 🌽 🌽 🚜 🚜 🌽 🌽 🌽 
+## 🚜 🌽 🌽 🌽 🌽 🌽 🌽 🚜 🌽 🚜 
+## 🌽 🐭 🌽 🌽 🌽 🌽 🐭 🌽 🚜 🌽 
+## 🌽 🌽 🚜 🌽 🌽 🌽 🌽 🐭 🌽 🌽 
+## 🌽 🌽 🚜 🌽 🚜 🌽 🚜 🌽 🌽 🚜 
+## 🌽 🌽 🌽 🚜 🌽 🌽 🐭 🌽 🌽 🐭 
+## 🚜 🌽 🌽 🌽 🌽 🌽 🌽 🌽 🌽 🌽 
+## 
+## terrain = &quot;city&quot;
+## 🏢 🏢 🏢 🏢 🏬 🏢 🏢 🏢 🏢 🦝 
+## 🏢 🏢 🏬 🏬 🏢 🏢 🏢 🏢 🏢 🏢 
+## 🏢 🏢 🏢 🏢 🏢 🏢 🏢 🏬 🏢 🏢 
+## 🏢 🏢 🏢 🏢 🏢 🏢 🏢 🏢 🏢 🏢 
+## 🏢 🏢 🏢 🏢 🏬 🏬 🏢 🏢 🏢 🏢 
+## 🏢 🏢 🏢 🏢 🏢 🏢 🏬 🏢 🏬 🏢 
+## 🏢 🏢 🏬 🏢 🏢 🏢 🏢 🏢 🦝 🏢 
+## 🏢 🏢 🦝 🏬 🏢 🦝 🏢 🏬 🏢 🏢 
+## 🏬 🏢 🏢 🏬 🏢 🏬 🏢 🏢 🏢 🦝 
+## 🏢 🏢 🏢 🏬 🏢 🏢 🏬 🏬 🏢 🏢 
+## 
+## terrain = &quot;desert&quot;
+## 🌵 🏜 🏜 🏜 🐫 🏜 🌵 🌵 🏜 🌵 
+## 🏜 🏜 🏜 🏜 🐫 🐫 🏜 🏜 🌵 🌵 
+## 🏜 🏜 🏜 🏜 🏜 🌵 🏜 🏜 🏜 🌵 
+## 🏜 🏜 🏜 🏜 🏜 🏜 🌵 🏜 🏜 🏜 
+## 🏜 🏜 🏜 🏜 🏜 🏜 🏜 🏜 🌵 🏜 
+## 🏜 🌵 🏜 🏜 🌵 🏜 🏜 🏜 🌵 🏜 
+## 🏜 🏜 🏜 🏜 🏜 🏜 🌵 🐫 🏜 🏜 
+## 🌵 🏜 🏜 🏜 🏜 🏜 🏜 🏜 🌵 🏜 
+## 🏜 🏜 🏜 🏜 🏜 🌵 🏜 🏜 🏜 🏜 
+## 🏜 🏜 🏜 🏜 🏜 🏜 🏜 🏜 🏜 🏜 
+## 
+## terrain = &quot;forest&quot;
+## 🎄 🌲 🌲 🌲 🌲 🌲 🌲 🌲 🌲 🌲 
+## 🐿 🌲 🌲 🌲 🌲 🌲 🌲 🌲 🌲 🐿 
+## 🌲 🌲 🌲 🐿 🌲 🌲 🌲 🌲 🎄 🌲 
+## 🌲 🌲 🌲 🌲 🌲 🌲 🐿 🌲 🌲 🌲 
+## 🌲 🌲 🌲 🌲 🌲 🌲 🌲 🌲 🌲 🌲 
+## 🌲 🌲 🐿 🌲 🌲 🌲 🐿 🌲 🌲 🌲 
+## 🐿 🌲 🌲 🌲 🎄 🌲 🐿 🌲 🌲 🎄 
+## 🌲 🌲 🌲 🌲 🐿 🌲 🌲 🎄 🌲 🌲 
+## 🐿 🌲 🐿 🌲 🎄 🌲 🐿 🌲 🐿 🌲 
+## 🌲 🌲 🌲 🌲 🌲 🌲 🌲 🌲 🌲 🐿 
+## 
+## terrain = &quot;garden&quot;
+## 🌹 🌹 🌹 🌹 🌱 🌹 🌹 🌹 🌹 🌹 
+## 🌹 🌱 🌹 🌱 🌹 🌹 🌹 🌹 🌹 🌹 
+## 🌱 🌹 🌹 🌹 🌱 🌹 🌹 🌹 🌹 🌱 
+## 🌹 🌹 🌹 🌹 🌱 🌹 🌹 🌱 🥀 🌹 
+## 🌹 🌱 🌹 🌹 🌹 🌹 🌹 🌹 🥀 🌱 
+## 🥀 🌱 🌹 🌱 🌹 🌹 🌹 🌹 🌹 🌹 
+## 🌱 🥀 🌹 🌹 🌹 🥀 🌹 🌹 🌱 🌹 
+## 🌹 🌹 🌱 🌹 🌹 🌹 🥀 🌹 🌹 🌹 
+## 🌱 🌱 🌹 🌹 🌹 🌹 🌹 🌱 🌹 🌹 
+## 🌹 🌹 🌱 🌹 🌹 🌹 🌹 🌹 🌱 🌹 
+## 
+## terrain = &quot;liminal&quot;
+## ⬜ ⬜ ⬜ 🚪 ⬜ 🚪 ⬜ 🚪 ⬜ ⬜ 
+## 🚪 ⬜ 🚪 🚪 ⬜ 🚪 ⬜ ⬜ ⬜ ⬜ 
+## ⬜ ⬜ ⬜ ⬜ ⬜ 🚪 ⬜ ⬜ ⬜ 🚪 
+## ⬜ ⬜ ⬜ ⬜ ⬜ ⬜ 🚪 ⬜ ⬜ ⬜ 
+## ⬜ ⬜ ⬜ ⬜ ⬜ ⬜ ⬜ ⬜ 🚪 ⬜ 
+## ⬜ ⬜ ⬜ ⬜ 🚪 ⬜ ⬜ ⬜ ⬜ ⬜ 
+## ⬜ 🚪 ⬜ ⬜ 🚪 🚪 ⬜ 🚪 ⬜ ⬜ 
+## ⬜ 🚪 ⬜ ⬜ 💡 ⬜ ⬜ 🚪 ⬜ ⬜ 
+## ⬜ 🚪 🚪 🚪 ⬜ ⬜ ⬜ ⬜ ⬜ ⬜ 
+## ⬜ ⬜ ⬜ ⬜ ⬜ ⬜ ⬜ 🚪 ⬜ ⬜ 
+## 
+## terrain = &quot;mountains&quot;
+## ⛰ 🏔️ ⛰ ⛰ ⛰ ⛰ 🏔️ 🏔️ ⛰ 🏔️ 
+## ⛰ 🐐 🏔️ ⛰ ⛰ ⛰ ⛰ ⛰ 🏔️ ⛰ 
+## ⛰ ⛰ ⛰ 🐐 ⛰ ⛰ 🏔️ ⛰ ⛰ ⛰ 
+## ⛰ ⛰ ⛰ 🏔️ ⛰ ⛰ 🏔️ ⛰ ⛰ ⛰ 
+## ⛰ 🏔️ ⛰ ⛰ 🏔️ ⛰ ⛰ ⛰ ⛰ ⛰ 
+## ⛰ ⛰ ⛰ ⛰ ⛰ ⛰ ⛰ ⛰ 🏔️ ⛰ 
+## ⛰ ⛰ ⛰ ⛰ ⛰ ⛰ 🐐 ⛰ ⛰ 🐐 
+## ⛰ 🐐 🏔️ ⛰ ⛰ ⛰ ⛰ ⛰ 🏔️ 🏔️ 
+## ⛰ ⛰ ⛰ 🏔️ 🐐 ⛰ 🏔️ 🏔️ ⛰ ⛰ 
+## ⛰ 🏔️ 🐐 ⛰ ⛰ ⛰ ⛰ ⛰ ⛰ ⛰ 
+## 
+## terrain = &quot;ocean&quot;
+## 🐬 🏝 🌊 🌊 🏝 🌊 🐬 🌊 🌊 🏝 
+## 🏝 🌊 🌊 🌊 🌊 🏝 🌊 🌊 🏝 🏝 
+## 🐬 🌊 🏝 🏝 🌊 🌊 🌊 🌊 🌊 🌊 
+## 🐬 🌊 🌊 🌊 🌊 🌊 🐬 🌊 🌊 🌊 
+## 🌊 🌊 🌊 🌊 🌊 🌊 🏝 🏝 🌊 🌊 
+## 🌊 🏝 🌊 🌊 🌊 🌊 🌊 🌊 🐬 🌊 
+## 🌊 🌊 🌊 🏝 🌊 🌊 🌊 🌊 🌊 🌊 
+## 🌊 🌊 🐬 🌊 🐬 🌊 🌊 🌊 🏝 🌊 
+## 🌊 🏝 🏝 🌊 🌊 🏝 🌊 🌊 🌊 🌊 
+## 🌊 🌊 🏝 🌊 🌊 🌊 🌊 🐬 🌊 🌊 
+## 
+## terrain = &quot;pastoral&quot;
+## 🐓 🥚 🐓 🐓 🐓 🥚 🥚 🥚 🐓 🐓 
+## 🐓 🥚 🐓 🥚 🥚 🥚 🐣 🐓 🥚 🐓 
+## 🐓 🥚 🥚 🥚 🐓 🐓 🐓 🐓 🐓 🐓 
+## 🐓 🐓 🐓 🐓 🐣 🐓 🥚 🐓 🐓 🐣 
+## 🐓 🐓 🐓 🐓 🐓 🐓 🐓 🐓 🐣 🐓 
+## 🐓 🐓 🥚 🐓 🐓 🐓 🐓 🐓 🐓 🐣 
+## 🐓 🐣 🐓 🐓 🐓 🐓 🐓 🐓 🐓 🐓 
+## 🥚 🐓 🥚 🐓 🐓 🐓 🐓 🐓 🐣 🐣 
+## 🐓 🐓 🐓 🐓 🐓 🥚 🥚 🐓 🐣 🐓 
+## 🐓 🐓 🐓 🥚 🐓 🐓 🐓 🐓 🐓 🐓 
+## 
+## terrain = &quot;polar&quot;
+## 🌨 🌨 🌨 🌨 🌨 ❄️ 🌨 🌨 🌨 🌨 
+## ❄️ 🌨 ❄️ 🌨 🌨 🌨 🌨 🌨 🐧 ❄️ 
+## 🌨 ❄️ ❄️ 🌨 ❄️ 🌨 🌨 🌨 ❄️ 🌨 
+## 🌨 🌨 🌨 🌨 🌨 🌨 ❄️ 🌨 🌨 🌨 
+## 🌨 🌨 🐧 🌨 ❄️ 🐧 🌨 ❄️ ❄️ 🌨 
+## ❄️ 🌨 🌨 🌨 🌨 🌨 ❄️ 🌨 ❄️ 🌨 
+## 🌨 🌨 ❄️ 🐧 ❄️ ❄️ ❄️ 🌨 🌨 ❄️ 
+## 🌨 🌨 🌨 🌨 🌨 ❄️ 🌨 🌨 🌨 ❄️ 
+## 🌨 ❄️ 🌨 🌨 🌨 ❄️ 🌨 🌨 🌨 🌨 
+## 🌨 🌨 🐧 ❄️ 🌨 ❄️ 🌨 🌨 ❄️ 🌨 
+## 
+## terrain = &quot;rainforest&quot;
+## 🌳 🌳 🌳 🦍 🌳 🌳 🌳 🌳 🐍 🌳 
+## 🌳 🐍 🌳 🌳 🐍 🌳 🌳 🐍 🌳 🌳 
+## 🌳 🌳 🌳 🌳 🌳 🌳 🦍 🌳 🌳 🌳 
+## 🌳 🐍 🐍 🐍 🌳 🦍 🌳 🌳 🌳 🌳 
+## 🌳 🌳 🌳 🌳 🦍 🌳 🦍 🌳 🌳 🐍 
+## 🌳 🌳 🌳 🌳 🌳 🌳 🌳 🐍 🌳 🌳 
+## 🌳 🌳 🐍 🦍 🌳 🌳 🌳 🐍 🌳 🐍 
+## 🌳 🌳 🐍 🌳 🐍 🌳 🐍 🌳 🌳 🌳 
+## 🌳 🌳 🌳 🌳 🐍 🌳 🌳 🌳 🌳 🌳 
+## 🐍 🌳 🌳 🌳 🦍 🌳 🌳 🌳 🌳 🌳 
+## 
+## terrain = &quot;sky&quot;
+## 🌈 ✈️ 🌧 🌧 🌧 🌧 🌧 🌧 🌧 🌈 
+## 🌧 🌈 🌧 🌧 🌧 🌧 🌧 🌈 🌧 🌈 
+## 🌧 🌧 🌧 🌧 🌧 🌧 🌧 🌧 🌈 🌈 
+## 🌧 🌧 🌧 🌧 🌧 🌈 🌧 🌧 🌈 🌧 
+## 🌧 🌧 🌈 🌧 ✈️ 🌧 🌧 🌧 🌧 ✈️ 
+## 🌧 🌧 🌧 ✈️ 🌧 🌧 🌧 🌧 🌧 🌈 
+## 🌧 🌧 🌧 🌧 🌈 🌧 🌧 🌧 🌧 🌧 
+## 🌈 🌧 🌧 🌧 🌧 🌧 🌧 🌈 🌧 🌧 
+## 🌧 🌈 🌧 🌧 🌧 🌧 🌧 🌧 🌧 🌧 
+## 🌧 🌧 🌧 🌧 🌈 🌧 🌧 ✈️ 🌈 🌈 
+## 
+## terrain = &quot;space&quot;
+## ⬛ ⬛ ⬛ ⬛ ⬛ ⭐ ⬛ ⬛ ⬛ ⭐ 
+## ⬛ ⭐ ⬛ ⭐ ⬛ 🛰 ⬛ ⬛ ⬛ ⬛ 
+## ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⭐ 
+## ⬛ ⬛ ⭐ ⬛ ⬛ ⬛ ⬛ ⭐ ⬛ ⬛ 
+## ⬛ ⬛ ⬛ ⭐ ⭐ ⬛ ⭐ ⭐ ⬛ ⬛ 
+## ⭐ ⬛ ⬛ ⭐ ⬛ 🛰 ⬛ 🛰 ⬛ ⭐ 
+## ⬛ ⬛ ⬛ 🛰 ⭐ ⬛ ⬛ 🛰 ⬛ ⭐ 
+## ⭐ ⬛ ⭐ ⬛ ⬛ ⬛ ⬛ ⬛ ⭐ ⬛ 
+## ⬛ ⬛ ⭐ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⭐ 
+## ⭐ ⭐ ⬛ ⬛ ⭐ ⬛ ⬛ ⬛ ⭐ ⬛ 
+## 
+## terrain = &quot;suburbs&quot;
+## 🏡 🌳 🌳 🌳 🚴 🌳 🌳 🌳 🏡 🌳 
+## 🌳 🌳 🏡 🌳 🏡 🌳 🌳 🏡 🏡 🌳 
+## 🌳 🌳 🏡 🌳 🌳 🌳 🌳 🌳 🌳 🌳 
+## 🌳 🏡 🌳 🌳 🏡 🌳 🏡 🌳 🚴 🏡 
+## 🌳 🌳 🏡 🌳 🌳 🏡 🌳 🌳 🌳 🌳 
+## 🌳 🌳 🌳 🌳 🏡 🌳 🌳 🚴 🌳 🌳 
+## 🌳 🌳 🏡 🏡 🌳 🏡 🌳 🏡 🌳 🌳 
+## 🌳 🌳 🏡 🌳 🌳 🏡 🌳 🏡 🌳 🏡 
+## 🌳 🏡 🌳 🏡 🌳 🌳 🏡 🏡 🌳 🏡 
+## 🌳 🌳 🌳 🌳 🌳 🚴 🏡 🌳 🏡 🌳 
+## 
+## terrain = &quot;traffic&quot;
+## 🚗 🚕 🚕 🚗 🚗 🚚 🚗 🚗 🚗 🚕 
+## 🚗 🚗 🚗 🚗 🚗 🚗 🚗 🚗 🚗 🚗 
+## 🚗 🚗 🚗 🚗 🚕 🚗 🚗 🚕 🚗 🚕 
+## 🚗 🚗 🚗 🚗 🚕 🚗 🚗 🚚 🚗 🚗 
+## 🚗 🚕 🚗 🚗 🚗 🚗 🚗 🚗 🚗 🚗 
+## 🚗 🚗 🚚 🚗 🚗 🚗 🚗 🚗 🚕 🚗 
+## 🚗 🚗 🚗 🚗 🚕 🚗 🚗 🚗 🚗 🚗 
+## 🚗 🚗 🚚 🚗 🚗 🚗 🚕 🚗 🚕 🚗 
+## 🚕 🚗 🚕 🚗 🚗 🚗 🚗 🚕 🚗 🚕 
+## 🚕 🚕 🚕 🚕 🚗 🚗 🚕 🚗 🚗 🚗 
+## 
+## terrain = &quot;undergrowth&quot;
+## 🍂 🍂 🍂 🍂 🐜 🍄 🍂 🍂 🍂 🍂 
+## 🍄 🐜 🍂 🍂 🍂 🍂 🍂 🍂 🍂 🍂 
+## 🍂 🐜 🐜 🐜 🍂 🍂 🐜 🍂 🍂 🍂 
+## 🍂 🍂 🍂 🍂 🍂 🐜 🍂 🍂 🍂 🍂 
+## 🍂 🐜 🍂 🍂 🍂 🐜 🍂 🍂 🍂 🐜 
+## 🍂 🐜 🐜 🍂 🍂 🍂 🐜 🍂 🍂 🍂 
+## 🍂 🍂 🍂 🍂 🍂 🍂 🍂 🐜 🍂 🍂 
+## 🍂 🍂 🍂 🍂 🍂 🐜 🍂 🐜 🍄 🍂 
+## 🍂 🍄 🍂 🍂 🍂 🍂 🐜 🍂 🍂 🍂 
+## 🍂 🍂 🐜 🍂 🐜 🍂 🍂 🍂 🍂 🍂 
+## 
+## terrain = &quot;woods&quot;
+## 🌰 🌳 🌳 🌰 🌰 🌳 🌳 🌳 🌳 🌳 
+## 🌳 🌳 🌳 🌳 🌳 🌳 🌳 🌳 🌳 🌳 
+## 🌳 🌳 🌳 🌰 🌰 🌳 🌳 🌳 🌳 🌳 
+## 🌳 🌰 🌳 🌰 🌳 🌰 🌳 🌳 🌳 🌳 
+## 🌳 🌰 🌰 🌳 🌳 🐿 🌳 🌳 🐿 🌳 
+## 🌰 🌳 🌳 🌳 🌳 🌰 🌳 🌳 🌰 🌳 
+## 🌰 🌳 🌰 🌳 🌳 🌳 🌳 🌳 🌳 🌰 
+## 🌳 🌳 🌳 🌳 🌳 🌳 🌳 🌰 🌳 🌳 
+## 🌳 🌳 🌳 🌳 🌳 🌳 🐿 🌰 🌳 🌳 
+## 🌳 🌳 🌰 🌰 🌰 🌳 🌰 🌳 🌳 🌰</code></pre>
+</details>
+<details>
+<summary>
+Click for all emoji sets
+</summary>
+</div>
+<div id="frequencies" class="section level2">
+<h2>Frequencies</h2>
+<p>Use <code>get_set()</code> to see each terrain’s emoji set and their ‘suggested frequency’ slot. In general, the most common emoji is the one that defines the background or vegetation and the rarer ones are creatures or whatever.</p>
+<pre class="r"><code>get_set(&quot;mountains&quot;)</code></pre>
+<pre><code>##     terrain                 name emoji     freq
+## 1 mountains             mountain     ⛰   common
+## 2 mountains snow_capped_mountain     🏔️ uncommon
+## 3 mountains                 goat    🐐     rare</code></pre>
+<p>But you can totally mess with these emoji sampling probabilities in <code>generate()</code>.</p>
+<p>Any <em>The Mountain Goats</em> fans?</p>
+<pre class="r"><code>generate(
+  terrain = &quot;mountains&quot;,
+  prob_common = 0.1,
+  prob_uncommon = 0.2,
+  prob_rare = 0.7  # INCREASE GOAT FREQUENCY
+)</code></pre>
+<pre><code>## 🐐 🏔️ 🐐 ⛰ 🐐 🐐 🐐 🏔️ 🐐 🐐 
+## 🏔️ 🐐 ⛰ 🐐 🐐 🐐 🐐 🏔️ 🐐 🐐 
+## 🐐 🐐 🏔️ 🐐 🐐 🐐 ⛰ 🐐 🐐 🐐 
+## 🐐 🐐 🐐 🐐 ⛰ 🐐 🐐 🏔️ 🐐 🐐 
+## 🐐 🐐 🐐 🐐 🏔️ 🐐 🐐 🐐 ⛰ 🐐 
+## 🐐 🐐 🐐 🐐 🏔️ 🐐 🏔️ 🐐 🐐 🐐 
+## 🏔️ 🐐 ⛰ 🏔️ 🐐 🐐 ⛰ 🐐 ⛰ 🐐 
+## 🐐 🐐 🐐 ⛰ 🐐 ⛰ 🐐 🏔️ 🐐 🏔️ 
+## 🏔️ 🐐 🐐 🐐 🐐 🐐 🏔️ 🏔️ 🏔️ 🏔️ 
+## 🏔️ 🏔️ ⛰ 🐐 🐐 🏔️ 🐐 🐐 🏔️ 🐐</code></pre>
+</div>
+</div>
+<div id="approach" class="section level1">
+<h1>Approach</h1>
+<p>The <code>generate()</code> function is pretty simple. What it does is:</p>
+<ol style="list-style-type: decimal">
+<li>Creates a vector of emojis with a length of <code>grid_size()</code> squared, sampled from the specified <code>terrain</code> set with frequencies from the <code>prob_*</code> arguments</li>
+<li>Coerces this vector to a matrix of length and width <code>grid_size()</code> (i.e. a square)</li>
+<li>Loops over each row of the matrix with <code>cat()</code> to print the output to the console</li>
+</ol>
+<p>It works.</p>
+</div>
+<div id="expansion" class="section level1">
+<h1>Expansion</h1>
+<p>If you really want, you can add a <code>terrain</code> option by raising <a href="https://github.com/matt-dray/emojiscape/issues">a new issue</a> or pull request in <a href="https://github.com/matt-dray/emojiscape">the {emojiscape} GitHub repo</a>. These are specified in the <code>.get_emoji()</code> function in the <a href="https://github.com/matt-dray/emojiscape/blob/main/R/utils.R">/R/utils.R</a> script.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.1.0 (2021-05-18)
+##  os       macOS Big Sur 10.16         
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2021-06-26                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version    date       lib source                     
+##  assertthat    0.2.1      2019-03-21 [1] CRAN (R 4.1.0)             
+##  blogdown      1.3        2021-04-14 [1] CRAN (R 4.1.0)             
+##  bookdown      0.22       2021-04-22 [1] CRAN (R 4.1.0)             
+##  bslib         0.2.5.1    2021-05-18 [1] CRAN (R 4.1.0)             
+##  cli           2.5.0      2021-04-26 [1] CRAN (R 4.1.0)             
+##  crayon        1.4.1      2021-02-08 [1] CRAN (R 4.1.0)             
+##  digest        0.6.27     2020-10-24 [1] CRAN (R 4.1.0)             
+##  emo           0.0.0.9000 2021-06-23 [1] Github (hadley/emo@3f03b11)
+##  emojiscape  * 0.0.0.9000 2021-06-26 [1] local                      
+##  evaluate      0.14       2019-05-28 [1] CRAN (R 4.1.0)             
+##  generics      0.1.0      2020-10-31 [1] CRAN (R 4.1.0)             
+##  glue          1.4.2      2020-08-27 [1] CRAN (R 4.1.0)             
+##  htmltools     0.5.1.1    2021-01-22 [1] CRAN (R 4.1.0)             
+##  jquerylib     0.1.4      2021-04-26 [1] CRAN (R 4.1.0)             
+##  jsonlite      1.7.2      2020-12-09 [1] CRAN (R 4.1.0)             
+##  knitr         1.33       2021-04-24 [1] CRAN (R 4.1.0)             
+##  lubridate     1.7.10     2021-02-26 [1] CRAN (R 4.1.0)             
+##  magrittr      2.0.1      2020-11-17 [1] CRAN (R 4.1.0)             
+##  purrr         0.3.4      2020-04-17 [1] CRAN (R 4.1.0)             
+##  R6            2.5.0      2020-10-28 [1] CRAN (R 4.1.0)             
+##  Rcpp          1.0.6      2021-01-15 [1] CRAN (R 4.1.0)             
+##  rlang         0.4.11     2021-04-30 [1] CRAN (R 4.1.0)             
+##  rmarkdown     2.9        2021-06-15 [1] CRAN (R 4.1.0)             
+##  sass          0.4.0      2021-05-12 [1] CRAN (R 4.1.0)             
+##  sessioninfo   1.1.1      2018-11-05 [1] CRAN (R 4.1.0)             
+##  stringi       1.6.2      2021-05-17 [1] CRAN (R 4.1.0)             
+##  stringr       1.4.0      2019-02-10 [1] CRAN (R 4.1.0)             
+##  withr         2.4.2      2021-04-18 [1] CRAN (R 4.1.0)             
+##  xfun          0.24       2021-06-15 [1] CRAN (R 4.1.0)             
+##  yaml          2.2.1      2020-02-01 [1] CRAN (R 4.1.0)             
+## 
+## [1] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
+</details>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>In turn, {emo} is built on <a href="https://github.com/muan/emojilib/">emojilib</a>, which is where I got the emoji names in the form ‘some_emoji’ for {emojiscape}.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>Not to scale. Or, y’know, use your imagination.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>

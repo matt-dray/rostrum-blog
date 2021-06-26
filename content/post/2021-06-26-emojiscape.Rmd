@@ -1,0 +1,154 @@
+---
+title: "Generate an {emojiscape}"
+author: Matt Dray
+date: '2021-06-26'
+slug: emojiscape
+categories:
+  - code
+  - package
+tags:
+  - emoji
+  - r
+draft: no
+---
+
+```{r setup, include=FALSE}
+set.seed(1337)
+```
+
+<div class="figure">
+<img src="/post/2021-06-26-emojiscape_files/emojiscape.gif" alt="Animation of an RStudio window where the generate function from emojiscape is being used to render to the console a 10 by 10 grid of emoji with a city theme, followed by an undergrowth scene with a smaller grid size, followed by the printing of a dataframe showing the set of emoji associated with the liminal scene, which are a large white square, a door and a lightbulb." width="75%"/>
+</div>
+
+# tl;dr
+
+You can print a little emoji scene to your R console with [the {emojiscape} package](https://github.com/matt-dray/emojiscape).
+
+# Why?
+
+Regular readers will know that this blog is where I implement whismical daydreams in R. Today is no exception: I've made a tiny package to print a little randomised emoji scene to my console.
+
+I've seen people make [emoji-based bots](https://botwiki.org/?s=emoji&search-filters-options%5B%5D=bots), which I've been interested in after making [the \@londonmapbot Twitter bot](https://twitter.com/londonmapbot) ([post](https://www.rostrum.blog/2020/09/21/londonmapbot/), [source](https://github.com/matt-dray/londonmapbot), [BotWiki](https://botwiki.org/bot/londonmapbot/)), 
+
+I've made this completely for my own amusement, so no guarantees whatsoever.
+
+# Play god
+
+## Install
+
+You can install {emojiscape} [from GitHub](https://github.com/matt-dray/emojiscape).
+
+```{r eval=-1}
+remotes::install_github("matt-dray/emojiscape")
+library(emojiscape)
+```
+
+The package has one dependency: [the GitHub-hosted {emo} package](https://github.com/hadley/emo)[^emo] by Hadley Wickham. It implements emoji in R like `emo::ji("sauropod")` `r emo::ji("sauropod")`.
+
+There's no guarantee that these particular emoji will display correctly on your device and they [may have different designs](https://emojipedia.org/grimacing-face/) if you're using another operating system.
+
+## Generate 
+
+Let's `generate()` a scene.
+
+The first one is _nuts_, lol: a classic deciduous `woods`.[^nuts]
+
+```{r woods}
+generate("woods")
+```
+
+Hold your breath, we're going to `space`. You can resize the output, but space is basically infinite and my console is not.
+
+```{r space}
+generate(
+  terrain = "space",
+  grid_size = 7  # i.e. a 7x7 grid
+)
+```
+
+Here's a little raccoon `city`. Perhaps the _residents_ are _evil_. (That is a gamer joke, gg.)
+
+```{r city}
+generate("city", 5)
+```
+
+I have a PhD in dead leaves, so I had to add `undergrowth`. _Ant_ you glad I included it?
+
+```{r undergrowth}
+generate("undergrowth", 5)
+```
+
+## Terrains
+
+So what are all the available terrain options?
+
+```{r}
+paste(as.list(args(generate))$terrain)[-1]
+```
+
+This list may go out of date if more options are added in future.
+
+Expand the sections below to see previews of each terrain and their full emoji sets.
+
+<details><summary>Click for all previews</summary>
+```{r echo = FALSE}
+terrain_options <- paste(as.list(args(generate))$terrain)[-1]
+
+print_scape <- function(terrain) {
+  cat(paste0('\nterrain = "', terrain, '"\n'))
+  emojiscape::generate(terrain)
+}
+
+purrr::walk(terrain_options, print_scape)
+```
+</details>
+
+<details><summary>Click for all emoji sets</summary>
+```{r echo=FALSE}
+purrr::walk(terrain_options, emojiscape::get_set)
+```
+
+## Frequencies
+
+Use `get_set()` to see each terrain's emoji set and their 'suggested frequency' slot. In general, the most common emoji is the one that defines the background or vegetation and the rarer ones are creatures or whatever.
+
+```{r mountains-emoji}
+get_set("mountains")
+```
+
+But you can totally mess with these emoji sampling probabilities in `generate()`.
+
+Any _The Mountain Goats_ fans?
+
+```{r mountains}
+generate(
+  terrain = "mountains",
+  prob_common = 0.1,
+  prob_uncommon = 0.2,
+  prob_rare = 0.7  # INCREASE GOAT FREQUENCY
+)
+```
+
+# Approach
+
+The `generate()` function is pretty simple. What it does is:
+
+1. Creates a vector of emojis with a length of `grid_size()` squared, sampled from the specified `terrain` set with frequencies from the `prob_*` arguments
+2. Coerces this vector to a matrix of length and width `grid_size()` (i.e. a square)
+3. Loops over each row of the matrix with `cat()` to print the output to the console
+
+It works.
+
+# Expansion
+
+If you really want, you can add a `terrain` option by raising [a new issue](https://github.com/matt-dray/emojiscape/issues) or pull request in [the {emojiscape} GitHub repo](https://github.com/matt-dray/emojiscape). These are specified in the `.get_emoji()` function in the [/R/utils.R](https://github.com/matt-dray/emojiscape/blob/main/R/utils.R) script.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^emo]: In turn, {emo} is built on [emojilib](https://github.com/muan/emojilib/), which is where I got the emoji names in the form 'some_emoji' for {emojiscape}.
+[^nuts]: Not to scale. Or, y'know, use your imagination.
