@@ -1,0 +1,216 @@
+---
+title: "Very simple pixel art in R"
+author: Matt Dray
+date: '2021-06-28'
+slug: pixel-art
+categories:
+  - code
+  - meta
+  - tutorial
+tags:
+  - r
+  - sprites
+  - zelda
+draft: no
+---
+
+<div class="figure">
+<img src="/post/2021-06-28-sprite-grid_files/link.gif" alt="Two-frame sprite animation of Link from The Legend of Zelda walking forwards."/>
+<p class="caption">It's dangerous to code alone...</p>
+</div>
+
+# tl;dr
+
+You can use R's `image()` function to convert a matrix to a pixelly graphic.
+
+# Pixel fixation
+
+My [last post](https://www.rostrum.blog/2021/06/26/emojiscape/) was about [the {emojiscape} package](https://github.com/matt-dray/emojiscape), which makes a little scene out of sampled emojis.
+
+Following a similar approach, you could write a matrix by hand and plot it via the base function `image()`. Here's a very basic example with a 'glider' from [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life#Examples_of_patterns). Values of `0` are 'dead' cells and values of `1` are 'live'. 
+
+```{r glider, fig.height=2, fig.width=2}
+glider_v <- c(0,0,0,0,0, 0,0,1,0,0, 0,0,0,1,0, 0,1,1,1,0, 0,0,0,0,0)
+glider_m <- matrix(glider_v, 5)           # convert to matrix
+glider_m <- glider_m[, ncol(glider_m):1]  # reverse cols
+par(mar = rep(0, 4))                      # ensure no margins
+image(glider_m)                           # plot it
+```
+
+# Reprologoducibility
+
+But really my  motivation is to make a reproducible version of [this blog's logo](https://raw.githubusercontent.com/matt-dray/stickers/master/output/rostrum_hex.png): an insect composed of 'pixels' in a 16-by-16 square.
+
+So, I've hand-coded a binary vector of length 256 (i.e. 16 * 16). The `0`s and `1`s here represent background and insect pixels, respectively. I've used line breaks to make it easier to create and edit the vector manually.
+
+```{r vector}
+logo_v <- c(
+  
+  0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,
+  0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,
+  0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,
+  0,0,1,0,0,1,0,1,1,0,1,0,0,1,0,0,
+  
+  0,0,0,1,0,1,0,1,1,0,1,0,1,0,0,0,
+  0,0,0,1,0,0,1,1,1,1,0,0,1,0,0,0,
+  0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,
+  0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,
+  
+  0,0,1,0,1,1,0,1,1,0,1,1,0,1,0,0,
+  0,0,0,1,0,1,0,1,1,0,1,0,1,0,0,0,
+  0,0,0,0,0,1,0,1,1,0,1,0,0,0,0,0,
+  0,0,0,0,1,1,0,1,1,0,1,1,0,0,0,0,
+  
+  0,0,0,1,0,1,0,1,1,0,1,0,1,0,0,0,
+  0,0,0,1,0,1,0,1,1,0,1,0,1,0,0,0,
+  0,0,1,0,0,1,0,1,1,0,1,0,0,1,0,0,
+  0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0
+
+)
+```
+
+I might as well make a (non-generic) function to matrixify (definitely a word) and plot the vector, so I can then tweak a few parameters as I please.
+
+```{r fn}
+plot_logo <- function(
+  x = logo_v,           # vector
+  px = 16,              # width/length of output (square)
+  col_0 = "black",      # colour for values of 0
+  col_1 = "#1e8016",    # colour for values of 1
+  lwd = 8               # to separate the squares
+) {
+  
+  par(mar = rep(0, 4))  # set margins outside plot region
+  
+  m <- matrix(x, px)    # create a matrix from the vector
+  m <- m[, ncol(m):1]   # reverse cols
+  
+  image(m, col = c(col_0, col_1))  # plot matrix, colour by number
+  
+  # If line width provided, draw lines between squares
+  if (!is.null(lwd)) {
+    px_half <- px * 2
+    s <- seq(-1 / px_half, 1 + (1 / px_half), 1 / (px - 1))
+    abline(h = s, v = s, col = col_0, lwd = lwd)
+  }
+  
+}
+```
+
+Note that I added a line width argument (`lwd`). If specified, horizontal and vertical lines are drawn to give the impression that the squares are 'separated' from each other.
+
+Here's the logo.
+
+```{r logo-vanilla, fig.height=2, fig.width=2}
+plot_logo(lwd = 2)
+```
+
+And here's what happens if we remove the lines and swap the colours, for example.
+
+```{r logo-altered, fig.height=2, fig.width=2}
+plot_logo(col_0 = "#1e8016", col_1 = "black", lwd = NULL)
+```
+
+And given it's Pride Month:
+
+```{r rainbow, fig.height=1, fig.width=1}
+for (i in rainbow(7)) {
+  plot_logo(lwd = 1, col_0 = "white", col_1 = i)
+}
+```
+
+# Sprite delight
+
+This approach is basically [pixel-art](https://en.wikipedia.org/wiki/Pixel_art)-by-numbers, right? 
+
+So I've written and animated two frames of a classic videogame character, [Link from The Legend of Zelda on the NES](https://en.wikipedia.org/wiki/The_Legend_of_Zelda_(video_game)), using [the {magick} package](https://cran.r-project.org/web/packages/magick/vignettes/intro.html) to create a gif.
+
+There's four colours in this one, so the vectors are no longer binary: there's `0` for the background, `1` for green, `2` for skin and `3` for the darker spots.
+
+The top part of the sprite doesn't change between frames, but the bottom does. To avoid repetition, we can store the top part as a separate vector, then combine it with each frame's lower section.
+
+```{r link, fig.width=2, fig.height=2}
+link_v_top <- c(
+  0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,
+  0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,
+  0,0,2,0,1,3,3,3,3,3,3,1,0,2,0,0,
+  0,0,2,0,3,3,3,3,3,3,3,3,0,2,0,0,
+  
+  0,0,2,2,3,2,1,2,2,1,2,3,2,2,0,0,
+  0,0,2,2,3,2,3,2,2,3,2,3,2,2,0,0,
+  0,0,0,2,2,2,2,2,2,2,2,2,2,3,0,0
+)
+
+link_v_b1 <- c(
+  0,0,0,1,1,2,2,3,3,2,2,1,1,3,0,0,
+  
+  0,3,3,3,3,3,2,2,2,2,1,1,3,3,3,0,
+  3,3,2,3,3,3,3,1,1,1,1,1,2,3,3,0,
+  3,2,2,2,3,3,2,3,3,1,1,2,2,2,3,0,
+  3,3,2,3,3,3,2,1,3,3,3,3,2,2,2,0,
+  
+  3,3,2,3,3,3,2,3,3,1,1,1,1,2,0,0,
+  3,3,3,3,3,3,2,1,1,1,1,1,0,0,0,0,
+  0,2,2,2,2,2,3,0,0,3,3,3,0,0,0,0,
+  0,0,0,0,3,3,3,0,0,0,0,0,0,0,0,0
+)
+
+link_v_b2 <- c(
+  0,0,0,0,1,2,2,3,3,2,2,1,3,3,0,0,
+  
+  0,0,3,3,3,3,3,2,2,2,1,1,1,2,0,0,
+  0,3,3,2,3,3,3,3,1,1,1,1,1,2,0,0,
+  0,3,2,2,2,3,3,2,3,3,1,1,3,0,0,0,
+  0,3,3,2,3,3,3,2,1,3,3,3,1,0,0,0,
+  
+  0,3,3,2,3,3,3,2,3,3,1,1,1,0,0,0,
+  0,3,3,3,3,3,3,2,1,1,1,3,0,0,0,0,
+  0,0,2,2,2,2,2,0,0,3,3,3,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,3,3,3,0,0,0,0
+)
+
+# Combine vectors to get frames
+link_f1 <- c(link_v_top, link_v_b1)
+link_f2 <- c(link_v_top, link_v_b2)
+
+tmp <- tempdir()  # temporary folder
+
+# Function to write frame to temporary folder
+write_link <- function(vec) {
+  write_path <- file.path(tmp, paste0(substitute(vec), ".png"))
+  png(write_path, width = 160, height = 160)
+  link_m <- matrix(vec, 16)
+  link_m <- link_m[, ncol(link_m):1]
+  par(mar = rep(0, 4))
+  link_cols <- c("white", "#7bc702", "#cc8f2d", "#6c430a")
+  image(link_m, col = link_cols)
+  dev.off()
+}
+
+# Write the frames
+write_link(link_f1); write_link(link_f2)
+
+# Generate a gif from the saved frames
+png_paths <- list.files(tmp, "*.png$", full.names = TRUE)
+frames <- magick::image_read(png_paths)
+magick::image_animate(frames, fps = 2, dispose = "previous")
+```
+
+# Hip to be square
+
+I'm not the first person to think or do this in R, I'm sure.
+
+I did come across [a really neato {pixelart} package and Shiny app by Florian Privé](https://github.com/privefl/pixelart) where you upload an image and it gets converted into a pixel form. As [Florian said in his blogpost](https://privefl.github.io/blog/shiny-app-for-making-pixel-art-models/):
+
+> Kids and big kids can quickly become addicted to this
+
+Yes. And that's exactly why this post exists.
+
+Let me know if you know of any more packages or whatever that do this sort of thing.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>

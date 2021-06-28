@@ -1,0 +1,233 @@
+---
+title: "Very simple pixel art in R"
+author: Matt Dray
+date: '2021-06-28'
+slug: pixel-art
+categories:
+  - code
+  - meta
+  - tutorial
+tags:
+  - r
+  - sprites
+  - zelda
+draft: no
+---
+
+
+
+<div class="figure">
+<img src="/post/2021-06-28-sprite-grid_files/link.gif" alt="Two-frame sprite animation of Link from The Legend of Zelda walking forwards."/>
+<p class="caption">
+It’s dangerous to code alone…
+</p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>You can use R’s <code>image()</code> function to convert a matrix to a pixelly graphic.</p>
+</div>
+<div id="pixel-fixation" class="section level1">
+<h1>Pixel fixation</h1>
+<p>My <a href="https://www.rostrum.blog/2021/06/26/emojiscape/">last post</a> was about <a href="https://github.com/matt-dray/emojiscape">the {emojiscape} package</a>, which makes a little scene out of sampled emojis.</p>
+<p>Following a similar approach, you could write a matrix by hand and plot it via the base function <code>image()</code>. Here’s a very basic example with a ‘glider’ from <a href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life#Examples_of_patterns">Conway’s Game of Life</a>. Values of <code>0</code> are ‘dead’ cells and values of <code>1</code> are ‘live’.</p>
+<pre class="r"><code>glider_v &lt;- c(0,0,0,0,0, 0,0,1,0,0, 0,0,0,1,0, 0,1,1,1,0, 0,0,0,0,0)
+glider_m &lt;- matrix(glider_v, 5)           # convert to matrix
+glider_m &lt;- glider_m[, ncol(glider_m):1]  # reverse cols
+par(mar = rep(0, 4))                      # ensure no margins
+image(glider_m)                           # plot it</code></pre>
+<p><img src="/post/2021-06-28-sprite-grid_files/figure-html/glider-1.png" width="192" /></p>
+</div>
+<div id="reprologoducibility" class="section level1">
+<h1>Reprologoducibility</h1>
+<p>But really my motivation is to make a reproducible version of <a href="https://raw.githubusercontent.com/matt-dray/stickers/master/output/rostrum_hex.png">this blog’s logo</a>: an insect composed of ‘pixels’ in a 16-by-16 square.</p>
+<p>So, I’ve hand-coded a binary vector of length 256 (i.e. 16 * 16). The <code>0</code>s and <code>1</code>s here represent background and insect pixels, respectively. I’ve used line breaks to make it easier to create and edit the vector manually.</p>
+<pre class="r"><code>logo_v &lt;- c(
+  
+  0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,
+  0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,
+  0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,
+  0,0,1,0,0,1,0,1,1,0,1,0,0,1,0,0,
+  
+  0,0,0,1,0,1,0,1,1,0,1,0,1,0,0,0,
+  0,0,0,1,0,0,1,1,1,1,0,0,1,0,0,0,
+  0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,
+  0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,
+  
+  0,0,1,0,1,1,0,1,1,0,1,1,0,1,0,0,
+  0,0,0,1,0,1,0,1,1,0,1,0,1,0,0,0,
+  0,0,0,0,0,1,0,1,1,0,1,0,0,0,0,0,
+  0,0,0,0,1,1,0,1,1,0,1,1,0,0,0,0,
+  
+  0,0,0,1,0,1,0,1,1,0,1,0,1,0,0,0,
+  0,0,0,1,0,1,0,1,1,0,1,0,1,0,0,0,
+  0,0,1,0,0,1,0,1,1,0,1,0,0,1,0,0,
+  0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0
+
+)</code></pre>
+<p>I might as well make a (non-generic) function to matrixify (definitely a word) and plot the vector, so I can then tweak a few parameters as I please.</p>
+<pre class="r"><code>plot_logo &lt;- function(
+  x = logo_v,           # vector
+  px = 16,              # width/length of output (square)
+  col_0 = &quot;black&quot;,      # colour for values of 0
+  col_1 = &quot;#1e8016&quot;,    # colour for values of 1
+  lwd = 8               # to separate the squares
+) {
+  
+  par(mar = rep(0, 4))  # set margins outside plot region
+  
+  m &lt;- matrix(x, px)    # create a matrix from the vector
+  m &lt;- m[, ncol(m):1]   # reverse cols
+  
+  image(m, col = c(col_0, col_1))  # plot matrix, colour by number
+  
+  # If line width provided, draw lines between squares
+  if (!is.null(lwd)) {
+    px_half &lt;- px * 2
+    s &lt;- seq(-1 / px_half, 1 + (1 / px_half), 1 / (px - 1))
+    abline(h = s, v = s, col = col_0, lwd = lwd)
+  }
+  
+}</code></pre>
+<p>Note that I added a line width argument (<code>lwd</code>). If specified, horizontal and vertical lines are drawn to give the impression that the squares are ‘separated’ from each other.</p>
+<p>Here’s the logo.</p>
+<pre class="r"><code>plot_logo(lwd = 2)</code></pre>
+<p><img src="/post/2021-06-28-sprite-grid_files/figure-html/logo-vanilla-1.png" width="192" /></p>
+<p>And here’s what happens if we remove the lines and swap the colours, for example.</p>
+<pre class="r"><code>plot_logo(col_0 = &quot;#1e8016&quot;, col_1 = &quot;black&quot;, lwd = NULL)</code></pre>
+<p><img src="/post/2021-06-28-sprite-grid_files/figure-html/logo-altered-1.png" width="192" /></p>
+<p>And given it’s Pride Month:</p>
+<pre class="r"><code>for (i in rainbow(7)) {
+  plot_logo(lwd = 1, col_0 = &quot;white&quot;, col_1 = i)
+}</code></pre>
+<p><img src="/post/2021-06-28-sprite-grid_files/figure-html/rainbow-1.png" width="96" /><img src="/post/2021-06-28-sprite-grid_files/figure-html/rainbow-2.png" width="96" /><img src="/post/2021-06-28-sprite-grid_files/figure-html/rainbow-3.png" width="96" /><img src="/post/2021-06-28-sprite-grid_files/figure-html/rainbow-4.png" width="96" /><img src="/post/2021-06-28-sprite-grid_files/figure-html/rainbow-5.png" width="96" /><img src="/post/2021-06-28-sprite-grid_files/figure-html/rainbow-6.png" width="96" /><img src="/post/2021-06-28-sprite-grid_files/figure-html/rainbow-7.png" width="96" /></p>
+</div>
+<div id="sprite-delight" class="section level1">
+<h1>Sprite delight</h1>
+<p>This approach is basically <a href="https://en.wikipedia.org/wiki/Pixel_art">pixel-art</a>-by-numbers, right?</p>
+<p>So I’ve written and animated two frames of a classic videogame character, <a href="https://en.wikipedia.org/wiki/The_Legend_of_Zelda_(video_game)">Link from The Legend of Zelda on the NES</a>, using <a href="https://cran.r-project.org/web/packages/magick/vignettes/intro.html">the {magick} package</a> to create a gif.</p>
+<p>There’s four colours in this one, so the vectors are no longer binary: there’s <code>0</code> for the background, <code>1</code> for green, <code>2</code> for skin and <code>3</code> for the darker spots.</p>
+<p>The top part of the sprite doesn’t change between frames, but the bottom does. To avoid repetition, we can store the top part as a separate vector, then combine it with each frame’s lower section.</p>
+<pre class="r"><code>link_v_top &lt;- c(
+  0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,
+  0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,
+  0,0,2,0,1,3,3,3,3,3,3,1,0,2,0,0,
+  0,0,2,0,3,3,3,3,3,3,3,3,0,2,0,0,
+  
+  0,0,2,2,3,2,1,2,2,1,2,3,2,2,0,0,
+  0,0,2,2,3,2,3,2,2,3,2,3,2,2,0,0,
+  0,0,0,2,2,2,2,2,2,2,2,2,2,3,0,0
+)
+
+link_v_b1 &lt;- c(
+  0,0,0,1,1,2,2,3,3,2,2,1,1,3,0,0,
+  
+  0,3,3,3,3,3,2,2,2,2,1,1,3,3,3,0,
+  3,3,2,3,3,3,3,1,1,1,1,1,2,3,3,0,
+  3,2,2,2,3,3,2,3,3,1,1,2,2,2,3,0,
+  3,3,2,3,3,3,2,1,3,3,3,3,2,2,2,0,
+  
+  3,3,2,3,3,3,2,3,3,1,1,1,1,2,0,0,
+  3,3,3,3,3,3,2,1,1,1,1,1,0,0,0,0,
+  0,2,2,2,2,2,3,0,0,3,3,3,0,0,0,0,
+  0,0,0,0,3,3,3,0,0,0,0,0,0,0,0,0
+)
+
+link_v_b2 &lt;- c(
+  0,0,0,0,1,2,2,3,3,2,2,1,3,3,0,0,
+  
+  0,0,3,3,3,3,3,2,2,2,1,1,1,2,0,0,
+  0,3,3,2,3,3,3,3,1,1,1,1,1,2,0,0,
+  0,3,2,2,2,3,3,2,3,3,1,1,3,0,0,0,
+  0,3,3,2,3,3,3,2,1,3,3,3,1,0,0,0,
+  
+  0,3,3,2,3,3,3,2,3,3,1,1,1,0,0,0,
+  0,3,3,3,3,3,3,2,1,1,1,3,0,0,0,0,
+  0,0,2,2,2,2,2,0,0,3,3,3,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,3,3,3,0,0,0,0
+)
+
+# Combine vectors to get frames
+link_f1 &lt;- c(link_v_top, link_v_b1)
+link_f2 &lt;- c(link_v_top, link_v_b2)
+
+tmp &lt;- tempdir()  # temporary folder
+
+# Function to write frame to temporary folder
+write_link &lt;- function(vec) {
+  write_path &lt;- file.path(tmp, paste0(substitute(vec), &quot;.png&quot;))
+  png(write_path, width = 160, height = 160)
+  link_m &lt;- matrix(vec, 16)
+  link_m &lt;- link_m[, ncol(link_m):1]
+  par(mar = rep(0, 4))
+  link_cols &lt;- c(&quot;white&quot;, &quot;#7bc702&quot;, &quot;#cc8f2d&quot;, &quot;#6c430a&quot;)
+  image(link_m, col = link_cols)
+  dev.off()
+}
+
+# Write the frames
+write_link(link_f1); write_link(link_f2)</code></pre>
+<pre><code>## quartz_off_screen 
+##                 2</code></pre>
+<pre><code>## quartz_off_screen 
+##                 2</code></pre>
+<pre class="r"><code># Generate a gif from the saved frames
+png_paths &lt;- list.files(tmp, &quot;*.png$&quot;, full.names = TRUE)
+frames &lt;- magick::image_read(png_paths)
+magick::image_animate(frames, fps = 2, dispose = &quot;previous&quot;)</code></pre>
+<p><img src="/post/2021-06-28-sprite-grid_files/figure-html/link-1.gif" /><!-- --></p>
+</div>
+<div id="hip-to-be-square" class="section level1">
+<h1>Hip to be square</h1>
+<p>I’m not the first person to think or do this in R, I’m sure.</p>
+<p>I did come across <a href="https://github.com/privefl/pixelart">a really neato {pixelart} package and Shiny app by Florian Privé</a> where you upload an image and it gets converted into a pixel form. As <a href="https://privefl.github.io/blog/shiny-app-for-making-pixel-art-models/">Florian said in his blogpost</a>:</p>
+<blockquote>
+<p>Kids and big kids can quickly become addicted to this</p>
+</blockquote>
+<p>Yes. And that’s exactly why this post exists.</p>
+<p>Let me know if you know of any more packages or whatever that do this sort of thing.</p>
+<hr />
+<details>
+<p><summary>Session info</summary></p>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.0.3 (2020-10-10)
+##  os       macOS Mojave 10.14.6        
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2021-06-28                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date       lib source        
+##  blogdown      0.21    2020-10-11 [1] CRAN (R 4.0.2)
+##  bookdown      0.21    2020-10-13 [1] CRAN (R 4.0.2)
+##  bslib         0.2.4   2021-01-25 [1] CRAN (R 4.0.2)
+##  cli           2.5.0   2021-04-26 [1] CRAN (R 4.0.2)
+##  digest        0.6.27  2020-10-24 [1] CRAN (R 4.0.2)
+##  evaluate      0.14    2019-05-28 [1] CRAN (R 4.0.1)
+##  highr         0.9     2021-04-16 [1] CRAN (R 4.0.2)
+##  htmltools     0.5.1.1 2021-01-22 [1] CRAN (R 4.0.2)
+##  jquerylib     0.1.3   2020-12-17 [1] CRAN (R 4.0.2)
+##  jsonlite      1.7.2   2020-12-09 [1] CRAN (R 4.0.2)
+##  knitr         1.32    2021-04-14 [1] CRAN (R 4.0.2)
+##  magick        2.7.1   2021-03-20 [1] CRAN (R 4.0.2)
+##  magrittr      2.0.1   2020-11-17 [1] CRAN (R 4.0.2)
+##  R6            2.5.0   2020-10-28 [1] CRAN (R 4.0.2)
+##  Rcpp          1.0.6   2021-01-15 [1] CRAN (R 4.0.2)
+##  rlang         0.4.11  2021-04-30 [1] CRAN (R 4.0.2)
+##  rmarkdown     2.7     2021-02-19 [1] CRAN (R 4.0.2)
+##  sass          0.3.1   2021-01-24 [1] CRAN (R 4.0.2)
+##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.0.2)
+##  stringi       1.6.1   2021-05-10 [1] CRAN (R 4.0.2)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.0.2)
+##  withr         2.4.2   2021-04-18 [1] CRAN (R 4.0.2)
+##  xfun          0.22    2021-03-11 [1] CRAN (R 4.0.2)
+##  yaml          2.2.1   2020-02-01 [1] CRAN (R 4.0.2)
+## 
+## [1] /Users/matt.dray/Library/R/4.0/library
+## [2] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
+</details>
+</div>
