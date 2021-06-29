@@ -37,6 +37,10 @@ par(mar = rep(0, 4))                      # ensure no margins
 image(glider_m)                           # plot it
 ```
 
+Note that I input the vector values from what would become the top left to bottom right of the output matrix. The `image()` function doesn't read them in this order, however, so I've added a step to reverse the column order so the plot output appears as I intended.
+
+Also, `image()` normally outputs with labelled axes, but we can effectively hide those by minimising the `mar`gins `par()`ameter of the plot to 0.
+
 # Reprologoducibility
 
 But really my  motivation is to make a reproducible version of [this blog's logo](https://raw.githubusercontent.com/matt-dray/stickers/master/output/rostrum_hex.png): an insect composed of 'pixels' in a 16-by-16 square.
@@ -127,9 +131,9 @@ So I've written and animated two frames of a classic videogame character, [Link 
 
 There's four colours in this one, so the vectors are no longer binary: there's `0` for the background, `1` for green, `2` for skin and `3` for the darker spots.
 
-The top part of the sprite doesn't change between frames, but the bottom does. To avoid repetition, we can store the top part as a separate vector, then combine it with each frame's lower section.
+The top part of the sprite doesn't change between frames, but the bottom does. To avoid repetition, we can store the top part as a separate vector, then combine it with each frame's lower section. It's still a bit of a slog to input these by hand!
 
-```{r link, fig.width=2, fig.height=2}
+```{r link-vectors, fig.width=2, fig.height=2}
 link_v_top <- c(
   0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,
   0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,
@@ -172,8 +176,12 @@ link_v_b2 <- c(
 # Combine vectors to get frames
 link_f1 <- c(link_v_top, link_v_b1)
 link_f2 <- c(link_v_top, link_v_b2)
+```
 
-tmp <- tempdir()  # temporary folder
+Now we have the vectors representing Link for each frame of the animation. The approach now is like before: convert this to a 16 by 16 matrix and plot it. This time I've got a function that also saves the plots by first opening a `png()` graphics device and closing it at the end with `dev.off()`. I've saved these to a temporary directory for the purposes of the post, rather than my local disk.
+
+```{r link-fn}
+tmp <- tempdir()  # store temporary folder path
 
 # Function to write frame to temporary folder
 write_link <- function(vec) {
@@ -189,12 +197,20 @@ write_link <- function(vec) {
 
 # Write the frames
 write_link(link_f1); write_link(link_f2)
-
-# Generate a gif from the saved frames
-png_paths <- list.files(tmp, "*.png$", full.names = TRUE)
-frames <- magick::image_read(png_paths)
-magick::image_animate(frames, fps = 2, dispose = "previous")
 ```
+
+We get a couple of messages to say that the devices have been closed, confirming the save.
+
+Now we can use the {magick} package to create a gif: `image_read()` to load both PNG frames into a single object from their save location, and then `image_animate()` to combine the images into an output that flips between the two frames. You could also use `image_write()` to save this object to gif format.
+
+```{r link-out}
+# Generate a gif from the saved frames
+png_paths <- list.files(tmp, "*.png$", full.names = TRUE)     # get file paths
+frames <- magick::image_read(png_paths)                       # load the files
+magick::image_animate(frames, fps = 2, dispose = "previous")  # combine frames
+```
+
+I'm not sure I'll be coding the graphics for the whole game anytime soon...
 
 # Hip to be square
 

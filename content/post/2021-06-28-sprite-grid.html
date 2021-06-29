@@ -36,6 +36,8 @@ glider_m &lt;- glider_m[, ncol(glider_m):1]  # reverse cols
 par(mar = rep(0, 4))                      # ensure no margins
 image(glider_m)                           # plot it</code></pre>
 <p><img src="/post/2021-06-28-sprite-grid_files/figure-html/glider-1.png" width="192" /></p>
+<p>Note that I input the vector values from what would become the top left to bottom right of the output matrix. The <code>image()</code> function doesn’t read them in this order, however, so I’ve added a step to reverse the column order so the plot output appears as I intended.</p>
+<p>Also, <code>image()</code> normally outputs with labelled axes, but we can effectively hide those by minimising the <code>mar</code>gins <code>par()</code>ameter of the plot to 0.</p>
 </div>
 <div id="reprologoducibility" class="section level1">
 <h1>Reprologoducibility</h1>
@@ -106,7 +108,7 @@ image(glider_m)                           # plot it</code></pre>
 <p>This approach is basically <a href="https://en.wikipedia.org/wiki/Pixel_art">pixel-art</a>-by-numbers, right?</p>
 <p>So I’ve written and animated two frames of a classic videogame character, <a href="https://en.wikipedia.org/wiki/The_Legend_of_Zelda_(video_game)">Link from The Legend of Zelda on the NES</a>, using <a href="https://cran.r-project.org/web/packages/magick/vignettes/intro.html">the {magick} package</a> to create a gif.</p>
 <p>There’s four colours in this one, so the vectors are no longer binary: there’s <code>0</code> for the background, <code>1</code> for green, <code>2</code> for skin and <code>3</code> for the darker spots.</p>
-<p>The top part of the sprite doesn’t change between frames, but the bottom does. To avoid repetition, we can store the top part as a separate vector, then combine it with each frame’s lower section.</p>
+<p>The top part of the sprite doesn’t change between frames, but the bottom does. To avoid repetition, we can store the top part as a separate vector, then combine it with each frame’s lower section. It’s still a bit of a slog to input these by hand!</p>
 <pre class="r"><code>link_v_top &lt;- c(
   0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,
   0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,
@@ -148,9 +150,9 @@ link_v_b2 &lt;- c(
 
 # Combine vectors to get frames
 link_f1 &lt;- c(link_v_top, link_v_b1)
-link_f2 &lt;- c(link_v_top, link_v_b2)
-
-tmp &lt;- tempdir()  # temporary folder
+link_f2 &lt;- c(link_v_top, link_v_b2)</code></pre>
+<p>Now we have the vectors representing Link for each frame of the animation. The approach now is like before: convert this to a 16 by 16 matrix and plot it. This time I’ve got a function that also saves the plots by first opening a <code>png()</code> graphics device and closing it at the end with <code>dev.off()</code>. I’ve saved these to a temporary directory for the purposes of the post, rather than my local disk.</p>
+<pre class="r"><code>tmp &lt;- tempdir()  # store temporary folder path
 
 # Function to write frame to temporary folder
 write_link &lt;- function(vec) {
@@ -170,11 +172,14 @@ write_link(link_f1); write_link(link_f2)</code></pre>
 ##                 2</code></pre>
 <pre><code>## quartz_off_screen 
 ##                 2</code></pre>
+<p>We get a couple of messages to say that the devices have been closed, confirming the save.</p>
+<p>Now we can use the {magick} package to create a gif: <code>image_read()</code> to load both PNG frames into a single object from their save location, and then <code>image_animate()</code> to combine the images into an output that flips between the two frames. You could also use <code>image_write()</code> to save this object to gif format.</p>
 <pre class="r"><code># Generate a gif from the saved frames
-png_paths &lt;- list.files(tmp, &quot;*.png$&quot;, full.names = TRUE)
-frames &lt;- magick::image_read(png_paths)
-magick::image_animate(frames, fps = 2, dispose = &quot;previous&quot;)</code></pre>
-<p><img src="/post/2021-06-28-sprite-grid_files/figure-html/link-1.gif" /><!-- --></p>
+png_paths &lt;- list.files(tmp, &quot;*.png$&quot;, full.names = TRUE)     # get file paths
+frames &lt;- magick::image_read(png_paths)                       # load the files
+magick::image_animate(frames, fps = 2, dispose = &quot;previous&quot;)  # combine frames</code></pre>
+<p><img src="/post/2021-06-28-sprite-grid_files/figure-html/link-out-1.gif" /><!-- --></p>
+<p>I’m not sure I’ll be coding the graphics for the whole game anytime soon…</p>
 </div>
 <div id="hip-to-be-square" class="section level1">
 <h1>Hip to be square</h1>
@@ -198,7 +203,7 @@ magick::image_animate(frames, fps = 2, dispose = &quot;previous&quot;)</code></p
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2021-06-28                  
+##  date     2021-06-29                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
 ##  package     * version date       lib source        
