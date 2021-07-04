@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.3 posts per month.
 
-🆕 The latest post was published 5 day(s) ago: [Very simple pixel art in
+🆕 The latest post was published 6 day(s) ago: [Very simple pixel art in
 R](https://www.rostrum.blog/2021/06/28/pixel-art/).
 
 📈 This 2D plot shows posts over time:
@@ -140,4 +140,4 @@ R](https://www.rostrum.blog/2021/06/28/pixel-art/).
 
 -----
 
-*Updated 2021-07-03*
+*Updated 2021-07-04*
