@@ -25,32 +25,32 @@ draft: no
 <div id="lewitt-remix" class="section level1">
 <h1>LeWitt ReMix</h1>
 <p>The third <a href="https://twitter.com/search?q=%23recreationthursday">#RecreationThursday</a> challenge involved Sol LeWitt’s <em>Colour Bands</em> (2000), <a href="https://www.sollewittprints.org/artwork/lewitt-raisonne-2000-07/">which you can see on his website</a>.</p>
-<p>Rather than recreate his artworks exactly, I decided to riff on the approach with a Shiny app, which adds different types of lines and some randomisation.</p>
+<p>Rather than recreate his artworks exactly, I decided to riff on the approach with a (very basic) Shiny app, which adds different types of lines and some randomisation.</p>
 <p>You can access it here (until I take it down): <a href="https://mattdray.shinyapps.io/lewitt-remix-app/"><img src="https://img.shields.io/badge/Shiny-shinyapps.io-blue?style=flat&amp;labelColor=white&amp;logo=RStudio&amp;logoColor=blue" /></a></p>
 <p>Alternatively, download and launch it locally via an R session:</p>
 <pre class="r"><code>shiny::runGitHub(
   &quot;viz-recreation&quot;, &quot;matt-dray&quot;, &quot;main&quot;,
   &quot;2021-07-01_rt_lewitt/lewitt-remix-app&quot;
 )</code></pre>
-<p>Change a few parameters and then hit the ‘Generate’ button for a new variant, which can be downloaded to your computer.</p>
+<p>In the app, you can change a few parameters and then hit the ‘Generate’ button for a new variant, which can be downloaded to your computer. I’ve limited the inputs so that you get relatively ‘sensible’ outputs (whatever that means).</p>
 <p>You could create something that looks similar to LeWitt’s original, or go off-piste and create a much larger number of panels or much thicker lines. Have fun!</p>
 <p>Read on for an explanation and for some examples.</p>
 </div>
 <div id="approach" class="section level1">
 <h1>Approach</h1>
 <p>Once again, I’ve used only base R functions to generate the outputs, just like <a href="https://www.rostrum.blog/2021/06/21/recreate-hlito/">my previous #RecreationThursday attempt</a>.</p>
-<p>I’ve used a cunning shortcut to mimic LeWitt: rather than draw any lines or shapes, I’ve just over-plotted points of decreasing size with <a href="https://stat.ethz.ch/R-manual/R-patched/library/graphics/html/points.html">R’s built-in plotting characters</a> (e.g. <code>21</code> is a filled circle, <code>22</code> a square). This gives the effect of concentric lines.</p>
+<p>I’ve used a cunning shortcut to mimic LeWitt: rather than draw any lines or shapes, I’ve just over-plotted points of decreasing size and variable colour with <a href="https://stat.ethz.ch/R-manual/R-patched/library/graphics/html/points.html">R’s built-in plotting characters</a> (e.g. <code>21</code> is a filled circle, <code>22</code> a square). This gives the effect of concentric lines.</p>
 <p>Here’s an example of plotting 50 unfilled circles of decreasing size on the same xy point:</p>
 <pre class="r"><code># Set variables
 shape &lt;- 21  # plotting character
 shp_n &lt;- 50  # number of points to plot
-shp_x &lt;- 2   # point size multiplier
+shp_x &lt;- 2   # point size multiplier (&#39;thickness&#39;)
 pal   &lt;- rainbow(5)  # colours
 
 # Set margins to zero, see only the plot
 par(mar = rep(0, 4))
 
-# Plot &#39;concentric circles&#39;
+# Plot concentric circles
 plot(
   x    = rep(0, shp_n),
   y    = rep(0, shp_n),
@@ -60,9 +60,9 @@ plot(
   col  = pal
 )</code></pre>
 <p><img src="/post/2021-07-05-recreate-lewitt_files/figure-html/unnamed-chunk-2-1.png" title="Concentric circles coloured consecutively with colours of the rainbow." alt="Concentric circles coloured consecutively with colours of the rainbow." width="384" /></p>
-<p>There are <a href="https://github.com/matt-dray/viz-recreation/blob/main/2021-07-01_rt_lewitt/lewitt-remix-app/global.R">two underlying custom functions</a>: one generates a single-panel LeWitt remix and the other calls multiple of these panels into a grid, with randomised features.</p>
-<p>The arguments include the plotting character, the position that the centre of the point-stack will take (cardinal directions, like <code>NE</code> to place the origin in the top-right), the colours, the number of shapes to overplot, the apparent ‘thickness’ of the ‘lines’ in the output, and the width of the box<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> that surrounds the image.</p>
-<p>So here’s a demo of the function that generates a single panel. It uses uses the triangle plotting characters, which originate in the centre and alternate through rainbow colours.</p>
+<p>There are <a href="https://github.com/matt-dray/viz-recreation/blob/main/2021-07-01_rt_lewitt/lewitt-remix-app/global.R">two underlying custom functions</a>: one generates a single-panel LeWitt randomised remix and the other calls multiple of these panels into a square grid.</p>
+<p>The arguments include the plotting character (circle, diamond, etc), the origin position that the centre of the point-stack will take (named for cardinal directions, like <code>NE</code> to place the origin in the top-right), the colours, the number of shapes to overplot (you want enough to completely cover the plot surface), the apparent ‘thickness’ of the ‘lines’ in the output (really just a mulitplier for the difference in size between each point), and the width of the box<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> that surrounds the image.</p>
+<p>So here’s a demo of the function<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> that generates a single panel. It uses uses the triangle plotting characters, which originate in the centre and alternate through rainbow colours. This is not too dissimilar from LeWitt’s originals.</p>
 <pre class="r"><code># Grab the functions from the repo
 source(&quot;https://raw.githubusercontent.com/matt-dray/viz-recreation/main/2021-07-01_rt_lewitt/lewitt-remix-app/global.R&quot;)
 
@@ -129,6 +129,7 @@ just_lewitt2(
 )</code></pre>
 <p><img src="/post/2021-07-05-recreate-lewitt_files/figure-html/unnamed-chunk-8-1.png" title="A square image containing four panels in a two by two grid. Each panel contains concentric patterns of squares or circles with an alternating randomised colour palette. The lines created by the concentric shapes appear extremely thin. There are no borders around the panels. The patterns give a slight impression of motion." alt="A square image containing four panels in a two by two grid. Each panel contains concentric patterns of squares or circles with an alternating randomised colour palette. The lines created by the concentric shapes appear extremely thin. There are no borders around the panels. The patterns give a slight impression of motion." width="384" /></p>
 <p>The Shiny app basically plays around with these function arguments depending on your inputs, providing some randomness with a new seed that’s generated with each click of the ‘Generate’ button or if you move any of the sliders.</p>
+<p>I would love it if you tried out the app, used the ‘Download’ button to save a copy, and then <a href="https://twitter.com/mattdray">showed me on Twitter</a>.</p>
 </div>
 <div id="get-involved" class="section level1">
 <h1>Get involved</h1>
@@ -139,11 +140,50 @@ just_lewitt2(
 <summary>
 Session info
 </summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.1.0 (2021-05-18)
+##  os       macOS Big Sur 10.16         
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2021-07-05                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date       lib source        
+##  blogdown      1.3     2021-04-14 [1] CRAN (R 4.1.0)
+##  bookdown      0.22    2021-04-22 [1] CRAN (R 4.1.0)
+##  bslib         0.2.5.1 2021-05-18 [1] CRAN (R 4.1.0)
+##  cli           2.5.0   2021-04-26 [1] CRAN (R 4.1.0)
+##  digest        0.6.27  2020-10-24 [1] CRAN (R 4.1.0)
+##  evaluate      0.14    2019-05-28 [1] CRAN (R 4.1.0)
+##  highr         0.9     2021-04-16 [1] CRAN (R 4.1.0)
+##  htmltools     0.5.1.1 2021-01-22 [1] CRAN (R 4.1.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.1.0)
+##  jsonlite      1.7.2   2020-12-09 [1] CRAN (R 4.1.0)
+##  knitr         1.33    2021-04-24 [1] CRAN (R 4.1.0)
+##  magrittr      2.0.1   2020-11-17 [1] CRAN (R 4.1.0)
+##  R6            2.5.0   2020-10-28 [1] CRAN (R 4.1.0)
+##  rlang         0.4.11  2021-04-30 [1] CRAN (R 4.1.0)
+##  rmarkdown     2.9     2021-06-15 [1] CRAN (R 4.1.0)
+##  sass          0.4.0   2021-05-12 [1] CRAN (R 4.1.0)
+##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.1.0)
+##  stringi       1.6.2   2021-05-17 [1] CRAN (R 4.1.0)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.1.0)
+##  withr         2.4.2   2021-04-18 [1] CRAN (R 4.1.0)
+##  xfun          0.24    2021-06-15 [1] CRAN (R 4.1.0)
+##  yaml          2.2.1   2020-02-01 [1] CRAN (R 4.1.0)
+## 
+## [1] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
 </details>
 </div>
 <div class="footnotes">
 <hr />
 <ol>
 <li id="fn1"><p>Boxes are drawn on a panel-by-panel basis, so the ‘interior’ borders appear thicker because of the additive effect of surrounding boxes.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>These are named like <code>just_lewitt()</code> because I like to start functions with verbs and thought it sounded a bit like a certain brand slogan.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>

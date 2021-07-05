@@ -31,7 +31,7 @@ knitr::opts_chunk$set(
 
 The third [#RecreationThursday](https://twitter.com/search?q=%23recreationthursday) challenge involved Sol LeWitt's _Colour Bands_ (2000), [which you can see on his website](https://www.sollewittprints.org/artwork/lewitt-raisonne-2000-07/).
 
-Rather than recreate his artworks exactly, I decided to riff on the approach with a Shiny app, which adds different types of lines and some randomisation.
+Rather than recreate his artworks exactly, I decided to riff on the approach with a (very basic) Shiny app, which adds different types of lines and some randomisation.
 
 You can access it here (until I take it down): [![](https://img.shields.io/badge/Shiny-shinyapps.io-blue?style=flat&labelColor=white&logo=RStudio&logoColor=blue)](https://mattdray.shinyapps.io/lewitt-remix-app/)
 
@@ -44,7 +44,7 @@ shiny::runGitHub(
 )
 ```
 
-Change a few parameters and then hit the 'Generate' button for a new variant, which can be downloaded to your computer.
+In the app, you can change a few parameters and then hit the 'Generate' button for a new variant, which can be downloaded to your computer. I've limited the inputs so that you get relatively 'sensible' outputs (whatever that means).
 
 You could create something that looks similar to LeWitt's original, or go off-piste and create a much larger number of panels or much thicker lines. Have fun!
 
@@ -54,7 +54,7 @@ Read on for an explanation and for some examples.
 
 Once again, I've used only base R functions to generate the outputs, just like [my previous #RecreationThursday attempt ](https://www.rostrum.blog/2021/06/21/recreate-hlito/).
 
-I've used a cunning shortcut to mimic LeWitt: rather than draw any lines or shapes, I've just over-plotted points of decreasing size with [R's built-in plotting characters](https://stat.ethz.ch/R-manual/R-patched/library/graphics/html/points.html) (e.g. `21` is a filled circle, `22` a square). This gives the effect of concentric lines.
+I've used a cunning shortcut to mimic LeWitt: rather than draw any lines or shapes, I've just over-plotted points of decreasing size and variable colour with [R's built-in plotting characters](https://stat.ethz.ch/R-manual/R-patched/library/graphics/html/points.html) (e.g. `21` is a filled circle, `22` a square). This gives the effect of concentric lines.
 
 Here's an example of plotting 50 unfilled circles of decreasing size on the same xy point:
 
@@ -62,13 +62,13 @@ Here's an example of plotting 50 unfilled circles of decreasing size on the same
 # Set variables
 shape <- 21  # plotting character
 shp_n <- 50  # number of points to plot
-shp_x <- 2   # point size multiplier
+shp_x <- 2   # point size multiplier ('thickness')
 pal   <- rainbow(5)  # colours
 
 # Set margins to zero, see only the plot
 par(mar = rep(0, 4))
 
-# Plot 'concentric circles'
+# Plot concentric circles
 plot(
   x    = rep(0, shp_n),
   y    = rep(0, shp_n),
@@ -79,11 +79,11 @@ plot(
 )
 ```
 
-There are [two underlying custom functions](https://github.com/matt-dray/viz-recreation/blob/main/2021-07-01_rt_lewitt/lewitt-remix-app/global.R): one generates a single-panel LeWitt remix and the other calls multiple of these panels into a grid, with randomised features.
+There are [two underlying custom functions](https://github.com/matt-dray/viz-recreation/blob/main/2021-07-01_rt_lewitt/lewitt-remix-app/global.R): one generates a single-panel LeWitt randomised remix and the other calls multiple of these panels into a square grid.
 
-The arguments include the plotting character, the position that the centre of the point-stack will take (cardinal directions, like `NE` to place the origin in the top-right), the colours, the number of shapes to overplot, the apparent 'thickness' of the 'lines' in the output, and the width of the box[^box] that surrounds the image.
+The arguments include the plotting character (circle, diamond, etc), the origin position that the centre of the point-stack will take (named for cardinal directions, like `NE` to place the origin in the top-right), the colours, the number of shapes to overplot (you want enough to completely cover the plot surface), the apparent 'thickness' of the 'lines' in the output (really just a mulitplier for the difference in size between each point), and the width of the box[^box] that surrounds the image.
 
-So here's a demo of the function that generates a single panel. It uses uses the triangle plotting characters, which originate in the centre and alternate through rainbow colours.
+So here's a demo of the function[^just] that generates a single panel. It uses uses the triangle plotting characters, which originate in the centre and alternate through rainbow colours. This is not too dissimilar from LeWitt's originals.
 
 ```{r fig.alt='A square image with a black border that contains concentric triangles coloured consecutively with rainbow colours.'}
 # Grab the functions from the repo
@@ -170,6 +170,8 @@ just_lewitt2(
 
 The Shiny app basically plays around with these function arguments depending on your inputs, providing some randomness with a new seed that's generated with each click of the 'Generate' button or if you move any of the sliders.
 
+I would love it if you tried out the app, used the 'Download' button to save a copy, and then [showed me on Twitter](https://twitter.com/mattdray).
+
 # Get involved
 
 Check out [#RecreationThursday on Twitter](https://twitter.com/search?q=%23recreationthursday). It’s a community challenge to recreate an art piece selected each fortnight by a rotating curator.
@@ -178,9 +180,10 @@ The timetable, art pieces, curators and example alt-text are available [in Sharl
 
 ---
 <details><summary>Session info</summary>
-```{r sessioninfo, echo=FALSE}
+```{r sessioninfo, echo=FALSE, results='hold'}
 sessioninfo::session_info()
 ```
 </details>
 
+[^just]: These are named like `just_lewitt()` because I like to start functions with verbs and thought it sounded a bit like a certain brand slogan.
 [^box]: Boxes are drawn on a panel-by-panel basis, so the 'interior' borders appear thicker because of the additive effect of surrounding boxes.
