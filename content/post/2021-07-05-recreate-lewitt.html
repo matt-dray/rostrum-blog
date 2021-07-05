@@ -13,15 +13,20 @@ tags:
   - shiny
   - recreation
   - recreation-thursday
-draft: yes
+draft: no
 ---
 
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
 
 
+<div class="figure">
+<p><img src="/post/2021-07-05-recreate-lewitt_files/lewitt-app.gif" alt="Animation showing web app in action. The 'generate' button is clicked to create a two by two grid of images containing brightly coloured lines. Sliders are dragged that change features of the output like the size of the grid. The 'generate' button is clicked to randomly update the colours and lines in each panel." width="500px"/></p>
+</div>
 <div id="lewitt-remix" class="section level1">
 <h1>LeWitt ReMix</h1>
 <p>The third <a href="https://twitter.com/search?q=%23recreationthursday">#RecreationThursday</a> challenge involved Sol LeWitt’s <em>Colour Bands</em> (2000), <a href="https://www.sollewittprints.org/artwork/lewitt-raisonne-2000-07/">which you can see on his website</a>.</p>
-<p>Rather than recreate his artworks exactly, I decided to riff on the approach with a Shiny app, which adds different types of lines and adds some randomisation into the mix. You can access it here: <a href="https://mattdray.shinyapps.io/lewitt-remix-app/"><img src="https://img.shields.io/badge/Shiny-shinyapps.io-blue?style=flat&amp;labelColor=white&amp;logo=RStudio&amp;logoColor=blue" /></a></p>
+<p>Rather than recreate his artworks exactly, I decided to riff on the approach with a Shiny app, which adds different types of lines and some randomisation.</p>
+<p>You can access it here (until I take it down): <a href="https://mattdray.shinyapps.io/lewitt-remix-app/"><img src="https://img.shields.io/badge/Shiny-shinyapps.io-blue?style=flat&amp;labelColor=white&amp;logo=RStudio&amp;logoColor=blue" /></a></p>
 <p>Alternatively, download and launch it locally via an R session:</p>
 <pre class="r"><code>shiny::runGitHub(
   &quot;viz-recreation&quot;, &quot;matt-dray&quot;, &quot;main&quot;,
@@ -54,7 +59,7 @@ plot(
   cex  = shp_x * shp_n:1,
   col  = pal
 )</code></pre>
-<p><img src="/post/2021-07-05-recreate-lewitt_files/figure-html/unnamed-chunk-2-1.png" width="384" /></p>
+<p><img src="/post/2021-07-05-recreate-lewitt_files/figure-html/unnamed-chunk-2-1.png" title="Concentric circles coloured consecutively with colours of the rainbow." alt="Concentric circles coloured consecutively with colours of the rainbow." width="384" /></p>
 <p>There are <a href="https://github.com/matt-dray/viz-recreation/blob/main/2021-07-01_rt_lewitt/lewitt-remix-app/global.R">two underlying custom functions</a>: one generates a single-panel LeWitt remix and the other calls multiple of these panels into a grid, with randomised features.</p>
 <p>The arguments include the plotting character, the position that the centre of the point-stack will take (cardinal directions, like <code>NE</code> to place the origin in the top-right), the colours, the number of shapes to overplot, the apparent ‘thickness’ of the ‘lines’ in the output, and the width of the box<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> that surrounds the image.</p>
 <p>So here’s a demo of the function that generates a single panel. It uses uses the triangle plotting characters, which originate in the centre and alternate through rainbow colours.</p>
@@ -70,7 +75,7 @@ just_lewitt(
   shp_x = 4,           # &#39;line thickness&#39;
   box_w = 20           # outer box thickness
 )</code></pre>
-<p><img src="/post/2021-07-05-recreate-lewitt_files/figure-html/unnamed-chunk-3-1.png" width="384" /></p>
+<p><img src="/post/2021-07-05-recreate-lewitt_files/figure-html/unnamed-chunk-3-1.png" title="A square image with a black border that contains concentric triangles coloured consecutively with rainbow colours." alt="A square image with a black border that contains concentric triangles coloured consecutively with rainbow colours." width="384" /></p>
 <p>And below is a panel made of four calls to the single-panel function. Elements like shape and the placement of the origin point are randomised.</p>
 <p>Also, rather than use LeWitt’s colouring scheme, I decided to randomise the colour palette by sampling seven colours from R’s built-in named <code>colours()</code>. This can produce some pretty garish results, but also some quite pleasing ones too. (I’m colourblind, so your mileage may vary.)</p>
 <pre class="r"><code># Set a seed for reproducibility
@@ -86,7 +91,7 @@ just_lewitt2(
   shp_x = 4,       # &#39;line thickness&#39;
   box_w = 10       # outer box thickness
 )</code></pre>
-<p><img src="/post/2021-07-05-recreate-lewitt_files/figure-html/unnamed-chunk-4-1.png" width="384" /></p>
+<p><img src="/post/2021-07-05-recreate-lewitt_files/figure-html/unnamed-chunk-4-1.png" title="A square image containing four panels in a two by two grid. Each panel contains concentric patterns of squares, triangles or circles with an alternating randomised colour palette. Each panel has a thick black border around it." alt="A square image containing four panels in a two by two grid. Each panel contains concentric patterns of squares, triangles or circles with an alternating randomised colour palette. Each panel has a thick black border around it." width="384" /></p>
 <p>This can end up looking like an eye-popping Magic Eye puzzle.</p>
 <pre class="r"><code>set.seed(7)
 just_lewitt2(
@@ -95,7 +100,7 @@ just_lewitt2(
   shp_x = 1,
   box_w = 0
 )</code></pre>
-<p><img src="/post/2021-07-05-recreate-lewitt_files/figure-html/unnamed-chunk-5-1.png" width="384" /></p>
+<p><img src="/post/2021-07-05-recreate-lewitt_files/figure-html/unnamed-chunk-5-1.png" title="A square image containing 100 panels in a 10 by 10 grid. Each panel contains concentric patterns of squares, triangles or circles with an alternating randomised colour palette. There are no borders around each panel." alt="A square image containing 100 panels in a 10 by 10 grid. Each panel contains concentric patterns of squares, triangles or circles with an alternating randomised colour palette. There are no borders around each panel." width="384" /></p>
 <p>Or a bit like semaphore.</p>
 <pre class="r"><code>set.seed(7)
 just_lewitt2(
@@ -104,7 +109,7 @@ just_lewitt2(
   shp_x = 20,
   box_w = 0
 )</code></pre>
-<p><img src="/post/2021-07-05-recreate-lewitt_files/figure-html/unnamed-chunk-6-1.png" width="384" /></p>
+<p><img src="/post/2021-07-05-recreate-lewitt_files/figure-html/unnamed-chunk-6-1.png" title="A square image containing four panels in a two by two grid. Each panel contains concentric patterns of squares, triangles or circles with an alternating randomised colour palette. The lines created by the concentric shapes appear thick. There are no borders around each panel." alt="A square image containing four panels in a two by two grid. Each panel contains concentric patterns of squares, triangles or circles with an alternating randomised colour palette. The lines created by the concentric shapes appear thick. There are no borders around each panel." width="384" /></p>
 <p>Or whatever this is.</p>
 <pre class="r"><code>set.seed(2)
 just_lewitt2(
@@ -113,7 +118,7 @@ just_lewitt2(
   shp_x = 1,
   box_w = 20
 )</code></pre>
-<p><img src="/post/2021-07-05-recreate-lewitt_files/figure-html/unnamed-chunk-7-1.png" width="384" /></p>
+<p><img src="/post/2021-07-05-recreate-lewitt_files/figure-html/unnamed-chunk-7-1.png" title="A square image containing 100 panels in a 10 by 10 grid. Each panel contains concentric patterns of squares, triangles or circles with an alternating randomised colour palette. The lines created by the concentric shapes appear thin. There are extremely thick black borders around each panel." alt="A square image containing 100 panels in a 10 by 10 grid. Each panel contains concentric patterns of squares, triangles or circles with an alternating randomised colour palette. The lines created by the concentric shapes appear thin. There are extremely thick black borders around each panel." width="384" /></p>
 <p>Uh-oh, I think I may have slipped through space-time.</p>
 <pre class="r"><code>set.seed(11)
 just_lewitt2(
@@ -122,7 +127,7 @@ just_lewitt2(
   shp_x = 0.4,
   box_w = 0
 )</code></pre>
-<p><img src="/post/2021-07-05-recreate-lewitt_files/figure-html/unnamed-chunk-8-1.png" width="384" /></p>
+<p><img src="/post/2021-07-05-recreate-lewitt_files/figure-html/unnamed-chunk-8-1.png" title="A square image containing four panels in a two by two grid. Each panel contains concentric patterns of squares or circles with an alternating randomised colour palette. The lines created by the concentric shapes appear extremely thin. There are no borders around the panels. The patterns give a slight impression of motion." alt="A square image containing four panels in a two by two grid. Each panel contains concentric patterns of squares or circles with an alternating randomised colour palette. The lines created by the concentric shapes appear extremely thin. There are no borders around the panels. The patterns give a slight impression of motion." width="384" /></p>
 <p>The Shiny app basically plays around with these function arguments depending on your inputs, providing some randomness with a new seed that’s generated with each click of the ‘Generate’ button or if you move any of the sliders.</p>
 </div>
 <div id="get-involved" class="section level1">
@@ -131,12 +136,14 @@ just_lewitt2(
 <p>The timetable, art pieces, curators and example alt-text are available <a href="https://github.com/sharlagelfand/RecreationThursday">in Sharla Gelfand’s RecreationThursday repo on GitHub</a>.</p>
 <hr />
 <details>
-<p><summary>Session info</summary></p>
+<summary>
+Session info
+</summary>
 </details>
 </div>
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>This is drawn on a panel-by-panel basis, so the interior boxes appear thicker because of the additive effect of surrounding boxes.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn1"><p>Boxes are drawn on a panel-by-panel basis, so the ‘interior’ borders appear thicker because of the additive effect of surrounding boxes.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>

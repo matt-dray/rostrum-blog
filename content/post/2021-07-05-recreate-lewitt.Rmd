@@ -13,9 +13,12 @@ tags:
   - shiny
   - recreation
   - recreation-thursday
-draft: yes
+draft: no
 ---
 
+<div class="figure">
+<img src="/post/2021-07-05-recreate-lewitt_files/lewitt-app.gif" alt="Animation showing web app in action. The 'generate' button is clicked to create a two by two grid of images containing brightly coloured lines. Sliders are dragged that change features of the output like the size of the grid. The 'generate' button is clicked to randomly update the colours and lines in each panel." width="500px"/>
+</div>
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
@@ -28,7 +31,9 @@ knitr::opts_chunk$set(
 
 The third [#RecreationThursday](https://twitter.com/search?q=%23recreationthursday) challenge involved Sol LeWitt's _Colour Bands_ (2000), [which you can see on his website](https://www.sollewittprints.org/artwork/lewitt-raisonne-2000-07/).
 
-Rather than recreate his artworks exactly, I decided to riff on the approach with a Shiny app, which adds different types of lines and adds some randomisation into the mix. You can access it here: [![](https://img.shields.io/badge/Shiny-shinyapps.io-blue?style=flat&labelColor=white&logo=RStudio&logoColor=blue)](https://mattdray.shinyapps.io/lewitt-remix-app/)
+Rather than recreate his artworks exactly, I decided to riff on the approach with a Shiny app, which adds different types of lines and some randomisation.
+
+You can access it here (until I take it down): [![](https://img.shields.io/badge/Shiny-shinyapps.io-blue?style=flat&labelColor=white&logo=RStudio&logoColor=blue)](https://mattdray.shinyapps.io/lewitt-remix-app/)
 
 Alternatively, download and launch it locally via an R session:
 
@@ -53,7 +58,7 @@ I've used a cunning shortcut to mimic LeWitt: rather than draw any lines or shap
 
 Here's an example of plotting 50 unfilled circles of decreasing size on the same xy point:
 
-```{r}
+```{r fig.alt='Concentric circles coloured consecutively with colours of the rainbow.'}
 # Set variables
 shape <- 21  # plotting character
 shp_n <- 50  # number of points to plot
@@ -80,7 +85,7 @@ The arguments include the plotting character, the position that the centre of th
 
 So here's a demo of the function that generates a single panel. It uses uses the triangle plotting characters, which originate in the centre and alternate through rainbow colours.
 
-```{r}
+```{r fig.alt='A square image with a black border that contains concentric triangles coloured consecutively with rainbow colours.'}
 # Grab the functions from the repo
 source("https://raw.githubusercontent.com/matt-dray/viz-recreation/main/2021-07-01_rt_lewitt/lewitt-remix-app/global.R")
 
@@ -99,7 +104,7 @@ And below is a panel made of four calls to the single-panel function. Elements l
 
 Also, rather than use LeWitt's colouring scheme, I decided to randomise the colour palette by sampling seven colours from R's built-in named `colours()`. This can produce some pretty garish results, but also some quite pleasing ones too. (I'm colourblind, so your mileage may vary.)
 
-```{r}
+```{r fig.alt='A square image containing four panels in a two by two grid. Each panel contains concentric patterns of squares, triangles or circles with an alternating randomised colour palette. Each panel has a thick black border around it.'}
 # Set a seed for reproducibility
 set.seed(5)
 
@@ -117,7 +122,7 @@ just_lewitt2(
 
 This can end up looking like an eye-popping Magic Eye puzzle.
 
-```{r}
+```{r fig.alt='A square image containing 100 panels in a 10 by 10 grid. Each panel contains concentric patterns of squares, triangles or circles with an alternating randomised colour palette. There are no borders around each panel.'}
 set.seed(7)
 just_lewitt2(
   dimn  = 10,
@@ -129,7 +134,7 @@ just_lewitt2(
 
 Or a bit like semaphore.
 
-```{r}
+```{r fig.alt='A square image containing four panels in a two by two grid. Each panel contains concentric patterns of squares, triangles or circles with an alternating randomised colour palette. The lines created by the concentric shapes appear thick. There are no borders around each panel.'}
 set.seed(7)
 just_lewitt2(
   dimn  = 2,
@@ -141,7 +146,7 @@ just_lewitt2(
 
 Or whatever this is.
 
-```{r}
+```{r fig.alt='A square image containing 100 panels in a 10 by 10 grid. Each panel contains concentric patterns of squares, triangles or circles with an alternating randomised colour palette. The lines created by the concentric shapes appear thin. There are extremely thick black borders around each panel.'}
 set.seed(2)
 just_lewitt2(
   dimn  = 10,
@@ -153,7 +158,7 @@ just_lewitt2(
 
 Uh-oh, I think I may have slipped through space-time.
 
-```{r}
+```{r fig.alt='A square image containing four panels in a two by two grid. Each panel contains concentric patterns of squares or circles with an alternating randomised colour palette. The lines created by the concentric shapes appear extremely thin. There are no borders around the panels. The patterns give a slight impression of motion.'}
 set.seed(11)
 just_lewitt2(
   dimn  = 2,
@@ -178,4 +183,4 @@ sessioninfo::session_info()
 ```
 </details>
 
-[^box]: This is drawn on a panel-by-panel basis, so the interior boxes appear thicker because of the additive effect of surrounding boxes.
+[^box]: Boxes are drawn on a panel-by-panel basis, so the 'interior' borders appear thicker because of the additive effect of surrounding boxes.
