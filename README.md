@@ -25,13 +25,13 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 92 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 93 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
-📅 That’s a post roughly every 13 days, or about 2.3 posts per month.
+📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 7 day(s) ago: [Very simple pixel art in
-R](https://www.rostrum.blog/2021/06/28/pixel-art/).
+🆕 The latest post was published 1 day(s) ago: [\#RecreationThursday: a
+LeWitt Shiny app](https://www.rostrum.blog/2021/07/05/recreate-lewitt/).
 
 📈 This 2D plot shows posts over time:
 
@@ -43,6 +43,7 @@ R](https://www.rostrum.blog/2021/06/28/pixel-art/).
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|     93 | 2021-07-05 | [\#RecreationThursday: a LeWitt Shiny app](https://www.rostrum.blog/2021/07/05/recreate-lewitt/)                          |
 |     92 | 2021-06-28 | [Very simple pixel art in R](https://www.rostrum.blog/2021/06/28/pixel-art/)                                              |
 |     91 | 2021-06-26 | [Generate an {emojiscape}](https://www.rostrum.blog/2021/06/26/emojiscape/)                                               |
 |     90 | 2021-06-21 | [\#RecreationThursday: Hlito with base R](https://www.rostrum.blog/2021/06/21/recreate-hlito/)                            |
@@ -140,4 +141,4 @@ R](https://www.rostrum.blog/2021/06/28/pixel-art/).
 
 -----
 
-*Updated 2021-07-05*
+*Updated 2021-07-06*
