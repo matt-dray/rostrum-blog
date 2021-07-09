@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 3 day(s) ago: [\#RecreationThursday: a
+🆕 The latest post was published 4 day(s) ago: [\#RecreationThursday: a
 LeWitt Shiny app](https://www.rostrum.blog/2021/07/05/recreate-lewitt/).
 
 📈 This 2D plot shows posts over time:
@@ -141,4 +141,4 @@ LeWitt Shiny app](https://www.rostrum.blog/2021/07/05/recreate-lewitt/).
 
 -----
 
-*Updated 2021-07-08*
+*Updated 2021-07-09*
