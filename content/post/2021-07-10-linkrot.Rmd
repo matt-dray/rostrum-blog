@@ -1,5 +1,5 @@
 ---
-title: "Decay is inevitable, accept {linkrot} "
+title: "Decay is inevitable, accept {linkrot}?"
 author: Matt Dray
 date: '2021-07-10'
 slug: linkrot
@@ -7,34 +7,39 @@ categories:
   - code
   - package
 tags:
+  - httr
   - linkrot
   - r
-draft: yes
+  - rvest
+  - xml2
+draft: no
 ---
 
 ```{r setup, include=FALSE}
 library(linkrot)
 ```
 
+<div class="figure">
+<img src="/post/2021-07-10-linkrot_files/404.png" alt="A screenshot of a 404 page, which is reached by following a broken link. The text says 'page not found, looks like you've followed a broken link or entered a URL that doesn't exist on this site'." width="100%"/>
+</div>
+
 # tl;dr
 
-I wrote a function to check for link rot and put it in the R package {linkrot}.
+I wrote a function to check for [link rot](https://en.wikipedia.org/wiki/Link_rot) and put it in [the R package {linkrot}](https://github.com/matt-dray/linkrot).
 
 # File not found
 
-Decay is inevitable.[^phd]
+You've clicked a link before and been taken somewhere you weren't expecting. Sometimes it's because [you've been rickrolled](https://www.youtube.com/watch?v=dQw4w9WgXcQ),[^rick] sure, but content on the internet is constantly being moved or removed and links break all the time.
 
-You've clicked a weblink before and been taken somewhere you weren't expecting. Sometimes it's because [you've been rickrolled](), sure, but content on the internet is constantly being moved or removed and links break all the time.
+A hyperlink that no longer resolves can be considered to have 'rotted'. As time marches on, the 'rottenness' of the internet increases. This can be frustrating.
 
-A hyperlink that no longer resolves can be considered to have 'rotted'. As time marches on, the 'rottenness' of the internet can only increase.
-
-This blog is getting on for a hundred posts over three years. It would not be a surprise if link rot has taken hold. I think it's worth finding out if I have a problem, if only for my own curiosity.
+This blog is getting on for a hundred posts over three years. It would not be a surprise if link rot has taken hold. I think it's worth finding out if I have a problem.
 
 # Install
 
-So, I want to visit every post on the blog, extract every link on them and then check each one to see whether it can be resolved.
+Basically I need to visit every link[^link] in every post on this blog and see if it's still working.
 
-I've written a function, `detect_rot()`, and put it in the {linkrot} package on GitHub. To install:
+I've written the function `detect_rot()` to do this, which I've put it in [the {linkrot} package on GitHub](https://en.wikipedia.org/wiki/Link_rot). To install:
 
 ```{r install, eval=FALSE}
 install.packages("remotes")
@@ -42,18 +47,20 @@ remotes::install_github("matt-dray/linkrot")
 library(linkrot)
 ```
 
+In short, the `detect_rot()` function takes the URL of a web page and returns a tibble with details of each link from that page and whether it can be reached.
+
+I've basically built it for my own amusement, so there's no guarantees.
+
 # Example
 
-In short, the function takes the URL of a web page and returns a tibble that contains a row for each link extracted form that page, with information on whether each one was contactable or not.
-
-As an example, let's feed in the first post on this blog, from April 2018:
+Let's feed in the first post on this blog, from April 2018:
 
 ```{r}
 url <- "https://www.rostrum.blog/2018/04/14/r-trek-exploring-stardates/"
 rot_df <- detect_rot(url)
 ```
 
-You'll notice we get a print-out that repeats the URL being checked, plus a bunch of dots. Each dot is a URL from that web page and it prints once the check for that page is complete.
+We get a print-out of the URL and a bunch of dots. The dots are printed each time a link from the page is checked successfully.
 
 What does the returned object look like?
 
@@ -61,37 +68,23 @@ What does the returned object look like?
 str(rot_df)
 ```
 
-So, a tibble with five columns and as many rows (30 in this case) as there are links on the page that we provided. The output has columns showing us the URL of each link and the text presented to the user for that link.
+So, a tibble with six columns and a row per link on that page (`r nrow(rot_df)` in this example). The output tells us the URL and text of each link and also whether the page is contactable or not. 
 
-Most importantly, there are columns that tell us whether the page is contactable or not. This takes the form of special 'response codes', where 200 represents successful contact. There are many different codes. You may be familiar with the 404 code if you've found a broken link before.
+I've recorded the special three-digit ['status code'](https://en.wikipedia.org/wiki/List_of_HTTP_status_codes) in the `response_code` column. These indicate whether a page was contactable. For example, 200 represents a typical success ('OK'), but you may be familiar with 404 ('not found') if you've found a broken link before.
 
-We can extract any of the links that appear to be broken. This page appears to haev at least one:
+We can extract any links that appear to be broken using the logical `response_success` column.
 
 ```{r}
-rot_df[!rot_df$response_success, c(2, 4, 5)]
+rot_df[!rot_df$response_success, c(4, 5, 2)]
 ```
 
-Uh-oh.
-
-## Under the hood
-
-You can find the function definition [in the source code](https://github.com/matt-dray/linkrot/blob/main/R/check.R). Let's take a slightly closer look at how this works. There's three steps in `detect_rot()`, each of which has [a helper function](https://github.com/matt-dray/linkrot/blob/main/R/utils.R):
-
-1. Check that the provided URL is valid with `.validate_page()`
-2. Scrape the links from the page with `.fetch_links()`
-3. Visit each link and check its response code with `.check_links()`
-
-So, the URL provided by the user is first checked with help from the {httr} package. We `GET()` the page and then extract the `status_code()` and check for an `http_error()`. If all is well (i.e. no error), then we can continue.
-
-To get the links from the URL, we first scrape the page with `xml::read_html()` and then use {rvest} functions: `html_nodes()` to grab all the nodes with links, then `html_attr()` and `html_text()` to extract the URLs and link text from each.
-
-Finally, each of the URLs is visited with `GET()` and the `http_status()` is extracted. The final data frame is converted to tibble (for ease of reading) and returned to the user.
+Uh-oh, looks like there's at least one in that post. It has [status code 404 ('client error')](https://en.wikipedia.org/wiki/HTTP_404), which basically means the thing couldn't be found.
 
 ## Blog rot
 
-Now we know how it works, lets apply the function over every post of this blog and see how many links have rotted. First we need the URL of every post:
+Now we know how it works for one page, lets apply the function over every post of this blog and see how many links have rotted. First we need all the post URLs:
 
-```{r}
+```{r post-list, message=FALSE}
 # Load packages
 library(xml2)
 library(rvest)
@@ -114,23 +107,55 @@ posts[1:5]  # preview
 
 Now we can use {purrr} to iterate the `detect_rot()` function over the pages. By using the `map_df()` we can get a data frame as output rather than a list. I've hidden the printed output from `detect_rot()` this time because there would be nearly 100 lines of output (one per post).
 
-```{r map-df, echo=FALSE, cache=TRUE}
-results <- map_df(posts, detect_rot) %>% 
-  set_names(basename(posts))
+```{r map-df, results='hide', cache=TRUE}
+results <- map_df(posts, detect_rot)
 ```
 
-So, our results dataframe has `r nrow(results)` links from `r length(posts).`
+So, our results tibble has `r nrow(results)` links from `r length(posts)` posts, or about `r round(nrow(results) / length(posts), 0)` links per post.
 
-We can filter the logical `response_success` column to see which links weren't successfully resolved[^na]
+Again, we can filter the logical `response_success` column to see which links weren't successfully resolved.[^na]
 
 ```{r failures}
-rotten <- filter(.results, !reponse_success) %>% 
-  select(link_url, response_code)
-
-rotten
+rotten <- filter(results, !response_success) 
+sample_n(select(rotten, link_url), 5)  # random selection
 ```
 
-That works out to `r round(nrow(rotten) / nrow(results), 2) * 100`% of links being unreachable.
+Aha, so there were `r nrow(rotten)` of these in total, which works out to about `r round(nrow(rotten) / nrow(results), 2) * 100`% being unreachable. 
 
-[^phd]: I have a PhD in decomposition of leaf litter, so I have authority in this matter.
+We can count the reasons for these failures by looking at the status codes.
+
+```{r failure-count}
+count(rotten, response_code, sort = TRUE)
+```
+
+You can see most of these status codes are in [the 4xx range](https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#4xx_client_errors), which means 'client error'. Usually this is a problem with the link you've provided, like 404 is 'not found', 403 is 'forbidden' and 406 is 'not acceptable'.
+
+It's hard to tell whether this level of link rot is good or bad, but remember that these are links that have failed within the past three years. Imagine how bad this might look in another 10 years.
+
+# Under the hood
+
+How does the function work?
+
+You can find the function definition [in the source code](https://github.com/matt-dray/linkrot/blob/main/R/check.R). There's three steps in `detect_rot()`, each of which has [a helper function](https://github.com/matt-dray/linkrot/blob/main/R/utils.R):
+
+1. Check that the provided URL is valid with `.validate_page()`
+1. Scrape the links from the page with `.fetch_links()`
+1. Visit each link and check its response code with `.check_links()`
+
+So, the URL provided by the user is first checked with help from the {httr} package. We `GET()` the page and then extract the `status_code()` and check for an `http_error()`. If all is well (i.e. no error), then we can continue.
+
+To get the links from the URL, we first scrape the page with `xml::read_html()` and then use {rvest} functions: `html_nodes()` to grab all the nodes with links, then `html_attr()` and `html_text()` to extract the URLs and link text from each.
+
+Finally, each of the URLs is visited with `GET()` and the `http_status()` is extracted. The final data frame is converted to tibble (for ease of reading) and returned to the user.
+
+# Now what?
+
+I could go back and fix the broken links, but maybe it's not that big a deal. I don't have any data on what people click on, so I can't really tell if it's worth it.
+
+But anyway, didn't I say 'decay is inevitable'? I can fix things, but more things will break.
+
+I wasn't expecting this to get quite so existential.
+
+[^rick]: Are you wondering whether to click this?
+[^link]: That's links to other pages on the internet, because links also exist to take you to these footnotes, or point elsewhere internally to this website.
 [^na]: As an aside, there are some links that {httr} struggled to contact. I wrapped functions internal to `detect_rot()` inside `tryCatch()` so any failures appear as `NA` in the `response_code` column. The printed output for `detect_rot()` also displays a `!` instead of a `.` when being run. There were `r nrow(filter(results, is.na(response_code)))` links that had this problem.

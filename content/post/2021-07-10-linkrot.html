@@ -1,0 +1,151 @@
+---
+title: "Decay is inevitable, accept {linkrot}?"
+author: Matt Dray
+date: '2021-07-10'
+slug: linkrot
+categories:
+  - code
+  - package
+tags:
+  - httr
+  - linkrot
+  - r
+  - rvest
+  - xml2
+draft: no
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div class="figure">
+<p><img src="/post/2021-07-10-linkrot_files/404.png" alt="A screenshot of a 404 page, which is reached by following a broken link. The text says 'page not found, looks like you've followed a broken link or entered a URL that doesn't exist on this site'." width="100%"/></p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I wrote a function to check for <a href="https://en.wikipedia.org/wiki/Link_rot">link rot</a> and put it in <a href="https://github.com/matt-dray/linkrot">the R package {linkrot}</a>.</p>
+</div>
+<div id="file-not-found" class="section level1">
+<h1>File not found</h1>
+<p>You’ve clicked a link before and been taken somewhere you weren’t expecting. Sometimes it’s because <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">you’ve been rickrolled</a>,<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> sure, but content on the internet is constantly being moved or removed and links break all the time.</p>
+<p>A hyperlink that no longer resolves can be considered to have ‘rotted’. As time marches on, the ‘rottenness’ of the internet increases. This can be frustrating.</p>
+<p>This blog is getting on for a hundred posts over three years. It would not be a surprise if link rot has taken hold. I think it’s worth finding out if I have a problem.</p>
+</div>
+<div id="install" class="section level1">
+<h1>Install</h1>
+<p>Basically I need to visit every link<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> in every post on this blog and see if it’s still working.</p>
+<p>I’ve written the function <code>detect_rot()</code> to do this, which I’ve put it in <a href="https://en.wikipedia.org/wiki/Link_rot">the {linkrot} package on GitHub</a>. To install:</p>
+<pre class="r"><code>install.packages(&quot;remotes&quot;)
+remotes::install_github(&quot;matt-dray/linkrot&quot;)
+library(linkrot)</code></pre>
+<p>In short, the <code>detect_rot()</code> function takes the URL of a web page and returns a tibble with details of each link from that page and whether it can be reached.</p>
+<p>I’ve basically built it for my own amusement, so there’s no guarantees.</p>
+</div>
+<div id="example" class="section level1">
+<h1>Example</h1>
+<p>Let’s feed in the first post on this blog, from April 2018:</p>
+<pre class="r"><code>url &lt;- &quot;https://www.rostrum.blog/2018/04/14/r-trek-exploring-stardates/&quot;
+rot_df &lt;- detect_rot(url)</code></pre>
+<pre><code>## Checking &lt;https://www.rostrum.blog/2018/04/14/r-trek-exploring-stardates/&gt; ..............................</code></pre>
+<p>We get a print-out of the URL and a bunch of dots. The dots are printed each time a link from the page is checked successfully.</p>
+<p>What does the returned object look like?</p>
+<pre class="r"><code>str(rot_df)</code></pre>
+<pre><code>## tibble [30 × 6] (S3: tbl_df/tbl/data.frame)
+##  $ page             : chr [1:30] &quot;https://www.rostrum.blog/2018/04/14/r-trek-exploring-stardates/&quot; &quot;https://www.rostrum.blog/2018/04/14/r-trek-exploring-stardates/&quot; &quot;https://www.rostrum.blog/2018/04/14/r-trek-exploring-stardates/&quot; &quot;https://www.rostrum.blog/2018/04/14/r-trek-exploring-stardates/&quot; ...
+##  $ link_url         : chr [1:30] &quot;https://www.r-project.org/about.html&quot; &quot;https://en.wikipedia.org/wiki/Star_Trek:_The_Next_Generation&quot; &quot;http://www.st-minutiae.com/resources/scripts/#thenextgeneration&quot; &quot;https://github.com/zeeshanu/learn-regex/blob/master/README.md&quot; ...
+##  $ link_text        : chr [1:30] &quot;R statistical software&quot; &quot;Star Trek: The Next Generation&quot; &quot;Star Trek Minutiae&quot; &quot;regex&quot; ...
+##  $ response_code    : num [1:30] 200 200 200 200 200 200 200 404 200 200 ...
+##  $ response_category: chr [1:30] &quot;Success&quot; &quot;Success&quot; &quot;Success&quot; &quot;Success&quot; ...
+##  $ response_success : logi [1:30] TRUE TRUE TRUE TRUE TRUE TRUE ...</code></pre>
+<p>So, a tibble with six columns and a row per link on that page (30 in this example). The output tells us the URL and text of each link and also whether the page is contactable or not.</p>
+<p>I’ve recorded the special three-digit <a href="https://en.wikipedia.org/wiki/List_of_HTTP_status_codes">‘status code’</a> in the <code>response_code</code> column. These indicate whether a page was contactable. For example, 200 represents a typical success (‘OK’), but you may be familiar with 404 (‘not found’) if you’ve found a broken link before.</p>
+<p>We can extract any links that appear to be broken using the logical <code>response_success</code> column.</p>
+<pre class="r"><code>rot_df[!rot_df$response_success, c(4, 5, 2)]</code></pre>
+<pre><code>## # A tibble: 1 x 3
+##   response_code response_category link_url                                      
+##           &lt;dbl&gt; &lt;chr&gt;             &lt;chr&gt;                                         
+## 1           404 Client error      https://cran.r-project.org/web/packages/rvest…</code></pre>
+<p>Uh-oh, looks like there’s at least one in that post. It has <a href="https://en.wikipedia.org/wiki/HTTP_404">status code 404 (‘client error’)</a>, which basically means the thing couldn’t be found.</p>
+<div id="blog-rot" class="section level2">
+<h2>Blog rot</h2>
+<p>Now we know how it works for one page, lets apply the function over every post of this blog and see how many links have rotted. First we need all the post URLs:</p>
+<pre class="r"><code># Load packages
+library(xml2)
+library(rvest)
+library(dplyr)
+library(purrr)
+
+# The URL of this blog&#39;s homepage
+blog_url &lt;- &quot;https://www.rostrum.blog&quot;
+
+# Fetch all the links from the blog home page
+blog_hrefs &lt;- 
+  read_html(blog_url) %&gt;%  # fetch full HTML
+  html_nodes(&quot;a&quot;) %&gt;%      # nodes with links
+  html_attr(&quot;href&quot;)        # the URL strings
+
+# Complete full URLs, filter for post links only
+posts &lt;- paste0(blog_url, blog_hrefs[grepl(&quot;^/20&quot;, blog_hrefs)])
+posts[1:5]  # preview</code></pre>
+<pre><code>## [1] &quot;https://www.rostrum.blog/2021/07/05/recreate-lewitt/&quot;
+## [2] &quot;https://www.rostrum.blog/2021/06/28/pixel-art/&quot;      
+## [3] &quot;https://www.rostrum.blog/2021/06/26/emojiscape/&quot;     
+## [4] &quot;https://www.rostrum.blog/2021/06/21/recreate-hlito/&quot; 
+## [5] &quot;https://www.rostrum.blog/2021/06/08/recreate-spear/&quot;</code></pre>
+<p>Now we can use {purrr} to iterate the <code>detect_rot()</code> function over the pages. By using the <code>map_df()</code> we can get a data frame as output rather than a list. I’ve hidden the printed output from <code>detect_rot()</code> this time because there would be nearly 100 lines of output (one per post).</p>
+<pre class="r"><code>results &lt;- map_df(posts, detect_rot)</code></pre>
+<p>So, our results tibble has 2319 links from 93 posts, or about 25 links per post.</p>
+<p>Again, we can filter the logical <code>response_success</code> column to see which links weren’t successfully resolved.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<pre class="r"><code>rotten &lt;- filter(results, !response_success) 
+sample_n(select(rotten, link_url), 5)  # random selection</code></pre>
+<pre><code>## # A tibble: 5 x 1
+##   link_url                                                                      
+##   &lt;chr&gt;                                                                         
+## 1 https://giphy.com/gifs/knitting-O1QfB9a2ruGEE?utm_source=media-link&amp;utm_mediu…
+## 2 https://ropenscilabs.github.io/actions_sandbox/understanding-yaml.html        
+## 3 https://www.reddit.com/r/tea/                                                 
+## 4 https://ukgovdatascience.github.io/rap-website/                               
+## 5 https://ropenscilabs.github.io/actions_sandbox/websites-using-pkgdown-bookdow…</code></pre>
+<p>Aha, so there were 61 of these in total, which works out to about 3% being unreachable.</p>
+<p>We can count the reasons for these failures by looking at the status codes.</p>
+<pre class="r"><code>count(rotten, response_code, sort = TRUE)</code></pre>
+<pre><code>## # A tibble: 6 x 2
+##   response_code     n
+##           &lt;dbl&gt; &lt;int&gt;
+## 1           404    52
+## 2           400     4
+## 3           502     2
+## 4           403     1
+## 5           406     1
+## 6           410     1</code></pre>
+<p>You can see most of these status codes are in <a href="https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#4xx_client_errors">the 4xx range</a>, which means ‘client error’. Usually this is a problem with the link you’ve provided, like 404 is ‘not found’, 403 is ‘forbidden’ and 406 is ‘not acceptable’.</p>
+<p>It’s hard to tell whether this level of link rot is good or bad, but remember that these are links that have failed within the past three years. Imagine how bad this might look in another 10 years.</p>
+</div>
+</div>
+<div id="under-the-hood" class="section level1">
+<h1>Under the hood</h1>
+<p>How does the function work?</p>
+<p>You can find the function definition <a href="https://github.com/matt-dray/linkrot/blob/main/R/check.R">in the source code</a>. There’s three steps in <code>detect_rot()</code>, each of which has <a href="https://github.com/matt-dray/linkrot/blob/main/R/utils.R">a helper function</a>:</p>
+<ol style="list-style-type: decimal">
+<li>Check that the provided URL is valid with <code>.validate_page()</code></li>
+<li>Scrape the links from the page with <code>.fetch_links()</code></li>
+<li>Visit each link and check its response code with <code>.check_links()</code></li>
+</ol>
+<p>So, the URL provided by the user is first checked with help from the {httr} package. We <code>GET()</code> the page and then extract the <code>status_code()</code> and check for an <code>http_error()</code>. If all is well (i.e. no error), then we can continue.</p>
+<p>To get the links from the URL, we first scrape the page with <code>xml::read_html()</code> and then use {rvest} functions: <code>html_nodes()</code> to grab all the nodes with links, then <code>html_attr()</code> and <code>html_text()</code> to extract the URLs and link text from each.</p>
+<p>Finally, each of the URLs is visited with <code>GET()</code> and the <code>http_status()</code> is extracted. The final data frame is converted to tibble (for ease of reading) and returned to the user.</p>
+</div>
+<div id="now-what" class="section level1">
+<h1>Now what?</h1>
+<p>I could go back and fix the broken links, but maybe it’s not that big a deal. I don’t have any data on what people click on, so I can’t really tell if it’s worth it.</p>
+<p>But anyway, didn’t I say ‘decay is inevitable’? I can fix things, but more things will break.</p>
+<p>I wasn’t expecting this to get quite so existential.</p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Are you wondering whether to click this?<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>That’s links to other pages on the internet, because links also exist to take you to these footnotes, or point elsewhere internally to this website.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>As an aside, there are some links that {httr} struggled to contact. I wrapped functions internal to <code>detect_rot()</code> inside <code>tryCatch()</code> so any failures appear as <code>NA</code> in the <code>response_code</code> column. The printed output for <code>detect_rot()</code> also displays a <code>!</code> instead of a <code>.</code> when being run. There were 8 links that had this problem.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
