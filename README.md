@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 4 day(s) ago: [Decay is inevitable,
+🆕 The latest post was published 5 day(s) ago: [Decay is inevitable,
 accept {linkrot}?](https://www.rostrum.blog/2021/07/10/linkrot/).
 
 📈 This 2D plot shows posts over time:
@@ -142,4 +142,4 @@ accept {linkrot}?](https://www.rostrum.blog/2021/07/10/linkrot/).
 
 -----
 
-*Updated 2021-07-14*
+*Updated 2021-07-15*
