@@ -1,0 +1,211 @@
+---
+title: "EXPOSED: a Kiwi conspiracy built into R!"
+author: Matt Dray
+date: '2021-07-15'
+slug: dollar-dollar
+categories:
+  - code
+tags:
+  - conspiracy
+  - currency
+  - kiwi
+  - locale
+  - r
+draft: no
+---
+
+
+
+<div class="figure">
+<img src="/post/2021-07-15-dollar-dollar_files/laser-kiwi-dollar.png" alt="A simple silhouette of a kiwi bird. A bright green laser shines from its eye. It is inscribing a bright green dollar symbol with the laser." width="300px"/>
+<p class="caption">
+Kiwi by <a href="https://thenounproject.com/term/kiwi-bird/1761273/">Georgiana Ionescu</a>. Laser embellishment in honour of <a href="https://en.wikipedia.org/wiki/File:Fire_the_Lazer.png">Lucy Gray’s flag</a>.
+</p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>R’s <code>$</code> symbol is part of an international ruse. I wrote a function so you can use your local currency as a dataframe accessor instead.</p>
+</div>
+<div id="pull-the-wool-from-your-eyes" class="section level1">
+<h1>Pull the wool from your eyes</h1>
+<p>You’re an R user, so you’ll know how to access the contents of a quoted column name from a dataframe with square-bracket notation.</p>
+<pre class="r"><code>mtcars[[&quot;cyl&quot;]]</code></pre>
+<pre><code>##  [1] 6 6 4 6 8 6 8 4 4 6 6 8 8 8 8 8 8 4 4 4 4 8 8 8 8 4 4 4 8 6 8 4</code></pre>
+<p>The dollar symbol (<code>$</code>) does the same thing, of course, in the form <code>dataframe$column</code>.</p>
+<pre class="r"><code>mtcars$cyl</code></pre>
+<pre><code>##  [1] 6 6 4 6 8 6 8 4 4 6 6 8 8 8 8 8 8 4 4 4 4 8 8 8 8 4 4 4 8 6 8 4</code></pre>
+<p>But, like basically everything in R, it’s just a function.</p>
+<p>So you can also use it in the ‘traditional way’ by passing the dataframe and column name to it as arguments inside brackets. You’ll need to use backticks though, because function names can’t start with symbols or numbers.</p>
+<pre class="r"><code>`$`(mtcars, cyl)</code></pre>
+<pre><code>##  [1] 6 6 4 6 8 6 8 4 4 6 6 8 8 8 8 8 8 4 4 4 4 8 8 8 8 4 4 4 8 6 8 4</code></pre>
+</div>
+<div id="wake-up-sheeple" class="section level1">
+<h1>Wake up sheeple</h1>
+<p>But why the dollar symbol? Something something ‘compatability with S’.</p>
+<p>Or perhaps a more sinister ploy by <a href="https://en.wikipedia.org/wiki/R_(programming_language)#History">R’s original developers, Ihaka and Gentleman</a>?</p>
+<p>Like a KIWI CONSPIRACY to raise awareness of the NEW ZEALND DOLLAR (NZD) and INFLUNCE currency markets? I’m just asking the question.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>So, I’m giving you the FREEDOM to assign the functionality of the dollar symbol to another currency symbol, like, oh, I don’t know, the pound sterling symbol (<code>£</code>), as a completely random example.</p>
+<pre class="r"><code>`£` &lt;- `$`
+`£`(mtcars, cyl)</code></pre>
+<pre><code>##  [1] 6 6 4 6 8 6 8 4 4 6 6 8 8 8 8 8 8 4 4 4 4 8 8 8 8 4 4 4 8 6 8 4</code></pre>
+<p>You can’t use it in the <code>dataframe$column</code> form, however. That kind of behaviour is reserved for special symbols in R.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<pre class="r"><code>mtcars£cyl</code></pre>
+<pre><code>## Error: &lt;text&gt;:1:7: unexpected input
+## 1: mtcars£
+##           ^</code></pre>
+<p>Shame. R has a little quirk that will make this work though. Sort of.</p>
+<p>You can make a function work like this by putting it between percentage symbols (<code>%</code>). This is called an ‘infix operator’ and you may have seen the {magrittr} pipe (<code>%&gt;%</code>) as one example.</p>
+<pre class="r"><code>`%£%` &lt;- `$`
+mtcars %£% cyl</code></pre>
+<pre><code>##  [1] 6 6 4 6 8 6 8 4 4 6 6 8 8 8 8 8 8 4 4 4 4 8 8 8 8 4 4 4 8 6 8 4</code></pre>
+<p>As a complete coincidence, I live in Great Britain (GB) where we use pound sterling (GBP).</p>
+<p>R also knows where I live (another conspiracy?).</p>
+<pre class="r"><code>Sys.getlocale()</code></pre>
+<pre><code>## [1] &quot;en_GB.UTF-8/en_GB.UTF-8/en_GB.UTF-8/C/en_GB.UTF-8/en_GB.UTF-8&quot;</code></pre>
+<p>This string is R’s way of keeping track of the location-specific information that influences stuff like the language of error messages.</p>
+<p>You can specify different locales for different things. Here’s my locale for ‘monetary’ parameters, for example.</p>
+<pre class="r"><code>Sys.getlocale(category = &quot;LC_MONETARY&quot;)</code></pre>
+<pre><code>## [1] &quot;en_GB.UTF-8&quot;</code></pre>
+<p>That particular value impacts parameters like the punctuation mark used for decimals and, wouldn’t you know it, the symbol used for currency.</p>
+<pre class="r"><code>Sys.localeconv()</code></pre>
+<pre><code>##     decimal_point     thousands_sep          grouping   int_curr_symbol 
+##               &quot;.&quot;                &quot;&quot;                &quot;&quot;            &quot;GBP &quot; 
+##   currency_symbol mon_decimal_point mon_thousands_sep      mon_grouping 
+##               &quot;£&quot;               &quot;.&quot;               &quot;,&quot;        &quot;\003\003&quot; 
+##     positive_sign     negative_sign   int_frac_digits       frac_digits 
+##                &quot;&quot;               &quot;-&quot;               &quot;2&quot;               &quot;2&quot; 
+##     p_cs_precedes    p_sep_by_space     n_cs_precedes    n_sep_by_space 
+##               &quot;1&quot;               &quot;0&quot;               &quot;1&quot;               &quot;0&quot; 
+##       p_sign_posn       n_sign_posn 
+##               &quot;1&quot;               &quot;1&quot;</code></pre>
+</div>
+<div id="mutton-dressed-as-lamb" class="section level1">
+<h1>Mutton dressed as lamb</h1>
+<p>So, that means I can write you a function that gets the currency symbol for your locale and assigns to it the functionality of the dollar symbol, naturally.</p>
+<p>I’ve used a bit of a trick<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> here. You can’t use a string on the left-hand side of the assignment operator, but you can build an R expression as a string and evaluate a parsed version of it (with some help from {rlang} in my example).</p>
+<pre class="r"><code>copy_dollar &lt;- function() {
+  
+  # Get currency symbol for locale
+  currency &lt;- Sys.localeconv()[[&quot;currency_symbol&quot;]]
+  
+  # Report the locale
+  if (currency == &quot;$&quot;) stop(&quot;KIWI CONSPIRATOR!&quot;)
+  locale &lt;- Sys.getlocale(category = &quot;LC_MONETARY&quot;)
+  cat(paste0(&quot;Your monetary locale is &#39;&quot;, locale, &quot;&#39;\n&quot;))
+  
+  # Generate and evaluate strings
+  expr_fn &lt;- paste0(&quot;`&quot;, currency, &quot;` &lt;&lt;- `$`&quot;)
+  expr_in &lt;- paste0(&quot;`%&quot;, currency, &quot;%` &lt;&lt;- `$`&quot;)
+  eval(rlang::parse_expr(expr_fn ))  # function form
+  eval(rlang::parse_expr(expr_in))   # infix form
+  
+  # Report to user
+  cat(
+    paste0(&quot;Try `&quot;, currency, &quot;`(df, col) and df`%&quot;, currency, &quot;%`col\n&quot;)
+  )
+  
+}</code></pre>
+<p>Freeeedooooom.</p>
+<pre class="r"><code>copy_dollar()</code></pre>
+<pre><code>## Your monetary locale is &#39;en_GB.UTF-8&#39;
+## Try `£`(df, col) and df`%£%`col</code></pre>
+<p>We got a couple of messages<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> to confirm our location and let us know how we can use the new currency-symbol functions.</p>
+<p>And we can see these in the global environment.</p>
+<pre class="r"><code>ls()</code></pre>
+<pre><code>## [1] &quot;%£%&quot;         &quot;£&quot;           &quot;copy_dollar&quot;</code></pre>
+<p>And we can prove that GBP equals NZD, at least as a function for accessing columns of a dataframe.</p>
+<pre class="r"><code>all(
+  mtcars %£% cyl == mtcars$cyl,
+  `£`(mtcars, cyl) == `$`(mtcars, cyl)
+)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<p>Okay, works for my location. What about when I’m competing in Japan at the Olympics<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a>? Well, I can change the monetary locale.</p>
+<pre class="r"><code>Sys.setlocale(&quot;LC_MONETARY&quot;, &quot;ja_JP.UTF-8&quot;)</code></pre>
+<pre><code>## [1] &quot;ja_JP.UTF-8&quot;</code></pre>
+<pre class="r"><code>Sys.localeconv()</code></pre>
+<pre><code>##     decimal_point     thousands_sep          grouping   int_curr_symbol 
+##               &quot;.&quot;                &quot;&quot;                &quot;&quot;            &quot;JPY &quot; 
+##   currency_symbol mon_decimal_point mon_thousands_sep      mon_grouping 
+##               &quot;¥&quot;               &quot;.&quot;               &quot;,&quot;        &quot;\003\003&quot; 
+##     positive_sign     negative_sign   int_frac_digits       frac_digits 
+##                &quot;&quot;               &quot;-&quot;               &quot;0&quot;               &quot;0&quot; 
+##     p_cs_precedes    p_sep_by_space     n_cs_precedes    n_sep_by_space 
+##               &quot;1&quot;               &quot;0&quot;               &quot;1&quot;               &quot;0&quot; 
+##       p_sign_posn       n_sign_posn 
+##               &quot;1&quot;               &quot;4&quot;</code></pre>
+<p>So now you can see the yen symbol (<code>¥</code>) as the named currency value for this locale. And you can use the function to activate it for use as a data accessor.</p>
+<pre class="r"><code>copy_dollar()</code></pre>
+<pre><code>## Your monetary locale is &#39;ja_JP.UTF-8&#39;
+## Try `¥`(df, col) and df`%¥%`col</code></pre>
+<pre class="r"><code>`¥`(mtcars, cyl)</code></pre>
+<pre><code>##  [1] 6 6 4 6 8 6 8 4 4 6 6 8 8 8 8 8 8 4 4 4 4 8 8 8 8 4 4 4 8 6 8 4</code></pre>
+<p>Oh, and there’s no no point trying to do this if your locale already uses the dollar for currency. I know you want as many dollars as possible, but don’t be greedy.</p>
+<pre class="r"><code>Sys.setlocale(&quot;LC_MONETARY&quot;, locale = &quot;en_NZ.UTF-8&quot;)</code></pre>
+<pre><code>## [1] &quot;en_NZ.UTF-8&quot;</code></pre>
+<pre class="r"><code>copy_dollar()</code></pre>
+<pre><code>## Error in copy_dollar(): KIWI CONSPIRATOR!</code></pre>
+<p>I’ll reset my settings to the motherland to prevent any accidental borking.</p>
+<pre class="r"><code>Sys.setlocale(locale = &quot;en_GB.UTF-8&quot;)</code></pre>
+<pre><code>## [1] &quot;en_GB.UTF-8/en_GB.UTF-8/en_GB.UTF-8/C/en_GB.UTF-8/en_GB.UTF-8&quot;</code></pre>
+<p>You can never be too careful.</p>
+</div>
+<div id="separate-your-sheep-from-your-goats" class="section level1">
+<h1>Separate your sheep from your goats</h1>
+<p>While you go and adjust your locale in an act of defiance, be on the lookout for the next New Zelander conspiracy.</p>
+<p>I heard that they want to replace the ampersand (<code>&amp;</code>) symbol in R version 5 with <code>NEWZEAL&amp;</code>, so stay on your toes.</p>
+<p>Hang on.</p>
+<p>I think I used sheep-related phrases in all the section titles of this post. And aren’t there like <a href="https://en.wikipedia.org/wiki/Sheep_farming_in_New_Zealand">10 sheep per person in New Zealand</a>?</p>
+<p>They’ve got to me already!</p>
+<hr />
+<details>
+<p><summary>Session info</summary></p>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.0.3 (2020-10-10)
+##  os       macOS Mojave 10.14.6        
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2021-07-15                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date       lib source        
+##  blogdown      0.21    2020-10-11 [1] CRAN (R 4.0.2)
+##  bookdown      0.21    2020-10-13 [1] CRAN (R 4.0.2)
+##  bslib         0.2.4   2021-01-25 [1] CRAN (R 4.0.2)
+##  cli           2.5.0   2021-04-26 [1] CRAN (R 4.0.2)
+##  digest        0.6.27  2020-10-24 [1] CRAN (R 4.0.2)
+##  evaluate      0.14    2019-05-28 [1] CRAN (R 4.0.1)
+##  htmltools     0.5.1.1 2021-01-22 [1] CRAN (R 4.0.2)
+##  jquerylib     0.1.3   2020-12-17 [1] CRAN (R 4.0.2)
+##  jsonlite      1.7.2   2020-12-09 [1] CRAN (R 4.0.2)
+##  knitr         1.32    2021-04-14 [1] CRAN (R 4.0.2)
+##  magrittr      2.0.1   2020-11-17 [1] CRAN (R 4.0.2)
+##  R6            2.5.0   2020-10-28 [1] CRAN (R 4.0.2)
+##  rlang         0.4.11  2021-04-30 [1] CRAN (R 4.0.2)
+##  rmarkdown     2.7     2021-02-19 [1] CRAN (R 4.0.2)
+##  sass          0.3.1   2021-01-24 [1] CRAN (R 4.0.2)
+##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.0.2)
+##  stringi       1.6.1   2021-05-10 [1] CRAN (R 4.0.2)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.0.2)
+##  withr         2.4.2   2021-04-18 [1] CRAN (R 4.0.2)
+##  xfun          0.22    2021-03-11 [1] CRAN (R 4.0.2)
+##  yaml          2.2.1   2020-02-01 [1] CRAN (R 4.0.2)
+## 
+## [1] /Users/matt.dray/Library/R/4.0/library
+## [2] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
+</details>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>With apologies to all the lovely people of New Zealand.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>Yep, you could probably change this in the R source code and recompile it, but… effort.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>‘Illusions, Michael.’<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>Yes, I’m aware I’ve written the messages in English only. I can only break down one international barrier at once, pal.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>I heard that code golf is one of the new sports on display this year?<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
