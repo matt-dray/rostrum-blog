@@ -25,13 +25,14 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 94 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 95 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 5 day(s) ago: [Decay is inevitable,
-accept {linkrot}?](https://www.rostrum.blog/2021/07/10/linkrot/).
+🆕 The latest post was published 1 day(s) ago: [EXPOSED: a Kiwi
+conspiracy built into
+R\!](https://www.rostrum.blog/2021/07/15/dollar-dollar/).
 
 📈 This 2D plot shows posts over time:
 
@@ -43,6 +44,7 @@ accept {linkrot}?](https://www.rostrum.blog/2021/07/10/linkrot/).
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|     95 | 2021-07-15 | [EXPOSED: a Kiwi conspiracy built into R\!](https://www.rostrum.blog/2021/07/15/dollar-dollar/)                           |
 |     94 | 2021-07-10 | [Decay is inevitable, accept {linkrot}?](https://www.rostrum.blog/2021/07/10/linkrot/)                                    |
 |     93 | 2021-07-05 | [\#RecreationThursday: a LeWitt Shiny app](https://www.rostrum.blog/2021/07/05/recreate-lewitt/)                          |
 |     92 | 2021-06-28 | [Very simple pixel art in R](https://www.rostrum.blog/2021/06/28/pixel-art/)                                              |
@@ -142,4 +144,4 @@ accept {linkrot}?](https://www.rostrum.blog/2021/07/10/linkrot/).
 
 -----
 
-*Updated 2021-07-15*
+*Updated 2021-07-16*
