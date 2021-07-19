@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 3 day(s) ago: [EXPOSED: a Kiwi
+🆕 The latest post was published 4 day(s) ago: [EXPOSED: a Kiwi
 conspiracy built into
 R\!](https://www.rostrum.blog/2021/07/15/dollar-dollar/).
 
@@ -144,4 +144,4 @@ R\!](https://www.rostrum.blog/2021/07/15/dollar-dollar/).
 
 -----
 
-*Updated 2021-07-18*
+*Updated 2021-07-19*
