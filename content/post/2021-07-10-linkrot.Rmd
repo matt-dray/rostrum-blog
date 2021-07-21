@@ -26,11 +26,11 @@ library(linkrot)
 
 # tl;dr
 
-I wrote a function to checkweb pages for [link rot](https://en.wikipedia.org/wiki/Link_rot) and put it in [the R package {linkrot}](https://github.com/matt-dray/linkrot).
+I wrote a little function to check web pages for [link rot](https://en.wikipedia.org/wiki/Link_rot) and put it in [the tiny R package {linkrot}](https://github.com/matt-dray/linkrot) in case you want to use or improve it.
 
 # Page not found
 
-You've clicked a link before and been taken somewhere you weren't expecting. Sometimes it's because [you've been rickrolled](https://www.youtube.com/watch?v=dQw4w9WgXcQ),[^rick] sure, but content on the internet is constantly being moved or removed and links break all the time.
+You've clicked a link before and been taken somewhere you weren't expecting. Sometimes it's because [you've been rickrolled](https://pudding.cool/2021/07/rickrolling/),[^rick] sure, but content on the internet is constantly being moved or removed and links break all the time.
 
 A hyperlink that no longer resolves can be considered to have 'rotted'. As time marches on, the 'rottenness' of the internet increases. This can be frustrating.
 
@@ -40,7 +40,7 @@ This blog is getting on for a hundred posts over three years. It would not be a 
 
 So, basically I want to visit every link in every post on this blog and see if it's still working.[^link]
 
-I've written the function `detect_rot()` to do this for any given web page and I've put it in [the {linkrot} package on GitHub](https://en.wikipedia.org/wiki/Link_rot). To install:
+I've written the function `detect_rot()` to do this for any given web page and I've put it in [the {linkrot} package on GitHub](https://github.com/matt-dray/linkrot). To install:
 
 ```{r install, eval=FALSE}
 install.packages("remotes")
@@ -50,7 +50,7 @@ library(linkrot)
 
 In short, the `detect_rot()` function takes the URL of a web page and returns a tibble with details of each link from that page and whether it can be reached.
 
-I've basically built it for my own amusement, so there's no guarantees.
+I've basically built it for my own amusement, so there's no guarantees. Feel free to suggest or amend things in [the GitHub repo](https://github.com/matt-dray/linkrot).
 
 ## Check one post
 
@@ -61,7 +61,7 @@ trek_url <- "https://www.rostrum.blog/2018/04/14/r-trek-exploring-stardates/"
 trek_rot <- detect_rot(trek_url)
 ```
 
-It can take a short while for the function to visit every link. To let us know it's working, the URL is printed to the console and then a dot is printed for every link that's been successfully visited (a bit like a progress bar).
+It can take a short while for the function to visit every link. To let us know it's working, the URL is printed to the console and then a period (`.`) is printed for every link that's been successfully visited (a bit like a progress bar).
 
 We're returned an object with a bunch of information.
 
@@ -71,7 +71,7 @@ str(trek_rot)
 
 So, it's a tibble with six columns and a row for each link on that page that's been checked (`r nrow(trek_rot)` in this example). Basically, the output tells us the URL and text of each link and also whether the page was reachable or not. 
 
-The tibble includes a special standardised three-digit ['status code'](https://en.wikipedia.org/wiki/List_of_HTTP_status_codes) in the `response_code` column. These indicate whether contact was successful, with a specific reason. For example, 200 represents a typical success ('OK'), but you may be familiar with 404 ('not found') if you've visited a broken link before.
+The tibble includes a special officially-standardised three-digit ['status code'](https://en.wikipedia.org/wiki/List_of_HTTP_status_codes) in the `response_code` column. These indicate whether contact was successful, with a specific reason. For example, 200 represents a typical success ('OK'), but you may be familiar with 404 ('not found') if you've visited a broken link before.
 
 We can extract any broken links using the logical `response_success` column.
 
@@ -79,15 +79,19 @@ We can extract any broken links using the logical `response_success` column.
 trek_rot[!trek_rot$response_success, c(4, 5, 2)]
 ```
 
-So, at time of writing, that post has one broken link: an {rvest} package vignette for SelectorGadget that's [no longer active on the CRAN site](). It has [status code 404 ('client error')](https://en.wikipedia.org/wiki/HTTP_404), which basically means the thing couldn't be found.
+So, at time of writing, that post has one broken link: an {rvest} package vignette for SelectorGadget that's no longer active on the CRAN site. It has [status code 404 ('client error')](https://en.wikipedia.org/wiki/HTTP_404), which basically means the thing couldn't be found.
 
 We can confirm this by [visiting the URL](https://cran.r-project.org/web/packages/rvest/vignettes/selectorgadget.html), but you could also use [the {webshot} package](https://wch.github.io/webshot/articles/intro.html) to go and retrieve an screenshot of the page.
 
-```{r webshot, fig.alt="A screenshot of the simple 404 page for the CRAN website, which can be seen when trying to access a URL that has no content. It says 'object not found' and that 'the requested URL was not found on this server'."}
+```{r webshot, eval=FALSE}
 library(webshot)
 cran_404 <- trek_rot$link_url[!trek_rot$response_success]
 webshot(cran_404, vheight = 250)
 ```
+
+<div class="figure">
+<img src="/post/2021-07-10-linkrot_files/webshot-404.png" alt="A screenshot of the simple 404 page for the CRAN website, which can be seen when trying to access a URL that has no content. It says 'object not found' and that 'the requested URL was not found on this server." width="100%"/>
+</div>
 
 So that's CRAN's 404 page to tell us that the page couldn't be fetched.
 
@@ -95,7 +99,7 @@ So that's CRAN's 404 page to tell us that the page couldn't be fetched.
 
 Now we know how it works for one page, we can apply the function over every post of this blog and see how many links have rotted. 
 
-First we need all the post URLs, which luckily are all available from [the blog's homepage](https://www.rostrum.blog). The links returned are internal (like `2021/06/28/pixel-art/`), so we need to add on the `https://www.rostrum.blog/` bit). We also need to filter out any links that aren't posts (like the 'About' page).
+First we need all the post URLs, which are all available from [the blog's homepage](https://www.rostrum.blog). The links returned are internal (like `2021/06/28/pixel-art/`), so we need to add on the `https://www.rostrum.blog/` bit. We also need to filter out any links that aren't posts (like the 'About' page).
 
 ```{r post-list, message=FALSE}
 # Load packages
@@ -124,9 +128,9 @@ Now we can use {purrr} to iterate the `detect_rot()` function over the pages. By
 results <- map_df(posts, detect_rot)
 ```
 
-So, this results tibble has `r nrow(results)` links from `r length(posts)` posts, or about `r round(nrow(results) / length(posts), 0)` links per post.
+So, this results tibble has `r nrow(results)` links from `r length(posts)` posts,[^reknit] or about `r round(nrow(results) / length(posts), 0)` links per post.
 
-Again, we can filter the logical `response_success` column to see which links weren't successfully resolved.[^na]
+Again, we can filter the logical `response_success` column to see which links weren't successfully resolved.
 
 ```{r failures}
 rotten <- filter(results, !response_success)
@@ -143,13 +147,13 @@ count(rotten, response_code, sort = TRUE)
 
 You can see most of these status codes are in [the 4xx range](https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#4xx_client_errors), which is the group of codes that mean 'client error'. Usually this is a problem with the link you've provided, like 404 is 'not found', 403 is 'forbidden' and 406 is 'not acceptable'.
 
-It's hard to tell whether this level of link rot is good or bad, but remember that these are links that have failed within the past three years. Imagine how bad this might look in another 10 years.
+It's hard to tell whether this level of link rot is good or bad, but remember that these are links that have failed within the past three years. Imagine how bad this might look in another 10 years. By comparison, a quarter of links on the _New York Times_ website [were completely inaccessible](https://www.cjr.org/analysis/linkrot-content-drift-new-york-times.php), stretching back to 1996.
 
 I'd be interested to know whether this is comparable to your blog or website.
 
 # Surveying for rot
 
-We've seen it in action, but how does the function work? I'm not claiming the approach is optimal, but it obviously worked for my needs.
+We've seen it in action, but how does the function work? I'm not claiming the approach is optimal, but it obviously worked for my needs. You'll probably find the approach naive if you have any experience in dealing with HTTP requests from R.
 
 ## Validate, fetch, check
 
@@ -169,9 +173,9 @@ Finally, each of the URLs is visited with `GET()` and the `http_status()` is ext
 
 Of course, it's possible that `GET()` will fail to reach a page for reasons other than it being missing. Sometimes there can be a momentary blip, but `detect_rot()` is simple and never retries a link.
 
-Additionally, there are some links that {httr} struggles to contact. I wrapped functions internal to `detect_rot()` inside `tryCatch()` so any failures appear as `NA` in the `response_code` column. The printed output for `detect_rot()` also displays a `!` instead of a `.` when being run. For example, there were `r nrow(filter(results, is.na(response_code)))` links that had this problem for this blog.
+Additionally, there are some links that {httr} struggles to contact. I wrapped functions internal to `detect_rot()` inside `tryCatch()` so any failures appear as `NA` in the `response_code` column. The printed output for `detect_rot()` also displays an exclamation point (`!`) instead of a period (`.`) when being run. For example, there were `r nrow(filter(results, is.na(response_code)))` links that had this problem for this blog.
 
-I welcome any thoughts or suggestions, particularly around testing. I'd like to use this package as a way to learn proper HTTP testing and have found [rOpenSci's _HTTP Testing in R_ book](https://books.ropensci.org/http-testing/index.html) useful so far.
+I welcome any thoughts or suggestions, particularly around testing. I'd like to use this package as a way to learn proper HTTP testing and have found [rOpenSci's _HTTP Testing in R_ book](https://books.ropensci.org/http-testing/index.html) useful so far. Eventually I might convert `detect_rot()` to use [the {httr2} package](https://httr2.r-lib.org/) when it's released.
 
 # Now what?
 
@@ -179,7 +183,9 @@ I could go back and fix the broken links, but maybe it's not that big a deal. I 
 
 But anyway, didn't I say 'decay is inevitable'? I can fix things, but more things will break.
 
-I wasn't expecting this to get quite so existential.
+I wasn't expecting this to get quite so existential.[^spoiler]
 
-[^rick]: Are you wondering whether to click this?
+[^rick]: Don't worry, you can see from the URL that this doesn't go to the YouTube video! it goes to the excellent pudding.cool site, which has some great analysis of the rise and rise (and rise) of Rickrolling.
 [^link]: That's links to other pages on the internet, because links also exist to take you to these footnotes, or point elsewhere internally to this website.
+[^reknit]: This number may be larger than 93 (the number of posts before this one) if I've re-knitted this post after its publication.
+[^spoiler]: Actually yes, dear reader, he was; he really was.

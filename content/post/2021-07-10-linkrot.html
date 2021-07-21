@@ -24,30 +24,30 @@ draft: no
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>I wrote a function to checkweb pages for <a href="https://en.wikipedia.org/wiki/Link_rot">link rot</a> and put it in <a href="https://github.com/matt-dray/linkrot">the R package {linkrot}</a>.</p>
+<p>I wrote a little function to check web pages for <a href="https://en.wikipedia.org/wiki/Link_rot">link rot</a> and put it in <a href="https://github.com/matt-dray/linkrot">the tiny R package {linkrot}</a> in case you want to use or improve it.</p>
 </div>
 <div id="page-not-found" class="section level1">
 <h1>Page not found</h1>
-<p>You’ve clicked a link before and been taken somewhere you weren’t expecting. Sometimes it’s because <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">you’ve been rickrolled</a>,<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> sure, but content on the internet is constantly being moved or removed and links break all the time.</p>
+<p>You’ve clicked a link before and been taken somewhere you weren’t expecting. Sometimes it’s because <a href="https://pudding.cool/2021/07/rickrolling/">you’ve been rickrolled</a>,<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> sure, but content on the internet is constantly being moved or removed and links break all the time.</p>
 <p>A hyperlink that no longer resolves can be considered to have ‘rotted’. As time marches on, the ‘rottenness’ of the internet increases. This can be frustrating.</p>
 <p>This blog is getting on for a hundred posts over three years. It would not be a surprise if link rot has taken hold. How big is the problem?</p>
 </div>
 <div id="rising-damp" class="section level1">
 <h1>Rising damp</h1>
 <p>So, basically I want to visit every link in every post on this blog and see if it’s still working.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
-<p>I’ve written the function <code>detect_rot()</code> to do this for any given web page and I’ve put it in <a href="https://en.wikipedia.org/wiki/Link_rot">the {linkrot} package on GitHub</a>. To install:</p>
+<p>I’ve written the function <code>detect_rot()</code> to do this for any given web page and I’ve put it in <a href="https://github.com/matt-dray/linkrot">the {linkrot} package on GitHub</a>. To install:</p>
 <pre class="r"><code>install.packages(&quot;remotes&quot;)
 remotes::install_github(&quot;matt-dray/linkrot&quot;)
 library(linkrot)</code></pre>
 <p>In short, the <code>detect_rot()</code> function takes the URL of a web page and returns a tibble with details of each link from that page and whether it can be reached.</p>
-<p>I’ve basically built it for my own amusement, so there’s no guarantees.</p>
+<p>I’ve basically built it for my own amusement, so there’s no guarantees. Feel free to suggest or amend things in <a href="https://github.com/matt-dray/linkrot">the GitHub repo</a>.</p>
 <div id="check-one-post" class="section level2">
 <h2>Check one post</h2>
 <p>Let’s feed in the first post on this blog, from April 2018:</p>
 <pre class="r"><code>trek_url &lt;- &quot;https://www.rostrum.blog/2018/04/14/r-trek-exploring-stardates/&quot;
 trek_rot &lt;- detect_rot(trek_url)</code></pre>
 <pre><code>## Checking &lt;https://www.rostrum.blog/2018/04/14/r-trek-exploring-stardates/&gt; ..............................</code></pre>
-<p>It can take a short while for the function to visit every link. To let us know it’s working, the URL is printed to the console and then a dot is printed for every link that’s been successfully visited (a bit like a progress bar).</p>
+<p>It can take a short while for the function to visit every link. To let us know it’s working, the URL is printed to the console and then a period (<code>.</code>) is printed for every link that’s been successfully visited (a bit like a progress bar).</p>
 <p>We’re returned an object with a bunch of information.</p>
 <pre class="r"><code>str(trek_rot)</code></pre>
 <pre><code>## tibble [30 × 6] (S3: tbl_df/tbl/data.frame)
@@ -58,25 +58,27 @@ trek_rot &lt;- detect_rot(trek_url)</code></pre>
 ##  $ response_category: chr [1:30] &quot;Success&quot; &quot;Success&quot; &quot;Success&quot; &quot;Success&quot; ...
 ##  $ response_success : logi [1:30] TRUE TRUE TRUE TRUE TRUE TRUE ...</code></pre>
 <p>So, it’s a tibble with six columns and a row for each link on that page that’s been checked (30 in this example). Basically, the output tells us the URL and text of each link and also whether the page was reachable or not.</p>
-<p>The tibble includes a special standardised three-digit <a href="https://en.wikipedia.org/wiki/List_of_HTTP_status_codes">‘status code’</a> in the <code>response_code</code> column. These indicate whether contact was successful, with a specific reason. For example, 200 represents a typical success (‘OK’), but you may be familiar with 404 (‘not found’) if you’ve visited a broken link before.</p>
+<p>The tibble includes a special officially-standardised three-digit <a href="https://en.wikipedia.org/wiki/List_of_HTTP_status_codes">‘status code’</a> in the <code>response_code</code> column. These indicate whether contact was successful, with a specific reason. For example, 200 represents a typical success (‘OK’), but you may be familiar with 404 (‘not found’) if you’ve visited a broken link before.</p>
 <p>We can extract any broken links using the logical <code>response_success</code> column.</p>
 <pre class="r"><code>trek_rot[!trek_rot$response_success, c(4, 5, 2)]</code></pre>
 <pre><code>## # A tibble: 1 x 3
 ##   response_code response_category link_url                                      
 ##           &lt;dbl&gt; &lt;chr&gt;             &lt;chr&gt;                                         
 ## 1           404 Client error      https://cran.r-project.org/web/packages/rvest…</code></pre>
-<p>So, at time of writing, that post has one broken link: an {rvest} package vignette for SelectorGadget that’s <a href="">no longer active on the CRAN site</a>. It has <a href="https://en.wikipedia.org/wiki/HTTP_404">status code 404 (‘client error’)</a>, which basically means the thing couldn’t be found.</p>
+<p>So, at time of writing, that post has one broken link: an {rvest} package vignette for SelectorGadget that’s no longer active on the CRAN site. It has <a href="https://en.wikipedia.org/wiki/HTTP_404">status code 404 (‘client error’)</a>, which basically means the thing couldn’t be found.</p>
 <p>We can confirm this by <a href="https://cran.r-project.org/web/packages/rvest/vignettes/selectorgadget.html">visiting the URL</a>, but you could also use <a href="https://wch.github.io/webshot/articles/intro.html">the {webshot} package</a> to go and retrieve an screenshot of the page.</p>
 <pre class="r"><code>library(webshot)
 cran_404 &lt;- trek_rot$link_url[!trek_rot$response_success]
 webshot(cran_404, vheight = 250)</code></pre>
-<p><img src="/post/2021-07-10-linkrot_files/figure-html/webshot-1.png" title="A screenshot of the simple 404 page for the CRAN website, which can be seen when trying to access a URL that has no content. It says 'object not found' and that 'the requested URL was not found on this server'." alt="A screenshot of the simple 404 page for the CRAN website, which can be seen when trying to access a URL that has no content. It says 'object not found' and that 'the requested URL was not found on this server'." width="672" /></p>
+<div class="figure">
+<p><img src="/post/2021-07-10-linkrot_files/webshot-404.png" alt="A screenshot of the simple 404 page for the CRAN website, which can be seen when trying to access a URL that has no content. It says 'object not found' and that 'the requested URL was not found on this server." width="100%"/></p>
+</div>
 <p>So that’s CRAN’s 404 page to tell us that the page couldn’t be fetched.</p>
 </div>
 <div id="check-whole-blog" class="section level2">
 <h2>Check whole blog</h2>
 <p>Now we know how it works for one page, we can apply the function over every post of this blog and see how many links have rotted.</p>
-<p>First we need all the post URLs, which luckily are all available from <a href="https://www.rostrum.blog">the blog’s homepage</a>. The links returned are internal (like <code>2021/06/28/pixel-art/</code>), so we need to add on the <code>https://www.rostrum.blog/</code> bit). We also need to filter out any links that aren’t posts (like the ‘About’ page).</p>
+<p>First we need all the post URLs, which are all available from <a href="https://www.rostrum.blog">the blog’s homepage</a>. The links returned are internal (like <code>2021/06/28/pixel-art/</code>), so we need to add on the <code>https://www.rostrum.blog/</code> bit. We also need to filter out any links that aren’t posts (like the ‘About’ page).</p>
 <pre class="r"><code># Load packages
 library(xml2)
 library(rvest)
@@ -103,8 +105,8 @@ tail(posts)  # preview</code></pre>
 ## [6] &quot;https://www.rostrum.blog/2018/04/14/r-trek-exploring-stardates/&quot;</code></pre>
 <p>Now we can use {purrr} to iterate the <code>detect_rot()</code> function over the pages. By using <code>map_df()</code> we can get a data frame as output rather than a list. I’ve hidden the printed output from <code>detect_rot()</code> this time because there would be nearly 100 lines of output (one per post).</p>
 <pre class="r"><code>results &lt;- map_df(posts, detect_rot)</code></pre>
-<p>So, this results tibble has 2331 links from 94 posts, or about 25 links per post.</p>
-<p>Again, we can filter the logical <code>response_success</code> column to see which links weren’t successfully resolved.[^na]</p>
+<p>So, this results tibble has 2331 links from 95 posts,<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> or about 25 links per post.</p>
+<p>Again, we can filter the logical <code>response_success</code> column to see which links weren’t successfully resolved.</p>
 <pre class="r"><code>rotten &lt;- filter(results, !response_success)
 nrow(rotten)</code></pre>
 <pre><code>## [1] 61</code></pre>
@@ -121,13 +123,13 @@ nrow(rotten)</code></pre>
 ## 5           410     1
 ## 6           502     1</code></pre>
 <p>You can see most of these status codes are in <a href="https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#4xx_client_errors">the 4xx range</a>, which is the group of codes that mean ‘client error’. Usually this is a problem with the link you’ve provided, like 404 is ‘not found’, 403 is ‘forbidden’ and 406 is ‘not acceptable’.</p>
-<p>It’s hard to tell whether this level of link rot is good or bad, but remember that these are links that have failed within the past three years. Imagine how bad this might look in another 10 years.</p>
+<p>It’s hard to tell whether this level of link rot is good or bad, but remember that these are links that have failed within the past three years. Imagine how bad this might look in another 10 years. By comparison, a quarter of links on the <em>New York Times</em> website <a href="https://www.cjr.org/analysis/linkrot-content-drift-new-york-times.php">were completely inaccessible</a>, stretching back to 1996.</p>
 <p>I’d be interested to know whether this is comparable to your blog or website.</p>
 </div>
 </div>
 <div id="surveying-for-rot" class="section level1">
 <h1>Surveying for rot</h1>
-<p>We’ve seen it in action, but how does the function work? I’m not claiming the approach is optimal, but it obviously worked for my needs.</p>
+<p>We’ve seen it in action, but how does the function work? I’m not claiming the approach is optimal, but it obviously worked for my needs. You’ll probably find the approach naive if you have any experience in dealing with HTTP requests from R.</p>
 <div id="validate-fetch-check" class="section level2">
 <h2>Validate, fetch, check</h2>
 <p>You can find the function definition for <code>detect_rot()</code> <a href="https://github.com/matt-dray/linkrot/blob/main/R/check.R">in the {linkrot} source code</a>. It has three underlying steps, each of which has <a href="https://github.com/matt-dray/linkrot/blob/main/R/utils.R">a helper function</a>:</p>
@@ -143,20 +145,22 @@ nrow(rotten)</code></pre>
 <div id="limitations" class="section level2">
 <h2>Limitations</h2>
 <p>Of course, it’s possible that <code>GET()</code> will fail to reach a page for reasons other than it being missing. Sometimes there can be a momentary blip, but <code>detect_rot()</code> is simple and never retries a link.</p>
-<p>Additionally, there are some links that {httr} struggles to contact. I wrapped functions internal to <code>detect_rot()</code> inside <code>tryCatch()</code> so any failures appear as <code>NA</code> in the <code>response_code</code> column. The printed output for <code>detect_rot()</code> also displays a <code>!</code> instead of a <code>.</code> when being run. For example, there were 8 links that had this problem for this blog.</p>
-<p>I welcome any thoughts or suggestions, particularly around testing. I’d like to use this package as a way to learn proper HTTP testing and have found <a href="https://books.ropensci.org/http-testing/index.html">rOpenSci’s <em>HTTP Testing in R</em> book</a> useful so far.</p>
+<p>Additionally, there are some links that {httr} struggles to contact. I wrapped functions internal to <code>detect_rot()</code> inside <code>tryCatch()</code> so any failures appear as <code>NA</code> in the <code>response_code</code> column. The printed output for <code>detect_rot()</code> also displays an exclamation point (<code>!</code>) instead of a period (<code>.</code>) when being run. For example, there were 8 links that had this problem for this blog.</p>
+<p>I welcome any thoughts or suggestions, particularly around testing. I’d like to use this package as a way to learn proper HTTP testing and have found <a href="https://books.ropensci.org/http-testing/index.html">rOpenSci’s <em>HTTP Testing in R</em> book</a> useful so far. Eventually I might convert <code>detect_rot()</code> to use <a href="https://httr2.r-lib.org/">the {httr2} package</a> when it’s released.</p>
 </div>
 </div>
 <div id="now-what" class="section level1">
 <h1>Now what?</h1>
 <p>I could go back and fix the broken links, but maybe it’s not that big a deal. I don’t have any data on what people click on, so I can’t really tell if it’s worth it.</p>
 <p>But anyway, didn’t I say ‘decay is inevitable’? I can fix things, but more things will break.</p>
-<p>I wasn’t expecting this to get quite so existential.</p>
+<p>I wasn’t expecting this to get quite so existential.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
 </div>
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>Are you wondering whether to click this?<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn1"><p>Don’t worry, you can see from the URL that this doesn’t go to the YouTube video! it goes to the excellent pudding.cool site, which has some great analysis of the rise and rise (and rise) of Rickrolling.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
 <li id="fn2"><p>That’s links to other pages on the internet, because links also exist to take you to these footnotes, or point elsewhere internally to this website.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>This number may be larger than 93 (the number of posts before this one) if I’ve re-knitted this post after its publication.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>Actually yes, dear reader, he was; he really was.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
