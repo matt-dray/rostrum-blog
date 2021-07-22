@@ -22,7 +22,7 @@ draft: no
 
 # tl;dr 
 
-R's `$` symbol is part of an international ruse. I wrote a function so you can use your local currency as a dataframe accessor instead.
+R's `$` data accessor symbol is part of an international ruse. I wrote a function so you can use your local currency symbol instead.
 
 # Pull the wool from your eyes
 
@@ -40,7 +40,7 @@ mtcars$cyl
 
 But, like basically everything in R, it's just a function. 
 
-So you can also use it in the 'traditional way' by passing the dataframe and column name to it as arguments inside brackets. You'll need to use backticks though, because function names can't start with symbols or numbers.
+So you can also use it in the 'traditional way' by passing the dataframe and column name to it as arguments inside brackets. You'll need to use backticks (```) though, because function names can't start with symbols or numbers.
 
 ```{r usd-fn}
 `$`(mtcars, cyl)
@@ -102,8 +102,6 @@ Sys.localeconv()
 
 So, that means I can write you a function that gets the currency symbol for your locale and assigns to it the functionality of the dollar symbol, naturally.
 
-I've used a bit of a trick[^trick] here. You can't use a string on the left-hand side of the assignment operator, but you can build an R expression as a string and evaluate a parsed version of it (with some help from {rlang} in my example).
-
 ```{r fn-def}
 copy_dollar <- function() {
   
@@ -118,18 +116,22 @@ copy_dollar <- function() {
   # Generate and evaluate strings
   expr_fn <- paste0("`", currency, "` <<- `$`")
   expr_in <- paste0("`%", currency, "%` <<- `$`")
-  eval(rlang::parse_expr(expr_fn ))  # function form
-  eval(rlang::parse_expr(expr_in))   # infix form
+  eval(rlang::parse_expr(expr_fn))  # function form
+  eval(rlang::parse_expr(expr_in))  # infix form
   
   # Report to user
   cat(
-    paste0("Try `", currency, "`(df, col) and df`%", currency, "%`col\n")
+    paste0("Try `", currency, "`(df, col) and df%", currency, "%col\n")
   )
   
 }
 ```
 
-Freeeedooooom.
+I used a bit of a trick[^trick] there. You can't use a string on the left-hand side of the assignment operator, but you can build an R expression as a string and `eval()`uate a parsed version of it (with some help from {rlang} in my example).
+
+I also used a special double-headed assignment arrow, `<<-`, that makes the objects available in the global environment.[^assign] That means we can use the new functions outside the scope of the `copy_dollar()` function.
+
+And now: freeeedooooom.
 
 ```{r run-fn-gb}
 copy_dollar()
@@ -147,12 +149,12 @@ And we can prove that GBP equals NZD, at least as a function for accessing colum
 
 ```{r gbp-proof}
 all(
-  mtcars %£% cyl == mtcars$cyl,
+  mtcars%£%cyl == mtcars$cyl,
   `£`(mtcars, cyl) == `$`(mtcars, cyl)
 )
 ```
 
-Okay, works for my location. What about when I'm competing in Japan at the Olympics[^golf]? Well, I can change the monetary locale.
+Okay, works for my location. What about when I'm competing in Japan at the Olympics?[^golf] Well, I can change the monetary locale.
 
 ```{r set-locale-jp}
 Sys.setlocale("LC_MONETARY", "ja_JP.UTF-8")
@@ -179,7 +181,7 @@ I'll reset my settings to the motherland to prevent any accidental borking.
 Sys.setlocale(locale = "en_GB.UTF-8")
 ```
 
-Nothing ever goes wrong in Britain.
+Nothing ever goes wrong in Britain, after all.
 
 # Separate your sheep from your goats
 
@@ -205,3 +207,4 @@ sessioninfo::session_info()
 [^recompile]: Yep, you could probably change this in the R source code and recompile it, but... effort.
 [^golf]: I heard that [code golf](https://en.wikipedia.org/wiki/Code_golf) is one of the new sports on display this year?
 [^eng]: Yes, I'm aware I've written the messages in English only. I can only break down one international barrier at once, pal.
+[^assign]: In other words, assign like the single-headed 'gets' operator, `<-`, but _more_ so! You may know that [I have strong feelings about assigment operators](https://www.rostrum.blog/2021/03/13/assign/), lol.

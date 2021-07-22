@@ -14,7 +14,6 @@ tags:
 draft: no
 ---
 
-<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
 
 
 <div class="figure">
@@ -25,7 +24,7 @@ Kiwi by <a href="https://thenounproject.com/term/kiwi-bird/1761273/">Georgiana I
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>R’s <code>$</code> symbol is part of an international ruse. I wrote a function so you can use your local currency as a dataframe accessor instead.</p>
+<p>R’s <code>$</code> data accessor symbol is part of an international ruse. I wrote a function so you can use your local currency symbol instead.</p>
 </div>
 <div id="pull-the-wool-from-your-eyes" class="section level1">
 <h1>Pull the wool from your eyes</h1>
@@ -36,7 +35,7 @@ Kiwi by <a href="https://thenounproject.com/term/kiwi-bird/1761273/">Georgiana I
 <pre class="r"><code>mtcars$cyl</code></pre>
 <pre><code>##  [1] 6 6 4 6 8 6 8 4 4 6 6 8 8 8 8 8 8 4 4 4 4 8 8 8 8 4 4 4 8 6 8 4</code></pre>
 <p>But, like basically everything in R, it’s just a function.</p>
-<p>So you can also use it in the ‘traditional way’ by passing the dataframe and column name to it as arguments inside brackets. You’ll need to use backticks though, because function names can’t start with symbols or numbers.</p>
+<p>So you can also use it in the ‘traditional way’ by passing the dataframe and column name to it as arguments inside brackets. You’ll need to use backticks (```) though, because function names can’t start with symbols or numbers.</p>
 <pre class="r"><code>`$`(mtcars, cyl)</code></pre>
 <pre><code>##  [1] 6 6 4 6 8 6 8 4 4 6 6 8 8 8 8 8 8 4 4 4 4 8 8 8 8 4 4 4 8 6 8 4</code></pre>
 </div>
@@ -83,7 +82,6 @@ mtcars %£% cyl</code></pre>
 <div id="mutton-dressed-as-lamb" class="section level1">
 <h1>Mutton dressed as lamb</h1>
 <p>So, that means I can write you a function that gets the currency symbol for your locale and assigns to it the functionality of the dollar symbol, naturally.</p>
-<p>I’ve used a bit of a trick<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> here. You can’t use a string on the left-hand side of the assignment operator, but you can build an R expression as a string and evaluate a parsed version of it (with some help from {rlang} in my example).</p>
 <pre class="r"><code>copy_dollar &lt;- function() {
   
   # Get currency symbol for locale
@@ -97,30 +95,32 @@ mtcars %£% cyl</code></pre>
   # Generate and evaluate strings
   expr_fn &lt;- paste0(&quot;`&quot;, currency, &quot;` &lt;&lt;- `$`&quot;)
   expr_in &lt;- paste0(&quot;`%&quot;, currency, &quot;%` &lt;&lt;- `$`&quot;)
-  eval(rlang::parse_expr(expr_fn ))  # function form
-  eval(rlang::parse_expr(expr_in))   # infix form
+  eval(rlang::parse_expr(expr_fn))  # function form
+  eval(rlang::parse_expr(expr_in))  # infix form
   
   # Report to user
   cat(
-    paste0(&quot;Try `&quot;, currency, &quot;`(df, col) and df`%&quot;, currency, &quot;%`col\n&quot;)
+    paste0(&quot;Try `&quot;, currency, &quot;`(df, col) and df%&quot;, currency, &quot;%col\n&quot;)
   )
   
 }</code></pre>
-<p>Freeeedooooom.</p>
+<p>I used a bit of a trick<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> there. You can’t use a string on the left-hand side of the assignment operator, but you can build an R expression as a string and <code>eval()</code>uate a parsed version of it (with some help from {rlang} in my example).</p>
+<p>I also used a special double-headed assignment arrow, <code>&lt;&lt;-</code>, that makes the objects available in the global environment.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> That means we can use the new functions outside the scope of the <code>copy_dollar()</code> function.</p>
+<p>And now: freeeedooooom.</p>
 <pre class="r"><code>copy_dollar()</code></pre>
 <pre><code>## Your monetary locale is &#39;en_GB.UTF-8&#39;
-## Try `£`(df, col) and df`%£%`col</code></pre>
-<p>We got a couple of messages<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> to confirm our location and let us know how we can use the new currency-symbol functions.</p>
+## Try `£`(df, col) and df%£%col</code></pre>
+<p>We got a couple of messages<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> to confirm our location and let us know how we can use the new currency-symbol functions.</p>
 <p>And we can see these in the global environment.</p>
 <pre class="r"><code>ls()</code></pre>
 <pre><code>## [1] &quot;%£%&quot;         &quot;£&quot;           &quot;copy_dollar&quot;</code></pre>
 <p>And we can prove that GBP equals NZD, at least as a function for accessing columns of a dataframe.</p>
 <pre class="r"><code>all(
-  mtcars %£% cyl == mtcars$cyl,
+  mtcars%£%cyl == mtcars$cyl,
   `£`(mtcars, cyl) == `$`(mtcars, cyl)
 )</code></pre>
 <pre><code>## [1] TRUE</code></pre>
-<p>Okay, works for my location. What about when I’m competing in Japan at the Olympics<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a>? Well, I can change the monetary locale.</p>
+<p>Okay, works for my location. What about when I’m competing in Japan at the Olympics?<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a> Well, I can change the monetary locale.</p>
 <pre class="r"><code>Sys.setlocale(&quot;LC_MONETARY&quot;, &quot;ja_JP.UTF-8&quot;)</code></pre>
 <pre><code>## [1] &quot;ja_JP.UTF-8&quot;</code></pre>
 <pre class="r"><code>Sys.localeconv()</code></pre>
@@ -137,7 +137,7 @@ mtcars %£% cyl</code></pre>
 <p>So now you can see the yen symbol (<code>¥</code>) as the named currency value for this locale. And you can use the function to activate it for use as a data accessor.</p>
 <pre class="r"><code>copy_dollar()</code></pre>
 <pre><code>## Your monetary locale is &#39;ja_JP.UTF-8&#39;
-## Try `¥`(df, col) and df`%¥%`col</code></pre>
+## Try `¥`(df, col) and df%¥%col</code></pre>
 <pre class="r"><code>`¥`(mtcars, cyl)</code></pre>
 <pre><code>##  [1] 6 6 4 6 8 6 8 4 4 6 6 8 8 8 8 8 8 4 4 4 4 8 8 8 8 4 4 4 8 6 8 4</code></pre>
 <p>Oh, and there’s no point trying to do this if your locale already uses the dollar for currency. I know you want as many dollars as possible, but don’t be greedy.</p>
@@ -148,7 +148,7 @@ mtcars %£% cyl</code></pre>
 <p>I’ll reset my settings to the motherland to prevent any accidental borking.</p>
 <pre class="r"><code>Sys.setlocale(locale = &quot;en_GB.UTF-8&quot;)</code></pre>
 <pre><code>## [1] &quot;en_GB.UTF-8/en_GB.UTF-8/en_GB.UTF-8/C/en_GB.UTF-8/en_GB.UTF-8&quot;</code></pre>
-<p>Nothing ever goes wrong in Britain.</p>
+<p>Nothing ever goes wrong in Britain, after all.</p>
 </div>
 <div id="separate-your-sheep-from-your-goats" class="section level1">
 <h1>Separate your sheep from your goats</h1>
@@ -159,46 +159,45 @@ mtcars %£% cyl</code></pre>
 <p>They’ve got to me already!</p>
 <hr />
 <details>
-<summary>
-Session info
-</summary>
+<p><summary>Session info</summary></p>
 <pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
 ##  setting  value                       
-##  version  R version 4.1.0 (2021-05-18)
-##  os       macOS Big Sur 10.16         
+##  version  R version 4.0.3 (2020-10-10)
+##  os       macOS Mojave 10.14.6        
 ##  system   x86_64, darwin17.0          
 ##  ui       X11                         
 ##  language (EN)                        
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2021-07-16                  
+##  date     2021-07-22                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
 ##  package     * version date       lib source        
-##  blogdown      1.3     2021-04-14 [1] CRAN (R 4.1.0)
-##  bookdown      0.22    2021-04-22 [1] CRAN (R 4.1.0)
-##  bslib         0.2.5.1 2021-05-18 [1] CRAN (R 4.1.0)
-##  cli           2.5.0   2021-04-26 [1] CRAN (R 4.1.0)
-##  digest        0.6.27  2020-10-24 [1] CRAN (R 4.1.0)
-##  evaluate      0.14    2019-05-28 [1] CRAN (R 4.1.0)
-##  htmltools     0.5.1.1 2021-01-22 [1] CRAN (R 4.1.0)
-##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.1.0)
-##  jsonlite      1.7.2   2020-12-09 [1] CRAN (R 4.1.0)
-##  knitr         1.33    2021-04-24 [1] CRAN (R 4.1.0)
-##  magrittr      2.0.1   2020-11-17 [1] CRAN (R 4.1.0)
-##  R6            2.5.0   2020-10-28 [1] CRAN (R 4.1.0)
-##  rlang         0.4.11  2021-04-30 [1] CRAN (R 4.1.0)
-##  rmarkdown     2.9     2021-06-15 [1] CRAN (R 4.1.0)
-##  sass          0.4.0   2021-05-12 [1] CRAN (R 4.1.0)
-##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.1.0)
-##  stringi       1.6.2   2021-05-17 [1] CRAN (R 4.1.0)
-##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.1.0)
-##  withr         2.4.2   2021-04-18 [1] CRAN (R 4.1.0)
-##  xfun          0.24    2021-06-15 [1] CRAN (R 4.1.0)
-##  yaml          2.2.1   2020-02-01 [1] CRAN (R 4.1.0)
+##  blogdown      0.21    2020-10-11 [1] CRAN (R 4.0.2)
+##  bookdown      0.21    2020-10-13 [1] CRAN (R 4.0.2)
+##  bslib         0.2.4   2021-01-25 [1] CRAN (R 4.0.2)
+##  cli           2.5.0   2021-04-26 [1] CRAN (R 4.0.2)
+##  digest        0.6.27  2020-10-24 [1] CRAN (R 4.0.2)
+##  evaluate      0.14    2019-05-28 [1] CRAN (R 4.0.1)
+##  htmltools     0.5.1.1 2021-01-22 [1] CRAN (R 4.0.2)
+##  jquerylib     0.1.3   2020-12-17 [1] CRAN (R 4.0.2)
+##  jsonlite      1.7.2   2020-12-09 [1] CRAN (R 4.0.2)
+##  knitr         1.32    2021-04-14 [1] CRAN (R 4.0.2)
+##  magrittr      2.0.1   2020-11-17 [1] CRAN (R 4.0.2)
+##  R6            2.5.0   2020-10-28 [1] CRAN (R 4.0.2)
+##  rlang         0.4.11  2021-04-30 [1] CRAN (R 4.0.2)
+##  rmarkdown     2.7     2021-02-19 [1] CRAN (R 4.0.2)
+##  sass          0.3.1   2021-01-24 [1] CRAN (R 4.0.2)
+##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.0.2)
+##  stringi       1.6.1   2021-05-10 [1] CRAN (R 4.0.2)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.0.2)
+##  withr         2.4.2   2021-04-18 [1] CRAN (R 4.0.2)
+##  xfun          0.22    2021-03-11 [1] CRAN (R 4.0.2)
+##  yaml          2.2.1   2020-02-01 [1] CRAN (R 4.0.2)
 ## 
-## [1] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
+## [1] /Users/matt.dray/Library/R/4.0/library
+## [2] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
 </details>
 </div>
 <div class="footnotes">
@@ -207,7 +206,8 @@ Session info
 <li id="fn1"><p>With apologies to all the lovely people of New Zealand.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
 <li id="fn2"><p>Yep, you could probably change this in the R source code and recompile it, but… effort.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 <li id="fn3"><p>‘Illusions, Michael.’<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
-<li id="fn4"><p>Yes, I’m aware I’ve written the messages in English only. I can only break down one international barrier at once, pal.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
-<li id="fn5"><p>I heard that <a href="https://en.wikipedia.org/wiki/Code_golf">code golf</a> is one of the new sports on display this year?<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>In other words, assign like the single-headed ‘gets’ operator, <code>&lt;-</code>, but <em>more</em> so! You may know that <a href="https://www.rostrum.blog/2021/03/13/assign/">I have strong feelings about assigment operators</a>, lol.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>Yes, I’m aware I’ve written the messages in English only. I can only break down one international barrier at once, pal.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+<li id="fn6"><p>I heard that <a href="https://en.wikipedia.org/wiki/Code_golf">code golf</a> is one of the new sports on display this year?<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
