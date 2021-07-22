@@ -36,7 +36,7 @@ R\!](https://www.rostrum.blog/2021/07/15/dollar-dollar/).
 
 📈 This 2D plot shows posts over time:
 
-<img src="README_files/figure-gfm/plot-out-1.png" title="A 2D chart where each point represents a post on an axis of time spanning from 2018 to the present. There are some gaps, but posts have been relatively consistent over time." alt="A 2D chart where each point represents a post on an axis of time spanning from 2018 to the present. There are some gaps, but posts have been relatively consistent over time."  />
+<img src="README_files/figure-gfm/plot-out-1.png" title="A 2D chart where each point represents a published blog post on a Y axis of time spanning from 2018 to the present. There are some gaps, but posts have been relatively consistent over time." alt="A 2D chart where each point represents a published blog post on a Y axis of time spanning from 2018 to the present. There are some gaps, but posts have been relatively consistent over time."  />
 
 <details>
 
@@ -144,4 +144,4 @@ R\!](https://www.rostrum.blog/2021/07/15/dollar-dollar/).
 
 -----
 
-*Updated 2021-07-22*
+*Updated 2021-07-22 22:38:13*
