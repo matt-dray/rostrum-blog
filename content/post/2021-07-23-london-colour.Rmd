@@ -1,0 +1,264 @@
+---
+title: "What colour is London?"
+author: Matt Dray
+date: '2021-07-15'
+slug: london-colour
+categories:
+  - code
+  - data-viz
+tags:
+  - magick
+  - r
+  - rtweet
+  - sf
+  - twitter
+draft: no
+---
+
+# tl;dr
+
+I used the {rtweet}, {magick} and {sf} R packages to reduce random satellite images of London to a single representative colour and then mapped and tiled them.
+
+# Green/grey belt
+
+I created the [\@londonmapbot](https://twitter.com/londonmapbot) Twitter bot to [tweet out a random satellite image of Greater London](https://www.rostrum.blog/2020/09/21/londonmapbot/) and more recently I've written some posts involving R and abstract art (like [pixel art](https://www.rostrum.blog/2021/06/28/pixel-art/) and [a Shiny app to remix art by Sol LeWitt](https://www.rostrum.blog/2021/07/05/recreate-lewitt/)).
+
+I figured we could sample these to get to 'the colours of London', which can be mapped or tiled.
+
+This is not too dissimilar to efforts to find the 'average colour' of countries of the world, which [Erin wrote a nice post about](https://twitter.com/erindataviz), for example.[^erin] The difference is that we aren't finding a colour to represent London, we're representing London with a series of single-colour points. 
+
+This is relatively trivial with the packages {rtweet} to pull tweets and {magick} to manipulate the images.
+
+# Get bot log
+
+First, load the packages we need. You'll need to use `install.packages()` for each one if you haven't already installed them.
+
+```{r load-packages, include=FALSE}
+library(rtweet)
+library(magick)
+library(tidyverse)
+library(sf)
+```
+
+[{rtweet}](https://docs.ropensci.org/rtweet/) makes it very easy to collect tweet content. To the `get_timeline()` function you can pass an account name and the number of tweets you want to fetch. You'll need to [set up authenication first, of course](https://docs.ropensci.org/rtweet/articles/auth.html).
+
+```{r get-tweets, cache=TRUE}
+tweets_read <- get_timeline("londonmapbot", n = 625)
+```
+
+Why do I want 625? Well, the bot has tweeted out nearly 9000 images at time of writing, but I want a useable number for this post. Spoiler: I also want to make a 25 by 25 grid of squares as one of my outputs.
+
+The function [actually returns more](https://github.com/ropensci/rtweet/issues/60) than 625 because {rtweet} maximises the number of tweets it fetches for each API call. Better to return more than you asked for, rather than less.
+
+The returned tibble contains a lot of information. I'm only interested in the `media_url` and `text` columns, from which I can extract the satellite image URLs and, with some regular expressions, the coordinate information that's provided in the body of the tweet.
+
+```{r tweet-wrangle}
+tweets <- tweets_read %>% 
+  transmute(media_url = unlist(media_url), text) %>% 
+  transmute(
+    media_url,
+    latitude = str_extract(text, "^\\d{2}.\\d{1,4}"),
+    longitude = str_extract(text, "(?<=, ).*(?=\nhttps)")
+  ) %>% 
+  slice(1:625)
+```
+
+So we've got a tibble with 3 columns and 625 rows.
+
+```{r tweets-head}
+glimpse(tweets)
+```
+
+I'm going to iterate through each URL to download the associated image to a temporary directory. I've used a `walk()` function from {purrr} rather than `map()` because we aren't returning anything; we're saving a file to a folder.
+
+Specifically, I used `walk2()`, which lets me supply two values to the iterate process: the URL and also the iteration number for that URL. That means I can print a message in the form 'Fetching 1 of 625' and get a rough idea of progress.
+
+I've also added a `Sys.sleep()` call to slow the process, as not to hammer the Twitter API too hard.[^api]
+
+```{r fn-download-images}
+# Function: download images from URLs
+download_images <- function(paths, dir) {
+  
+  Sys.sleep(sample(0:2, 1))  # random pause
+  
+  tw_df <- data.frame(number = 1:length(paths), url = paths)
+  
+  purrr::walk2(
+    tw_df$number, tw_df$url, 
+    ~ { cat("Fetching", .x, "of", length(tw_df$number), "\n")
+      download.file(.y, file.path(dir, basename(.y))) }
+  )
+  
+}
+```
+
+So, you can pass a vector of URLs and a directory path to the function. For purposes of this post, I'm going to save the files to a temporary folder. 
+
+```{r download-images, include=FALSE}
+tmp <- tempdir()
+download_images(tweets$media_url, tmp)
+```
+
+That call takes a little while and the duration will vary given the random pauses built into the function. I've hidden the output because there would be 625 items printed to the console. An example of the output:
+
+```{r image-fetch-print, eval=FALSE}
+Fetching 479 of 625 
+trying URL 'http://pbs.twimg.com/media/E6Akw2fXMAA3VSk.jpg'
+Content type 'image/jpeg' length 113537 bytes (110 KB)
+==================================================
+downloaded 110 KB
+```
+
+To prove this has worked, we can fetch all the image paths from the directory in which they're stored and count how many there are.
+
+```{r file-count}
+files <- list.files(tmp, ".jpg$", full.names = TRUE)
+length(files)
+```
+
+Great, as expected. Now we have a set of satellite images that we can manipulate.
+
+# Demo: one image
+
+As a demo, let's take a look at the first image.
+
+```{r example-read, fig.alt="A satellite image of a ranom part of Greater London."}
+ex_in <- image_read(files[1])
+ex_in
+```
+
+Now we can crop out the logos, quantize the image and resize it using {magick} functions. 
+
+[Quantization is the algorithmic simplification of an image to the colours that best represent it](https://en.wikipedia.org/wiki/Color_quantization). You could, for example, use this for reducing the number of colours in an image to making it easier to compress while minimising information loss. We're going to quantize to just one colour to find the colour that best represents the image. Note that this isn't the same as 'taking an average colour'.
+
+```{r example-quantize, fig.alt="A square filled with a single colour that represents the satellite image og Greater London in the previous image in this blog post."}
+ex_square <- ex_in %>%
+  image_crop("x420-0") %>%
+  image_quantize(1) %>% 
+  image_resize("100x100!")
+
+ex_square
+```
+
+So the colour of that square is what you get when you quantize the original satellite image down to one colour. What is that colour? We can extract the hex code.
+
+```{r hex}
+ex_rgb <- image_data(ex_square, channels = "rgb")[1:3]
+ex_hex <- toupper(paste0("#", paste(as.character(ex_rgb), collapse = "")))
+ex_hex
+```
+
+Of course, we can generally expect that the colour will be somewhere between very green (city fringes, parks, golf courses) and very grey (urban), while some may be more blue (reservoirs).
+
+# All images
+
+The `image_*()` functions in {magick} are generally vectorised, so we can pass it all of the paths to our files and apply the wrangling steps across all of the images at once.
+
+```{r read-images}
+imgs_in <- image_read(files)
+imgs <- image_crop(imgs_in, "x420-0")
+```
+
+I want to grab the single quantized hex value representing each image.
+
+```{r get-hex-all}
+imgs_dat <- imgs %>% image_quantize(1) %>% image_resize("1x1!")
+hex_dat <- map(1:625, ~image_data(imgs_dat, "rgb", frame = .x))
+hex_cols <- hex_dat %>% 
+  map_chr(~paste0("#", toupper(paste(.[1:3], collapse = ""))))
+
+head(hex_cols)
+```
+
+Now we can bind these to our tweets dataset.
+
+```{r bind-hex}
+tweets_cols <- tweets %>% bind_cols(hex = hex_cols)
+glimpse(tweets_cols)
+```
+
+## Map
+
+The obvious thing to do is to create a map with each point marking the location of a satellite image tweeted by [londonmapbot](https://twitter.com/londonmapbot), filled with the single representative colour for that image.
+
+The bot samples from a square roughly covering Greater London within the M25, so it might be nice to show the outline of London for reference. [The {sf} package](https://r-spatial.github.io/sf/) makes it straightforward to read [a GeoJSON of the NUTS1 boundaries](https://geoportal.statistics.gov.uk/search?collection=Dataset&sort=name&tags=all(BDY_NUTS1%2CJAN_2018)) for the UK via [the Open Geography Portal](https://geoportal.statistics.gov.uk/) API, then convert it to latitude-longitude coordinates and filter for London only.
+
+```{r london-sf}
+nuts_path <- "https://opendata.arcgis.com/datasets/01fd6b2d7600446d8af768005992f76a_4.geojson"
+ldn_sf <- st_read(nuts_path) %>% 
+  st_transform(crs = 4326) %>%
+  filter(nuts118nm == "London")
+```
+
+And we can convert our tweets tibble to an sf-class spatial object as well, given that it contains coordinate information.
+
+```{r tweets_sf}
+tweets_sf <- tweets_cols %>% 
+  st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
+```
+
+Then it's a case of adding these to a map, which in this case is a {ggplot2} object.
+
+```{r map-sf, fig.alt="Random points are arranged over a simplified boundary of greater London. Each point represents the location for which the londonmapbot Twitter accoutn tweeted a satellite image. The points are various shades of green through grey, with the colour representing the image via a process of quantization."}
+ggplot() +
+  geom_sf(data = tweets_sf, col = hex_cols, size = 3) +
+  geom_sf(data = ldn_sf, alpha = 0, size = 1, col = "black") +
+  theme_void()
+```
+Are there any patterns here? Maybe it's greener in the suburbs? It's a serious question; I'm a deuteranope.[^deuteranope]
+
+
+## Tile
+
+For something more abstract, we can create squares of each colour and tile them. 
+
+Here the tiles are laid out row by row from right to left, in a more-or-less random order.
+
+```{r mosaic-random, fig.height=5, fig.width=5, fig.alt="A 25 by 25 grid of squares, each of which represents a random satellite image of Greater London that's been quantized to show one representative colour. This has resulted in various shades of grey, green and cream, depending on factors like urbanness and green space in the original satellite image. The arrangement of colours appears to be random."}
+hex_tiles <- crossing(x = 1:25, y = 1:25) %>% 
+  bind_cols(hex = tweets_cols$hex)
+  
+ggplot() +
+  geom_tile(aes(hex_tiles$x, hex_tiles$y), fill = hex_tiles$hex) +
+  theme_void()
+```
+
+For fans of order, we could instead arrange them by brightness, or 'luminance'.[^hard] Here I've modified a simple approach by [Wouter van der Bijl](https://www.woutervdbijl.com/) from [a StackOverflow post](https://stackoverflow.com/questions/61193516/how-to-sort-colours-in-r).
+
+```{r mosaic-col, fig.height=5, fig.width=5, fig.alt="A 25 by 25 grid of squares, each of which represents a random satellite image of Greater London that's been quantized to show one representative colour. This has resulted in various shades of grey, green and cream, depending on factors like urbanness and green space in the original satellite image. The squares are ordered form brightest in the top-left to darkest in the lower-right."}
+# Get luminance for hex values
+rgb_vals <- col2rgb(tweets_cols$hex)  # Hex to RGB
+lab_vals <- convertColor(t(rgb_vals), 'sRGB', 'Lab')  # RGB to Lab
+hex_lum <- tweets_cols$hex[order(lab_vals[, 'L'])]  # luminance order
+
+# Set up dummy xy tile locations
+cross_xy <- crossing(y = 1:25, x = 1:25)
+
+# Create tibble of x, y, hex luminance
+hex_tiles_bright <- tibble(
+  x = cross_xy$x,
+  y = rev(cross_xy$y),
+  hex = hex_lum
+)
+
+# Plot so 'lightest' in top left, 'darkest' in bottom right
+ggplot(hex_tiles_bright) +
+  geom_tile(aes(x, y), fill = rev(hex_tiles_bright$hex)) +
+  theme_void()
+```
+
+Stunning, eh? 
+
+The colours make me think of the classic smoggy ['pea souper'](https://en.wiktionary.org/wiki/pea-souper) of London in times past, which is fitting.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE, results='hold'}
+sessioninfo::session_info()
+```
+</details>
+
+[^api]: I'm being relatively [polite](https://www.rostrum.blog/2019/03/04/polite-webscrape/) by doing this, it's probably note strictly necessary.
+[^erin]: I didn't find Erin's post until after starting my post, but I see that there are similarities in tools: Erin makes use of many of the {magick} functions that I have, for example. This makes me think I've used a sensible approach.
+[^hard]: Colour is a hard concept and the idea of 'brightness' is no exception. We're keeping things naïve here.
+[^deuteranope]: As in the ['nope' to green/brown/red](https://en.wikipedia.org/wiki/Color_blindness) sort of colourblindness.
