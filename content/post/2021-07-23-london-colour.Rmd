@@ -21,23 +21,23 @@ draft: no
 
 # tl;dr
 
-I used the {rtweet}, {magick} and {sf} R packages to reduce random satellite images of London to a single representative colour and then mapped and tiled them.
+I used the {rtweet} and {magick} R packages to fetch tweets of random satellite images of London and then reduced each one to a single representative colour.
 
 # Green/grey belt
 
-I created the [\@londonmapbot](https://twitter.com/londonmapbot) Twitter bot to [tweet out a random satellite image of Greater London](https://www.rostrum.blog/2020/09/21/londonmapbot/) and more recently I've written some posts involving R and abstract art (like [pixel art](https://www.rostrum.blog/2021/06/28/pixel-art/) and [a Shiny app to remix art by Sol LeWitt](https://www.rostrum.blog/2021/07/05/recreate-lewitt/)).
+I created the [\@londonmapbot](https://twitter.com/londonmapbot) Twitter bot to tweet out satellite images of random points in Greater London. You can read earlier posts about [how it was made](https://www.rostrum.blog/2020/09/21/londonmapbot/) and how I [mapped the points interactively](https://www.rostrum.blog/2020/12/20/londonmapbot-leaflet/).
 
 I figured we could sample these to get to 'the colours of London', which can be mapped or tiled.
 
 This is not too dissimilar to efforts to find the 'average colour' of countries of the world, which [Erin wrote a nice post about](https://twitter.com/erindataviz), for example.[^erin] The difference is that we aren't finding a colour to represent London, we're representing London with a series of single-colour points. 
 
-This is relatively trivial with the packages {rtweet} to pull tweets and {magick} to manipulate the images.
+This is relatively trivial with the packages [{rtweet}](https://docs.ropensci.org/rtweet/) to pull tweets and [{magick}](https://cran.r-project.org/web/packages/magick/vignettes/intro.html) to manipulate the images. We can use [{sf}](https://r-spatial.github.io/sf/) to place the points on a map and [{ggplot2}](https://ggplot2.tidyverse.org/) for other visualisations.
 
 # Get bot log
 
 First, load the packages we need. You'll need to use `install.packages()` for each one if you haven't already installed them.
 
-```{r load-packages, include=FALSE}
+```{r load-packages, echo=TRUE, results = 'hide'}
 library(rtweet)
 library(magick)
 library(tidyverse)
@@ -50,7 +50,7 @@ library(sf)
 tweets_read <- get_timeline("londonmapbot", n = 625)
 ```
 
-Why do I want 625? Well, the bot has tweeted out nearly 9000 images at time of writing, but I want a useable number for this post. Spoiler: I also want to make a 25 by 25 grid of squares as one of my outputs.
+Why do I want 625? Well, the bot has tweeted out nearly 9000 images at time of writing, but I want a useable number for this post. (Spoiler: I also want to make a 25 by 25 grid of squares as one of my outputs.)
 
 The function [actually returns more](https://github.com/ropensci/rtweet/issues/60) than 625 because {rtweet} maximises the number of tweets it fetches for each API call. Better to return more than you asked for, rather than less.
 
@@ -131,9 +131,9 @@ ex_in <- image_read(files[1])
 ex_in
 ```
 
-Now we can crop out the logos, quantize the image and resize it using functions from [the {magick} package](https://cran.r-project.org/web/packages/magick/vignettes/intro.html). 
+Now we can crop out the logos, reduce its colours and resize it using functions from [the {magick} package](https://cran.r-project.org/web/packages/magick/vignettes/intro.html). 
 
-[Quantization is the algorithmic simplification of an image to the colours that best represent it](https://en.wikipedia.org/wiki/Color_quantization). You could, for example, use this for reducing the number of colours in an image to making it easier to compress while minimising information loss. We're going to quantize to just one colour to find the colour that best represents the image. Note that this isn't the same as 'taking an average colour'.
+'Quantization' is the process we'll use on each image; it's basically [the algorithmic simplification of an image to the colours that best represent it](https://en.wikipedia.org/wiki/Color_quantization). You could, for example, use this for reducing the number of colours in an image to make it easier to compress while minimising information loss. We're going to quantize to just one colour to find the colour that best represents the image. Note that this isn't the same as 'taking an average colour'.
 
 ```{r example-quantize, fig.alt="A square filled with a single colour that represents the satellite image og Greater London in the previous image in this blog post."}
 ex_square <- ex_in %>%
@@ -181,7 +181,7 @@ tweets_cols <- tweets %>% bind_cols(hex = hex_cols)
 glimpse(tweets_cols)
 ```
 
-## Map
+## Visualisation: map
 
 The obvious thing to do is to create a map with each point marking the location of a satellite image tweeted by [londonmapbot](https://twitter.com/londonmapbot), filled with the single representative colour for that image.
 
@@ -201,7 +201,7 @@ tweets_sf <- tweets_cols %>%
   st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
 ```
 
-Then it's a case of adding these to a map, which in this case is a {ggplot2} object.
+Then it's a case of adding these to a map, which in this case is a {ggplot2} object. The `geom_sf()` function is great at accepting and understanding polygons and points.
 
 ```{r map-sf, fig.alt="Random points are arranged over a simplified boundary of greater London. Each point represents the location for which the londonmapbot Twitter accoutn tweeted a satellite image. The points are various shades of green through grey, with the colour representing the image via a process of quantization."}
 ggplot() +
@@ -209,12 +209,13 @@ ggplot() +
   geom_sf(data = ldn_sf, alpha = 0, size = 1, col = "black") +
   theme_void()
 ```
-Are there any patterns here? Maybe it's greener in the suburbs? It's a serious question; I'm a deuteranope.[^deuteranope]
+Are there any patterns here? Maybe it's greener in the suburbs? (It's a serious question; I'm a deuteranope.)[^deuteranope]
 
+## Visualisation: tiles
 
-## Tile
+Recently I've written some posts involving R and abstract art (like [pixel art](https://www.rostrum.blog/2021/06/28/pixel-art/) and [a Shiny app to remix art by Sol LeWitt](https://www.rostrum.blog/2021/07/05/recreate-lewitt/)).
 
-For something more abstract, we can create squares of each colour and tile them. 
+So why not get more abstract with these data points? We can create squares of each colour and tile them. 
 
 Here the tiles are laid out row by row from right to left, in a more-or-less random order.
 
@@ -251,9 +252,11 @@ ggplot(hex_tiles_bright) +
   theme_void()
 ```
 
-Stunning, eh? 
+Stunning, eh? Kinda?
 
 The colours make me think of the classic smoggy ['pea souper'](https://en.wiktionary.org/wiki/pea-souper) of London in times past, which is fitting.
+
+Of course, there's many more data available in [the londonmapbot feed](https://twitter.com/londonmapbot) and many other ways to visualise these data, so I may return to this idea in the future.
 
 ---
 <details><summary>Session info</summary>
@@ -262,7 +265,7 @@ sessioninfo::session_info()
 ```
 </details>
 
-[^api]: I'm being relatively [polite](https://www.rostrum.blog/2019/03/04/polite-webscrape/) by doing this, it's probably note strictly necessary.
+[^api]: I'm being relatively [polite](https://www.rostrum.blog/2019/03/04/polite-webscrape/) by doing this, it's probably not strictly necessary.
 [^erin]: I didn't find Erin's post until after starting my post, but I see that there are similarities in tools: Erin makes use of many of the {magick} functions that I have, for example. This makes me think I've used a sensible approach.
 [^hard]: Colour is a hard concept and the idea of 'brightness' is no exception. We're keeping things naïve here.
 [^deuteranope]: As in the ['nope' to green/brown/red](https://en.wikipedia.org/wiki/Color_blindness) sort of colourblindness.

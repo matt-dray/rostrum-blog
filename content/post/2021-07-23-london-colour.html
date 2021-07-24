@@ -22,21 +22,38 @@ draft: no
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>I used the {rtweet}, {magick} and {sf} R packages to reduce random satellite images of London to a single representative colour and then mapped and tiled them.</p>
+<p>I used the {rtweet} and {magick} R packages to fetch tweets of random satellite images of London and then reduced each one to a single representative colour.</p>
 </div>
 <div id="greengrey-belt" class="section level1">
 <h1>Green/grey belt</h1>
-<p>I created the <a href="https://twitter.com/londonmapbot">@londonmapbot</a> Twitter bot to <a href="https://www.rostrum.blog/2020/09/21/londonmapbot/">tweet out a random satellite image of Greater London</a> and more recently I’ve written some posts involving R and abstract art (like <a href="https://www.rostrum.blog/2021/06/28/pixel-art/">pixel art</a> and <a href="https://www.rostrum.blog/2021/07/05/recreate-lewitt/">a Shiny app to remix art by Sol LeWitt</a>).</p>
+<p>I created the <a href="https://twitter.com/londonmapbot">@londonmapbot</a> Twitter bot to tweet out satellite images of random points in Greater London. You can read earlier posts about <a href="https://www.rostrum.blog/2020/09/21/londonmapbot/">how it was made</a> and how I <a href="https://www.rostrum.blog/2020/12/20/londonmapbot-leaflet/">mapped the points interactively</a>.</p>
 <p>I figured we could sample these to get to ‘the colours of London’, which can be mapped or tiled.</p>
 <p>This is not too dissimilar to efforts to find the ‘average colour’ of countries of the world, which <a href="https://twitter.com/erindataviz">Erin wrote a nice post about</a>, for example.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> The difference is that we aren’t finding a colour to represent London, we’re representing London with a series of single-colour points.</p>
-<p>This is relatively trivial with the packages {rtweet} to pull tweets and {magick} to manipulate the images.</p>
+<p>This is relatively trivial with the packages <a href="https://docs.ropensci.org/rtweet/">{rtweet}</a> to pull tweets and <a href="https://cran.r-project.org/web/packages/magick/vignettes/intro.html">{magick}</a> to manipulate the images. We can use <a href="https://r-spatial.github.io/sf/">{sf}</a> to place the points on a map and <a href="https://ggplot2.tidyverse.org/">{ggplot2}</a> for other visualisations.</p>
 </div>
 <div id="get-bot-log" class="section level1">
 <h1>Get bot log</h1>
 <p>First, load the packages we need. You’ll need to use <code>install.packages()</code> for each one if you haven’t already installed them.</p>
+<pre class="r"><code>library(rtweet)
+library(magick)</code></pre>
+<pre><code>## Linking to ImageMagick 6.9.12.3
+## Enabled features: cairo, fontconfig, freetype, heic, lcms, pango, raw, rsvg, webp
+## Disabled features: fftw, ghostscript, x11</code></pre>
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre><code>## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.0 ──</code></pre>
+<pre><code>## ✓ ggplot2 3.3.3     ✓ purrr   0.3.4
+## ✓ tibble  3.1.1     ✓ dplyr   1.0.6
+## ✓ tidyr   1.1.3     ✓ stringr 1.4.0
+## ✓ readr   1.4.0     ✓ forcats 0.5.1</code></pre>
+<pre><code>## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+## x dplyr::filter()  masks stats::filter()
+## x purrr::flatten() masks rtweet::flatten()
+## x dplyr::lag()     masks stats::lag()</code></pre>
+<pre class="r"><code>library(sf)</code></pre>
+<pre><code>## Linking to GEOS 3.8.1, GDAL 3.1.4, PROJ 6.3.1</code></pre>
 <p><a href="https://docs.ropensci.org/rtweet/">{rtweet}</a> makes it very easy to collect tweet content. To the <code>get_timeline()</code> function you can pass an account name and the number of tweets you want to fetch. You’ll need to <a href="https://docs.ropensci.org/rtweet/articles/auth.html">set up authenication first, of course</a>.</p>
 <pre class="r"><code>tweets_read &lt;- get_timeline(&quot;londonmapbot&quot;, n = 625)</code></pre>
-<p>Why do I want 625? Well, the bot has tweeted out nearly 9000 images at time of writing, but I want a useable number for this post. Spoiler: I also want to make a 25 by 25 grid of squares as one of my outputs.</p>
+<p>Why do I want 625? Well, the bot has tweeted out nearly 9000 images at time of writing, but I want a useable number for this post. (Spoiler: I also want to make a 25 by 25 grid of squares as one of my outputs.)</p>
 <p>The function <a href="https://github.com/ropensci/rtweet/issues/60">actually returns more</a> than 625 because {rtweet} maximises the number of tweets it fetches for each API call. Better to return more than you asked for, rather than less.</p>
 <p>The returned tibble contains a lot of information. I’m only interested in the <code>media_url</code> and <code>text</code> columns, from which I can extract the satellite image URLs and, with some regular expressions, the coordinate information that’s provided in the body of the tweet.</p>
 <pre class="r"><code>tweets &lt;- tweets_read %&gt;% 
@@ -90,8 +107,8 @@ length(files)</code></pre>
 <pre class="r"><code>ex_in &lt;- image_read(files[1])
 ex_in</code></pre>
 <p><img src="/post/2021-07-23-london-colour_files/figure-html/example-read-1.png" title="A satellite image of a ranom part of Greater London." alt="A satellite image of a ranom part of Greater London." width="600" /></p>
-<p>Now we can crop out the logos, quantize the image and resize it using functions from <a href="https://cran.r-project.org/web/packages/magick/vignettes/intro.html">the {magick} package</a>.</p>
-<p><a href="https://en.wikipedia.org/wiki/Color_quantization">Quantization is the algorithmic simplification of an image to the colours that best represent it</a>. You could, for example, use this for reducing the number of colours in an image to making it easier to compress while minimising information loss. We’re going to quantize to just one colour to find the colour that best represents the image. Note that this isn’t the same as ‘taking an average colour’.</p>
+<p>Now we can crop out the logos, reduce its colours and resize it using functions from <a href="https://cran.r-project.org/web/packages/magick/vignettes/intro.html">the {magick} package</a>.</p>
+<p>‘Quantization’ is the process we’ll use on each image; it’s basically <a href="https://en.wikipedia.org/wiki/Color_quantization">the algorithmic simplification of an image to the colours that best represent it</a>. You could, for example, use this for reducing the number of colours in an image to make it easier to compress while minimising information loss. We’re going to quantize to just one colour to find the colour that best represents the image. Note that this isn’t the same as ‘taking an average colour’.</p>
 <pre class="r"><code>ex_square &lt;- ex_in %&gt;%
   image_crop(&quot;x420-0&quot;) %&gt;%
   image_quantize(1) %&gt;% 
@@ -128,8 +145,8 @@ glimpse(tweets_cols)</code></pre>
 ## $ latitude  &lt;chr&gt; &quot;51.5651&quot;, &quot;51.4665&quot;, &quot;51.3752&quot;, &quot;51.5041&quot;, &quot;51.5668&quot;, &quot;51.3…
 ## $ longitude &lt;chr&gt; &quot;0.0466&quot;, &quot;-0.3526&quot;, &quot;-0.1997&quot;, &quot;-0.0174&quot;, &quot;-0.1882&quot;, &quot;-0.13…
 ## $ hex       &lt;chr&gt; &quot;#48503E&quot;, &quot;#535C3F&quot;, &quot;#435034&quot;, &quot;#415534&quot;, &quot;#5D6152&quot;, &quot;#535…</code></pre>
-<div id="map" class="section level2">
-<h2>Map</h2>
+<div id="visualisation-map" class="section level2">
+<h2>Visualisation: map</h2>
 <p>The obvious thing to do is to create a map with each point marking the location of a satellite image tweeted by <a href="https://twitter.com/londonmapbot">londonmapbot</a>, filled with the single representative colour for that image.</p>
 <p>The bot samples from a square roughly covering Greater London within the M25, so it might be nice to show the outline of London for reference. <a href="https://r-spatial.github.io/sf/">The {sf} package</a> makes it straightforward to read <a href="https://geoportal.statistics.gov.uk/search?collection=Dataset&amp;sort=name&amp;tags=all(BDY_NUTS1%2CJAN_2018)">a GeoJSON of the NUTS1 boundaries</a> for the UK via <a href="https://geoportal.statistics.gov.uk/">the Open Geography Portal</a> API, then convert it to latitude-longitude coordinates and filter for London only.</p>
 <pre class="r"><code>nuts_path &lt;- &quot;https://opendata.arcgis.com/datasets/01fd6b2d7600446d8af768005992f76a_4.geojson&quot;
@@ -145,17 +162,18 @@ ldn_sf &lt;- st_read(nuts_path) %&gt;%
 <p>And we can convert our tweets tibble to an sf-class spatial object as well, given that it contains coordinate information.</p>
 <pre class="r"><code>tweets_sf &lt;- tweets_cols %&gt;% 
   st_as_sf(coords = c(&quot;longitude&quot;, &quot;latitude&quot;), crs = 4326)</code></pre>
-<p>Then it’s a case of adding these to a map, which in this case is a {ggplot2} object.</p>
+<p>Then it’s a case of adding these to a map, which in this case is a {ggplot2} object. The <code>geom_sf()</code> function is great at accepting and understanding polygons and points.</p>
 <pre class="r"><code>ggplot() +
   geom_sf(data = tweets_sf, col = hex_cols, size = 3) +
   geom_sf(data = ldn_sf, alpha = 0, size = 1, col = &quot;black&quot;) +
   theme_void()</code></pre>
 <p><img src="/post/2021-07-23-london-colour_files/figure-html/map-sf-1.png" title="Random points are arranged over a simplified boundary of greater London. Each point represents the location for which the londonmapbot Twitter accoutn tweeted a satellite image. The points are various shades of green through grey, with the colour representing the image via a process of quantization." alt="Random points are arranged over a simplified boundary of greater London. Each point represents the location for which the londonmapbot Twitter accoutn tweeted a satellite image. The points are various shades of green through grey, with the colour representing the image via a process of quantization." width="672" />
-Are there any patterns here? Maybe it’s greener in the suburbs? It’s a serious question; I’m a deuteranope.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+Are there any patterns here? Maybe it’s greener in the suburbs? (It’s a serious question; I’m a deuteranope.)<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
 </div>
-<div id="tile" class="section level2">
-<h2>Tile</h2>
-<p>For something more abstract, we can create squares of each colour and tile them.</p>
+<div id="visualisation-tiles" class="section level2">
+<h2>Visualisation: tiles</h2>
+<p>Recently I’ve written some posts involving R and abstract art (like <a href="https://www.rostrum.blog/2021/06/28/pixel-art/">pixel art</a> and <a href="https://www.rostrum.blog/2021/07/05/recreate-lewitt/">a Shiny app to remix art by Sol LeWitt</a>).</p>
+<p>So why not get more abstract with these data points? We can create squares of each colour and tile them.</p>
 <p>Here the tiles are laid out row by row from right to left, in a more-or-less random order.</p>
 <pre class="r"><code>hex_tiles &lt;- crossing(x = 1:25, y = 1:25) %&gt;% 
   bind_cols(hex = tweets_cols$hex)
@@ -185,8 +203,9 @@ ggplot(hex_tiles_bright) +
   geom_tile(aes(x, y), fill = rev(hex_tiles_bright$hex)) +
   theme_void()</code></pre>
 <p><img src="/post/2021-07-23-london-colour_files/figure-html/mosaic-col-1.png" title="A 25 by 25 grid of squares, each of which represents a random satellite image of Greater London that's been quantized to show one representative colour. This has resulted in various shades of grey, green and cream, depending on factors like urbanness and green space in the original satellite image. The squares are ordered form brightest in the top-left to darkest in the lower-right." alt="A 25 by 25 grid of squares, each of which represents a random satellite image of Greater London that's been quantized to show one representative colour. This has resulted in various shades of grey, green and cream, depending on factors like urbanness and green space in the original satellite image. The squares are ordered form brightest in the top-left to darkest in the lower-right." width="480" /></p>
-<p>Stunning, eh?</p>
+<p>Stunning, eh? Kinda?</p>
 <p>The colours make me think of the classic smoggy <a href="https://en.wiktionary.org/wiki/pea-souper">‘pea souper’</a> of London in times past, which is fitting.</p>
+<p>Of course, there’s many more data available in <a href="https://twitter.com/londonmapbot">the londonmapbot feed</a> and many other ways to visualise these data, so I may return to this idea in the future.</p>
 <hr />
 <details>
 <p><summary>Session info</summary></p>
@@ -204,7 +223,6 @@ ggplot(hex_tiles_bright) +
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
 ##  package     * version date       lib source        
-##  askpass       1.1     2019-01-13 [1] CRAN (R 4.0.2)
 ##  assertthat    0.2.1   2019-03-21 [1] CRAN (R 4.0.2)
 ##  backports     1.2.1   2020-12-09 [1] CRAN (R 4.0.2)
 ##  blogdown      0.21    2020-10-11 [1] CRAN (R 4.0.2)
@@ -215,10 +233,8 @@ ggplot(hex_tiles_bright) +
 ##  class         7.3-17  2020-04-26 [2] CRAN (R 4.0.3)
 ##  classInt      0.4-3   2020-04-07 [1] CRAN (R 4.0.2)
 ##  cli           2.5.0   2021-04-26 [1] CRAN (R 4.0.2)
-##  codetools     0.2-16  2018-12-24 [2] CRAN (R 4.0.3)
 ##  colorspace    2.0-1   2021-05-04 [1] CRAN (R 4.0.2)
 ##  crayon        1.4.1   2021-02-08 [1] CRAN (R 4.0.2)
-##  curl          4.3     2019-12-02 [1] CRAN (R 4.0.1)
 ##  DBI           1.1.1   2021-01-15 [1] CRAN (R 4.0.2)
 ##  dbplyr        2.1.0   2021-02-03 [1] CRAN (R 4.0.2)
 ##  digest        0.6.27  2020-10-24 [1] CRAN (R 4.0.2)
@@ -250,7 +266,6 @@ ggplot(hex_tiles_bright) +
 ##  magrittr      2.0.1   2020-11-17 [1] CRAN (R 4.0.2)
 ##  modelr        0.1.8   2020-05-19 [1] CRAN (R 4.0.2)
 ##  munsell       0.5.0   2018-06-12 [1] CRAN (R 4.0.2)
-##  openssl       1.4.3   2020-09-18 [1] CRAN (R 4.0.2)
 ##  pillar        1.6.0   2021-04-13 [1] CRAN (R 4.0.2)
 ##  pkgconfig     2.0.3   2019-09-22 [1] CRAN (R 4.0.2)
 ##  png           0.1-7   2013-12-03 [1] CRAN (R 4.0.2)
@@ -293,7 +308,7 @@ ggplot(hex_tiles_bright) +
 <hr />
 <ol>
 <li id="fn1"><p>I didn’t find Erin’s post until after starting my post, but I see that there are similarities in tools: Erin makes use of many of the {magick} functions that I have, for example. This makes me think I’ve used a sensible approach.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>I’m being relatively <a href="https://www.rostrum.blog/2019/03/04/polite-webscrape/">polite</a> by doing this, it’s probably note strictly necessary.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>I’m being relatively <a href="https://www.rostrum.blog/2019/03/04/polite-webscrape/">polite</a> by doing this, it’s probably not strictly necessary.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 <li id="fn3"><p>As in the <a href="https://en.wikipedia.org/wiki/Color_blindness">‘nope’ to green/brown/red</a> sort of colourblindness.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
 <li id="fn4"><p>Colour is a hard concept and the idea of ‘brightness’ is no exception. We’re keeping things naïve here.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
 </ol>
