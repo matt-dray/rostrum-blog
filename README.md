@@ -9,8 +9,8 @@
 
 [![rostrum.blog
 post](https://img.shields.io/badge/rostrum-blog-008900?style=flat&labelColor=black&logo=data:image/gif;base64,R0lGODlhEAAQAPEAAAAAABWCBAAAAAAAACH5BAlkAAIAIf8LTkVUU0NBUEUyLjADAQAAACwAAAAAEAAQAAAC55QkISIiEoQQQgghRBBCiCAIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAAh+QQJZAACACwAAAAAEAAQAAAC55QkIiESIoQQQgghhAhCBCEIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAA7)](https://www.rostrum.blog/)
-[![License: CC
-BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+[![License: CC BY-NC-SA
+4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 [![Netlify
 Status](https://api.netlify.com/api/v1/badges/ebfbdae4-a903-43e8-9f53-75becd95b42e/deploy-status)](https://app.netlify.com/sites/rostrum/deploys)
 <!-- badges: end -->
@@ -38,13 +38,14 @@ London?](https://www.rostrum.blog/2021/07/23/london-colour/).
 <img src="README_files/figure-gfm/plot-out-1.png" title="A 2D chart where each point represents a published blog post on a Y axis of time spanning from 2018 to the present. There are some gaps, but posts have been relatively consistent over time." alt="A 2D chart where each point represents a published blog post on a Y axis of time spanning from 2018 to the present. There are some gaps, but posts have been relatively consistent over time."  />
 
 <details>
-
-<summary>📂 Click to expand a full list of posts</summary>
+<summary>
+📂 Click to expand a full list of posts
+</summary>
 
 | Number | Date       | Title                                                                                                                     |
-| -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|-------:|:-----------|:--------------------------------------------------------------------------------------------------------------------------|
 |     96 | 2021-07-23 | [What colour is London?](https://www.rostrum.blog/2021/07/23/london-colour/)                                              |
-|     95 | 2021-07-15 | [EXPOSED: a Kiwi conspiracy built into R\!](https://www.rostrum.blog/2021/07/15/dollar-dollar/)                           |
+|     95 | 2021-07-15 | [EXPOSED: a Kiwi conspiracy built into R!](https://www.rostrum.blog/2021/07/15/dollar-dollar/)                            |
 |     94 | 2021-07-10 | [Decay is inevitable, accept {linkrot}?](https://www.rostrum.blog/2021/07/10/linkrot/)                                    |
 |     93 | 2021-07-05 | [\#RecreationThursday: a LeWitt Shiny app](https://www.rostrum.blog/2021/07/05/recreate-lewitt/)                          |
 |     92 | 2021-06-28 | [Very simple pixel art in R](https://www.rostrum.blog/2021/06/28/pixel-art/)                                              |
@@ -58,7 +59,7 @@ London?](https://www.rostrum.blog/2021/07/23/london-colour/).
 |     84 | 2021-04-10 | [Convert R to cron to English with {dialga}](https://www.rostrum.blog/2021/04/10/dialga/)                                 |
 |     83 | 2021-03-23 | [Make a {shiny} app README badge](https://www.rostrum.blog/2021/03/23/shiny-badge/)                                       |
 |     82 | 2021-03-23 | [Apple Health and Nike Run Club with {xml2}](https://www.rostrum.blog/2021/03/23/xml-health/)                             |
-|     81 | 2021-03-13 | [Protect yourself from equals assignment\!](https://www.rostrum.blog/2021/03/13/assign/)                                  |
+|     81 | 2021-03-13 | [Protect yourself from equals assignment!](https://www.rostrum.blog/2021/03/13/assign/)                                   |
 |     80 | 2021-03-02 | [A tiny {shiny} flag challenge](https://www.rostrum.blog/2021/03/02/randoflag/)                                           |
 |     79 | 2021-02-27 | [Typo-shaming my Git commits](https://www.rostrum.blog/2021/02/27/typos/)                                                 |
 |     78 | 2021-02-21 | [\#GithubSkyline but hear me out](https://www.rostrum.blog/2021/02/21/skyphone/)                                          |
@@ -142,6 +143,6 @@ London?](https://www.rostrum.blog/2021/07/23/london-colour/).
 
 </details>
 
------
+------------------------------------------------------------------------
 
-*Updated 2021-07-25 02:36:51*
+*Updated 2021-07-25 23:34:22*
