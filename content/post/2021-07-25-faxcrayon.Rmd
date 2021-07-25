@@ -1,0 +1,81 @@
+---
+title: "Make an art gallery with {bs4cards}"
+author: Matt Dray
+date: '2021-07-25'
+slug: faxcrayon
+categories:
+  - code
+  - data-viz
+tags:
+  - bs4lib
+  - github-pages
+  - namecheap
+  - r
+  - recreation-thursday
+  - website
+draft: no
+---
+
+<div class="figure">
+<img src="/post/2021-07-25-faxcrayon_files/faxcrayon.png" alt="A screenshot of the webpage faxcrayon dot art that has the site title at the top with emojis of a fax machine and a crayon. Below are links to the source and other materials. Below that are some rectangular cards that show some art with the date, title and type of art, like whether its original or a recreation." width="100%"/>
+<p class="caption">Design is, like, a process, so the page may change, y'know?</p>
+</div>
+
+# tl;dr 
+
+I used [the {bs4cards} package](https://bs4cards.djnavarro.net/articles/introduction.html) by [Danielle Navarro](https://djnavarro.net/) to create an effortless online 'gallery' of 'art' on a single [R Markdown page](https://rmarkdown.rstudio.com/): [faxcrayon.art](https://faxcrayon.art).
+
+# Art is a lie
+
+Turns out you can just put up some pictures on the internet and call it a gallery. No one is stopping you.
+
+Here is a foolproof approach: R Markdown with {bs4cards} to write the content, GitHub Pages to serve it, and a totally rad URL to convince people you're legit.
+
+## {bs4lib}
+
+The [{bs4lib}](https://bs4cards.djnavarro.net/articles/introduction.html) package (available on CRAN) is great because it lets you create customisable 'cards' that you can tile on an R Markdown page.
+
+To create a card, you use the `card()` function with arguments for `title`, `image`,[^alt] `text`, `link`, etc. You can put these in a list and pass that to `card_grid()` to make a grid. Of cards. A card grid.
+
+So, this format could work well to bring disparate information together in one central location, like a blog's landing page, where a card's content gives you a preview of post that you can click to visit it.
+
+So I did just that: [I made a single page](https://github.com/matt-dray/faxcrayon)[^site] where each card displays an art piece I created with R code for [#RecreationThursday on Twitter](https://twitter.com/search?q=%23recreationthursday) or whatever, the date it was created, the 'name' of the piece, and whether its is a recreation of an original artwork, a remix (like extending or corrupting an artist's vision) or something that fell out of my own coding process (i.e. abstract or vaguely eye-pleasing stuff).
+
+<div class="figure">
+<img src="/post/2021-07-25-faxcrayon_files/cards.png" alt="Example of three cards made use the bs4cards package. Each one has a header with the date in, a square image in the middle, the name of the piece which is a link, and some body text that explains whether the piece is original, a remix or a recreation." width="100%"/>
+</div>
+
+## GitHub Pages
+
+One of the easiest ways to serve an R Markdown file on the internet is to store it in a GitHub repository, knit it to HTML and then [enable GitHub Pages](https://pages.github.com/). 
+
+You go to the 'Pages' in your repository's settings to enable it and then your HTML is served so that it's available to anyone on the internet in the form <username.github.io/repository-name/file.html>.[^index]
+
+## Domain
+
+But <matt-dray.github.io/faxcrayon> isn't that exciting as URLs go, and since I'm going to be an internationally-famous and extremely financially-successful artist, it makes sense to improve [my online brand](https://www.youtube.com/watch?v=rPHK494AUxE) with a rad URL.
+
+Where to get inspiration? I've tweeted images for #RecreationThursday using the fax[^fax] `r emo::ji("fax")` and crayon emojis `r emo::ji("crayon")` because I was using my rudimentary skills to create facsimile copies of original artworks. So... fax crayon? Like a wax crayon, but, like, fax? Plus it only cost two dollars, so.
+
+There's [a small dance](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site#about-custom-domain-configuration) you have to do to make GitHub Pages link to your domain, while your domain provider may themselves require [a particular set of settings](https://www.namecheap.com/support/knowledgebase/article.aspx/9645/2208/how-do-i-link-my-domain-to-github-pages/).
+
+It took half an hour or so for the domain dance to complete, but now the site is available at [faxcrayon.art](https://www.faxcrayon.art).
+
+# Nothing is real
+
+So: {bs4cards}, GitHub Pages and a totally hip URL.
+
+Now I just need to work out how to integrate NFT[^nft] functionality to the site and quit my day job.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE, results='hold'}
+sessioninfo::session_info()
+```
+</details>
+
+[^index]: If you're feeling fancy, you can call your file 'index.Rmd', which knits to 'index.html', which GitHub Pages serves with the slightly more succinct URL <username.github.io/repository-name>.
+[^fax]: Younglings, the fax machine is an ancient and possibly imaginary piece of technology that's a mash-up of a telephone, photocopier and printer. All in one!
+[^nft]: [Non-Fungible Tokens](https://www.youtube.com/watch?v=Oz9zw7-_vhM) are Not For 'Thew.
+[^alt]: You can pass `card_image("<path to image>", alt = "Descriptive alt text.")` to the `image` argument of `card()` to help improve accessibility.
+[^site]: If you were less lazy than me you could turn this into [a fully-blown R Markdown website](https://rmarkdown.rstudio.com/lesson-13.html), so that a card click takes you to a separate page for that piece.
