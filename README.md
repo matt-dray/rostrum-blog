@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 1 day(s) ago: [Make an art gallery with
+🆕 The latest post was published 2 day(s) ago: [Make an art gallery with
 {bs4cards}](https://www.rostrum.blog/2021/07/25/faxcrayon/).
 
 📈 This 2D plot shows posts over time:
@@ -145,4 +145,4 @@ since 2018-04-14.
 
 -----
 
-*Updated 2021-07-26 02:39:00*
+*Updated 2021-07-27 02:39:18*
