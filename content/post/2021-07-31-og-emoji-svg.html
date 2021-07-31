@@ -1,0 +1,322 @@
+---
+title: "OG emoji SVGs"
+author: Matt Dray
+date: '2021-07-31'
+slug: og-emoji-svg
+categories:
+  - code
+  - data-viz
+tags:
+  - emoji
+  - r
+  - magick
+  - png
+  - polite
+  - svg
+  - webscrape
+draft: no
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div class="figure">
+<p><img src="/post/2021-07-31-og-emoji-svg_files/emoji-grid.png" alt="A 10 by 9 grid of pixelated emojis coloured with random rainbow colours. Examples include a cat face, a fax machine and thumbs up." width="100%"/></p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I <a href="https://github.com/matt-dray/og-emoji-svg">wrote code to produce SVG versions of the ‘first-ever’ emoji set</a>. Using R, I scraped <a href="https://blog.emojipedia.org/">Emojipedia</a> with the <a href="https://dmi3kno.github.io/polite/">{polite}</a> package and then handled images with <a href="https://cran.r-project.org/package=png">{png}</a>, <a href="https://docs.ropensci.org/magick/index.html">{magick}</a> and <a href="https://svglite.r-lib.org/reference/svglite.html">{svglite}</a>.</p>
+</div>
+<div id="important-archival-work" class="section level1">
+<h1>Important archival work</h1>
+<p>I posted recently on <a href="https://www.rostrum.blog/2021/06/28/pixel-art/">creating ‘pixel art’ in R</a> and have since stumbled upon <a href="https://coolbutuseless.github.io/2018/08/13/gganimate-with-sprites/">an old post by mikefc on the coolbutuseless blog</a> with a method that makes it easier to convert from an image to its ‘pixels’.</p>
+<p>I’ve also learnt recently of <a href="https://emilhvitfeldt.github.io/emoji/">Emil’s development of the {emoji} package</a> for R (superseding <a href="https://github.com/hadley/emo">Hadley’s GitHub-only {emo} package</a>).</p>
+<p>Speaking of emoji, <a href="https://en.wikipedia.org/wiki/Jeremy_Burge">Jeremy Burge</a> and colleagues have worked hard to archive and document them on <a href="https://blog.emojipedia.org/">Emojipedia</a>. They posted recently about the discovery that <a href="https://blog.emojipedia.org/correcting-the-record-on-the-first-emoji-set/">the first emoji set was likely to be from SoftBank in 1997</a>, rather than <a href="https://stories.moma.org/the-original-emoji-set-has-been-added-to-the-museum-of-modern-arts-collection-c6060e141f61">the NTT DOCOMO set that was acquired by MoMA</a>.</p>
+<p>As a mash-up of these things, I’ve decided to create SVG versions of the original SoftBank set. This format means that the images can be resized without loss of resolution and can be adapted in other ways, like being recoloured.</p>
+<p>The approach:</p>
+<ol style="list-style-type: decimal">
+<li>Scrape the Emojipedia hub page for SoftBank’s 1997 emojis</li>
+<li>Scrape each emoji’s dedicated page to retrieve its image path</li>
+<li>Download each image (gif format)</li>
+<li>Convert gifs to PNGs to matrices</li>
+<li>Convert matrices to plots to SVGs</li>
+</ol>
+<p>The packages we need are all available from CRAN with <code>install.packages()</code>:</p>
+<pre class="r"><code>library(polite)
+library(rvest)
+library(purrr)
+library(svglite)
+library(png)
+library(magick)</code></pre>
+<pre><code>## Linking to ImageMagick 6.9.12.3
+## Enabled features: cairo, fontconfig, freetype, heic, lcms, pango, raw, rsvg, webp
+## Disabled features: fftw, ghostscript, x11</code></pre>
+<p>All the code here is available in <a href="https://github.com/matt-dray/og-emoji-svg">a GitHub repo</a>.</p>
+</div>
+<div id="scrape-politely" class="section level1">
+<h1>Scrape politely</h1>
+<p>It’s best to scrape using <a href="https://dmi3kno.github.io/polite/">the {polite} package</a>, which allows you to identify yourself to the target website and observe any requests to delay between scrapes. I’ve <a href="https://www.rostrum.blog/2019/03/04/polite-webscrape/">written about this before</a>.</p>
+<p>First we <code>bow()</code> to the site by providing our information and saying where we want to scrape. The returned object contains information that {polite} uses to decide whether scraping is allowed and whether a crawl delay is required.</p>
+<pre class="r"><code>ep_bow &lt;- bow(
+  url = &quot;https://emojipedia.org/softbank/1997&quot;,
+  user_agent = &quot;M Dray &lt;https://www.matt-dray.com&gt;&quot;
+)
+
+ep_bow</code></pre>
+<pre><code>## &lt;polite session&gt; https://emojipedia.org/softbank/1997
+##     User-agent: M Dray &lt;https://www.matt-dray.com&gt;
+##     robots.txt: 1 rules are defined for 1 bots
+##    Crawl delay: 5 sec
+##   The path is scrapable for this user-agent</code></pre>
+<p>From <a href="https://emojipedia.org/softbank/1997/">the SoftBank 1997 hub page</a> of <a href="https://blog.emojipedia.org/">Emojipedia</a> we can scrape the URLs that lead to each emoji’s dedicated page. <a href="https://rvest.tidyverse.org/">The {rvest} package</a> has some handy functions that help us manipulate the retrieved HTML after scraping with {polite}, which rate-limits us to a retrieval every 5 seconds, given the information returned from our <code>bow()</code>.</p>
+<pre class="r"><code>sb_urls &lt;- scrape(ep_bow) |&gt; html_nodes(&quot;a&quot;) |&gt; html_attr(&quot;href&quot;)
+sb97_urls &lt;- sb_urls[grepl(&quot;/1997/&quot;, sb_urls) &amp; !grepl(&quot;more&quot;, sb_urls)]
+head(sb97_urls)</code></pre>
+<pre><code>## [1] &quot;/softbank/1997/grinning-face-with-big-eyes/&quot;   
+## [2] &quot;/softbank/1997/smiling-face-with-smiling-eyes/&quot;
+## [3] &quot;/softbank/1997/disappointed-face/&quot;             
+## [4] &quot;/softbank/1997/angry-face/&quot;                    
+## [5] &quot;/softbank/1997/pile-of-poo/&quot;                   
+## [6] &quot;/softbank/1997/kiss-mark/&quot;</code></pre>
+<p>From this we can get the full list of 90 emoji names for the 1997 SoftBank set.</p>
+<details>
+<summary>
+Click to expand full list of emoji names
+</summary>
+<pre class="r"><code>basename(sb97_urls)</code></pre>
+<pre><code>##  [1] &quot;grinning-face-with-big-eyes&quot;    &quot;smiling-face-with-smiling-eyes&quot;
+##  [3] &quot;disappointed-face&quot;              &quot;angry-face&quot;                    
+##  [5] &quot;pile-of-poo&quot;                    &quot;kiss-mark&quot;                     
+##  [7] &quot;broken-heart&quot;                   &quot;red-heart&quot;                     
+##  [9] &quot;raised-hand&quot;                    &quot;victory-hand&quot;                  
+## [11] &quot;index-pointing-up&quot;              &quot;thumbs-up&quot;                     
+## [13] &quot;raised-fist&quot;                    &quot;oncoming-fist&quot;                 
+## [15] &quot;boy&quot;                            &quot;girl&quot;                          
+## [17] &quot;man&quot;                            &quot;woman&quot;                         
+## [19] &quot;baby-angel&quot;                     &quot;person-surfing&quot;                
+## [21] &quot;dog-face&quot;                       &quot;cat-face&quot;                      
+## [23] &quot;tiger-face&quot;                     &quot;horse-face&quot;                    
+## [25] &quot;mouse-face&quot;                     &quot;bear&quot;                          
+## [27] &quot;penguin&quot;                        &quot;spouting-whale&quot;                
+## [29] &quot;fish&quot;                           &quot;cherry-blossom&quot;                
+## [31] &quot;rose&quot;                           &quot;shortcake&quot;                     
+## [33] &quot;hot-beverage&quot;                   &quot;cocktail-glass&quot;                
+## [35] &quot;beer-mug&quot;                       &quot;fork-and-knife&quot;                
+## [37] &quot;mount-fuji&quot;                     &quot;house&quot;                         
+## [39] &quot;office-building&quot;                &quot;church&quot;                        
+## [41] &quot;sunrise-over-mountains&quot;         &quot;railway-car&quot;                   
+## [43] &quot;bullet-train&quot;                   &quot;station&quot;                       
+## [45] &quot;automobile&quot;                     &quot;fuel-pump&quot;                     
+## [47] &quot;sailboat&quot;                       &quot;airplane&quot;                      
+## [49] &quot;twelve-oclock&quot;                  &quot;one-oclock&quot;                    
+## [51] &quot;two-oclock&quot;                     &quot;three-oclock&quot;                  
+## [53] &quot;four-oclock&quot;                    &quot;five-oclock&quot;                   
+## [55] &quot;six-oclock&quot;                     &quot;seven-oclock&quot;                  
+## [57] &quot;eight-oclock&quot;                   &quot;nine-oclock&quot;                   
+## [59] &quot;ten-oclock&quot;                     &quot;eleven-oclock&quot;                 
+## [61] &quot;crescent-moon&quot;                  &quot;sun&quot;                           
+## [63] &quot;cloud&quot;                          &quot;umbrella-with-rain-drops&quot;      
+## [65] &quot;snowman-without-snow&quot;           &quot;christmas-tree&quot;                
+## [67] &quot;soccer-ball&quot;                    &quot;baseball&quot;                      
+## [69] &quot;tennis&quot;                         &quot;flag-in-hole&quot;                  
+## [71] &quot;skis&quot;                           &quot;t-shirt&quot;                       
+## [73] &quot;running-shoe&quot;                   &quot;ring&quot;                          
+## [75] &quot;gem-stone&quot;                      &quot;musical-note&quot;                  
+## [77] &quot;microphone&quot;                     &quot;saxophone&quot;                     
+## [79] &quot;guitar&quot;                         &quot;trumpet&quot;                       
+## [81] &quot;mobile-phone&quot;                   &quot;telephone&quot;                     
+## [83] &quot;fax-machine&quot;                    &quot;laptop&quot;                        
+## [85] &quot;movie-camera&quot;                   &quot;camera&quot;                        
+## [87] &quot;key&quot;                            &quot;question-mark&quot;                 
+## [89] &quot;exclamation-mark&quot;               &quot;trident-emblem&quot;</code></pre>
+</details>
+<p>Now, thanks to <a href="https://purrr.tidyverse.org/">the {purrr} package</a>, we can iterate over these pages and extract each emoji image URL.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> You have to update your <code>bow()</code> with a <code>nod()</code> for each new page you want to scrape.</p>
+<pre class="r"><code>scrape_sb_gif &lt;- function(sb_ext, bow = ep_bow) {
+  session &lt;- nod(ep_bow, sb_ext)
+  scrape(session) |&gt; html_nodes(&quot;img&quot;) |&gt; html_attr(&quot;src&quot;)
+}
+
+sb97_img &lt;- map_chr(sb97_urls, scrape_sb_gif)
+
+head(sb97_img)</code></pre>
+<pre><code>## [1] &quot;https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/160/softbank/182/smiling-face-with-open-mouth_1f603.gif&quot;  
+## [2] &quot;https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/160/softbank/182/smiling-face-with-smiling-eyes_1f60a.gif&quot;
+## [3] &quot;https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/160/softbank/182/disappointed-face_1f61e.gif&quot;             
+## [4] &quot;https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/160/softbank/182/angry-face_1f620.gif&quot;                    
+## [5] &quot;https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/160/softbank/182/pile-of-poo_1f4a9.gif&quot;                   
+## [6] &quot;https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/160/softbank/182/kiss-mark_1f48b.gif&quot;</code></pre>
+<p>So, looks like these are stored on AWS servers.</p>
+</div>
+<div id="download-and-convert" class="section level1">
+<h1>Download and convert</h1>
+<p>Now we can download the emoji images. Here I’m going to download them to a temporary folder. I’ve also chosen to insert manually a random one- to five-second delay between downloads here to limit the impact on the server.</p>
+<p>Note that the <code>download.file()</code> function prints an output for each downloaded file, but I’ve hidden this because there’s 90 outputs.</p>
+<pre class="r"><code># Create temporary folder to write into
+tmp &lt;- tempdir()
+
+# Download each file and give it the emoji name
+walk2(
+  sb97_img,
+  basename(sb97_urls),
+  ~{ cat(&quot;Downloading&quot;, .y, &quot;\n&quot;)
+    download.file(.x, file.path(tmp, paste0(.y, &quot;.gif&quot;)))
+    Sys.sleep(sample(1:5, 1)) }
+)</code></pre>
+<p>We actually want PNG format for the next step, not gifs. One way to do this is to read in the gifs as <a href="https://docs.ropensci.org/magick/index.html">{magick}</a> objects and then write them back out to png.</p>
+<pre class="r"><code>gif_paths &lt;- list.files(tmp, pattern = &quot;.gif&quot;, full.names = TRUE)
+png_paths &lt;- gsub(&quot;gif&quot;, &quot;png&quot;, gif_paths)
+
+walk2(
+  gif_paths,
+  png_paths,
+  ~image_read(.x) |&gt; image_write(.y, format = &quot;png&quot;)
+)</code></pre>
+</div>
+<div id="generate-outputs" class="section level1">
+<h1>Generate outputs</h1>
+<div id="pixel-plots" class="section level2">
+<h2>Pixel plots</h2>
+<p>First, we need a function to read the PNGs and create a 32 by 32 matrix representing the pixels of the image.</p>
+<pre class="r"><code>pixelate_emoji &lt;- function(path_in) {
+  x &lt;- readPNG(path_in)
+  y &lt;- matrix(as.vector(x), 32)
+  t(y[nrow(y):1, 33:64])
+}</code></pre>
+<p>We can take the matrix output from <code>pixelate_emoji()</code> and create a plot of that emoji’s pixels using the <code>image()</code> function from base R.</p>
+<pre class="r"><code>plot_emoji &lt;- function(emo_mat, col_px = &quot;black&quot;, col_bg = &quot;white&quot;) {
+  image(
+    emo_mat,
+    col = c(col_bg, col_px),
+    useRaster = TRUE,
+    axes = FALSE, xaxs = NULL, yaxs = NULL
+  )
+}</code></pre>
+<p>We can create a grid of them all.</p>
+<pre class="r"><code>par(mfrow = c(10, 9), mar = rep(1, 4))
+walk(png_paths, ~pixelate_emoji(.x) |&gt; plot_emoji())</code></pre>
+<p><img src="/post/2021-07-31-og-emoji-svg_files/figure-html/plot-emoji-grid-1.png" title="A 10 by 9 grid of black-and-white pixelated emoji from the original 1997 SoftBank set." alt="A 10 by 9 grid of black-and-white pixelated emoji from the original 1997 SoftBank set." width="100%" /></p>
+<p>Some are a bit peculiar. The faces look like onions or dumplings, for example. But the vast majority are recognisable as emoji that persist today. Note the poo with a smiley face; this emoji is not recent!</p>
+<p>Here’s three emoji, but closer.</p>
+<pre class="r"><code>par(mfrow = c(1, 3), mar = rep(1, 4))
+walk(
+  png_paths[c(82, 19, 55)],
+  ~pixelate_emoji(.x) |&gt; plot_emoji()
+)</code></pre>
+<p><img src="/post/2021-07-31-og-emoji-svg_files/figure-html/plot-three-emoji-1.png" title="Three black-and-white pixelated emoji from the original 1997 SoftBank set. From left-to-right they are a thumbs-up, a disappointed face and a smiling poo." alt="Three black-and-white pixelated emoji from the original 1997 SoftBank set. From left-to-right they are a thumbs-up, a disappointed face and a smiling poo." width="100%" /></p>
+<p>Or, in modern parlance: 👍😞💩</p>
+</div>
+<div id="write-svgs" class="section level2">
+<h2>Write SVGs</h2>
+<p>We can save each plot into <a href="https://en.wikipedia.org/wiki/Scalable_Vector_Graphics">SVG (Scalable Vector Graphics) format</a> using <a href="https://svglite.r-lib.org/reference/svglite.html">the {svglite} package</a>, which can be put in a function that accepts a matrix that’s output from <code>pixelate_emoji()</code>.</p>
+<pre class="r"><code>save_emoji &lt;- function(emo_mat, file_out, dimn = 10) {
+  svglite(file_out, width = dimn, height = dimn)
+  par(mar = rep(0, 4), mfrow = c(1, 1))
+  plot_emoji(emo_mat)
+  dev.off()
+}</code></pre>
+<p>Now to convert all the PNGs to SVGs.</p>
+<pre class="r"><code>svg_paths &lt;- gsub(&quot;png&quot;, &quot;svg&quot;, png_paths)
+
+walk2(
+  png_paths, 
+  svg_paths,
+  ~save_emoji(pixelate_emoji(.x), file_out = .y)
+) </code></pre>
+<p>We can demonstrate the benefit of SVGs by plotting a scraped PNG emoji (the excellent ‘spouting whale’) at small, medium and large sizes (25, 100 and 500 pixels square) and then do the same for the SVGs.</p>
+<p>First the PNG, which look more fuzzy as the image gets larger:</p>
+<p><img src="/post/2021-07-31-og-emoji-svg_files/spouting-whale.png" width="25" height="25" />
+<img src="/post/2021-07-31-og-emoji-svg_files/spouting-whale.png" width="100" height="100" />
+<img src="/post/2021-07-31-og-emoji-svg_files/spouting-whale.png" width="500" height="500" /></p>
+<p>Now the SVGs, which look sharp at all sizes:</p>
+<p><img src="/post/2021-07-31-og-emoji-svg_files/spouting-whale.svg" width="25" height="25" />
+<img src="/post/2021-07-31-og-emoji-svg_files/spouting-whale.svg" width="100" height="100" />
+<img src="/post/2021-07-31-og-emoji-svg_files/spouting-whale.svg" width="500" height="500" /></p>
+<p>This happens because an SVG is basically a text file of instructions on how to build the image that an interpreter can re-build from scratch at any size. Hence the word ‘scalable’ in ‘SVG’.</p>
+</div>
+</div>
+<div id="licensing" class="section level1">
+<h1>Licensing?</h1>
+<p>This was a project to remind me about ‘polite’ scraping and the powers of SVG graphics. But maybe the outputs could be useful for archival purposes or something?</p>
+<p>I can’t be completely certain of licensing for this particular emoji set (even <a href="https://emojipedia.org/licensing/">Emojipedia isn’t always sure</a>), but I certainly can’t and don’t condone their use for any commercial activities; they belong to <a href="https://en.wikipedia.org/wiki/SoftBank_Group">SoftBank</a>. I’ve used a few images in this post for demonstration purposes only.</p>
+<p>I’ve made the code <a href="https://github.com/matt-dray/og-emoji-svg">available in a GitHub repo</a> that you can use for personal investigation, but I haven’t included any of the outputs there. Let me know if you find a use for this, lol.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.1.0 (2021-05-18)
+##  os       macOS Big Sur 10.16         
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2021-07-31                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version    date       lib source                     
+##  assertthat    0.2.1      2019-03-21 [1] CRAN (R 4.1.0)             
+##  blogdown      1.3        2021-04-14 [1] CRAN (R 4.1.0)             
+##  bookdown      0.22       2021-04-22 [1] CRAN (R 4.1.0)             
+##  bslib         0.2.5.1    2021-05-18 [1] CRAN (R 4.1.0)             
+##  cachem        1.0.5      2021-05-15 [1] CRAN (R 4.1.0)             
+##  cli           2.5.0      2021-04-26 [1] CRAN (R 4.1.0)             
+##  crayon        1.4.1      2021-02-08 [1] CRAN (R 4.1.0)             
+##  curl          4.3.2      2021-06-23 [1] CRAN (R 4.1.0)             
+##  digest        0.6.27     2020-10-24 [1] CRAN (R 4.1.0)             
+##  emo           0.0.0.9000 2021-06-23 [1] Github (hadley/emo@3f03b11)
+##  evaluate      0.14       2019-05-28 [1] CRAN (R 4.1.0)             
+##  fastmap       1.1.0      2021-01-25 [1] CRAN (R 4.1.0)             
+##  fs            1.5.0      2020-07-31 [1] CRAN (R 4.1.0)             
+##  generics      0.1.0      2020-10-31 [1] CRAN (R 4.1.0)             
+##  glue          1.4.2      2020-08-27 [1] CRAN (R 4.1.0)             
+##  here          1.0.1      2020-12-13 [1] CRAN (R 4.1.0)             
+##  highr         0.9        2021-04-16 [1] CRAN (R 4.1.0)             
+##  htmltools     0.5.1.1    2021-01-22 [1] CRAN (R 4.1.0)             
+##  httr          1.4.2      2020-07-20 [1] CRAN (R 4.1.0)             
+##  jquerylib     0.1.4      2021-04-26 [1] CRAN (R 4.1.0)             
+##  jsonlite      1.7.2      2020-12-09 [1] CRAN (R 4.1.0)             
+##  knitr         1.33       2021-04-24 [1] CRAN (R 4.1.0)             
+##  lifecycle     1.0.0      2021-02-15 [1] CRAN (R 4.1.0)             
+##  lubridate     1.7.10     2021-02-26 [1] CRAN (R 4.1.0)             
+##  magick      * 2.7.2      2021-05-02 [1] CRAN (R 4.1.0)             
+##  magrittr      2.0.1      2020-11-17 [1] CRAN (R 4.1.0)             
+##  memoise       2.0.0      2021-01-26 [1] CRAN (R 4.1.0)             
+##  mime          0.11       2021-06-23 [1] CRAN (R 4.1.0)             
+##  png         * 0.1-7      2013-12-03 [1] CRAN (R 4.1.0)             
+##  polite      * 0.1.1      2019-11-30 [1] CRAN (R 4.1.0)             
+##  purrr       * 0.3.4      2020-04-17 [1] CRAN (R 4.1.0)             
+##  R6            2.5.0      2020-10-28 [1] CRAN (R 4.1.0)             
+##  ratelimitr    0.4.1      2018-10-07 [1] CRAN (R 4.1.0)             
+##  Rcpp          1.0.6      2021-01-15 [1] CRAN (R 4.1.0)             
+##  rlang         0.4.11     2021-04-30 [1] CRAN (R 4.1.0)             
+##  rmarkdown     2.9        2021-06-15 [1] CRAN (R 4.1.0)             
+##  robotstxt     0.7.13     2020-09-03 [1] CRAN (R 4.1.0)             
+##  rprojroot     2.0.2      2020-11-15 [1] CRAN (R 4.1.0)             
+##  rvest       * 1.0.0      2021-03-09 [1] CRAN (R 4.1.0)             
+##  sass          0.4.0      2021-05-12 [1] CRAN (R 4.1.0)             
+##  selectr       0.4-2      2019-11-20 [1] CRAN (R 4.1.0)             
+##  sessioninfo   1.1.1      2018-11-05 [1] CRAN (R 4.1.0)             
+##  spiderbar     0.2.4      2021-05-16 [1] CRAN (R 4.1.0)             
+##  stringi       1.6.2      2021-05-17 [1] CRAN (R 4.1.0)             
+##  stringr       1.4.0      2019-02-10 [1] CRAN (R 4.1.0)             
+##  svglite     * 2.0.0      2021-02-20 [1] CRAN (R 4.1.0)             
+##  systemfonts   1.0.2      2021-05-11 [1] CRAN (R 4.1.0)             
+##  usethis       2.0.1      2021-02-10 [1] CRAN (R 4.1.0)             
+##  withr         2.4.2      2021-04-18 [1] CRAN (R 4.1.0)             
+##  xfun          0.24       2021-06-15 [1] CRAN (R 4.1.0)             
+##  xml2          1.3.2      2020-04-23 [1] CRAN (R 4.1.0)             
+##  yaml          2.2.1      2020-02-01 [1] CRAN (R 4.1.0)             
+## 
+## [1] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
+</details>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Note that I’m using the new (at time of writing) base R pipe, <code>|&gt;</code>, rather than the {magrittr} pipe, <code>%&gt;%</code>, so you’ll need R v4.1 or higher to run this code.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
