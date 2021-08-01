@@ -25,13 +25,13 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 97 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 98 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 6 day(s) ago: [Make an art gallery with
-{bs4cards}](https://www.rostrum.blog/2021/07/25/faxcrayon/).
+🆕 The latest post was published 1 day(s) ago: [OG emoji
+SVGs](https://www.rostrum.blog/2021/07/31/og-emoji-svg/).
 
 📈 This 2D plot shows posts over time:
 
@@ -43,6 +43,7 @@ since 2018-04-14.
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|     98 | 2021-07-31 | [OG emoji SVGs](https://www.rostrum.blog/2021/07/31/og-emoji-svg/)                                                        |
 |     97 | 2021-07-25 | [Make an art gallery with {bs4cards}](https://www.rostrum.blog/2021/07/25/faxcrayon/)                                     |
 |     96 | 2021-07-23 | [What colour is London?](https://www.rostrum.blog/2021/07/23/london-colour/)                                              |
 |     95 | 2021-07-15 | [EXPOSED: a Kiwi conspiracy built into R\!](https://www.rostrum.blog/2021/07/15/dollar-dollar/)                           |
@@ -145,4 +146,4 @@ since 2018-04-14.
 
 -----
 
-*Updated 2021-07-31 02:37:39*
+*Updated 2021-08-01 02:42:11*
