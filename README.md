@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 2 day(s) ago: [OG emoji
+🆕 The latest post was published 3 day(s) ago: [OG emoji
 SVGs](https://www.rostrum.blog/2021/07/31/og-emoji-svg/).
 
 📈 This 2D plot shows posts over time:
@@ -146,4 +146,4 @@ SVGs](https://www.rostrum.blog/2021/07/31/og-emoji-svg/).
 
 -----
 
-*Updated 2021-08-02 02:37:43*
+*Updated 2021-08-03 02:39:15*
