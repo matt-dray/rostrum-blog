@@ -1,0 +1,253 @@
+---
+title: "Read a hex colour code by eye"
+author: Matt Dray
+date: '2021-08-09'
+slug: dehex
+categories:
+  - code
+  - data-viz
+  - package
+tags:
+  - color
+  - colour
+  - crayon
+  - hex
+  - r
+draft: yes
+---
+
+# tl;dr
+
+I wrote [an R package, {dehex}](https://github.com/matt-dray/dehex), that can help you 'read' a hex colour code according to [David DeSandro's method](https://www.youtube.com/watch?v=eqZqx6lRPe0).
+
+# Hexemplary encoding
+
+In computing, [hex codes](https://en.wikipedia.org/wiki/Web_colors) are used to encode a colour as a six-digit string, preceded by convention with an octothorpe (`#`). Each pair of characters represents an 'amount' of red, green and blue. Those amounts are written in hexadecimal code (hence 'hex'), which uses the digits 1 to 9 and then A to F to encode 16 possible values for each slot. Sixteen million colours can be encoded in this way.
+
+For example, the code #FF000 is 'red'. It uses the highest of these hex values, 'F', in both of the 'red' positions, while the green and blue pairs are zero. That's easy enough to decipher, but what about #8ACD52 or #C0FFEE?[^words]
+
+# The DeSandro Method
+
+[David DeSandro](https://desandro.com/) of [Metafizzy](https://metafizzy.co/) gave [a talk at the dotCSS conference in 2018](https://www.youtube.com/watch?v=eqZqx6lRPe0) about his superpower: 'reading' a hex colour code without the need for a tool to interpret it.[^maelle]
+
+In short, it's possible to look at a hex code like #F2D359 and interpret the rough hue, saturation and lightness of the colour it encodes, which you can speak as an English phrase like 'light washed yellow'.
+
+Like David, I'm red-green colourblind and have difficulty identifying and talking about colours. Many online tools return a colour sample for a provided hex code, but I often struggle without an interpretation in English.
+
+# Hue am I?
+
+So, I've made [a small package called {dehex}](https://github.com/matt-dray/dehex) that you can use to:
+
+1. Train yourself to read hex codes with the DeSandro Method
+1. Return a rough English phrase for a given hex code
+
+[The package is on GitHub ](https://github.com/matt-dray/dehex) and you can install with the help of {remotes}.
+
+```{r pkg-download, eval=FALSE}
+remotes::install_github("matt-dray/dehex")
+```
+
+## Cheat
+
+> This sounds like too much work, just tell me what colour my hex code is
+
+I'm going to show you immediately how to retrieve an English phrase and a colour sample for a given hex code. Probably this is the most useful bit of the package for users who don't want to become colour boffins.
+
+Since we're 'solving' the hex code, the function is called `dh_solve()`.[^dh] It outputs a text string.
+
+```{r}
+dehex::dh_solve("#F2D359")
+```
+
+If you set `swatch` to `TRUE`, then you'll get a plot filled with that colour.
+
+```{r colour-out, out.height="200px", out.width="400px", fig.alt="A monochrome block coloured with a light washed yellow."}
+dehex::dh_solve("#F2D359", swatch = TRUE)
+```
+
+I think that's quite pleasant.
+
+## Learning is fun
+
+For the more adventurous, you can use {dehex} to learn how to read a hex code.
+
+The DeSandro Method has five steps:
+
+1. Simplify from a six- to a three-digit hex code
+1. Create a bar chart from the RGB values encoded by the short hex
+1. Assess hue (red, orange, violet, etc) from the chart's ‘shape’
+1. Assess saturation ('saturated', 'washed', etc) from the range of the RGB values
+1. Assess lightness ('dark', 'middle', 'light') from the total of the RGB values
+
+I've incorporated each of these into {dehex}, plus a method for getting the answer.
+
+### 1. Three-digit code
+
+Turns out that the first value of each pair is the important one when determining colour, so you can shorten the standard six-digit hex code to jut three digits. 
+
+That's easy enough to do in your head, but the function `dh_shorten()` does it for you:
+
+```{r dh-shorten}
+hex_code <- "#F2D359"
+short_code <- dehex::dh_shorten(hex_code)
+short_code
+```
+
+As it happens, the short code is still recognised by interpreters, but it's often expanded double up each value to get back to six. So #FD5 is technically #FFDD55 rather than the original #F2D359, but that doesn't really matter for our purposes.
+
+### 2. RGB graph
+
+The values in the shortcode encode an 'amount' of red, green and blue. The lowest value is 0 and the highest is F, which is hexadecimal for 15. The higher the value, the more that's mixed into the final colour. 
+
+You can use `dh_graph()` to create this for you automatically. Rather than generate a plot though, we can just print a cute bar graph to the console. We're only using it for reference, after all. 
+
+```{r dh-graph}
+dehex::dh_graph(
+  short_code,
+  adorn_h = FALSE, adorn_s = FALSE, adorn_l = FALSE
+)
+```
+
+The output is a horizontal chart showing the values of red (R), green (G) and blue (B) encoded by the hex short code. Each bar is made from 16 [unicode block elements](https://en.wikipedia.org/wiki/Block_Elements), which are 'filled' to represent the amount of each colour.
+
+If you're using RStudio, this will print in colour, thanks to [the {crayon} package](https://github.com/r-lib/crayon). That looks like this using Rstudio's default TextMate theme:
+
+![](/post/2021-08-09-dehex_files/graph-crayon-light.png)
+
+Or, using the Monokai dark theme:
+
+![](/post/2021-08-09-dehex_files/graph-crayon-dark.png)
+
+Perhaps you're wondering what the `adorn_*` arguments do. They add extra information to the graph that will help us match it to guides in 3 to 5. I'll switch these on as we go through those next steps.
+
+### 3. Hue
+
+Hue is basically a colour's name, like 'orange'. We're going to compare the 'profile' or 'shape' of our RGB graph to a number of others to determine which one most closely resembles ours.
+
+For simplicity, we stick only to the primary, secondary and tertiary colours in the RGB system: red, blue, green; yellow, cyan, magenta; orange, chartreuse, aquamarine, azure, violet and rose. We also include a special case: grey.
+
+The {dehex} package has a built in guide that will print RGB graphs for each of these colours. Since this is a guide for hue, you pass the argument `"H"`. I've hidden the output, since there are 13 graphs.
+
+```{r dh-guide-h, eval=FALSE}
+dehex::dh_guide("H")
+```
+
+<details><summary>Click to expand the hue guides</summary>
+```{r dh-guide-h-hide}
+dehex::dh_guide("H")
+```
+</details>
+
+You can see that I've added a value to the end of each bar, which represents the ranking of the RGB values. This follows the logic of the `rank()` function in base R: 1 is smallest, 3 is largest and ties are the average of the shared ranks. However, I've increased the tolerance for ties.
+
+Which of the graphs in the hue gudie most closely resemble our colour?
+
+You might be able to see by eye that it's probably yellow, but we look at our graph again but this time with `adorn_h` set to `TRUE` (the default).
+
+```{r dh-graph-h}
+dehex::dh_graph(
+  short_code,
+  adorn_h = TRUE, adorn_s = FALSE, adorn_l = FALSE
+)
+```
+
+So, we have an RGB hue ranking of 2.5-2.5-1, which indeed matches the 'yellow' ranks in the guide, even if the RGB values are not exactly the same.
+
+### 4. Saturation
+
+Now we repeat the process for saturation. This time we're going to compare the range of RGB values. This is easier because there's only three (saturated, washed and muted) plus grey (i.e. zero range).
+
+This time we pass `"S"` for the saturation guide:
+
+```{r dh-guide-s, eval=FALSE}
+dehex::dh_guide("S")
+```
+
+<details><summary>Click to expand the saturation guides</summary>
+```{r dh-guide-s-hide}
+dehex::dh_guide("S")
+```
+</details>
+
+This time there's an additional bar for saturation, labelled 'S', that indicates the range of RGB values covered by each level of saturation. We can compare the saturation of our colour with the `adorn_s` argument set to `TRUE`.
+
+```{r dh-graph-s}
+dehex::dh_graph(
+  short_code,
+  adorn_h = FALSE, adorn_s = TRUE, adorn_l = FALSE
+)
+```
+
+So, that's roughly the range of the 'washed' category of saturation.
+
+### 5. Lightness
+
+Finally, we do the same for the lightness of the colour ('light', 'middle' and 'dark'). DeSanto says that you can total up the values, where higher values are lighter, but I've chosen to mark the mean value on the guide for lightness in {dehex} because I think it's easier to interpret from the graph format.
+
+Provide `"L"` for lightness to the `dh_guide()` function:
+
+```{r dh-guide-l, eval=FALSE}
+dehex::dh_guide("L")
+```
+
+<details><summary>Click to expand the hue guides</summary>
+```{r dh-guide-l-hide}
+dehex::dh_guide("L")
+```
+</details>
+
+And again, here's the chart for our colour showing a column for lightness:
+
+```{r dh-graph-l}
+dehex::dh_graph(
+  short_code,
+  adorn_h = FALSE, adorn_s = FALSE, adorn_l = TRUE
+)
+```
+
+Yep, slightly on the higher end, so it's a lighter colour.
+
+### 
+
+If you followed these steps, you'll have seen that `r hex_code` is roughly 'light washed yellow'. 
+
+{dehex} can therefore be used as a 'training device' to guide you through this process.
+
+The idea is that you remember the hue shapes (relatively hard because there's lots), the saturation ranges (i.e. wider range means more saturated) and lightness averages (i.e. higher is lighter) from the guides and compare your colour to those.
+
+You can check your answer (or cheat, of course) by using `dh_solve()`. I showed this earlier in the post, but it also has the option to see all the matching charts for hue, saturation and lightness:
+
+```{r solve-graphs}
+dehex::dh_solve(hex_code, graphs = TRUE)
+```
+
+Here you can see the selected guides that best matched the input.
+
+## Test yourself
+
+If you're really serious about this, you'll want to practice with random hex codes, of course. Lucky for you I've included a function that will generate them.
+
+See if you can work out what this colour is using the guides and method above and then check your answer in the details block below.
+
+```{r dh-random}
+set.seed(1337)
+rando_hex <- dehex::dh_random()
+rando_hex
+```
+
+<details><summary>Click here for the solution</summary>
+```{r random-solve, out.height="200px", out.width="400px", fig.alt="A monochrome block coloured with a dark washed red"}
+dehex::dh_solve(rando_hex, swatch = TRUE, graphs = TRUE)
+```
+</details>
+
+Did you get it right?
+
+# Dream of colourfornication
+
+As ever, this package and post are a Showerthought That Became Real (possible tagline for this blog). 
+There are probably bugs, it's not coded optimally, it's not fully tested, etc, etc. [Drop an issue or PR in the GitHub repo](https://github.com/matt-dray/dehex) with any ideas or (gentle) hate mail.
+
+[^words]: Yep, if you have 1 to 9 and A to F, you can 'spell' words with hex codes. See [mikefc's {colourmebad} package](https://coolbutuseless.github.io/2021/07/30/introducing-colourmebad-find-pronounceable-colours-close-to-reference-colours/) and [Michael Sumner's {hexwords}](https://github.com/mdsumner/hexwords).
+[^maelle]: I only found about this talk because of [a tweet from Maëlle](https://twitter.com/ma_salmon/status/1420726230194794496?s=20).
+[^dh]: All the functions in the package are prefixed with `dh_`, as in 'dehex', for easier autocomplete.
