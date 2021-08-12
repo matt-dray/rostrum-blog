@@ -25,21 +25,21 @@ draft: no
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>I wrote <a href="https://github.com/matt-dray/dehex">an R package, {dehex}</a>, that can help you ‘read’ a hex colour code by eye according to <a href="https://metafizzy.co/blog/read-color-hex-codes/">David DeSandro’s method</a>.</p>
+<p>I wrote <a href="https://github.com/matt-dray/dehex">an R package, {dehex}</a>, that helps you learn to ‘read’ a hex colour code by eye according to David DeSandro’s method. <a href="https://metafizzy.co/blog/read-color-hex-codes/">Check out his mindblowing talk</a>.</p>
 </div>
 <div id="hue-are-you" class="section level1">
 <h1>Hue are you?</h1>
-<p><a href="https://en.wikipedia.org/wiki/Web_colors">Hex codes</a> can be used to encode a colour as a succinct six-digit alphanumeric string, like #F4D82A.</p>
-<p>These codes are written in hexadecimal (hence ‘hex’): they can take the characters 0 to 9 and A to F, which encodes 16 possible values. Sixteen million colours can be encoded in this way.</p>
+<p><a href="https://en.wikipedia.org/wiki/Web_colors">Hex codes</a> are used in computing to encode a colour as a succinct six-digit alphanumeric string, like #F4D82A.</p>
+<p>These codes are written in hexadecimal (hence ‘hex’): they can take the characters 0 to 9 and A to F, which encodes 16 possible values. This encodes 16 million colours total, which are easy for computers to store and interpret.</p>
 <p>Each pair of characters basically encodes red, green and blue. For example, the code #FF000 is ‘red’. It uses the highest of these hex values, ‘F’, in both of the ‘red’ positions, while the green and blue pairs are zero.</p>
-<p>That’s easy enough to decipher, but what about #8ACD52 or #C0FFEE?<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> You could copy these into a tool that returns colour information (many search engines can do this now) but they usually return a sample and not the colour’s name.</p>
+<p>That’s easy enough to decipher, but what about #8ACD52 or #C0FFEE?<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> You could copy these into a tool that returns colour information (many search engines can do this now) but they often return a sample and not the colour’s name.</p>
 <p>I’m red-green colourblind and have difficulty identifying and talking about colours, so that’s not always helpful.</p>
 </div>
 <div id="the-desandro-method" class="section level1">
 <h1>The DeSandro Method</h1>
 <p><a href="https://desandro.com/">David DeSandro</a> of <a href="https://metafizzy.co/">Metafizzy</a> gave <a href="https://metafizzy.co/blog/read-color-hex-codes/">a talk at the dotCSS conference in 2018</a> about his superpower: ‘reading’ a hex colour code by eye.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
 <p><a href="https://www.youtube.com/watch?v=eqZqx6lRPe0">His talk</a> is comprehensive and has excellent visuals. I strongly recommend that you watch his explanation if you find this topic interesting. You can also find <a href="https://speakerdeck.com/desandro/read-color-hex-codes">the slides</a> and <a href="https://metafizzy.co/blog/read-color-hex-codes/">a great written explanation on his blog</a>. I cannot do justice here to such a powerful thought technology.</p>
-<p>In short, it’s possible to look at a hex code like #F2D359 and get the rough hue, saturation and lightness of the colour it encodes, which you can speak as an English phrase like ‘light washed yellow’. David, too, is colourblind and has found success with his method.</p>
+<p>In short, it’s possible to look at a hex code like #F2D359 and get the rough <a href="https://en.wikipedia.org/wiki/HSL_and_HSV">hue, saturation and lightness</a> of the colour it encodes, which you can speak as an English phrase like ‘light washed yellow’. David, too, is colourblind and has found success with his method.</p>
 <p>This post isn’t about colour theory and I’m definitely not an expert, but the point of the method is that you don’t need to be one.</p>
 </div>
 <div id="introducing-dehex" class="section level1">
@@ -47,11 +47,12 @@ draft: no
 <div class="figure">
 <p><img src="/post/2021-08-09-dehex_files/dehex-logo.png" alt="A hexagon-shaped logo with the text 'dehex' in the lower right and a bar chart with a single red, green and blue bar that originates in the top left." width="200px"/></p>
 </div>
-<p>Right, so I’ve made <a href="https://github.com/matt-dray/dehex">a small package called {dehex}</a> that you can use to:</p>
+<p>Right, so I’ve made <a href="https://github.com/matt-dray/dehex">a small R package called {dehex}</a> that you can use to:</p>
 <ol style="list-style-type: decimal">
 <li>Train yourself to read hex codes with the DeSandro Method</li>
 <li>Return a rough English phrase for a given hex code</li>
 </ol>
+<p>All from your R console.</p>
 <p><a href="https://github.com/matt-dray/dehex">The package is on GitHub</a> and you can install with the help of {remotes}.</p>
 <pre class="r"><code>remotes::install_github(&quot;matt-dray/dehex&quot;)</code></pre>
 <p>The reason for the name should be obvious: you’re ‘dehexing’, i.e. converting from hex. But also I like the connotation of removing a ‘hex’ as in a spell. The colour is cursed; it’s trapped behind a code.</p>
@@ -77,8 +78,8 @@ draft: no
 </div>
 <div id="learning-is-fun" class="section level2">
 <h2>Learning is fun</h2>
-<p>For the more adventurous, you can use {dehex} to learn how to read a hex code with DeSandro’s method.</p>
-<p>It has five steps:</p>
+<p>For the more adventurous, you can use {dehex} to learn how to read a hex code with DeSandro’s method from your R console.</p>
+<p>There’s <a href="https://speakerdeck.com/desandro/read-color-hex-codes?slide=10">five steps</a>:</p>
 <ol style="list-style-type: decimal">
 <li>Simplify from a six- to a three-digit hex code</li>
 <li>Create a bar chart from the RGB values encoded by the short hex</li>
@@ -89,7 +90,7 @@ draft: no
 <p>I’ve incorporated each of these into {dehex}, plus a method for getting the answer.</p>
 <div id="three-digit-code" class="section level3">
 <h3>1. Three-digit code</h3>
-<p>Turns out that the first value of each pair is the important one when determining colour, so you can shorten the standard six-digit hex code to just three digits.</p>
+<p>Turns out that <a href="https://speakerdeck.com/desandro/read-color-hex-codes?slide=67">the first value of each pair is the important one</a> when determining colour, so you can shorten the standard six-digit hex code to just three digits.</p>
 <p>That’s easy enough to do in your head, but the function <code>dh_shorten()</code> does it for you:</p>
 <pre class="r"><code>hex_code &lt;- &quot;#F2D359&quot;
 short_code &lt;- dehex::dh_shorten(hex_code)
@@ -218,7 +219,7 @@ Click to expand the hue guides
 </div>
 <div id="saturation" class="section level3">
 <h3>4. Saturation</h3>
-<p>Now we repeat the process for <a href="https://en.wikipedia.org/wiki/Colorfulness">saturation</a>. This time we’re going to compare the range of RGB values. This is easier because there’s only three (<a href="https://speakerdeck.com/desandro/read-color-hex-codes?slide=50">‘saturate’d, ’washed’ and ‘muted’) plus grey (i.e. zero range)</a>.</p>
+<p>Now we repeat the process for <a href="https://en.wikipedia.org/wiki/Colorfulness">saturation</a>. This time we’re going to compare the range of RGB values. This is easier because there’s only three (<a href="https://speakerdeck.com/desandro/read-color-hex-codes?slide=50">‘saturated’, ‘washed’ and ‘muted’) plus grey (i.e. zero range)</a>.</p>
 <p>This time we pass <code>"S"</code> for the saturation guide:</p>
 <pre class="r"><code>dehex::dh_guide(&quot;S&quot;)</code></pre>
 <details>
@@ -263,12 +264,12 @@ Click to expand the saturation guides
 </div>
 <div id="lightness" class="section level3">
 <h3>5. Lightness</h3>
-<p>Finally, we do the same for the <a href="https://en.wikipedia.org/wiki/Lightness">lightness</a> of the colour (<a href="https://speakerdeck.com/desandro/read-color-hex-codes?slide=46">‘light’, ‘middle’ and ‘dark’</a>. DeSandro says that you can total up the values, where higher values are lighter, but I’ve chosen to mark the mean value on the guide for lightness in {dehex} because I think it’s easier to interpret from the graph format.</p>
+<p>Finally, we do the same for the <a href="https://en.wikipedia.org/wiki/Lightness">lightness</a> of the colour (<a href="https://speakerdeck.com/desandro/read-color-hex-codes?slide=46">‘light’, ‘middle’ and ‘dark’</a>. You can total up the values, where higher values are lighter, but I’ve chosen to mark the mean value in {dehex} because I think it’s easier to interpret from the graph format.</p>
 <p>Provide <code>"L"</code> for lightness to the <code>dh_guide()</code> function:</p>
 <pre class="r"><code>dehex::dh_guide(&quot;L&quot;)</code></pre>
 <details>
 <summary>
-Click to expand the hue guides
+Click to expand the lightness guides
 </summary>
 <pre><code>## light
 ## R ████████████████
@@ -397,7 +398,7 @@ Session info
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2021-08-11                  
+##  date     2021-08-12                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
 ##  package     * version date       lib source                          

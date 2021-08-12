@@ -23,17 +23,17 @@ draft: no
 
 # tl;dr
 
-I wrote [an R package, {dehex}](https://github.com/matt-dray/dehex), that can help you 'read' a hex colour code by eye according to [David DeSandro's method](https://metafizzy.co/blog/read-color-hex-codes/).
+I wrote [an R package, {dehex}](https://github.com/matt-dray/dehex), that helps you learn to 'read' a hex colour code by eye according to David DeSandro's method. [Check out his mindblowing talk](https://metafizzy.co/blog/read-color-hex-codes/).
 
 # Hue are you?
 
-[Hex codes](https://en.wikipedia.org/wiki/Web_colors) can be used to encode a colour as a succinct six-digit alphanumeric string, like #F4D82A.
+[Hex codes](https://en.wikipedia.org/wiki/Web_colors) are used in computing to encode a colour as a succinct six-digit alphanumeric string, like #F4D82A.
 
-These codes are written in hexadecimal (hence 'hex'): they can take the characters 0 to 9 and A to F, which encodes 16 possible values. Sixteen million colours can be encoded in this way.
+These codes are written in hexadecimal (hence 'hex'): they can take the characters 0 to 9 and A to F, which encodes 16 possible values. This encodes 16 million colours total, which are easy for computers to store and interpret.
 
 Each pair of characters basically encodes red, green and blue. For example, the code #FF000 is 'red'. It uses the highest of these hex values, 'F', in both of the 'red' positions, while the green and blue pairs are zero. 
 
-That's easy enough to decipher, but what about #8ACD52 or #C0FFEE?[^words] You could copy these into a tool that returns colour information (many search engines can do this now) but they usually return a sample and not the colour's name.
+That's easy enough to decipher, but what about #8ACD52 or #C0FFEE?[^words] You could copy these into a tool that returns colour information (many search engines can do this now) but they often return a sample and not the colour's name.
 
 I'm red-green colourblind and have difficulty identifying and talking about colours, so that's not always helpful.
 
@@ -43,7 +43,7 @@ I'm red-green colourblind and have difficulty identifying and talking about colo
 
 [His talk](https://www.youtube.com/watch?v=eqZqx6lRPe0) is comprehensive and has excellent visuals. I strongly recommend that you watch his explanation if you find this topic interesting. You can also find [the slides](https://speakerdeck.com/desandro/read-color-hex-codes) and [a great written explanation on his blog](https://metafizzy.co/blog/read-color-hex-codes/). I cannot do justice here to such a powerful thought technology.
 
-In short, it's possible to look at a hex code like #F2D359 and get the rough hue, saturation and lightness of the colour it encodes, which you can speak as an English phrase like 'light washed yellow'. David, too, is colourblind and has found success with his method.
+In short, it's possible to look at a hex code like #F2D359 and get the rough [hue, saturation and lightness](https://en.wikipedia.org/wiki/HSL_and_HSV) of the colour it encodes, which you can speak as an English phrase like 'light washed yellow'. David, too, is colourblind and has found success with his method.
 
 This post isn't about colour theory and I'm definitely not an expert, but the point of the method is that you don't need to be one.
 
@@ -53,10 +53,12 @@ This post isn't about colour theory and I'm definitely not an expert, but the po
 <img src="/post/2021-08-09-dehex_files/dehex-logo.png" alt="A hexagon-shaped logo with the text 'dehex' in the lower right and a bar chart with a single red, green and blue bar that originates in the top left." width="200px"/>
 </div>
 
-Right, so I've made [a small package called {dehex}](https://github.com/matt-dray/dehex) that you can use to:
+Right, so I've made [a small R package called {dehex}](https://github.com/matt-dray/dehex) that you can use to:
 
 1. Train yourself to read hex codes with the DeSandro Method
 1. Return a rough English phrase for a given hex code
+
+All from your R console.
 
 [The package is on GitHub ](https://github.com/matt-dray/dehex) and you can install with the help of {remotes}.
 
@@ -95,9 +97,9 @@ I later noticed that [the package {ColorNameR}](https://github.com/msanchez-beec
 
 ## Learning is fun
 
-For the more adventurous, you can use {dehex} to learn how to read a hex code with DeSandro's method.
+For the more adventurous, you can use {dehex} to learn how to read a hex code with DeSandro's method from your R console.
 
-It has five steps:
+There's [five steps](https://speakerdeck.com/desandro/read-color-hex-codes?slide=10):
 
 1. Simplify from a six- to a three-digit hex code
 1. Create a bar chart from the RGB values encoded by the short hex
@@ -109,7 +111,7 @@ I've incorporated each of these into {dehex}, plus a method for getting the answ
 
 ### 1. Three-digit code
 
-Turns out that the first value of each pair is the important one when determining colour, so you can shorten the standard six-digit hex code to just three digits. 
+Turns out that [the first value of each pair is the important one](https://speakerdeck.com/desandro/read-color-hex-codes?slide=67) when determining colour, so you can shorten the standard six-digit hex code to just three digits. 
 
 That's easy enough to do in your head, but the function `dh_shorten()` does it for you:
 
@@ -196,7 +198,7 @@ I admit this step is quite clunky and it doesn't help that there's so many plots
 
 ### 4. Saturation
 
-Now we repeat the process for [saturation](https://en.wikipedia.org/wiki/Colorfulness). This time we're going to compare the range of RGB values. This is easier because there's only three (['saturate'd, 'washed' and 'muted') plus grey (i.e. zero range)](https://speakerdeck.com/desandro/read-color-hex-codes?slide=50).
+Now we repeat the process for [saturation](https://en.wikipedia.org/wiki/Colorfulness). This time we're going to compare the range of RGB values. This is easier because there's only three (['saturated', 'washed' and 'muted') plus grey (i.e. zero range)](https://speakerdeck.com/desandro/read-color-hex-codes?slide=50).
 
 This time we pass `"S"` for the saturation guide:
 
@@ -223,7 +225,7 @@ So, that's roughly the range of the 'washed' category of saturation.
 
 ### 5. Lightness
 
-Finally, we do the same for the [lightness](https://en.wikipedia.org/wiki/Lightness) of the colour (['light', 'middle' and 'dark'](https://speakerdeck.com/desandro/read-color-hex-codes?slide=46). DeSandro says that you can total up the values, where higher values are lighter, but I've chosen to mark the mean value on the guide for lightness in {dehex} because I think it's easier to interpret from the graph format.
+Finally, we do the same for the [lightness](https://en.wikipedia.org/wiki/Lightness) of the colour (['light', 'middle' and 'dark'](https://speakerdeck.com/desandro/read-color-hex-codes?slide=46). You can total up the values, where higher values are lighter, but I've chosen to mark the mean value in {dehex} because I think it's easier to interpret from the graph format.
 
 Provide `"L"` for lightness to the `dh_guide()` function:
 
@@ -231,7 +233,7 @@ Provide `"L"` for lightness to the `dh_guide()` function:
 dehex::dh_guide("L")
 ```
 
-<details><summary>Click to expand the hue guides</summary>
+<details><summary>Click to expand the lightness guides</summary>
 ```{r dh-guide-l-hide, echo=FALSE}
 dehex::dh_guide("L")
 ```
