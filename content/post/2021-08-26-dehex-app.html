@@ -1,0 +1,132 @@
+---
+title: "Adding a Shiny app to {dehex}"
+author: Matt Dray
+date: '2021-08-27'
+slug: dehex-app
+categories:
+  - code
+  - data-viz
+  - package
+tags:
+  - color
+  - colour
+  - dehex
+  - hex
+  - r
+  - shiny
+draft: no
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div class="figure">
+<img src="/post/2021-08-26-dehex-app_files/app-screenshot-v0.1.2.png" alt="Screenshot of the dehex Shiny app. A randomised colour hex code has been generated in the left panel after clicking a big button labelled 'generate' and the right-hand side shows a numbered tabset open at the final, sixth, tab called 'solve', which shows the name of the colour and a sample of it." width="100%"/>
+<p class="caption">
+Use the {dehex} app to generate a random hex code and learn how to interpret it by eye.
+</p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p><a href="https://github.com/matt-dray/dehex">The {dehex} package</a> now contains a Shiny app that you can use to walk through the process of reading a colour hex code, as per <a href="https://metafizzy.co/blog/read-color-hex-codes/">David DeSandro’s method</a>.</p>
+</div>
+<div id="dehexcellent" class="section level1">
+<h1>{dehex}cellent</h1>
+<p>In <a href="https://www.rostrum.blog/2021/08/10/dehex/">the last post</a> I introduced <a href="https://github.com/matt-dray/dehex">the R package {dehex}</a>. Its purpose is to help me (you?) look at a colour hex code and be able to ‘read’ roughly what colour it is without resorting to a lookup.</p>
+<div class="figure">
+<img src="/post/2021-08-09-dehex_files/dehex-logo.png" alt="A hexagon-shaped logo with the text 'dehex' in the lower right and a bar chart with a single red, green and blue bar that originates in the top left." width="20%"/>
+<p class="caption">
+I promise this is <a href="https://github.com/matt-dray/stickers/blob/master/output/dehex_hex.png">a hex sticker</a>, but it’s background is white, whoops.
+</p>
+</div>
+<p>So, the computer-friendly code ‘#C68738’ can be interpreted by your brain as the human-friendly phrase ‘middle washed orange’.</p>
+<p>The package only exists because of <a href="https://metafizzy.co/blog/read-color-hex-codes/">a mind-melting talk by David DeSandro</a> and his recommendation of the approach due to his colourblindness. I’m also colourblind and would prefer to ‘solve’ a colour than try and guess what it is from a sample.</p>
+</div>
+<div id="an-apportunity" class="section level1">
+<h1>An apportunity</h1>
+<p>The {dehex} package uses a number of functions to help you through the steps of DeSandro’s method. It prints things to the R console to help you.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>There’s <code>dh_shorten()</code> to simplify the code to three digits; <code>dh_graph()</code> to make an RGB chart of your shortened hex code; <code>dh_guide()</code> to preview hue, saturation and lightness profiles to match against your shortened hex code; and <code>dh_solve()</code> to provide you with ‘the answer’, along with RGB charts for the nearest hue, saturation and lightness (HSL) profiles.</p>
+<div class="figure">
+<img src="/post/2021-08-09-dehex_files/graph-crayon-dark.png" alt="Output from the dehex package's dh_graph function, which shows a horizontal bar chart in the RStudio console with a dark theme. The columns are labelled R, G, B, S and L and the ends of the RGB columns are labelled H1, H2 and H3. The RGB bars are coloured red, blue and green; S and L are white. Above the plot is the three-digit colour hex code that graph is summarising." width="50%"/>
+<p class="caption">
+An RGB bar chart printed by {dehex} to the console, with guides for hue, saturation and lightness.
+</p>
+</div>
+<p>The trouble is that you have to know what order to run these functions. The documentation, README and blog post provide this information, as well as DeSandro’s resources, but it would be ideal to have an option to showcase {dehex} and learn stuff without needing to type any functions yourself.</p>
+<p>So, I’ve created a simple Shiny app and made it available as the <code>dh_app()</code> function in {dehex}.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> I consider it ‘in development’ (this absolves me of liability if I say this, yes?).</p>
+<p>The app depends on two packages: {shiny} and {bslib}. You’ll have to install these separately to {dehex} by using <code>install.packages(c("shiny", "bslib"))</code> (if you haven’t already installed them on your machine).</p>
+<p>These aren’t dependencies<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> because you shouldn’t be forced to install them if you have no plans on using the app.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
+<p>Aside: what’s fun is I get to make further use of <a href="https://www.rostrum.blog/2021/03/23/shiny-badge/">the Shiny app README badge I invented (?)</a> with <a href="https://github.com/matt-dray/badgr">my {badgr} package</a>, like so:</p>
+<p><img src="https://img.shields.io/badge/Shiny-in_package-blue?style=flat&amp;labelColor=white&amp;logo=RStudio&amp;logoColor=blue" /></p>
+</div>
+<div id="lolwat" class="section level1">
+<h1>lolwat?</h1>
+<p>The app is pretty simple.</p>
+<p>There’s a big blue button labelled ‘Generate’. Click it and a random six-digit colour hex code is generated.</p>
+<div class="figure">
+<img src="/post/2021-08-26-dehex-app_files/2bee2b.png" alt="A screenshot from the dehex Shiny app. The 'generate' button has been clicked to reveal the colour hex code 2BEE2B." width="50%"/>
+<p class="caption">
+‘That is the question.’
+</p>
+</div>
+<p>Your then proceed through the numbered tabs to learn about each step, get some quick bullets of explanation, and then have the option to reveal help via some outputs from functions in the {dehex} package. There’s also a link to the relevant slide of David DeSandro’s talk.</p>
+<p>As a beginner, you’ll want to reveal the tips to get maximum help. As you get better, you may not need to reveal them anymore.</p>
+<p>The final tab provides the solution. You should have the answer by the time you get to this tab, but it reveals to you the hue, saturation and lightness RGB profiles that best match the generated hex code, along with the answer as a string, and a sample of the colour itself.</p>
+<p>The app is purposefully low on interactivity. It’s just a little sidequest that bundles the steps and relevant {dehex} functions, in case you don’t want to run the functions from R itself.<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a></p>
+<p>Originally I was going to just create an app to go on the web for anyone to use, but why would they want to see outputs from {dehex}? I also think that it’s worth reading DeSandro’s blog and watching or reading his talk in the first instance.</p>
+<p>As ever, make suggestions, issues, pull requests in <a href="https://github.com/matt-dray/dehex">the GitHub repo for the package</a>. Or <a href="https://twitter.com/mattdray">complain at me on Twitter</a>.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.1.0 (2021-05-18)
+##  os       macOS Big Sur 10.16         
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2021-08-27                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date       lib source        
+##  blogdown      1.4     2021-07-23 [1] CRAN (R 4.1.0)
+##  bookdown      0.23    2021-08-13 [1] CRAN (R 4.1.0)
+##  bslib         0.2.5.1 2021-05-18 [1] CRAN (R 4.1.0)
+##  cli           3.0.1   2021-07-17 [1] CRAN (R 4.1.0)
+##  digest        0.6.27  2020-10-24 [1] CRAN (R 4.1.0)
+##  evaluate      0.14    2019-05-28 [1] CRAN (R 4.1.0)
+##  htmltools     0.5.1.1 2021-01-22 [1] CRAN (R 4.1.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.1.0)
+##  jsonlite      1.7.2   2020-12-09 [1] CRAN (R 4.1.0)
+##  knitr         1.33    2021-04-24 [1] CRAN (R 4.1.0)
+##  magrittr      2.0.1   2020-11-17 [1] CRAN (R 4.1.0)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.1.0)
+##  rlang         0.4.11  2021-04-30 [1] CRAN (R 4.1.0)
+##  rmarkdown     2.10    2021-08-06 [1] CRAN (R 4.1.0)
+##  rstudioapi    0.13    2020-11-12 [1] CRAN (R 4.1.0)
+##  sass          0.4.0   2021-05-12 [1] CRAN (R 4.1.0)
+##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.1.0)
+##  stringi       1.7.3   2021-07-16 [1] CRAN (R 4.1.0)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.1.0)
+##  withr         2.4.2   2021-04-18 [1] CRAN (R 4.1.0)
+##  xfun          0.25    2021-08-06 [1] CRAN (R 4.1.0)
+##  yaml          2.2.1   2020-02-01 [1] CRAN (R 4.1.0)
+## 
+## [1] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
+</details>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Yes, but the quality of printing Unicode blocks in the app depends on what browser you’re using to view it. On macOS, Firefox seems fine. Other browsers don’t line up the little Unicode blocks nicely when outputting from <code>dh_graph()</code>. Ah well.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>You can read about how to do this in <a href="https://mastering-shiny.org/scaling-packaging.html">Hadley Wickham’s ‘Mastering Shiny’ book</a>.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>In other words, they’re listed as <code>Imports</code> rather than <code>Suggests</code> in the DESCRIPTION file.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>Using {bslib} is a bit lazy on my part because it makes it really easy to customise the style of a Shiny app, while forcing the user to have to install yet another package. This is not the tinyverse way, so I may refactor one day.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>The ‘thought-of-a-thing-and-then-did-it-sort-of’ approach is very befitting of this blog and very apt given this is post number 100. 🎈<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>

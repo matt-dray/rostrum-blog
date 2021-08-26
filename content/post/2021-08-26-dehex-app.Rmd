@@ -1,0 +1,99 @@
+---
+title: "Adding a Shiny app to {dehex}"
+author: Matt Dray
+date: '2021-08-27'
+slug: dehex-app
+categories:
+  - code
+  - data-viz
+  - package
+tags:
+  - color
+  - colour
+  - dehex
+  - hex
+  - r
+  - shiny
+draft: no
+---
+
+<div class="figure">
+<img src="/post/2021-08-26-dehex-app_files/app-screenshot-v0.1.2.png" alt="Screenshot of the dehex Shiny app. A randomised colour hex code has been generated in the left panel after clicking a big button labelled 'generate' and the right-hand side shows a numbered tabset open at the final, sixth, tab called 'solve', which shows the name of the colour and a sample of it." width="100%"/>
+<p class="caption">Use the {dehex} app to generate a random hex code and learn how to interpret it by eye.</p>
+</div>
+
+# tl;dr
+
+[The {dehex} package](https://github.com/matt-dray/dehex) now contains a Shiny app that you can use to walk through the process of reading a colour hex code, as per [David DeSandro's method](https://metafizzy.co/blog/read-color-hex-codes/).
+
+# {dehex}cellent
+
+In [the last post](https://www.rostrum.blog/2021/08/10/dehex/) I introduced [the R package {dehex}](https://github.com/matt-dray/dehex). Its purpose is to help me (you?) look at a colour hex code and be able to 'read' roughly what colour it is without resorting to a lookup.
+
+<div class="figure">
+<img src="/post/2021-08-09-dehex_files/dehex-logo.png" alt="A hexagon-shaped logo with the text 'dehex' in the lower right and a bar chart with a single red, green and blue bar that originates in the top left." width="20%"/>
+<p class="caption">I promise this is [a hex sticker](https://github.com/matt-dray/stickers/blob/master/output/dehex_hex.png), but it's background is white, whoops.</p>
+</div>
+
+So, the computer-friendly code '#C68738' can be interpreted by your brain as the human-friendly phrase 'middle washed orange'.
+
+The package only exists because of [a mind-melting talk by David DeSandro](https://metafizzy.co/blog/read-color-hex-codes/) and his recommendation of the approach due to his colourblindness. I'm also colourblind and would prefer to 'solve' a colour than try and guess what it is from a sample.
+
+# An apportunity
+
+The {dehex} package uses a number of functions to help you through the steps of DeSandro's method. It prints things to the R console to help you.[^browser]
+
+There's `dh_shorten()` to simplify the code to three digits; `dh_graph()` to make an RGB chart of your shortened hex code; `dh_guide()` to preview hue, saturation and lightness profiles to match against your shortened hex code; and `dh_solve()` to provide you with 'the answer', along with RGB charts for the nearest hue, saturation and lightness (HSL) profiles.
+
+<div class="figure">
+<img src="/post/2021-08-09-dehex_files/graph-crayon-dark.png" alt="Output from the dehex package's dh_graph function, which shows a horizontal bar chart in the RStudio console with a dark theme. The columns are labelled R, G, B, S and L and the ends of the RGB columns are labelled H1, H2 and H3. The RGB bars are coloured red, blue and green; S and L are white. Above the plot is the three-digit colour hex code that graph is summarising." width="50%"/>
+<p class="caption">An RGB bar chart printed by {dehex} to the console, with guides for hue, saturation and lightness.</p>
+</div>
+
+The trouble is that you have to know what order to run these functions. The documentation, README and blog post provide this information, as well as DeSandro's resources, but it would be ideal to have an option to showcase {dehex} and learn stuff without needing to type any functions yourself.
+
+So, I've created a simple Shiny app and made it available as the `dh_app()` function in {dehex}.[^hadley] I consider it 'in development' (this absolves me of liability if I say this, yes?).
+
+The app depends on two packages: {shiny} and {bslib}. You'll have to install these separately to {dehex} by using `install.packages(c("shiny", "bslib"))` (if you haven't already installed them on your machine). 
+
+These aren't dependencies[^suggests] because you shouldn't be forced to install them if you have no plans on using the app.[^bslib]
+
+Aside: what's fun is I get to make further use of [the Shiny app README badge I invented (?)](https://www.rostrum.blog/2021/03/23/shiny-badge/) with [my {badgr} package](https://github.com/matt-dray/badgr), like so:
+
+![](https://img.shields.io/badge/Shiny-in_package-blue?style=flat&labelColor=white&logo=RStudio&logoColor=blue)
+
+# lolwat?
+
+The app is pretty simple. 
+
+There's a big blue button labelled 'Generate'. Click it and a random six-digit colour hex code is generated.
+
+<div class="figure">
+<img src="/post/2021-08-26-dehex-app_files/2bee2b.png" alt="A screenshot from the dehex Shiny app. The 'generate' button has been clicked to reveal the colour hex code 2BEE2B." width="50%"/>
+<p class="caption">'That is the question.'</p>
+</div>
+
+Your then proceed through the numbered tabs to learn about each step, get some quick bullets of explanation, and then have the option to reveal help via some outputs from functions in the {dehex} package. There's also a link to the relevant slide of David DeSandro's talk.
+
+As a beginner, you'll want to reveal the tips to get maximum help. As you get better, you may not need to reveal them anymore.
+
+The final tab provides the solution. You should have the answer by the time you get to this tab, but it reveals to you the hue, saturation and lightness RGB profiles that best match the generated hex code, along with the answer as a string, and a sample of the colour itself.
+
+The app is purposefully low on interactivity. It's just a little sidequest that bundles the steps and relevant {dehex} functions, in case you don't want to run the functions from R itself.[^hundred]
+
+Originally I was going to just create an app to go on the web for anyone to use, but why would they want to see outputs from {dehex}? I also think that it's worth reading DeSandro's blog and watching or reading his talk in the first instance.
+
+As ever, make suggestions, issues, pull requests in [the GitHub repo for the package](https://github.com/matt-dray/dehex). Or [complain at me on Twitter](https://twitter.com/mattdray).
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^bslib]: Using {bslib} is a bit lazy on my part because it makes it really easy to customise the style of a Shiny app, while forcing the user to have to install yet another package. This is not the tinyverse way, so I may refactor one day.
+[^suggests]: In other words, they're listed as `Imports` rather than `Suggests` in the DESCRIPTION file.
+[^hadley]: You can read about how to do this in [Hadley Wickham's 'Mastering Shiny' book](https://mastering-shiny.org/scaling-packaging.html). 
+[^browser]: Yes, but the quality of printing Unicode blocks in the app depends on what browser you're using to view it. On macOS, Firefox seems fine. Other browsers don't line up the little Unicode blocks nicely when outputting from `dh_graph()`. Ah well.
+[^hundred]: The 'thought-of-a-thing-and-then-did-it-sort-of' approach is very befitting of this blog and very apt given this is post number 100. `r emo::ji("balloon")`
