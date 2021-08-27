@@ -1,0 +1,307 @@
+---
+title: "Nearly (?) all the R package startup messages"
+author: Matt Dray
+date: '2021-08-27'
+slug: zzz
+categories:
+  - code
+tags:
+  - cran
+  - gh
+  - httr
+  - r
+  - tidyverse
+draft: no
+---
+
+<div class="figure">
+<img src="/post/2021-08-26-zzz_files/multicolor-startup.png" alt="A screenshot of the R console showing the output from when the multicolor package is attached. It's cursive ASCII-art text of the package name, coloured with random colours." width=500/>
+</div>
+
+# tl;dr
+
+I got curious about R package startup messages, so I grabbed all the special zzz.R files from R packages that are on CRAN and sourced on GitHub. You can jump to the [table of results](#table-of-results).
+
+# Start me up
+
+[I learnt recently from Hernando Cortina](https://twitter.com/cortinah/status/1427429455409070090?s=20) that his and Amanda Dobbyn's [{multicolor}](https://github.com/aedobbyn/multicolor/) package prints to the console some multicoloured ASCII-art text of the package's name when you call it with `library(multicolor)`.
+
+It gave me an itch to scratch: how often are these sorts of startup messages used by R packages? What do people put in them? Is there anything funny in them? Anything nefarious?
+
+# A strong attachment
+
+A package may need to run additional code before its functions can work, like maybe some `options()` need to be set.
+
+There are two times this kind of code can be run: when the package is loaded, including namespace calls like `dplyr::select()`, or more specifically when the package is attached with `library()`.
+
+To prepare code for running on-load or on-attach, you create the special functions `.onLoad()` and `.onAttach()`. These go in a zzz.R file in the R/ directory of your package, because... convention?
+
+The on-attach option is useful for printing messages for the user to see in the console, like the {multicolor} example above. You want this to happen on-attach and not on-load, since you wouldn't want to print a message every single your script uses the `::` namespace qualifier.
+
+To specify a message in the body of your `.onAttach()` function, you use `packageStartupMessage()`. Why not just `cat()` or `message()`? Because it allows the user to quell startup messages using `suppressPackageStartupMessages()`.
+
+You can learn more in Hadley Wickham's [R Packages](https://r-pkgs.org/r.html#when-you-do-need-side-effects) book.
+
+As an example, consider the {tidyverse} package, which has some verbose output on attach:
+
+```{r library-tidyverse}
+library(tidyverse)
+```
+
+But you can shush it with the `suppressPackageStartupMessages()` function:[^long]
+
+```{r library-tidyverse-suppress}
+detach("package:tidyverse")  # first detach it
+suppressPackageStartupMessages(library(tidyverse))
+```
+
+Peace.
+
+So the startup messages of {multicolor} and {tidyverse} do two completely different things: one is fun and frivolous and the other is informative. Isn't it possible that someone could put ads in the startup message or use it in evil ways? Well, perhaps.
+
+Let's find out what R package developers put in their startup messages. How many packages even have a `zzz.R` file and how many of those even contain a `packageStartupMessage()` call?
+
+# Catching some Zs
+
+I understand if all this talk of zzz.R causes you to `r emo::ji("zzz")`. In short, if you want to get all the zzz.R files, you can:
+
+1. Get a list of R packages on CRAN
+1. Identify which ones have an associated GitHub repo
+1. Get the default branch name of each one and construct the possible URL to their zzz.R file
+1. Contact the possible zzz.R file to see if it exists
+1. If it exists, download it
+1. Filter for zzz.R files that contain `packageStartupMessage()`
+
+We've already attached the tidyverse packages, but we'll also need two more packages:
+
+```{r library-gh-httr}
+library(gh)    # interact with GitHub API
+library(httr)  # requests via the internet 
+```
+
+## Packages
+
+Luckily you can grab info for all current CRAN packages with the very handy `CRAN_package_db()` function.[^kevinbacran] 
+
+```{r cran-pkg-db}
+cran_pkgs <- as_tibble(tools::CRAN_package_db())
+```
+
+This returns a dataframe containing `r nrow(cran_pkgs)` rows, where each one is a package, along with `r ncol(cran_pkgs)` variables. We get information like the stuff that's found in package DESCRIPTION files, but it doesn't tell us whether a package has a zzz.R file.
+
+One way to do this is to visit the GitHub repo associated with the package, if it has one, and see if a zzz.R exists. Of course, many packages are not on GitHub, but we're going to ignore those for simplicity.
+
+## Github repos
+
+A quick way of discovering if a package has a GitHub repo is to check for 'github.com' in the `BugReports` section of it DESCRIPTION file.[^bugreports] Again, this doesn't capture all the possible repos, but is fine for now.
+
+```{r package-owner-repo, warning=FALSE}
+has_repo <- cran_pkgs %>% 
+  select(Package, BugReports) %>% 
+  filter(str_detect(BugReports, "github")) %>% 
+  transmute(
+    Package,
+    owner_repo = str_extract(
+      str_replace_all(paste0(BugReports, "/x"), "//", "/"),
+      "(?<=github.com/).*(?=/[a-zA-Z])"
+    )
+  ) %>% 
+  separate(owner_repo, c("owner", "repo"), "/") %>% 
+  filter(!is.na(Package), !is.na(owner), !is.na(repo)) %>% 
+  distinct(Package, owner, repo) %>% 
+  arrange(Package) 
+
+sample_n(has_repo, 5)
+```
+
+If you're wondering why we didn't just use the package name as the repo name, it's because they sometimes don't match, e.g. {baseballDBR} is in a repo called 'moneyball'.
+
+Now we can use the repo details to build a URL to a potential zzz.R URL. This comes in the form `https://raw.githubusercontent.com/<owner>/<repo>/<defaultbranch>/R/zzz.R"`.
+
+## Default branch
+
+You'll notice we don't yet know the default branch of the package's GitHub repo. Historically, we could probably have just hard-coded 'master', but the automatic default is now 'main'. And of course, the default branch could be something else entirely.
+
+We can grab the default branch for each repo from the GitHub API using [the excellent {gh} package](https://gh.r-lib.org/) by Gabor Csardi, Jenny Bryan and Hadley Wickham. You'll [need to do some setup](https://gh.r-lib.org/articles/managing-personal-access-tokens.html) to use it yourself.
+
+I've created 'possibly' function variants with {purrr} so that any errors in the process are handled by returning `NA`, rather than breaking the loop, which would kill the process.
+
+```{r get-repos, echo=TRUE, results='hide', cache=TRUE}
+# Create 'try' function versions
+map2_possibly <- possibly(map2, NA_real_)
+gh_possibly <- possibly(gh, NA_real_)
+
+# Function: fetch repo details, print message on action
+get_repo <- function(owner, repo) {
+  cat(paste0("[", Sys.time(), "]"), paste0(owner, "/", repo), "\n")
+  gh_possibly("GET /repos/{owner}/{repo}", owner = owner, repo = repo) 
+}
+
+maybe_zzz <- has_repo %>%
+  mutate(
+    repo_deets =  map2_possibly(
+      has_repo$owner, has_repo$repo, get_repo
+    )
+  ) %>% 
+  mutate(
+    default_branch = map(
+      repo_deets, ~pluck(.x, "default_branch")
+    ),
+    default_branch = pluck(default_branch, 1),
+    zzz_url = paste0(
+      "https://raw.githubusercontent.com/",
+      owner, "/", repo, "/", default_branch, "/R/zzz.R"
+    )
+  )
+```
+
+So now we have a column with the returned repo information, the extracted default branch name and a URL that points to a potential zzz.R file in that repo.
+
+```{r maybe-zzz-view}
+maybe_zzz
+```
+
+## Status codes
+
+Now we can check the status code for each of the URLs we've built. A return of `200` tells us that the file exists and `404` means it doesn't.[^linkrot] Again, we can prevent the loop breaking on error by creating a 'possibly' version of `map()`.
+
+```{r status-code, cache=TRUE}
+library(httr)  # for status_code()
+
+map_possibly <- possibly(map, NA_character_)
+
+maybe_zzz_status <- maybe_zzz %>% 
+  mutate(
+    status = map_possibly(
+      zzz_url, ~status_code(GET(.x))
+    )
+  ) %>% 
+  unnest(status)
+
+count(maybe_zzz_status, status)
+```
+
+Okay, great, we've got over a thousand zzz.R files.
+
+## Read content
+
+Now we know which packages have a zzz.R file, we can use `readLines()` to grab their content from their URL, which again we can protect from errors with `purrr::possibly()`.
+
+```{r read-lines, echo=TRUE, results='hide', cache=TRUE}
+# Function: readLines() but with a pause and message
+readLines_delay <- function(path) {
+  sample(1:3, 1)
+  cat(paste0("[", Sys.time(), "]"), path, "\n")
+  readLines(path, warn = FALSE)
+}
+
+readLines_delay_possibly <- possibly(readLines_delay, NA_character_)
+
+fosho_zzz <- maybe_zzz_status %>% 
+  select(-repo_deets) %>% 
+  filter(status == 200) %>%  # just the 
+  mutate(lines = map_possibly(zzz_url, readLines_delay_possibly))
+
+dim(fosho_zzz)
+```
+
+So now we have a dataframe with a row per package and a list-column containing the R code in the  zzz.R file.
+
+## Startup messages
+
+Finally, we can find out which packages have a `packageStartupMessage()` call inside their zzz.R.
+
+```{r has-psm}
+has_psm <- fosho_zzz %>% 
+  select(Package, lines) %>%
+  unnest(lines) %>%
+  filter(str_detect(lines, "packageStartupMessage")) %>% 
+  mutate(lines = str_remove_all(lines, " ")) %>%
+  distinct(Package) %>% 
+  pull()
+
+fosho_psm <- filter(fosho_zzz, Package %in% has_psm)
+```
+
+So we started with `r nrow(cran_pkgs)` CRAN packages and have winnowed it to down to `r nrow(fosho_psm)` (`r round(100*(nrow(fosho_psm)/nrow(cran_pkgs)))`%) that have a call to `packageStartupMessage()` in their zzz.R.
+
+## [Table of results](#table-of-results)
+
+I could provide a table with all the zzz.R scripts that I collected, but I don't want to break any licenses by reproducing them all here. Instead, here's an interactive table that links to the GitHub page for each zzz.R file.
+
+<details><summary>Click for table code</summary>
+```{r reactable-hide, eval=FALSE}
+library(reactable)
+reactable(
+  data = fosho_zzz %>% select(package = Package, owner, repo, url = zzz_url), 
+  columns = list(
+    url = colDef(cell = function(value) {
+      htmltools::tags$a(href = value, target = "_blank", "zzz.R")
+    })
+  )
+)
+```
+</details>
+
+```{r reactable-run, echo=FALSE}
+library(reactable)
+reactable(
+  data = fosho_zzz %>% select(package = Package, owner, repo, url = zzz_url), 
+  columns = list(
+    url = colDef(cell = function(value) {
+      htmltools::tags$a(href = value, target = "_blank", "zzz.R")
+    })
+  )
+)
+```
+
+## Patterns
+
+I had a scan through the scripts and found some frequent uses of `packageStartupMessages()` to:
+
+* show a basic salutation (e.g. {afex})
+* show the version number, a check to see if the user has the latest version, sometimes a prompt to download the latest version for them (e.g. {vistributions}), sometimes a note that the package has been superseded by another (e.g. {drake})
+* links to guidance, examples, documentation (e.g. {bayesplot})
+* provide a citation or author names (e.g. {unvotes})
+* link to issue tracking or bug reporting (e.g. {timeperiodsR})
+* check for required supplementary software (e.g. {DALY})
+* remind of the need for credentials or keys for packages that access APIS, for example (e.g. {trainR})
+* provide terms of use, warranties, licenses, etc (e.g. {emmeans})
+
+I was also interested to see:
+
+* a random tip, so you get something new each time you attach the package (e.g. {shinyjs})
+* appeals for GitHub stars (e.g. {sigminer})
+* links to purchasable course materials (e.g. {anomalise})
+
+And perhaps the most self-aware were several packages that reminded the user that they can turn off startup messages with `suppressPackageStartupMessages()` if it the messages get too annoying (e.g. {dendextend}).
+
+A few interesting specifics (possible spoiler alerts!):
+
+* {bayestestR} and {sjmisc} have displays a special Star Wars message on a certain day of the year...
+* {SHT} and {symengine} load ASCII art, as does {BetaBit}, which also prompts the user for a game they'd like to play
+* {depigner} says 'Welcome to depigner: we are here to un-stress you!'
+* {mde} has a friendly 'Happy Exploration :)' salutation and {manymodelr} says 'Happy Modelling! :)'
+* {sjPLot} says '#refugeeswelcome'
+
+You can use the interactive table above to reach each of the zzz.R files for these packages, or have a sift through yourself to see what you can find.
+
+# Buy my stuff
+
+Is there a line somewhere? Is it okay to advertise something? You could argue that someone has gone out of their way to release a package for free, so what harm is it in trying to get something back? or does this approach undermine the whole 'open' process?
+
+I know some people find startup messages a bit annoying, but I think it's easy enough for users to opt out of seeing them with a call to `suppressPackageStartupMessages()`. 
+
+Mostly I'm kind of surprised by the lack of abuse of `packageStartupMessage()` in this sample. Let me know of any cheeky business you might have come across.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^kevinbacran]: I made use of this for [the {kevinbacran} package](https://matt-dray.github.io/kevinbacran/) and the associated ['What's your Hadley Number?' app](https://www.rostrum.blog/2019/02/27/hadley-number/).
+[^long]: Which makes me wonder what the longest R function name is.
+[^bugreports]: I chose the `BugReports` field rather the `URL` field because people put all sorts of things in the latter, like links to websites, etc. `BugReports` (I think) tends to point to the source on GitHub.
+[^linkrot]: I wrote about status codes as part of the post on [my {linkrot} package](http://localhost:5115/2021/07/10/linkrot/).
