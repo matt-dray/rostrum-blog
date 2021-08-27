@@ -25,13 +25,13 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 99 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 100 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 16 day(s) ago: [Read a hex colour code
-with {dehex}](https://www.rostrum.blog/2021/08/10/dehex/).
+🆕 The latest post was published 0 day(s) ago: [Adding a Shiny app to
+{dehex}](https://www.rostrum.blog/2021/08/27/dehex-app/).
 
 📈 This 2D plot shows posts over time:
 
@@ -43,6 +43,7 @@ with {dehex}](https://www.rostrum.blog/2021/08/10/dehex/).
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|    100 | 2021-08-27 | [Adding a Shiny app to {dehex}](https://www.rostrum.blog/2021/08/27/dehex-app/)                                           |
 |     99 | 2021-08-10 | [Read a hex colour code with {dehex}](https://www.rostrum.blog/2021/08/10/dehex/)                                         |
 |     98 | 2021-07-31 | [OG emoji SVGs](https://www.rostrum.blog/2021/07/31/og-emoji-svg/)                                                        |
 |     97 | 2021-07-25 | [Make an art gallery with {bs4cards}](https://www.rostrum.blog/2021/07/25/faxcrayon/)                                     |
@@ -147,4 +148,4 @@ with {dehex}](https://www.rostrum.blog/2021/08/10/dehex/).
 
 -----
 
-*Updated 2021-08-26 02:43:04*
+*Updated 2021-08-27 02:43:50*
