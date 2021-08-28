@@ -1,5 +1,5 @@
 ---
-title: "Nearly (?) all the R package startup messages"
+title: "Exploring R package startup messages"
 author: Matt Dray
 date: '2021-08-27'
 slug: zzz
@@ -72,6 +72,11 @@ I understand if all this talk of zzz.R causes you to `r emo::ji("zzz")`. In shor
 1. If it exists, download it
 1. Filter for zzz.R files that contain `packageStartupMessage()`
 
+<div class="tip"> `r fontawesome::fa("exclamation-circle")` <b>Note</b>
+
+If you're thinking this approach is a bit long-winded, you're right. As [Tim pointed out](https://twitter.com/_TimTaylor_/status/1431387715728248834?s=20), we could just extract the info via [METACRAN](https://github.com/cran), an unofficial CRAN mirror hosted on GitHub. It even has [its own API](https://www.r-pkg.org/services#api). I'll probably give that a go at some point.
+</div>
+
 We've already attached the tidyverse packages, but we'll also need two more packages:
 
 ```{r library-gh-httr}
@@ -114,6 +119,8 @@ has_repo <- cran_pkgs %>%
 sample_n(has_repo, 5)
 ```
 
+There were `r nrow(cran_pkgs)` CRAN packages total and now we have `r nrow(has_repo)` (`r round(100*(nrow(has_repo)/nrow(cran_pkgs)))`%) that appear to have a GitHub repo.
+
 If you're wondering why we didn't just use the package name as the repo name, it's because they sometimes don't match, e.g. {baseballDBR} is in a repo called 'moneyball'.
 
 Now we can use the repo details to build a URL to a potential zzz.R URL. This comes in the form `https://raw.githubusercontent.com/<owner>/<repo>/<defaultbranch>/R/zzz.R"`.
@@ -123,6 +130,8 @@ Now we can use the repo details to build a URL to a potential zzz.R URL. This co
 You'll notice we don't yet know the default branch of the package's GitHub repo. Historically, we could probably have just hard-coded 'master', but the automatic default is now 'main'. And of course, the default branch could be something else entirely.
 
 We can grab the default branch for each repo from the GitHub API using [the excellent {gh} package](https://gh.r-lib.org/) by Gabor Csardi, Jenny Bryan and Hadley Wickham. You'll [need to do some setup](https://gh.r-lib.org/articles/managing-personal-access-tokens.html) to use it yourself.
+
+The key function is `gh()`, to which you can pass a GET request for the information we want: `GET /repos/{owner}/{repo}`. We can iterate for each repo by passing each owner and repo name in turn. It returns a list object with lots of information about the repo.
 
 I've created 'possibly' function variants with {purrr} so that any errors in the process are handled by returning `NA`, rather than breaking the loop, which would kill the process.
 
@@ -158,7 +167,7 @@ maybe_zzz <- has_repo %>%
 So now we have a column with the returned repo information, the extracted default branch name and a URL that points to a potential zzz.R file in that repo.
 
 ```{r maybe-zzz-view}
-maybe_zzz
+head(maybe_zzz)
 ```
 
 ## Status codes
@@ -186,6 +195,8 @@ Okay, great, we've got over a thousand zzz.R files.
 ## Read content
 
 Now we know which packages have a zzz.R file, we can use `readLines()` to grab their content from their URL, which again we can protect from errors with `purrr::possibly()`.
+
+Note that I've created a special version of `readLines()` that reports to the user the path being checked, but also has a random delay. This is to dampen the impact on GitHub's servers.
 
 ```{r read-lines, echo=TRUE, results='hide', cache=TRUE}
 # Function: readLines() but with a pause and message
@@ -286,7 +297,7 @@ A few interesting specifics (possible spoiler alerts!):
 
 You can use the interactive table above to reach each of the zzz.R files for these packages, or have a sift through yourself to see what you can find.
 
-# Buy my stuff
+# Buy my stuff?
 
 Is there a line somewhere? Is it okay to advertise something? You could argue that someone has gone out of their way to release a package for free, so what harm is it in trying to get something back? or does this approach undermine the whole 'open' process?
 

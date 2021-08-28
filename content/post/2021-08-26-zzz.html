@@ -1,5 +1,5 @@
 ---
-title: "Nearly (?) all the R package startup messages"
+title: "Exploring R package startup messages"
 author: Matt Dray
 date: '2021-08-27'
 slug: zzz
@@ -71,6 +71,10 @@ suppressPackageStartupMessages(library(tidyverse))</code></pre>
 <li>If it exists, download it</li>
 <li>Filter for zzz.R files that contain <code>packageStartupMessage()</code></li>
 </ol>
+<div class="tip">
+<p><svg aria-hidden="true" role="img" viewBox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;"><path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"/></svg> <b>Note</b></p>
+<p>If you’re thinking this approach is a bit long-winded, you’re right. As <a href="https://twitter.com/_TimTaylor_/status/1431387715728248834?s=20">Tim pointed out</a>, we could just extract the info via <a href="https://github.com/cran">METACRAN</a>, an unofficial CRAN mirror hosted on GitHub. It even has <a href="https://www.r-pkg.org/services#api">its own API</a>. I’ll probably give that a go at some point.</p>
+</div>
 <p>We’ve already attached the tidyverse packages, but we’ll also need two more packages:</p>
 <pre class="r"><code>library(gh)    # interact with GitHub API
 library(httr)  # requests via the internet </code></pre>
@@ -101,13 +105,14 @@ library(httr)  # requests via the internet </code></pre>
 
 sample_n(has_repo, 5)</code></pre>
 <pre><code>## # A tibble: 5 × 3
-##   Package          owner                            repo            
-##   &lt;chr&gt;            &lt;chr&gt;                            &lt;chr&gt;           
-## 1 randNames        karthik                          randNames       
-## 2 redux            richfitz                         redux           
-## 3 archivist.github MarcinKosinski                   archivist.github
-## 4 WeMix            American-Institutes-for-Research WeMix           
-## 5 vaultr           vimc                             vaultr</code></pre>
+##   Package   owner          repo     
+##   &lt;chr&gt;     &lt;chr&gt;          &lt;chr&gt;    
+## 1 params    sahilseth      params   
+## 2 bigmds    pachoning      bigmds   
+## 3 mthapower aurora-mareviv mthapower
+## 4 osmplotr  ropensci       osmplotr 
+## 5 RGF       RGF-team       rgf</code></pre>
+<p>There were 18112 CRAN packages total and now we have 6569 (36%) that appear to have a GitHub repo.</p>
 <p>If you’re wondering why we didn’t just use the package name as the repo name, it’s because they sometimes don’t match, e.g. {baseballDBR} is in a repo called ‘moneyball’.</p>
 <p>Now we can use the repo details to build a URL to a potential zzz.R URL. This comes in the form <code>https://raw.githubusercontent.com/&lt;owner&gt;/&lt;repo&gt;/&lt;defaultbranch&gt;/R/zzz.R"</code>.</p>
 </div>
@@ -115,6 +120,7 @@ sample_n(has_repo, 5)</code></pre>
 <h2>Default branch</h2>
 <p>You’ll notice we don’t yet know the default branch of the package’s GitHub repo. Historically, we could probably have just hard-coded ‘master’, but the automatic default is now ‘main’. And of course, the default branch could be something else entirely.</p>
 <p>We can grab the default branch for each repo from the GitHub API using <a href="https://gh.r-lib.org/">the excellent {gh} package</a> by Gabor Csardi, Jenny Bryan and Hadley Wickham. You’ll <a href="https://gh.r-lib.org/articles/managing-personal-access-tokens.html">need to do some setup</a> to use it yourself.</p>
+<p>The key function is <code>gh()</code>, to which you can pass a GET request for the information we want: <code>GET /repos/{owner}/{repo}</code>. We can iterate for each repo by passing each owner and repo name in turn. It returns a list object with lots of information about the repo.</p>
 <p>I’ve created ‘possibly’ function variants with {purrr} so that any errors in the process are handled by returning <code>NA</code>, rather than breaking the loop, which would kill the process.</p>
 <pre class="r"><code># Create &#39;try&#39; function versions
 map2_possibly &lt;- possibly(map2, NA_real_)
@@ -143,21 +149,16 @@ maybe_zzz &lt;- has_repo %&gt;%
     )
   )</code></pre>
 <p>So now we have a column with the returned repo information, the extracted default branch name and a URL that points to a potential zzz.R file in that repo.</p>
-<pre class="r"><code>maybe_zzz</code></pre>
-<pre><code>## # A tibble: 6,569 × 6
-##    Package         owner          repo   repo_deets  default_branch zzz_url     
-##    &lt;chr&gt;           &lt;chr&gt;          &lt;chr&gt;  &lt;list&gt;      &lt;chr&gt;          &lt;chr&gt;       
-##  1 AATtools        Spiritspeak    AATto… &lt;gh_rspns … master         https://raw…
-##  2 abbyyR          soodoku        abbyyR &lt;gh_rspns … master         https://raw…
-##  3 abctools        dennisprangle  abcto… &lt;gh_rspns … master         https://raw…
-##  4 abdiv           kylebittinger  abdiv  &lt;gh_rspns … master         https://raw…
-##  5 abess           abess-team     abess  &lt;gh_rspns … master         https://raw…
-##  6 ABHgenotypeR    StefanReuscher ABHge… &lt;gh_rspns … master         https://raw…
-##  7 abstr           a-b-street     abstr  &lt;gh_rspns … master         https://raw…
-##  8 academictwitteR cjbarrie       acade… &lt;gh_rspns … master         https://raw…
-##  9 accSDA          gumeo          accSDA &lt;gh_rspns … master         https://raw…
-## 10 accucor         XiaoyangSu     AccuC… &lt;gh_rspns … master         https://raw…
-## # … with 6,559 more rows</code></pre>
+<pre class="r"><code>head(maybe_zzz)</code></pre>
+<pre><code>## # A tibble: 6 × 6
+##   Package      owner          repo         repo_deets  default_branch zzz_url   
+##   &lt;chr&gt;        &lt;chr&gt;          &lt;chr&gt;        &lt;list&gt;      &lt;chr&gt;          &lt;chr&gt;     
+## 1 AATtools     Spiritspeak    AATtools     &lt;gh_rspns … master         https://r…
+## 2 abbyyR       soodoku        abbyyR       &lt;gh_rspns … master         https://r…
+## 3 abctools     dennisprangle  abctools     &lt;gh_rspns … master         https://r…
+## 4 abdiv        kylebittinger  abdiv        &lt;gh_rspns … master         https://r…
+## 5 abess        abess-team     abess        &lt;gh_rspns … master         https://r…
+## 6 ABHgenotypeR StefanReuscher ABHgenotypeR &lt;gh_rspns … master         https://r…</code></pre>
 </div>
 <div id="status-codes" class="section level2">
 <h2>Status codes</h2>
@@ -185,6 +186,7 @@ count(maybe_zzz_status, status)</code></pre>
 <div id="read-content" class="section level2">
 <h2>Read content</h2>
 <p>Now we know which packages have a zzz.R file, we can use <code>readLines()</code> to grab their content from their URL, which again we can protect from errors with <code>purrr::possibly()</code>.</p>
+<p>Note that I’ve created a special version of <code>readLines()</code> that reports to the user the path being checked, but also has a random delay. This is to dampen the impact on GitHub’s servers.</p>
 <pre class="r"><code># Function: readLines() but with a pause and message
 readLines_delay &lt;- function(path) {
   sample(1:3, 1)
@@ -268,7 +270,7 @@ reactable(
 </div>
 </div>
 <div id="buy-my-stuff" class="section level1">
-<h1>Buy my stuff</h1>
+<h1>Buy my stuff?</h1>
 <p>Is there a line somewhere? Is it okay to advertise something? You could argue that someone has gone out of their way to release a package for free, so what harm is it in trying to get something back? or does this approach undermine the whole ‘open’ process?</p>
 <p>I know some people find startup messages a bit annoying, but I think it’s easy enough for users to opt out of seeing them with a call to <code>suppressPackageStartupMessages()</code>.</p>
 <p>Mostly I’m kind of surprised by the lack of abuse of <code>packageStartupMessage()</code> in this sample. Let me know of any cheeky business you might have come across.</p>
@@ -287,7 +289,7 @@ Session info
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2021-08-27                  
+##  date     2021-08-28                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
 ##  package     * version    date       lib source                     
@@ -310,6 +312,7 @@ Session info
 ##  emo           0.0.0.9000 2021-08-26 [1] Github (hadley/emo@3f03b11)
 ##  evaluate      0.14       2019-05-28 [1] CRAN (R 4.1.0)             
 ##  fansi         0.5.0      2021-05-25 [1] CRAN (R 4.1.0)             
+##  fontawesome   0.2.2      2021-07-02 [1] CRAN (R 4.1.0)             
 ##  forcats     * 0.5.1      2021-01-27 [1] CRAN (R 4.1.0)             
 ##  fs            1.5.0      2020-07-31 [1] CRAN (R 4.1.0)             
 ##  generics      0.1.0      2020-10-31 [1] CRAN (R 4.1.0)             
