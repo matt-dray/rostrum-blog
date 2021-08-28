@@ -25,13 +25,13 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 100 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 101 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
-📅 That’s a post roughly every 12 days, or about 2.4 posts per month.
+📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 0 day(s) ago: [Adding a Shiny app to
-{dehex}](https://www.rostrum.blog/2021/08/27/dehex-app/).
+🆕 The latest post was published 1 day(s) ago: [Nearly (?) all the R
+package startup messages](https://www.rostrum.blog/2021/08/27/zzz/).
 
 📈 This 2D plot shows posts over time:
 
@@ -43,6 +43,7 @@ since 2018-04-14.
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|    101 | 2021-08-27 | [Nearly (?) all the R package startup messages](https://www.rostrum.blog/2021/08/27/zzz/)                                 |
 |    100 | 2021-08-27 | [Adding a Shiny app to {dehex}](https://www.rostrum.blog/2021/08/27/dehex-app/)                                           |
 |     99 | 2021-08-10 | [Read a hex colour code with {dehex}](https://www.rostrum.blog/2021/08/10/dehex/)                                         |
 |     98 | 2021-07-31 | [OG emoji SVGs](https://www.rostrum.blog/2021/07/31/og-emoji-svg/)                                                        |
@@ -148,4 +149,4 @@ since 2018-04-14.
 
 -----
 
-*Updated 2021-08-27 02:43:50*
+*Updated 2021-08-28 02:38:11*
