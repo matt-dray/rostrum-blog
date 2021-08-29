@@ -30,8 +30,8 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 1 day(s) ago: [Nearly (?) all the R
-package startup messages](https://www.rostrum.blog/2021/08/27/zzz/).
+🆕 The latest post was published 2 day(s) ago: [Exploring R package
+startup messages](https://www.rostrum.blog/2021/08/27/zzz/).
 
 📈 This 2D plot shows posts over time:
 
@@ -43,7 +43,7 @@ package startup messages](https://www.rostrum.blog/2021/08/27/zzz/).
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
-|    101 | 2021-08-27 | [Nearly (?) all the R package startup messages](https://www.rostrum.blog/2021/08/27/zzz/)                                 |
+|    101 | 2021-08-27 | [Exploring R package startup messages](https://www.rostrum.blog/2021/08/27/zzz/)                                          |
 |    100 | 2021-08-27 | [Adding a Shiny app to {dehex}](https://www.rostrum.blog/2021/08/27/dehex-app/)                                           |
 |     99 | 2021-08-10 | [Read a hex colour code with {dehex}](https://www.rostrum.blog/2021/08/10/dehex/)                                         |
 |     98 | 2021-07-31 | [OG emoji SVGs](https://www.rostrum.blog/2021/07/31/og-emoji-svg/)                                                        |
@@ -149,4 +149,4 @@ package startup messages](https://www.rostrum.blog/2021/08/27/zzz/).
 
 -----
 
-*Updated 2021-08-28 02:38:11*
+*Updated 2021-08-29 02:37:50*
