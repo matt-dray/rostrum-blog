@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 2 day(s) ago: [Exploring R package
+🆕 The latest post was published 3 day(s) ago: [Exploring R package
 startup messages](https://www.rostrum.blog/2021/08/27/zzz/).
 
 📈 This 2D plot shows posts over time:
@@ -149,4 +149,4 @@ startup messages](https://www.rostrum.blog/2021/08/27/zzz/).
 
 -----
 
-*Updated 2021-08-29 02:37:50*
+*Updated 2021-08-30 02:36:55*
