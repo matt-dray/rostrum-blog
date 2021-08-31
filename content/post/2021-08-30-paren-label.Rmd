@@ -1,0 +1,340 @@
+---
+title: "Auto-label closing parentheses in R scripts"
+author: Matt Dray
+date: '2021-08-27'
+slug: add-biscuits
+categories:
+  - code
+  - package
+tags:
+  - biscuits
+  - blogsnip
+  - lintr
+  - r
+  - styler
+draft: no
+---
+
+<div class="figure">
+<img src="/post/2021-08-30-paren-label_files/add-biscuits.gif" alt="Six nested functions in an RStudio script pane are highlighted and then an addin from the RStudio Addins menu is used, called 'add closing paren labels'. It breaks open the functions across several lines and adds labels after each closing bracket with the name of the function that it closes." width="100%"/>
+</div>
+
+# tl;dr
+
+I wrote a novelty function that adds a comment to each closing parenthesis of a script with the name of the function that it's closing. This is called [a biscuit](https://code-biscuits.github.io/), apparently.
+
+# Matryoshka functions
+
+Shiny apps can involve a lot of nested functions in the UI, which can make them difficult to handle.
+
+I get confused by long-winded apps. Sometimes I comment after a closing parenthesis ('paren') with the name of the function that it's closing. [I tweeted about this recently](https://twitter.com/mattdray/status/1430520260508229633?s=20) and it seemed to resonate.
+
+```{r eval = FALSE}
+ui <- fluidPage(
+  "hogwash",
+  sidebarLayout(
+    "tripe",
+    mainPanel(
+      "piffle",
+      tabsetPanel(
+        "bilge",
+        tabPanel(
+          "twaddle"
+        )  # tabPanel
+      )  # tabsetPanel
+    )  # mainPanel
+  )  # sidebarLayout
+)  # fluidPage
+```
+
+[Duncan told me](https://twitter.com/nacnudus/status/1431739654789902339?s=20) they're called ['biscuits'](https://code-biscuits.github.io/), which is charming.
+
+Of course, a well-designed Shiny app would be modular and abstract away the functions, making everything a delight to read and understand. And if you're nesting too much, maybe consider [Roger Peng's eight-space indentation](https://simplystatistics.org/2018/07/27/why-i-indent-my-code-8-spaces/) to punish yourself.
+
+# Paren in a codestack
+
+There are a few ways that the RStudio IDE can help with bracket-buddying. In particular:
+
+1. You can auto-indent with <kbd>Command</kbd> + <kbd>I</kbd> and [expose indent guides](https://twitter.com/mattdray/status/1431006821704216577?s=20) with _Options_ > _Code_ > _Show indent guides_ so that paren-pairs are aligned vertically
+1. Put your cursor next to a parenthesis and its partner will be automatically highlighted
+1. Colour-match paren-pairs [with rainbow colours](https://twitter.com/mattdray/status/1430563837003055107?s=20), which you can activate with _Options_ > _Code_ > _Display_
+1. Use the keyboard shortcut <kbd>Control</kbd> + <kbd>P</kbd> to [jump from an opening to a closing parenthesis](https://twitter.com/mattdray/status/1432292336969699334)
+
+You can see these in action in this gif:
+
+<div class="figure">
+<img src="/post/2021-08-30-paren-label_files/paren-jump.gif" alt="Code for a simplified Shiny app in the RStudio editor. The keyboard shortcut Control-and-P is being used to jump from the opening to closing parenthesis of a given pair." width="100%"/>
+</div>
+
+These go some way to helping, but each is not perfect for me, personally. For example, as someone with colourblindness, I find the rainbow colouring isn't distinct enough.
+
+Natch, I wondered about writing an R function to add the biscuits. Consider this post a thought-experiment manifested with some clunky code that is poorly tested and make break everything. You have been warned.
+
+# A biscuit recipe
+
+## Easy as 1, 2, 4
+
+Using R code, how can you work out which parentheses match? Spoiler: it's not that simple.
+
+Maybe you could treat an expression as a string, then label the opening parens in order and the closing parens in reverse order. Here the matching numbers identify the matching parentheses:
+
+```{r eval=FALSE}
+"first(second(third()))"
+#     1      2     3321
+```
+
+But this simple reversing heuristic doesn't work for these examples:
+
+```{r eval=FALSE}
+"first(second(third(), fourth()))"
+#     1      2     34        4321
+
+"first(second(third(')')))"
+#     1      2     3 4 321
+```
+
+In the first example we'd get the parens for `third()` and `fourth()` mixed up. In the second we have a sneaky unopened closing paren inside a string.
+
+And this doesn't solve how we would then extract each function name to use as the biscuit.
+
+## 'Overengineer' is my middle name
+
+Rather than the naive approach of handling the code as strings, I decided to parse the expressions and work with their constituent building blocks of R code.
+
+I've created a function, `add_biscuits()`, that contains sub-functions for three steps:
+
+1. `.parse()` to parse the R code from an input
+1. `.label()` to match parenthesis pairs by their parent function, grab the parent function name and insert as a comment after the closing parenthesis
+1. `.format()` to stick it all back together and style it
+
+The rest of the post walks through these functions. Note that the code is illustrative and made concise for purposes of this post. I'm certain there's easier ways to do things.
+
+We'll use as input one of those simple examples from above.
+
+```{r string}
+string <- "first(second(third('x'), fourth('y')))"
+```
+
+### 1. Parse
+
+The `.parse()` function takes a string containing R code and returns a data frame of its 'syntax tree'. In other words, it breaks the string into 'tokens' that are recognised as units of R code: function calls, assignment arrows, etc.
+
+I've used `lintr::get_source_expressions()` to do the hard work of parsing the string into a dataframe with one row per token. The downside is that you must provide to it a file rather than a character object, so we first have to write it to a temporary file.
+
+I've then filtered the dataframe to get only the tokens that are R code (i.e. they aren't spaces) and renumbered the rows so they're consecutive. This will be useful when we want to extract the function names for each set of parens.
+
+<details><summary>Expand the `.parse()` function definition</summary>
+```{r parse}
+.parse <- function(string) {
+  
+  file <- tempfile(fileext = ".R")
+  writeLines(string, file)
+  
+  linted <- lintr::get_source_expressions(file)
+  parsed <- linted$expressions[[1]]$parsed_content
+  
+  parsed <- parsed[parsed$terminal == TRUE, ]
+  rownames(parsed) <- as.character(seq(nrow(parsed)))
+  
+  return(parsed)
+  
+}
+```
+</details>
+
+Here's what the output looks like:
+
+```{r parse-string}
+tree <- .parse(string)
+tree[, c("line1", "col1", "parent", "token", "text")]
+```
+
+So each row is a recognised R token, e.g. the function name from the `first()` function is a `SYMBOL_FUNCTION_CALL` and `'x'` is a `STR_CONSTANT`. Parentheses are recognised as separate special tokens too: `'('` and `')'`.
+
+We also get returned the position of each token in the input (`line*` and `col*`) and a variable called `parent` which tells us something about the association of tokens. In our case, opening- and closing-parens have the same `parent` value.
+
+### 2. Label
+
+So we can tie our paren pairs together with the `parent` variable and we know where to place the biscuit with the `line1` and `col1` information. But how to extract the function name and biscuitify it?
+
+I've written the slightly awkward `.label()` function for this. It checks each row to see if it's a closing-paren token; if so, it finds the position of the matching open-paren by `parent`; then it looks at the text of the token in the preceding row to get the function name and sticks that in a new column called `label`.
+
+<details><summary>Expand the `.label()` function definition</summary>
+```{r label}
+.label <- function(tree) {
+  
+  tree$label <- NA_character_
+  
+  for (tkn in seq_len(nrow(tree))) {
+    
+    tree$label[tkn] <- ifelse(
+      tree$token[[tkn]] == "')'",
+      tree[as.numeric(rownames(
+        tree[tree$parent == tree$parent[[tkn]] & tree$token == "'('", ]
+      )) - 1, "text"],
+      NA_character_
+    )
+    
+  }
+  
+  return(tree)
+  
+}
+```
+</details>
+
+So now we have the required biscuit for each closing paren:
+
+```{r label-tree}
+tree_lbl <- .label(tree)
+tree_lbl[!is.na(tree_lbl$label), c("text", "label")]
+```
+
+### 3. Format
+
+The last step needs involves sticking everything back together again. My quick solution is hacky and needs a refactor for sure.
+
+The `.format()` function does a couple of awkward things: recognises and pastes commas to their preceding token (otherwise we'll get lines in the output that start with a comma, which is valid, but not my style) and pastes in the biscuits with a suffixed `#` to mark it as a comment. Of course, this blocks downstream code, so we can add a linebreak with `\n`.
+
+The output is still going to be a bit uggo though, so I employed {styler} to reformat it in tidyverse style. This is very definitely opinionated.
+
+<details><summary>Expand the `.format()` function definition</summary>
+```{r format}
+.format <- function(tree_lbl) {
+  
+  tree_lbl$comma <- c(
+    ifelse(tree_lbl$text != ",", NA_character_, ",")[-1], NA_character_
+  )  # lag commas
+  
+  tree_lbl <- tree_lbl[tree_lbl$token != "','", ]  # remove comma tokens
+  
+  tree_lbl$string <- NA_character_
+  
+  for (tkn in seq_len(nrow(tree_lbl))) {
+    
+    if (!is.na(tree_lbl$comma[tkn])) {  # when there's a comma
+      
+      if (!is.na(tree_lbl$label[tkn])) {  # paste with biscuit
+        
+        tree_lbl$string[tkn] <- paste0(
+          "\n", tree_lbl$text[tkn], tree_lbl$comma[tkn],
+          "#", tree_lbl$label[tkn], "\n"
+        ) 
+        
+      } else if (is.na(tree_lbl$label[tkn])) {  # paste without biscuit
+        
+        tree_lbl$string[tkn] <- paste0(
+          "\n", tree_lbl$text[tkn], tree_lbl$comma[tkn], "\n"
+        ) 
+        
+      }
+      
+    } else if (is.na(tree_lbl$comma[tkn]) & !is.na(tree_lbl$label[tkn])) {
+      
+      tree_lbl$string[tkn] <- paste0(
+        "\n", tree_lbl$text[tkn], "#", tree_lbl$label[tkn], "\n"
+      ) 
+      
+    } else {  # no comma, no biscuit
+      
+      tree_lbl$string[tkn] <- tree_lbl$text[tkn]
+      
+    }
+    
+  }
+  
+  string_out <- paste0(tree_lbl$string, collapse = "")
+  string_out <- gsub("\n\n", "\n", string_out)
+  
+  styled <- suppressWarnings(
+    utils::capture.output(styler::style_text(string_out))
+  )
+  
+  paste(styled, collapse = "\n")
+  
+}
+```
+</details>
+
+Let's hand over to `.format()` the labelled tree dataframe that was output from `.label()`:
+
+```{r format-tree-lbl}
+out <- .format(tree_lbl)
+out
+```
+
+So the output is a character vector, with one element per line of our output R file. You can see in the console how this looks.
+
+```{r cat-out}
+cat(out)
+```
+
+Real noice: we've got a comment after each closing bracket that notes which function it's closing. You can argue that some of these biscuits are redundant, but the goal has been achieved!
+
+A reminder of the original input:
+
+```{r string-reminder}
+string
+```
+
+### 4. Combined function
+
+And so, we can put these three steps together in one function: `add_biscuits()`, which is a cuter name than `label_parens()` or whatever.
+
+```{r insert-biscuits}
+add_biscuits <- function(string) { 
+  .parse(string) |> .label() |> .format()
+}
+```
+
+The output from each sub-function passes to the next, so it's a nice chance to use the pipe operator (R >= v4.1).
+
+Let's try it on that awkward example with the sneaky extra bracket.
+
+```{r example-string2}
+string2 <- "first(second(third(')')))"
+cat(add_biscuits(string2))
+```
+
+So only the 'real' closing-paren token has been recognised and labelled.
+
+# Bonus: RStudio addin
+
+You're thinking 'cool, but how can I use this thing practically?' The answer is an RStudio addin.
+
+I've [written before](https://www.rostrum.blog/2019/10/22/blogsnip/) about [{blogsnip}](https://github.com/matt-dray/blogsnip), my package of RMarkdown-related RStudio addins to help me prepare blog posts. I've put the `add_biscuits()` function in there for now.
+
+Install from GitHub as follows and then restart RStudio. {blogsnip} doesn't force you to install {lintr} and {styler}, so you'll have to do that separately.
+
+```{r blogsnip, eval=FALSE}
+install.packages("remotes")  # if not yet installed 
+remotes::install_github("matt-dray/blogsnip")
+install.packages(c("lintr", "styler"))
+```
+
+There should now be a 'BLOGSNIP' section in the 'Addins' menu (top navigation bar) with an option to 'Add closing paren labels'. Select a full R expression in the script window, then select 'Add closing paren labels'. Your code will be replaced with the same code, but with biscuits inserted.
+
+<div class="figure">
+<img src="/post/2021-08-30-paren-label_files/add-biscuits.gif" alt="Six nested functions in an RStudio script pane are highlighted and then an addin from the RStudio Addins menu is used, called 'add closing paren labels'. It breaks open the functions across several lines and adds labels after each closing bracket with the name of the function that it closes." width="100%"/>
+</div>
+
+So beware: your code will be replaced if you use the addin. Of course, you can edit or undo the output as necessary.
+
+You can set a keyboard shortcut for this too, if you want. Go to _Tools_ > _Modify Keyboard Shortcuts..._. I set mine to <kbd>Ctrl</kbd> + <kbd>Cmd</kbd> + <kbd>P</kbd>, since <kbd>Ctrl</kbd> + <kbd>P</kbd> is the shortcut that jumps from opening to closing parens.
+
+# Oh, crumbs...
+
+Let me be clear: `add_biscuits()` is half-baked. It works on the simple examples here, but I'm pretty sure it will break horribly on more complex things. I haven't really tested it properly. 
+
+It gets confused if there's already some closing paragraphs. It gets confused if you don't highlight enough code to capture all the opening and closing parens. It gets confused if you run it over more than one expression.
+
+So, use the function at your own risk, or better yet: improve it. [Contribute to {blogsnip}](https://github.com/matt-dray/blogsnip) or get me [on Twitter](https://twitter.com/mattdray).
+
+Or even better yet, just use a good implementation of this functionality that someone else has probably written and I've been too lazy to search for.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>

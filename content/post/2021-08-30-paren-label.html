@@ -1,0 +1,371 @@
+---
+title: "Auto-label closing parentheses in R scripts"
+author: Matt Dray
+date: '2021-08-27'
+slug: add-biscuits
+categories:
+  - code
+  - package
+tags:
+  - biscuits
+  - blogsnip
+  - lintr
+  - r
+  - styler
+draft: no
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div class="figure">
+<p><img src="/post/2021-08-30-paren-label_files/add-biscuits.gif" alt="Six nested functions in an RStudio script pane are highlighted and then an addin from the RStudio Addins menu is used, called 'add closing paren labels'. It breaks open the functions across several lines and adds labels after each closing bracket with the name of the function that it closes." width="100%"/></p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I wrote a novelty function that adds a comment to each closing parenthesis of a script with the name of the function that it’s closing. This is called <a href="https://code-biscuits.github.io/">a biscuit</a>, apparently.</p>
+</div>
+<div id="matryoshka-functions" class="section level1">
+<h1>Matryoshka functions</h1>
+<p>Shiny apps can involve a lot of nested functions in the UI, which can make them difficult to handle.</p>
+<p>I get confused by long-winded apps. Sometimes I comment after a closing parenthesis (‘paren’) with the name of the function that it’s closing. <a href="https://twitter.com/mattdray/status/1430520260508229633?s=20">I tweeted about this recently</a> and it seemed to resonate.</p>
+<pre class="r"><code>ui &lt;- fluidPage(
+  &quot;hogwash&quot;,
+  sidebarLayout(
+    &quot;tripe&quot;,
+    mainPanel(
+      &quot;piffle&quot;,
+      tabsetPanel(
+        &quot;bilge&quot;,
+        tabPanel(
+          &quot;twaddle&quot;
+        )  # tabPanel
+      )  # tabsetPanel
+    )  # mainPanel
+  )  # sidebarLayout
+)  # fluidPage</code></pre>
+<p><a href="https://twitter.com/nacnudus/status/1431739654789902339?s=20">Duncan told me</a> they’re called <a href="https://code-biscuits.github.io/">‘biscuits’</a>, which is charming.</p>
+<p>Of course, a well-designed Shiny app would be modular and abstract away the functions, making everything a delight to read and understand. And if you’re nesting too much, maybe consider <a href="https://simplystatistics.org/2018/07/27/why-i-indent-my-code-8-spaces/">Roger Peng’s eight-space indentation</a> to punish yourself.</p>
+</div>
+<div id="paren-in-a-codestack" class="section level1">
+<h1>Paren in a codestack</h1>
+<p>There are a few ways that the RStudio IDE can help with bracket-buddying. In particular:</p>
+<ol style="list-style-type: decimal">
+<li>You can auto-indent with <kbd>Command</kbd> + <kbd>I</kbd> and <a href="https://twitter.com/mattdray/status/1431006821704216577?s=20">expose indent guides</a> with <em>Options</em> &gt; <em>Code</em> &gt; <em>Show indent guides</em> so that paren-pairs are aligned vertically</li>
+<li>Put your cursor next to a parenthesis and its partner will be automatically highlighted</li>
+<li>Colour-match paren-pairs <a href="https://twitter.com/mattdray/status/1430563837003055107?s=20">with rainbow colours</a>, which you can activate with <em>Options</em> &gt; <em>Code</em> &gt; <em>Display</em></li>
+<li>Use the keyboard shortcut <kbd>Control</kbd> + <kbd>P</kbd> to <a href="https://twitter.com/mattdray/status/1432292336969699334">jump from an opening to a closing parenthesis</a></li>
+</ol>
+<p>You can see these in action in this gif:</p>
+<div class="figure">
+<p><img src="/post/2021-08-30-paren-label_files/paren-jump.gif" alt="Code for a simplified Shiny app in the RStudio editor. The keyboard shortcut Control-and-P is being used to jump from the opening to closing parenthesis of a given pair." width="100%"/></p>
+</div>
+<p>These go some way to helping, but each is not perfect for me, personally. For example, as someone with colourblindness, I find the rainbow colouring isn’t distinct enough.</p>
+<p>Natch, I wondered about writing an R function to add the biscuits. Consider this post a thought-experiment manifested with some clunky code that is poorly tested and make break everything. You have been warned.</p>
+</div>
+<div id="a-biscuit-recipe" class="section level1">
+<h1>A biscuit recipe</h1>
+<div id="easy-as-1-2-4" class="section level2">
+<h2>Easy as 1, 2, 4</h2>
+<p>Using R code, how can you work out which parentheses match? Spoiler: it’s not that simple.</p>
+<p>Maybe you could treat an expression as a string, then label the opening parens in order and the closing parens in reverse order. Here the matching numbers identify the matching parentheses:</p>
+<pre class="r"><code>&quot;first(second(third()))&quot;
+#     1      2     3321</code></pre>
+<p>But this simple reversing heuristic doesn’t work for these examples:</p>
+<pre class="r"><code>&quot;first(second(third(), fourth()))&quot;
+#     1      2     34        4321
+
+&quot;first(second(third(&#39;)&#39;)))&quot;
+#     1      2     3 4 321</code></pre>
+<p>In the first example we’d get the parens for <code>third()</code> and <code>fourth()</code> mixed up. In the second we have a sneaky unopened closing paren inside a string.</p>
+<p>And this doesn’t solve how we would then extract each function name to use as the biscuit.</p>
+</div>
+<div id="overengineer-is-my-middle-name" class="section level2">
+<h2>‘Overengineer’ is my middle name</h2>
+<p>Rather than the naive approach of handling the code as strings, I decided to parse the expressions and work with their constituent building blocks of R code.</p>
+<p>I’ve created a function, <code>add_biscuits()</code>, that contains sub-functions for three steps:</p>
+<ol style="list-style-type: decimal">
+<li><code>.parse()</code> to parse the R code from an input</li>
+<li><code>.label()</code> to match parenthesis pairs by their parent function, grab the parent function name and insert as a comment after the closing parenthesis</li>
+<li><code>.format()</code> to stick it all back together and style it</li>
+</ol>
+<p>The rest of the post walks through these functions. Note that the code is illustrative and made concise for purposes of this post. I’m certain there’s easier ways to do things.</p>
+<p>We’ll use as input one of those simple examples from above.</p>
+<pre class="r"><code>string &lt;- &quot;first(second(third(&#39;x&#39;), fourth(&#39;y&#39;)))&quot;</code></pre>
+<div id="parse" class="section level3">
+<h3>1. Parse</h3>
+<p>The <code>.parse()</code> function takes a string containing R code and returns a data frame of its ‘syntax tree’. In other words, it breaks the string into ‘tokens’ that are recognised as units of R code: function calls, assignment arrows, etc.</p>
+<p>I’ve used <code>lintr::get_source_expressions()</code> to do the hard work of parsing the string into a dataframe with one row per token. The downside is that you must provide to it a file rather than a character object, so we first have to write it to a temporary file.</p>
+<p>I’ve then filtered the dataframe to get only the tokens that are R code (i.e. they aren’t spaces) and renumbered the rows so they’re consecutive. This will be useful when we want to extract the function names for each set of parens.</p>
+<details>
+<summary>
+Expand the <code>.parse()</code> function definition
+</summary>
+<pre class="r"><code>.parse &lt;- function(string) {
+  
+  file &lt;- tempfile(fileext = &quot;.R&quot;)
+  writeLines(string, file)
+  
+  linted &lt;- lintr::get_source_expressions(file)
+  parsed &lt;- linted$expressions[[1]]$parsed_content
+  
+  parsed &lt;- parsed[parsed$terminal == TRUE, ]
+  rownames(parsed) &lt;- as.character(seq(nrow(parsed)))
+  
+  return(parsed)
+  
+}</code></pre>
+</details>
+<p>Here’s what the output looks like:</p>
+<pre class="r"><code>tree &lt;- .parse(string)
+tree[, c(&quot;line1&quot;, &quot;col1&quot;, &quot;parent&quot;, &quot;token&quot;, &quot;text&quot;)]</code></pre>
+<pre><code>##    line1 col1 parent                token   text
+## 1      1    1      3 SYMBOL_FUNCTION_CALL  first
+## 2      1    6     40                  &#39;(&#39;      (
+## 3      1    7      6 SYMBOL_FUNCTION_CALL second
+## 4      1   13     35                  &#39;(&#39;      (
+## 5      1   14      9 SYMBOL_FUNCTION_CALL  third
+## 6      1   19     16                  &#39;(&#39;      (
+## 7      1   20     12            STR_CONST    &#39;x&#39;
+## 8      1   23     16                  &#39;)&#39;      )
+## 9      1   24     35                  &#39;,&#39;      ,
+## 10     1   26     23 SYMBOL_FUNCTION_CALL fourth
+## 11     1   32     30                  &#39;(&#39;      (
+## 12     1   33     26            STR_CONST    &#39;y&#39;
+## 13     1   36     30                  &#39;)&#39;      )
+## 14     1   37     35                  &#39;)&#39;      )
+## 15     1   38     40                  &#39;)&#39;      )</code></pre>
+<p>So each row is a recognised R token, e.g. the function name from the <code>first()</code> function is a <code>SYMBOL_FUNCTION_CALL</code> and <code>'x'</code> is a <code>STR_CONSTANT</code>. Parentheses are recognised as separate special tokens too: <code>'('</code> and <code>')'</code>.</p>
+<p>We also get returned the position of each token in the input (<code>line*</code> and <code>col*</code>) and a variable called <code>parent</code> which tells us something about the association of tokens. In our case, opening- and closing-parens have the same <code>parent</code> value.</p>
+</div>
+<div id="label" class="section level3">
+<h3>2. Label</h3>
+<p>So we can tie our paren pairs together with the <code>parent</code> variable and we know where to place the biscuit with the <code>line1</code> and <code>col1</code> information. But how to extract the function name and biscuitify it?</p>
+<p>I’ve written the slightly awkward <code>.label()</code> function for this. It checks each row to see if it’s a closing-paren token; if so, it finds the position of the matching open-paren by <code>parent</code>; then it looks at the text of the token in the preceding row to get the function name and sticks that in a new column called <code>label</code>.</p>
+<details>
+<summary>
+Expand the <code>.label()</code> function definition
+</summary>
+<pre class="r"><code>.label &lt;- function(tree) {
+  
+  tree$label &lt;- NA_character_
+  
+  for (tkn in seq_len(nrow(tree))) {
+    
+    tree$label[tkn] &lt;- ifelse(
+      tree$token[[tkn]] == &quot;&#39;)&#39;&quot;,
+      tree[as.numeric(rownames(
+        tree[tree$parent == tree$parent[[tkn]] &amp; tree$token == &quot;&#39;(&#39;&quot;, ]
+      )) - 1, &quot;text&quot;],
+      NA_character_
+    )
+    
+  }
+  
+  return(tree)
+  
+}</code></pre>
+</details>
+<p>So now we have the required biscuit for each closing paren:</p>
+<pre class="r"><code>tree_lbl &lt;- .label(tree)
+tree_lbl[!is.na(tree_lbl$label), c(&quot;text&quot;, &quot;label&quot;)]</code></pre>
+<pre><code>##    text  label
+## 8     )  third
+## 13    ) fourth
+## 14    ) second
+## 15    )  first</code></pre>
+</div>
+<div id="format" class="section level3">
+<h3>3. Format</h3>
+<p>The last step needs involves sticking everything back together again. My quick solution is hacky and needs a refactor for sure.</p>
+<p>The <code>.format()</code> function does a couple of awkward things: recognises and pastes commas to their preceding token (otherwise we’ll get lines in the output that start with a comma, which is valid, but not my style) and pastes in the biscuits with a suffixed <code>#</code> to mark it as a comment. Of course, this blocks downstream code, so we can add a linebreak with <code>\n</code>.</p>
+<p>The output is still going to be a bit uggo though, so I employed {styler} to reformat it in tidyverse style. This is very definitely opinionated.</p>
+<details>
+<summary>
+Expand the <code>.format()</code> function definition
+</summary>
+<pre class="r"><code>.format &lt;- function(tree_lbl) {
+  
+  tree_lbl$comma &lt;- c(
+    ifelse(tree_lbl$text != &quot;,&quot;, NA_character_, &quot;,&quot;)[-1], NA_character_
+  )  # lag commas
+  
+  tree_lbl &lt;- tree_lbl[tree_lbl$token != &quot;&#39;,&#39;&quot;, ]  # remove comma tokens
+  
+  tree_lbl$string &lt;- NA_character_
+  
+  for (tkn in seq_len(nrow(tree_lbl))) {
+    
+    if (!is.na(tree_lbl$comma[tkn])) {  # when there&#39;s a comma
+      
+      if (!is.na(tree_lbl$label[tkn])) {  # paste with biscuit
+        
+        tree_lbl$string[tkn] &lt;- paste0(
+          &quot;\n&quot;, tree_lbl$text[tkn], tree_lbl$comma[tkn],
+          &quot;#&quot;, tree_lbl$label[tkn], &quot;\n&quot;
+        ) 
+        
+      } else if (is.na(tree_lbl$label[tkn])) {  # paste without biscuit
+        
+        tree_lbl$string[tkn] &lt;- paste0(
+          &quot;\n&quot;, tree_lbl$text[tkn], tree_lbl$comma[tkn], &quot;\n&quot;
+        ) 
+        
+      }
+      
+    } else if (is.na(tree_lbl$comma[tkn]) &amp; !is.na(tree_lbl$label[tkn])) {
+      
+      tree_lbl$string[tkn] &lt;- paste0(
+        &quot;\n&quot;, tree_lbl$text[tkn], &quot;#&quot;, tree_lbl$label[tkn], &quot;\n&quot;
+      ) 
+      
+    } else {  # no comma, no biscuit
+      
+      tree_lbl$string[tkn] &lt;- tree_lbl$text[tkn]
+      
+    }
+    
+  }
+  
+  string_out &lt;- paste0(tree_lbl$string, collapse = &quot;&quot;)
+  string_out &lt;- gsub(&quot;\n\n&quot;, &quot;\n&quot;, string_out)
+  
+  styled &lt;- suppressWarnings(
+    utils::capture.output(styler::style_text(string_out))
+  )
+  
+  paste(styled, collapse = &quot;\n&quot;)
+  
+}</code></pre>
+</details>
+<p>Let’s hand over to <code>.format()</code> the labelled tree dataframe that was output from <code>.label()</code>:</p>
+<pre class="r"><code>out &lt;- .format(tree_lbl)
+out</code></pre>
+<pre><code>## [1] &quot;first(\n  second(\n    third(\&quot;x\&quot;), # third\n    fourth(\&quot;y\&quot;) # fourth\n  ) # second\n) # first&quot;</code></pre>
+<p>So the output is a character vector, with one element per line of our output R file. You can see in the console how this looks.</p>
+<pre class="r"><code>cat(out)</code></pre>
+<pre><code>## first(
+##   second(
+##     third(&quot;x&quot;), # third
+##     fourth(&quot;y&quot;) # fourth
+##   ) # second
+## ) # first</code></pre>
+<p>Real noice: we’ve got a comment after each closing bracket that notes which function it’s closing. You can argue that some of these biscuits are redundant, but the goal has been achieved!</p>
+<p>A reminder of the original input:</p>
+<pre class="r"><code>string</code></pre>
+<pre><code>## [1] &quot;first(second(third(&#39;x&#39;), fourth(&#39;y&#39;)))&quot;</code></pre>
+</div>
+<div id="combined-function" class="section level3">
+<h3>4. Combined function</h3>
+<p>And so, we can put these three steps together in one function: <code>add_biscuits()</code>, which is a cuter name than <code>label_parens()</code> or whatever.</p>
+<pre class="r"><code>add_biscuits &lt;- function(string) { 
+  .parse(string) |&gt; .label() |&gt; .format()
+}</code></pre>
+<p>The output from each sub-function passes to the next, so it’s a nice chance to use the pipe operator (R &gt;= v4.1).</p>
+<p>Let’s try it on that awkward example with the sneaky extra bracket.</p>
+<pre class="r"><code>string2 &lt;- &quot;first(second(third(&#39;)&#39;)))&quot;
+cat(add_biscuits(string2))</code></pre>
+<pre><code>## first(
+##   second(
+##     third(&quot;)&quot;) # third
+##   ) # second
+## ) # first</code></pre>
+<p>So only the ‘real’ closing-paren token has been recognised and labelled.</p>
+</div>
+</div>
+</div>
+<div id="bonus-rstudio-addin" class="section level1">
+<h1>Bonus: RStudio addin</h1>
+<p>You’re thinking ‘cool, but how can I use this thing practically?’ The answer is an RStudio addin.</p>
+<p>I’ve <a href="https://www.rostrum.blog/2019/10/22/blogsnip/">written before</a> about <a href="https://github.com/matt-dray/blogsnip">{blogsnip}</a>, my package of RMarkdown-related RStudio addins to help me prepare blog posts. I’ve put the <code>add_biscuits()</code> function in there for now.</p>
+<p>Install from GitHub as follows and then restart RStudio. {blogsnip} doesn’t force you to install {lintr} and {styler}, so you’ll have to do that separately.</p>
+<pre class="r"><code>install.packages(&quot;remotes&quot;)  # if not yet installed 
+remotes::install_github(&quot;matt-dray/blogsnip&quot;)
+install.packages(c(&quot;lintr&quot;, &quot;styler&quot;))</code></pre>
+<p>There should now be a ‘BLOGSNIP’ section in the ‘Addins’ menu (top navigation bar) with an option to ‘Add closing paren labels’. Select a full R expression in the script window, then select ‘Add closing paren labels’. Your code will be replaced with the same code, but with biscuits inserted.</p>
+<div class="figure">
+<p><img src="/post/2021-08-30-paren-label_files/add-biscuits.gif" alt="Six nested functions in an RStudio script pane are highlighted and then an addin from the RStudio Addins menu is used, called 'add closing paren labels'. It breaks open the functions across several lines and adds labels after each closing bracket with the name of the function that it closes." width="100%"/></p>
+</div>
+<p>So beware: your code will be replaced if you use the addin. Of course, you can edit or undo the output as necessary.</p>
+<p>You can set a keyboard shortcut for this too, if you want. Go to <em>Tools</em> &gt; <em>Modify Keyboard Shortcuts…</em>. I set mine to <kbd>Ctrl</kbd> + <kbd>Cmd</kbd> + <kbd>P</kbd>, since <kbd>Ctrl</kbd> + <kbd>P</kbd> is the shortcut that jumps from opening to closing parens.</p>
+</div>
+<div id="oh-crumbs" class="section level1">
+<h1>Oh, crumbs…</h1>
+<p>Let me be clear: <code>add_biscuits()</code> is half-baked. It works on the simple examples here, but I’m pretty sure it will break horribly on more complex things. I haven’t really tested it properly.</p>
+<p>It gets confused if there’s already some closing paragraphs. It gets confused if you don’t highlight enough code to capture all the opening and closing parens. It gets confused if you run it over more than one expression.</p>
+<p>So, use the function at your own risk, or better yet: improve it. <a href="https://github.com/matt-dray/blogsnip">Contribute to {blogsnip}</a> or get me <a href="https://twitter.com/mattdray">on Twitter</a>.</p>
+<p>Or even better yet, just use a good implementation of this functionality that someone else has probably written and I’ve been too lazy to search for.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.1.0 (2021-05-18)
+##  os       macOS Big Sur 10.16         
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2021-08-31                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package      * version date       lib source        
+##  backports      1.2.1   2020-12-09 [1] CRAN (R 4.1.0)
+##  blogdown       1.4     2021-07-23 [1] CRAN (R 4.1.0)
+##  bookdown       0.23    2021-08-13 [1] CRAN (R 4.1.0)
+##  bslib          0.2.5.1 2021-05-18 [1] CRAN (R 4.1.0)
+##  callr          3.7.0   2021-04-20 [1] CRAN (R 4.1.0)
+##  cli            3.0.1   2021-07-17 [1] CRAN (R 4.1.0)
+##  crayon         1.4.1   2021-02-08 [1] CRAN (R 4.1.0)
+##  cyclocomp      1.1.0   2016-09-10 [1] CRAN (R 4.1.0)
+##  desc           1.3.0   2021-03-05 [1] CRAN (R 4.1.0)
+##  digest         0.6.27  2020-10-24 [1] CRAN (R 4.1.0)
+##  ellipsis       0.3.2   2021-04-29 [1] CRAN (R 4.1.0)
+##  evaluate       0.14    2019-05-28 [1] CRAN (R 4.1.0)
+##  fansi          0.5.0   2021-05-25 [1] CRAN (R 4.1.0)
+##  htmltools      0.5.1.1 2021-01-22 [1] CRAN (R 4.1.0)
+##  jquerylib      0.1.4   2021-04-26 [1] CRAN (R 4.1.0)
+##  jsonlite       1.7.2   2020-12-09 [1] CRAN (R 4.1.0)
+##  knitr          1.33    2021-04-24 [1] CRAN (R 4.1.0)
+##  lazyeval       0.2.2   2019-03-15 [1] CRAN (R 4.1.0)
+##  lifecycle      1.0.0   2021-02-15 [1] CRAN (R 4.1.0)
+##  lintr          2.0.1   2020-02-19 [1] CRAN (R 4.1.0)
+##  magrittr       2.0.1   2020-11-17 [1] CRAN (R 4.1.0)
+##  pillar         1.6.2   2021-07-29 [1] CRAN (R 4.1.0)
+##  pkgconfig      2.0.3   2019-09-22 [1] CRAN (R 4.1.0)
+##  processx       3.5.2   2021-04-30 [1] CRAN (R 4.1.0)
+##  ps             1.6.0   2021-02-28 [1] CRAN (R 4.1.0)
+##  purrr          0.3.4   2020-04-17 [1] CRAN (R 4.1.0)
+##  R.cache        0.15.0  2021-04-30 [1] CRAN (R 4.1.0)
+##  R.methodsS3    1.8.1   2020-08-26 [1] CRAN (R 4.1.0)
+##  R.oo           1.24.0  2020-08-26 [1] CRAN (R 4.1.0)
+##  R.utils        2.10.1  2020-08-26 [1] CRAN (R 4.1.0)
+##  R6             2.5.1   2021-08-19 [1] CRAN (R 4.1.0)
+##  rematch2       2.1.2   2020-05-01 [1] CRAN (R 4.1.0)
+##  remotes        2.4.0   2021-06-02 [1] CRAN (R 4.1.0)
+##  rex            1.2.0   2020-04-21 [1] CRAN (R 4.1.0)
+##  rlang          0.4.11  2021-04-30 [1] CRAN (R 4.1.0)
+##  rmarkdown      2.10    2021-08-06 [1] CRAN (R 4.1.0)
+##  rprojroot      2.0.2   2020-11-15 [1] CRAN (R 4.1.0)
+##  rstudioapi     0.13    2020-11-12 [1] CRAN (R 4.1.0)
+##  sass           0.4.0   2021-05-12 [1] CRAN (R 4.1.0)
+##  sessioninfo    1.1.1   2018-11-05 [1] CRAN (R 4.1.0)
+##  stringi        1.7.3   2021-07-16 [1] CRAN (R 4.1.0)
+##  stringr        1.4.0   2019-02-10 [1] CRAN (R 4.1.0)
+##  styler         1.5.1   2021-07-13 [1] CRAN (R 4.1.0)
+##  tibble         3.1.3   2021-07-23 [1] CRAN (R 4.1.0)
+##  utf8           1.2.2   2021-07-24 [1] CRAN (R 4.1.0)
+##  vctrs          0.3.8   2021-04-29 [1] CRAN (R 4.1.0)
+##  withr          2.4.2   2021-04-18 [1] CRAN (R 4.1.0)
+##  xfun           0.25    2021-08-06 [1] CRAN (R 4.1.0)
+##  xml2           1.3.2   2020-04-23 [1] CRAN (R 4.1.0)
+##  xmlparsedata   1.0.5   2021-03-06 [1] CRAN (R 4.1.0)
+##  yaml           2.2.1   2020-02-01 [1] CRAN (R 4.1.0)
+## 
+## [1] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
+</details>
+</div>
