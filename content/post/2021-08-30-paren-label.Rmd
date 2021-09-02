@@ -23,7 +23,7 @@ draft: no
 
 # tl;dr
 
-I wrote a novelty R function that inserts a comment after a closing parenthesis with the name of the function it belongs to. (These are called [biscuits](https://code-biscuits.github.io/), apparently.) It's available as an RStudio Addin from [the {blogsnip} package](https://github.com/matt-dray/blogsnip).
+I wrote a novelty R function that inserts commenta after closing parentheses with the names of the functions they belong to. (These are called [biscuits](https://code-biscuits.github.io/), apparently.) It's available as an RStudio Addin from [the {blogsnip} package](https://github.com/matt-dray/blogsnip).
 
 # Matryoshka functions
 
@@ -72,7 +72,7 @@ These go some way to helping, but each is not perfect for me, personally. For ex
 
 # A biscuit recipe
 
-So what if we want to use those closing-paren labels, or 'biscuits', anyway? There doesn't seem to be an option in RStudio for that.
+So what if we want to use those closing-paren labels, or 'biscuits', instead? There doesn't seem to be an option in RStudio for that.
 
 Naturally, I wondered about filling that gap in the market. 
 
@@ -82,7 +82,9 @@ As a result, consider this post a thought-experiment manifested with some clunky
 
 Using R code, how can you work out the matching parentheses in an expression? Spoiler: it's not that simple.
 
-Maybe you could treat an expression as a string, then label the opening parens in order and the closing parens in reverse order. In this example, the letters correctly match the parentheses (uppercase for open-parens and lowercase for closing-parens):
+Maybe you could treat an expression as a string, then label the opening and closing parens in forward and reverse order, respectively. 
+
+In this example, the labels match up the parens for each imaginary function (uppercase for open-parens and lowercase for closing-parens):
 
 ```{r eval=FALSE}
 "first(second(third()))"
@@ -105,9 +107,9 @@ Not forgetting that this doesn't solve how to extract each function name to use 
 
 ## 'Overengineer' is my middle name
 
-Rather than the naive approach of handling the code as strings, I decided to parse the expressions and work with their constituent building blocks of R code.
+Rather than the naive approach of chopping up and counting strings, I decided to parse the actual R expressions from them.
 
-I've created a function, `add_biscuits()`, that contains sub-functions for three steps:
+I created a function to do this, `add_biscuits()`, that contains sub-functions for three steps:
 
 1. `.parse()` to interpret the R code from an input
 1. `.label()` to match parenthesis pairs by their parent function, grab the parent function name and insert it as a comment after the closing paren
@@ -115,7 +117,7 @@ I've created a function, `add_biscuits()`, that contains sub-functions for three
 
 The rest of the post walks through these functions. I'm certain there's easier ways to do things, but the code here demonstrates the point I'm trying to reach.
 
-For demonstration, we can use one of those simple examples from above as our input.
+For demonstration, we can use one of the trickier examples from above as our input.
 
 ```{r string}
 string <- "first(second(third('x'), fourth('y')))"
@@ -302,20 +304,19 @@ string2 <- "first(second(third(')')))"
 cat(add_biscuits(string2))
 ```
 
-So only the 'real' closing-paren token has been recognised and labelled.
+So only the 'real' closing-paren tokens have been recognised and labelled.
 
 # Bonus: RStudio addin
 
 You're thinking 'cool, but how can I use this thing practically?' The answer is an RStudio addin.
 
-I've [written before](https://www.rostrum.blog/2019/10/22/blogsnip/) about [{blogsnip}](https://github.com/matt-dray/blogsnip), my package of RMarkdown-related RStudio addins to help me prepare blog posts. I've put the `add_biscuits()` function in there for now.
+I've [written before](https://www.rostrum.blog/2019/10/22/blogsnip/) about [{blogsnip}](https://github.com/matt-dray/blogsnip), my package of R Markdown-related RStudio addins to help me prepare blog posts. I've put the `add_biscuits()` function in there for now.
 
-Install from GitHub as follows and then restart RStudio. {blogsnip} doesn't force you to install {lintr} and {styler}, so you'll have to do that separately.
+Install from GitHub with {remotes} as follows and then restart RStudio. {blogsnip} doesn't force you to install {lintr} and {styler}, so you'll have to do that too (if you haven't already).
 
 ```{r blogsnip, eval=FALSE}
-install.packages("remotes")  # if not yet installed 
+install.packages(c("remotes", "lintr", "styler"))
 remotes::install_github("matt-dray/blogsnip")
-install.packages(c("lintr", "styler"))
 ```
 
 There should now be a 'BLOGSNIP' section in the 'Addins' menu (top navigation bar) with an option to 'Add closing paren labels'. Select a full R expression in the script window, then select 'Add closing paren labels'. Your code will be replaced with the same code, but with biscuits inserted.
@@ -324,7 +325,7 @@ There should now be a 'BLOGSNIP' section in the 'Addins' menu (top navigation ba
 <img src="/post/2021-08-30-paren-label_files/add-biscuits.gif" alt="Six nested functions in an RStudio script pane are highlighted and then an addin from the RStudio Addins menu is used, called 'add closing paren labels'. It breaks open the functions across several lines and adds labels after each closing bracket with the name of the function that it closes." width="100%"/>
 </div>
 
-So beware: your code will be replaced if you use the addin. Of course, you can edit or undo the output as necessary.
+Beware: your code will be replaced if you use the addin. Of course, you can edit or undo the output as necessary.
 
 You can set a keyboard shortcut for this too, if you want. Go to _Tools_ > _Modify Keyboard Shortcuts..._. I set mine to <kbd>Ctrl</kbd> + <kbd>Cmd</kbd> + <kbd>P</kbd>, since <kbd>Ctrl</kbd> + <kbd>P</kbd> is the shortcut that jumps from opening to closing parens.
 
@@ -332,11 +333,13 @@ You can set a keyboard shortcut for this too, if you want. Go to _Tools_ > _Modi
 
 Let me be clear: `add_biscuits()` is half-baked. It works on the simple examples here, but I'm pretty sure it will break horribly on more complex things. I haven't really tested it properly. 
 
-It gets confused if there's already some closing paragraphs. It gets confused if you don't highlight enough code to capture all the opening and closing parens. It gets confused if you run it over more than one expression. It ignores anything other than a round parenthesis. Etc, etc.
+It gets confused if there's already some closing parens. It gets confused if you don't highlight enough code to capture all the opening and closing parens. It gets confused if you run it over more than one expression. It ignores anything other than a round parenthesis. Etc, etc.
 
 So, use the function at your own risk, or better yet: improve it. [Contribute to {blogsnip}](https://github.com/matt-dray/blogsnip) or get me [on Twitter](https://twitter.com/mattdray).
 
 Or even better yet, just use a good implementation of this functionality that someone else has probably written and I've been too lazy to search for.
+
+Or, y'know, don't write heavily-nested code that requires you to write comments after closing parens.
 
 ---
 <details><summary>Session info</summary>

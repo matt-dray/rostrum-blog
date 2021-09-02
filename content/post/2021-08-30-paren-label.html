@@ -25,7 +25,7 @@ draft: no
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>I wrote a novelty R function that inserts a comment after a closing parenthesis with the name of the function it belongs to. (These are called <a href="https://code-biscuits.github.io/">biscuits</a>, apparently.) It’s available as an RStudio Addin from <a href="https://github.com/matt-dray/blogsnip">the {blogsnip} package</a>.</p>
+<p>I wrote a novelty R function that inserts commenta after closing parentheses with the names of the functions they belong to. (These are called <a href="https://code-biscuits.github.io/">biscuits</a>, apparently.) It’s available as an RStudio Addin from <a href="https://github.com/matt-dray/blogsnip">the {blogsnip} package</a>.</p>
 </div>
 <div id="matryoshka-functions" class="section level1">
 <h1>Matryoshka functions</h1>
@@ -66,13 +66,14 @@ draft: no
 </div>
 <div id="a-biscuit-recipe" class="section level1">
 <h1>A biscuit recipe</h1>
-<p>So what if we want to use those closing-paren labels, or ‘biscuits’, anyway? There doesn’t seem to be an option in RStudio for that.</p>
+<p>So what if we want to use those closing-paren labels, or ‘biscuits’, instead? There doesn’t seem to be an option in RStudio for that.</p>
 <p>Naturally, I wondered about filling that gap in the market.</p>
 <p>As a result, consider this post a thought-experiment manifested with some clunky code that is poorly tested and probably doesn’t do exactly what you want it to do. You have been warned.</p>
 <div id="easy-as-a-b-d" class="section level2">
 <h2>Easy as A, B, D</h2>
 <p>Using R code, how can you work out the matching parentheses in an expression? Spoiler: it’s not that simple.</p>
-<p>Maybe you could treat an expression as a string, then label the opening parens in order and the closing parens in reverse order. In this example, the letters correctly match the parentheses (uppercase for open-parens and lowercase for closing-parens):</p>
+<p>Maybe you could treat an expression as a string, then label the opening and closing parens in forward and reverse order, respectively.</p>
+<p>In this example, the labels match up the parens for each imaginary function (uppercase for open-parens and lowercase for closing-parens):</p>
 <pre class="r"><code>&quot;first(second(third()))&quot;
 #     A      B     Ccba</code></pre>
 <p>But this simple reversing heuristic doesn’t work for these expressions:</p>
@@ -86,15 +87,15 @@ draft: no
 </div>
 <div id="overengineer-is-my-middle-name" class="section level2">
 <h2>‘Overengineer’ is my middle name</h2>
-<p>Rather than the naive approach of handling the code as strings, I decided to parse the expressions and work with their constituent building blocks of R code.</p>
-<p>I’ve created a function, <code>add_biscuits()</code>, that contains sub-functions for three steps:</p>
+<p>Rather than the naive approach of chopping up and counting strings, I decided to parse the actual R expressions from them.</p>
+<p>I created a function to do this, <code>add_biscuits()</code>, that contains sub-functions for three steps:</p>
 <ol style="list-style-type: decimal">
 <li><code>.parse()</code> to interpret the R code from an input</li>
 <li><code>.label()</code> to match parenthesis pairs by their parent function, grab the parent function name and insert it as a comment after the closing paren</li>
 <li><code>.format()</code> to stick it all back together and style it</li>
 </ol>
 <p>The rest of the post walks through these functions. I’m certain there’s easier ways to do things, but the code here demonstrates the point I’m trying to reach.</p>
-<p>For demonstration, we can use one of those simple examples from above as our input.</p>
+<p>For demonstration, we can use one of the trickier examples from above as our input.</p>
 <pre class="r"><code>string &lt;- &quot;first(second(third(&#39;x&#39;), fourth(&#39;y&#39;)))&quot;</code></pre>
 <div id="parse" class="section level3">
 <h3>1. Parse</h3>
@@ -274,31 +275,31 @@ cat(add_biscuits(string2))</code></pre>
 ##     third(&quot;)&quot;) # third
 ##   ) # second
 ## ) # first</code></pre>
-<p>So only the ‘real’ closing-paren token has been recognised and labelled.</p>
+<p>So only the ‘real’ closing-paren tokens have been recognised and labelled.</p>
 </div>
 </div>
 </div>
 <div id="bonus-rstudio-addin" class="section level1">
 <h1>Bonus: RStudio addin</h1>
 <p>You’re thinking ‘cool, but how can I use this thing practically?’ The answer is an RStudio addin.</p>
-<p>I’ve <a href="https://www.rostrum.blog/2019/10/22/blogsnip/">written before</a> about <a href="https://github.com/matt-dray/blogsnip">{blogsnip}</a>, my package of RMarkdown-related RStudio addins to help me prepare blog posts. I’ve put the <code>add_biscuits()</code> function in there for now.</p>
-<p>Install from GitHub as follows and then restart RStudio. {blogsnip} doesn’t force you to install {lintr} and {styler}, so you’ll have to do that separately.</p>
-<pre class="r"><code>install.packages(&quot;remotes&quot;)  # if not yet installed 
-remotes::install_github(&quot;matt-dray/blogsnip&quot;)
-install.packages(c(&quot;lintr&quot;, &quot;styler&quot;))</code></pre>
+<p>I’ve <a href="https://www.rostrum.blog/2019/10/22/blogsnip/">written before</a> about <a href="https://github.com/matt-dray/blogsnip">{blogsnip}</a>, my package of R Markdown-related RStudio addins to help me prepare blog posts. I’ve put the <code>add_biscuits()</code> function in there for now.</p>
+<p>Install from GitHub with {remotes} as follows and then restart RStudio. {blogsnip} doesn’t force you to install {lintr} and {styler}, so you’ll have to do that too (if you haven’t already).</p>
+<pre class="r"><code>install.packages(c(&quot;remotes&quot;, &quot;lintr&quot;, &quot;styler&quot;))
+remotes::install_github(&quot;matt-dray/blogsnip&quot;)</code></pre>
 <p>There should now be a ‘BLOGSNIP’ section in the ‘Addins’ menu (top navigation bar) with an option to ‘Add closing paren labels’. Select a full R expression in the script window, then select ‘Add closing paren labels’. Your code will be replaced with the same code, but with biscuits inserted.</p>
 <div class="figure">
 <p><img src="/post/2021-08-30-paren-label_files/add-biscuits.gif" alt="Six nested functions in an RStudio script pane are highlighted and then an addin from the RStudio Addins menu is used, called 'add closing paren labels'. It breaks open the functions across several lines and adds labels after each closing bracket with the name of the function that it closes." width="100%"/></p>
 </div>
-<p>So beware: your code will be replaced if you use the addin. Of course, you can edit or undo the output as necessary.</p>
+<p>Beware: your code will be replaced if you use the addin. Of course, you can edit or undo the output as necessary.</p>
 <p>You can set a keyboard shortcut for this too, if you want. Go to <em>Tools</em> &gt; <em>Modify Keyboard Shortcuts…</em>. I set mine to <kbd>Ctrl</kbd> + <kbd>Cmd</kbd> + <kbd>P</kbd>, since <kbd>Ctrl</kbd> + <kbd>P</kbd> is the shortcut that jumps from opening to closing parens.</p>
 </div>
 <div id="oh-crumbs" class="section level1">
 <h1>Oh, crumbs…</h1>
 <p>Let me be clear: <code>add_biscuits()</code> is half-baked. It works on the simple examples here, but I’m pretty sure it will break horribly on more complex things. I haven’t really tested it properly.</p>
-<p>It gets confused if there’s already some closing paragraphs. It gets confused if you don’t highlight enough code to capture all the opening and closing parens. It gets confused if you run it over more than one expression. It ignores anything other than a round parenthesis. Etc, etc.</p>
+<p>It gets confused if there’s already some closing parens. It gets confused if you don’t highlight enough code to capture all the opening and closing parens. It gets confused if you run it over more than one expression. It ignores anything other than a round parenthesis. Etc, etc.</p>
 <p>So, use the function at your own risk, or better yet: improve it. <a href="https://github.com/matt-dray/blogsnip">Contribute to {blogsnip}</a> or get me <a href="https://twitter.com/mattdray">on Twitter</a>.</p>
 <p>Or even better yet, just use a good implementation of this functionality that someone else has probably written and I’ve been too lazy to search for.</p>
+<p>Or, y’know, don’t write heavily-nested code that requires you to write comments after closing parens.</p>
 <hr />
 <details>
 <summary>
