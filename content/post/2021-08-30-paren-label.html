@@ -1,5 +1,5 @@
 ---
-title: "Auto-label closing parentheses in R scripts"
+title: "Auto-label closing parentheses in RStudio"
 author: Matt Dray
 date: '2021-08-31'
 slug: add-biscuits
@@ -11,6 +11,8 @@ tags:
   - blogsnip
   - lintr
   - r
+  - rstudio
+  - rstudio-addin
   - styler
 draft: no
 ---
@@ -28,7 +30,8 @@ draft: no
 <div id="matryoshka-functions" class="section level1">
 <h1>Matryoshka functions</h1>
 <p>Shiny apps can involve a lot of nested functions in the UI, which can make them difficult to handle.</p>
-<p>I get confused by long-winded apps. Sometimes I comment after a closing parenthesis (‘paren’) with the name of the function that it’s closing. <a href="https://twitter.com/mattdray/status/1430520260508229633?s=20">I tweeted about this recently</a> and it seemed to resonate.</p>
+<p>Sometimes I comment after a closing parenthesis (‘paren’) with the name of the function that it’s closing, which makes it easier to match the pairs.</p>
+<p><a href="https://twitter.com/nacnudus/status/1431739654789902339?s=20">Duncan told me</a> these labels are called <a href="https://code-biscuits.github.io/">‘biscuits’</a>, which is charming.</p>
 <pre class="r"><code>ui &lt;- fluidPage(
   &quot;hogwash&quot;,
   sidebarLayout(
@@ -44,15 +47,14 @@ draft: no
     )  # mainPanel
   )  # sidebarLayout
 )  # fluidPage</code></pre>
-<p><a href="https://twitter.com/nacnudus/status/1431739654789902339?s=20">Duncan told me</a> they’re called <a href="https://code-biscuits.github.io/">‘biscuits’</a>, which is charming.</p>
-<p>Of course, a well-designed Shiny app would be modular and abstract away the functions, making everything a delight to read and understand. And if you’re nesting too much, maybe consider <a href="https://simplystatistics.org/2018/07/27/why-i-indent-my-code-8-spaces/">Roger Peng’s eight-space indentation</a> to punish yourself.</p>
+<p>Ideally you don’t want to write <a href="https://twitter.com/mxwlj/status/1433132926418374661?s=20">‘hadouken code’</a><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> like this, though. A well-designed Shiny app would be modular and abstract away the functions, making everything a delight to read and understand.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
 </div>
 <div id="paren-in-a-codestack" class="section level1">
 <h1>Paren in a codestack</h1>
-<p>There are a few ways that the RStudio IDE can help with bracket-buddying. In particular:</p>
+<p>There are a few ways that the RStudio IDE can help with the problem of bracket-buddying in long-winded scripts. In particular:</p>
 <ol style="list-style-type: decimal">
-<li>You can auto-indent with <kbd>Command</kbd> + <kbd>I</kbd> and <a href="https://twitter.com/mattdray/status/1431006821704216577?s=20">expose indent guides</a> with <em>Options</em> &gt; <em>Code</em> &gt; <em>Show indent guides</em> so that paren-pairs are aligned vertically</li>
 <li>Put your cursor next to a parenthesis and its partner will be automatically highlighted</li>
+<li>You can auto-indent with <kbd>Command</kbd> + <kbd>I</kbd> and <a href="https://twitter.com/mattdray/status/1431006821704216577?s=20">expose indent guides</a> with <em>Options</em> &gt; <em>Code</em> &gt; <em>Show indent guides</em> so that paren-pairs are aligned vertically</li>
 <li>Colour-match paren-pairs <a href="https://twitter.com/mattdray/status/1430563837003055107?s=20">with rainbow colours</a>, which you can activate with <em>Options</em> &gt; <em>Code</em> &gt; <em>Display</em></li>
 <li>Use the keyboard shortcut <kbd>Control</kbd> + <kbd>P</kbd> to <a href="https://twitter.com/mattdray/status/1432292336969699334">jump from an opening to a closing parenthesis</a></li>
 </ol>
@@ -61,40 +63,42 @@ draft: no
 <p><img src="/post/2021-08-30-paren-label_files/paren-jump.gif" alt="Code for a simplified Shiny app in the RStudio editor. The keyboard shortcut Control-and-P is being used to jump from the opening to closing parenthesis of a given pair." width="100%"/></p>
 </div>
 <p>These go some way to helping, but each is not perfect for me, personally. For example, as someone with colourblindness, I find the rainbow colouring isn’t distinct enough.</p>
-<p>Natch, I wondered about writing an R function to add the biscuits. Consider this post a thought-experiment manifested with some clunky code that is poorly tested and make break everything. You have been warned.</p>
 </div>
 <div id="a-biscuit-recipe" class="section level1">
 <h1>A biscuit recipe</h1>
-<div id="easy-as-1-2-4" class="section level2">
-<h2>Easy as 1, 2, 4</h2>
-<p>Using R code, how can you work out which parentheses match? Spoiler: it’s not that simple.</p>
-<p>Maybe you could treat an expression as a string, then label the opening parens in order and the closing parens in reverse order. Here the matching numbers identify the matching parentheses:</p>
+<p>So what if we want to use those closing-paren labels, or ‘biscuits’, anyway? There doesn’t seem to be an option in RStudio for that.</p>
+<p>Naturally, I wondered about filling that gap in the market.</p>
+<p>As a result, consider this post a thought-experiment manifested with some clunky code that is poorly tested and probably doesn’t do exactly what you want it to do. You have been warned.</p>
+<div id="easy-as-a-b-d" class="section level2">
+<h2>Easy as A, B, D</h2>
+<p>Using R code, how can you work out the matching parentheses in an expression? Spoiler: it’s not that simple.</p>
+<p>Maybe you could treat an expression as a string, then label the opening parens in order and the closing parens in reverse order. In this example, the letters correctly match the parentheses (uppercase for open-parens and lowercase for closing-parens):</p>
 <pre class="r"><code>&quot;first(second(third()))&quot;
-#     1      2     3321</code></pre>
-<p>But this simple reversing heuristic doesn’t work for these examples:</p>
+#     A      B     Ccba</code></pre>
+<p>But this simple reversing heuristic doesn’t work for these expressions:</p>
 <pre class="r"><code>&quot;first(second(third(), fourth()))&quot;
-#     1      2     34        4321
+#     A      B     Cd        Dcba
 
 &quot;first(second(third(&#39;)&#39;)))&quot;
-#     1      2     3 4 321</code></pre>
+#     A      B     C d cba</code></pre>
 <p>In the first example we’d get the parens for <code>third()</code> and <code>fourth()</code> mixed up. In the second we have a sneaky unopened closing paren inside a string.</p>
-<p>And this doesn’t solve how we would then extract each function name to use as the biscuit.</p>
+<p>Not forgetting that this doesn’t solve how to extract each function name to use as the biscuit.</p>
 </div>
 <div id="overengineer-is-my-middle-name" class="section level2">
 <h2>‘Overengineer’ is my middle name</h2>
 <p>Rather than the naive approach of handling the code as strings, I decided to parse the expressions and work with their constituent building blocks of R code.</p>
 <p>I’ve created a function, <code>add_biscuits()</code>, that contains sub-functions for three steps:</p>
 <ol style="list-style-type: decimal">
-<li><code>.parse()</code> to parse the R code from an input</li>
-<li><code>.label()</code> to match parenthesis pairs by their parent function, grab the parent function name and insert as a comment after the closing parenthesis</li>
+<li><code>.parse()</code> to interpret the R code from an input</li>
+<li><code>.label()</code> to match parenthesis pairs by their parent function, grab the parent function name and insert it as a comment after the closing paren</li>
 <li><code>.format()</code> to stick it all back together and style it</li>
 </ol>
-<p>The rest of the post walks through these functions. Note that the code is illustrative and made concise for purposes of this post. I’m certain there’s easier ways to do things.</p>
-<p>We’ll use as input one of those simple examples from above.</p>
+<p>The rest of the post walks through these functions. I’m certain there’s easier ways to do things, but the code here demonstrates the point I’m trying to reach.</p>
+<p>For demonstration, we can use one of those simple examples from above as our input.</p>
 <pre class="r"><code>string &lt;- &quot;first(second(third(&#39;x&#39;), fourth(&#39;y&#39;)))&quot;</code></pre>
 <div id="parse" class="section level3">
 <h3>1. Parse</h3>
-<p>The <code>.parse()</code> function takes a string containing R code and returns a data frame of its ‘syntax tree’. In other words, it breaks the string into ‘tokens’ that are recognised as units of R code: function calls, assignment arrows, etc.</p>
+<p>The <code>.parse()</code> function takes a string containing R code and returns a dataframe of its ‘syntax tree’. In other words, it breaks the string into ‘tokens’ that are recognised as units of R code: function calls, assignment arrows, etc.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
 <p>I’ve used <code>lintr::get_source_expressions()</code> to do the hard work of parsing the string into a dataframe with one row per token. The downside is that you must provide to it a file rather than a character object, so we first have to write it to a temporary file.</p>
 <p>I’ve then filtered the dataframe to get only the tokens that are R code (i.e. they aren’t spaces) and renumbered the rows so they’re consecutive. This will be useful when we want to extract the function names for each set of parens.</p>
 <details>
@@ -141,7 +145,7 @@ tree[, c(&quot;line1&quot;, &quot;col1&quot;, &quot;parent&quot;, &quot;token&qu
 <div id="label" class="section level3">
 <h3>2. Label</h3>
 <p>So we can tie our paren pairs together with the <code>parent</code> variable and we know where to place the biscuit with the <code>line1</code> and <code>col1</code> information. But how to extract the function name and biscuitify it?</p>
-<p>I’ve written the slightly awkward <code>.label()</code> function for this. It checks each row to see if it’s a closing-paren token; if so, it finds the position of the matching open-paren by <code>parent</code>; then it looks at the text of the token in the preceding row to get the function name and sticks that in a new column called <code>label</code>.</p>
+<p>I’ve written the slightly awkward <code>.label()</code> function for this. It takes the output from <code>.parse()</code> and checks each row to see if it’s a closing-paren token; if so, it finds the position of the matching open-paren by <code>parent</code>; then it looks at the text of the token in the preceding row to get the function name and sticks that in a new column called <code>label</code>.</p>
 <details>
 <summary>
 Expand the <code>.label()</code> function definition
@@ -310,7 +314,7 @@ Session info
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2021-08-31                  
+##  date     2021-09-02                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
 ##  package      * version date       lib source        
@@ -368,4 +372,12 @@ Session info
 ## 
 ## [1] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
 </details>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>The code looks like the shockwave emanating from <a href="https://en.wikipedia.org/wiki/Hadouken">a ‘hadouken’ energy-ball</a> from the Street Fighter video games.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>And if you’re nesting too much, maybe consider <a href="https://simplystatistics.org/2018/07/27/why-i-indent-my-code-8-spaces/">Roger Peng’s eight-space indentation</a> to punish yourself.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>This was the approach we used in <a href="https://github.com/matt-dray/r2eng/">the {r2eng} package</a> to <a href="https://www.rostrum.blog/2020/11/14/hello-r2eng/">convert R expressions to English sentences</a>.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+</ol>
 </div>

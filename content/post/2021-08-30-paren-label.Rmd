@@ -1,5 +1,5 @@
 ---
-title: "Auto-label closing parentheses in R scripts"
+title: "Auto-label closing parentheses in RStudio"
 author: Matt Dray
 date: '2021-08-31'
 slug: add-biscuits
@@ -11,6 +11,8 @@ tags:
   - blogsnip
   - lintr
   - r
+  - rstudio
+  - rstudio-addin
   - styler
 draft: no
 ---
@@ -25,9 +27,11 @@ I wrote a novelty R function that inserts a comment after a closing parenthesis 
 
 # Matryoshka functions
 
-Shiny apps can involve a lot of nested functions in the UI, which can make them difficult to handle.
+Shiny apps can involve a lot of nested functions in the UI, which can make them difficult to handle. 
 
-I get confused by long-winded apps. Sometimes I comment after a closing parenthesis ('paren') with the name of the function that it's closing. [I tweeted about this recently](https://twitter.com/mattdray/status/1430520260508229633?s=20) and it seemed to resonate.
+Sometimes I comment after a closing parenthesis ('paren') with the name of the function that it's closing, which makes it easier to match the pairs. 
+
+[Duncan told me](https://twitter.com/nacnudus/status/1431739654789902339?s=20) these labels are called ['biscuits'](https://code-biscuits.github.io/), which is charming.
 
 ```{r eval = FALSE}
 ui <- fluidPage(
@@ -47,16 +51,14 @@ ui <- fluidPage(
 )  # fluidPage
 ```
 
-[Duncan told me](https://twitter.com/nacnudus/status/1431739654789902339?s=20) they're called ['biscuits'](https://code-biscuits.github.io/), which is charming.
-
-Of course, a well-designed Shiny app would be modular and abstract away the functions, making everything a delight to read and understand. And if you're nesting too much, maybe consider [Roger Peng's eight-space indentation](https://simplystatistics.org/2018/07/27/why-i-indent-my-code-8-spaces/) to punish yourself.
+Ideally you don't want to write ['hadouken code'](https://twitter.com/mxwlj/status/1433132926418374661?s=20)[^hadouken] like this, though. A well-designed Shiny app would be modular and abstract away the functions, making everything a delight to read and understand.[^peng]
 
 # Paren in a codestack
 
-There are a few ways that the RStudio IDE can help with bracket-buddying. In particular:
+There are a few ways that the RStudio IDE can help with the problem of bracket-buddying in long-winded scripts. In particular:
 
-1. You can auto-indent with <kbd>Command</kbd> + <kbd>I</kbd> and [expose indent guides](https://twitter.com/mattdray/status/1431006821704216577?s=20) with _Options_ > _Code_ > _Show indent guides_ so that paren-pairs are aligned vertically
 1. Put your cursor next to a parenthesis and its partner will be automatically highlighted
+1. You can auto-indent with <kbd>Command</kbd> + <kbd>I</kbd> and [expose indent guides](https://twitter.com/mattdray/status/1431006821704216577?s=20) with _Options_ > _Code_ > _Show indent guides_ so that paren-pairs are aligned vertically
 1. Colour-match paren-pairs [with rainbow colours](https://twitter.com/mattdray/status/1430563837003055107?s=20), which you can activate with _Options_ > _Code_ > _Display_
 1. Use the keyboard shortcut <kbd>Control</kbd> + <kbd>P</kbd> to [jump from an opening to a closing parenthesis](https://twitter.com/mattdray/status/1432292336969699334)
 
@@ -68,34 +70,38 @@ You can see these in action in this gif:
 
 These go some way to helping, but each is not perfect for me, personally. For example, as someone with colourblindness, I find the rainbow colouring isn't distinct enough.
 
-Natch, I wondered about writing an R function to add the biscuits. Consider this post a thought-experiment manifested with some clunky code that is poorly tested and make break everything. You have been warned.
-
 # A biscuit recipe
 
-## Easy as 1, 2, 4
+So what if we want to use those closing-paren labels, or 'biscuits', anyway? There doesn't seem to be an option in RStudio for that.
 
-Using R code, how can you work out which parentheses match? Spoiler: it's not that simple.
+Naturally, I wondered about filling that gap in the market. 
 
-Maybe you could treat an expression as a string, then label the opening parens in order and the closing parens in reverse order. Here the matching numbers identify the matching parentheses:
+As a result, consider this post a thought-experiment manifested with some clunky code that is poorly tested and probably doesn't do exactly what you want it to do. You have been warned.
+
+## Easy as A, B, D
+
+Using R code, how can you work out the matching parentheses in an expression? Spoiler: it's not that simple.
+
+Maybe you could treat an expression as a string, then label the opening parens in order and the closing parens in reverse order. In this example, the letters correctly match the parentheses (uppercase for open-parens and lowercase for closing-parens):
 
 ```{r eval=FALSE}
 "first(second(third()))"
-#     1      2     3321
+#     A      B     Ccba
 ```
 
-But this simple reversing heuristic doesn't work for these examples:
+But this simple reversing heuristic doesn't work for these expressions:
 
 ```{r eval=FALSE}
 "first(second(third(), fourth()))"
-#     1      2     34        4321
+#     A      B     Cd        Dcba
 
 "first(second(third(')')))"
-#     1      2     3 4 321
+#     A      B     C d cba
 ```
 
 In the first example we'd get the parens for `third()` and `fourth()` mixed up. In the second we have a sneaky unopened closing paren inside a string.
 
-And this doesn't solve how we would then extract each function name to use as the biscuit.
+Not forgetting that this doesn't solve how to extract each function name to use as the biscuit.
 
 ## 'Overengineer' is my middle name
 
@@ -103,13 +109,13 @@ Rather than the naive approach of handling the code as strings, I decided to par
 
 I've created a function, `add_biscuits()`, that contains sub-functions for three steps:
 
-1. `.parse()` to parse the R code from an input
-1. `.label()` to match parenthesis pairs by their parent function, grab the parent function name and insert as a comment after the closing parenthesis
+1. `.parse()` to interpret the R code from an input
+1. `.label()` to match parenthesis pairs by their parent function, grab the parent function name and insert it as a comment after the closing paren
 1. `.format()` to stick it all back together and style it
 
-The rest of the post walks through these functions. Note that the code is illustrative and made concise for purposes of this post. I'm certain there's easier ways to do things.
+The rest of the post walks through these functions. I'm certain there's easier ways to do things, but the code here demonstrates the point I'm trying to reach.
 
-We'll use as input one of those simple examples from above.
+For demonstration, we can use one of those simple examples from above as our input.
 
 ```{r string}
 string <- "first(second(third('x'), fourth('y')))"
@@ -117,7 +123,7 @@ string <- "first(second(third('x'), fourth('y')))"
 
 ### 1. Parse
 
-The `.parse()` function takes a string containing R code and returns a data frame of its 'syntax tree'. In other words, it breaks the string into 'tokens' that are recognised as units of R code: function calls, assignment arrows, etc.
+The `.parse()` function takes a string containing R code and returns a dataframe of its 'syntax tree'. In other words, it breaks the string into 'tokens' that are recognised as units of R code: function calls, assignment arrows, etc.[^r2eng]
 
 I've used `lintr::get_source_expressions()` to do the hard work of parsing the string into a dataframe with one row per token. The downside is that you must provide to it a file rather than a character object, so we first have to write it to a temporary file.
 
@@ -157,7 +163,7 @@ We also get returned the position of each token in the input (`line*` and `col*`
 
 So we can tie our paren pairs together with the `parent` variable and we know where to place the biscuit with the `line1` and `col1` information. But how to extract the function name and biscuitify it?
 
-I've written the slightly awkward `.label()` function for this. It checks each row to see if it's a closing-paren token; if so, it finds the position of the matching open-paren by `parent`; then it looks at the text of the token in the preceding row to get the function name and sticks that in a new column called `label`.
+I've written the slightly awkward `.label()` function for this. It takes the output from `.parse()` and checks each row to see if it's a closing-paren token; if so, it finds the position of the matching open-paren by `parent`; then it looks at the text of the token in the preceding row to get the function name and sticks that in a new column called `label`.
 
 <details><summary>Expand the `.label()` function definition</summary>
 ```{r label}
@@ -338,3 +344,7 @@ Or even better yet, just use a good implementation of this functionality that so
 sessioninfo::session_info()
 ```
 </details>
+
+[^hadouken]: The code looks like the shockwave emanating from [a 'hadouken' energy-ball](https://en.wikipedia.org/wiki/Hadouken) from the Street Fighter video games.
+[^peng]: And if you're nesting too much, maybe consider [Roger Peng's eight-space indentation](https://simplystatistics.org/2018/07/27/why-i-indent-my-code-8-spaces/) to punish yourself.
+[^r2eng]: This was the approach we used in [the {r2eng} package](https://github.com/matt-dray/r2eng/) to [convert R expressions to English sentences](https://www.rostrum.blog/2020/11/14/hello-r2eng/).
