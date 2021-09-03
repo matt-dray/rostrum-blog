@@ -30,9 +30,9 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 2 day(s) ago: [Auto-label closing
-parentheses in R
-scripts](https://www.rostrum.blog/2021/08/31/add-biscuits/).
+🆕 The latest post was published 3 day(s) ago: [Auto-label closing
+parentheses in
+RStudio](https://www.rostrum.blog/2021/08/31/add-biscuits/).
 
 📈 This 2D plot shows posts over time:
 
@@ -44,7 +44,7 @@ scripts](https://www.rostrum.blog/2021/08/31/add-biscuits/).
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
-|    102 | 2021-08-31 | [Auto-label closing parentheses in R scripts](https://www.rostrum.blog/2021/08/31/add-biscuits/)                          |
+|    102 | 2021-08-31 | [Auto-label closing parentheses in RStudio](https://www.rostrum.blog/2021/08/31/add-biscuits/)                            |
 |    101 | 2021-08-27 | [Exploring R package startup messages](https://www.rostrum.blog/2021/08/27/zzz/)                                          |
 |    100 | 2021-08-27 | [Adding a Shiny app to {dehex}](https://www.rostrum.blog/2021/08/27/dehex-app/)                                           |
 |     99 | 2021-08-10 | [Read a hex colour code with {dehex}](https://www.rostrum.blog/2021/08/10/dehex/)                                         |
@@ -151,4 +151,4 @@ scripts](https://www.rostrum.blog/2021/08/31/add-biscuits/).
 
 -----
 
-*Updated 2021-09-02 02:37:06*
+*Updated 2021-09-03 02:36:00*
