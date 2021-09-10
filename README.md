@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 9 day(s) ago: [Auto-label closing
+🆕 The latest post was published 10 day(s) ago: [Auto-label closing
 parentheses in
 RStudio](https://www.rostrum.blog/2021/08/31/add-biscuits/).
 
@@ -151,4 +151,4 @@ RStudio](https://www.rostrum.blog/2021/08/31/add-biscuits/).
 
 -----
 
-*Updated 2021-09-09 02:37:08*
+*Updated 2021-09-10 02:37:02*
