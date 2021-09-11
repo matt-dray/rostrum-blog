@@ -1,0 +1,158 @@
+---
+title: "Extract punctuation from books"
+author: Matt Dray
+date: '2021-09-12'
+slug: extract-punct
+categories:
+  - code
+tags:
+  - crayon
+  - gutenbergr
+  - r
+draft: yes
+---
+
+# tl;dr
+
+I wrote a function to extract only the punctuation marks from a provided text.
+
+# Punct rock
+
+A few years ago [Adam J Calhoun did a small but really neat thing](https://medium.com/@neuroecology/punctuation-in-novels-8f316d542ec4): extracted and presented only the punctuation from some books. The blog appeared again recently in my timeline.
+
+Mostly I like the aesthetics of all the neatly printed characters, but the approach also tells us a (perhaps obvious) story about writing styles across time and between authors.
+
+Long story short: old-timey folk wrote convoluted sentences; literature and essays from a hundred or more years ago are especially rich with semi-colons, commas, more commas and of course, as the audience is well-aware, even more commas, which to modern eyes can be a little tiring; certainly it's a style that is out of fashion, but was pretty hip for, let's say, Herman Melville, when writing _Moby Dick_.
+
+Whereas Hemingway was terse.
+
+# You've been punct
+
+So I wrote a little, opinionated R function called `extract_punct()` that grabs the punctuation characters for a given text
+
+I thought someone might have done this before, but I didn't dredge up anything immediately. Julia Silge [wrote a post](https://juliasilge.com/blog/punctution-literature/) on quantifying punctuation like Calhoun's original, but it doesn't involve printing the characters.
+
+## Functuation
+
+Below is the definition for `extract_punct()`. You supply your content to `text`, and then you set the argument:
+
+* `sort = FALSE` to return the punctuation in the order it appears in the text, or `TRUE` to order it 'alphabetically'
+* `vec_only = TRUE` to early-return the punctuation characters as a vector for you to do with as you please
+* `vec_only = FALSE` to end `cat()` (print) the results to the console
+* `width` to decide where the line breaks will go in the printed output (defaults to 80)
+* `colour = TRUE` to have each punctuation character returned in colour thanks to [the {crayon} package by Gábor Csárdi](https://github.com/r-lib/crayon)[^crayon] (coloured by terminal, 'continuing', parenthetical and quote marks), which might help spot patterns, or `FALSE` to return without colour
+
+```{r fn}
+extract_punct <- function(text,              # input text
+                          sort = FALSE,      # order the characters?
+                          vec_only = FALSE,  # early-return the char vector?
+                          width = 80,        # width of output
+                          colour = TRUE) {   # colour output?
+  
+  punct_rx  <- "[\\.,:;!?\"\']"
+  matches   <- regexpr(punct_rx, text)
+  punct_vec <- regmatches(text, matches)
+  
+  if (sort) punct_vec <- punct_vec[order(punct_vec)]
+  
+  if (vec_only) return(punct_vec)
+  
+  punct_vec <- sapply(
+    punct_vec,
+    switch,
+    "."  = crayon::blue("."),
+    "!"  = crayon::blue("!"),
+    "?"  = crayon::blue("?"),
+    ","  = crayon::yellow(","),
+    ";"  = crayon::yellow(";"),
+    ":"  = crayon::yellow(":"),
+    "("  = crayon::red("("),
+    ")"  = crayon::red(")"),
+    "\"" = crayon::silver("\""),
+    "'"  = crayon::silver("'")
+  )
+  
+  if (!is.null(width) & !colour) {
+    cat(names(punct_vec), sep = "", fill = width)
+  }
+  
+  if (!is.null(width) & colour) {
+    
+    div_size <- length(punct_vec) %/% width * width
+    mat_flat <- c(rbind("\n", matrix(punct_vec[1:div_size], nrow = width)))
+    leftover <- c("\n", punct_vec[div_size:length(punct_vec)])
+    cat(mat_flat[2:length(mat_flat)], leftover, sep = "")
+    
+  }
+  
+}
+```
+
+There's no defensive programming or testing here; this is just for fun for the purposes of this blog post. Maybe it'll work on your machine?
+
+There were a couple of technical annoyances to deal with in the function definition; let me know what you would improve.[^tech]
+
+## {gutenbergr}, dead ahead!
+
+Let's inspect the punctuation from some books on [Project Gutenberg](https://www.gutenberg.org/), which we can interact with via the [{gutenbergr} package](https://CRAN.R-project.org/package=gutenbergr) by [David Robinson](http://varianceexplained.org/).[^dr]
+
+How do you get a Gutenberg ID to input into `extract_punct()`? One way is to search the `gutenberg_metadata()`[^works] dataframe:
+
+```{r gb-works}
+library(gutenbergr)
+suppressPackageStartupMessages(library(dplyr))
+library(stringr)
+
+sample_n(gutenberg_metadata, 5) %>% select(1:3)
+```
+
+You could filter for a particular author or title.
+
+```{r gb-author}
+gutenberg_metadata %>% 
+  filter(str_detect(author, "Kafka")) %>%
+  select(1:3) %>%
+  slice(1:5)
+```
+
+I've chosen [Franz Kafka's _Metamorphosis_ (1915)](https://www.gutenberg.org/ebooks/558) as our example. It's short, so we can get the gist of the output from `extract_punct()` without printing hundreds of lines.
+
+```{r download}
+id <- gutenberg_metadata %>% 
+  filter(str_detect(author, "Kafka"), title == "Metamorphosis") %>%
+  pull(gutenberg_id)
+
+book <- gutenberg_download(id, verbose = FALSE)
+
+book %>% filter(!is.na(text)) %>% sample_n(5) %>% select(text)
+```
+
+Right so, we can pass the text to the `extract_punct()` function to return all the punctuation in the order it appears, with linebreaks to print it out more prettily. 
+
+```{r ex}
+extract_punct(book$text, colour = FALSE)   # unsorted, cat, width 80, no colour
+```
+
+It's not visible in the output of this blog, but you can pass `colour = TRUE` to output the same thing to the R console but with each separate punctuation character coloured differently. Is prettier/easier to spot patterns?
+
+We can also get the same output as before, but ordered by character. makes it easier to visualise the total for each one.
+
+```{r ex-sort}
+extract_punct(book$text, sort = TRUE, colour = FALSE)
+```
+
+It would be fun to look at a few different different texts.
+
+
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^dr]: No, not the legendary San Antonio Spurs center from the 90s.
+[^crayon]: Readers may remember {crayon} from my recent post about [the {dehex} package](https://www.rostrum.blog/2021/08/10/dehex/).
+[^tech]: In particular, it's easy to print the character vector of punctuation characters and linebreak it with the `fill` argument of `cat()`, but this behaviour is altered when you convert the characters to {crayon} strings. Instead, `extract_punct()` inserts newline characters at the desired print width using a crummy trick that flattens a matrix of the punctuation characters. Of course, matrices are 'square', so there are leftover punctuation characters that have to be dealt with separately and pasted on to the end, lol.
+[^works]: Note that you can use `gutenberg_works()` for a pre-filtered dataset with English-only texts, are in text format and whose text is not under copyright.

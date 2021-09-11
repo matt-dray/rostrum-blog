@@ -1,0 +1,258 @@
+---
+title: "Extract punctuation from books"
+author: Matt Dray
+date: '2021-09-12'
+slug: extract-punct
+categories:
+  - code
+tags:
+  - crayon
+  - gutenbergr
+  - r
+draft: yes
+---
+
+
+
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I wrote a function to extract only the punctuation marks from a provided text.</p>
+</div>
+<div id="punct-rock" class="section level1">
+<h1>Punct rock</h1>
+<p>A few years ago <a href="https://medium.com/@neuroecology/punctuation-in-novels-8f316d542ec4">Adam J Calhoun did a small but really neat thing</a>: extracted and presented only the punctuation from some books. The blog appeared again recently in my timeline.</p>
+<p>Mostly I like the aesthetics of all the neatly printed characters, but the approach also tells us a (perhaps obvious) story about writing styles across time and between authors.</p>
+<p>Long story short: old-timey folk wrote convoluted sentences; literature and essays from a hundred or more years ago are especially rich with semi-colons, commas, more commas and of course, as the audience is well-aware, even more commas, which to modern eyes can be a little tiring; certainly it’s a style that is out of fashion, but was pretty hip for, let’s say, Herman Melville, when writing <em>Moby Dick</em>.</p>
+<p>Whereas Hemingway was terse.</p>
+</div>
+<div id="youve-been-punct" class="section level1">
+<h1>You’ve been punct</h1>
+<p>So I wrote a little, opinionated R function called <code>extract_punct()</code> that grabs the punctuation characters for a given text</p>
+<p>I thought someone might have done this before, but I didn’t dredge up anything immediately. Julia Silge <a href="https://juliasilge.com/blog/punctution-literature/">wrote a post</a> on quantifying punctuation like Calhoun’s original, but it doesn’t involve printing the characters.</p>
+<div id="functuation" class="section level2">
+<h2>Functuation</h2>
+<p>Below is the definition for <code>extract_punct()</code>. You supply your content to <code>text</code>, and then you set the argument:</p>
+<ul>
+<li><code>sort = FALSE</code> to return the punctuation in the order it appears in the text, or <code>TRUE</code> to order it ‘alphabetically’</li>
+<li><code>vec_only = TRUE</code> to early-return the punctuation characters as a vector for you to do with as you please</li>
+<li><code>vec_only = FALSE</code> to end <code>cat()</code> (print) the results to the console</li>
+<li><code>width</code> to decide where the line breaks will go in the printed output (defaults to 80)</li>
+<li><code>colour = TRUE</code> to have each punctuation character returned in colour thanks to <a href="https://github.com/r-lib/crayon">the {crayon} package by Gábor Csárdi</a><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> (coloured by terminal, ‘continuing’, parenthetical and quote marks), which might help spot patterns, or <code>FALSE</code> to return without colour</li>
+</ul>
+<pre class="r"><code>extract_punct &lt;- function(text,              # input text
+                          sort = FALSE,      # order the characters?
+                          vec_only = FALSE,  # early-return the char vector?
+                          width = 80,        # width of output
+                          colour = TRUE) {   # colour output?
+  
+  punct_rx  &lt;- &quot;[\\.,:;!?\&quot;\&#39;]&quot;
+  matches   &lt;- regexpr(punct_rx, text)
+  punct_vec &lt;- regmatches(text, matches)
+  
+  if (sort) punct_vec &lt;- punct_vec[order(punct_vec)]
+  
+  if (vec_only) return(punct_vec)
+  
+  punct_vec &lt;- sapply(
+    punct_vec,
+    switch,
+    &quot;.&quot;  = crayon::blue(&quot;.&quot;),
+    &quot;!&quot;  = crayon::blue(&quot;!&quot;),
+    &quot;?&quot;  = crayon::blue(&quot;?&quot;),
+    &quot;,&quot;  = crayon::yellow(&quot;,&quot;),
+    &quot;;&quot;  = crayon::yellow(&quot;;&quot;),
+    &quot;:&quot;  = crayon::yellow(&quot;:&quot;),
+    &quot;(&quot;  = crayon::red(&quot;(&quot;),
+    &quot;)&quot;  = crayon::red(&quot;)&quot;),
+    &quot;\&quot;&quot; = crayon::silver(&quot;\&quot;&quot;),
+    &quot;&#39;&quot;  = crayon::silver(&quot;&#39;&quot;)
+  )
+  
+  if (!is.null(width) &amp; !colour) {
+    cat(names(punct_vec), sep = &quot;&quot;, fill = width)
+  }
+  
+  if (!is.null(width) &amp; colour) {
+    
+    div_size &lt;- length(punct_vec) %/% width * width
+    mat_flat &lt;- c(rbind(&quot;\n&quot;, matrix(punct_vec[1:div_size], nrow = width)))
+    leftover &lt;- c(&quot;\n&quot;, punct_vec[div_size:length(punct_vec)])
+    cat(mat_flat[2:length(mat_flat)], leftover, sep = &quot;&quot;)
+    
+  }
+  
+}</code></pre>
+<p>There’s no defensive programming or testing here; this is just for fun for the purposes of this blog post. Maybe it’ll work on your machine?</p>
+<p>There were a couple of technical annoyances to deal with in the function definition; let me know what you would improve.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+</div>
+<div id="gutenbergr-dead-ahead" class="section level2">
+<h2>{gutenbergr}, dead ahead!</h2>
+<p>Let’s inspect the punctuation from some books on <a href="https://www.gutenberg.org/">Project Gutenberg</a>, which we can interact with via the <a href="https://CRAN.R-project.org/package=gutenbergr">{gutenbergr} package</a> by <a href="http://varianceexplained.org/">David Robinson</a>.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<p>How do you get a Gutenberg ID to input into <code>extract_punct()</code>? One way is to search the <code>gutenberg_metadata()</code><a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> dataframe:</p>
+<pre class="r"><code>library(gutenbergr)
+suppressPackageStartupMessages(library(dplyr))
+library(stringr)
+
+sample_n(gutenberg_metadata, 5) %&gt;% select(1:3)</code></pre>
+<pre><code>## # A tibble: 5 × 3
+##   gutenberg_id title                                     author                 
+##          &lt;int&gt; &lt;chr&gt;                                     &lt;chr&gt;                  
+## 1        42231 &quot;Old and New Paris: Its History, Its Peo… Edwards, H. Sutherland…
+## 2         7299 &quot;Obiter Dicta&quot;                            Birrell, Augustine     
+## 3        15200 &quot;Selections From the Works of John Ruski… Ruskin, John           
+## 4        41799 &quot;The Old Pike\r\nA History of the Nation… Searight, Thomas B. (T…
+## 5        16856 &quot;Sermons at Rugby&quot;                        Percival, John</code></pre>
+<p>You could filter for a particular author or title.</p>
+<pre class="r"><code>gutenberg_metadata %&gt;% 
+  filter(str_detect(author, &quot;Kafka&quot;)) %&gt;%
+  select(1:3) %&gt;%
+  slice(1:5)</code></pre>
+<pre><code>## # A tibble: 5 × 3
+##   gutenberg_id title                    author      
+##          &lt;int&gt; &lt;chr&gt;                    &lt;chr&gt;       
+## 1         5200 Metamorphosis            Kafka, Franz
+## 2         7849 The Trial                Kafka, Franz
+## 3        16304 Der Heizer: Ein Fragment Kafka, Franz
+## 4        19638 Auf der Galerie          Kafka, Franz
+## 5        20045 Großer Lärm              Kafka, Franz</code></pre>
+<p>I’ve chosen <a href="https://www.gutenberg.org/ebooks/558">Franz Kafka’s <em>Metamorphosis</em> (1915)</a> as our example. It’s short, so we can get the gist of the output from <code>extract_punct()</code> without printing hundreds of lines.</p>
+<pre class="r"><code>id &lt;- gutenberg_metadata %&gt;% 
+  filter(str_detect(author, &quot;Kafka&quot;), title == &quot;Metamorphosis&quot;) %&gt;%
+  pull(gutenberg_id)
+
+book &lt;- gutenberg_download(id, verbose = FALSE)
+
+book %&gt;% filter(!is.na(text)) %&gt;% sample_n(5) %&gt;% select(text)</code></pre>
+<pre><code>## # A tibble: 5 × 1
+##   text                                                                   
+##   &lt;chr&gt;                                                                  
+## 1 It was only when he had reached the door that he realised what it      
+## 2 the locksmith after all”. Then he lay his head on the handle of the    
+## 3 Gregor”, he called, “what’s wrong?” And after a short while he called  
+## 4 brief look in on Gregor and at first found nothing special. She thought
+## 5 then set himself to the task of turning the key in the lock with his</code></pre>
+<p>Right so, we can pass the text to the <code>extract_punct()</code> function to return all the punctuation in the order it appears, with linebreaks to print it out more prettily.</p>
+<pre class="r"><code>extract_punct(book$text, colour = FALSE)   # unsorted, cat, width 80, no colour</code></pre>
+<pre><code>## ,.,,.,?,.,,..,,,.,,,.,.,,,.!;;..,.,.;,,,!,....,!,.;.?,?,.,.,?.,.?,.,,..?,.,,.,:,
+## ,.,,,,::?,.:,,.,,.,.,.;.,;,,;,.,,;;,,,,.,.,..,,,,..,.,.,,.:.,...,.,.,.;,,,?...,.
+## .,,.?,?,,?,,,,.;.,.;.,.:..,...,,.!;...,;.;;,,.,,,.?,;.?.?,?..,.,,.,.,?,.,,,.,...
+## ,.;,,,,,,...!,.!.;..,,!,,,.,;..,,.,;...?,,....?.,,,.?;.,,,,.,,.,,..,..,..,;,,.,;
+## :!,.,,.,:..,.,.,,..,,..,.,.,.;;.;,.,..,,.,.,,,,.,.,...,,.,,,,,.!,.,..,,,..;,.,!!
+## .;.,,,;,,,,;,;..,:,,;;;.,,..;;.;;.,,,,,,,.,.,,,,.,.,,.,;,.,.!,.,,....,;;,.,,,.,.
+## ..,..,,,.,.;..,,.;.,,.,.,,.,,.,.?,.,;;.,;.,,,.,,.;.,,.,,,..,,,,,,,,,.,.,.,,?,,..
+## .,,.,;;;.,,,..,.,,.,;,.,.,.,.,.,.,,,.,,..,,.,,,.,,,.,.,,;..,.,;.,,.,.,,,,....,,.
+## ,.,..,,,,,..,.,.,.,,,.,,.,.,..,,,.,,.,;,;...?,.,,,.,,.,.,,,,,;,,,.,.;,,..,.,.;,.
+## ,,,.,,..,.,.,...,.,.,,,,...:?,,,,..,,,,,.;;,.,,,,,.;,;.,,;..,.,.,,.,,.;,.,,?.,,.
+## ,?,.,,;;.,,.,,,,,,,....,.,,.,,,,.,.,.,,,.,.;;,,.,.,,.,.,..;.,.,,,,.!.,,,:.,.;,;;
+## ;;;;;.,,;,,.,,,.?.:.,,.,.,,,.,!..;.,,;,,,,;,.,;;,.,,,,,.,,.,.,.,.,,..;;,,,.;.,.,
+## .,,;,,,,,.,.,,,.,,.,.,,,.,,..;;;,.!.,;,..,,.,,.,..,,..,!,.,?;;.,,.,,.,;,.,,,..,;
+## ,,.,,;,,,,,,,,,,,,,,.,..,;..,,,,,.;,,;;,,.,,.,.,.,...,,,.!,.,.,.,..,,,.,.,.,.,.,
+## ,...,.,,.,,,.,.,,,,.,..,,,,.,..,.,,,.,.,,.,,..,?,,?..,.;,;;.;,..;,.,.,;,,,.,...,
+## ..?.,,,;;,?.,,,.,.,.,...,..,,,,..,.,,.,,..:..,,.,.,...,,..,.,,...,,.,,,,,,?,,.,,
+## .,....,.!,.,.,.,,...,.,....,.,.,,..,...,!,...,.,....,.,.,.,.,.,:,.....;,.,.,,...
+## ...,,.,,...,;?....;...,.,....,;...,.;.;;,,,;.,.,.,..,.,,..,,.;,.,,,,...,..,,.,.,
+## ;,,.,,...,.</code></pre>
+<p>It’s not visible in the output of this blog, but you can pass <code>colour = TRUE</code> to output the same thing to the R console but with each separate punctuation character coloured differently. Is prettier/easier to spot patterns?</p>
+<p>We can also get the same output as before, but ordered by character. makes it easier to visualise the total for each one.</p>
+<pre class="r"><code>extract_punct(book$text, sort = TRUE, colour = FALSE)</code></pre>
+<pre><code>## ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+## ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+## ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+## ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+## ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+## ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+## ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+## ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+## ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,;;
+## ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+## ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;::::::::::::::!!!!!!!!!!!!!!!!!!!??????????
+## ???????????????????????.........................................................
+## ................................................................................
+## ................................................................................
+## ................................................................................
+## ................................................................................
+## ................................................................................
+## ................................................................................
+## ...........</code></pre>
+<p>It would be fun to look at a few different different texts.</p>
+<hr />
+<details>
+<p><summary>Session info</summary></p>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.0.3 (2020-10-10)
+##  os       macOS Mojave 10.14.6        
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2021-09-11                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date       lib source        
+##  assertthat    0.2.1   2019-03-21 [1] CRAN (R 4.0.2)
+##  bit           4.0.4   2020-08-04 [1] CRAN (R 4.0.2)
+##  bit64         4.0.5   2020-08-30 [1] CRAN (R 4.0.2)
+##  blogdown      0.21    2020-10-11 [1] CRAN (R 4.0.2)
+##  bookdown      0.21    2020-10-13 [1] CRAN (R 4.0.2)
+##  bslib         0.2.4   2021-01-25 [1] CRAN (R 4.0.2)
+##  cli           3.0.1   2021-07-17 [1] CRAN (R 4.0.2)
+##  crayon        1.4.1   2021-02-08 [1] CRAN (R 4.0.2)
+##  curl          4.3     2019-12-02 [1] CRAN (R 4.0.1)
+##  DBI           1.1.1   2021-01-15 [1] CRAN (R 4.0.2)
+##  digest        0.6.27  2020-10-24 [1] CRAN (R 4.0.2)
+##  dplyr       * 1.0.6   2021-05-05 [1] CRAN (R 4.0.2)
+##  ellipsis      0.3.2   2021-04-29 [1] CRAN (R 4.0.2)
+##  evaluate      0.14    2019-05-28 [1] CRAN (R 4.0.1)
+##  fansi         0.5.0   2021-05-25 [1] CRAN (R 4.0.2)
+##  generics      0.1.0   2020-10-31 [1] CRAN (R 4.0.2)
+##  glue          1.4.2   2020-08-27 [1] CRAN (R 4.0.2)
+##  gutenbergr  * 0.2.1   2021-06-01 [1] CRAN (R 4.0.2)
+##  hms           1.1.0   2021-05-17 [1] CRAN (R 4.0.2)
+##  htmltools     0.5.1.1 2021-01-22 [1] CRAN (R 4.0.2)
+##  jquerylib     0.1.3   2020-12-17 [1] CRAN (R 4.0.2)
+##  jsonlite      1.7.2   2020-12-09 [1] CRAN (R 4.0.2)
+##  knitr         1.32    2021-04-14 [1] CRAN (R 4.0.2)
+##  lifecycle     1.0.0   2021-02-15 [1] CRAN (R 4.0.2)
+##  magrittr      2.0.1   2020-11-17 [1] CRAN (R 4.0.2)
+##  pillar        1.6.2   2021-07-29 [1] CRAN (R 4.0.3)
+##  pkgconfig     2.0.3   2019-09-22 [1] CRAN (R 4.0.2)
+##  purrr         0.3.4   2020-04-17 [1] CRAN (R 4.0.2)
+##  R6            2.5.0   2020-10-28 [1] CRAN (R 4.0.2)
+##  Rcpp          1.0.6   2021-01-15 [1] CRAN (R 4.0.2)
+##  readr         2.0.0   2021-07-20 [1] CRAN (R 4.0.2)
+##  rlang         0.4.11  2021-04-30 [1] CRAN (R 4.0.2)
+##  rmarkdown     2.7     2021-02-19 [1] CRAN (R 4.0.2)
+##  rstudioapi    0.13    2020-11-12 [1] CRAN (R 4.0.2)
+##  sass          0.3.1   2021-01-24 [1] CRAN (R 4.0.2)
+##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.0.2)
+##  stringi       1.7.3   2021-07-16 [1] CRAN (R 4.0.2)
+##  stringr     * 1.4.0   2019-02-10 [1] CRAN (R 4.0.2)
+##  tibble        3.1.3   2021-07-23 [1] CRAN (R 4.0.2)
+##  tidyselect    1.1.1   2021-04-30 [1] CRAN (R 4.0.2)
+##  triebeard     0.3.0   2016-08-04 [1] CRAN (R 4.0.2)
+##  tzdb          0.1.2   2021-07-20 [1] CRAN (R 4.0.2)
+##  urltools      1.7.3   2019-04-14 [1] CRAN (R 4.0.2)
+##  utf8          1.2.2   2021-07-24 [1] CRAN (R 4.0.2)
+##  vctrs         0.3.8   2021-04-29 [1] CRAN (R 4.0.2)
+##  vroom         1.5.3   2021-07-14 [1] CRAN (R 4.0.2)
+##  withr         2.4.2   2021-04-18 [1] CRAN (R 4.0.2)
+##  xfun          0.22    2021-03-11 [1] CRAN (R 4.0.2)
+##  yaml          2.2.1   2020-02-01 [1] CRAN (R 4.0.2)
+## 
+## [1] /Users/matt.dray/Library/R/4.0/library
+## [2] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
+</details>
+</div>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Readers may remember {crayon} from my recent post about <a href="https://www.rostrum.blog/2021/08/10/dehex/">the {dehex} package</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>In particular, it’s easy to print the character vector of punctuation characters and linebreak it with the <code>fill</code> argument of <code>cat()</code>, but this behaviour is altered when you convert the characters to {crayon} strings. Instead, <code>extract_punct()</code> inserts newline characters at the desired print width using a crummy trick that flattens a matrix of the punctuation characters. Of course, matrices are ‘square’, so there are leftover punctuation characters that have to be dealt with separately and pasted on to the end, lol.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>No, not the legendary San Antonio Spurs center from the 90s.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>Note that you can use <code>gutenberg_works()</code> for a pre-filtered dataset with English-only texts, are in text format and whose text is not under copyright.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
