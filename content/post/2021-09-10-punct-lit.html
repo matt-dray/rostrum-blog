@@ -109,13 +109,13 @@ library(stringr)
 
 sample_n(gutenberg_metadata, 5) %&gt;% select(1:3)</code></pre>
 <pre><code># A tibble: 5 × 3
-  gutenberg_id title                                               author       
-         &lt;int&gt; &lt;chr&gt;                                               &lt;chr&gt;        
-1        43627 &quot;Strange Stories from a Chinese Studio, Vol. 1 (of… Pu, Songling 
-2        31100 &quot;The Complete Project Gutenberg Works of Jane Aust… Austen, Jane 
-3         7196 &quot;The Adventures of Tom Sawyer, Part 4.&quot;             Twain, Mark  
-4        26561 &quot;The Story of a Common Soldier of Army Life in the… Stillwell, L…
-5        21843 &quot;The Botanical Magazine, Vol. 06\r\nOr, Flower-Gar… Curtis, Will…</code></pre>
+  gutenberg_id title                                        author              
+         &lt;int&gt; &lt;chr&gt;                                        &lt;chr&gt;               
+1        16376 &quot;Browning&#39;s Shorter Poems&quot;                   Browning, Robert    
+2        39090 &quot;Travelers Five Along Life&#39;s Highway\r\nJim… Johnston, Annie F. …
+3        16806 &quot;Rosmersholma: Nelinäytöksinen näytelmä&quot;     Ibsen, Henrik       
+4        25684 &quot;A World Called Crimson&quot;                     Granger, Darius John
+5         2430 &quot;Romantic Ballads, Translated from the Dani… &lt;NA&gt;                </code></pre>
 <p>You could filter for a particular author or title, like Franz Kafka.</p>
 <pre class="r"><code>gutenberg_metadata %&gt;% 
   filter(str_detect(author, &quot;Kafka&quot;)) %&gt;%
@@ -139,13 +139,13 @@ book &lt;- gutenberg_download(id, verbose = FALSE)
 
 book %&gt;% filter(!is.na(text)) %&gt;% sample_n(5) %&gt;% select(text)</code></pre>
 <pre><code># A tibble: 5 × 1
-  text                                                                      
-  &lt;chr&gt;                                                                     
-1 &quot;are sent to higher Seminaries of an exclusive character; and at our&quot;     
-2 &quot;have no feet, we can no more \&quot;sit\&quot; nor \&quot;stand\&quot; (in your sense of the&quot;
-3 &quot;cried my Wife, \&quot;and you are breaking the Commandments in thus&quot;          
-4 &quot;and much remains to be done before you are fit to proclaim the Gospel&quot;   
-5 &quot;&quot;                                                                        </code></pre>
+  text                                                                     
+  &lt;chr&gt;                                                                    
+1 &quot;&quot;                                                                       
+2 &quot;The Southward attraction in our country is so slight that even to a&quot;    
+3 &quot;straight line; and it was added or implied, that it is consequently&quot;    
+4 &quot;the vain belief that conduct depends upon will, effort, training,&quot;      
+5 &quot;imprisonment, but added his satisfaction that, unless some mention were&quot;</code></pre>
 <p>Right so, we can pass the text to the <code>extract_punct()</code> function to return all the punctuation in the order it appears, with linebreak every 70 characters so the text fits the width of this blog.</p>
 <pre class="r"><code>extract_punct(book$text, width = 70, colour = FALSE)</code></pre>
 <pre><code>..,,.,,,,.&quot;.,&quot;,..,.;,,(),(),,,,..;,;(..,(),.,.;;,.:.,.,,,;.;.),,.,..,,
@@ -701,7 +701,7 @@ All punctuation from ‘Flatland’ by Edward A Abbott
 .&quot;.&#39;&quot;.&#39;&quot;.&quot;,.,,&quot;;,,..&quot;,.&quot;,..&quot;;,;,.,(,,,.&#39;&quot;&quot;,,.&#39;.&quot;&quot;&quot;&quot;&quot;&quot;!&quot;&quot;!&quot;&quot;&quot;.&quot;,.&quot;,;;..
 .&quot;.,.&#39;.&quot;.&quot;&#39;..&quot;.(,.&quot;,,.&#39;&quot;;.&quot;&quot;.,,..&quot;,,..&quot;,..&quot;(..&quot;..&quot;,..&quot;,&#39;.&#39;&quot;,!.&quot;!.&quot;,..</code></pre>
 </details>
-<p>Feel free to experiment with <code>extract_punct()</code> and let me know how it goes.</p>
+<p>Feel free to experiment with <code>extract_punct()</code> and let me know how it goes. Maybe include en and em dashes, or take a look at the use of ‘curly’ quotes, or something.</p>
 <hr />
 <details>
 <summary>
@@ -774,7 +774,6 @@ Session info
 
 [1] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
 </details>
-<p>You could expand this. Maybe include en and em dashes, or take a look at the use of ‘curly’ quotes, or something.</p>
 </div>
 </div>
 <div class="footnotes">
