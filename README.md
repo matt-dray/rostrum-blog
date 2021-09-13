@@ -25,14 +25,13 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 102 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 103 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 12 day(s) ago: [Auto-label closing
-parentheses in
-RStudio](https://www.rostrum.blog/2021/08/31/add-biscuits/).
+🆕 The latest post was published 1 day(s) ago: [Extract punctuation from
+books with R](https://www.rostrum.blog/2021/09/12/extract-punct/).
 
 📈 This 2D plot shows posts over time:
 
@@ -44,6 +43,7 @@ RStudio](https://www.rostrum.blog/2021/08/31/add-biscuits/).
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|    103 | 2021-09-12 | [Extract punctuation from books with R](https://www.rostrum.blog/2021/09/12/extract-punct/)                               |
 |    102 | 2021-08-31 | [Auto-label closing parentheses in RStudio](https://www.rostrum.blog/2021/08/31/add-biscuits/)                            |
 |    101 | 2021-08-27 | [Exploring R package startup messages](https://www.rostrum.blog/2021/08/27/zzz/)                                          |
 |    100 | 2021-08-27 | [Adding a Shiny app to {dehex}](https://www.rostrum.blog/2021/08/27/dehex-app/)                                           |
@@ -151,4 +151,4 @@ RStudio](https://www.rostrum.blog/2021/08/31/add-biscuits/).
 
 -----
 
-*Updated 2021-09-12 02:36:52*
+*Updated 2021-09-13 02:37:34*
