@@ -1,0 +1,228 @@
+---
+title: "Wot3LdnEmojis"
+author: Matt Dray
+date: '2021-09-14'
+slug: wot3ldnemojis
+categories:
+  - code
+  - tutorial
+tags:
+  - emoji
+  - leaflet
+  - map
+  - r
+  - sf
+  - tidyverse
+draft: no
+---
+
+# tl;dr
+
+I made Wot3LdnEmojis: a London-only clone of [What3Emojis](https://what3emojis.com/) using London-related emojis and very little R code.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, error=FALSE}
+library(sf)
+suppressPackageStartupMessages(library(tidyverse))
+library(leaflet)
+set.seed(9002488)
+
+nuts_path <- 
+  "https://raw.githubusercontent.com/martinjc/UK-GeoJSON/master/json/eurostat/ew/nuts1.json"
+
+ldn_sf <- st_read(nuts_path, quiet = TRUE) %>% 
+  filter(NUTS112NM == "London")
+
+grid_sf <- ldn_sf %>% 
+  st_make_grid(cellsize = 0.01, square = FALSE, flat_topped = TRUE) %>% 
+  st_intersection(ldn_sf)
+
+ldn_emo <- c(
+  "💂", "🚇", "🏰", "👸", "🎡", "🐋", "🐦", 
+  "🏙️", "🥒", "🏟️", "🐉", "🎭", "🔔", "🌳"
+)
+
+ldn_emo_combo <- expand.grid(
+  emo_a = ldn_emo, emo_b = ldn_emo, emo_c = ldn_emo
+) %>% 
+  sample_n(length(grid_sf)) %>%
+  transmute(emo_triplet = paste(emo_a, emo_b, emo_c))
+
+grid_sf_emo <- grid_sf %>% 
+  st_sf(ldn_emo_combo) %>%
+  rename(., geometry = .)
+
+leaflet() %>% 
+  addProviderTiles("CartoDB.Voyager", group = "Light") %>%
+  addProviderTiles("CartoDB.DarkMatter", group = "Dark") %>%
+  addPolygons(
+    data = grid_sf_emo, group = "Grid", 
+    color = "grey", weight = 1, opacity = 0.5,
+    fill = TRUE, fillOpacity = 0,
+    label = paste(grid_sf_emo$emo_triplet),
+    labelOptions = labelOptions(
+      direction = "top", style = list("font-size" = "35px")
+    ),
+    highlightOptions = highlightOptions(color = "blue", weight = 3,)
+  ) %>% 
+  addLayersControl(
+    baseGroups = c("Light", "Dark"),
+    overlayGroups = "Grid",
+    position = "topright",
+    options = layersControlOptions(collapsed = FALSE)
+  )
+```
+
+Hover over a grid cell to get the emoji-triplet reference. Zoom and pan, change to dark mode, toggle the grid.
+
+# U wot m8
+
+By now you've heard about various 'alternative' location systems that split the world into a grid and assign each with a value that's more human-interpretable than latitude and longitude. For example, [Google Plus Codes](https://maps.google.com/pluscodes/) and [What3Words](https://what3words.com/about).
+
+The latter has been in the news a lot.[^w3w] In the meantime, their product has spawned a raft of spoofs, like the NSFW [Four Kings Map](https://www.fourkingmaps.co.uk/), [What3Emojis](https://what3emojis.com/) and [What2Numbers](https://www.what2numbers.org/), lol.[^w2n]
+
+I like What3Emojis because it's tongue-in-cheek[^w3e], yes, but they also understand the 21st Century mantra that:
+
+>No system is perfect, except for emoji.
+
+The What3Emojis code is [openly available](https://github.com/BadIdeaFactory/what3emojis), but of course I wondered how easy it would be to make something like this in R. 
+
+I've limited it to London because us Londoners aren't aware of anything outside of the M25. Read on for the how-to of this obnoxiously-named, cockney-baiting Wot3LdnEmojis system.
+
+# Adam 'n' Eve it
+
+First we need to attach [the {sf} package](https://r-spatial.github.io/sf/) for geospatial operations; [{leaflet}](https://rstudio.github.io/leaflet/) for interactive mapping; and [{tidyverse}](https://www.tidyverse.org/) for data wrangling. We'll also set a seed here for reproducible results.[^seed]
+
+```{r, library-seed, eval=FALSE}
+library(sf)
+library(leaflet)
+suppressPackageStartupMessages(library(tidyverse))
+set.seed(9002488)
+```
+
+We can grab the official Greater London boundary from a GeoJSON of geographic units in the UK[^nuts], which is served by the [Open Geography Portal from the Office for National Statistics](https://geoportal.statistics.gov.uk/).
+
+Or we would, if the site wasn't down when I went to run this. Instead, we can use the handy JSONs hosted by [Martin Chorley on GitHub](https://github.com/martinjc/UK-GeoJSON/). Hero.
+
+```{r fetch-geojson}
+nuts_path <- paste0(
+  "https://raw.githubusercontent.com/martinjc/UK-GeoJSON/",
+  "master/json/eurostat/ew/nuts1.json"
+)
+
+ldn_sf <- st_read(nuts_path, quiet = TRUE) %>% 
+  filter(NUTS112NM == "London")
+
+ldn_sf
+````
+
+So, it's an sf-class object that behaves like a dataframe, but has some extra geospatial information stored in it.
+
+We've got the boundary, how do we do a grid?
+
+What3Emojis say they used 'gazillions of 4m×4m triangles' in their grid, but I don't have the computing power for that and I can't count that high. 
+
+Instead, I bring you low-fidelity, massive hexagons. But hexagons are the patron shape of R users, so I think that's okay.
+
+{sf} has `st_make_grid()` makes gridding easy. We can pass arguments for size and shape, then `st_intersection()` limits the grid to the area inside the London boundary only.
+
+```{r}
+grid_sf <- ldn_sf %>% 
+  st_make_grid(cellsize = 0.01, square = FALSE, flat_topped = TRUE) %>% 
+  st_intersection(ldn_sf)
+
+length(grid_sf)
+```
+
+I've checked the length of the object so we know how many grid cells we need to label uniquely. The fewest number of emoji we'll need is therefore 14, since 14^3 is 2744.
+
+Of course, I have chosen emojis that at least vaguely represent London. Below I've added [names](https://unpkg.com/emojilib@3.0.4/dist/emoji-en-US.json) and commented with my interpretation. Let me know if you have better ideas.
+
+```{r emoji-wrangling}
+ldn_emo <- c(
+  metro           = "🚇",  # the tube
+  guard           = "💂",  # Queen's Guard
+  queen           = "👸",  # HMQE2
+  castle          = "🏰",  # Tower of London
+  ferris_wheel    = "🎡",  # London Eye
+  bell            = "🔔",  # Big Ben (not a clock!)
+  whale           = "🐋",  # Natural History Museum
+  cityscape       = "🏙️",  # Canary Wharf
+  cucumber        = "🥒",  # The Gherkin
+  performing_arts = "🎭",  # Theatre District
+  stadium         = "🏟️",  # Wembley Stadium
+  dragon          = "🐉",  # City of London emblem
+  bird            = "🐦",  # pigeon
+  deciduous_tree  = "🌳"   # London plane tree
+)
+```
+
+Depending on your operating system, there's a chance you might note be able to see some of these emoji. Oh no! Ah well.
+
+You may also have noticed that it's utterly ridiculous to use London-related emojis to label locations in London. 'Where are you?' 'London Eye, London Eye, London Eye'. 'You're at the London Eye?' 'No.' Oh no! Ah well.
+
+Anyway, we can get all three-way combinations of these with `expand.grid()`, then shuffle them randomly.
+
+```{r}
+ldn_emo_combo <- expand.grid(
+  emo_a = ldn_emo, emo_b = ldn_emo, emo_c = ldn_emo
+) %>% 
+  sample_n(length(grid_sf)) %>%
+  transmute(emo_triplet = paste(emo_a, emo_b, emo_c))
+
+ldn_emo_combo$emo_triplet[1:3]
+```
+
+Then it's a case of adding the emoji information into the `grid_sf` object, which can be done via `st_df()`.
+
+```{r add-triplets-sf}
+grid_sf_emo <- grid_sf %>% 
+  st_sf(ldn_emo_combo) %>%
+  rename(., geometry = .)
+
+head(grid_sf_emo)
+```
+
+You can see the triplets have been added as an extra column so there's one triplet per grid cell.
+
+Time to create the interactive map with {leaflet}, which is built up in layers. 
+
+I've added a light and a dark underlying map that you can toggle between[^dark] I've also made the hexagons transparent with thin borders to it's easier to see the map, but you can toggle the grid on and off to help pinpoint a location.
+
+```{r, leaflet-map, eval=FALSE}
+leaflet() %>% 
+  addProviderTiles("CartoDB.Voyager", group = "Light") %>%
+  addProviderTiles("CartoDB.DarkMatter", group = "Dark") %>%
+  addPolygons(
+    data = grid_sf_emo, group = "Grid", 
+    color = "grey", weight = 1, opacity = 0.5,
+    fill = TRUE, fillOpacity = 0,
+    label = paste(grid_sf_emo$emo_triplet),
+    labelOptions = labelOptions(
+      direction = "top", style = list("font-size" = "35px")
+    ),
+    highlightOptions = highlightOptions(color = "blue", weight = 3,)
+  ) %>% 
+  addLayersControl(
+    baseGroups = c("Light", "Dark"),
+    overlayGroups = "Grid",
+    position = "topright",
+    options = layersControlOptions(collapsed = FALSE)
+  )
+```
+
+I found:
+
+* Buckingham Palace at 🔔🐦🥒 (Big Ben, pigeon, gherkin)
+* Leicester Square at 🌳🌳🏙️ (plane tree, plane tree, Canary Wharf)
+* The Shard at 🐦🐋💂 (pigeon, whale, guard)
+* Wimbledon at 💂🌳🏟 (guard, plane tree, Wembley)
+* The Millennium Dome at 👸🚇🐉 (Queen, tube, dragon)
+
+Literally minutes of fun. Of course, you shouldn't use this map for anything whatsoever, possibly not even for your own amusement. I, on the other hand, can do whatever I like.
+
+[^w3w]: This post is not about that company or its practices. See instead, for example, the excellent YouTube videos by [Andrew Steele](https://www.youtube.com/watch?v=SqK0ciE0rto) and [Mia Mulder](https://www.youtube.com/watch?v=4PPRh9ZunmI), or [Terence Eden's blog post](https://shkspr.mobi/blog/2019/03/why-bother-with-what-three-words/). Even [the BBC](https://www.bbc.co.uk/news/technology-56901363) covered it.
+[^w2n]: I was genuinely tricked by this website's joke, fair play.
+[^w3e]: This blog is obviously a fan of emojis, see [the one about creating SVG versions of the original emoji set](https://www.rostrum.blog/2021/07/31/og-emoji-svg/) or [the one about a package for generating 'emojiscapes'](https://www.rostrum.blog/2021/06/26/emojiscape/).
+[^seed]: The seed value has a meaning related to London; guess what it is.
+[^nuts]: The file contains [NUTS level 1](https://en.wikipedia.org/wiki/Nomenclature_of_Territorial_Units_for_Statistics), which is a European standard for administrative geographies. Now the UK has left the EU, it has technically switched to something called 'International Territorial Units' (ITU), which I think are the same boundaries as NUTS for the time being.
+[^dark]: Darkmode required to prevent damage to poor Millennial eyes when doomscrolling at 0300.
