@@ -6,14 +6,13 @@ slug: assign
 categories:
   - code
 tags:
+  - assignment
   - flamewar
-  - lintr
   - r
+  - static-code-analysis
 draft: no
 ---
 
-<script src="/rmarkdown-libs/jquery/jquery.min.js"></script>
-<script src="/rmarkdown-libs/elevate-section-attrs/elevate-section-attrs.js"></script>
 
 
 <div class="figure">
@@ -21,7 +20,7 @@ draft: no
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>I present you a function that warns if an R script contains the Assignment Operator That Shall Not Be Named.</p>
+<p>I present you a function that warns if an R script contains <em>The Assignment Operator That Shall Not Be Named</em>.</p>
 </div>
 <div id="assign-of-the-times" class="section level1">
 <h1>Assign of the times</h1>
@@ -33,16 +32,13 @@ draft: no
 <h1>Assignment refinement</h1>
 <p>I’ve created the <code>appraise_assignment()</code> function that will peek at a suspect script and warn you if it contains the foul mark.</p>
 <pre class="r"><code>appraise_assignment &lt;- function(file, destroy = FALSE) {
-  
-  trees &lt;- lintr::get_source_expressions(file)  # parse code
-  expr_len &lt;- length(trees[[1]])  # we want the final element
-  tokens &lt;-  # extract tokens used in script
-    trees$expressions[[expr_len]]$full_parsed_content[, &quot;token&quot;]
+
+  tokens &lt;- getParseData(parse(file))[[&quot;token&quot;]]
   
   if (any(tokens == &quot;EQ_ASSIGN&quot;)) {  # &#39;=&#39;
-    warning(&quot;\nme = &#39;disgusted&#39;\n&quot;) 
+    warning(&quot;\nme = &#39;disgusted&#39;&quot;) 
     if (destroy == TRUE) {
-      answer &lt;- readlines(&quot;Destroy file? y/n&quot;)
+      answer &lt;- readline(&quot;Destroy file? y/n: &quot;)
       if (answer == &quot;y&quot;) cat(&quot;Have mercy! This time...&quot;)
     }
   } else if (any(tokens == &quot;RIGHT_ASSIGN&quot;)) {  # &#39;&lt;-&#39;
@@ -54,18 +50,22 @@ draft: no
   }
   
 }</code></pre>
-<p>It uses <a href="https://github.com/jimhester/lintr">Jim Hester’s {lintr} package</a> to parse R expressions and identify each ‘token’ that’s used (maths symbols, special operators, variables, etc).</p>
+<p>Basically, we <code>parse()</code> an input file and then the function uses <code>getParseData()</code> to extract ‘tokens’ (i.e. maths symbols, special operators, variables, etc) from the R expressions within.</p>
 <p>In particular, it spots the token called <code>EQ_ASSIGN</code>, which is when <code>=</code> is used in the context of assignment.</p>
 </div>
 <div id="i-saw-the-assign" class="section level1">
 <h1>I saw the assign</h1>
-<p>For demonstration purposes, I’ve written four temporary files containing left assign (<code>&lt;-</code>), right assign (<code>-&gt;</code>, inferior mirror-copy of <code>&lt;-</code>), equals (<code>=</code>), and no assignment at all.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> Our function will catch even a single deviation, even if proper assignment has also been used.</p>
+<p>For demonstration purposes, I’ve written four temporary files containing left assign (<code>&lt;-</code>), right assign (<code>-&gt;</code>), equals (<code>=</code>), and no assignment at all.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> Our function will catch even a single deviation in a given file.</p>
 <pre class="r"><code>temp &lt;- tempdir()  # temp location to store files
+
 purrr::walk2(
   c(&quot;x &lt;- 1&quot;, &quot;x &lt;- 1; y -&gt; 1&quot;, &quot;x &lt;- 1; y = 1&quot;, &quot;x&quot;),
   c(&quot;left&quot;, &quot;right&quot;, &quot;equals&quot;, &quot;none&quot;),
   ~writeLines(.x, file.path(temp, paste0(.y, &quot;.R&quot;)))
-)</code></pre>
+)
+
+list.files(temp, pattern = &quot;.R$&quot;)</code></pre>
+<pre><code>## [1] &quot;equals.R&quot; &quot;left.R&quot;   &quot;none.R&quot;   &quot;right.R&quot;</code></pre>
 <p>First, let’s pass the file containing the unquestionably correct assignment operator.</p>
 <pre class="r"><code>appraise_assignment(file.path(temp, &quot;left.R&quot;))</code></pre>
 <pre><code>## you &lt;- &#39;hero&#39;</code></pre>
@@ -74,7 +74,8 @@ purrr::walk2(
 <pre><code>## &#39;unorthodox&#39; -&gt; you</code></pre>
 <p>Hold steady…</p>
 <pre class="r"><code>appraise_assignment(file.path(temp, &quot;equals.R&quot;))</code></pre>
-<pre><code>## Warning in appraise_assignment(file.path(temp, &quot;equals.R&quot;)): 
+<pre><code>## Warning message:
+## In appraise_assignment(file.path(temp, &quot;equals.R&quot;)) : 
 ## me = &#39;disgusted&#39;</code></pre>
 <p>Phew, we got a warning, so we know the file is dangerous and should never be opened.</p>
 <p>In fact, if you set the argument <code>destroy = TRUE</code> in <code>appraise_assignment()</code>, you’ll be prompted to irrecoverably annihilate the rotten file forever.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
@@ -91,6 +92,50 @@ purrr::walk2(
 x</code></pre>
 <pre><code>## [1] 1</code></pre>
 <p>It’s a really long arrow, so I call it ‘the spear’.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> I look forward to its adoption by R Core.</p>
+<hr />
+<details>
+<p><summary>Session info</summary></p>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.0.3 (2020-10-10)
+##  os       macOS Mojave 10.14.6        
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2021-09-21                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date       lib source        
+##  blogdown      0.21    2020-10-11 [1] CRAN (R 4.0.2)
+##  bookdown      0.21    2020-10-13 [1] CRAN (R 4.0.2)
+##  bslib         0.2.4   2021-01-25 [1] CRAN (R 4.0.2)
+##  cli           3.0.1   2021-07-17 [1] CRAN (R 4.0.2)
+##  digest        0.6.27  2020-10-24 [1] CRAN (R 4.0.2)
+##  evaluate      0.14    2019-05-28 [1] CRAN (R 4.0.1)
+##  htmltools     0.5.1.1 2021-01-22 [1] CRAN (R 4.0.2)
+##  jquerylib     0.1.3   2020-12-17 [1] CRAN (R 4.0.2)
+##  jsonlite      1.7.2   2020-12-09 [1] CRAN (R 4.0.2)
+##  knitr         1.32    2021-04-14 [1] CRAN (R 4.0.2)
+##  magrittr      2.0.1   2020-11-17 [1] CRAN (R 4.0.2)
+##  purrr         0.3.4   2020-04-17 [1] CRAN (R 4.0.2)
+##  R6            2.5.0   2020-10-28 [1] CRAN (R 4.0.2)
+##  rlang         0.4.11  2021-04-30 [1] CRAN (R 4.0.2)
+##  rmarkdown     2.7     2021-02-19 [1] CRAN (R 4.0.2)
+##  rstudioapi    0.13    2020-11-12 [1] CRAN (R 4.0.2)
+##  sass          0.3.1   2021-01-24 [1] CRAN (R 4.0.2)
+##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.0.2)
+##  stringi       1.7.3   2021-07-16 [1] CRAN (R 4.0.2)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.0.2)
+##  withr         2.4.2   2021-04-18 [1] CRAN (R 4.0.2)
+##  xfun          0.22    2021-03-11 [1] CRAN (R 4.0.2)
+##  yaml          2.2.1   2020-02-01 [1] CRAN (R 4.0.2)
+## 
+## [1] /Users/matt.dray/Library/R/4.0/library
+## [2] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
+</details>
 </div>
 <div class="footnotes">
 <hr />
@@ -98,6 +143,6 @@ x</code></pre>
 <li id="fn1"><p>Actually, I don’t really care which one you use, but that’s less of a funny take. I prefer the left assignment operator because look! It’s a little arrow! Quirky! Esoteric! An extra keystroke to exercise your fingers!<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
 <li id="fn2"><p>We do not talk about <code>&lt;&lt;-</code>.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 <li id="fn3"><p>Well, not really, because I don’t want you to delete any of your files. But rest assured I’ve included <code>file.remove()</code> in my local version of the function and I’m not afraid to use it.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
-<li id="fn4"><p>If you’re wondering how this works, R evaluates this as <code>&lt;-</code> and then a whole bunch of ‘negative’ symbols. They cancel out If you have an odd number of them.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>In other words, R evaluates this as an object, <code>x</code>, being assigned a numeric value that has an odd number of ‘negative’ symbols that cancel each other out.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
