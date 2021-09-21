@@ -6,9 +6,10 @@ slug: assign
 categories:
   - code
 tags:
+  - assignment
   - flamewar
-  - lintr
   - r
+  - static-code-analysis
 draft: no
 ---
 
@@ -18,7 +19,7 @@ draft: no
 
 # tl;dr
 
-I present you a function that warns if an R script contains the Assignment Operator That Shall Not Be Named.
+I present you a function that warns if an R script contains _The Assignment Operator That Shall Not Be Named_.
 
 # Assign of the times
 
@@ -34,16 +35,13 @@ I've created the `appraise_assignment()` function that will peek at a suspect sc
 
 ```{r}
 appraise_assignment <- function(file, destroy = FALSE) {
-  
-  trees <- lintr::get_source_expressions(file)  # parse code
-  expr_len <- length(trees[[1]])  # we want the final element
-  tokens <-  # extract tokens used in script
-    trees$expressions[[expr_len]]$full_parsed_content[, "token"]
+
+  tokens <- getParseData(parse(file))[["token"]]
   
   if (any(tokens == "EQ_ASSIGN")) {  # '='
-    warning("\nme = 'disgusted'\n") 
+    warning("\nme = 'disgusted'") 
     if (destroy == TRUE) {
-      answer <- readlines("Destroy file? y/n")
+      answer <- readline("Destroy file? y/n: ")
       if (answer == "y") cat("Have mercy! This time...")
     }
   } else if (any(tokens == "RIGHT_ASSIGN")) {  # '<-'
@@ -57,39 +55,52 @@ appraise_assignment <- function(file, destroy = FALSE) {
 }
 ```
 
-It uses [Jim Hester's {lintr} package](https://github.com/jimhester/lintr) to parse R expressions and identify each 'token' that's used (maths symbols, special operators, variables, etc).
+Basically, we `parse()` an input file and then the function uses `getParseData()` to extract 'tokens' (i.e. maths symbols, special operators, variables, etc) from the R expressions within.
 
 In particular, it spots the token called `EQ_ASSIGN`, which is when `=` is used in the context of assignment.
 
 # I saw the assign
 
-For demonstration purposes, I've written four temporary files containing left assign (`<-`), right assign (`->`, inferior mirror-copy of `<-`), equals (`=`), and no assignment at all.[^global] Our function will catch even a single deviation, even if proper assignment has also been used.
+For demonstration purposes, I've written four temporary files containing left assign (`<-`), right assign (`->`), equals (`=`), and no assignment at all.[^global] Our function will catch even a single deviation in a given file.
 
 ```{r}
 temp <- tempdir()  # temp location to store files
+
 purrr::walk2(
   c("x <- 1", "x <- 1; y -> 1", "x <- 1; y = 1", "x"),
   c("left", "right", "equals", "none"),
   ~writeLines(.x, file.path(temp, paste0(.y, ".R")))
 )
+
+list.files(temp, pattern = ".R$")
 ```
 
 First, let's pass the file containing the unquestionably correct assignment operator.
 
-```{r}
+```{r eval=FALSE}
 appraise_assignment(file.path(temp, "left.R"))
 ```
-
+```
+## you <- 'hero'
+```
 Right-assignment is left-assignment's less-handsome sibling.
 
-```{r}
+```{r eval=FALSE}
 appraise_assignment(file.path(temp, "right.R"))
+```
+```
+## 'unorthodox' -> you
 ```
 
 Hold steady...
 
-```{r}
+```{r eval=FALSE}
 appraise_assignment(file.path(temp, "equals.R"))
+```
+```
+## Warning message:
+## In appraise_assignment(file.path(temp, "equals.R")) : 
+## me = 'disgusted'
 ```
 
 Phew, we got a warning, so we know the file is dangerous and should never be opened.
@@ -117,7 +128,14 @@ x
 
 It's a really long arrow, so I call it 'the spear'.[^hyphens] I look forward to its adoption by R Core.
 
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
 [^actually]: Actually, I don't really care which one you use, but that's less of a funny take. I prefer the left assignment operator because look! It's a little arrow! Quirky! Esoteric! An extra keystroke to exercise your fingers!
 [^destroy]: Well, not really, because I don't want you to delete any of your files. But rest assured I've included `file.remove()` in my local version of the function and I'm not afraid to use it.
 [^global]: We do not talk about `<<-`.
-[^hyphens]: If you're wondering how this works, R evaluates this as `<-` and then a whole bunch of 'negative' symbols. They cancel out If you have an odd number of them.
+[^hyphens]: In other words, R evaluates this as an object, `x`, being assigned a numeric value that has an odd number of 'negative' symbols that cancel each other out.
