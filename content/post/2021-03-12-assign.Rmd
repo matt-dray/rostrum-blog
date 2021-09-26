@@ -13,8 +13,39 @@ tags:
 draft: no
 ---
 
+```{r echo=FALSE}
+# For some Rmd-related reason, possibly due to temp files, the function
+# definition in the body of this post doesn't work properly; it always concludes
+# at the else statement. That's weird because the funciton works when run
+# interactively and it also works in the {blogsnip} package. To get around this, 
+# the post will use this hidden definition from an earlier version of this post,
+# which uses {lintr} to parse expressions instead of getParseData(parse(file)).
+appraise_assignment <- function(file, destroy = FALSE) {
+  
+  trees <- lintr::get_source_expressions(file)
+  expr_len <- length(trees[[1]])
+  tokens <-
+    trees$expressions[[expr_len]]$full_parsed_content[, "token"]
+  
+  if (any(tokens == "EQ_ASSIGN")) {            # if '='
+    warning("\nme = 'disgusted'") 
+    if (destroy == TRUE) {
+      answer <- readline("Destroy file? y/n: ")
+      if (answer == "y") cat("Have mercy! This time...")
+    }
+  } else if (any(tokens == "RIGHT_ASSIGN")) {  # if '<-'
+    cat("'unorthodox' -> you\n")
+  } else if (any(tokens == "LEFT_ASSIGN")) {   # if '->'
+    cat("you <- 'hero'\n")
+  } else {
+    cat("anyway(assignment(is(even('what'))))\n")
+  }
+  
+}
+```
+
 <div class="figure">
-<img src="/post/2021-03-12-assign_files/cmm.png" alt="A man sits at a table with a banner that has R's left assignment operator and underneath says 'change my mind'." width="75%"/>
+<img src="/post/2021-03-12-assign_files/cmm.png" alt="A man sits at a table with a banner that has on it R's left assignment operator (<-) and underneath it says 'change my mind'." width="75%"/>
 </div>
 
 # tl;dr
@@ -33,20 +64,20 @@ But what if a nefarious colleague still sends you their scuffed code?
 
 I've created the `appraise_assignment()` function that will peek at a suspect script and warn you if it contains the foul mark.
 
-```{r}
+```{r eval=FALSE}
 appraise_assignment <- function(file, destroy = FALSE) {
-
+  
   tokens <- getParseData(parse(file))[["token"]]
   
-  if (any(tokens == "EQ_ASSIGN")) {  # '='
+  if (any(tokens == "EQ_ASSIGN")) {            # if '='
     warning("\nme = 'disgusted'") 
     if (destroy == TRUE) {
       answer <- readline("Destroy file? y/n: ")
       if (answer == "y") cat("Have mercy! This time...")
     }
-  } else if (any(tokens == "RIGHT_ASSIGN")) {  # '<-'
+  } else if (any(tokens == "RIGHT_ASSIGN")) {  # if '<-'
     cat("'unorthodox' -> you\n")
-  } else if (any(tokens == "LEFT_ASSIGN")) {  # '->'
+  } else if (any(tokens == "LEFT_ASSIGN")) {   # if '->'
     cat("you <- 'hero'\n")
   } else {
     cat("anyway(assignment(is(even('what'))))\n")
@@ -77,30 +108,20 @@ list.files(temp, pattern = ".R$")
 
 First, let's pass the file containing the unquestionably correct assignment operator.
 
-```{r eval=FALSE}
+```{r}
 appraise_assignment(file.path(temp, "left.R"))
 ```
-```
-## you <- 'hero'
-```
+
 Right-assignment is left-assignment's less-handsome sibling.
 
-```{r eval=FALSE}
+```{r}
 appraise_assignment(file.path(temp, "right.R"))
-```
-```
-## 'unorthodox' -> you
 ```
 
 Hold steady...
 
-```{r eval=FALSE}
+```{r}
 appraise_assignment(file.path(temp, "equals.R"))
-```
-```
-## Warning message:
-## In appraise_assignment(file.path(temp, "equals.R")) : 
-## me = 'disgusted'
 ```
 
 Phew, we got a warning, so we know the file is dangerous and should never be opened.
