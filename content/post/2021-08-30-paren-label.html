@@ -9,7 +9,6 @@ categories:
 tags:
   - biscuits
   - blogsnip
-  - lintr
   - r
   - rstudio
   - rstudio-addin
@@ -25,7 +24,7 @@ draft: no
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>I wrote a novelty R function that inserts commenta after closing parentheses with the names of the functions they belong to. (These are called <a href="https://code-biscuits.github.io/">biscuits</a>, apparently.) It’s available as an RStudio Addin from <a href="https://github.com/matt-dray/blogsnip">the {blogsnip} package</a>.</p>
+<p>I wrote a novelty R function that inserts comments after closing parentheses with the names of the functions they belong to. (These are called <a href="https://code-biscuits.github.io/">biscuits</a>, apparently.) It’s available as an RStudio Addin from <a href="https://github.com/matt-dray/blogsnip">the {blogsnip} package</a>.</p>
 </div>
 <div id="matryoshka-functions" class="section level1">
 <h1>Matryoshka functions</h1>
@@ -99,8 +98,8 @@ draft: no
 <pre class="r"><code>string &lt;- &quot;first(second(third(&#39;x&#39;), fourth(&#39;y&#39;)))&quot;</code></pre>
 <div id="parse" class="section level3">
 <h3>1. Parse</h3>
-<p>The <code>.parse()</code> function takes a string containing R code and returns a dataframe of its ‘syntax tree’. In other words, it breaks the string into ‘tokens’ that are recognised as units of R code: function calls, assignment arrows, etc.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
-<p>I’ve used <code>lintr::get_source_expressions()</code> to do the hard work of parsing the string into a dataframe with one row per token. The downside is that you must provide to it a file rather than a character object, so we first have to write it to a temporary file.</p>
+<p>The <code>.parse()</code> function takes a string containing R code and returns a dataframe of its ‘syntax tree’. In other words, it breaks the string into ‘tokens’ that are recognised as units of R code: function calls, assignment arrows, etc.</p>
+<p>I’ve used <code>getParseData(parse())</code> to do the hard work of parsing the string into a dataframe with one row per token. The downside is that you must provide to it a file rather than a character object, so we first have to write it to a temporary file.</p>
 <p>I’ve then filtered the dataframe to get only the tokens that are R code (i.e. they aren’t spaces) and renumbered the rows so they’re consecutive. This will be useful when we want to extract the function names for each set of parens.</p>
 <details>
 <summary>
@@ -111,9 +110,7 @@ Expand the <code>.parse()</code> function definition
   file &lt;- tempfile(fileext = &quot;.R&quot;)
   writeLines(string, file)
   
-  linted &lt;- lintr::get_source_expressions(file)
-  parsed &lt;- linted$expressions[[1]]$parsed_content
-  
+  tokens &lt;- getParseData(parse(file))
   parsed &lt;- parsed[parsed$terminal == TRUE, ]
   rownames(parsed) &lt;- as.character(seq(nrow(parsed)))
   
@@ -145,7 +142,7 @@ tree[, c(&quot;line1&quot;, &quot;col1&quot;, &quot;parent&quot;, &quot;token&qu
 </div>
 <div id="label" class="section level3">
 <h3>2. Label</h3>
-<p>So we can tie our paren pairs together with the <code>parent</code> variable and we know where to place the biscuit with the <code>line1</code> and <code>col1</code> information. But how to extract the function name and biscuitify it?</p>
+<p>So we can tie our paren pairs together with the <code>parent</code> variable and we know where to place the biscuit with the <code>line1</code> and <code>col1</code> information. But how to extract the function name and ‘biscuitise’ it?</p>
 <p>I’ve written the slightly awkward <code>.label()</code> function for this. It takes the output from <code>.parse()</code> and checks each row to see if it’s a closing-paren token; if so, it finds the position of the matching open-paren by <code>parent</code>; then it looks at the text of the token in the preceding row to get the function name and sticks that in a new column called <code>label</code>.</p>
 <details>
 <summary>
@@ -283,8 +280,8 @@ cat(add_biscuits(string2))</code></pre>
 <h1>Bonus: RStudio addin</h1>
 <p>You’re thinking ‘cool, but how can I use this thing practically?’ The answer is an RStudio addin.</p>
 <p>I’ve <a href="https://www.rostrum.blog/2019/10/22/blogsnip/">written before</a> about <a href="https://github.com/matt-dray/blogsnip">{blogsnip}</a>, my package of R Markdown-related RStudio addins to help me prepare blog posts. I’ve put the <code>add_biscuits()</code> function in there for now.</p>
-<p>Install from GitHub with {remotes} as follows and then restart RStudio. {blogsnip} doesn’t force you to install {lintr} and {styler}, so you’ll have to do that too (if you haven’t already).</p>
-<pre class="r"><code>install.packages(c(&quot;remotes&quot;, &quot;lintr&quot;, &quot;styler&quot;))
+<p>Install from GitHub with {remotes} as follows and then restart RStudio. {blogsnip} doesn’t force you to install {styler}, so you’ll have to do that too (if you haven’t already).</p>
+<pre class="r"><code>install.packages(c(&quot;remotes&quot;, &quot;styler&quot;))
 remotes::install_github(&quot;matt-dray/blogsnip&quot;)</code></pre>
 <p>There should now be a ‘BLOGSNIP’ section in the ‘Addins’ menu (top navigation bar) with an option to ‘Add closing paren labels’. Select a full R expression in the script window, then select ‘Add closing paren labels’. Your code will be replaced with the same code, but with biscuits inserted.</p>
 <div class="figure">
@@ -296,7 +293,7 @@ remotes::install_github(&quot;matt-dray/blogsnip&quot;)</code></pre>
 <div id="oh-crumbs" class="section level1">
 <h1>Oh, crumbs…</h1>
 <p>Let me be clear: <code>add_biscuits()</code> is half-baked. It works on the simple examples here, but I’m pretty sure it will break horribly on more complex things. I haven’t really tested it properly.</p>
-<p>It gets confused if there’s already some closing parens. It gets confused if you don’t highlight enough code to capture all the opening and closing parens. It gets confused if you run it over more than one expression. It ignores anything other than a round parenthesis. Etc, etc.</p>
+<p>It gets confused if there’s already some labelled closing parens. It gets confused if you don’t highlight enough code to capture all the opening and closing parens. It gets confused if you run it over more than one expression. It ignores curly and square parentheses. Etc, etc.</p>
 <p>So, use the function at your own risk, or better yet: improve it. <a href="https://github.com/matt-dray/blogsnip">Contribute to {blogsnip}</a> or get me <a href="https://twitter.com/mattdray">on Twitter</a>.</p>
 <p>Or even better yet, just use a good implementation of this functionality that someone else has probably written and I’ve been too lazy to search for.</p>
 <p>Or, y’know, don’t write heavily-nested code that requires you to write comments after closing parens.</p>
@@ -315,7 +312,7 @@ Session info
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2021-09-02                  
+##  date     2021-09-26                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
 ##  package      * version date       lib source        
@@ -335,7 +332,7 @@ Session info
 ##  htmltools      0.5.1.1 2021-01-22 [1] CRAN (R 4.1.0)
 ##  jquerylib      0.1.4   2021-04-26 [1] CRAN (R 4.1.0)
 ##  jsonlite       1.7.2   2020-12-09 [1] CRAN (R 4.1.0)
-##  knitr          1.33    2021-04-24 [1] CRAN (R 4.1.0)
+##  knitr          1.34    2021-09-09 [1] CRAN (R 4.1.0)
 ##  lazyeval       0.2.2   2019-03-15 [1] CRAN (R 4.1.0)
 ##  lifecycle      1.0.0   2021-02-15 [1] CRAN (R 4.1.0)
 ##  lintr          2.0.1   2020-02-19 [1] CRAN (R 4.1.0)
@@ -359,14 +356,14 @@ Session info
 ##  rstudioapi     0.13    2020-11-12 [1] CRAN (R 4.1.0)
 ##  sass           0.4.0   2021-05-12 [1] CRAN (R 4.1.0)
 ##  sessioninfo    1.1.1   2018-11-05 [1] CRAN (R 4.1.0)
-##  stringi        1.7.3   2021-07-16 [1] CRAN (R 4.1.0)
+##  stringi        1.7.4   2021-08-25 [1] CRAN (R 4.1.0)
 ##  stringr        1.4.0   2019-02-10 [1] CRAN (R 4.1.0)
 ##  styler         1.5.1   2021-07-13 [1] CRAN (R 4.1.0)
-##  tibble         3.1.3   2021-07-23 [1] CRAN (R 4.1.0)
+##  tibble         3.1.4   2021-08-25 [1] CRAN (R 4.1.0)
 ##  utf8           1.2.2   2021-07-24 [1] CRAN (R 4.1.0)
 ##  vctrs          0.3.8   2021-04-29 [1] CRAN (R 4.1.0)
 ##  withr          2.4.2   2021-04-18 [1] CRAN (R 4.1.0)
-##  xfun           0.25    2021-08-06 [1] CRAN (R 4.1.0)
+##  xfun           0.26    2021-09-14 [1] CRAN (R 4.1.0)
 ##  xml2           1.3.2   2020-04-23 [1] CRAN (R 4.1.0)
 ##  xmlparsedata   1.0.5   2021-03-06 [1] CRAN (R 4.1.0)
 ##  yaml           2.2.1   2020-02-01 [1] CRAN (R 4.1.0)
@@ -379,6 +376,5 @@ Session info
 <ol>
 <li id="fn1"><p>The code looks like the shockwave emanating from <a href="https://en.wikipedia.org/wiki/Hadouken">a ‘hadouken’ energy-ball</a> from the Street Fighter video games.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
 <li id="fn2"><p>And if you’re nesting too much, maybe consider <a href="https://simplystatistics.org/2018/07/27/why-i-indent-my-code-8-spaces/">Roger Peng’s eight-space indentation</a> to punish yourself.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
-<li id="fn3"><p>This was the approach we used in <a href="https://github.com/matt-dray/r2eng/">the {r2eng} package</a> to <a href="https://www.rostrum.blog/2020/11/14/hello-r2eng/">convert R expressions to English sentences</a>.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
