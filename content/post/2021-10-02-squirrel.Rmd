@@ -1,0 +1,174 @@
+---
+title: "{ActionSquirrel}: a game in the R console"
+author: Matt Dray
+date: '2021-10-03'
+slug: squirrel
+categories:
+  - code
+  - package
+tags:
+  - emoji
+  - game
+  - r
+  - R6
+  - sonify
+---
+
+```{r include = FALSE}
+knitr::opts_chunk$set(comment = "")
+set.seed(2)
+```
+
+<div class="figure">
+<img src="/post/2021-10-02-squirrel_files/squirrel.gif" alt="The ActionSquirrel package is loaded to the R console, which prints some information about commands that can be run. A new game is initiated with the 'new' method, revealilng a 5 by 5 grid of emoji of a squirrel, owl and nut, else decisuous trees. Ther 'move' method is applied to move the squirrel to collect a nut and then get eaten by the owl." width="100%"/>
+</div>
+
+# tl;dr
+
+I created [the {ActionSquirrel} package](https://github.com/matt-dray/ActionSquirrel). It contains an [{R6}-powered](https://r6.r-lib.org/index.html) playable game for the R console, which includes images (well, emoji) and sounds (thanks to the [{sonify}](https://CRAN.R-project.org/package=sonify) package).
+
+# GameRs
+
+I've written before about the idea of games that you can play in R. For example, I replicated a text-based version of [_Pokemon Blue_'s Safari Zone](https://www.rostrum.blog/2021/01/04/safar6/). This was made possible by using [the {R6} package by Winston Chang](https://r6.r-lib.org/index.html), which provides an implementation of [object-oriented programming](https://www.freecodecamp.org/news/object-oriented-programming-concepts-21bb035f7260/) (OOP) in R.
+
+An R6 class has 'fields' (variables) and 'methods' (functions) that can adjust the field values. This means you can manipulate the state of the object over time. You can read more in [the {R6} documentation](https://r6.r-lib.org/index.html) or in [Hadley Wickham's _Advanced R_ book](https://adv-r.hadley.nz/r6.html#r6-classes).
+
+So you could create a class with a field that provides the location of a character, then let the user apply a method to overwrite that location. If you print the 'before' and 'after' states, you'll get the impression of movement for the character.
+
+# Winter is coming
+
+With this in mind, I made a game and put it in the {ActionSquirrel} package. It's pretty simple; consider it a concept. 
+
+You play as a squirrel in a woodland, hoarding nuts before winter sets in. You have to collect 8 nuts in 30 moves or you won't survive. To make matters worse, there's an owl on patrol that wants to eat you.
+
+The package contains a single 'ActionSquirrel' class. It has fields for the location of game objects---emojis for a tree, a squirrel, an owl and a nut---on a grid.[^grid] It has a method to move the squirrel around the grid, which also executes code to assesses and change other field states. For example, it can check how many moves have happened, can adjust the owl's position and spawn a new nut after the last one was collected.
+
+# Demo
+
+Install from GitHub.
+
+```{r install, eval=FALSE}
+install.packages("remotes")  # if not installed already
+remotes::install_github("matt-dray/ActionSquirrel")
+```
+
+Note that I've developed and tested this only in RStudio v1.4.1717 with R v4.1.1 running on macOS Big Sur. I think emoji rendering, console-clearing and the sound effects may not work on all platforms and setups.
+
+Basic instructions are printed when the package is attached.
+
+```{r library}
+library(ActionSquirrel)
+```
+
+## Start
+
+Initiate an object with the ActionSquirrel class by assigning `ActionSquirrel$new()` to a name (I'll use `x` for demo purposes). This clears the console and generates a forest grid that contains the squirrel, a nut and an owl, along with tallies for moves and nuts collected.
+
+```{r init}
+x <- ActionSquirrel$new()
+```
+
+Methods are applied to your object like `object$method()`. We can use the `pause()` method to get game instructions, for example.
+
+```{r pause}
+x$pause()
+```
+
+## State
+
+To understand a little more the mechanics of R6-classes, you could take a peek at the current state of the fields and methods by printing your ActionSquirrel-class object.
+
+```{r state}
+x
+```
+
+The most relevant of these are the `moves` and `nuts` counts; the `*_loc` values that specify the location of the `s`quirrel, `o`wl and `n`ut in the `overworld` vector;  and the `move()` method for controlling the player.
+
+It isn't necessary for gameplay purposes to see this information, but it for learning purposes it provides a sort-of 'meta' view of the current game state. (It will also help you 'hack' the game, more on that later!)
+
+## Move
+
+You move the squirrel through the forest with the `move()` method. It has one argument, `where`, that takes the directions `"up"`, `"down"`, `"left"` and `"right"` (you can also just supply the first letter of the direction). I built in collision detection, so you can't exceed the limits of the grid by trying to go left if you're already on teh leftmost edge.
+
+```{r up}
+x$move("up")
+```
+
+Congratulations: your move tally has increased by one. You may also have noticed that the owl moved up one space as well. The owl will move one space vertically or horizontally, or stay still, with equal probability.
+
+Note that you can also take more than one move at a time (elite gamer tech) by 'chaining' methods, like `x$move("up)$move("left)`, but this is risky because you might collide with the owl.
+
+Importantly, the whole R console is cleared before the updated grid is printed. This gives an impression of animated graphics, since the console overwrites the previous state with the current state.
+
+Now to collect the nut.
+
+```{r left}
+x$move("left")
+```
+
+Congratulations, your nut tally has increased by one and a new nut has spawned in a random location. Collect at least eight nuts, or you won't survive winter.
+
+## Owl
+
+You'll get a game over if the owl eats you (i.e. you occupy the same spot). So if you move left and the owl happens to move up...
+
+```{r owl-death}
+x$move("left")
+```
+
+The location of your death is marked with a skull and you'll get a game over with information about what happened. At this point, the `active` field of the class is set to `FALSE`, which prevents you from moving again
+
+## Winter
+
+After 30 turns the game will end because you've reached winter. You'll get a victory screen if you collected 8 nuts, otherwise a failure screen.
+
+Aside: {R6} allows for 'public' and 'private' fields and methods. I've used public methods for the ActionSquirrel class, so that users can see the contents and state of the class and manipulate them. I think this is good for learning purposes.
+
+It also means that we can 'hack' the game to the end state by overwriting the number of nuts and moves remaining! First, a victory after having collected eight nuts or more:
+
+```{r endgame-win}
+x <- ActionSquirrel$new()
+x$moves <- 29
+x$nuts <- 10
+x$move()
+```
+
+Our little squirrel friend is hibernating with the nut cache nearby. Meanwhile, the signs of winter fill the rest of the grid. Your success is confirmed in a printed statement.
+
+And what if we end the game with an insufficient nut cache?
+
+```{r endgame-lose}
+x <- ActionSquirrel$new()
+x$moves <- 29
+x$nuts <- 4
+x$move()
+```
+
+Oh dear.
+
+## SFX
+
+So we've got a player character, an enemy, collectibles, a goal and 'animated' visuals. The only thing missing is audio.
+
+Luckily, you can force your computer to make noise with [the {sonify} package](https://CRAN.R-project.org/package=sonify). I've used it before in this blog [to represent COVID-19 data in audio form](https://www.rostrum.blog/2021/02/02/sonify-covid/). For {ActionSquirrel}, I used it to make short, simple beeps to indicate a move, nut capture, collision with the edge of the grid, a win and a death. Here's what those sound like, respectively:
+
+<html><audio controls><source src="/output/squirrel/sfx.wav" type="audio/wav"></audio></html>
+
+The death sound is a flatline, because of course it is.
+
+# R6, 7, 8
+
+So, give it a go. What's your high score? How guilty did you feel when the squirrel died?
+
+There's lots of ways this could be improved. Maybe the owl could have 'AI' that encourages it to move towards the player or nut. Maybe there could be another enemy with different movement patterns. I welcome any bug reports or suggestions in [the GitHub repo for {ActionSquirrel}](https://github.com/matt-dray/ActionSquirrel/issues), or maybe you can fork it and make it better.
+
+This post completes my R6 OOP hattrick alongside posts on [Animal Crossing](https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/) and [Pokémon](https://www.rostrum.blog/2021/01/04/safar6/). Next time I might move onto {R7}, a new package for OOP in R [that's being coordinated and developed in the open by the R Consortium](https://github.com/RConsortium/OOP-WG/).
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^grid]: I've [posted previously](https://www.rostrum.blog/2021/06/26/emojiscape/) about [my {emojiscape} package](https://github.com/matt-dray/emojiscape) for printing little emoji grids to the console that represent different scenes. You may recognise the components from `emojiscape::generate("woods")` in {ActionSquirrel}.

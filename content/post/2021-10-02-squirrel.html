@@ -1,0 +1,262 @@
+---
+title: "{ActionSquirrel}: a game in the R console"
+author: Matt Dray
+date: '2021-10-03'
+slug: squirrel
+categories:
+  - code
+  - package
+tags:
+  - emoji
+  - game
+  - r
+  - R6
+  - sonify
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div class="figure">
+<p><img src="/post/2021-10-02-squirrel_files/squirrel.gif" alt="The ActionSquirrel package is loaded to the R console, which prints some information about commands that can be run. A new game is initiated with the 'new' method, revealilng a 5 by 5 grid of emoji of a squirrel, owl and nut, else decisuous trees. Ther 'move' method is applied to move the squirrel to collect a nut and then get eaten by the owl." width="100%"/></p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I created <a href="https://github.com/matt-dray/ActionSquirrel">the {ActionSquirrel} package</a>. It contains an <a href="https://r6.r-lib.org/index.html">{R6}-powered</a> playable game for the R console, which includes images (well, emoji) and sounds (thanks to the <a href="https://CRAN.R-project.org/package=sonify">{sonify}</a> package).</p>
+</div>
+<div id="gamers" class="section level1">
+<h1>GameRs</h1>
+<p>I’ve written before about the idea of games that you can play in R. For example, I replicated a text-based version of <a href="https://www.rostrum.blog/2021/01/04/safar6/"><em>Pokemon Blue</em>’s Safari Zone</a>. This was made possible by using <a href="https://r6.r-lib.org/index.html">the {R6} package by Winston Chang</a>, which provides an implementation of <a href="https://www.freecodecamp.org/news/object-oriented-programming-concepts-21bb035f7260/">object-oriented programming</a> (OOP) in R.</p>
+<p>An R6 class has ‘fields’ (variables) and ‘methods’ (functions) that can adjust the field values. This means you can manipulate the state of the object over time. You can read more in <a href="https://r6.r-lib.org/index.html">the {R6} documentation</a> or in <a href="https://adv-r.hadley.nz/r6.html#r6-classes">Hadley Wickham’s <em>Advanced R</em> book</a>.</p>
+<p>So you could create a class with a field that provides the location of a character, then let the user apply a method to overwrite that location. If you print the ‘before’ and ‘after’ states, you’ll get the impression of movement for the character.</p>
+</div>
+<div id="winter-is-coming" class="section level1">
+<h1>Winter is coming</h1>
+<p>With this in mind, I made a game and put it in the {ActionSquirrel} package. It’s pretty simple; consider it a concept.</p>
+<p>You play as a squirrel in a woodland, hoarding nuts before winter sets in. You have to collect 8 nuts in 30 moves or you won’t survive. To make matters worse, there’s an owl on patrol that wants to eat you.</p>
+<p>The package contains a single ‘ActionSquirrel’ class. It has fields for the location of game objects—emojis for a tree, a squirrel, an owl and a nut—on a grid.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> It has a method to move the squirrel around the grid, which also executes code to assesses and change other field states. For example, it can check how many moves have happened, can adjust the owl’s position and spawn a new nut after the last one was collected.</p>
+</div>
+<div id="demo" class="section level1">
+<h1>Demo</h1>
+<p>Install from GitHub.</p>
+<pre class="r"><code>install.packages(&quot;remotes&quot;)  # if not installed already
+remotes::install_github(&quot;matt-dray/ActionSquirrel&quot;)</code></pre>
+<p>Note that I’ve developed and tested this only in RStudio v1.4.1717 with R v4.1.1 running on macOS Big Sur. I think emoji rendering, console-clearing and the sound effects may not work on all platforms and setups.</p>
+<p>Basic instructions are printed when the package is attached.</p>
+<pre class="r"><code>library(ActionSquirrel)</code></pre>
+<pre><code>Welcome to {ActionSquirrel}!
+* New game: x &lt;- ActionSquirrel$new()
+* Move:     e.g. x$move(&#39;up&#39;)
+* Info:     x$pause()</code></pre>
+<div id="start" class="section level2">
+<h2>Start</h2>
+<p>Initiate an object with the ActionSquirrel class by assigning <code>ActionSquirrel$new()</code> to a name (I’ll use <code>x</code> for demo purposes). This clears the console and generates a forest grid that contains the squirrel, a nut and an owl, along with tallies for moves and nuts collected.</p>
+<pre class="r"><code>x &lt;- ActionSquirrel$new()</code></pre>
+<pre><code>🌳 🌳 🌳 🌳 🌳 
+🌳 🌳 🌰 🌳 🌳 
+🌳 🌳 🌳 🐿 🌳 
+🌳 🦉 🌳 🌳 🌳 
+🌳 🌳 🌳 🌳 🌳 
+Moves: 0 
+Nuts: 0</code></pre>
+<p>Methods are applied to your object like <code>object$method()</code>. We can use the <code>pause()</code> method to get game instructions, for example.</p>
+<pre class="r"><code>x$pause()</code></pre>
+<pre><code>P A U S E
+ * Aim:       get eight nuts before winter (30 moves)
+ * Move:      e.g. x$move(&#39;up&#39;)
+ * Chain:     e.g. x$move(&#39;u&#39;)$move(&#39;r&#39;)
+ * New game:  x &lt;- ActionSquirrel$new()
+ * Info:      x$pause()
+ * Source:    github.com/matt-dray/ActionSquirrel</code></pre>
+</div>
+<div id="state" class="section level2">
+<h2>State</h2>
+<p>To understand a little more the mechanics of R6-classes, you could take a peek at the current state of the fields and methods by printing your ActionSquirrel-class object.</p>
+<pre class="r"><code>x</code></pre>
+<pre><code>&lt;ActionSquirrel&gt;
+  Public:
+    active: TRUE
+    clone: function (deep = FALSE) 
+    initialize: function () 
+    move: function (where = c(&quot;up&quot;, &quot;down&quot;, &quot;left&quot;, &quot;right&quot;)) 
+    moves: 0
+    n_loc: 8
+    nuts: 0
+    o_loc: 17
+    overworld: 🌳 🌳 🌳 🌳 🌳 🌳 🌳 🌰 🌳 🌳 🌳 🌳 🌳 🐿 🌳 🌳 🦉 🌳 🌳 🌳 🌳 🌳 🌳 🌳 🌳
+    pause: function () 
+    s_loc: 14</code></pre>
+<p>The most relevant of these are the <code>moves</code> and <code>nuts</code> counts; the <code>*_loc</code> values that specify the location of the <code>s</code>quirrel, <code>o</code>wl and <code>n</code>ut in the <code>overworld</code> vector; and the <code>move()</code> method for controlling the player.</p>
+<p>It isn’t necessary for gameplay purposes to see this information, but it for learning purposes it provides a sort-of ‘meta’ view of the current game state. (It will also help you ‘hack’ the game, more on that later!)</p>
+</div>
+<div id="move" class="section level2">
+<h2>Move</h2>
+<p>You move the squirrel through the forest with the <code>move()</code> method. It has one argument, <code>where</code>, that takes the directions <code>"up"</code>, <code>"down"</code>, <code>"left"</code> and <code>"right"</code> (you can also just supply the first letter of the direction). I built in collision detection, so you can’t exceed the limits of the grid by trying to go left if you’re already on teh leftmost edge.</p>
+<pre class="r"><code>x$move(&quot;up&quot;)</code></pre>
+<pre><code>🌳 🌳 🌳 🌳 🌳 
+🌳 🌳 🌰 🐿️ 🌳 
+🌳 🦉 🌳 🌳 🌳 
+🌳 🌳 🌳 🌳 🌳 
+🌳 🌳 🌳 🌳 🌳 
+Moves: 1 
+Nuts: 0</code></pre>
+<p>Congratulations: your move tally has increased by one. You may also have noticed that the owl moved up one space as well. The owl will move one space vertically or horizontally, or stay still, with equal probability.</p>
+<p>Note that you can also take more than one move at a time (elite gamer tech) by ‘chaining’ methods, like <code>x$move("up)$move("left)</code>, but this is risky because you might collide with the owl.</p>
+<p>Importantly, the whole R console is cleared before the updated grid is printed. This gives an impression of animated graphics, since the console overwrites the previous state with the current state.</p>
+<p>Now to collect the nut.</p>
+<pre class="r"><code>x$move(&quot;left&quot;)</code></pre>
+<pre><code>🌳 🌳 🌳 🌳 🌳 
+🌳 🌳 🐿️ 🌳 🌳 
+🌳 🦉 🌳 🌳 🌳 
+🌰 🌳 🌳 🌳 🌳 
+🌳 🌳 🌳 🌳 🌳 
+Moves: 2 
+Nuts: 1</code></pre>
+<p>Congratulations, your nut tally has increased by one and a new nut has spawned in a random location. Collect at least eight nuts, or you won’t survive winter.</p>
+</div>
+<div id="owl" class="section level2">
+<h2>Owl</h2>
+<p>You’ll get a game over if the owl eats you (i.e. you occupy the same spot). So if you move left and the owl happens to move up…</p>
+<pre class="r"><code>x$move(&quot;left&quot;)</code></pre>
+<pre><code>🌳 🌳 🌳 🌳 🌳 
+🌳 💀 🌳 🌳 🌳 
+🌳 🌳 🌳 🌳 🌳 
+🌰 🌳 🌳 🌳 🌳 
+🌳 🌳 🌳 🌳 🌳 
+Moves: 3 
+Nuts: 1
+Y O U   D I E D ! 
+The owl ate you.
+G A M E   O V E R 
+* New game: x &lt;- ActionSquirrel$new() 
+* Source:   github.com/matt-dray/ActionSquirrel</code></pre>
+<p>The location of your death is marked with a skull and you’ll get a game over with information about what happened. At this point, the <code>active</code> field of the class is set to <code>FALSE</code>, which prevents you from moving again</p>
+</div>
+<div id="winter" class="section level2">
+<h2>Winter</h2>
+<p>After 30 turns the game will end because you’ve reached winter. You’ll get a victory screen if you collected 8 nuts, otherwise a failure screen.</p>
+<p>Aside: {R6} allows for ‘public’ and ‘private’ fields and methods. I’ve used public methods for the ActionSquirrel class, so that users can see the contents and state of the class and manipulate them. I think this is good for learning purposes.</p>
+<p>It also means that we can ‘hack’ the game to the end state by overwriting the number of nuts and moves remaining! First, a victory after having collected eight nuts or more:</p>
+<pre class="r"><code>x &lt;- ActionSquirrel$new()</code></pre>
+<pre><code>🌳 🌳 🌳 🌳 🌳 
+🌳 🌳 🌰 🌳 🌳 
+🌳 🌳 🌳 🐿 🌳 
+🌳 🦉 🌳 🌳 🌳 
+🌳 🌳 🌳 🌳 🌳 
+Moves: 0 
+Nuts: 0</code></pre>
+<pre class="r"><code>x$moves &lt;- 29
+x$nuts &lt;- 10
+x$move()</code></pre>
+<pre><code>🐿️ 💤 🌰 🌰 🌰 
+🌰 🌰 🌰 🌰 🌰 
+🌰 🌰 🎄 ⛄ 🎄 
+🌨 ⛄ 🎄 ⛄ 🎄 
+⛄ ⛄ 🌨 🎄 🌨 
+Moves: 30 
+Nuts: 10
+Y O U   S U R V I V E D ! 
+Sufficient winter nut cache!
+G A M E   O V E R 
+* New game: x &lt;- ActionSquirrel$new() 
+* Source:   github.com/matt-dray/ActionSquirrel</code></pre>
+<p>Our little squirrel friend is hibernating with the nut cache nearby. Meanwhile, the signs of winter fill the rest of the grid. Your success is confirmed in a printed statement.</p>
+<p>And what if we end the game with an insufficient nut cache?</p>
+<pre class="r"><code>x &lt;- ActionSquirrel$new()</code></pre>
+<pre><code>🌳 🌳 🌳 🌳 🌳 
+🌳 🌳 🌰 🌳 🌳 
+🌳 🌳 🌳 🐿 🌳 
+🌳 🦉 🌳 🌳 🌳 
+🌳 🌳 🌳 🌳 🌳 
+Moves: 0 
+Nuts: 0</code></pre>
+<pre class="r"><code>x$moves &lt;- 29
+x$nuts &lt;- 4
+x$move()</code></pre>
+<pre><code>🐿️ 💀 🌰 🌰 🌰 
+🌰 ❌ ❌ ❌ ❌ 
+🎄 🎄 🌨 🎄 ⛄ 
+🎄 ⛄ 🎄 ⛄ 🎄 
+⛄ 🎄 🌨 ⛄ ⛄ 
+Moves: 30 
+Nuts: 4
+Y O U   D I E D ! 
+Insufficient winter nut cache!
+G A M E   O V E R 
+* New game: x &lt;- ActionSquirrel$new() 
+* Source:   github.com/matt-dray/ActionSquirrel</code></pre>
+<p>Oh dear.</p>
+</div>
+<div id="sfx" class="section level2">
+<h2>SFX</h2>
+<p>So we’ve got a player character, an enemy, collectibles, a goal and ‘animated’ visuals. The only thing missing is audio.</p>
+<p>Luckily, you can force your computer to make noise with <a href="https://CRAN.R-project.org/package=sonify">the {sonify} package</a>. I’ve used it before in this blog <a href="https://www.rostrum.blog/2021/02/02/sonify-covid/">to represent COVID-19 data in audio form</a>. For {ActionSquirrel}, I used it to make short, simple beeps to indicate a move, nut capture, collision with the edge of the grid, a win and a death. Here’s what those sound like, respectively:</p>
+<html>
+<audio controls>
+<source src="/output/squirrel/sfx.wav" type="audio/wav">
+</audio>
+</html>
+<p>The death sound is a flatline, because of course it is.</p>
+</div>
+</div>
+<div id="r6-7-8" class="section level1">
+<h1>R6, 7, 8</h1>
+<p>So, give it a go. What’s your high score? How guilty did you feel when the squirrel died?</p>
+<p>There’s lots of ways this could be improved. Maybe the owl could have ‘AI’ that encourages it to move towards the player or nut. Maybe there could be another enemy with different movement patterns. I welcome any bug reports or suggestions in <a href="https://github.com/matt-dray/ActionSquirrel/issues">the GitHub repo for {ActionSquirrel}</a>, or maybe you can fork it and make it better.</p>
+<p>This post completes my R6 OOP hattrick alongside posts on <a href="https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/">Animal Crossing</a> and <a href="https://www.rostrum.blog/2021/01/04/safar6/">Pokémon</a>. Next time I might move onto {R7}, a new package for OOP in R <a href="https://github.com/RConsortium/OOP-WG/">that’s being coordinated and developed in the open by the R Consortium</a>.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>─ Session info ───────────────────────────────────────────────────────────────
+ setting  value                       
+ version  R version 4.1.0 (2021-05-18)
+ os       macOS Big Sur 10.16         
+ system   x86_64, darwin17.0          
+ ui       X11                         
+ language (EN)                        
+ collate  en_GB.UTF-8                 
+ ctype    en_GB.UTF-8                 
+ tz       Europe/London               
+ date     2021-10-03                  
+
+─ Packages ───────────────────────────────────────────────────────────────────
+ package        * version    date       lib source        
+ ActionSquirrel * 0.0.0.9007 2021-10-01 [1] local         
+ blogdown         1.4        2021-07-23 [1] CRAN (R 4.1.0)
+ bookdown         0.23       2021-08-13 [1] CRAN (R 4.1.0)
+ bslib            0.2.5.1    2021-05-18 [1] CRAN (R 4.1.0)
+ cli              3.0.1      2021-07-17 [1] CRAN (R 4.1.0)
+ digest           0.6.27     2020-10-24 [1] CRAN (R 4.1.0)
+ evaluate         0.14       2019-05-28 [1] CRAN (R 4.1.0)
+ htmltools        0.5.1.1    2021-01-22 [1] CRAN (R 4.1.0)
+ jquerylib        0.1.4      2021-04-26 [1] CRAN (R 4.1.0)
+ jsonlite         1.7.2      2020-12-09 [1] CRAN (R 4.1.0)
+ knitr            1.34       2021-09-09 [1] CRAN (R 4.1.0)
+ magrittr         2.0.1      2020-11-17 [1] CRAN (R 4.1.0)
+ MASS             7.3-54     2021-05-03 [1] CRAN (R 4.1.0)
+ R6               2.5.1      2021-08-19 [1] CRAN (R 4.1.0)
+ rlang            0.4.11     2021-04-30 [1] CRAN (R 4.1.0)
+ rmarkdown        2.10       2021-08-06 [1] CRAN (R 4.1.0)
+ rstudioapi       0.13       2020-11-12 [1] CRAN (R 4.1.0)
+ sass             0.4.0      2021-05-12 [1] CRAN (R 4.1.0)
+ sessioninfo      1.1.1      2018-11-05 [1] CRAN (R 4.1.0)
+ signal           0.7-7      2021-05-25 [1] CRAN (R 4.1.0)
+ sonify           0.0-1      2017-02-01 [1] CRAN (R 4.1.0)
+ stringi          1.7.4      2021-08-25 [1] CRAN (R 4.1.0)
+ stringr          1.4.0      2019-02-10 [1] CRAN (R 4.1.0)
+ tuneR            1.3.3.1    2021-08-04 [1] CRAN (R 4.1.0)
+ withr            2.4.2      2021-04-18 [1] CRAN (R 4.1.0)
+ xfun             0.26       2021-09-14 [1] CRAN (R 4.1.0)
+ yaml             2.2.1      2020-02-01 [1] CRAN (R 4.1.0)
+
+[1] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
+</details>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>I’ve <a href="https://www.rostrum.blog/2021/06/26/emojiscape/">posted previously</a> about <a href="https://github.com/matt-dray/emojiscape">my {emojiscape} package</a> for printing little emoji grids to the console that represent different scenes. You may recognise the components from <code>emojiscape::generate("woods")</code> in {ActionSquirrel}.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
