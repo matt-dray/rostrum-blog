@@ -25,13 +25,13 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 104 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 105 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 19 day(s) ago:
-[Wot3LdnEmojis](https://www.rostrum.blog/2021/09/14/wot3ldnemojis/).
+🆕 The latest post was published 1 day(s) ago: [{ActionSquirrel}: a game
+in the R console](https://www.rostrum.blog/2021/10/03/squirrel/).
 
 📈 This 2D plot shows posts over time:
 
@@ -43,6 +43,7 @@ since 2018-04-14.
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|    105 | 2021-10-03 | [{ActionSquirrel}: a game in the R console](https://www.rostrum.blog/2021/10/03/squirrel/)                                |
 |    104 | 2021-09-14 | [Wot3LdnEmojis](https://www.rostrum.blog/2021/09/14/wot3ldnemojis/)                                                       |
 |    103 | 2021-09-12 | [Extract punctuation from books with R](https://www.rostrum.blog/2021/09/12/extract-punct/)                               |
 |    102 | 2021-08-31 | [Auto-label closing parentheses in RStudio](https://www.rostrum.blog/2021/08/31/add-biscuits/)                            |
@@ -152,4 +153,4 @@ since 2018-04-14.
 
 -----
 
-*Updated 2021-10-03 02:36:53*
+*Updated 2021-10-04 02:38:47*
