@@ -20,7 +20,7 @@ set.seed(2)
 ```
 
 <div class="figure">
-<img src="/post/2021-10-02-squirrel_files/squirrel.gif" alt="The ActionSquirrel package is loaded to the R console, which prints some information about commands that can be run. A new game is initiated with the 'new' method, revealilng a 5 by 5 grid of emoji of a squirrel, owl and nut, else decisuous trees. Ther 'move' method is applied to move the squirrel to collect a nut and then get eaten by the owl." width="100%"/>
+<img src="/post/2021-10-02-squirrel_files/squirrel.gif" alt="The ActionSquirrel package is loaded to the R console, which prints some information about commands that can be run. A new game is initiated with the 'new' method, revealing a 5 by 5 grid of emoji of a squirrel, owl and nut, else deciduous trees. The 'move' method is applied to move the squirrel to collect a nut and then get eaten by the owl." width="100%"/>
 </div>
 
 # tl;dr
@@ -68,7 +68,7 @@ Initiate an object with the ActionSquirrel class by assigning `ActionSquirrel$ne
 x <- ActionSquirrel$new()
 ```
 
-Methods are applied to your object like `object$method()`. We can use the `pause()` method to get game instructions, for example.
+Methods are applied to your object with the dollar symbol accessor[^dollar] in the form `object$method()`. We can use the `pause()` method to get game instructions, for example.
 
 ```{r pause}
 x$pause()
@@ -78,25 +78,27 @@ x$pause()
 
 To understand a little more the mechanics of R6-classes, you could take a peek at the current state of the fields and methods by printing your ActionSquirrel-class object.
 
+It isn't necessary for gameplay purposes to see this information, but for learning purposes it provides a sort-of 'meta' view of the current game state. (It will also help you 'hack' the game, more on that later!)
+
 ```{r state}
 x
 ```
 
 The most relevant of these are the `moves` and `nuts` counts; the `*_loc` values that specify the location of the `s`quirrel, `o`wl and `n`ut in the `overworld` vector;  and the `move()` method for controlling the player.
 
-It isn't necessary for gameplay purposes to see this information, but it for learning purposes it provides a sort-of 'meta' view of the current game state. (It will also help you 'hack' the game, more on that later!)
-
 ## Move
 
-You move the squirrel through the forest with the `move()` method. It has one argument, `where`, that takes the directions `"up"`, `"down"`, `"left"` and `"right"` (you can also just supply the first letter of the direction). I built in collision detection, so you can't exceed the limits of the grid by trying to go left if you're already on teh leftmost edge.
+You move the squirrel through the forest with the `move()` method. It has one argument, `where`, that takes the directions `"up"`, `"down"`, `"left"` and `"right"` (you can also just supply the first letter of the direction). 
 
 ```{r up}
 x$move("up")
 ```
 
-Congratulations: your move tally has increased by one. You may also have noticed that the owl moved up one space as well. The owl will move one space vertically or horizontally, or stay still, with equal probability.
+Congratulations: your move tally has increased by one. You may also have noticed that the owl moved up one space as well; it moves one space vertically or horizontally, or stays still, with equal probability.
 
-Note that you can also take more than one move at a time (elite gamer tech) by 'chaining' methods, like `x$move("up)$move("left)`, but this is risky because you might collide with the owl.
+I built in collision detection, so you can't exceed the limits of the grid by trying to go left if you're already on the leftmost edge, for example.
+
+Note that you can also take more than one move at a time (elite gamer tech) by 'chaining' methods, like `x$move("up")$move("left")`, but this is risky because you might collide with the owl.
 
 Importantly, the whole R console is cleared before the updated grid is printed. This gives an impression of animated graphics, since the console overwrites the previous state with the current state.
 
@@ -172,3 +174,4 @@ sessioninfo::session_info()
 </details>
 
 [^grid]: I've [posted previously](https://www.rostrum.blog/2021/06/26/emojiscape/) about [my {emojiscape} package](https://github.com/matt-dray/emojiscape) for printing little emoji grids to the console that represent different scenes. You may recognise the components from `emojiscape::generate("woods")` in {ActionSquirrel}.
+[^dollar]: But beware of the [conspiracy behind the use of this operator](https://www.rostrum.blog/2021/07/15/dollar-dollar/).

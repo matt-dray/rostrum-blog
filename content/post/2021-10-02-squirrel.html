@@ -18,7 +18,7 @@ tags:
 
 
 <div class="figure">
-<p><img src="/post/2021-10-02-squirrel_files/squirrel.gif" alt="The ActionSquirrel package is loaded to the R console, which prints some information about commands that can be run. A new game is initiated with the 'new' method, revealilng a 5 by 5 grid of emoji of a squirrel, owl and nut, else decisuous trees. Ther 'move' method is applied to move the squirrel to collect a nut and then get eaten by the owl." width="100%"/></p>
+<p><img src="/post/2021-10-02-squirrel_files/squirrel.gif" alt="The ActionSquirrel package is loaded to the R console, which prints some information about commands that can be run. A new game is initiated with the 'new' method, revealing a 5 by 5 grid of emoji of a squirrel, owl and nut, else deciduous trees. The 'move' method is applied to move the squirrel to collect a nut and then get eaten by the owl." width="100%"/></p>
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
@@ -59,7 +59,7 @@ remotes::install_github(&quot;matt-dray/ActionSquirrel&quot;)</code></pre>
 🌳 🌳 🌳 🌳 🌳 
 Moves: 0 
 Nuts: 0</code></pre>
-<p>Methods are applied to your object like <code>object$method()</code>. We can use the <code>pause()</code> method to get game instructions, for example.</p>
+<p>Methods are applied to your object with the dollar symbol accessor<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> in the form <code>object$method()</code>. We can use the <code>pause()</code> method to get game instructions, for example.</p>
 <pre class="r"><code>x$pause()</code></pre>
 <pre><code>P A U S E
  * Aim:       get eight nuts before winter (30 moves)
@@ -72,6 +72,7 @@ Nuts: 0</code></pre>
 <div id="state" class="section level2">
 <h2>State</h2>
 <p>To understand a little more the mechanics of R6-classes, you could take a peek at the current state of the fields and methods by printing your ActionSquirrel-class object.</p>
+<p>It isn’t necessary for gameplay purposes to see this information, but for learning purposes it provides a sort-of ‘meta’ view of the current game state. (It will also help you ‘hack’ the game, more on that later!)</p>
 <pre class="r"><code>x</code></pre>
 <pre><code>&lt;ActionSquirrel&gt;
   Public:
@@ -87,11 +88,10 @@ Nuts: 0</code></pre>
     pause: function () 
     s_loc: 14</code></pre>
 <p>The most relevant of these are the <code>moves</code> and <code>nuts</code> counts; the <code>*_loc</code> values that specify the location of the <code>s</code>quirrel, <code>o</code>wl and <code>n</code>ut in the <code>overworld</code> vector; and the <code>move()</code> method for controlling the player.</p>
-<p>It isn’t necessary for gameplay purposes to see this information, but it for learning purposes it provides a sort-of ‘meta’ view of the current game state. (It will also help you ‘hack’ the game, more on that later!)</p>
 </div>
 <div id="move" class="section level2">
 <h2>Move</h2>
-<p>You move the squirrel through the forest with the <code>move()</code> method. It has one argument, <code>where</code>, that takes the directions <code>"up"</code>, <code>"down"</code>, <code>"left"</code> and <code>"right"</code> (you can also just supply the first letter of the direction). I built in collision detection, so you can’t exceed the limits of the grid by trying to go left if you’re already on teh leftmost edge.</p>
+<p>You move the squirrel through the forest with the <code>move()</code> method. It has one argument, <code>where</code>, that takes the directions <code>"up"</code>, <code>"down"</code>, <code>"left"</code> and <code>"right"</code> (you can also just supply the first letter of the direction).</p>
 <pre class="r"><code>x$move(&quot;up&quot;)</code></pre>
 <pre><code>🌳 🌳 🌳 🌳 🌳 
 🌳 🌳 🌰 🐿️ 🌳 
@@ -100,8 +100,9 @@ Nuts: 0</code></pre>
 🌳 🌳 🌳 🌳 🌳 
 Moves: 1 
 Nuts: 0</code></pre>
-<p>Congratulations: your move tally has increased by one. You may also have noticed that the owl moved up one space as well. The owl will move one space vertically or horizontally, or stay still, with equal probability.</p>
-<p>Note that you can also take more than one move at a time (elite gamer tech) by ‘chaining’ methods, like <code>x$move("up)$move("left)</code>, but this is risky because you might collide with the owl.</p>
+<p>Congratulations: your move tally has increased by one. You may also have noticed that the owl moved up one space as well; it moves one space vertically or horizontally, or stays still, with equal probability.</p>
+<p>I built in collision detection, so you can’t exceed the limits of the grid by trying to go left if you’re already on the leftmost edge, for example.</p>
+<p>Note that you can also take more than one move at a time (elite gamer tech) by ‘chaining’ methods, like <code>x$move("up")$move("left")</code>, but this is risky because you might collide with the owl.</p>
 <p>Importantly, the whole R console is cleared before the updated grid is printed. This gives an impression of animated graphics, since the console overwrites the previous state with the current state.</p>
 <p>Now to collect the nut.</p>
 <pre class="r"><code>x$move(&quot;left&quot;)</code></pre>
@@ -219,37 +220,37 @@ Session info
  collate  en_GB.UTF-8                 
  ctype    en_GB.UTF-8                 
  tz       Europe/London               
- date     2021-10-03                  
+ date     2021-10-04                  
 
 ─ Packages ───────────────────────────────────────────────────────────────────
- package        * version    date       lib source        
- ActionSquirrel * 0.0.0.9007 2021-10-01 [1] local         
- blogdown         1.4        2021-07-23 [1] CRAN (R 4.1.0)
- bookdown         0.23       2021-08-13 [1] CRAN (R 4.1.0)
- bslib            0.2.5.1    2021-05-18 [1] CRAN (R 4.1.0)
- cli              3.0.1      2021-07-17 [1] CRAN (R 4.1.0)
- digest           0.6.27     2020-10-24 [1] CRAN (R 4.1.0)
- evaluate         0.14       2019-05-28 [1] CRAN (R 4.1.0)
- htmltools        0.5.1.1    2021-01-22 [1] CRAN (R 4.1.0)
- jquerylib        0.1.4      2021-04-26 [1] CRAN (R 4.1.0)
- jsonlite         1.7.2      2020-12-09 [1] CRAN (R 4.1.0)
- knitr            1.34       2021-09-09 [1] CRAN (R 4.1.0)
- magrittr         2.0.1      2020-11-17 [1] CRAN (R 4.1.0)
- MASS             7.3-54     2021-05-03 [1] CRAN (R 4.1.0)
- R6               2.5.1      2021-08-19 [1] CRAN (R 4.1.0)
- rlang            0.4.11     2021-04-30 [1] CRAN (R 4.1.0)
- rmarkdown        2.10       2021-08-06 [1] CRAN (R 4.1.0)
- rstudioapi       0.13       2020-11-12 [1] CRAN (R 4.1.0)
- sass             0.4.0      2021-05-12 [1] CRAN (R 4.1.0)
- sessioninfo      1.1.1      2018-11-05 [1] CRAN (R 4.1.0)
- signal           0.7-7      2021-05-25 [1] CRAN (R 4.1.0)
- sonify           0.0-1      2017-02-01 [1] CRAN (R 4.1.0)
- stringi          1.7.4      2021-08-25 [1] CRAN (R 4.1.0)
- stringr          1.4.0      2019-02-10 [1] CRAN (R 4.1.0)
- tuneR            1.3.3.1    2021-08-04 [1] CRAN (R 4.1.0)
- withr            2.4.2      2021-04-18 [1] CRAN (R 4.1.0)
- xfun             0.26       2021-09-14 [1] CRAN (R 4.1.0)
- yaml             2.2.1      2020-02-01 [1] CRAN (R 4.1.0)
+ package        * version date       lib source        
+ ActionSquirrel * 0.1.0   2021-10-03 [1] local         
+ blogdown         1.4     2021-07-23 [1] CRAN (R 4.1.0)
+ bookdown         0.23    2021-08-13 [1] CRAN (R 4.1.0)
+ bslib            0.2.5.1 2021-05-18 [1] CRAN (R 4.1.0)
+ cli              3.0.1   2021-07-17 [1] CRAN (R 4.1.0)
+ digest           0.6.27  2020-10-24 [1] CRAN (R 4.1.0)
+ evaluate         0.14    2019-05-28 [1] CRAN (R 4.1.0)
+ htmltools        0.5.1.1 2021-01-22 [1] CRAN (R 4.1.0)
+ jquerylib        0.1.4   2021-04-26 [1] CRAN (R 4.1.0)
+ jsonlite         1.7.2   2020-12-09 [1] CRAN (R 4.1.0)
+ knitr            1.34    2021-09-09 [1] CRAN (R 4.1.0)
+ magrittr         2.0.1   2020-11-17 [1] CRAN (R 4.1.0)
+ MASS             7.3-54  2021-05-03 [1] CRAN (R 4.1.0)
+ R6               2.5.1   2021-08-19 [1] CRAN (R 4.1.0)
+ rlang            0.4.11  2021-04-30 [1] CRAN (R 4.1.0)
+ rmarkdown        2.10    2021-08-06 [1] CRAN (R 4.1.0)
+ rstudioapi       0.13    2020-11-12 [1] CRAN (R 4.1.0)
+ sass             0.4.0   2021-05-12 [1] CRAN (R 4.1.0)
+ sessioninfo      1.1.1   2018-11-05 [1] CRAN (R 4.1.0)
+ signal           0.7-7   2021-05-25 [1] CRAN (R 4.1.0)
+ sonify           0.0-1   2017-02-01 [1] CRAN (R 4.1.0)
+ stringi          1.7.4   2021-08-25 [1] CRAN (R 4.1.0)
+ stringr          1.4.0   2019-02-10 [1] CRAN (R 4.1.0)
+ tuneR            1.3.3.1 2021-08-04 [1] CRAN (R 4.1.0)
+ withr            2.4.2   2021-04-18 [1] CRAN (R 4.1.0)
+ xfun             0.26    2021-09-14 [1] CRAN (R 4.1.0)
+ yaml             2.2.1   2020-02-01 [1] CRAN (R 4.1.0)
 
 [1] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
 </details>
@@ -258,5 +259,6 @@ Session info
 <hr />
 <ol>
 <li id="fn1"><p>I’ve <a href="https://www.rostrum.blog/2021/06/26/emojiscape/">posted previously</a> about <a href="https://github.com/matt-dray/emojiscape">my {emojiscape} package</a> for printing little emoji grids to the console that represent different scenes. You may recognise the components from <code>emojiscape::generate("woods")</code> in {ActionSquirrel}.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>But beware of the <a href="https://www.rostrum.blog/2021/07/15/dollar-dollar/">conspiracy behind the use of this operator</a>.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
