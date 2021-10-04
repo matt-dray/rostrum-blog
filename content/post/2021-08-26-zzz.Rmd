@@ -129,7 +129,7 @@ Now we can use the repo details to build a URL to a potential zzz.R URL. This co
 
 You'll notice we don't yet know the default branch of the package's GitHub repo. Historically, we could probably have just hard-coded 'master', but the automatic default is now 'main'. And of course, the default branch could be something else entirely.
 
-We can grab the default branch for each repo from the GitHub API using [the excellent {gh} package](https://gh.r-lib.org/) by Gabor Csardi, Jenny Bryan and Hadley Wickham. You'll [need to do some setup](https://gh.r-lib.org/articles/managing-personal-access-tokens.html) to use it yourself.
+We can grab the default branch for each repo from the GitHub API using [the excellent {gh} package](https://gh.r-lib.org/) by Gábor Csárdi, Jenny Bryan and Hadley Wickham. You'll [need to do some setup](https://gh.r-lib.org/articles/managing-personal-access-tokens.html) to use it yourself.
 
 The key function is `gh()`, to which you can pass a GET request for the information we want: `GET /repos/{owner}/{repo}`. We can iterate for each repo by passing each owner and repo name in turn. It returns a list object with lots of information about the repo.
 
@@ -244,7 +244,10 @@ I could provide a table with all the zzz.R scripts that I collected, but I don't
 ```{r reactable-hide, eval=FALSE}
 library(reactable)
 reactable(
-  data = fosho_zzz %>% select(package = Package, owner, repo, url = zzz_url), 
+  data = fosho_zzz %>% select(package = Package, owner, url = zzz_url),
+  searchable = TRUE,
+  paginationType = "jump",
+  defaultPageSize = 10,
   columns = list(
     url = colDef(cell = function(value) {
       htmltools::tags$a(href = value, target = "_blank", "zzz.R")
@@ -257,7 +260,10 @@ reactable(
 ```{r reactable-run, echo=FALSE}
 library(reactable)
 reactable(
-  data = fosho_zzz %>% select(package = Package, owner, repo, url = zzz_url), 
+  data = fosho_zzz %>% select(package = Package, owner, url = zzz_url), 
+  searchable = TRUE,
+  paginationType = "jump",
+  defaultPageSize = 10,
   columns = list(
     url = colDef(cell = function(value) {
       htmltools::tags$a(href = value, target = "_blank", "zzz.R")
@@ -315,4 +321,4 @@ sessioninfo::session_info()
 [^kevinbacran]: I made use of this for [the {kevinbacran} package](https://matt-dray.github.io/kevinbacran/) and the associated ['What's your Hadley Number?' app](https://www.rostrum.blog/2019/02/27/hadley-number/).
 [^long]: Which makes me wonder what the longest R function name is.
 [^bugreports]: I chose the `BugReports` field rather the `URL` field because people put all sorts of things in the latter, like links to websites, etc. `BugReports` (I think) tends to point to the source on GitHub.
-[^linkrot]: I wrote about status codes as part of the post on [my {linkrot} package](http://localhost:5115/2021/07/10/linkrot/).
+[^linkrot]: I wrote about status codes as part of the post on [my {linkrot} package](https://www.rostrum.blog/2021/07/10/linkrot/).
