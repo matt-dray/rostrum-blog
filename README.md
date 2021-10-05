@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 1 day(s) ago: [{ActionSquirrel}: a game
+🆕 The latest post was published 2 day(s) ago: [{ActionSquirrel}: a game
 in the R console](https://www.rostrum.blog/2021/10/03/squirrel/).
 
 📈 This 2D plot shows posts over time:
@@ -153,4 +153,4 @@ in the R console](https://www.rostrum.blog/2021/10/03/squirrel/).
 
 -----
 
-*Updated 2021-10-04 02:38:47*
+*Updated 2021-10-05 02:47:28*
