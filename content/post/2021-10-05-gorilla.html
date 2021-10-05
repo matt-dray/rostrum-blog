@@ -1,0 +1,185 @@
+---
+title: "Reveal a hidden gorilla with {magick}"
+author: Matt Dray
+date: '2021-10-05'
+slug: gorilla
+categories:
+  - code
+  - tutorial
+tags:
+  - magick
+  - r
+  - raster
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>You can convert a line drawing to datapoints with <a href="https://docs.ropensci.org/magick/">a sprinkle of {magick}</a>.</p>
+</div>
+<div id="ape-escape" class="section level1">
+<h1>Ape escape</h1>
+<p>Have you seen <a href="http://www.theinvisiblegorilla.com/gorilla_experiment.html">that video</a> where you’re so focused on counting basketball passes that you fail to see the gorilla moving across the screen?</p>
+<p>This kind of selective attention was studied by two researchers, Yanai and Lercher, who provided subjects with a dataset that looked like a gorilla when plotted. <a href="https://www.biorxiv.org/content/10.1101/2020.07.30.228916v1">The gorilla was found less often if the subjects were also given a hypothesis to investigate</a>.</p>
+<p>The study got some attention on Twitter last week. As a result, <a href="https://ivelasq.rbind.io/blog/reticulate-data-recreation/">Isabella Velásquez wrote a great blogpost</a> where she recreated the dataset using R and Python in tandem via <a href="https://rstudio.github.io/reticulate/">the {reticulate} package</a>.</p>
+<p>I had a go at creating the dataset with base R and <a href="https://docs.ropensci.org/magick/">the excellent {magick} package for image manipulation</a>.</p>
+</div>
+<div id="point-it-out" class="section level1">
+<h1>Point it out</h1>
+<p>The jpeg image file used in the original paper can be downloaded from classroomclipart.com to a temporary location on your machine.</p>
+<pre class="r"><code>download.file(
+  paste0(
+    &quot;https://classroomclipart.com/images/gallery/&quot;,
+    &quot;Clipart/Black_and_White_Clipart/Animals/&quot;,
+    &quot;gorilla-waving-cartoon-black-white-outline-clipart-914.jpg&quot; 
+  ),
+  tempfile(fileext = &quot;.jpg&quot;)
+)</code></pre>
+<p>We can read the file into R with {magick}.</p>
+<pre class="r"><code>img &lt;- 
+  list.files(tempdir(), pattern = &quot;.jpg$&quot;, full.names = TRUE) |&gt;
+  magick::image_read()
+
+img</code></pre>
+<p><img src="/post/2021-10-05-gorilla_files/figure-html/orig-img-1.png" title="A line drawing of a cartoon gorilla waving." alt="A line drawing of a cartoon gorilla waving."  /></p>
+<p>With other {magick} functions we can:</p>
+<ul>
+<li>reduce to two distinct colours only (i.e. for the lines and background), which makes it easier to filter the data later</li>
+<li>convert from an image to point data</li>
+</ul>
+<pre class="r"><code>go &lt;- img |&gt;
+  magick::image_quantize(2) |&gt;  # colour reduction
+  magick::image_raster() |&gt;     # as x-y data
+  as.data.frame()
+
+head(go)</code></pre>
+<pre><code>##   x y       col
+## 1 1 1 #fefefeff
+## 2 2 1 #fefefeff
+## 3 3 1 #fefefeff
+## 4 4 1 #fefefeff
+## 5 5 1 #fefefeff
+## 6 6 1 #fefefeff</code></pre>
+<p>And to prove we only have two colours (off-white for the background, grey for the lines):</p>
+<pre class="r"><code>unique(go$col)</code></pre>
+<pre><code>## [1] &quot;#fefefeff&quot; &quot;#555555ff&quot;</code></pre>
+<p>Now we can:</p>
+<ul>
+<li>reverse the order of the <code>y</code> values so the gorilla faces the same way as in the paper</li>
+<li>filter to retain only the datapoints that represent lines</li>
+<li>rescale the <code>x</code> and <code>y</code> to create ‘Body Mass Index’ (BMI)<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> and ‘steps’ variables</li>
+</ul>
+<pre class="r"><code>go$y     &lt;- rev(go$y)
+go       &lt;- go[go$col != &quot;#fefefeff&quot;, ]
+go$bmi   &lt;- go$y / max(go $y) * 17 + 15
+go$steps &lt;- 15000 - go$x * 15000 / max(go$x)
+
+head(go)</code></pre>
+<pre><code>##       x   y       col bmi    steps
+## 174 174 550 #555555ff  32 8665.049
+## 175 175 550 #555555ff  32 8628.641
+## 176 176 550 #555555ff  32 8592.233
+## 196 196 550 #555555ff  32 7864.078
+## 198 198 550 #555555ff  32 7791.262
+## 199 199 550 #555555ff  32 7754.854</code></pre>
+<p>You may have noticed that the image has a watermark. We could have removed it earlier with {magick}, but can do it now by filtering out the datapoints in that corner.</p>
+<pre class="r"><code>go$logo &lt;- ifelse(go$bmi &lt; 16 &amp; go$steps &lt; 5500, TRUE, FALSE)
+go      &lt;- go[!go$logo, ]</code></pre>
+<p>This leaves us with 16865 datapoints. We can follow the original study by taking a sample and splitting the results into ‘female’ and ‘male’ groups, weighted so that the female group has higher step counts.</p>
+<pre class="r"><code>go_smp       &lt;- go[sample(nrow(go), 1768), ]
+go_smp$rnorm &lt;- rnorm(nrow(go_smp), mean = 0, sd = 10)
+go_smp$index &lt;- go_smp$steps * (1 + go_smp$rnorm)
+go_smp$group &lt;- 
+  ifelse(go_smp$index &lt; median(go_smp$steps), &quot;F&quot;, &quot;M&quot;) |&gt;
+  as.factor()
+
+head(go_smp[, c(&quot;bmi&quot;, &quot;steps&quot;, &quot;group&quot;)])</code></pre>
+<pre><code>##             bmi      steps group
+## 141108 21.42909 7572.81553     F
+## 78949  26.09636 5643.20388     F
+## 28681  29.86727 5788.83495     M
+## 90859  25.20000 7026.69903     F
+## 78506  26.12727 6771.84466     M
+## 81986  25.88000   72.81553     F</code></pre>
+<p>Now finally to plot the datasets side-by-side.</p>
+<pre class="r"><code>par(mfrow = c(1, 2))
+
+with(
+  go_smp[go_smp$group == &quot;F&quot;, ],
+  plot(
+    steps, bmi, xlim = c(0, 15000),
+    pch = 16, cex = 0.5, col = &quot;blue&quot;,
+    xlab = &quot;Steps&quot;, ylab = &quot;BMI&quot;, 
+  )
+)
+
+with(
+  go_smp[go_smp$group == &quot;M&quot;, ],
+  plot(
+    steps, bmi, xlim = c(0, 15000),
+    pch = 16, cex = 0.5, col = &quot;red&quot;,
+    xlab = &quot;Steps&quot;, ylab = &quot;BMI&quot;
+  )
+)</code></pre>
+<p><img src="/post/2021-10-05-gorilla_files/figure-html/two-plots-1.png" title="Two side-by-side plots of steps (x) against BMI (y) where both sets of datapoints look like a cartoon gorilla waving." alt="Two side-by-side plots of steps (x) against BMI (y) where both sets of datapoints look like a cartoon gorilla waving." width="672" /></p>
+<p>I see them!</p>
+<p>This has been a bit overengineered and could be generalised, but it gives a gist of how you might go about converting an image to a dataframe of x and y positions.</p>
+<p>At worst, this is a reminder not to trust researchers and to always check for unexpected gorillas.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.1.1 (2021-08-10)
+##  os       macOS Mojave 10.14.6        
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2021-10-05                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date       lib source        
+##  blogdown      1.5     2021-09-02 [1] CRAN (R 4.1.0)
+##  bookdown      0.24    2021-09-02 [1] CRAN (R 4.1.0)
+##  bslib         0.3.0   2021-09-02 [1] CRAN (R 4.1.0)
+##  cli           3.0.1   2021-07-17 [1] CRAN (R 4.1.0)
+##  digest        0.6.28  2021-09-23 [1] CRAN (R 4.1.0)
+##  evaluate      0.14    2019-05-28 [1] CRAN (R 4.1.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.1.0)
+##  highr         0.9     2021-04-16 [1] CRAN (R 4.1.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.1.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.1.0)
+##  jsonlite      1.7.2   2020-12-09 [1] CRAN (R 4.1.0)
+##  knitr         1.34    2021-09-09 [1] CRAN (R 4.1.0)
+##  magick        2.7.3   2021-08-18 [1] CRAN (R 4.1.0)
+##  magrittr      2.0.1   2020-11-17 [1] CRAN (R 4.1.0)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.1.0)
+##  Rcpp          1.0.7   2021-07-07 [1] CRAN (R 4.1.0)
+##  rlang         0.4.11  2021-04-30 [1] CRAN (R 4.1.0)
+##  rmarkdown     2.11    2021-09-14 [1] CRAN (R 4.1.0)
+##  rstudioapi    0.13    2020-11-12 [1] CRAN (R 4.1.0)
+##  sass          0.4.0   2021-05-12 [1] CRAN (R 4.1.0)
+##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.1.0)
+##  stringi       1.7.4   2021-08-25 [1] CRAN (R 4.1.0)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.1.0)
+##  withr         2.4.2   2021-04-18 [1] CRAN (R 4.1.0)
+##  xfun          0.26    2021-09-14 [1] CRAN (R 4.1.0)
+##  yaml          2.2.1   2020-02-01 [1] CRAN (R 4.1.0)
+## 
+## [1] /Users/matt.dray/Library/R/x86_64/4.1/library
+## [2] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
+</details>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Check out <a href="http://maintenancephase.com/">a recent episode of the <em>Maintenance Phase</em> podcast</a> (dated 2021-08-03) about the troublesome history and development of BMI as a metric.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
