@@ -25,13 +25,13 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 105 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 106 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 2 day(s) ago: [{ActionSquirrel}: a game
-in the R console](https://www.rostrum.blog/2021/10/03/squirrel/).
+🆕 The latest post was published 1 day(s) ago: [Reveal a hidden gorilla
+with {magick}](https://www.rostrum.blog/2021/10/05/gorilla/).
 
 📈 This 2D plot shows posts over time:
 
@@ -43,6 +43,7 @@ in the R console](https://www.rostrum.blog/2021/10/03/squirrel/).
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|    106 | 2021-10-05 | [Reveal a hidden gorilla with {magick}](https://www.rostrum.blog/2021/10/05/gorilla/)                                     |
 |    105 | 2021-10-03 | [{ActionSquirrel}: a game in the R console](https://www.rostrum.blog/2021/10/03/squirrel/)                                |
 |    104 | 2021-09-14 | [Wot3LdnEmojis](https://www.rostrum.blog/2021/09/14/wot3ldnemojis/)                                                       |
 |    103 | 2021-09-12 | [Extract punctuation from books with R](https://www.rostrum.blog/2021/09/12/extract-punct/)                               |
@@ -153,4 +154,4 @@ in the R console](https://www.rostrum.blog/2021/10/03/squirrel/).
 
 -----
 
-*Updated 2021-10-05 02:47:28*
+*Updated 2021-10-06 02:47:22*
