@@ -39,7 +39,7 @@ What does it do? It posts a satellite image from random coordinates in Greater L
 
 The code for this runs remotely. You can set it up, let it run and never think about it again.
 
-So how does it work? A scheduled GitHub Action runs R code to generate random latitude and longitude values, which are sent to the [Mapbox API](https://docs.mapbox.com/api/maps/#static-images) to retrieve a satellite picture. The image is then posted via [the Twitter API](https://developer.twitter.com/en/docs) that is accessed using the [{rtweet}](https://docs.ropensci.org/rtweet/) package. A link to the coordinates on OpenStreetMap is also included so you can find out exactly where the image is form.
+So how does it work? A scheduled GitHub Action runs R code to generate random latitude and longitude values, which are sent to the [Mapbox API](https://docs.mapbox.com/api/maps/#static-images) to retrieve a satellite picture. The image is then posted via [the Twitter API](https://developer.twitter.com/en/docs) that is accessed using the [{rtweet}](https://docs.ropensci.org/rtweet/) package. A link to the coordinates on OpenStreetMap is also included so you can find out exactly where the image is from.
 
 The main purpose was to learn more about GitHub Actions, building on [my previous posts about using actions for continuous integration](https://www.rostrum.blog/2020/08/09/ghactions-pkgs/), but I think incidentally that the tweets are quite pleasing to look at and to guess where they are.
 
@@ -198,7 +198,14 @@ So, you can:
 * inspect the [YAML file](https://github.com/matt-dray/londonmapbot/blob/master/.github/workflows/londonmapbot.yml) that runs the action
 * see [the R script](https://github.com/matt-dray/londonmapbot/blob/master/.github/workflows/londonmapbot.yml) that generates and posts the image
 
+The [GitHub README](https://github.com/matt-dray/londonmapbot/blob/master/README.md) also lists a few other map bots that have taken inspiration from londonmapbot; take a look at those too.
+
 Unfortunately, it doesn't post successfully 100% of the time. You can see why by checking the actions log, which is accessed from [the 'Actions' tab on the repo](https://github.com/matt-dray/londonmapbot/actions). The failed ones, with red crosses, seem mostly due to an 'empty reply from server'. I'm okay with this for now.
+
+<div class="tip"> `r fontawesome::fa("exclamation-circle")` <b>Update</b>
+
+Actually, the action eventually righted itself and runs without any problems now. For context, you can [read a discussion](https://github.com/matt-dray/londonmapbot/issues/4) about what might have been going on at the time.
+</div>
 
 In the first iteration of the action I passed the R code as a single line in the YAML file, which is suboptimal. I later tidied the code into a separate R script and declared the secrets in the YAML file. I looked at actions by [Matt Kerlogue](https://lapsedgeographer.london/2020-04/automating-pdf-scraping/#using-github-actions-to-schedule-the-process) and [David Keyes](https://github.com/rfortherestofus/rrutweets) to do this. David's repo is interesting from a Twitter perspective because it automates tweets provided via a Google Sheet.
 

@@ -15,6 +15,7 @@ tags:
   - twitter
 ---
 
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
 
 
 <div class="figure">
@@ -38,7 +39,7 @@ tags:
 </p>
 </div>
 <p>The code for this runs remotely. You can set it up, let it run and never think about it again.</p>
-<p>So how does it work? A scheduled GitHub Action runs R code to generate random latitude and longitude values, which are sent to the <a href="https://docs.mapbox.com/api/maps/#static-images">Mapbox API</a> to retrieve a satellite picture. The image is then posted via <a href="https://developer.twitter.com/en/docs">the Twitter API</a> that is accessed using the <a href="https://docs.ropensci.org/rtweet/">{rtweet}</a> package. A link to the coordinates on OpenStreetMap is also included so you can find out exactly where the image is form.</p>
+<p>So how does it work? A scheduled GitHub Action runs R code to generate random latitude and longitude values, which are sent to the <a href="https://docs.mapbox.com/api/maps/#static-images">Mapbox API</a> to retrieve a satellite picture. The image is then posted via <a href="https://developer.twitter.com/en/docs">the Twitter API</a> that is accessed using the <a href="https://docs.ropensci.org/rtweet/">{rtweet}</a> package. A link to the coordinates on OpenStreetMap is also included so you can find out exactly where the image is from.</p>
 <p>The main purpose was to learn more about GitHub Actions, building on <a href="https://www.rostrum.blog/2020/08/09/ghactions-pkgs/">my previous posts about using actions for continuous integration</a>, but I think incidentally that the tweets are quite pleasing to look at and to guess where they are.</p>
 </div>
 <div id="the-components" class="section level1">
@@ -171,7 +172,12 @@ Keep it secret… keep it safe.
 <li>inspect the <a href="https://github.com/matt-dray/londonmapbot/blob/master/.github/workflows/londonmapbot.yml">YAML file</a> that runs the action</li>
 <li>see <a href="https://github.com/matt-dray/londonmapbot/blob/master/.github/workflows/londonmapbot.yml">the R script</a> that generates and posts the image</li>
 </ul>
+<p>The <a href="https://github.com/matt-dray/londonmapbot/blob/master/README.md">GitHub README</a> also lists a few other map bots that have taken inspiration from londonmapbot; take a look at those too.</p>
 <p>Unfortunately, it doesn’t post successfully 100% of the time. You can see why by checking the actions log, which is accessed from <a href="https://github.com/matt-dray/londonmapbot/actions">the ‘Actions’ tab on the repo</a>. The failed ones, with red crosses, seem mostly due to an ‘empty reply from server’. I’m okay with this for now.</p>
+<div class="tip">
+<p><svg aria-hidden="true" role="img" viewBox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;"><path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"/></svg> <b>Update</b></p>
+<p>Actually, the action eventually righted itself and runs without any problems now. For context, you can <a href="https://github.com/matt-dray/londonmapbot/issues/4">read a discussion</a> about what might have been going on at the time.</p>
+</div>
 <p>In the first iteration of the action I passed the R code as a single line in the YAML file, which is suboptimal. I later tidied the code into a separate R script and declared the secrets in the YAML file. I looked at actions by <a href="https://lapsedgeographer.london/2020-04/automating-pdf-scraping/#using-github-actions-to-schedule-the-process">Matt Kerlogue</a> and <a href="https://github.com/rfortherestofus/rrutweets">David Keyes</a> to do this. David’s repo is interesting from a Twitter perspective because it automates tweets provided via a Google Sheet.</p>
 <p>I should also note that there are already <a href="https://github.com/marketplace?query=tweet">actions on the GitHub Marketplace for tweeting</a>, but they didn’t quite do what I wanted. I also wanted to write the juicy bit with R code, which I’m most familiar with.</p>
 <p>Do give me suggestions and pull requests, or tell me how good you are at identifying the granular location in each image.</p>
