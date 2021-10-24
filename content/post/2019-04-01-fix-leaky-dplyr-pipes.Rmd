@@ -25,39 +25,50 @@ draft: no
 <p class="caption">Data leaking from a pipe ([via Giphy](https://giphy.com/gifs/tony-bennett-Y8qTuvMUjSh7a))</p>
 </div>
 
+<div class="tip"> `r fontawesome::fa("exclamation-circle")` <b>Note</b>
+
+This post has been updated to include newer
+</div>
+
 # tl;dr
 
-You can chain function calls in R with `%>%`. There's a few ways to catch errors in these pipelines.
+Chaining R function calls with the {magrittr} pipe operator (`%>%`) makes data wrangling more intuitive for many users, but it can be difficult to confirm what is happening at each step. This post explores some options to help prevent errors.
+
+<div class="tip"> `r fontawesome::fa("exclamation-circle")` <b>Note</b>
+
+I came back to this post in late 2021 to replace the dataset[^iris] with {palmerpenguins}, to improve the text and to add {boomer}. Note also that base R's pipe (`|>`) was introduced after this post was written and is not included here.
+</div>
 
 # C'est un pipe
 
-You know R's [`%>%` (pipe) operator](https://magrittr.tidyverse.org/articles/magrittr.html) by now. It lets you chain function calls. It was created for [Stefan Milton Bache](http://stefanbache.dk/) and [Hadley Wickham](http://hadley.nz/)'s [{magrittr} package](https://CRAN.R-project.org/package=magrittr) and popularised by [the tidyverse](https://www.tidyverse.org/). Par exemple:
+R's [`%>%` (pipe) operator](https://magrittr.tidyverse.org/articles/magrittr.html) ets you chain function calls. It was created for [Stefan Milton Bache](http://stefanbache.dk/) and [Hadley Wickham](http://hadley.nz/)'s [{magrittr} package](https://CRAN.R-project.org/package=magrittr) and popularised by [the tidyverse](https://www.tidyverse.org/).
+
+Here's an illustrative example using the `penguins` data from the {palmerpenguins} package. The {magrittr} pipe is loaded when {dplyr} is attached.
 
 ```{r pipeline-example, warning=FALSE, message=FALSE}
-# {dplyr} for data manipulation
-# it also re-exports the pipe from {magrittr}
-library(dplyr)
+library(palmerpenguins)
+library(dplyr, warn.conflicts = FALSE)
 
-# Get mean sepal width for two iris species
-iris_pipe <- iris %>%
-  filter(Species %in% c("setosa", "versicolor")) %>% 
-  group_by(Species) %>% 
-  summarise(`Mean width` = mean(Sepal.Width)) %>% 
-  mutate(`Mean width` = round(`Mean width`, 1))
+penguin_pipe <- penguins %>%
+  filter(species %in% c("Gentoo", "Chinstrap")) %>% 
+  group_by(species) %>% 
+  summarise(`mean_mass_g` = mean(body_mass_g, na.rm = TRUE)) %>% 
+  mutate(`mean_mass_g` = round(`mean_mass_g`, 1))
 
-# Print
-iris_pipe
+penguin_pipe
 ```
+
+So, we take the `penguins` data, then filter for two particular pecies, then group by those species, then summarise by taking the mean of a variable and then finally we mutate that variable by rounding it. 
 
 # Ce n'est pas debuggable?
 
-[Some are critical of this approach](https://twitter.com/TedPetrou/status/1109519764613787648?ref_src=twsrc%5Etfw). Long pipes obscure what's happened to your data and make debugging hard. There's [no clear recommendation for solving this](https://community.rstudio.com/t/whats-currently-the-recommended-way-to-debug-pipe-chains/14724) either. 
+[Some are critical of the pipe approach](https://twitter.com/TedPetrou/status/1109519764613787648?ref_src=twsrc%5Etfw). Long pipes obscure what's happened to your data and make debugging hard. There's [no clear recommendation for solving this](https://community.rstudio.com/t/whats-currently-the-recommended-way-to-debug-pipe-chains/14724) either. 
 
-I think most people create pipes interactively and check their outputs at each step. You could also make sensibly-lengthed pipes for each 'unit' of wrangling (read, clean, model, etc). Hadley Wickham discusses this in [the pipes chapter of the R for Data Science book](https://r4ds.had.co.nz/pipes.html). 
+I think most people 'build pipelines' interactively and check their outputs at each step. You could also make smaller, more sensibly-sized pipes for each 'unit' of wrangling (read, clean, model, etc) rather than one massive one. Hadley Wickham discusses this in [the pipes chapter of the R for Data Science book](https://r4ds.had.co.nz/pipes.html). 
 
 This post summarises some solutions.
 
-This table summarises it even more:
+The table below summarises it even more. 'Message' means whether it prints something informative to the console; `View()` and `print()` tell you if the data set can be viewed at each step; and 'debug' if it opens the debug menu.
 
 
 | Package         | Description                                         | Message  | `View()` | `print()` | Debug    |
@@ -69,9 +80,7 @@ This table summarises it even more:
 | {magrittr}      | `debug_pipe()` function                             | &#10008; | &#10008; | &#10008;  | &#10004; |
 | `debug()`       | R's good old `debug()` function                     | &#10008; | &#10008; | &#10008;  | &#10004; |
 | {pipes}         | Special assignment operators                        | &#10008; | &#10004; | &#10004;  | &#10004; |
-| Bizarro pipe    | Replace `%>%` with `->.;` and observe `.Last.level` | &#10008; | &#10008; | &#10008;  | &#10008; |
-
-'Message' means whether it prints something informative to the console; `View()` and `print()` tell you if the data set can be viewed at each step; and 'debug' if it opens the debug menu.
+| Bizarro pipe    | Replace `%>%` with `->.;` and observe `.Last.value` | &#10008; | &#10008; | &#10008;  | &#10008; |
 
 Read on for explanations and examples.
 
@@ -99,32 +108,34 @@ These are packages for seeing what happened to your data set at each step of you
 
 [The {tidylog} package](https://github.com/elbersb/tidylog) was written by [Benjamin Elbers](https://elbersb.de/public/). It prints to the console some summary sentences of the changes that have happened to your data after each {dplyr} step.
 
+{tidylog} will mask the functions of {dplyr}, which we've already attached. Basically, you can continue to use the names of {dplyr} function names, but you'll actually be calling the {tidylog} versions.
+
 ```{r tidylog-mask}
-# install.packages("tidylog")  # available from CRAN
-library(tidylog)  # must be loaded after dplyr
+# install.packages("tidylog")  # on CRAN
+library(tidylog)
 ```
 
-You can see from the output that {tidylog} masks all the {dplyr} functions. In other words, you can continue use the {dplyr} function names as usual, but with the added {tidylog} side-effect that the changes at each step are reported in the console. 
+You can see from the output that {tidylog} masks all the {dplyr} functions. Now we'll get the {tidylog} side-effect of each function call, which reports to the console the changes to the data at each step in the pipeline.
 
 ```{r tidylog-example2}
-iris_pipe <- iris %>%
-  filter(Species %in% c("setosa", "versicolor")) %>% 
-  group_by(Sepal.Width) %>% 
-  summarise(`Mean width` = mean(Sepal.Width)) %>% 
-  mutate(`Mean width` = round(`Mean width`, 1))
+penguin_pipe <- penguins %>%
+  filter(species %in% c("Gentoo", "Chinstrap")) %>% 
+  group_by(species) %>% 
+  summarise(`mean_mass_g` = mean(body_mass_g, na.rm = TRUE)) %>% 
+  mutate(`mean_mass_g` = round(`mean_mass_g`, 1))
 ```
 
 This a nice passive approach. But how does this help? We can sense-check each step. For example:
 
 ```{r tidylog-example}
-iris_pipe <- iris %>%
-  filter(Species %in% c("cycliophora", "onychophora")) %>% 
-  group_by(Sepal.Width) %>% 
-  summarise(`Mean width` = mean(Sepal.Width)) %>% 
-  mutate(`Mean width` = round(`Mean width`, 1))
+penguin_pipe <- penguins %>%
+  filter(species %in% c("Chocolate", "Pingu")) %>% 
+  group_by(species) %>% 
+  summarise(`mean_mass_g` = mean(body_mass_g, na.rm = TRUE)) %>% 
+  mutate(`mean_mass_g` = round(`mean_mass_g`, 1))
 ```
 
-Did you spot the contrived error? I filtered for species that don't exist in the data set[^species]. This was reported as `filter: removed all rows (100%)` in the first step. 
+Did you spot the contrived error? I filtered for species that don't exist in the data set. This was reported clearly as `filter: removed all rows (100%)` in the console. A nice quick check without being too invasive.
 
 I'll unload {tidylog} before continuing so it doesn't interfere with the other examples.
 
@@ -141,13 +152,17 @@ unloadNamespace("tidylog")
 library(ViewPipeSteps)
 ```
 
-After installing you can simply highlight your code and select 'View Pipe Chain Steps' or 'Print Pipe Chain Steps' from the add-ins menu.
+After you install it and restart RStudio, you can highlight your code and select 'View Pipe Chain Steps' (i.e. send intermediate results to to separate tabs in the script pane) or 'Print Pipe Chain Steps' (i.e. send intermediate results to the console) from the add-ins menu.
 
-Beware if you have lots of steps in your pipeline because it's going to fill up your console or a while bunch of tabs or windows containing each cut of the data set.
+<insert gif>
+
+Beware if you have lots of steps in your pipeline because it's going to open many script tabs or fill up your console.
+
+This is good for smaller datasets, especially if you're very familiar with their content. It may be a little overwhelming relative to {tidylog}'s succinct statements, but you get to see the data itself at each step of the pipeline. 
 
 ## 2. Debug mode {#debug-mode}
 
-These are packages that help highlight where a problem occurred. These take you to the [debug menu](https://support.rstudio.com/hc/en-us/articles/205612627-Debugging-with-RStudio), which is worth reading up on if you haven't used it before.
+The packages in this section help to highlight where a problem occurred. These take you to [RStudio's debug menu](https://support.rstudio.com/hc/en-us/articles/205612627-Debugging-with-RStudio), which is worth reading up on if you haven't used it before.
 
 ### 2a. {tamper} {#tamper}
 
@@ -165,29 +180,33 @@ library(tamper)
 
 options(error = tamper::tamper)  # set error option to tamper
 
-iris %>%
-  filter(Species %in% c("setosa", "versicolor")) %>% 
-  group_by(Species) %>% 
-  summarise(`Mean width` = mean(Sepal.Girth)) %>%  # error here!
-  mutate(`Mean width` = round(`Mean width`, 1))
+penguins %>%
+  filter(species %in% c("Gentoo", "Chinstrap")) %>% 
+  group_by(species) %>% 
+  summarise(`mean_mass_g` = mean(body_mass_lb, na.rm = TRUE)) %>% 
+  mutate(`mean_mass_g` = round(`mean_mass_g`, 1))
 ```
 
+You'll get this output:
+
 ```
-## Error in mean(Sepal.Girth) : object 'Sepal.Girth' not found
+## Error in mean(body_mass_lb : object 'body_mass_lb' not found
 ## 
 ## Enter 0 to exit or choose:
 ## 
 ## 1:    Switch mode
 ## 2:    Take me to the error
 ## 
-## 3:    iris %>%
-## 4: ->   filter(., Species %in% c("setosa", "versicolor")) %>%
-## 5:      group_by(., Species) %>%
-## 6:      summarise(., `Mean width` = mean(Sepal.Girth)) %>%
-## 7:      mutate(., `Mean width` = round(`Mean width`, 1))
+## 3:    penguins %>%
+## 4:      filter(., species %in% c("Gentoo", "Chinstrap")) %>%
+## 5:      group_by(., species) %>%
+## 6: ->   summarise(., `mean_mass_g` = mean(body_mass_lb, na.rm = TRUE)) %>%
+## 7:      mutate(., `mean_mass_g` = round(`mean_mass_g`, 1))
 ## 
 ## Selection:
 ```
+
+You can see the arrow (`->`) pointing to the problematic line. The last line is a prompt for you to type your selection into the console and press <kbd>Enter</kbd>.
 
 ### 2b. {pipecleaner} {#pipecleaner}
 
@@ -198,15 +217,21 @@ You highlight your code and select 'debug pipeline in browser' from the RStudio 
 ```{r burst-pipe, eval=FALSE}
 # remotes::install_github("alistaire47/pipecleaner")  # not on CRAN
 library(pipecleaner)
+```
 
-# Intact, original pipeline
-iris_pipe <- iris %>%
-  filter(Species %in% c("setosa", "versicolor")) %>% 
-  group_by(Sepal.Width) %>% 
-  summarise(`Mean width` = mean(Sepal.Width)) %>% 
-  mutate(`Mean width` = round(`Mean width`, 1))
+Here's the intact, original pipeline:
 
-# After 'debug pipeline in browser' or 'burst pipes' addins
+```
+penguins_pipe <- penguins %>%
+  filter(species %in% c("Gentoo", "Chinstrap")) %>% 
+  group_by(species) %>% 
+  summarise(`mean_mass_g` = mean(body_mass_lb, na.rm = TRUE)) %>% 
+  mutate(`mean_mass_g` = round(`mean_mass_g`, 1))
+```
+
+And here's how it looks after highlighting the code and selecting 'debug pipeline in browser' or 'burst pipes' from the RStudio addins menu:
+
+```
 dot1 <- filter(iris, Species %in% c("setosa", "versicolor"))
 dot2 <- group_by(dot1, Species)
 dot3 <- summarise(dot2, `Mean width` = mean(Sepal.Width))
@@ -222,15 +247,15 @@ Surprise: [the {magrittr} package](https://magrittr.tidyverse.org/reference/debu
 ```{r magrittr-example, eval=FALSE}
 library(magrittr)
 
-iris_magrittr <- iris %>%
-  filter(Species %in% c("setosa", "versicolor")) %>%
-  group_by(Species) %>% 
-  summarise(`Mean width` = mean(Sepal.Width)) %>%
+penguins %>%
+  filter(species %in% c("Gentoo", "Chinstrap")) %>% 
+  group_by(species) %>% 
+  summarise(`mean_mass_g` = mean(body_mass_lb, na.rm = TRUE)) %>% 
   debug_pipe() %>% 
-  mutate(`Mean width` = round(`Mean width`, 1))
+  mutate(`mean_mass_g` = round(`mean_mass_g`, 1))
 ```
 
-Not much to say about this one, but worth mentioning because `%>%` gets re-exported in other packages -- [check out `usethis::use_pipe()`](https://usethis.r-lib.org/reference/use_pipe.html) -- but `debug_pipe()` doesn't.
+Worth mentioning because `%>%` gets re-exported with other packages, especially {tidyverse} packages, but `debug_pipe()` doesn't. That means you must explicitly attach {magrittr} to use it.
 
 ### 2d. `debug()` {#debug-fun}
 
@@ -241,11 +266,11 @@ You can do this for a given function in the pipeline:
 ```{r debug-base, eval=FALSE}
 debug(summarise)
 
-iris_magrittr <- iris %>%
-  filter(Species %in% c("setosa", "versicolor")) %>%
-  group_by(Species) %>% 
-  summarise(`Mean width` = mean(Sepal.Width)) %>%
-  mutate(`Mean width` = round(`Mean width`, 1))
+penguins_pipe<- penguins %>%
+  filter(species %in% c("Gentoo", "Chinstrap")) %>% 
+  group_by(species) %>% 
+  summarise(`mean_mass_g` = mean(body_mass_lb, na.rm = TRUE)) %>% 
+  mutate(`mean_mass_g` = round(`mean_mass_g`, 1))
   
 undebug(summarise)
 ```
@@ -254,7 +279,7 @@ Or you can even debug each step by setting up ```debug(`%>%`)```, since the pipe
 
 ## 3. Operator hacking
 
-It's possible to make variant pipe operators. But maybe we don't even need `%>%`?
+It's possible to make variant pipe operators. Maybe we don't even need `%>%`?
 
 ### 3a. {pipes} {#pipes}
 
@@ -285,7 +310,7 @@ So this one could have gone in the 'summary inspection' section above, but it co
 
 ### 3b. Bizarro pipe {#bizarro-pipe}
 
-Forget the pipe. We can create an operator that acts like a pipe but can be run so that we can check what's happening at each step.
+Forget dependencies. We can create an operator with base R that acts like a pipe but can be run so that we can check what's happening at each step.
 
 [John Mount](http://www.win-vector.com/site/staff/john-mount/)'s solution is [the 'Bizarro pipe'](http://www.win-vector.com/blog/2017/01/using-the-bizarro-pipe-to-debug-magrittr-pipelines-in-r/), which looks like `->.;`. 
 
@@ -295,16 +320,16 @@ Things you might be wondering:
 
 * yes, you can use a `->` for assignment to the right
 * yes, you can assign to a `.`, but you'll need to explicitly supply it as the data argument to the next function call in your Bizarro pipeline
-* yes, you can use semi-colons in R for run-on code execution -- try `head(iris); tail(iris)`
+* yes, you can use semi-colons in R for run-on code execution -- try `head(penguins); tail(penguins)`
 
 So what? Well, you can execute each line in turn and check the output. But wait: an object called `.` is not presented in the global environment. Not unless you check 'Show .Last.value in environment listing' in RStudio's settings. Now when you run the line you'll see the '.Last.value' that's been output.
 
 ```{r bizarro-example}
-iris_bizarro <- iris ->.;
-  filter(., Species %in% c("setosa", "versicolor")) ->.;
-  group_by(., Species) ->.;
-  summarise(., `Mean width` = mean(Sepal.Width)) ->.;
-  mutate(., `Mean width` = round(`Mean width`, 1))
+penguins_pipe <- penguins %>%
+  filter(., species %in% c("Gentoo", "Chinstrap")) ->.;
+  group_by(., species) ->.;
+  summarise(., `mean_mass_g` = mean(body_mass_lb, na.rm = TRUE)) ->.;
+  mutate(., `mean_mass_g` = round(`mean_mass_g`, 1))
 ```
 
 So it's slightly convoluted and people looking at your code are going to be confused, but hey, no dependencies are needed.
@@ -328,4 +353,4 @@ xfun::session_info()
 ```
 </details>
 
-[^species]: Welcome to Biology Geek Corner. [Cycliophora](https://www.nature.com/articles/378711a0) is a [phylum](https://en.wikipedia.org/wiki/Phylum) containing just [one genus and (probably) three species](https://en.wikipedia.org/wiki/Symbion). Our own phylum -- [Chordata](https://en.wikipedia.org/wiki/Chordate) -- contains 55,000 species.  [_Symbion pandora_](https://en.wikipedia.org/wiki/Symbion_pandora) was the first cycliophoran species found in 1995, which appears to live [commensally](https://en.wikipedia.org/wiki/Commensalism) and exclusively on lobster lips. [Onychophora](https://en.wikipedia.org/wiki/Onychophora) is the velvet worm phylum that contains wee beasties that [spray slime, have little adorable claws and are, surprise, kinda velvety](https://www.youtube.com/watch?v=LY8TgD6-7kg) ([one species is named 'totoro'](https://www.wired.com/2014/10/velvet-worm-named-totoro/) because of its similarity to [My Neighbour Totoro](https://ghibli.fandom.com/wiki/My_Neighbor_Totoro)'s [Catbus](https://ghibli.fandom.com/wiki/Catbus)).
+[^iris]: It was `iris`. [Read more about it](https://www.garrickadenbuie.com/blog/lets-move-on-from-iris/).
