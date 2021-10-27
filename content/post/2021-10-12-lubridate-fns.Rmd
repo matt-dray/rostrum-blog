@@ -1,72 +1,76 @@
 ---
-title: "lubridate"
+title: "{itdepends} on {lubridate}"
 author: Matt Dray
-date: '2021-10-05'
+date: '2021-10-24'
 slug: lubridate-fns
 categories:
   - code
   - tutorial
 tags:
+  - dependencies
+  - itdepends
+  - lubridate
   - r
 draft: yes
 ---
 
-```{r}
+```{r setup, include=FALSE}
 set.seed(1)
-
 ```
 
+# tl;dr
 
-Use whatever dependencies you want, I really don't care. I write joke packages that I don't put on CRAN, so.
+I used [the {itdepends} R package](https://github.com/r-lib/itdepends) to see how CRAN packages depend on [{lubridate}](https://lubridate.tidyverse.org/), which [was not removed from CRAN](What if [the {lubridate} package was removed from CRAN](https://github.com/tidyverse/lubridate/issues/998)?) recently.
 
-I see the benefit of minimising dependencies. I understand the drawback of reinventing the wheel. 
+# Lubrigate
 
-I appreciate packages that handle things I can't be bothered with, like datetimes. What's 29 February plus one year? I don't care and I don't want to solve it.
+A test failure in [{lubridate}](https://lubridate.tidyverse.org/) led to hundreds of R developers being emailed about [its potential expulsion from CRAN](https://github.com/tidyverse/lubridate/issues/998), which also threatened the hundreds of packages that depend on it. 
 
-Anyway, 'lubrigate' happened last week. I'm not going into detail here, but a test failure in the popular tidyverse package {lubridate} would've seen its expulsion from CRAN along with hundreds of packages that depend on it.
+I see the benefit of minimising dependencies. I also understand the drawbacks of reinventing the wheel. Maybe {lubridate} is a good dependency: a clean API, part of the well-known tidyverse and it handles stuff you can't be bothered with, like what's 29 February plus one year?
 
-Made me wonder:
+[Jim Hester spoke at rstudio::conf(2019) about dependencies](https://www.tidyverse.org/blog/2019/05/itdepends/). His [{itdepends}](https://github.com/r-lib/itdepends) package helps you understand the scale and impact of your dependencies.
 
-1. How many packages list {lubridate} as an import?
-1. How many {lubridate} functions are used in each package?
-1. If using few lubridate functions, are they functions that handle annoying dateimte problems?
+So, for fun, I'm looking at how {lubridate} is used by packages that import it.
 
-I'd actually like to do this for all CRAN packages and their dependencies, but I don't have a personal CRAN mirror and I don't write performant code.
+# Get CRAN packages
 
-# CRAN packages
-
-`CRAN_package_db()` is a convenient base R function that returns information about packages hosted on CRAN. We can filter if for the packages that import {lubridate}. In other words, any packages that list {lubridate} in the `Imports` section of the package DESCRIPTION file.
+`CRAN_package_db()` is a convenient function that returns information about packages available on CRAN. We can filter if for the packages that import {lubridate}, i.e. they have {lubridate} in the `Imports` section of their DESCRIPTION file.
 
 ```{r cran-db}
-cran <- tools::CRAN_package_db()
-
 library(dplyr, warn.conflicts = FALSE)
 library(tidyr)
 library(stringr)
+
+cran <- tools::CRAN_package_db()
 
 imports_lubridate <- cran |> 
   filter(str_detect(Imports, "lubridate")) |> 
   pull(Package)
 
-head(imports_lubridate)
+sample(imports_lubridate, 5)  # random sample
 ```
 
-Right, so that's `r length(imports_lubridate)` packages out of `r nrow(cran)` (`r 100 * round(length(imports_lubridate) / nrow(cran), 2)`%). Is that a lot? Well, the multi-purpose tidyverse package {dplyr} is listed in the Imports of `r cran |> filter(str_detect(Imports, "dplyr")) |> nrow()` other packages.
+Right, so that's `r length(imports_lubridate)` packages out of `r nrow(cran)` (`r 100 * round(length(imports_lubridate) / nrow(cran), 2)`%). Is that a lot? Well, the tidyverse package {dplyr}, the Swiss Army knife of data wrangling, is listed in the Imports of `r cran |> filter(str_detect(Imports, "dplyr")) |> nrow()`.
 
-# Install
+# Install all
 
-Spoiler: we have to install all these packages so we can analyse the frequency of use of the dependencies they contain. This is a mild pain.
+So, perhaps this is a little nuts, but we're going to install all the {lubridate}-dependent packages. {itdepends} works with locally-installed packages, you see.
 
-```{r echo=FALSE}
-tmp <- tempdir()
+```{r install-packages, warning=FALSE, echo=TRUE, results='hide', message=FALSE, cache=TRUE}
+tmp <- tempdir()  # temporary folder
 
 purrr::walk(
   imports_lubridate,
-  ~install.packages(.x, destdir = tmp, dependencies = FALSE, Ncpus = 4)
+  ~install.packages(
+    .x, 
+    destdir = tmp, 
+    dependencies = FALSE,  # skip installing dependencies
+    repos = "https://cran.ma.imperial.ac.uk/"  # mirror
+  )
 )
 ```
 
-I've tried to make this mildly less painful by preventing download of the dependencies of each package and by maximising the number of cores working on the downloads.
+This takes a little while. There's probably faster methods, like maybe [the {pak} package](https://pak.r-lib.org/), but I just used what worked.
 
 # {itdepends}
 
@@ -76,25 +80,21 @@ I've tried to make this mildly less painful by preventing download of the depend
 remotes::install_github("jimhester/itdepends")
 ```
 
-Now we can pass each of these package names to the `dep_usage_package()` function of {itdepends}. We get back a dataframe for each package, listing each function call it makes and the package that the function comes from.
+Now we can pass each of these package names to the `dep_usage_package()` function of {itdepends} in a loop. We get back a dataframe for each package, listing each function call it makes and the package that the function comes from.
 
-The approach I decided to take here was to create an empty list of known size (i.e. the length of the number of packages we installed) and then loop over each package name to write each list element with the output from `dep_usage_pkg()`.
+I've added a mildly unorthodox use of `next`, [borrowed from StackOverflow](https://stackoverflow.com/a/55937737), because I was having trouble with the loop after a failure.
 
-The function sometimes fails, so I've put it in a `tryCatch()` and any errors are recorded as an empty dataframe. I was having some trouble getting the loop to continue to the next package after a failure, so I've added a mildly awkward use of `next` from base R's control flow functions, which [I took from StackOverflow](https://stackoverflow.com/a/55937737), naturally.
-
-```{r echo=FALSE}
+```{r itdepends-loop, warning=FALSE, cache=TRUE}
 dep_list <- vector("list", length(imports_lubridate)) |> 
   setNames(imports_lubridate)
 
 for (i in imports_lubridate) {
   
-  cat(i, "\n")
-  
   skip <- FALSE
   
   tryCatch(
     { dep_list[[i]] <- itdepends::dep_usage_pkg(i)
-    dep_list[[i]]$focus <- i },
+    dep_list[[i]]$focus <- i  },
     error = function(e) { 
       dep_list[[i]] <- data.frame(
         pkg = NA_character_, fun = NA_character_, focus = NA_character_
@@ -103,42 +103,156 @@ for (i in imports_lubridate) {
     }
   )
   
-  if (skip) { next }
+  if (skip) next
   
 }
 ```
 
-I absolutely do not claim this to be the best, most optimised approach. but it works. The first couple of elements look like this:
+I absolutely do not claim this to be the best, most optimised approach. But it works. 
 
-```{r}
-count(dep_list[[1]], fun)
+# Counting dependencies
+
+Now that {itdepends} has extracted all the function calls from each of the packages, we can take a look at their frequencies.
+
+## Example
+
+Here's the top 10 most-used functions from the first package alphabetically: {academictwitteR}.
+
+```{r ex-count-fn}
+ex_pkg <- "academictwitteR"
+
+dep_list[[ex_pkg]] |> 
+  count(pkg, fun, sort = TRUE) |>
+  slice(1:5)
 ```
 
-```{r}
-# List to dataframe
+It's not particularly exciting to know that the top 5 are made up of base R functions like the assignment arrow, the dollar-sign data accessor[^nzd] and the square bracket. We also don't really care about the package's internal functions. Let's filter these out and re-count
+
+```{r ex-count-fn-no-base}
+base_pkgs <- c(
+  "stats", "graphics", "grDevices",
+  "utils", "datasets", "methods", "base"
+)
+
+dep_list[[ex_pkg]] |>
+  filter(!pkg %in% c(base_pkgs, ex_pkg)) |> 
+  count(pkg, fun, sort = TRUE) |> 
+  slice(1:10)
+```
+
+Aha. We can see immediately that the authors have made use of tidyverse to write their package, since you can see {dplyr}, {tibble}, etc, in there. This makes the use of {lubridate} relatively unsurprising. 
+
+Here's the {lubridate} functions used by this package.
+
+```{r ex-count-lubridate}
+dep_list[[ex_pkg]] |>
+  filter(pkg == "lubridate") |> 
+  count(pkg, fun, sort = TRUE)
+```
+
+So this package uses four {lubridate} functions for conversion and formatting of datetimes.
+
+## All packages
+
+Now let's take a look at the function calls across all the packages that import {lubridate}. I'm first going to convert the list of results to a dataframe.
+
+```{r list-to-df}
 dep_df <- do.call(rbind, dep_list)
+```
 
-# Frequency of named lubridate functions by package
+### Function use by package
+
+This is a count of the number of uses of each {lubridate} function by each of the the `focus` packages (i.e. the packages we installed).
+
+```{r count-focus-fn-lubridate}
 pkg_fn_count <- dep_df |>
-dplyr::filter(pkg == "lubridate") |>
-dplyr::count(focus, fun)
+  filter(pkg == "lubridate") |>
+  count(focus, fun, sort = TRUE)
 
-# Frequency of all lubridate functions by package
+pkg_fn_count |> slice(1:5)
+```
+
+Holy moley, the {PriceIndices} package calls `month()` and `year()`, used to extract elements of a date, over 1400 times.
+
+### Unique function use by package
+
+We can also look at things like the packages that make calls to the greatest number of unique {lubridate} packages. Here's the top 5.
+
+```{r count-unique-lubridate-fns}
 fn_distinct_count <- dep_df |>
-dplyr::filter(pkg == "lubridate") |>
-dplyr::distinct(focus, fun) |>
-dplyr::count(focus, sort = TRUE)
+  filter(pkg == "lubridate") |>
+  distinct(focus, fun) |>
+  count(focus, sort = TRUE) 
 
-# Frequency of all lubridate functions by package
-fn_nondistinct_count <- dep_df |>
-dplyr::filter(pkg == "lubridate") |>
-dplyr::count(focus, sort = TRUE)
+fn_distinct_count |> slice(1:5)
+```
 
-# Histogram: distinct {lubridate}-function use by packages
+So these packages are using more than 10 unique functions from {lubridate}, which is pretty extensive usage.
+
+A quick histogram reveals that a large number of packages are actually using just a single {lubridate} function.
+
+```{r hist-unique-lubridate-fns}
 hist(
-fn_distinct_count$n,
-breaks = 30,
-main = "Distinct {lubridate} functions used by\npackages importing {lubridate}",
-xlab = "Function count"
+  fn_distinct_count$n,
+  breaks = 30,
+  main = "Unique {lubridate} functions used by\npackages importing {lubridate}",
+  xlab = "Function count"
 )
 ```
+
+So, of these packages that use just one {lubridate} function, which function is the most frequent?
+
+```{r single-call-pkgs}
+focus_one_fn <- fn_distinct_count |>
+  filter(n == 1) |>
+  pull(focus)
+
+pkg_fn_count |> 
+  filter(focus %in% focus_one_fn) |> 
+  count(fun, sort = TRUE) |> 
+  slice(1:5)
+```
+
+Looks like some pretty standard functions, like converting to a date (`as_date()`, `as_datetime()`) or to parse dates with a particular time component (`ymd_hms` for year, month, date, hour, minute, seconds, and `ymd()`).
+
+I think this is interesting: some packages are importing {lubridate} in its entirety to use a single function. And thse functions have base R equivalents with no package-dependency cost. Without diving too deep, this implies that people are using {lubridate} because of syntax familiarity or perhaps because they're already loading other tidyverse packages anyway. 
+
+### Non-unique function use by package
+
+What about total calls?
+
+```{r percent-lubridate}
+fn_nondistinct_count <- dep_df |>
+  filter(pkg == "lubridate") |>
+  count(focus, sort = TRUE)
+
+dep_df |> 
+  count(focus) |> 
+  left_join(
+    fn_nondistinct_count,
+    by = "focus",
+    suffix = c("_total", "_lub")
+  ) |> 
+  mutate(percent_lub = round(100 * n_lub / n_total, 1)) |> 
+  arrange(desc(percent_lub)) |>
+  slice(1:5)
+```
+
+And another quick histogram.
+
+```{r nonunique-lubridate-count}
+hist(
+  fn_nondistinct_count$n,
+  breaks = 30,
+  main = "Non-unique {lubridate} functions used by\npackages importing {lubridate}",
+  xlab = "Function count"
+)
+```
+
+It'd be interesting to do this for all CRAN packages and their dependencies, but I don't have a personal CRAN mirror and I don't write particularly performant code.
+
+# So
+
+Use whatever dependencies you want, it's up to you. I write joke packages that I don't put on CRAN, so.
+
+[^nzd]: You should [be aware of the international conspiracy](https://www.rostrum.blog/2021/07/15/dollar-dollar/) behind the use of this symbol in R.

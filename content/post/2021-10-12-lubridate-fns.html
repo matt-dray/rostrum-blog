@@ -1,0 +1,264 @@
+---
+title: "{itdepends} on {lubridate}"
+author: Matt Dray
+date: '2021-10-24'
+slug: lubridate-fns
+categories:
+  - code
+  - tutorial
+tags:
+  - dependencies
+  - itdepends
+  - lubridate
+  - r
+draft: yes
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I used <a href="https://github.com/r-lib/itdepends">the {itdepends} R package</a> to see how CRAN packages depend on <a href="https://lubridate.tidyverse.org/">{lubridate}</a>, which <a href="What%20if%20%5Bthe%20%7Blubridate%7D%20package%20was%20removed%20from%20CRAN%5D(https://github.com/tidyverse/lubridate/issues/998)?">was not removed from CRAN</a> recently.</p>
+</div>
+<div id="lubrigate" class="section level1">
+<h1>Lubrigate</h1>
+<p>A test failure in <a href="https://lubridate.tidyverse.org/">{lubridate}</a> led to hundreds of R developers being emailed about <a href="https://github.com/tidyverse/lubridate/issues/998">its potential expulsion from CRAN</a>, which also threatened the hundreds of packages that depend on it.</p>
+<p>I see the benefit of minimising dependencies. I also understand the drawbacks of reinventing the wheel. Maybe {lubridate} is a good dependency: a clean API, part of the well-known tidyverse and it handles stuff you can’t be bothered with, like what’s 29 February plus one year?</p>
+<p><a href="https://www.tidyverse.org/blog/2019/05/itdepends/">Jim Hester spoke at rstudio::conf(2019) about dependencies</a>. His <a href="https://github.com/r-lib/itdepends">{itdepends}</a> package helps you understand the scale and impact of your dependencies.</p>
+<p>So, for fun, I’m looking at how {lubridate} is used by packages that import it.</p>
+</div>
+<div id="get-cran-packages" class="section level1">
+<h1>Get CRAN packages</h1>
+<p><code>CRAN_package_db()</code> is a convenient function that returns information about packages available on CRAN. We can filter if for the packages that import {lubridate}, i.e. they have {lubridate} in the <code>Imports</code> section of their DESCRIPTION file.</p>
+<pre class="r"><code>library(dplyr, warn.conflicts = FALSE)
+library(tidyr)
+library(stringr)
+
+cran &lt;- tools::CRAN_package_db()
+
+imports_lubridate &lt;- cran |&gt; 
+  filter(str_detect(Imports, &quot;lubridate&quot;)) |&gt; 
+  pull(Package)
+
+sample(imports_lubridate, 5)  # random sample</code></pre>
+<pre><code>## [1] &quot;radiant.model&quot; &quot;GetBCBData&quot;    &quot;eplusr&quot;        &quot;sweidnumbr&quot;   
+## [5] &quot;weaana&quot;</code></pre>
+<p>Right, so that’s 486 packages out of 18374 (3%). Is that a lot? Well, the tidyverse package {dplyr}, the Swiss Army knife of data wrangling, is listed in the Imports of 2308.</p>
+</div>
+<div id="install-all" class="section level1">
+<h1>Install all</h1>
+<p>So, perhaps this is a little nuts, but we’re going to install all the {lubridate}-dependent packages. {itdepends} works with locally-installed packages, you see.</p>
+<pre class="r"><code>tmp &lt;- tempdir()  # temporary folder
+
+purrr::walk(
+  imports_lubridate,
+  ~install.packages(
+    .x, 
+    destdir = tmp, 
+    dependencies = FALSE,  # skip installing dependencies
+    repos = &quot;https://cran.ma.imperial.ac.uk/&quot;  # mirror
+  )
+)</code></pre>
+<p>This takes a little while. There’s probably faster methods, like maybe <a href="https://pak.r-lib.org/">the {pak} package</a>, but I just used what worked.</p>
+</div>
+<div id="itdepends" class="section level1">
+<h1>{itdepends}</h1>
+<p>{itdepends} is available from GitHub.</p>
+<pre class="r"><code>remotes::install_github(&quot;jimhester/itdepends&quot;)</code></pre>
+<p>Now we can pass each of these package names to the <code>dep_usage_package()</code> function of {itdepends} in a loop. We get back a dataframe for each package, listing each function call it makes and the package that the function comes from.</p>
+<p>I’ve added a mildly unorthodox use of <code>next</code>, <a href="https://stackoverflow.com/a/55937737">borrowed from StackOverflow</a>, because I was having trouble with the loop after a failure.</p>
+<pre class="r"><code>dep_list &lt;- vector(&quot;list&quot;, length(imports_lubridate)) |&gt; 
+  setNames(imports_lubridate)
+
+for (i in imports_lubridate) {
+  
+  skip &lt;- FALSE
+  
+  tryCatch(
+    { dep_list[[i]] &lt;- itdepends::dep_usage_pkg(i)
+    dep_list[[i]]$focus &lt;- i  },
+    error = function(e) { 
+      dep_list[[i]] &lt;- data.frame(
+        pkg = NA_character_, fun = NA_character_, focus = NA_character_
+      )
+      skip &lt;&lt;- TRUE 
+    }
+  )
+  
+  if (skip) next
+  
+}</code></pre>
+<p>I absolutely do not claim this to be the best, most optimised approach. But it works.</p>
+</div>
+<div id="counting-dependencies" class="section level1">
+<h1>Counting dependencies</h1>
+<p>Now that {itdepends} has extracted all the function calls from each of the packages, we can take a look at their frequencies.</p>
+<div id="example" class="section level2">
+<h2>Example</h2>
+<p>Here’s the top 10 most-used functions from the first package alphabetically: {academictwitteR}.</p>
+<pre class="r"><code>ex_pkg &lt;- &quot;academictwitteR&quot;
+
+dep_list[[ex_pkg]] |&gt; 
+  count(pkg, fun, sort = TRUE) |&gt;
+  slice(1:5)</code></pre>
+<pre><code>## # A tibble: 5 × 3
+##   pkg   fun         n
+##   &lt;chr&gt; &lt;chr&gt;   &lt;int&gt;
+## 1 base  &lt;-        193
+## 2 base  {         162
+## 3 base  if         90
+## 4 base  $          70
+## 5 base  is.null    40</code></pre>
+<p>It’s not particularly exciting to know that the top 5 are made up of base R functions like the assignment arrow, the dollar-sign data accessor<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> and the square bracket. We also don’t really care about the package’s internal functions. Let’s filter these out and re-count</p>
+<pre class="r"><code>base_pkgs &lt;- c(
+  &quot;stats&quot;, &quot;graphics&quot;, &quot;grDevices&quot;,
+  &quot;utils&quot;, &quot;datasets&quot;, &quot;methods&quot;, &quot;base&quot;
+)
+
+dep_list[[ex_pkg]] |&gt;
+  filter(!pkg %in% c(base_pkgs, ex_pkg)) |&gt; 
+  count(pkg, fun, sort = TRUE) |&gt; 
+  slice(1:10)</code></pre>
+<pre><code>## # A tibble: 10 × 3
+##    pkg       fun                n
+##    &lt;chr&gt;     &lt;chr&gt;          &lt;int&gt;
+##  1 lifecycle deprecate_soft    16
+##  2 magrittr  %&gt;%               14
+##  3 dplyr     bind_rows          7
+##  4 dplyr     left_join          5
+##  5 dplyr     select_if          5
+##  6 jsonlite  read_json          4
+##  7 tibble    tibble             4
+##  8 dplyr     distinct           3
+##  9 dplyr     select             3
+## 10 purrr     map_dfr            3</code></pre>
+<p>Aha. We can see immediately that the authors have made use of tidyverse to write their package, since you can see {dplyr}, {tibble}, etc, in there. This makes the use of {lubridate} relatively unsurprising.</p>
+<p>Here’s the {lubridate} functions used by this package.</p>
+<pre class="r"><code>dep_list[[ex_pkg]] |&gt;
+  filter(pkg == &quot;lubridate&quot;) |&gt; 
+  count(pkg, fun, sort = TRUE)</code></pre>
+<pre><code>## # A tibble: 4 × 3
+##   pkg       fun             n
+##   &lt;chr&gt;     &lt;chr&gt;       &lt;int&gt;
+## 1 lubridate as_datetime     1
+## 2 lubridate seconds         1
+## 3 lubridate with_tz         1
+## 4 lubridate ymd_hms         1</code></pre>
+<p>So this package uses four {lubridate} functions for conversion and formatting of datetimes.</p>
+</div>
+<div id="all-packages" class="section level2">
+<h2>All packages</h2>
+<p>Now let’s take a look at the function calls across all the packages that import {lubridate}. I’m first going to convert the list of results to a dataframe.</p>
+<pre class="r"><code>dep_df &lt;- do.call(rbind, dep_list)</code></pre>
+<div id="function-use-by-package" class="section level3">
+<h3>Function use by package</h3>
+<p>This is a count of the number of uses of each {lubridate} function by each of the the <code>focus</code> packages (i.e. the packages we installed).</p>
+<pre class="r"><code>pkg_fn_count &lt;- dep_df |&gt;
+  filter(pkg == &quot;lubridate&quot;) |&gt;
+  count(focus, fun, sort = TRUE)
+
+pkg_fn_count |&gt; slice(1:5)</code></pre>
+<pre><code>## # A tibble: 5 × 3
+##   focus        fun         n
+##   &lt;chr&gt;        &lt;chr&gt;   &lt;int&gt;
+## 1 PriceIndices month     887
+## 2 PriceIndices year      534
+## 3 tidyndr      as_date    53
+## 4 RClimacell   with_tz    52
+## 5 RobinHood    ymd_hms    52</code></pre>
+<p>Holy moley, the {PriceIndices} package calls <code>month()</code> and <code>year()</code>, used to extract elements of a date, over 1400 times.</p>
+</div>
+<div id="unique-function-use-by-package" class="section level3">
+<h3>Unique function use by package</h3>
+<p>We can also look at things like the packages that make calls to the greatest number of unique {lubridate} packages. Here’s the top 5.</p>
+<pre class="r"><code>fn_distinct_count &lt;- dep_df |&gt;
+  filter(pkg == &quot;lubridate&quot;) |&gt;
+  distinct(focus, fun) |&gt;
+  count(focus, sort = TRUE) 
+
+fn_distinct_count |&gt; slice(1:5)</code></pre>
+<pre><code>## # A tibble: 5 × 2
+##   focus              n
+##   &lt;chr&gt;          &lt;int&gt;
+## 1 photobiology      26
+## 2 fmdates           21
+## 3 finbif            15
+## 4 xml2relational    15
+## 5 card              12</code></pre>
+<p>So these packages are using more than 10 unique functions from {lubridate}, which is pretty extensive usage.</p>
+<p>A quick histogram reveals that a large number of packages are actually using just a single {lubridate} function.</p>
+<pre class="r"><code>hist(
+  fn_distinct_count$n,
+  breaks = 30,
+  main = &quot;Unique {lubridate} functions used by\npackages importing {lubridate}&quot;,
+  xlab = &quot;Function count&quot;
+)</code></pre>
+<p><img src="/post/2021-10-12-lubridate-fns_files/figure-html/hist-unique-lubridate-fns-1.png" width="672" /></p>
+<p>So, of these packages that use just one {lubridate} function, which function is the most frequent?</p>
+<pre class="r"><code>focus_one_fn &lt;- fn_distinct_count |&gt;
+  filter(n == 1) |&gt;
+  pull(focus)
+
+pkg_fn_count |&gt; 
+  filter(focus %in% focus_one_fn) |&gt; 
+  count(fun, sort = TRUE) |&gt; 
+  slice(1:5)</code></pre>
+<pre><code>## # A tibble: 5 × 2
+##   fun             n
+##   &lt;chr&gt;       &lt;int&gt;
+## 1 as_date         6
+## 2 ymd             6
+## 3 ymd_hms         6
+## 4 as_datetime     5
+## 5 is.Date         4</code></pre>
+<p>Looks like some pretty standard functions, like converting to a date (<code>as_date()</code>, <code>as_datetime()</code>) or to parse dates with a particular time component (<code>ymd_hms</code> for year, month, date, hour, minute, seconds, and <code>ymd()</code>).</p>
+<p>I think this is interesting: some packages are importing {lubridate} in its entirety to use a single function. And thse functions have base R equivalents with no package-dependency cost. Without diving too deep, this implies that people are using {lubridate} because of syntax familiarity or perhaps because they’re already loading other tidyverse packages anyway.</p>
+</div>
+<div id="non-unique-function-use-by-package" class="section level3">
+<h3>Non-unique function use by package</h3>
+<p>What about total calls?</p>
+<pre class="r"><code>fn_nondistinct_count &lt;- dep_df |&gt;
+  filter(pkg == &quot;lubridate&quot;) |&gt;
+  count(focus, sort = TRUE)
+
+dep_df |&gt; 
+  count(focus) |&gt; 
+  left_join(
+    fn_nondistinct_count,
+    by = &quot;focus&quot;,
+    suffix = c(&quot;_total&quot;, &quot;_lub&quot;)
+  ) |&gt; 
+  mutate(percent_lub = round(100 * n_lub / n_total, 1)) |&gt; 
+  arrange(desc(percent_lub)) |&gt;
+  slice(1:5)</code></pre>
+<pre><code>## # A tibble: 5 × 4
+##   focus        n_total n_lub percent_lub
+##   &lt;chr&gt;          &lt;int&gt; &lt;int&gt;       &lt;dbl&gt;
+## 1 RClimacell      2241   225        10  
+## 2 PriceIndices   18207  1453         8  
+## 3 riem             113     9         8  
+## 4 quantdates       534    42         7.9
+## 5 rtrends          101     8         7.9</code></pre>
+<p>And another quick histogram.</p>
+<pre class="r"><code>hist(
+  fn_nondistinct_count$n,
+  breaks = 30,
+  main = &quot;Non-unique {lubridate} functions used by\npackages importing {lubridate}&quot;,
+  xlab = &quot;Function count&quot;
+)</code></pre>
+<p><img src="/post/2021-10-12-lubridate-fns_files/figure-html/nonunique-lubridate-count-1.png" width="672" /></p>
+<p>It’d be interesting to do this for all CRAN packages and their dependencies, but I don’t have a personal CRAN mirror and I don’t write particularly performant code.</p>
+</div>
+</div>
+</div>
+<div id="so" class="section level1">
+<h1>So</h1>
+<p>Use whatever dependencies you want, it’s up to you. I write joke packages that I don’t put on CRAN, so.</p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>You should <a href="https://www.rostrum.blog/2021/07/15/dollar-dollar/">be aware of the international conspiracy</a> behind the use of this symbol in R.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
