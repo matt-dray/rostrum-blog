@@ -20,6 +20,11 @@ slug: fix-leaky-pipes
 draft: no
 ---
 
+```{r setup}
+library(palmerpenguins)
+library(dplyr, warn.conflicts = FALSE)
+```
+
 <div class="figure">
 <img src="https://media.giphy.com/media/Y8qTuvMUjSh7a/giphy.gif" alt="The character Data from Star Trek: The Next Generation is smoking a pipe.">
 <p class="caption">Data leaking from a pipe ([via Giphy](https://giphy.com/gifs/tony-bennett-Y8qTuvMUjSh7a))</p>
@@ -129,7 +134,7 @@ This a nice passive approach. But how does this help? We can sense-check each st
 
 ```{r tidylog-example}
 penguin_pipe <- penguins %>%
-  filter(species %in% c("Chocolate", "Pingu")) %>% 
+  filter(species == "Pingu") %>% 
   group_by(species) %>% 
   summarise(`mean_mass_g` = mean(body_mass_g, na.rm = TRUE)) %>% 
   mutate(`mean_mass_g` = round(`mean_mass_g`, 1))
@@ -212,33 +217,39 @@ You can see the arrow (`->`) pointing to the problematic line. The last line is 
 
 [The {pipecleaner} package](https://alistaire47.github.io/pipecleaner/index.html) is an RStudio addin by [Edward Visel](https://alistaire.rbind.io/). It has the best name.
 
-You highlight your code and select 'debug pipeline in browser' from the RStudio addins menu. This 'bursts' your pipeline to one intermediate object per function call, then opens the debug menu. You can also simply 'burst pipes' from the addins menu without debug mode.
-
 ```{r burst-pipe, eval=FALSE}
 # remotes::install_github("alistaire47/pipecleaner")  # not on CRAN
 library(pipecleaner)
 ```
 
+You highlight your code and select 'debug pipeline in browser' from the RStudio addins menu. This 'bursts' your pipeline to one intermediate object per function call and opens the debug menu. You can also simply 'burst pipes' from the addins menu without debug mode.
+
 Here's the intact, original pipeline:
 
-```
+```{r pipeclean-before, eval=FALSE}
 penguins_pipe <- penguins %>%
   filter(species %in% c("Gentoo", "Chinstrap")) %>% 
   group_by(species) %>% 
-  summarise(`mean_mass_g` = mean(body_mass_lb, na.rm = TRUE)) %>% 
+  summarise(`mean_mass_g` = mean(body_mass_g, na.rm = TRUE)) %>% 
   mutate(`mean_mass_g` = round(`mean_mass_g`, 1))
 ```
 
-And here's how it looks after highlighting the code and selecting 'debug pipeline in browser' or 'burst pipes' from the RStudio addins menu:
+Here's what the 'burst pipes' look like:
 
-```
-dot1 <- filter(iris, Species %in% c("setosa", "versicolor"))
-dot2 <- group_by(dot1, Species)
-dot3 <- summarise(dot2, `Mean width` = mean(Sepal.Width))
-iris_pipe <- mutate(dot3, `Mean width` = round(`Mean width`,1))
+```{r pipeclean-after, eval=FALSE}
+dot1 <- filter(penguins, species %in% c("Gentoo", "Chinstrap"))
+dot2 <- group_by(dot1, species)
+dot3 <- summarise(dot2, mean_mass_g = mean(body_mass_g, na.rm = TRUE))
+penguins_pipe <- mutate(dot3, mean_mass_g = round(mean_mass_g,1))
 ```
 
-So effectively it steps through each new object to report back errors. But it leaves you with multiple objects (with meaningless names) to clean up -- there's no 'fix pipes' option to return to your original pipeline.
+The names for the intermediate objects default to `dot1` etc. Fortunately, the {pipecleaner} addin also lets you 'burst pipes and set names', which opens a Shiny app for you to name the objects as you please.
+
+<div class="figure">
+<img src="/post/2019-04-01-fix-leaky-dplyr-pipes_files/burst-pipes.png" alt="Screenshot of an R Shiny app to rename objects in a 'burst' magrittr pipeline. On the right is a magrittr pipeline that's been broken into one object per function, where the names are dot1, dot2, etc. on the left, are text boxes that let you rename the objects as you please." width="100%"/>
+</div>
+
+Note also that there's no 'fix pipes' option to return to your original pipeline.
 
 ### 2c. {magrittr} {#magrittr}
 
@@ -269,7 +280,7 @@ debug(summarise)
 penguins_pipe<- penguins %>%
   filter(species %in% c("Gentoo", "Chinstrap")) %>% 
   group_by(species) %>% 
-  summarise(`mean_mass_g` = mean(body_mass_lb, na.rm = TRUE)) %>% 
+  summarise(`mean_mass_g` = mean(body_mass_g, na.rm = TRUE)) %>% 
   mutate(`mean_mass_g` = round(`mean_mass_g`, 1))
   
 undebug(summarise)
