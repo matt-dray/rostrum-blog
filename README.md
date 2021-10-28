@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 22 day(s) ago: [Reveal a hidden gorilla
+🆕 The latest post was published 23 day(s) ago: [Reveal a hidden gorilla
 with {magick}](https://www.rostrum.blog/2021/10/05/gorilla/).
 
 📈 This 2D plot shows posts over time:
@@ -154,4 +154,4 @@ with {magick}](https://www.rostrum.blog/2021/10/05/gorilla/).
 
 -----
 
-*Updated 2021-10-27 02:37:31*
+*Updated 2021-10-28 02:40:23*
