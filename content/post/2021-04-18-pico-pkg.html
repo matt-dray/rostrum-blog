@@ -6,6 +6,7 @@ slug: pico-pkg
 categories:
   - code
   - package
+  - tutorial
 tags:
   - pico
   - r
@@ -20,7 +21,7 @@ draft: no
 <p><img src="https://raw.githubusercontent.com/matt-dray/stickers/master/output/pico_hex.png" alt="Hexagonal logo for the pico package with the package name in very small font in light brown on a darker brown background." width=200/></p>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>I made <a href="https://github.com/matt-dray/pico">{pico}</a>, an R package for creating R packages with the absolute minimum structure and content. The goal: demystify package making.</p>
+<p>I made <a href="https://github.com/matt-dray/pico">{pico}</a>, an R package for creating tiny R packages with the absolute minimum structure and content. The goal: to demystify package making.</p>
 </div>
 <div id="function-in-a-haystack" class="section level1">
 <h1>Function in a haystack</h1>
@@ -29,14 +30,14 @@ draft: no
 </div>
 <div id="whats-the-problem" class="section level1">
 <h1>What’s the problem?</h1>
-<p><a href="https://twitter.com/WeAreRLadies/status/1383142336050384896?s=20">Packages are daunting</a>, particularly if you haven’t made one before. I’ve written a number of packages for fun and I still don’t know all the requirements.</p>
+<p><a href="https://twitter.com/WeAreRLadies/status/1383142336050384896?s=20">Packages are daunting</a>, particularly if you haven’t made one before. I’ve <a href="https://github.com/matt-dray/projects/blob/main/README.md#-r-packages">written a number of packages for fun and learning</a>, but none have been <a href="https://cran.r-project.org/">submitted to CRAN</a> and I’m never quite sure if I’m doing everything ‘correctly’.</p>
 <p>From personal experience, I think the esoteric structure and content of R packages are a barrier to beginners. Like, what is the <code>man/</code> folder and what’s an <code>.Rd</code> file? It’s easy to look at a chonky package repo on GitHub, like the popular <a href="https://github.com/tidyverse/dplyr/">{dplyr}</a>, and despair.</p>
-<p>Yes, you could RTFM (‘Read the Hecking Manual’), but have you <a href="http://www.hep.by/gnu/r-patched/r-exts/R-exts.html#SEC_Top">looked at it</a> before? And it’s not even necessary to follow all of these steps if you don’t have dreams of submitting to CRAN.</p>
-<p>What if—for teaching purposes—we strip back to the absolute barest of package requirements with the goal of demystification and to make it easier to get started?</p>
+<p>Yes, you could RTFM (‘Read the Hecking Manual’) about R packages, but have you <a href="http://www.hep.by/gnu/r-patched/r-exts/R-exts.html#SEC_Top">looked at it</a> before? And it’s not even necessary to follow all of these steps if you don’t have dreams of submitting it to CRAN.</p>
+<p>What if—for teaching purposes—we strip back to the absolute barest of requirements with the goal of demystifying packages and to make it easier to get started?</p>
 </div>
 <div id="minimalism" class="section level1">
 <h1>Minimalism</h1>
-<p>So what’s the least we need for a functioning package? Well, following <a href="http://kbroman.org/pkg_primer/pages/minimal.html">Karl Broman</a>, all you need is two files and a subfolder.</p>
+<p>What’s the least we need for a functioning package? Well, following <a href="http://kbroman.org/pkg_primer/pages/minimal.html">Karl Broman’s book</a>, all you need is two files and a subfolder. That is all.</p>
 <p>Here’s how it looks for an imaginary package called {mypkg}:</p>
 <pre><code>mypkg/
 ├── R/
@@ -46,20 +47,21 @@ draft: no
 <pre class="r"><code>say_hi &lt;- function(name = &quot;buddy&quot;) {
   paste0(&quot;Ahoy-hoy &quot;, name, &quot;!&quot;)
 }</code></pre>
-<p>The <code>DESCRIPTION</code> file might not be as familiar, but it’s basically a text file with two lines: the package name and a version number.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> This file is the thing that actually earmarks that this folder is an R package and not just a regular folder with some R scripts in it.</p>
+<p>The <code>DESCRIPTION</code> file (which has no file extension) might not be as familiar, but it’s basically a text file with only two lines: the package name and a version number (typically 0.0.0.9000 indicates a package under development, whereas 0.1 might be a minor release).<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
 <pre><code>Package: mypkg
 Version: 0.0.0.9000</code></pre>
-<p>…And that’s all that’s required.</p>
+<p>The <code>DESCRIPTION</code> file is like a magic flag that identifies that this folder is special and contains an R package; it isn’t just a boring folder with some R scripts in it.</p>
+<p>…And that’s all you need.</p>
 </div>
 <div id="introducing-pico" class="section level1">
 <h1>Introducing {pico}</h1>
-<p>So, you could point-and-click to create a folder with the structure and content outlined above, but I’ve also created <a href="https://github.com/matt-dray/pico">the {pico} package</a> to make the setup even easier.</p>
+<p>So, you could point-and-click to create a folder with the structure and content outlined above, but I’ve also created <a href="https://github.com/matt-dray/pico">the {pico} package</a> to make the setup even easier.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
 <p>The basic process for using {pico} is:</p>
 <ol style="list-style-type: decimal">
 <li>Install {pico} with <code>remotes::install_github("matt-dray/pico")</code></li>
-<li>Create your package with e.g. <code>pico::create("mypkg", "~/Documents/")</code></li>
-<li>Add new function definitions to <code>mypkg/R/functions.R</code></li>
-<li>Install your package with <code>remotes::install_local("~/Documents/mypkg")</code> and attach like usual with <code>library(mypkg)</code></li>
+<li>Create your package with e.g. <code>pico::create("mypkg", "~/Documents/")</code> (the second argument is a filepath for where to put the package folder)</li>
+<li>Add new function definitions to the <code>mypkg/R/functions.R</code> script file</li>
+<li>Install the package to your computer with <code>remotes::install_local("~/Documents/mypkg")</code> and attach it like a normal package with <code>library(mypkg)</code></li>
 </ol>
 <p>Later you can add more functions to <code>R/functions.R</code> (or add more script files to the <code>R/</code> folder) and can reinstall the package with <code>install_local()</code>, using the <code>force = TRUE</code> argument to overwrite the old version.</p>
 <p>Let’s take a look at those steps in a bit more depth.</p>
@@ -73,22 +75,24 @@ remotes::install_github(&quot;matt-dray/pico&quot;)</code></pre>
 </div>
 <div id="create-your-package" class="section level2">
 <h2>Create your package</h2>
-<p>There’s only one function in {pico}: <code>create()</code>. It generates a ‘pico package’ with the minimum required content. You supply a package <code>name</code> and a <code>dir</code>ectory where you want your package folder to be generated.</p>
-<p>As a demonstration, here’s how to create a pico package called {mypkg} in a temporary folder (put yours somewhere more permanent and convenient like <code>~/Documents</code> on macOS, for example):</p>
+<p>There’s only one function in {pico}: <code>create()</code>. It generates a folder with the minimum required content, as outlined above. You supply a package <code>name</code> and a <code>dir</code>ectory (folder on your computer) where you want your package to be generated.</p>
+<p>As a demonstration, here’s how to create a pico package called {mypkg} in <a href="https://en.wikipedia.org/wiki/Temporary_folder">a temporary folder</a>. You should put yours somewhere more permanent and convenient like <code>~/Documents</code> on macOS, for example.</p>
 <pre class="r"><code>tmp &lt;- tempdir()
 pico::create(name = &quot;mypkg&quot;, dir = tmp)</code></pre>
 <pre><code>## Pico package {mypkg} written to:
-##   /var/folders/y5/ts9sjlt10x1d7qpkgbhy3smh0000gn/T//RtmpA5hjNp/mypkg</code></pre>
-<p>There’s some output confirming your new package has been written to the location you specified (my example path here is nonstandard because it’s a temporary location).</p>
-<p>The name will be checked against R-package naming standards: it should contain alphanumeric characters or periods only, must have at least two characters, and can’t start with a number nor end with a period. The provided directory also will be checked for existence and, if it already contains a folder with the proposed name of your package, you’ll be asked interactively if you want to overwrite it.</p>
+##   /var/folders/jz/1sgz8lvd19q2wrx7w0cp7rth0000gn/T//Rtmp04i5CG/mypkg</code></pre>
+<p>This will output some lines in the R console that confirm your new package has been written to the location you specified (my example path here is convoluted because it’s just a temporary folder).</p>
+<p>The <code>name</code> will be checked against R-package naming standards: it should contain alphanumeric characters or periods only, must have at least two characters, and can’t start with a number nor end with a period. The provided <code>dir</code>ectory also will be checked for existence and, if it already contains a folder with the proposed name of your package, you’ll be asked interactively if you want to overwrite it.</p>
 </div>
 <div id="install-your-package" class="section level2">
 <h2>Install your package</h2>
-<p>So, your package now exists on your computer. Now how do you use it?</p>
+<p>So, the package now exists on your computer inside a folder. Now how do you use its functions in an R session?</p>
 <p>Normally, you would use <code>install.packages()</code> to fetch a package from CRAN and install it to your computer’s R package library. We can do something similar, but instead of fetching from CRAN, we can fetch the package ‘locally’, i.e. from your computer.</p>
-<p>To do this, we can use the {remotes} package, which we installed earlier. It contains an <code>install_local()</code> function to which you pass the package’s filepath on your computer:</p>
-<pre class="r"><code>remotes::install_local(path = file.path(tmp, &quot;mypkg&quot;))</code></pre>
-<pre><code>## ✓  checking for file  ‘private/var/folders/y5/ts9sjlt10x1d7qpkgbhy3smh0000gn/T//RtmpA5hjNp/mypkg ’ ...
+<p>To do this, we can use the {remotes} package, which we installed earlier. It contains an <code>install_local()</code> function to which you pass the package’s filepath on your computer.</p>
+<pre class="r"><code>remotes::install_local(
+  path = file.path(tmp, &quot;mypkg&quot;)  # change to your packages filepath
+)</code></pre>
+<pre><code>## ✓  checking for file  ‘private/var/folders/jz/1sgz8lvd19q2wrx7w0cp7rth0000gn/T//Rtmp04i5CG/mypkg ’ ...
 ##  ─  preparing ‘mypkg’:
 ##  ✓  checking DESCRIPTION meta-information
 ##  ─  checking for LF line-endings in source and make files and shell scripts
@@ -111,20 +115,20 @@ pico::create(name = &quot;mypkg&quot;, dir = tmp)</code></pre>
 <p>You’ll see some output that describes the installation process, ending with <code>DONE</code>.</p>
 <p>The package is now installed into your R package library and can be attached like any other package.</p>
 <pre class="r"><code>library(mypkg)</code></pre>
-<p>Now the functions from the package are available for use. By default, <code>create()</code> adds a dummy function called <code>say_hi()</code> to <code>R/functions.R</code>, so we can use it now:</p>
+<p>Now the functions from the package are available for use. By default, <code>create()</code> added a dummy function called <code>say_hi()</code> to <code>R/functions.R</code>, which we can use now:</p>
 <pre class="r"><code>say_hi(&quot;chums&quot;)</code></pre>
 <pre><code>## [1] &quot;Ahoy-hoy chums!&quot;</code></pre>
-<p>So, that means that all those functions you keep forgetting, or that are stored across multiple locations, are now available to you from one package. And ultimately, all it required was <code>install_github()</code>, <code>create()</code> and <code>install_local()</code>.</p>
+<p>So, we created an R package, installed it and used it.</p>
 </div>
 </div>
 <div id="add-new-functions" class="section level1">
 <h1>Add new functions</h1>
-<p>Of course, you can add your own functions to your pico package. The basic steps are:</p>
+<p>Of course, you’ll want to add your own functions to your package. The basic steps are:</p>
 <ol style="list-style-type: decimal">
 <li>Open the <code>R/functions.R</code> script</li>
 <li>Paste in your function definitions and save the file</li>
 <li>Rerun <code>remotes::install_local()</code> with the argument <code>force = TRUE</code></li>
-<li>Restart R, so it recognises the updated package</li>
+<li>Restart R, so the updated package is recognised</li>
 </ol>
 <p>Here’s what this might look like for our example package. First, you might add the function <code>say_bye()</code> by adding these lines to the <code>functions.R</code> file:</p>
 <pre class="r"><code>say_bye &lt;- function(name = &quot;folks&quot;) {
@@ -140,7 +144,8 @@ pico::create(name = &quot;mypkg&quot;, dir = tmp)</code></pre>
 <pre class="r"><code>library(mypkg)
 say_bye(&quot;friends&quot;)</code></pre>
 <pre><code>## [1] &quot;Cheerio friends!&quot;</code></pre>
-<p>It can get unwieldy to add all your functions to the <code>functions.R</code> file provided by {pico}, so you can add multiple scripts to the <code>R/</code> subfolder.</p>
+<p>So, that means that all those functions you keep forgetting, or that are stored across multiple locations, can be made available to you from one package. And ultimately, all it required was <code>install_github()</code>, <code>create()</code> and <code>install_local()</code>.</p>
+<p>Note that it can get unwieldy to add all your functions to the <code>functions.R</code> file provided by {pico}, but you can group them up into several R scripts in the <code>R/</code> subfolder if you like.</p>
 </div>
 <div id="huge-limitations" class="section level1">
 <h1>Huge limitations</h1>
@@ -166,7 +171,7 @@ Session info
 </summary>
 <pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
 ##  setting  value                       
-##  version  R version 4.0.4 (2021-02-15)
+##  version  R version 4.1.0 (2021-05-18)
 ##  os       macOS Big Sur 10.16         
 ##  system   x86_64, darwin17.0          
 ##  ui       X11                         
@@ -174,47 +179,52 @@ Session info
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2021-04-19                  
+##  date     2021-11-02                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
-##  package     * version    date       lib source                            
-##  assertthat    0.2.1      2019-03-21 [1] CRAN (R 4.0.0)                    
-##  blogdown      1.2        2021-03-04 [1] CRAN (R 4.0.2)                    
-##  bookdown      0.21       2020-10-13 [1] CRAN (R 4.0.2)                    
-##  callr         3.6.0      2021-03-28 [1] CRAN (R 4.0.2)                    
-##  cli           2.3.1      2021-02-23 [1] CRAN (R 4.0.2)                    
-##  crayon        1.4.1      2021-02-08 [1] CRAN (R 4.0.2)                    
-##  digest        0.6.27     2020-10-24 [1] CRAN (R 4.0.2)                    
-##  evaluate      0.14       2019-05-28 [1] CRAN (R 4.0.0)                    
-##  glue          1.4.2      2020-08-27 [1] CRAN (R 4.0.2)                    
-##  htmltools     0.5.1.9000 2021-03-11 [1] Github (rstudio/htmltools@ac43afe)
-##  knitr         1.31       2021-01-27 [1] CRAN (R 4.0.2)                    
-##  magrittr      2.0.1      2020-11-17 [1] CRAN (R 4.0.2)                    
-##  mypkg       * 0.0.9000   2021-04-19 [1] local                             
-##  pico          0.0.0.9000 2021-04-18 [1] local                             
-##  pkgbuild      1.2.0      2020-12-15 [1] CRAN (R 4.0.2)                    
-##  prettyunits   1.1.1      2020-01-24 [1] CRAN (R 4.0.0)                    
-##  processx      3.5.0      2021-03-23 [1] CRAN (R 4.0.2)                    
-##  ps            1.6.0      2021-02-28 [1] CRAN (R 4.0.2)                    
-##  R6            2.5.0      2020-10-28 [1] CRAN (R 4.0.2)                    
-##  remotes       2.2.0      2020-07-21 [1] CRAN (R 4.0.2)                    
-##  rlang         0.4.10     2020-12-30 [1] CRAN (R 4.0.2)                    
-##  rmarkdown     2.6        2020-12-14 [1] CRAN (R 4.0.2)                    
-##  rprojroot     2.0.2      2020-11-15 [1] CRAN (R 4.0.2)                    
-##  sessioninfo   1.1.1      2018-11-05 [1] CRAN (R 4.0.0)                    
-##  stringi       1.5.3      2020-09-09 [1] CRAN (R 4.0.2)                    
-##  stringr       1.4.0      2019-02-10 [1] CRAN (R 4.0.0)                    
-##  withr         2.4.1      2021-01-26 [1] CRAN (R 4.0.2)                    
-##  xfun          0.21       2021-02-10 [1] CRAN (R 4.0.2)                    
-##  yaml          2.2.1      2020-02-01 [1] CRAN (R 4.0.0)                    
+##  package     * version    date       lib source                         
+##  blogdown      1.4        2021-07-23 [1] CRAN (R 4.1.0)                 
+##  bookdown      0.23       2021-08-13 [1] CRAN (R 4.1.0)                 
+##  bslib         0.3.1      2021-10-06 [1] CRAN (R 4.1.0)                 
+##  callr         3.7.0      2021-04-20 [1] CRAN (R 4.1.0)                 
+##  cli           3.1.0      2021-10-27 [1] CRAN (R 4.1.0)                 
+##  crayon        1.4.1      2021-02-08 [1] CRAN (R 4.1.0)                 
+##  digest        0.6.28     2021-09-23 [1] CRAN (R 4.1.0)                 
+##  evaluate      0.14       2019-05-28 [1] CRAN (R 4.1.0)                 
+##  fastmap       1.1.0      2021-01-25 [1] CRAN (R 4.1.0)                 
+##  htmltools     0.5.2      2021-08-25 [1] CRAN (R 4.1.0)                 
+##  jquerylib     0.1.4      2021-04-26 [1] CRAN (R 4.1.0)                 
+##  jsonlite      1.7.2      2020-12-09 [1] CRAN (R 4.1.0)                 
+##  knitr         1.36       2021-09-29 [1] CRAN (R 4.1.0)                 
+##  magrittr      2.0.1      2020-11-17 [1] CRAN (R 4.1.0)                 
+##  mypkg       * 0.0.9000   2021-11-02 [1] local                          
+##  pico          0.0.0.9000 2021-11-02 [1] Github (matt-dray/pico@ebd205c)
+##  pkgbuild      1.2.0      2020-12-15 [1] CRAN (R 4.1.0)                 
+##  prettyunits   1.1.1      2020-01-24 [1] CRAN (R 4.1.0)                 
+##  processx      3.5.2      2021-04-30 [1] CRAN (R 4.1.0)                 
+##  ps            1.6.0      2021-02-28 [1] CRAN (R 4.1.0)                 
+##  R6            2.5.1      2021-08-19 [1] CRAN (R 4.1.0)                 
+##  remotes       2.4.1      2021-09-29 [1] CRAN (R 4.1.0)                 
+##  rlang         0.4.12     2021-10-18 [1] CRAN (R 4.1.0)                 
+##  rmarkdown     2.10       2021-08-06 [1] CRAN (R 4.1.0)                 
+##  rprojroot     2.0.2      2020-11-15 [1] CRAN (R 4.1.0)                 
+##  rstudioapi    0.13       2020-11-12 [1] CRAN (R 4.1.0)                 
+##  sass          0.4.0      2021-05-12 [1] CRAN (R 4.1.0)                 
+##  sessioninfo   1.1.1      2018-11-05 [1] CRAN (R 4.1.0)                 
+##  stringi       1.7.5      2021-10-04 [1] CRAN (R 4.1.0)                 
+##  stringr       1.4.0      2019-02-10 [1] CRAN (R 4.1.0)                 
+##  withr         2.4.2      2021-04-18 [1] CRAN (R 4.1.0)                 
+##  xfun          0.26       2021-09-14 [1] CRAN (R 4.1.0)                 
+##  yaml          2.2.1      2020-02-01 [1] CRAN (R 4.1.0)                 
 ## 
-## [1] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
+## [1] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
 </details>
 </div>
 <div class="footnotes">
 <hr />
 <ol>
 <li id="fn1"><p>My initial thought was to try and respond—in a single tweet—with the code required to build a package. That might help show how little code is required, especially with shortcuts like <code>usethis::create_package()</code> and <code>usethis::use_r()</code>. But I think there’s a little too much extra explanation required for this to be a viable, helpful response.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>You don’t need to worry too much about the version number for now; a suffix of <code>9000</code> liike this one indicates a package is in development. You can read more <a href="https://r-pkgs.org/description.html#version">in Hadley’s book</a>.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>You don’t need to worry too much about the version number for now, especially if you aren’t releasing the package to the world. You can read more <a href="https://r-pkgs.org/description.html#version">in Hadley’s book</a>, though.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>Yo, I heard you like packages that make packages, so I wrote you a package to make a package.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
