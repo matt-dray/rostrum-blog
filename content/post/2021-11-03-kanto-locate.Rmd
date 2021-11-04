@@ -1,0 +1,184 @@
+---
+title: "Get coorindates from fictitious maps"
+author: Matt Dray
+date: '2021-11-03'
+slug: locator
+categories:
+  - code
+  - tutorial
+tags:
+  - map
+  - r
+draft: yes
+---
+
+```{r setup, include=FALSE}
+kanto_x <- c(
+  0.247018664047151,
+  0.245117878192534,
+  0.245117878192534,
+  0.247018664047151,
+  0.427593320235756,
+  0.610068762278979,
+  0.794444990176817,
+  0.610068762278979,
+  0.796345776031434,
+  0.475112966601179,
+  0.520731827111984,
+  0.610068762278979,
+  0.383875245579568,
+  0.245117878192534,
+  0.153880157170923,
+  0.151979371316307
+)
+
+kanto_y <- c(
+  0.30648777173913,
+  0.501039402173913,
+  0.758688858695652,
+  0.816528532608696,
+  0.882255434782609,
+  0.879626358695652,
+  0.819157608695652,
+  0.437941576086956,
+  0.692961956521739,
+  0.692961956521739,
+  0.182921195652174,
+  0.695591032608696,
+  0.0567255434782608,
+  0.0567255434782608,
+  0.753430706521739,
+  0.879626358695652
+)
+
+kanto_names <- c(
+  "Pallet Town",
+  "Viridian City",
+  "Viridian Forest",
+  "Pewter City",
+  "Mt Moon",
+  "Cerulean City",
+  "Rock Tunnel",
+  "Vermilion City",
+  "Lavender Town",
+  "Celadon City",
+  "Fuchsia City",
+  "Saffron City",
+  "Seafoam Islands",
+  "Cinnabar Island",
+  "Victory Road",
+  "Indigo Plateau"
+)
+
+kanto_pts <- data.frame(kanto_x, kanto_y)
+names(kanto_pts) <- c("x", "y")
+row.names(kanto_pts) <- kanto_names
+```
+
+
+# tl;dr
+
+words
+
+# Map
+
+How can you generate coordinates locations on fictitious maps?
+
+Here's an approach: read an image into R with `png::png()`, plot it with `grid::grid_raster()`, then use the `locator()` function[^locator] to manually click on the plot to record point positions.
+
+```{r}
+plot_map <- function(png_path) {
+  
+  tmp <- tempfile()
+  download.file(png_path, tmp, quiet = TRUE)
+  img <- png::readPNG(tmp)
+  par(mar = rep(0, 4))
+  plot.new()
+  grid::grid.raster(img, x = 0.5, y = 0.5)
+  
+}
+```
+
+For simplicity, I'm gong to start with the Town Map of Kanto from Pokémon Red, Blue and Yellow. The locations are really obvious points that we can easily click on. Let's plot it.
+
+```{r}
+kanto <- "https://cdn2.bulbagarden.net/upload/8/86/Kanto_Town_Map_RBY.png"
+plot_map(kanto)
+```
+
+With the Kanto map in our active plot window, we can execute a function that prompts the user to click on named locations and outputs a dataframe with their X and Y coordinates.
+
+```{r}
+locate_points <- function(poi) {
+  
+  poi_list <- vector("list", length(poi)) |> setNames(poi)
+  
+  for (i in poi) {
+    cat(paste0("Locate ", i, "... "))
+    poi_list[[i]] <- locator(1, type = "p")
+    cat("found.\n")
+  }
+  
+  poi_df <- do.call(rbind, poi_list) |> data.frame()
+  
+}
+```
+
+Kanto has two types of location: towns and cities (squares) and other places (circles). Provide a character vector of their names to be prompted to click them.
+
+```{r eval=FALSE}
+kanto_names <- c(
+  "Pallet Town",
+  "Viridian City",
+  "Viridian Forest",
+  "Pewter City",
+  "Mt Moon",
+  "Cerulean City",
+  "Rock Tunnel",
+  "Vermilion City",
+  "Lavender Town",
+  "Celadon City",
+  "Fuchsia City",
+  "Saffron City",
+  "Seafoam Islands",
+  "Cinnabar Island",
+  "Victory Road",
+  "Indigo Plateau"
+)
+
+kanto_pts <- locate_points(kanto_names)
+```
+```
+Locate Pallet Town... found.
+Locate Viridian City... found.
+Locate Viridian Forest... found.
+Locate Pewter City... found.
+Locate Mt Moon... found.
+Locate Cerulean City... found.
+Locate Rock Tunnel... found.
+Locate Vermilion City... found.
+Locate Lavender Town... found.
+Locate Celadon City... found.
+Locate Fuchsia City... found.
+Locate Saffron City... found.
+Locate Seafoam Islands... found.
+Locate Cinnabar Island... found.
+Locate Victory Road... found.
+Locate Indigo Plateau... found.
+```
+
+And the output is a little data.frame of the x and y locations.
+
+```{r}
+kanto_pts
+```
+
+
+```{r}
+get_coords <- function(path, poi) {
+  .plot_setup()
+  .locate_points()
+}
+```
+
+[^locator]: Back in my day we used the `locator()` function to place labels directly onto plots by clicking where to place them.

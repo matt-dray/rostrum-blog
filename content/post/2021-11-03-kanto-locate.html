@@ -1,0 +1,120 @@
+---
+title: "Get coorindates from fictitious maps"
+author: Matt Dray
+date: '2021-11-03'
+slug: locator
+categories:
+  - code
+  - tutorial
+tags:
+  - map
+  - r
+draft: yes
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>words</p>
+</div>
+<div id="map" class="section level1">
+<h1>Map</h1>
+<p>How can you generate coordinates locations on fictitious maps?</p>
+<p>Here’s an approach: read an image into R with <code>png::png()</code>, plot it with <code>grid::grid_raster()</code>, then use the <code>locator()</code> function<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> to manually click on the plot to record point positions.</p>
+<pre class="r"><code>plot_map &lt;- function(png_path) {
+  
+  tmp &lt;- tempfile()
+  download.file(png_path, tmp, quiet = TRUE)
+  img &lt;- png::readPNG(tmp)
+  par(mar = rep(0, 4))
+  plot.new()
+  grid::grid.raster(img, x = 0.5, y = 0.5)
+  
+}</code></pre>
+<p>For simplicity, I’m gong to start with the Town Map of Kanto from Pokémon Red, Blue and Yellow. The locations are really obvious points that we can easily click on. Let’s plot it.</p>
+<pre class="r"><code>kanto &lt;- &quot;https://cdn2.bulbagarden.net/upload/8/86/Kanto_Town_Map_RBY.png&quot;
+plot_map(kanto)</code></pre>
+<p><img src="/post/2021-11-03-kanto-locate_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+<p>With the Kanto map in our active plot window, we can execute a function that prompts the user to click on named locations and outputs a dataframe with their X and Y coordinates.</p>
+<pre class="r"><code>locate_points &lt;- function(poi) {
+  
+  poi_list &lt;- vector(&quot;list&quot;, length(poi)) |&gt; setNames(poi)
+  
+  for (i in poi) {
+    cat(paste0(&quot;Locate &quot;, i, &quot;... &quot;))
+    poi_list[[i]] &lt;- locator(1, type = &quot;p&quot;)
+    cat(&quot;found.\n&quot;)
+  }
+  
+  poi_df &lt;- do.call(rbind, poi_list) |&gt; data.frame()
+  
+}</code></pre>
+<p>Kanto has two types of location: towns and cities (squares) and other places (circles). Provide a character vector of their names to be prompted to click them.</p>
+<pre class="r"><code>kanto_names &lt;- c(
+  &quot;Pallet Town&quot;,
+  &quot;Viridian City&quot;,
+  &quot;Viridian Forest&quot;,
+  &quot;Pewter City&quot;,
+  &quot;Mt Moon&quot;,
+  &quot;Cerulean City&quot;,
+  &quot;Rock Tunnel&quot;,
+  &quot;Vermilion City&quot;,
+  &quot;Lavender Town&quot;,
+  &quot;Celadon City&quot;,
+  &quot;Fuchsia City&quot;,
+  &quot;Saffron City&quot;,
+  &quot;Seafoam Islands&quot;,
+  &quot;Cinnabar Island&quot;,
+  &quot;Victory Road&quot;,
+  &quot;Indigo Plateau&quot;
+)
+
+kanto_pts &lt;- locate_points(kanto_names)</code></pre>
+<pre><code>Locate Pallet Town... found.
+Locate Viridian City... found.
+Locate Viridian Forest... found.
+Locate Pewter City... found.
+Locate Mt Moon... found.
+Locate Cerulean City... found.
+Locate Rock Tunnel... found.
+Locate Vermilion City... found.
+Locate Lavender Town... found.
+Locate Celadon City... found.
+Locate Fuchsia City... found.
+Locate Saffron City... found.
+Locate Seafoam Islands... found.
+Locate Cinnabar Island... found.
+Locate Victory Road... found.
+Locate Indigo Plateau... found.</code></pre>
+<p>And the output is a little data.frame of the x and y locations.</p>
+<pre class="r"><code>kanto_pts</code></pre>
+<pre><code>##                         x          y
+## Pallet Town     0.2470187 0.30648777
+## Viridian City   0.2451179 0.50103940
+## Viridian Forest 0.2451179 0.75868886
+## Pewter City     0.2470187 0.81652853
+## Mt Moon         0.4275933 0.88225543
+## Cerulean City   0.6100688 0.87962636
+## Rock Tunnel     0.7944450 0.81915761
+## Vermilion City  0.6100688 0.43794158
+## Lavender Town   0.7963458 0.69296196
+## Celadon City    0.4751130 0.69296196
+## Fuchsia City    0.5207318 0.18292120
+## Saffron City    0.6100688 0.69559103
+## Seafoam Islands 0.3838752 0.05672554
+## Cinnabar Island 0.2451179 0.05672554
+## Victory Road    0.1538802 0.75343071
+## Indigo Plateau  0.1519794 0.87962636</code></pre>
+<pre class="r"><code>get_coords &lt;- function(path, poi) {
+  .plot_setup()
+  .locate_points()
+}</code></pre>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Back in my day we used the <code>locator()</code> function to place labels directly onto plots by clicking where to place them.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
