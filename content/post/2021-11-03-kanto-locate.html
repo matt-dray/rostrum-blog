@@ -95,7 +95,7 @@ Click on Victory Road... found.
 Click on Indigo Plateau... found.</code></pre>
 <p>Aside: here’s a simplified version of what’s going on when you use <code>locator()</code>.</p>
 <div class="figure">
-<p><img src="/post/2021-11-03-kanto-locate_files/locator.gif" alt="R code is run in RStudio to produce a simple plot with one point in the centre. After running the execute function, the user clicks the single point and the console prints a list with x and y coordinate values for that point." width="100%"/></p>
+<p><img src="/post/2021-11-03-kanto-locate_files/locator.gif" alt="R code is run in RStudio to produce a simple plot with one point in the centre. After running the locator function, the user clicks the point on the plot and the console prints a list with the x and y coordinate values for that point." width="100%"/></p>
 </div>
 <p>Anyway, the output from <code>locate_points()</code> is a data.frame of the coordinates with one row per location. The locations vector was passed as the rownames of the dataframe.</p>
 <pre class="r"><code>kanto_pts</code></pre>
@@ -146,7 +146,7 @@ text(
   pos = c(1, 1, 1, 4, 1, 1, 2, 1, 2, 1, 1, 1, 3, 3, 1, 1),
   family = &quot;Press Start 2P&quot;  # from Google Fonts
 )</code></pre>
-<p><img src="/post/2021-11-03-kanto-locate_files/figure-html/plot-cities-1.png" title="A map where the labelled points are cities from the original Pokemon videogame. Cities are red points with larger text. Non-cities are smaller and blue. A light grey line connects them to shoe the path of travek." alt="A map where the labelled points are cities from the original Pokemon videogame. Cities are red points with larger text. Non-cities are smaller and blue. A light grey line connects them to shoe the path of travek." width="672" /></p>
+<p><img src="/post/2021-11-03-kanto-locate_files/figure-html/plot-cities-1.png" title="A map where the labelled points are cities from the original Pokemon videogame. Cities are red points with larger text. Non-cities are smaller and blue. A light grey line connects the cities to show the path of travel." alt="A map where the labelled points are cities from the original Pokemon videogame. Cities are red points with larger text. Non-cities are smaller and blue. A light grey line connects the cities to show the path of travel." width="672" /></p>
 <p>It might also be fun to do a minimal map of the cities where the points are coloured according to the name of the city. You may have noticed that the city names are all fancy colour names, so let’s use them. Well, except Pallett, which can be a mix of all colours.</p>
 <pre class="r"><code>kanto_cities &lt;- 
   kanto_pts[kanto_pts$city | rownames(kanto_pts) == &quot;Indigo Plateau&quot;, ]
@@ -159,8 +159,8 @@ kanto_cities$colour &lt;- c(  # close-enough named R colours
 par(mar = rep(0, 4))
 with(kanto_cities, plot(x, y, axes = FALSE))
 with(kanto_cities, points(x, y, pch = 22, cex = 4, bg = colour))</code></pre>
-<p><img src="/post/2021-11-03-kanto-locate_files/figure-html/plot-colors-1.png" title="A plot showing an arrangement of coloured squares that represent the cities from the town map of the original Pokemon game. The squares are coloured to match the town names, so cerulean is blue." alt="A plot showing an arrangement of coloured squares that represent the cities from the town map of the original Pokemon game. The squares are coloured to match the town names, so cerulean is blue." width="672" /></p>
-<p>I’ll admit I struggled to make this, given colourblindness, and because I had no prior notions of what colours like ‘vermilion’ and ‘celadon’ are.</p>
+<p><img src="/post/2021-11-03-kanto-locate_files/figure-html/plot-colors-1.png" title="A minimal plot showing an arrangement of coloured squares that represent the cities from the town map of the original Pokemon game. The squares are coloured to match the town names, so Cerulean City is blue." alt="A minimal plot showing an arrangement of coloured squares that represent the cities from the town map of the original Pokemon game. The squares are coloured to match the town names, so Cerulean City is blue." width="672" /></p>
+<p>I’ll admit I struggled to make this given my colourblindness, but also because I had no prior notions of what colours like ‘vermilion’ and ‘celadon’ are. Actually they kind of sound more like Pokémon names.</p>
 <p>Anyway, these ‘maps’ are the first steps to create something more exciting. For now they demonstrate the point (literally, lol). Plus they fulfil my belated submission for day one of <a href="https://github.com/tjukanovt/30DayMapChallenge">the #30DayMapChallenge</a>, I guess?</p>
 </div>
 <div id="distances" class="section level1">

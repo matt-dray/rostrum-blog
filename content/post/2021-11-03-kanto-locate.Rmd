@@ -141,7 +141,7 @@ Click on Indigo Plateau... found.
 Aside: here's a simplified version of what's going on when you use `locator()`.
 
 <div class="figure">
-<img src="/post/2021-11-03-kanto-locate_files/locator.gif" alt="R code is run in RStudio to produce a simple plot with one point in the centre. After running the execute function, the user clicks the single point and the console prints a list with x and y coordinate values for that point." width="100%"/>
+<img src="/post/2021-11-03-kanto-locate_files/locator.gif" alt="R code is run in RStudio to produce a simple plot with one point in the centre. After running the locator function, the user clicks the point on the plot and the console prints a list with the x and y coordinate values for that point." width="100%"/>
 </div>
 
 Anyway, the output from `locate_points()` is a data.frame of the coordinates with one row per location. The locations vector was passed as the rownames of the dataframe.
@@ -156,7 +156,7 @@ The coordinate values are between 0 to 1 because those are the default x- and y-
 
 So! You can now plot the coordinates independently. To demonstrate, I've plotted the points and added a label whose style is dependent on the type of location. I've added lines to join the locations in the order they appear in a normal playthrough.
 
-```{r plot-cities, fig.alt='A map where the labelled points are cities from the original Pokemon videogame. Cities are red points with larger text. Non-cities are smaller and blue. A light grey line connects them to shoe the path of travek.'}
+```{r plot-cities, fig.alt='A map where the labelled points are cities from the original Pokemon videogame. Cities are red points with larger text. Non-cities are smaller and blue. A light grey line connects the cities to show the path of travel.'}
 kanto_pts$city <- ifelse(
   grepl("Town|City|Island$", rownames(kanto_pts)), 
   TRUE, FALSE
@@ -186,7 +186,7 @@ text(
 
 It might also be fun to do a minimal map of the cities where the points are coloured according to the name of the city. You may have noticed that the city names are all fancy colour names, so let's use them. Well, except Pallett, which can be a mix of all colours.
 
-```{r plot-colors, fig.alt='A plot showing an arrangement of coloured squares that represent the cities from the town map of the original Pokemon game. The squares are coloured to match the town names, so cerulean is blue.'}
+```{r plot-colors, fig.alt='A minimal plot showing an arrangement of coloured squares that represent the cities from the town map of the original Pokemon game. The squares are coloured to match the town names, so Cerulean City is blue.'}
 kanto_cities <- 
   kanto_pts[kanto_pts$city | rownames(kanto_pts) == "Indigo Plateau", ]
 
@@ -200,7 +200,7 @@ with(kanto_cities, plot(x, y, axes = FALSE))
 with(kanto_cities, points(x, y, pch = 22, cex = 4, bg = colour))
 ```
 
-I'll admit I struggled to make this, given colourblindness, and because I had no prior notions of what colours like 'vermilion' and 'celadon' are.
+I'll admit I struggled to make this given my colourblindness, but also because I had no prior notions of what colours like 'vermilion' and 'celadon' are. Actually they kind of sound more like Pokémon names.
 
 Anyway, these 'maps' are the first steps to create something more exciting. For now they demonstrate the point (literally, lol). Plus they fulfil my belated submission for day one of [the #30DayMapChallenge](https://github.com/tjukanovt/30DayMapChallenge), I guess?
 
