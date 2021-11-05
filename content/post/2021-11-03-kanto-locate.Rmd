@@ -184,7 +184,7 @@ text(
 )
 ```
 
-It might also be fun to do a minimal map of the cities where the points are coloured according to the name of the city. You may have noticed that the city names are all fancy colour names (viridian, fuchsia, etc), so let's use them. Well, except Pallett, for which can just use a mix of all colours, i.e. white.
+It might also be fun to do a minimal map of the cities where the points are coloured according to the name of the city. You may have noticed that the city names are all fancy colour names (viridian, fuchsia, etc), so let's use them. Well, except Pallet, for which can just use a mix of all colours, i.e. white.
 
 ```{r plot-colors, fig.alt='A minimal plot showing an arrangement of coloured squares that represent the cities from the town map of the original Pokemon game. The squares are coloured to match the town names, so Cerulean City is blue.'}
 kanto_cities <- 
@@ -226,13 +226,13 @@ rownames(kanto_dist) <- kanto_names
 kanto_dist[1:3, 1:3]  # first few
 ```
 
-These values are the number of arbitrary distance units between pairs of locations, which are given by the row and column headers. So, Pallett Town to Viridian City is 19 arbitrary units.
+These values are the number of arbitrary distance units between pairs of locations, which are given by the row and column headers. So, Pallet Town to Viridian City is 19 arbitrary units.
 
-Based on my own measurements, the centre of Pallett to the centre of Viridian is 64 in-game 'blocks', where a block is a 16- by 16-pixel square.[^scale] 
+Based on my own measurements, the centre of Pallet to the centre of Viridian is 64 in-game 'blocks', where a block is a 16- by 16-pixel square.[^scale] 
 
 It just so happens that [the player-character sprite fills a single block](https://www.spriters-resource.com/fullview/63033/)[^sprite] and we know that the character is probably [about 140 cm tall](https://bulbapedia.bulbagarden.net/wiki/Ash_Ketchum).[^height]
 
-That means Pallett to Viridian is about 64 * 140 cm = 8960 cm. So, one of our arbitrary units equals 8960 cm / 19 = 472 cm. Now we can correct our distance lookup.
+That means Pallet to Viridian is about 64 * 140 cm = 8960 cm. So, one of our arbitrary units equals 8960 cm / 19 = 472 cm. Now we can correct our distance lookup.
 
 ```{r distance-m}
 kanto_dist_m <- round(kanto_dist * 472 / 100)
@@ -241,9 +241,13 @@ kanto_dist_m[1:3, 1:3]
 
 Once again I've removed some precision by calculating the result as a rounded distance in metres. Coward.
 
-But it means we can say some really profound (well... weird) stuff like it's about half a kilometre from Cerulean City to Cinnabar Island. Maybe that's true in the context of the game's dimensions, but it's... underwhelming.
+<div class="figure">
+<img src="/post/2021-11-03-kanto-locate_files/distance.jpg" alt="Diagram to show how the known height in pixels of a character sprite from the original Pokemon videogame can be used to ascertain the 'real world' distance between twoo in-game towns, Pallet and Viridian, based on their known distance in pixels. A block is about 16 pixels, which is 140 cm. There are 64 blocks between the two towns, so this is about 90 m." width="100%"/>
+</div>
 
-Was this distance-conversion exercise worthwhile? No. But it might strengthen my belated submission to day two of [the #30DayMapChallenge](https://github.com/tjukanovt/30DayMapChallenge) ('lines')?
+So this means we can now say some really profound things like it's about 90 m from Pallet Town to Viridian City. Maybe that's true in the context of the game's dimensions, but it's... underwhelming. 
+
+Was this scuffed distance-conversion exercise worthwhile? No. But it might strengthen my belated submission to day two of [the #30DayMapChallenge](https://github.com/tjukanovt/30DayMapChallenge) ('lines')?
 
 ---
 <details><summary>Session info</summary>
