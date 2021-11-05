@@ -52,13 +52,13 @@ Use R to interactively extract arbitrary coordinates from images of imaginary ma
 
 There are lots of interesting fictitious maps. For example, Middle Earth from _Lord of the Rings_, Hyrule from _The Legend of Zelda_ and Sodor from _Thomas the Tank Engine_.
 
-This is excellent fodder for fan-made recreations. I've thought before about how I would do this programmatically, but there's one one particularly awkward thing: how do you grab coordinates from a PNG of your chosen map?
+This is excellent fodder for fan-made recreations. I've thought before about how I would do this programmatically, but there's one particularly awkward thing: how can you grab location coordinates from an image of your chosen map?
 
 This post outlines a pretty low-effort method for doing this in R. Basically there's two steps: (1) read and plot an image of a map and (2) click locations interactively to record their coordinates. I'm going to do this with a Pokémon example for simplicity, but also because have you ever visited this blog before?
 
 # Get map
 
-For my own convenience, I've written a function that downloads a PNG of a map from the web and loads it into R. This requires {png} and {grid} packages.
+For my own convenience, I've written a function that downloads a PNG of a map from the web and plots it. This requires {png} and {grid} packages.
 
 ```{r fn-plot}
 plot_map <- function(png_path) {
@@ -73,7 +73,7 @@ plot_map <- function(png_path) {
 }
 ```
 
-To be specific, I'm using the in-game map of the fictitious Kanto region from the first generation of [_Pokémon Red_ and _Blue_](https://en.wikipedia.org/wiki/Pok%C3%A9mon_Red_and_Blue) for the Nintendo GameBoy,[^safar6] [downloaded from Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/Main_Page). This is good for a demo: the locations are discrete and obvious.
+To be specific, I'm using the in-game map of the fictitious Kanto region from the first generation of [_Pokémon Red_ and _Blue_](https://en.wikipedia.org/wiki/Pok%C3%A9mon_Red_and_Blue) for the Nintendo GameBoy,[^safar6] [downloaded from Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/Main_Page). This is good for a demo: the locations are pretty discrete, obvious and clickable.
 
 ```{r plot-kanto, fig.alt='The simple, blocky Kanto town map from the original Pokemon game. Squares represent cities, circles are other points of interest, and there are routes connecting them. The location shows both land and sea.'}
 kanto_path <- 
@@ -82,11 +82,13 @@ kanto_path <-
 plot_map(kanto_path)
 ```
 
-You might be thinking that it looks like a schematic map, an abstraction of the actual geography, like the London underground map. In fact, the town map is pretty similar to the actual in-game world layout, as demonstrated by folks who have tried [to stitch together all the overworld screens to make a megamap](https://www.reddit.com/r/pokemon/comments/lpttq8/put_together_all_the_images_to_create_a_gen_i/).
+The map is an inventory item for looking up the geography of the overworld. It looks like an abstraction, but it's actually pretty similar to the gameworld. Some folks have [stitched together all the overworld screens to make a megamap](https://www.reddit.com/r/pokemon/comments/lpttq8/put_together_all_the_images_to_create_a_gen_i/) so you can see the similarity.
+
+You might be thinking that it looks like a schematic map---an abstraction of the actual geography---like the London underground map. In fact, the town map is pretty similar to the actual in-game world layout, as demonstrated by folks who have [stitched together all the overworld screens to make a megamap](https://www.reddit.com/r/pokemon/comments/lpttq8/put_together_all_the_images_to_create_a_gen_i/).
 
 # Get points
 
-With the Kanto map drawn in our active plot window, we can run a function to prompt the user to click on named locations, which will record their coordinates.
+With the Kanto map drawn in our active plot window, we can run a function to prompt the user to click on points and record their coordinates.
 
 ```{r fn-locate}
 locate_points <- function(places) {
@@ -104,9 +106,9 @@ locate_points <- function(places) {
 }
 ```
 
-This is not magic. It is merely powered by the `locator()` function, which records the x and y location of a point clicked on a plot by the user.[^useless]
+This is not magic. It is merely powered by the `locator()` function, which records the x and y location of a point clicked on a plot by the user.[^useless] The first argument is the number of clicks to collect.
 
-We need to pass the function a character vector of place names. For this demo, that'll be Kanto's towns, cities and other places of interest. The function loops through the locations and requests you to click the corresponding point on the map.
+For this bespoke function, we pass a character vector of place names. For this demo, that'll be Kanto's towns, cities and other places of interest. The function loops through the locations and requests you to click the corresponding point on the map.
 
 ```{r kanto-names, eval=FALSE}
 kanto_names <- c(
@@ -138,13 +140,13 @@ Click on Victory Road... found.
 Click on Indigo Plateau... found.
 ```
 
-Aside: here's a simplified version of what's going on when you use `locator()`.
+Aside: here's a simplified version of what's going on when you use `locator()`. Make a plot, call the function and then the top of the plotting window in RStudio says 'locator active' and your cursor becomes crosshairs. Clicking on the plot returns a list of the x and y coordinates within the plotting space.
 
 <div class="figure">
 <img src="/post/2021-11-03-kanto-locate_files/locator.gif" alt="R code is run in RStudio to produce a simple plot with one point in the centre. After running the locator function, the user clicks the point on the plot and the console prints a list with the x and y coordinate values for that point." width="100%"/>
 </div>
 
-Anyway, the output from `locate_points()` is a data.frame of the coordinates with one row per location. The locations vector was passed as the rownames of the dataframe.
+During the clickfest, the `locate_points()` function has assembled the points lists into a data.frame with one row per location. The locations vector was passed as the rownames of the dataframe as well.
 
 ```{r preview-points}
 kanto_pts
@@ -184,7 +186,7 @@ text(
 )
 ```
 
-It might also be fun to do a minimal map of the cities where the points are coloured according to the name of the city. You may have noticed that the city names are all fancy colour names, so let's use them. Well, except Pallett, which can be a mix of all colours.
+It might also be fun to do a minimal map of the cities where the points are coloured according to the name of the city. You may have noticed that the city names are all fancy colour names (viridian, fuchsia, etc), so let's use them. Well, except Pallett, for which can just use a mix of all colours, i.e. white.
 
 ```{r plot-colors, fig.alt='A minimal plot showing an arrangement of coloured squares that represent the cities from the town map of the original Pokemon game. The squares are coloured to match the town names, so Cerulean City is blue.'}
 kanto_cities <- 
@@ -202,7 +204,7 @@ with(kanto_cities, points(x, y, pch = 22, cex = 4, bg = colour))
 
 I'll admit I struggled to make this given my colourblindness, but also because I had no prior notions of what colours like 'vermilion' and 'celadon' are. Actually they kind of sound more like Pokémon names.
 
-Anyway, these 'maps' are the first steps to create something more exciting. For now they demonstrate the point (literally, lol). Plus they fulfil my belated submission for day one of [the #30DayMapChallenge](https://github.com/tjukanovt/30DayMapChallenge), I guess?
+Anyway, these 'maps' are the first steps to create something more exciting. For now they demonstrate the point (literally, lol). Plus they fulfil my belated submission for day one of [the #30DayMapChallenge](https://github.com/tjukanovt/30DayMapChallenge) ('points'), I guess?
 
 # Distances
 
@@ -210,7 +212,7 @@ But wait, there's more.
 
 So, obviously, why not work out the distances between towns? Not in arbitrary units, but in actual metres. There's a few ways we could do this, but basically I'm going to peg a pixel to a known length.[^irlkanto]
 
-First, we can create a lookup table of the straight-line 'distances' between locations, given our arbitrary 0 to 1 dimensions. We want to avoid being precise with this values (they're only as good as my ability to click a tiny square on a computer screen), so I'm multiplying and rounding them.
+First, we can create a lookup table of the straight-line 'distances' between locations, given our arbitrary 0 to 1 dimensions. We want to avoid being precise with these values (they're only as good as my ability to click a tiny square on a computer screen), so I'm multiplying and rounding them.
 
 ```{r distance}
 kanto_dist <- raster::pointDistance(
@@ -241,9 +243,9 @@ kanto_dist_m[1:3, 1:3]
 
 Once again I've removed some precision by calculating the result as a rounded distance in metres. Coward.
 
-But it means we can say some really profound (well... weird) stuff like it's about half a kilometre from Cerulean City to Cinnabar Island.
+But it means we can say some really profound (well... weird) stuff like it's about half a kilometre from Cerulean City to Cinnabar Island. Maybe that's true in the context of the game's dimensions, but it's... underwhelming.
 
-Was this distance-conversion exercise worthwhile? No. But it might strengthen my belated submission to day two of [the #30DayMapChallenge](https://github.com/tjukanovt/30DayMapChallenge)?
+Was this distance-conversion exercise worthwhile? No. But it might strengthen my belated submission to day two of [the #30DayMapChallenge](https://github.com/tjukanovt/30DayMapChallenge) ('lines')?
 
 ---
 <details><summary>Session info</summary>
