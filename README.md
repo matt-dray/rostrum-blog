@@ -25,13 +25,13 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 106 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 107 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
-📅 That’s a post roughly every 12 days, or about 2.4 posts per month.
+📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 30 day(s) ago: [Reveal a hidden gorilla
-with {magick}](https://www.rostrum.blog/2021/10/05/gorilla/).
+🆕 The latest post was published 1 day(s) ago: [Get coordinates from
+fictitious maps](https://www.rostrum.blog/2021/11/04/kanto-locator/).
 
 📈 This 2D plot shows posts over time:
 
@@ -43,6 +43,7 @@ with {magick}](https://www.rostrum.blog/2021/10/05/gorilla/).
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|    107 | 2021-11-04 | [Get coordinates from fictitious maps](https://www.rostrum.blog/2021/11/04/kanto-locator/)                                |
 |    106 | 2021-10-05 | [Reveal a hidden gorilla with {magick}](https://www.rostrum.blog/2021/10/05/gorilla/)                                     |
 |    105 | 2021-10-03 | [{ActionSquirrel}: a game in the R console](https://www.rostrum.blog/2021/10/03/squirrel/)                                |
 |    104 | 2021-09-14 | [Wot3LdnEmojis](https://www.rostrum.blog/2021/09/14/wot3ldnemojis/)                                                       |
@@ -154,4 +155,4 @@ with {magick}](https://www.rostrum.blog/2021/10/05/gorilla/).
 
 -----
 
-*Updated 2021-11-04 02:40:39*
+*Updated 2021-11-05 02:43:05*
