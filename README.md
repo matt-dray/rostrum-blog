@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 1 day(s) ago: [Get coordinates from
+🆕 The latest post was published 2 day(s) ago: [Get coordinates from
 fictitious maps](https://www.rostrum.blog/2021/11/04/kanto-locator/).
 
 📈 This 2D plot shows posts over time:
@@ -155,4 +155,4 @@ fictitious maps](https://www.rostrum.blog/2021/11/04/kanto-locator/).
 
 -----
 
-*Updated 2021-11-05 02:43:05*
+*Updated 2021-11-06 02:39:06*
