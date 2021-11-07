@@ -1,5 +1,5 @@
 ---
-title: "Deepfried memes with R"
+title: "Deep fried memes in R"
 author: Matt Dray
 date: '2021-11-07'
 slug: deepfry
@@ -7,119 +7,138 @@ categories:
   - code
   - tutorial
 tags:
+  - flamewar
   - magick
   - meme
   - r
-draft: yes
+  - spongebob
+draft: no
 ---
 
+```{r setup, include=FALSE}
+set.seed(6)
+```
 
-tl;dr
+<div class="figure">
+<img src="/post/2021-11-07-deepfry_files/spongebob-frypants.gif" alt="An animation showing a transition from a meme image to a deep-fried version, which has been compressed, has an orange tint and includes a cry-laugh emoji. The meme is of sarcastic Spongebob, with the same text on the top and bottom, but the lower text has alternating case. It says 'equals-sign saves keystrokes versus assignment-arrow'." width="100%"/>
+</div>
 
-You can make memes in R with the {meme} package. You should be able to deep-fry them.
+# tl;dr
+
+Now you can use a function to deep fry memes in R.
+
+# Extra crispy
+
+You can make memes in R with [packages like Guangchang Yu's {meme}](https://github.com/GuangchuangYu/meme/). You could even post them to Twitter with #RStatsMemes for [\@rstatsmemes](https://twitter.com/rstatsmemes) to find.
+
+However, it's no longer enough to present memes as-is. They must be deep-fried to become [modern and ironic](https://en.wikipedia.org/wiki/Internet_meme#Irony_and_absurdism). It will help people think that your meme is so edgy that it's been re-saved thousands of times.
 
 # Setup
 
-Install and attach the packages we need.
+You'll need image-manipulation wizardry from [the {magick} package](https://docs.ropensci.org/magick/index.html), along with [{extrafont}](https://github.com/wch/extrafont) to let you use fonts from your system.
 
-At time of writing there is an issue with importing fonts via {extrafont} that [requires an earlier version of {Rttf2pt1} to be installed](https://stackoverflow.com/a/68642855).
-
-```{r}
-# install.packages(c("meme", "extrafont", "magick", "remotes"))
-# remotes::install_version("Rttf2pt1", version = "1.3.8")
-```
-
-Now to import the fonts from your system.
+At time of writing there is an issue with importing fonts, which [requires an earlier version of {Rttf2pt1} to be installed](https://stackoverflow.com/a/68642855).
 
 ```{r eval=FALSE}
-meme::font_import()
+install.packages(c("magick", "extrafont", "remotes"))
+remotes::install_version("Rttf2pt1", version = "1.3.8")
 ```
 
-# Meme
+You can then import fonts from your system.
 
-Make a meme.
-
-```{r}
-img_path <- "~/Desktop/rmeme.jpg"
-
-meme_img <- meme::meme(
-  img_path,
-  upper = "top text",
-  lower = "bottom text"
-)
-
-meme_img
+```{r eval=FALSE}
+extrafont::font_import()
 ```
 
-There is a `meme_save()` function that's like `ggsave()`
+Now we can use important joke fonts---like Impact, Papyrus or Calibri---in our memes.
+
+# Frying utensils
+
+I've smashed everything into one `fry()` function that:
+
+1. Reads a meme template image from a path
+1. Adds top/bottom text
+1. Reads a specific cursed cry/laugh emoji from a URL and places it in a random location (corners or left/right sides)
+1. Adjusts the image contrast, saturation, etc, and then compresses it horribly
+1. Outputs a `magick-image` object that you can save with `magick::image_write()`.
+
+It does what I want it to do; adjust it as you please.
 
 ```{r}
-meme_out <- tempfile(fileext = ".jpg")
-meme::meme_save(meme_img, file = meme_out)
-```
+suppressPackageStartupMessages(library(magick))
 
-# Fry
-
-Function to read and manipulate image, then re-save as a horribly compressed jpeg. It outputs as a `magick-image` object that you can save with `magick::image_write()`.
-
-```{r}
 fry <- function(
-  img_path,
-  emoji_path = "/post/2021-11-07-deepfry_files/deepfry-emoji.jpg",
+  img_path, emoji_path,
+  text_top, text_bottom,
   depth = c("shallow", "deep")) {
   
   depth <- match.arg(depth)
   
   cat("Heating oil... ")
   
+  emoji <- magick::image_read(emoji_path)
+  
+  emoji_where <-  sample(c(
+      paste0("north", c("east", "west")),
+      paste0("south", c("east", "west")),
+      "east", "west"
+    ), 1)
+  
   if (depth == "shallow") {
     compress <- 8
-  } 
-  
-  if (depth == "deep") {
+  } else if (depth == "deep") {
     compress <- 1
   } 
   
-  emoji <- magick::image_read(emoji_path) |> 
-    magick::image_rotate(sample(-45:45, 1))
+  img <- image_read(img_path) |> 
+    image_annotate(
+      text_top, "north", size = 80, font = "Impact",
+      color = "white", strokecolor = "black"
+    ) |>
+    image_annotate(
+      text_bottom, "south", size = 80, font = "Impact",
+      color = "white", strokecolor = "black"
+    ) |>
+    image_scale("1000") |> 
+    image_composite(emoji, gravity = emoji_where) |> 
+    image_colorize(30, "orange") |>
+    image_modulate(80, 120, 90) |> 
+    image_contrast(sharpen = 100) |> 
+    image_noise()
   
-  gravities <-  c(
-    paste0("north", c("east", "west")),
-    paste0("south", c("east", "west")),
-    "east", "west", "center"
-  )
-  
-  emo_gravity <- sample(gravities, 1)
-  
-  img_in <- magick::image_read(img_path) |> 
-    magick::image_scale("800") |> 
-    magick::image_composite(emoji, gravity = emo_gravity) |> 
-    magick::image_colorize(30, "orange") |>
-    magick::image_modulate(80, 120, 90) |> 
-    magick::image_contrast(sharpen = 100) |> 
-    magick::image_noise()
-  
-  cat("dunking... ")
+  cat("dunking meme... ")
   path_out <- tempfile("meme", fileext = ".jpeg")
-  magick::image_write(img_in, path_out, "jpeg", compress)
+  image_write(img, path_out, "jpeg", compress)
   
   cat("crisp.")
-  magick::image_read(path_out)
+  image_read(path_out)
   
 }
 ```
 
-S H A L L O W   F R Y .
+# Get cooking
 
-```{r}
-fry(meme_img)
+First, a nice shallow fry.
+
+```{r shallow-fry, fig.alt="A deep-fried meme image, which has been compressed, has an orange tint and includes a cry-laugh emoji. It is less compressed than the next image. The meme is of sarcastic Spongebob, with the same text on the top and bottom, but the lower text has alternating case. It says 'equals-sign saves keystrokes versus assignment-arrow'."}
+sponge_path <- "~/Desktop/spongebob.jpg"
+emoji_path <- paste0(
+    "https://raw.githubusercontent.com/matt-dray/rostrum-blog/",
+    "master/static/post/2021-11-07-deepfry_files/deepfry-emoji.jpg"
+  )
+bot_txt <- "= sAvEs KeYsTrOkEs Vs <-"
+top_txt <- tolower(bot_txt)
+
+fry(sponge_path, emoji_path, top_txt, bot_txt, "shallow")
 ```
 
-D E E P   F R Y .
+And now we _deep_ fry.
 
-```{r}
-fry(meme_img, depth = "deep")
+```{r deep-fry, fig.alt="A deep-fried meme image, which has been compressed, has an orange tint and includes a cry-laugh emoji. It is more compressed than the image above. The meme is of sarcastic Spongebob, with the same text on the top and bottom, but the lower text has alternating case. It says 'equals-sign saves keystrokes versus assignment-arrow'."}
+fry(sponge_path, emoji_path, top_txt, bot_txt, "deep")
 ```
+
+\*Fry-cook's kiss\*
 
 ---
 <details><summary>Session info</summary>
@@ -127,3 +146,27 @@ fry(meme_img, depth = "deep")
 sessioninfo::session_info()
 ```
 </details>
+
+
+```{r eval=FALSE, include=FALSE}
+
+sponge_fried <- 
+  fry(sponge_path, emoji_path, top_txt, bot_txt, "deep")
+
+sponge_unfried <- image_read(sponge_path) |> 
+    image_annotate(
+      text_top, "north", size = 80, font = "Impact",
+      color = "white", strokecolor = "black"
+    ) |>
+    image_annotate(
+      text_bottom, "south", size = 80, font = "Impact",
+      color = "white", strokecolor = "black"
+    ) |>
+    image_scale("1000")
+
+c(sponge_unfried, sponge_fried) %>%
+  image_morph() %>%
+  image_animate(fps = 5, optimize = TRUE) |> 
+  image_write("~/Desktop/spongebob-frypants.gif")
+```
+
