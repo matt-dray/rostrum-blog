@@ -33,7 +33,7 @@ You can make memes in R with [packages like Guangchang Yu's {meme}](https://gith
 
 However, it's no longer enough to present memes as-is. They must be deep-fried to become [modern and ironic](https://en.wikipedia.org/wiki/Internet_meme#Irony_and_absurdism). It will help people think that your meme is so edgy that it's been re-saved thousands of times.
 
-# Setup
+# Get to temperature
 
 You'll need image-manipulation wizardry from [the {magick} package](https://docs.ropensci.org/magick/index.html), along with [{extrafont}](https://github.com/wch/extrafont) to let you use fonts from your system.
 
@@ -52,15 +52,16 @@ extrafont::font_import()
 
 Now we can use important joke fonts---like Impact, Papyrus or Calibri---in our memes.
 
-# Frying utensils
+# Small fry
 
-I've smashed everything into one `fry()` function that:
+I've cooked up a single, low-quality function, `fry()`, that:
 
-1. Reads a meme template image from a path
-1. Adds top/bottom text
-1. Reads a specific cursed cry/laugh emoji from a URL and places it in a random location (corners or left/right sides)
-1. Adjusts the image contrast, saturation, etc,[^adjust] and then compresses it horribly
-1. Outputs a `magick-image` object that you can save with `magick::image_write()` and send to all your friend
+1. Reads a meme template image (or any image) from a path
+1. Adds top/bottom text in Impact font
+1. Reads from a URL a specific (cursed) cry/laugh emoji that's popular in deep-frying and places it in a random location (corners or left/right sides)
+1. Adjusts the image contrast, saturation, etc,[^adjust] and tints it orange
+1. Writes the image to a temporary jpeg file---compressing it horribly---and then reads it back in
+1. Outputs a `magick-image` object that you can save with `magick::image_write()` and send to all your friend (sic)
 
 It does what I want it to do; adjust it as you please.
 
@@ -78,17 +79,11 @@ fry <- function(
   
   emoji <- magick::image_read(emoji_path)
   
-  emoji_where <-  sample(c(
-      paste0("north", c("east", "west")),
-      paste0("south", c("east", "west")),
-      "east", "west"
-    ), 1)
-  
-  if (depth == "shallow") {
-    compress <- 8
-  } else if (depth == "deep") {
-    compress <- 1
-  } 
+  emoji_where <-  sample(c(  
+    paste0("north", c("east", "west")),
+    paste0("south", c("east", "west")),
+    "east", "west"  # e.g. 'east' is right
+  ), 1)
   
   img <- image_read(img_path) |> 
     image_annotate(
@@ -101,12 +96,19 @@ fry <- function(
     ) |>
     image_scale("1000") |> 
     image_composite(emoji, gravity = emoji_where) |> 
-    image_colorize(30, "orange") |>
-    image_modulate(80, 120, 90) |> 
+    image_colorize(30, "orange") |>  # tint
+    image_modulate(brightness = 80, saturation = 120, hue = 90) |>
     image_contrast(sharpen = 100) |> 
     image_noise()
   
   cat("dunking meme... ")
+  
+  if (depth == "shallow") {
+    compress <- 8
+  } else if (depth == "deep") {
+    compress <- 1  # maximum compression
+  } 
+  
   path_out <- tempfile("meme", fileext = ".jpeg")
   image_write(img, path_out, "jpeg", compress)
   
@@ -118,19 +120,26 @@ fry <- function(
 
 # Get cooking
 
-What spicy meme shall I make? Well, the `=` versus `<-` assignment-operator flamewar[^flamewar] has been cold for a few days, so time to heat it up again. And why not incorporate the world's most famous fry cook?
+What spicy meme shall I make? Well, the `=` versus `<-` assignment-operator flamewar has been cold for a few days, so time to heat it up again.[^flamewar] And why not incorporate the world's most famous fry cook (in sarcastic form)?
+
+```{r}
+sponge_path <- paste0(  # URL to meme image
+  "https://raw.githubusercontent.com/matt-dray/rostrum-blog/",
+  "master/static/post/2021-11-07-deepfry_files/spongebob.jpg"
+)
+
+emoji_path <- paste0(  # URL to cry/laugh emoji
+  "https://raw.githubusercontent.com/matt-dray/rostrum-blog/",
+  "master/static/post/2021-11-07-deepfry_files/deepfry-emoji.jpg"
+)
+
+bot_txt <- "= sAvEs KeYsTrOkEs Vs <-"  # sarcastic text
+top_txt <- tolower(bot_txt)
+```
 
 First, a nice shallow fry.
 
 ```{r shallow-fry, fig.alt="A deep-fried meme image, which has been compressed, has an orange tint and includes a cry-laugh emoji. It is less compressed than the next image. The meme is of sarcastic Spongebob, with the same text on the top and bottom, but the lower text has alternating case. It says 'equals-sign saves keystrokes versus assignment-arrow'."}
-sponge_path <- "~/Desktop/spongebob.jpg"
-emoji_path <- paste0(
-    "https://raw.githubusercontent.com/matt-dray/rostrum-blog/",
-    "master/static/post/2021-11-07-deepfry_files/deepfry-emoji.jpg"
-  )
-bot_txt <- "= sAvEs KeYsTrOkEs Vs <-"
-top_txt <- tolower(bot_txt)
-
 fry(sponge_path, emoji_path, top_txt, bot_txt, "shallow")
 ```
 
@@ -159,15 +168,15 @@ sponge_fried <-
   fry(sponge_path, emoji_path, top_txt, bot_txt, "deep")
 
 sponge_unfried <- image_read(sponge_path) |> 
-    image_annotate(
-      text_top, "north", size = 80, font = "Impact",
-      color = "white", strokecolor = "black"
-    ) |>
-    image_annotate(
-      text_bottom, "south", size = 80, font = "Impact",
-      color = "white", strokecolor = "black"
-    ) |>
-    image_scale("1000")
+  image_annotate(
+    text_top, "north", size = 80, font = "Impact",
+    color = "white", strokecolor = "black"
+  ) |>
+  image_annotate(
+    text_bottom, "south", size = 80, font = "Impact",
+    color = "white", strokecolor = "black"
+  ) |>
+  image_scale("1000")
 
 c(sponge_unfried, sponge_fried) %>%
   image_morph() %>%
