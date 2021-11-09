@@ -14,6 +14,9 @@ tags:
 ---
 
 ```{r setup, include=FALSE}
+# Pre-prepare dataframe of locations, since you can't use locator()
+# interactively while the post is being knitted.
+
 kanto_x <- c(
   0.247018664047151, 0.245117878192534, 0.245117878192534, 0.247018664047151,
   0.427593320235756, 0.610068762278979, 0.794444990176817, 0.610068762278979,
@@ -46,7 +49,7 @@ row.names(kanto_pts) <- kanto_names
 
 # tl;dr
 
-Use R to interactively extract arbitrary coordinates from images of imaginary maps. I extracted points of interest from Kanto in the original _Pokémon_ games.
+Use the `locator()` function in R to interactively extract arbitrary coordinates from images of imaginary maps. I extracted points of interest from Kanto in the original _Pokémon_ games.
 
 # On the road to Viridian City
 
@@ -66,14 +69,14 @@ plot_map <- function(png_path) {
   tmp <- tempfile()
   download.file(png_path, tmp, quiet = TRUE)
   img <- png::readPNG(tmp)
-  par(mar = rep(0, 4))
-  plot.new()
+  par(mar = rep(0, 4))  # remove margins
+  plot.new()  # start new plot frame
   grid::grid.raster(img, x = 0.5, y = 0.5)
   
 }
 ```
 
-To be specific, I'm using the in-game map of the fictitious Kanto region from the first generation of [_Pokémon Red_ and _Blue_](https://en.wikipedia.org/wiki/Pok%C3%A9mon_Red_and_Blue) for the Nintendo GameBoy,[^safar6] [downloaded from Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/Main_Page). This is good for a demo: the locations are pretty discrete, obvious and clickable.
+To be specific, I'm using the in-game 'town map' of the fictitious Kanto region from the first generation of [_Pokémon Red_ and _Blue_](https://en.wikipedia.org/wiki/Pok%C3%A9mon_Red_and_Blue) for the Nintendo GameBoy,[^safar6] [downloaded from Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/Main_Page). This is good for a demo: the locations are pretty discrete, obvious and clickable.
 
 ```{r plot-kanto, fig.alt='The simple, blocky Kanto town map from the original Pokemon game. Squares represent cities, circles are other points of interest, and there are routes connecting them. The location shows both land and sea.'}
 kanto_path <- 
@@ -82,7 +85,7 @@ kanto_path <-
 plot_map(kanto_path)
 ```
 
-You might be thinking that it looks like a schematic map---an abstraction of the actual geography---like the London underground map. In fact, the town map is pretty similar to the actual in-game world layout, as demonstrated by folks who have [stitched together all the overworld screens to make a megamap](https://www.reddit.com/r/pokemon/comments/lpttq8/put_together_all_the_images_to_create_a_gen_i/).
+You might be thinking that it looks like a schematic map---an abstraction of actual geography---like the London underground map. In fact, the town map is pretty similar to the actual in-game world layout, as demonstrated by folks who have [stitched together all the overworld screens](https://www.reddit.com/r/pokemon/comments/lpttq8/put_together_all_the_images_to_create_a_gen_i/).
 
 # Get points
 
@@ -91,7 +94,8 @@ With the Kanto map drawn in our active plot window, we can run a function to pro
 ```{r fn-locate}
 locate_points <- function(places) {
   
-  places_list <- vector("list", length(places)) |> setNames(places)
+  places_list <- vector("list", length(places)) |> 
+    setNames(places)
   
   for (i in places) {
     cat(paste0("Click on ", i, "... "))
@@ -99,14 +103,21 @@ locate_points <- function(places) {
     cat("found.\n")
   }
   
-  places_df <- do.call(rbind, places_list) |> data.frame()
+  places_df <- do.call(rbind, places_list) |>
+    data.frame()
   
 }
 ```
 
-This is not magic. It is merely powered by the `locator()` function, which records the x and y location of a point clicked on a plot by the user.[^useless] The first argument is the number of clicks to collect.
+This is not magic. It is merely powered by the `locator()` function, which records the x and y location of a point clicked on a plot by the user.[^useless] 
 
-For this bespoke function, we pass a character vector of place names. For this demo, that'll be Kanto's towns, cities and other places of interest. The function loops through the locations and requests you to click the corresponding point on the map.
+Here's a simplified version of what's going on when you use `locator()`. If you make a plot and call the function, then the top of the plotting window in RStudio says 'locator active' and your cursor becomes crosshairs. Clicking on the plot returns a list of the x and y coordinates within the plotting space. The first argument is the number of clicks to collect before the locator is deactivated automatically.
+
+<div class="figure">
+<img src="/post/2021-11-03-kanto-locate_files/locator.gif" alt="R code is run in RStudio to produce a simple plot with one point in the centre. After running the locator function, the user clicks the point on the plot and the console prints a list with the x and y coordinate values for that point." width="100%"/>
+</div>
+
+For our bespoke `locate_points()` function, we can pass a character vector of place names. For this demo, that'll be Kanto's towns, cities and other places of interest. The function loops through the locations and requests you to click the corresponding point on the map. The console will read like `Click on Pallet Town...` and then `found` once you've clicked it.
 
 ```{r kanto-names, eval=FALSE}
 kanto_names <- c(
@@ -117,40 +128,16 @@ kanto_names <- c(
   "Indigo Plateau"
 )
 
-kanto_pts <- locate_points(kanto_names)
-```
-```
-Click on Pallet Town... found.
-Click on Viridian City... found.
-Click on Viridian Forest... found.
-Click on Pewter City... found.
-Click on Mt Moon... found.
-Click on Cerulean City... found.
-Click on Rock Tunnel... found.
-Click on Vermilion City... found.
-Click on Lavender Town... found.
-Click on Celadon City... found.
-Click on Fuchsia City... found.
-Click on Saffron City... found.
-Click on Seafoam Islands... found.
-Click on Cinnabar Island... found.
-Click on Victory Road... found.
-Click on Indigo Plateau... found.
+kanto_pts <- locate_points(kanto_names)  # initiates clicking prompts
 ```
 
-Aside: here's a simplified version of what's going on when you use `locator()`. Make a plot, call the function and then the top of the plotting window in RStudio says 'locator active' and your cursor becomes crosshairs. Clicking on the plot returns a list of the x and y coordinates within the plotting space.
-
-<div class="figure">
-<img src="/post/2021-11-03-kanto-locate_files/locator.gif" alt="R code is run in RStudio to produce a simple plot with one point in the centre. After running the locator function, the user clicks the point on the plot and the console prints a list with the x and y coordinate values for that point." width="100%"/>
-</div>
-
-During the clickfest, the `locate_points()` function has assembled the points lists into a data.frame with one row per location. The locations vector was passed as the rownames of the dataframe as well.
+During the clickfest, the `locate_points()` function has assembled the points lists into a data.frame with one row per location. The locations vector was passed as the rownames of the dataframe as well. Here's the full list of collected coordindates.
 
 ```{r preview-points}
 kanto_pts
 ```
 
-The coordinate values are between 0 to 1 because those are the default x- and y-axis limits that were set up in `plot_map()`.
+The coordinate values are between 0 to 1 because those are the default x- and y-axis limits that were set up in `plot_map()`. They're remarkably precise, but the resolution on the image wasn't great and my hand-eye coordination is bad, so take these with a grain of salt.
 
 # Plot
 
@@ -163,10 +150,8 @@ kanto_pts$city <- ifelse(
 )
 
 par(mar = rep(0, 4))
-
-plot(kanto_pts$x, kanto_pts$y, axes = FALSE)
-
-lines(kanto_pts$x, kanto_pts$y, col = "grey95", lwd = 5)
+with(kanto_pts, plot(x, y, axes = FALSE))
+with(kanto_pts, lines(x, y, col = "grey95", lwd = 5))
 
 points(
   kanto_pts$x, kanto_pts$y,
@@ -187,22 +172,23 @@ text(
 It might also be fun to do a minimal map of the cities where the points are coloured according to the name of the city. You may have noticed that the city names are all fancy colour names (viridian, fuchsia, etc), so let's use them. Well, except Pallet, for which can just use a mix of all colours, i.e. white.
 
 ```{r plot-colors, fig.alt='A minimal plot showing an arrangement of coloured squares that represent the cities from the town map of the original Pokemon game. The squares are coloured to match the town names, so Cerulean City is blue.'}
-kanto_cities <- 
-  kanto_pts[kanto_pts$city | rownames(kanto_pts) == "Indigo Plateau", ]
+kanto_colour <- 
+  kanto_pts[kanto_pts$city | 
+              rownames(kanto_pts) == "Indigo Plateau", ]
 
-kanto_cities$colour <- c(  # close-enough named R colours
+kanto_colour$city_col <- c(  # close-enough named R colours
   "white", "aquamarine4", "grey57", "royalblue3 ",
   "red3 ", "lavender", "darkseagreen2", "magenta",
   "tomato2", "orangered2", "blue"
 ) 
 par(mar = rep(0, 4))
-with(kanto_cities, plot(x, y, axes = FALSE))
-with(kanto_cities, points(x, y, pch = 22, cex = 4, bg = colour))
+with(kanto_colour, plot(x, y, axes = FALSE))
+with(kanto_colour, points(x, y, pch = 22, cex = 4, bg = city_col))
 ```
 
 I'll admit I struggled to make this given my colourblindness, but also because I had no prior notions of what colours like 'vermilion' and 'celadon' are. Actually they kind of sound more like Pokémon names.
 
-Anyway, these 'maps' are the first steps to create something more exciting. For now they demonstrate the point (literally, lol). Plus they fulfil my belated submission for day one of [the #30DayMapChallenge](https://github.com/tjukanovt/30DayMapChallenge) ('points'), I guess?
+Anyway, these 'maps' are the first steps to create something more exciting. For now they demonstrate the point (literally, lol). Plus they fulfil my belated submission for day one of [the #30DayMapChallenge](https://github.com/tjukanovt/30DayMapChallenge) ('points').
 
 # Distances
 
@@ -236,7 +222,7 @@ That means Pallet to Viridian is about 64 * 140 cm = 8960 cm. So, one of our arb
 
 ```{r distance-m}
 kanto_dist_m <- round(kanto_dist * 472 / 100)
-kanto_dist_m[1:3, 1:3]
+kanto_dist_m[1:3, 1:3]  # first few
 ```
 
 Once again I've removed some precision by calculating the result as a rounded distance in metres. Coward.
@@ -247,7 +233,9 @@ Once again I've removed some precision by calculating the result as a rounded di
 
 So this means we can now say some really profound things like it's about 90 m from Pallet Town to Viridian City. Maybe that's true in the context of the game's dimensions, but it's... underwhelming. 
 
-Was this scuffed distance-conversion exercise worthwhile? No. But it might strengthen my belated submission to day two of [the #30DayMapChallenge](https://github.com/tjukanovt/30DayMapChallenge) ('lines')?
+Was this scuffed distance-conversion exercise worthwhile? No. 
+
+But it might strengthen my belated submission to day two of [the #30DayMapChallenge](https://github.com/tjukanovt/30DayMapChallenge) ('lines')?
 
 ---
 <details><summary>Session info</summary>
