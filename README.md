@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 10 day(s) ago: [Deep fried memes in
+🆕 The latest post was published 11 day(s) ago: [Deep fried memes in
 R](https://www.rostrum.blog/2021/11/07/deepfry/).
 
 📈 This 2D plot shows posts over time:
@@ -156,4 +156,4 @@ R](https://www.rostrum.blog/2021/11/07/deepfry/).
 
 -----
 
-*Updated 2021-11-17 02:40:58*
+*Updated 2021-11-18 02:40:48*
