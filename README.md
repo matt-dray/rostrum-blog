@@ -28,9 +28,9 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 🔢 There have been 108 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
-📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
+📅 That’s a post roughly every 12 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 15 day(s) ago: [Deep fried memes in
+🆕 The latest post was published 20 day(s) ago: [Deep fried memes in
 R](https://www.rostrum.blog/2021/11/07/deepfry/).
 
 📈 This 2D plot shows posts over time:
@@ -156,4 +156,4 @@ R](https://www.rostrum.blog/2021/11/07/deepfry/).
 
 -----
 
-*Updated 2021-11-22 02:44:39*
+*Updated 2021-11-27 02:41:34*
