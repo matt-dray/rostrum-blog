@@ -30,9 +30,9 @@ draft: no
 <li>start functions with a prefix to make autocomplete easier, like the <a href="https://matt-dray.github.io/dehex/reference/index.html"><code>dh_*()</code> functions from {dehex}</a></li>
 <li>try to be descriptive but succinct, like <a href="https://matt-dray.github.io/dialga/reference/r2cron.html"><code>r2cron()</code> from {dialga}</a></li>
 </ul>
-<p>It can be tricky to be succinct. Consider the base R function <code>suppressPackageStartupMessages()</code><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>: it’s a whopping 30 characters, but all the words are important and something like <code>suppPkgStartMsg()</code> isn’t so clear.</p>
+<p>It can be tricky to be succinct. Consider the base R function <code>suppressPackageStartupMessages()</code><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>: it’s a whopping 30 characters, but all the words are important. Something shortened, like <code>suppPkgStartMsg()</code>, wouldn’t be so clear.</p>
 <p>It <a href="https://www.rostrum.blog/2021/08/27/zzz/#fn1">made me wonder</a>: what’s the longest function name in R?<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
-<p>But! It seems tricky to and time consuming to find the longest function name from <em>all</em> R packages. CRAN alone has over 18,000 at time of writing.</p>
+<p>But! It seems tricky and time consuming to find the longest function name from <em>all</em> R packages. CRAN alone has over 18,000 at time of writing.</p>
 <p>A much easier (lazier) approach is to focus on some package subsets. I’ll look at base R and the {tidyverse}.</p>
 </div>
 <div id="the-long-and-the-short-of-it" class="section level1">
@@ -45,7 +45,7 @@ base_names</code></pre>
 <pre><code>## [1] &quot;stats&quot;     &quot;graphics&quot;  &quot;grDevices&quot; &quot;utils&quot;     &quot;datasets&quot;  &quot;methods&quot;  
 ## [7] &quot;base&quot;</code></pre>
 <p>How can we fetch all the functions from these packages? We can use <code>ls()</code> to list all their objects, supplying the package name in the format <code>"package:base"</code>, for example. Note that I said ‘objects’, not ‘functions’, since it will also return names that refer to things like datasets.</p>
-<p>For fun, we can use this as an excuse to demo <a href="https://milesmcbain.micro.blog/2021/06/23/how-youd-fix.html">the dog’s balls approach</a> to function-writing in R v4.1.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<p>For fun, we can use this as an excuse to demo ‘lambda’ syntax and <a href="https://milesmcbain.micro.blog/2021/06/23/how-youd-fix.html">the dog’s balls approach</a> to function-writing, both introduced in R v4.1.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
 <pre class="r"><code>base_pkgs &lt;- paste0(&quot;package:&quot;, base_names)
 
 base_fns &lt;- lapply(base_pkgs, ls) |&gt;
@@ -58,10 +58,10 @@ row.names(base_fns) &lt;- NULL
 base_fns$nchar &lt;- nchar(base_fns$object)
 
 base_fns &lt;- base_fns[order(-base_fns$nchar), ]</code></pre>
-<p>Of the 2424 objects, a quick histogram shows that the most frequent character length is under 10, with a tail stretching out to over 30.</p>
+<p>Of the 2424 objects across these packages, a quick histogram shows that the most frequent character length is under 10, with a tail stretching out to over 30.</p>
 <pre class="r"><code>hist(
   base_fns$nchar,
-  main = &quot;Character length of base-package object names&quot;,
+  main = &quot;Character length of base-object names&quot;,
   xlab = &quot;Number of characters&quot;,
   las = 1
 )</code></pre>
@@ -81,10 +81,10 @@ head(base_fns_top, 10)</code></pre>
 ## 8            print.DLLRegisteredRoutines    base    27
 ## 9             as.data.frame.model.matrix    base    26
 ## 10            conditionMessage.condition    base    26</code></pre>
-<p>So there are four objects with names longer than <code>suppressPackageStartupMessages()</code>, which are rarely used as far as I can tell. The longest is <code>aspell_write_personal_dictionary_file()</code>, which has 37 (!) characters. It’s part of the spellcheck functions in {utils}.</p>
-<p>It’s interesting to me that it follows some of those rules for function naming that I mentioned earlier. It has a verb, is descriptive and uses a prefix for easier autocomplete; <code>aspell</code> refers to <a href="http://aspell.net/">the GNU open-source Aspell spellchecker</a> on which it’s based.</p>
+<p>So there are four objects with names longer than <code>suppressPackageStartupMessages()</code>, though they are rarely used as far as I can tell. The longest is <code>aspell_write_personal_dictionary_file()</code>, which has 37(!) characters. It’s part of the spellcheck functions in {utils}.</p>
+<p>It’s interesting to me that it follows some of those rules for function naming that I mentioned earlier. It has a verb, is descriptive and uses a prefix for easier autocomplete; ‘aspell’ refers to <a href="http://aspell.net/">the GNU open-source Aspell spellchecker</a> on which it’s based.</p>
 <p>I’m intrigued that the function uses snake_case rather than camelCase or dot.case, which seem more prevalent in base functions. You could argue then that the underscores have ‘inflated’ the length by four characters. Similarly, the prefix adds another six characters. So maybe the function could be simplified to <code>writePersonalDictionaryFile()</code>, which is merely 27 characters.</p>
-<p>What about shortest functions? There are many one-character functions.</p>
+<p>What about shortest functions? There are many one-character functions in base R.</p>
 <pre class="r"><code>sort(base_fns[base_fns$nchar == 1, ][[&quot;object&quot;]])</code></pre>
 <pre><code>##  [1] &quot;-&quot; &quot;:&quot; &quot;!&quot; &quot;?&quot; &quot;(&quot; &quot;[&quot; &quot;{&quot; &quot;@&quot; &quot;*&quot; &quot;/&quot; &quot;&amp;&quot; &quot;^&quot; &quot;+&quot; &quot;&lt;&quot; &quot;=&quot; &quot;&gt;&quot; &quot;|&quot; &quot;~&quot; &quot;$&quot;
 ## [20] &quot;c&quot; &quot;C&quot; &quot;D&quot; &quot;F&quot; &quot;I&quot; &quot;q&quot; &quot;t&quot; &quot;T&quot;</code></pre>
@@ -94,7 +94,7 @@ head(base_fns_top, 10)</code></pre>
 <h2>{tidyverse}</h2>
 <p>How about object names from the {tidyverse}?</p>
 <p>To start, we need to attach the packages. Running <code>library(tidyverse)</code> only loads the core packages of the tidyverse, so we need another approach to attach them all.</p>
-<p>One method is to get the a vector of the package names with the <code>tidyverse_packages()</code> function and passing it to <code>p_load()</code> from {pacman}, which prevents the need for a separate <code>library()</code> call for each one.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
+<p>One method is to get the a vector of the package names with the <code>tidyverse_packages()</code> function and pass it to <code>p_load()</code> from {pacman}, which prevents the need for a separate <code>library()</code> call for each one.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
 <p>First, here’s the tidyverse packages.</p>
 <pre class="r"><code># install.packages(&quot;tidyverse&quot;)  # if not installed
 suppressPackageStartupMessages(  # in action!
@@ -147,7 +147,7 @@ tidy_fns &lt;- map(tidy_pkgs, ls) |&gt;
 ##  9 haven         vec_arith.haven_labelled            24
 ## 10 rstudioapi    getActiveDocumentContext            24</code></pre>
 <p>The longest two are 32 and 30 characters in length and are both from {googlesheets4}. The help pages say they’re ‘internal {vctrs} methods’. The names of these are long because of the construction: the first part tells us the method name, e.g. <code>vec_ptype2</code>, and the second part tells us that they apply to the <code>googlesheets4_formula</code> S3 class.</p>
-<p>So maybe these don’t really count because they would be called as <code>vec_ptype2()</code> and <code>vec_cast()</code>? And they’re inflated because they contain the package name, {googlesheets4} , which is quite a long one (13 characters). That would leave <code>cli::cli_progress_builtin_handlers()</code> and <code>rstudioapi::getRStudioPackageDependencies()</code> as the next longest (29 characters). The latter uses camelCase—which is typical of the {rstudioapi} package—so isn’t bulked out by underscores.</p>
+<p>So maybe these don’t really count because they would be excuted as as <code>vec_ptype2()</code> and <code>vec_cast()</code>? And they’re inflated because they contain the package name, {googlesheets4} , which is quite a long one (13 characters). That would leave <code>cli::cli_progress_builtin_handlers()</code> and <code>rstudioapi::getRStudioPackageDependencies()</code> as the next longest (29 characters). The latter uses camelCase—which is typical of the {rstudioapi} package—so isn’t bulked out by underscores.</p>
 <p>On the other end of the spectrum, there’s only one function with one character: <code>dplyr::n()</code>. I think it makes sense to avoid single-character functions in non-base packages, because they aren’t terribly descriptive. <code>n()</code> can at least be understood to mean ‘number’.</p>
 <p>Instead, here’s all the two-letter functions from the {tidyverse}. Note that many of these are from {lubridate} and are shorthand expressions that make sense in context, like <code>hm()</code> for hour-minute. You can also see some of {rlang}’s operators creep in here, like bang-bang (<code>!!</code>) and the walrus (<code>:=</code>).<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a></p>
 <pre class="r"><code>filter(tidy_fns, nchar == 2)</code></pre>
@@ -273,7 +273,7 @@ Session info
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p><a href="https://www.rostrum.blog/2021/08/27/zzz/">I wrote a whole post about this recently</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn1"><p><a href="https://www.rostrum.blog/2021/08/27/zzz/">I wrote recently a whole post about package startup messages</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
 <li id="fn2"><p><a href="https://twitter.com/mcguinlu/status/1443257017745948677?s=20">Luke was curious too</a>, so that’s at least two of us. (Luke also noticed that <a href="https://twitter.com/mcguinlu/status/1443256485367197708?s=20">a link to my {linkrot} package was itself rotten</a>, lol.)<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 <li id="fn3"><p>My understanding is that a future version of R will allow an underscore as the left-hand-side placeholder, in a similar manner to how the {tidyverse} allows a dot. That will do away with the need for <code>()()</code>. Also ignore my badly-written base code; I’m trying to re-learn.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
 <li id="fn4"><p>In fact, <code>p_load()</code> will attempt installation if the package can’t be found in your library. Arguably, this is poor behaviour; you should always ask the user before installing something on their machine.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
