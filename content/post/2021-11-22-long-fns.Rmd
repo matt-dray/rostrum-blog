@@ -1,0 +1,185 @@
+---
+title: "R has obscenely long function names"
+author: Matt Dray
+date: '2021-11-27'
+slug: long-fns
+categories:
+  - code
+tags:
+  - base
+  - r
+  - tidyverse
+draft: no
+---
+
+<div class="figure">
+<img src="/post/2021-11-22-long-fns_files/longboi.png" alt="A crudely-drawn long dog with the R function name aspell_write_personal_dictionary_file written along the length of its body." width="100%"/>
+</div>
+
+# tl;dr
+
+Use `ls()` on a package name in the form `"package:base"` to see all the objects it contains. I've done this to find the longest (and shortest) function names in base R and the {tidyverse} suite.
+
+# Naming things
+
+I try to keep to a few rules when creating function names, like:
+
+* use a verb to make clear the intended action, like [`get_badge()` from {badgr}](https://matt-dray.github.io/badgr/reference/get_badge.html)
+* start functions with a prefix to make autocomplete easier, like the [`dh_*()` functions from {dehex}](https://matt-dray.github.io/dehex/reference/index.html)
+* try to be descriptive but succinct, like [`r2cron()` from {dialga}](https://matt-dray.github.io/dialga/reference/r2cron.html)
+
+It can be tricky to be succinct. Consider the base R function `suppressPackageStartupMessages()`[^suppress]: it's a whopping 30 characters, but all the words are important and something like `suppPkgStartMsg()` isn't so clear.
+
+It [made me wonder](https://www.rostrum.blog/2021/08/27/zzz/#fn1): what's the longest function name in R?[^luke]
+
+But! It seems tricky to and time consuming to find the longest function name from _all_ R packages. CRAN alone has over 18,000 at time of writing.
+
+A much easier (lazier) approach is to focus on some package subsets. I'll look at base R and the {tidyverse}.
+
+# The long and the short of it
+
+## Base R
+
+Certain R packages are built-in and attached by default on startup.
+
+```{r base-names}
+base_names <- sessionInfo()$basePkgs
+base_names
+```
+How can we fetch all the functions from these packages? We can use `ls()` to list all their objects, supplying the package name in the format `"package:base"`, for example. Note that I said 'objects', not 'functions', since it will also return names that refer to things like datasets.
+
+For fun, we can use this as an excuse to demo [the dog's balls approach](https://milesmcbain.micro.blog/2021/06/23/how-youd-fix.html) to function-writing in R v4.1.[^underscore]
+
+```{r base-fns}
+base_pkgs <- paste0("package:", base_names)
+
+base_fns <- lapply(base_pkgs, ls) |>
+  setNames(base_names) |> 
+  lapply(\(object) as.data.frame(object)) |> 
+  (\(x) do.call(rbind, x))()  # the balls ()()
+
+base_fns$package <- gsub("\\.\\d{,4}$", "", row.names(base_fns))
+row.names(base_fns) <- NULL
+base_fns$nchar <- nchar(base_fns$object)
+
+base_fns <- base_fns[order(-base_fns$nchar), ]
+```
+
+Of the `r nrow(base_fns)` objects, a quick histogram shows that the most frequent character length is under 10, with a tail stretching out to over 30.
+
+```{r hist-base-fns, fig.alt="Histogram of character lengths for base object names. It's fairly normal around a bin of 6 to 8 characters, which has a peak frequency of over 400, plus there's a tail stretching out to over 30 characters."}
+hist(
+  base_fns$nchar,
+  main = "Character length of base-package object names",
+  xlab = "Number of characters",
+  las = 1
+)
+```
+
+Here's the top 10 by character length.
+
+```{r base-fns-top}
+base_fns_top <- base_fns[order(-base_fns$nchar), ]
+rownames(base_fns_top) <- seq(length = nrow(base_fns_top))
+head(base_fns_top, 10)
+```
+
+So there are four objects with names longer than `suppressPackageStartupMessages()`, which are rarely used as far as I can tell. The longest is `aspell_write_personal_dictionary_file()`, which has 37 (!) characters. It's part of the spellcheck functions in {utils}.
+
+It's interesting to me that it follows some of those rules for function naming that I mentioned earlier. It has a verb, is descriptive and uses a prefix for easier autocomplete; `aspell` refers to [the GNU open-source Aspell spellchecker](http://aspell.net/) on which it's based.
+
+I'm intrigued that the function uses snake_case rather than camelCase or dot.case, which seem more prevalent in base functions. You could argue then that the underscores have 'inflated' the length by four characters. Similarly, the prefix adds another six characters. So maybe the function could be simplified to `writePersonalDictionaryFile()`, which is merely 27 characters.
+
+What about shortest functions? There are many one-character functions.
+
+```{r base-fns-single}
+sort(base_fns[base_fns$nchar == 1, ][["object"]])
+```
+Some of these will be familiar, like `c()` to concatenate and `t()` to transpose. You might wonder why operators and brackets are in here. Remember: everything in R is a function, so `` `[`(mtcars, "hp")`` is the same as `mtcars["hp"]`. I have to admit that `stats::C()` and `stats::D()` were new to me.
+
+## {tidyverse}
+
+How about object names from the {tidyverse}?
+
+To start, we need to attach the packages. Running `library(tidyverse)` only loads the core packages of the tidyverse, so we need another approach to attach them all.
+
+One method is to get the a vector of the package names with the `tidyverse_packages()` function and passing it to `p_load()` from {pacman}, which prevents the need for a separate `library()` call for each one.[^pac]
+
+First, here's the tidyverse packages.
+
+```{r tidy-names}
+# install.packages("tidyverse")  # if not installed
+suppressPackageStartupMessages(  # in action!
+  library(tidyverse)
+)
+tidy_names <- tidyverse_packages()
+tidy_names
+```
+
+And now to load them all.
+
+```{r tidy-names-load}
+# install.packages("pacman")  # if not installed
+library(pacman)
+p_load(char = tidy_names)
+```
+
+Once again we can `ls()` over packages in the form `"package:dplyr"`. Now the {tidyverse} is loaded, we might as well use it to run the same pipeline as we did for the base packages.
+
+```{r tidy-fns}
+tidy_pkgs <- paste0("package:", tidy_names)
+
+tidy_fns <- map(tidy_pkgs, ls) |>
+  set_names(tidy_names) |> 
+  enframe(name = "package", value = "object") |>
+  unnest(object) |> 
+  mutate(nchar = nchar(object))
+```
+
+So we're looking at even more packages this time, since the whole tidyverse contains `r nrow(tidy_fns)` of them.
+
+The histogram is not too dissimilar to the one for base packages, though the tail is shorter, it's arguably more normal-looking and the peak is perhaps slightly closer to 10. The latter could be because of more liberal use of snake_case.
+
+```{r hist-tidy-fns, fig.alt="Histogram of character lengths for tidyverse object names. It's fairly normal around a bin of 8 to 10 characters, which has a peak frequency of over 600, plus there's a tail stretching out to over 30 characters."}
+hist(
+  tidy_fns$nchar,
+  main = "Character length of {tidyverse} object names",
+  xlab = "Number of characters",
+  las = 1
+)
+```
+
+Here's the top 10 by character length.
+
+```{r tidy-fns-top}
+slice_max(tidy_fns, nchar, n = 10)
+```
+
+The longest two are 32 and 30 characters in length and are both from {googlesheets4}. The help pages say they're 'internal {vctrs} methods'. The names of these are long because of the construction: the first part tells us the method name, e.g. `vec_ptype2`, and the second part tells us that they apply to the `googlesheets4_formula` S3 class.
+
+So maybe these don't really count because they would be called as `vec_ptype2()` and `vec_cast()`? And they're inflated because they contain the package name, {googlesheets4} , which is quite a long one (13 characters). That would leave `cli::cli_progress_builtin_handlers()` and `rstudioapi::getRStudioPackageDependencies()` as the next longest (29 characters). The latter uses camelCase---which is typical of the {rstudioapi} package---so isn't bulked out by underscores.
+
+On the other end of the spectrum, there's only one function with one character: `dplyr::n()`. I think it makes sense to avoid single-character functions in non-base packages, because they aren't terribly descriptive. `n()` can at least be understood to mean 'number'.
+
+Instead, here's all the two-letter functions from the {tidyverse}. Note that many of these are from {lubridate} and are shorthand expressions that make sense in context, like `hm()` for hour-minute. You can also see some of {rlang}'s operators creep in here, like bang-bang (`!!`) and the walrus (`:=`).[^bandname]
+
+```{r tidy-fns-two}
+filter(tidy_fns, nchar == 2)
+```
+
+Both the {dplyr} functions here are no longer intended for use. I'm sad especially for `dplyr::do()`: the help page says it 'never really felt like it belong[ed] with the rest of dplyr' `r emo::ji("cry")`. 
+
+> In memoriam: `do()`.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^suppress]: [I wrote a whole post about this recently](https://www.rostrum.blog/2021/08/27/zzz/).
+[^luke]: [Luke was curious too](https://twitter.com/mcguinlu/status/1443257017745948677?s=20), so that's at least two of us. (Luke also noticed that [a link to my {linkrot} package was itself rotten](https://twitter.com/mcguinlu/status/1443256485367197708?s=20), lol.)
+[^pac]: In fact, `p_load()` will attempt installation if the package can't be found in your library. Arguably, this is poor behaviour; you should always ask the user before installing something on their machine.
+[^underscore]: My understanding is that a future version of R will allow an underscore as the left-hand-side placeholder, in a similar manner to how the {tidyverse} allows a dot. That will do away with the need for `()()`. Also ignore my badly-written base code; I'm trying to re-learn.
+[^bandname]: Bang-Bang and the Walrus, touring Spring 2022.

@@ -1,0 +1,282 @@
+---
+title: "R has obscenely long function names"
+author: Matt Dray
+date: '2021-11-27'
+slug: long-fns
+categories:
+  - code
+tags:
+  - base
+  - r
+  - tidyverse
+draft: no
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div class="figure">
+<p><img src="/post/2021-11-22-long-fns_files/longboi.png" alt="A crudely-drawn long dog with the R function name aspell_write_personal_dictionary_file written along the length of its body." width="100%"/></p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>Use <code>ls()</code> on a package name in the form <code>"package:base"</code> to see all the objects it contains. I’ve done this to find the longest (and shortest) function names in base R and the {tidyverse} suite.</p>
+</div>
+<div id="naming-things" class="section level1">
+<h1>Naming things</h1>
+<p>I try to keep to a few rules when creating function names, like:</p>
+<ul>
+<li>use a verb to make clear the intended action, like <a href="https://matt-dray.github.io/badgr/reference/get_badge.html"><code>get_badge()</code> from {badgr}</a></li>
+<li>start functions with a prefix to make autocomplete easier, like the <a href="https://matt-dray.github.io/dehex/reference/index.html"><code>dh_*()</code> functions from {dehex}</a></li>
+<li>try to be descriptive but succinct, like <a href="https://matt-dray.github.io/dialga/reference/r2cron.html"><code>r2cron()</code> from {dialga}</a></li>
+</ul>
+<p>It can be tricky to be succinct. Consider the base R function <code>suppressPackageStartupMessages()</code><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>: it’s a whopping 30 characters, but all the words are important and something like <code>suppPkgStartMsg()</code> isn’t so clear.</p>
+<p>It <a href="https://www.rostrum.blog/2021/08/27/zzz/#fn1">made me wonder</a>: what’s the longest function name in R?<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>But! It seems tricky to and time consuming to find the longest function name from <em>all</em> R packages. CRAN alone has over 18,000 at time of writing.</p>
+<p>A much easier (lazier) approach is to focus on some package subsets. I’ll look at base R and the {tidyverse}.</p>
+</div>
+<div id="the-long-and-the-short-of-it" class="section level1">
+<h1>The long and the short of it</h1>
+<div id="base-r" class="section level2">
+<h2>Base R</h2>
+<p>Certain R packages are built-in and attached by default on startup.</p>
+<pre class="r"><code>base_names &lt;- sessionInfo()$basePkgs
+base_names</code></pre>
+<pre><code>## [1] &quot;stats&quot;     &quot;graphics&quot;  &quot;grDevices&quot; &quot;utils&quot;     &quot;datasets&quot;  &quot;methods&quot;  
+## [7] &quot;base&quot;</code></pre>
+<p>How can we fetch all the functions from these packages? We can use <code>ls()</code> to list all their objects, supplying the package name in the format <code>"package:base"</code>, for example. Note that I said ‘objects’, not ‘functions’, since it will also return names that refer to things like datasets.</p>
+<p>For fun, we can use this as an excuse to demo <a href="https://milesmcbain.micro.blog/2021/06/23/how-youd-fix.html">the dog’s balls approach</a> to function-writing in R v4.1.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<pre class="r"><code>base_pkgs &lt;- paste0(&quot;package:&quot;, base_names)
+
+base_fns &lt;- lapply(base_pkgs, ls) |&gt;
+  setNames(base_names) |&gt; 
+  lapply(\(object) as.data.frame(object)) |&gt; 
+  (\(x) do.call(rbind, x))()  # the balls ()()
+
+base_fns$package &lt;- gsub(&quot;\\.\\d{,4}$&quot;, &quot;&quot;, row.names(base_fns))
+row.names(base_fns) &lt;- NULL
+base_fns$nchar &lt;- nchar(base_fns$object)
+
+base_fns &lt;- base_fns[order(-base_fns$nchar), ]</code></pre>
+<p>Of the 2424 objects, a quick histogram shows that the most frequent character length is under 10, with a tail stretching out to over 30.</p>
+<pre class="r"><code>hist(
+  base_fns$nchar,
+  main = &quot;Character length of base-package object names&quot;,
+  xlab = &quot;Number of characters&quot;,
+  las = 1
+)</code></pre>
+<p><img src="/post/2021-11-22-long-fns_files/figure-html/hist-base-fns-1.png" title="Histogram of character lengths for base object names. It's fairly normal around a bin of 6 to 8 characters, which has a peak frequency of over 400, plus there's a tail stretching out to over 30 characters." alt="Histogram of character lengths for base object names. It's fairly normal around a bin of 6 to 8 characters, which has a peak frequency of over 400, plus there's a tail stretching out to over 30 characters." width="672" /></p>
+<p>Here’s the top 10 by character length.</p>
+<pre class="r"><code>base_fns_top &lt;- base_fns[order(-base_fns$nchar), ]
+rownames(base_fns_top) &lt;- seq(length = nrow(base_fns_top))
+head(base_fns_top, 10)</code></pre>
+<pre><code>##                                   object package nchar
+## 1  aspell_write_personal_dictionary_file   utils    37
+## 2     getDLLRegisteredRoutines.character    base    34
+## 3       getDLLRegisteredRoutines.DLLInfo    base    32
+## 4        reconcilePropertiesAndPrototype methods    31
+## 5         suppressPackageStartupMessages    base    30
+## 6          as.data.frame.numeric_version    base    29
+## 7           as.character.numeric_version    base    28
+## 8            print.DLLRegisteredRoutines    base    27
+## 9             as.data.frame.model.matrix    base    26
+## 10            conditionMessage.condition    base    26</code></pre>
+<p>So there are four objects with names longer than <code>suppressPackageStartupMessages()</code>, which are rarely used as far as I can tell. The longest is <code>aspell_write_personal_dictionary_file()</code>, which has 37 (!) characters. It’s part of the spellcheck functions in {utils}.</p>
+<p>It’s interesting to me that it follows some of those rules for function naming that I mentioned earlier. It has a verb, is descriptive and uses a prefix for easier autocomplete; <code>aspell</code> refers to <a href="http://aspell.net/">the GNU open-source Aspell spellchecker</a> on which it’s based.</p>
+<p>I’m intrigued that the function uses snake_case rather than camelCase or dot.case, which seem more prevalent in base functions. You could argue then that the underscores have ‘inflated’ the length by four characters. Similarly, the prefix adds another six characters. So maybe the function could be simplified to <code>writePersonalDictionaryFile()</code>, which is merely 27 characters.</p>
+<p>What about shortest functions? There are many one-character functions.</p>
+<pre class="r"><code>sort(base_fns[base_fns$nchar == 1, ][[&quot;object&quot;]])</code></pre>
+<pre><code>##  [1] &quot;-&quot; &quot;:&quot; &quot;!&quot; &quot;?&quot; &quot;(&quot; &quot;[&quot; &quot;{&quot; &quot;@&quot; &quot;*&quot; &quot;/&quot; &quot;&amp;&quot; &quot;^&quot; &quot;+&quot; &quot;&lt;&quot; &quot;=&quot; &quot;&gt;&quot; &quot;|&quot; &quot;~&quot; &quot;$&quot;
+## [20] &quot;c&quot; &quot;C&quot; &quot;D&quot; &quot;F&quot; &quot;I&quot; &quot;q&quot; &quot;t&quot; &quot;T&quot;</code></pre>
+<p>Some of these will be familiar, like <code>c()</code> to concatenate and <code>t()</code> to transpose. You might wonder why operators and brackets are in here. Remember: everything in R is a function, so <code>`[`(mtcars, "hp")</code> is the same as <code>mtcars["hp"]</code>. I have to admit that <code>stats::C()</code> and <code>stats::D()</code> were new to me.</p>
+</div>
+<div id="tidyverse" class="section level2">
+<h2>{tidyverse}</h2>
+<p>How about object names from the {tidyverse}?</p>
+<p>To start, we need to attach the packages. Running <code>library(tidyverse)</code> only loads the core packages of the tidyverse, so we need another approach to attach them all.</p>
+<p>One method is to get the a vector of the package names with the <code>tidyverse_packages()</code> function and passing it to <code>p_load()</code> from {pacman}, which prevents the need for a separate <code>library()</code> call for each one.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
+<p>First, here’s the tidyverse packages.</p>
+<pre class="r"><code># install.packages(&quot;tidyverse&quot;)  # if not installed
+suppressPackageStartupMessages(  # in action!
+  library(tidyverse)
+)
+tidy_names &lt;- tidyverse_packages()
+tidy_names</code></pre>
+<pre><code>##  [1] &quot;broom&quot;         &quot;cli&quot;           &quot;crayon&quot;        &quot;dbplyr&quot;       
+##  [5] &quot;dplyr&quot;         &quot;dtplyr&quot;        &quot;forcats&quot;       &quot;googledrive&quot;  
+##  [9] &quot;googlesheets4&quot; &quot;ggplot2&quot;       &quot;haven&quot;         &quot;hms&quot;          
+## [13] &quot;httr&quot;          &quot;jsonlite&quot;      &quot;lubridate&quot;     &quot;magrittr&quot;     
+## [17] &quot;modelr&quot;        &quot;pillar&quot;        &quot;purrr&quot;         &quot;readr&quot;        
+## [21] &quot;readxl&quot;        &quot;reprex&quot;        &quot;rlang&quot;         &quot;rstudioapi&quot;   
+## [25] &quot;rvest&quot;         &quot;stringr&quot;       &quot;tibble&quot;        &quot;tidyr&quot;        
+## [29] &quot;xml2&quot;          &quot;tidyverse&quot;</code></pre>
+<p>And now to load them all.</p>
+<pre class="r"><code># install.packages(&quot;pacman&quot;)  # if not installed
+library(pacman)
+p_load(char = tidy_names)</code></pre>
+<p>Once again we can <code>ls()</code> over packages in the form <code>"package:dplyr"</code>. Now the {tidyverse} is loaded, we might as well use it to run the same pipeline as we did for the base packages.</p>
+<pre class="r"><code>tidy_pkgs &lt;- paste0(&quot;package:&quot;, tidy_names)
+
+tidy_fns &lt;- map(tidy_pkgs, ls) |&gt;
+  set_names(tidy_names) |&gt; 
+  enframe(name = &quot;package&quot;, value = &quot;object&quot;) |&gt;
+  unnest(object) |&gt; 
+  mutate(nchar = nchar(object))</code></pre>
+<p>So we’re looking at even more packages this time, since the whole tidyverse contains 3018 of them.</p>
+<p>The histogram is not too dissimilar to the one for base packages, though the tail is shorter, it’s arguably more normal-looking and the peak is perhaps slightly closer to 10. The latter could be because of more liberal use of snake_case.</p>
+<pre class="r"><code>hist(
+  tidy_fns$nchar,
+  main = &quot;Character length of {tidyverse} object names&quot;,
+  xlab = &quot;Number of characters&quot;,
+  las = 1
+)</code></pre>
+<p><img src="/post/2021-11-22-long-fns_files/figure-html/hist-tidy-fns-1.png" title="Histogram of character lengths for tidyverse object names. It's fairly normal around a bin of 8 to 10 characters, which has a peak frequency of over 600, plus there's a tail stretching out to over 30 characters." alt="Histogram of character lengths for tidyverse object names. It's fairly normal around a bin of 8 to 10 characters, which has a peak frequency of over 600, plus there's a tail stretching out to over 30 characters." width="672" /></p>
+<p>Here’s the top 10 by character length.</p>
+<pre class="r"><code>slice_max(tidy_fns, nchar, n = 10)</code></pre>
+<pre><code>## # A tibble: 10 × 3
+##    package       object                           nchar
+##    &lt;chr&gt;         &lt;chr&gt;                            &lt;int&gt;
+##  1 googlesheets4 vec_ptype2.googlesheets4_formula    32
+##  2 googlesheets4 vec_cast.googlesheets4_formula      30
+##  3 cli           cli_progress_builtin_handlers       29
+##  4 rstudioapi    getRStudioPackageDependencies       29
+##  5 rstudioapi    launcherPlacementConstraint         27
+##  6 cli           ansi_has_hyperlink_support          26
+##  7 ggplot2       scale_continuous_identity           25
+##  8 ggplot2       scale_linetype_continuous           25
+##  9 haven         vec_arith.haven_labelled            24
+## 10 rstudioapi    getActiveDocumentContext            24</code></pre>
+<p>The longest two are 32 and 30 characters in length and are both from {googlesheets4}. The help pages say they’re ‘internal {vctrs} methods’. The names of these are long because of the construction: the first part tells us the method name, e.g. <code>vec_ptype2</code>, and the second part tells us that they apply to the <code>googlesheets4_formula</code> S3 class.</p>
+<p>So maybe these don’t really count because they would be called as <code>vec_ptype2()</code> and <code>vec_cast()</code>? And they’re inflated because they contain the package name, {googlesheets4} , which is quite a long one (13 characters). That would leave <code>cli::cli_progress_builtin_handlers()</code> and <code>rstudioapi::getRStudioPackageDependencies()</code> as the next longest (29 characters). The latter uses camelCase—which is typical of the {rstudioapi} package—so isn’t bulked out by underscores.</p>
+<p>On the other end of the spectrum, there’s only one function with one character: <code>dplyr::n()</code>. I think it makes sense to avoid single-character functions in non-base packages, because they aren’t terribly descriptive. <code>n()</code> can at least be understood to mean ‘number’.</p>
+<p>Instead, here’s all the two-letter functions from the {tidyverse}. Note that many of these are from {lubridate} and are shorthand expressions that make sense in context, like <code>hm()</code> for hour-minute. You can also see some of {rlang}’s operators creep in here, like bang-bang (<code>!!</code>) and the walrus (<code>:=</code>).<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a></p>
+<pre class="r"><code>filter(tidy_fns, nchar == 2)</code></pre>
+<pre><code>## # A tibble: 16 × 3
+##    package   object nchar
+##    &lt;chr&gt;     &lt;chr&gt;  &lt;int&gt;
+##  1 cli       no         2
+##  2 dplyr     do         2
+##  3 dplyr     id         2
+##  4 lubridate am         2
+##  5 lubridate hm         2
+##  6 lubridate ms         2
+##  7 lubridate my         2
+##  8 lubridate pm         2
+##  9 lubridate tz         2
+## 10 lubridate ym         2
+## 11 lubridate yq         2
+## 12 magrittr  or         2
+## 13 rlang     :=         2
+## 14 rlang     !!         2
+## 15 rlang     ll         2
+## 16 rlang     UQ         2</code></pre>
+<p>Both the {dplyr} functions here are no longer intended for use. I’m sad especially for <code>dplyr::do()</code>: the help page says it ‘never really felt like it belong[ed] with the rest of dplyr’ 😢.</p>
+<blockquote>
+<p>In memoriam: <code>do()</code>.</p>
+</blockquote>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.1.0 (2021-05-18)
+##  os       macOS Big Sur 10.16         
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2021-11-27                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package       * version    date       lib source                     
+##  assertthat      0.2.1      2019-03-21 [1] CRAN (R 4.1.0)             
+##  backports       1.2.1      2020-12-09 [1] CRAN (R 4.1.0)             
+##  blogdown        1.4        2021-07-23 [1] CRAN (R 4.1.0)             
+##  bookdown        0.23       2021-08-13 [1] CRAN (R 4.1.0)             
+##  broom         * 0.7.9      2021-07-27 [1] CRAN (R 4.1.0)             
+##  bslib           0.3.1      2021-10-06 [1] CRAN (R 4.1.0)             
+##  cellranger      1.1.0      2016-07-27 [1] CRAN (R 4.1.0)             
+##  cli           * 3.1.0      2021-10-27 [1] CRAN (R 4.1.0)             
+##  colorspace      2.0-2      2021-06-24 [1] CRAN (R 4.1.0)             
+##  crayon        * 1.4.2      2021-10-29 [1] CRAN (R 4.1.0)             
+##  data.table      1.14.0     2021-02-21 [1] CRAN (R 4.1.0)             
+##  DBI             1.1.1      2021-01-15 [1] CRAN (R 4.1.0)             
+##  dbplyr        * 2.1.1      2021-04-06 [1] CRAN (R 4.1.0)             
+##  digest          0.6.28     2021-09-23 [1] CRAN (R 4.1.0)             
+##  dplyr         * 1.0.7      2021-06-18 [1] CRAN (R 4.1.0)             
+##  dtplyr        * 1.1.0      2021-02-20 [1] CRAN (R 4.1.0)             
+##  ellipsis        0.3.2      2021-04-29 [1] CRAN (R 4.1.0)             
+##  emo             0.0.0.9000 2021-08-26 [1] Github (hadley/emo@3f03b11)
+##  evaluate        0.14       2019-05-28 [1] CRAN (R 4.1.0)             
+##  fansi           0.5.0      2021-05-25 [1] CRAN (R 4.1.0)             
+##  fastmap         1.1.0      2021-01-25 [1] CRAN (R 4.1.0)             
+##  forcats       * 0.5.1      2021-01-27 [1] CRAN (R 4.1.0)             
+##  fs              1.5.0      2020-07-31 [1] CRAN (R 4.1.0)             
+##  gargle          1.2.0      2021-07-02 [1] CRAN (R 4.1.0)             
+##  generics        0.1.1      2021-10-25 [1] CRAN (R 4.1.0)             
+##  ggplot2       * 3.3.5      2021-06-25 [1] CRAN (R 4.1.0)             
+##  glue            1.5.0      2021-11-07 [1] CRAN (R 4.1.0)             
+##  googledrive   * 2.0.0      2021-07-08 [1] CRAN (R 4.1.0)             
+##  googlesheets4 * 1.0.0      2021-07-21 [1] CRAN (R 4.1.0)             
+##  gtable          0.3.0      2019-03-25 [1] CRAN (R 4.1.0)             
+##  haven         * 2.4.3      2021-08-04 [1] CRAN (R 4.1.0)             
+##  highr           0.9        2021-04-16 [1] CRAN (R 4.1.0)             
+##  hms           * 1.1.1      2021-09-26 [1] CRAN (R 4.1.0)             
+##  htmltools       0.5.2      2021-08-25 [1] CRAN (R 4.1.0)             
+##  httr          * 1.4.2      2020-07-20 [1] CRAN (R 4.1.0)             
+##  jquerylib       0.1.4      2021-04-26 [1] CRAN (R 4.1.0)             
+##  jsonlite      * 1.7.2      2020-12-09 [1] CRAN (R 4.1.0)             
+##  knitr           1.36       2021-09-29 [1] CRAN (R 4.1.0)             
+##  lifecycle       1.0.1      2021-09-24 [1] CRAN (R 4.1.0)             
+##  lubridate     * 1.8.0      2021-10-07 [1] CRAN (R 4.1.0)             
+##  magrittr      * 2.0.1      2020-11-17 [1] CRAN (R 4.1.0)             
+##  modelr        * 0.1.8      2020-05-19 [1] CRAN (R 4.1.0)             
+##  munsell         0.5.0      2018-06-12 [1] CRAN (R 4.1.0)             
+##  pacman        * 0.5.1      2019-03-11 [1] CRAN (R 4.1.0)             
+##  pillar        * 1.6.4      2021-10-18 [1] CRAN (R 4.1.0)             
+##  pkgconfig       2.0.3      2019-09-22 [1] CRAN (R 4.1.0)             
+##  purrr         * 0.3.4      2020-04-17 [1] CRAN (R 4.1.0)             
+##  R6              2.5.1      2021-08-19 [1] CRAN (R 4.1.0)             
+##  Rcpp            1.0.7      2021-07-07 [1] CRAN (R 4.1.0)             
+##  readr         * 2.0.2      2021-09-27 [1] CRAN (R 4.1.0)             
+##  readxl        * 1.3.1      2019-03-13 [1] CRAN (R 4.1.0)             
+##  reprex        * 2.0.1      2021-08-05 [1] CRAN (R 4.1.0)             
+##  rlang         * 0.4.12     2021-10-18 [1] CRAN (R 4.1.0)             
+##  rmarkdown       2.10       2021-08-06 [1] CRAN (R 4.1.0)             
+##  rstudioapi    * 0.13       2020-11-12 [1] CRAN (R 4.1.0)             
+##  rvest         * 1.0.1      2021-07-26 [1] CRAN (R 4.1.0)             
+##  sass            0.4.0      2021-05-12 [1] CRAN (R 4.1.0)             
+##  scales          1.1.1      2020-05-11 [1] CRAN (R 4.1.0)             
+##  sessioninfo     1.1.1      2018-11-05 [1] CRAN (R 4.1.0)             
+##  stringi         1.7.5      2021-10-04 [1] CRAN (R 4.1.0)             
+##  stringr       * 1.4.0      2019-02-10 [1] CRAN (R 4.1.0)             
+##  tibble        * 3.1.6      2021-11-07 [1] CRAN (R 4.1.0)             
+##  tidyr         * 1.1.3      2021-03-03 [1] CRAN (R 4.1.0)             
+##  tidyselect      1.1.1      2021-04-30 [1] CRAN (R 4.1.0)             
+##  tidyverse     * 1.3.1      2021-04-15 [1] CRAN (R 4.1.0)             
+##  tzdb            0.1.2      2021-07-20 [1] CRAN (R 4.1.0)             
+##  utf8            1.2.2      2021-07-24 [1] CRAN (R 4.1.0)             
+##  vctrs           0.3.8      2021-04-29 [1] CRAN (R 4.1.0)             
+##  withr           2.4.2      2021-04-18 [1] CRAN (R 4.1.0)             
+##  xfun            0.26       2021-09-14 [1] CRAN (R 4.1.0)             
+##  xml2          * 1.3.2      2020-04-23 [1] CRAN (R 4.1.0)             
+##  yaml            2.2.1      2020-02-01 [1] CRAN (R 4.1.0)             
+## 
+## [1] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
+</details>
+</div>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p><a href="https://www.rostrum.blog/2021/08/27/zzz/">I wrote a whole post about this recently</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p><a href="https://twitter.com/mcguinlu/status/1443257017745948677?s=20">Luke was curious too</a>, so that’s at least two of us. (Luke also noticed that <a href="https://twitter.com/mcguinlu/status/1443256485367197708?s=20">a link to my {linkrot} package was itself rotten</a>, lol.)<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>My understanding is that a future version of R will allow an underscore as the left-hand-side placeholder, in a similar manner to how the {tidyverse} allows a dot. That will do away with the need for <code>()()</code>. Also ignore my badly-written base code; I’m trying to re-learn.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>In fact, <code>p_load()</code> will attempt installation if the package can’t be found in your library. Arguably, this is poor behaviour; you should always ask the user before installing something on their machine.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>Bang-Bang and the Walrus, touring Spring 2022.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
