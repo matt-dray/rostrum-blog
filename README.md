@@ -25,13 +25,13 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 108 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 110 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
-📅 That’s a post roughly every 12 days, or about 2.4 posts per month.
+📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 20 day(s) ago: [Deep fried memes in
-R](https://www.rostrum.blog/2021/11/07/deepfry/).
+🆕 The latest post was published 1 day(s) ago: [{itdepends} on
+{lubridate}](https://www.rostrum.blog/2021/11/27/lubridate-fns/).
 
 📈 This 2D plot shows posts over time:
 
@@ -43,6 +43,8 @@ R](https://www.rostrum.blog/2021/11/07/deepfry/).
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|    110 | 2021-11-27 | [{itdepends} on {lubridate}](https://www.rostrum.blog/2021/11/27/lubridate-fns/)                                          |
+|    109 | 2021-11-27 | [R has obscenely long function names](https://www.rostrum.blog/2021/11/27/long-fns/)                                      |
 |    108 | 2021-11-07 | [Deep fried memes in R](https://www.rostrum.blog/2021/11/07/deepfry/)                                                     |
 |    107 | 2021-11-04 | [Get coordinates from fictitious maps](https://www.rostrum.blog/2021/11/04/kanto-locator/)                                |
 |    106 | 2021-10-05 | [Reveal a hidden gorilla with {magick}](https://www.rostrum.blog/2021/10/05/gorilla/)                                     |
@@ -156,4 +158,4 @@ R](https://www.rostrum.blog/2021/11/07/deepfry/).
 
 -----
 
-*Updated 2021-11-27 02:41:34*
+*Updated 2021-11-28 02:40:39*
