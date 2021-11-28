@@ -1,7 +1,7 @@
 ---
 title: "{itdepends} on {lubridate}"
 author: Matt Dray
-date: '2021-11-27'
+date: '2021-11-28'
 slug: lubridate-fns
 categories:
   - code
@@ -28,7 +28,7 @@ draft: no
 <h1>Lubrigate</h1>
 <p>A test failure in <a href="https://lubridate.tidyverse.org/">{lubridate}</a> led to hundreds of R developers being emailed about <a href="https://github.com/tidyverse/lubridate/issues/998">its potential expulsion from CRAN</a>, which also threatened the hundreds of packages that depend on it.</p>
 <p>I see the benefit of minimising dependencies. I also understand the drawbacks of reinventing the wheel. Maybe {lubridate} is a good dependency: a simple API, part of the popular {tidyverse}, and it handles stuff you can’t be bothered with (like what’s 29 February plus one year?).</p>
-<p><a href="https://www.tidyverse.org/blog/2019/05/itdepends/">Jim Hester spoke at rstudio::conf(2019) about dependencies</a>. His <a href="https://github.com/r-lib/itdepends">{itdepends}</a> package helps you understand the scale and impact of your dependencies.</p>
+<p><a href="https://www.tidyverse.org/blog/2019/05/itdepends/">Jim Hester spoke at rstudio::conf(2019) about dependencies</a>. His <a href="https://github.com/r-lib/itdepends">{itdepends}</a> package helps you understand their scale and impact on your package.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
 <p>So, for fun, I’m looking at how {lubridate} is used by packages that import it.</p>
 </div>
 <div id="crank-it-up" class="section level1">
@@ -62,7 +62,7 @@ purrr::walk(
     repos = &quot;https://cran.ma.imperial.ac.uk/&quot;  # mirror
   )
 )</code></pre>
-<p>This takes a little while. There’s probably faster methods, like maybe <a href="https://pak.r-lib.org/">the {pak} package</a>, but for now I just used what worked.</p>
+<p>This takes a little while. There’s probably faster methods, like maybe <a href="https://pak.r-lib.org/">the {pak} package</a>, but for now I just used what worked. I’ve also hidden the output, obviously. It’s also possible that some packages will error out and won’t install. Oh no! Ah well.</p>
 </div>
 <div id="it-depends-on-itdepends" class="section level1">
 <h1>It depends on {itdepends}</h1>
@@ -93,7 +93,7 @@ for (i in imports_lubridate) {
   if (skip) next
   
 }</code></pre>
-<p>I absolutely do not claim this to be the best, most optimised approach. But it works.</p>
+<p>I absolutely do not claim this to be the best, most optimised approach. But it works for me.</p>
 </div>
 <div id="dependensheeesh" class="section level1">
 <h1>Dependensheeesh</h1>
@@ -114,7 +114,7 @@ dep_list[[ex_pkg]] |&gt;
 ## 3 base  if      109
 ## 4 base  $        90
 ## 5 base  !        42</code></pre>
-<p>It’s not particularly exciting to know that the top 5 are made up of base R functions like the assignment arrow (<code>&lt;-</code>) and the dollar-sign (<code>$</code>) data accessor<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> and the square bracket (<code>[</code>). We also don’t really care about the package’s internal functions. Let’s filter out these packages and re-count</p>
+<p>It’s not particularly exciting to know that the top 5 are made up of base R functions like the assignment arrow (<code>&lt;-</code>), the dollar-sign (<code>$</code>) data accessor<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> and the square bracket (<code>[</code>). We also don’t really care about the package’s internal functions. Let’s filter out these packages and re-count</p>
 <pre class="r"><code>base_pkgs &lt;- sessionInfo()$basePkgs
 
 dep_list[[ex_pkg]] |&gt;
@@ -172,7 +172,7 @@ pkg_fn_count |&gt; slice(1:5)</code></pre>
 </div>
 <div id="unique-function-use-by-package" class="section level3">
 <h3>Unique function use by package</h3>
-<p>We can also look at things like the packages that make calls to the greatest number of unique {lubridate} packages. Here’s the top 5.</p>
+<p>We can also look at things like the packages that make calls to the greatest number of unique {lubridate} functions. Here’s the top 5.</p>
 <pre class="r"><code>fn_distinct_count &lt;- dep_df |&gt;
   filter(pkg == &quot;lubridate&quot;) |&gt;
   distinct(focus, fun) |&gt;
@@ -187,8 +187,8 @@ fn_distinct_count |&gt; slice(1:5)</code></pre>
 ## 3 fmdates           21
 ## 4 finbif            15
 ## 5 xml2relational    15</code></pre>
-<p>So these packages are using more than 10 unique functions from {lubridate}, which is pretty extensive usage.</p>
-<p>A quick histogram reveals that a large number of packages are actually using just a single {lubridate} function.</p>
+<p>So these packages are using more than 10 unique functions from {lubridate}, which is pretty extensive usage. It may be tricky to do away with the convenience of the dependnecy in these cases, especially.</p>
+<p>Conversely, a quick histogram reveals that a large number of packages are actually using just a single {lubridate} function.</p>
 <pre class="r"><code>hist(
   fn_distinct_count$n,
   breaks = 30,
@@ -196,7 +196,8 @@ fn_distinct_count |&gt; slice(1:5)</code></pre>
   xlab = &quot;Function count&quot;
 )</code></pre>
 <p><img src="/post/2021-10-12-lubridate-fns_files/figure-html/hist-unique-lubridate-fns-1.png" title="Histrogram of unique lubridate functions used by the packages that import lubridate. The vast majority are using 1 or 2, with a long tail out to about 25." alt="Histrogram of unique lubridate functions used by the packages that import lubridate. The vast majority are using 1 or 2, with a long tail out to about 25." width="672" /></p>
-<p>So, of these packages that use just one {lubridate} function, which function is the most frequent?</p>
+<p>Maybe the dependency could be dropped in these cases?</p>
+<p>Out of interest, which {lubridate} function is the most frequent in packages that use just one?</p>
 <pre class="r"><code>focus_one_fn &lt;- fn_distinct_count |&gt;
   filter(n == 1) |&gt;
   pull(focus)
@@ -218,7 +219,7 @@ pkg_fn_count |&gt;
 </div>
 <div id="non-unique-function-use-by-package" class="section level3">
 <h3>Non-unique function use by package</h3>
-<p>What about total calls by each package?</p>
+<p>What about total calls to {lubridate} functions by each of the dependent package? This is on-unique, so could include one function being called multiple times by a given package.</p>
 <pre class="r"><code>fn_nondistinct_count &lt;- dep_df |&gt;
   filter(pkg == &quot;lubridate&quot;) |&gt;
   count(focus, sort = TRUE)
@@ -257,8 +258,8 @@ dep_df |&gt;
 <div id="you-do-you" class="section level1">
 <h1>You do you</h1>
 <p>Does the information here imply that many developers could consider removing their small number of {lubridate} calls in favour of date-related base functions? Maybe. That’s up to the developers.</p>
-<p>Use whatever dependencies you want, it’s up to you. {itdepends} might be a useful tool for you to work out if you need all the dependencies you have. Other tools are out there; <a href="https://ashbaldry.github.io/2021-11-25-depcheck-r-dependency-checker/">I read recently</a> about <a href="https://github.com/ashbaldry/depcheck">Ashley Baldry’s {depcheck} package</a>, for example</p>
-<p>It might be interesting to do this for all CRAN packages and their dependencies, but I don’t have a personal CRAN mirror and I don’t write particularly performant code.</p>
+<p>Ultimately, {itdepends} might be a useful tool for you to work out if you need all the dependencies you have. Other tools are out there; <a href="https://ashbaldry.github.io/2021-11-25-depcheck-r-dependency-checker/">I read recently</a> about <a href="https://github.com/ashbaldry/depcheck">Ashley Baldry’s {depcheck} package</a>, for example</p>
+<p>It might be interesting to redo this investigation for all CRAN packages and their dependencies, but I don’t have a personal CRAN mirror and I don’t write particularly performant code.</p>
 <p>Anyway, don’t listen to me: I write joke packages that I don’t put on CRAN, lol.</p>
 <hr />
 <details>
@@ -327,6 +328,7 @@ Session info
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>You should <a href="https://www.rostrum.blog/2021/07/15/dollar-dollar/">be aware of the international conspiracy</a> behind the use of this symbol in R.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn1"><p><a href="https://twitter.com/_TimTaylor_">Tim</a> reminded me of this package/nerdsniped me.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>You should <a href="https://www.rostrum.blog/2021/07/15/dollar-dollar/">be aware of the international conspiracy</a> behind the use of this symbol in R.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>

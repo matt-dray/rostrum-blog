@@ -1,7 +1,7 @@
 ---
 title: "{itdepends} on {lubridate}"
 author: Matt Dray
-date: '2021-11-27'
+date: '2021-11-28'
 slug: lubridate-fns
 categories:
   - code
@@ -32,7 +32,7 @@ A test failure in [{lubridate}](https://lubridate.tidyverse.org/) led to hundred
 
 I see the benefit of minimising dependencies. I also understand the drawbacks of reinventing the wheel. Maybe {lubridate} is a good dependency: a simple API, part of the popular {tidyverse}, and it handles stuff you can't be bothered with (like what's 29 February plus one year?).
 
-[Jim Hester spoke at rstudio::conf(2019) about dependencies](https://www.tidyverse.org/blog/2019/05/itdepends/). His [{itdepends}](https://github.com/r-lib/itdepends) package helps you understand the scale and impact of your dependencies.
+[Jim Hester spoke at rstudio::conf(2019) about dependencies](https://www.tidyverse.org/blog/2019/05/itdepends/). His [{itdepends}](https://github.com/r-lib/itdepends) package helps you understand their scale and impact on your package.[^tim]
 
 So, for fun, I'm looking at how {lubridate} is used by packages that import it.
 
@@ -74,7 +74,7 @@ purrr::walk(
 )
 ```
 
-This takes a little while. There's probably faster methods, like maybe [the {pak} package](https://pak.r-lib.org/), but for now I just used what worked.
+This takes a little while. There's probably faster methods, like maybe [the {pak} package](https://pak.r-lib.org/), but for now I just used what worked. I've also hidden the output, obviously. It's also possible that some packages will error out and won't install. Oh no! Ah well.
 
 # It depends on {itdepends}
 
@@ -114,7 +114,7 @@ for (i in imports_lubridate) {
 }
 ```
 
-I absolutely do not claim this to be the best, most optimised approach. But it works. 
+I absolutely do not claim this to be the best, most optimised approach. But it works for me.
 
 # Dependensheeesh
 
@@ -132,7 +132,7 @@ dep_list[[ex_pkg]] |>
   slice(1:5)
 ```
 
-It's not particularly exciting to know that the top 5 are made up of base R functions like the assignment arrow (`<-`) and the dollar-sign (`$`) data accessor[^nzd] and the square bracket (`[`). We also don't really care about the package's internal functions. Let's filter out these packages and re-count
+It's not particularly exciting to know that the top 5 are made up of base R functions like the assignment arrow (`<-`), the dollar-sign (`$`) data accessor[^nzd] and the square bracket (`[`). We also don't really care about the package's internal functions. Let's filter out these packages and re-count
 
 ```{r ex-count-fn-no-base}
 base_pkgs <- sessionInfo()$basePkgs
@@ -179,7 +179,7 @@ Holy moley, the {PriceIndices} package calls `month()` and `year()`, used to ext
 
 ### Unique function use by package
 
-We can also look at things like the packages that make calls to the greatest number of unique {lubridate} packages. Here's the top 5.
+We can also look at things like the packages that make calls to the greatest number of unique {lubridate} functions. Here's the top 5.
 
 ```{r count-unique-lubridate-fns}
 fn_distinct_count <- dep_df |>
@@ -190,9 +190,9 @@ fn_distinct_count <- dep_df |>
 fn_distinct_count |> slice(1:5)
 ```
 
-So these packages are using more than 10 unique functions from {lubridate}, which is pretty extensive usage.
+So these packages are using more than 10 unique functions from {lubridate}, which is pretty extensive usage. It may be tricky to do away with the convenience of the dependnecy in these cases, especially.
 
-A quick histogram reveals that a large number of packages are actually using just a single {lubridate} function.
+Conversely, a quick histogram reveals that a large number of packages are actually using just a single {lubridate} function.
 
 ```{r hist-unique-lubridate-fns, fig.alt="Histrogram of unique lubridate functions used by the packages that import lubridate. The vast majority are using 1 or 2, with a long tail out to about 25."}
 hist(
@@ -203,7 +203,9 @@ hist(
 )
 ```
 
-So, of these packages that use just one {lubridate} function, which function is the most frequent?
+Maybe the dependency could be dropped in these cases?
+
+Out of interest, which {lubridate} function is the most frequent in packages that use just one?
 
 ```{r single-call-pkgs}
 focus_one_fn <- fn_distinct_count |>
@@ -222,7 +224,7 @@ I think this is interesting: some packages are importing {lubridate} in its enti
 
 ### Non-unique function use by package
 
-What about total calls by each package?
+What about total calls to {lubridate} functions by each of the dependent package? This is on-unique, so could include one function being called multiple times by a given package.
 
 ```{r percent-lubridate}
 fn_nondistinct_count <- dep_df |>
@@ -260,9 +262,9 @@ Huh, so the number of non-unique {lubridate} calls is almost always less than 50
 
 Does the information here imply that many developers could consider removing their small number of {lubridate} calls in favour of date-related base functions? Maybe. That's up to the developers.
 
-Use whatever dependencies you want, it's up to you. {itdepends} might be a useful tool for you to work out if you need all the dependencies you have. Other tools are out there; [I read recently](https://ashbaldry.github.io/2021-11-25-depcheck-r-dependency-checker/) about [Ashley Baldry's {depcheck} package](https://github.com/ashbaldry/depcheck), for example
+Ultimately, {itdepends} might be a useful tool for you to work out if you need all the dependencies you have. Other tools are out there; [I read recently](https://ashbaldry.github.io/2021-11-25-depcheck-r-dependency-checker/) about [Ashley Baldry's {depcheck} package](https://github.com/ashbaldry/depcheck), for example
 
-It might be interesting to do this for all CRAN packages and their dependencies, but I don't have a personal CRAN mirror and I don't write particularly performant code.
+It might be interesting to redo this investigation for all CRAN packages and their dependencies, but I don't have a personal CRAN mirror and I don't write particularly performant code.
 
 Anyway, don't listen to me: I write joke packages that I don't put on CRAN, lol.
 
@@ -273,4 +275,5 @@ sessioninfo::session_info()
 ```
 </details>
 
+[^tim]: [Tim](https://twitter.com/_TimTaylor_) reminded me of this package/nerdsniped me.
 [^nzd]: You should [be aware of the international conspiracy](https://www.rostrum.blog/2021/07/15/dollar-dollar/) behind the use of this symbol in R.
