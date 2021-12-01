@@ -20,7 +20,7 @@ set.seed(6)
 ```
 
 <div class="figure">
-<img src="/post/2021-11-07-deepfry_files/spongebob-frypants.gif" alt="An animation showing a transition from a meme image to a deep-fried version, which has been compressed, has an orange tint and includes a cry-laugh emoji. The meme is of sarcastic Spongebob, with the same text on the top and bottom, but the lower text has alternating case. It says 'equals-sign saves keystrokes versus assignment-arrow'." width="100%"/>
+<img src="/post/2021-11-07-deepfry_files/spongebob-frypants.gif" alt="An animation showing a transition from a meme image to a deep-fried version, which has been compressed, has an orange tint, bulges from the centre and includes a cry-laugh emoji. The meme is of sarcastic Spongebob, with the same text on the top and bottom, but the lower text has alternating case. It says 'equals-sign saves keystrokes versus assignment-arrow'." width="100%"/>
 </div>
 
 # tl;dr
@@ -59,7 +59,7 @@ I've cooked up a single, low-quality function, `fry()`, that:
 1. Reads a meme template image (or any image) from a path
 1. Adds top/bottom text in Impact font
 1. Reads from a URL a specific (cursed) cry/laugh emoji that's popular in deep-frying and places it in a random location (corners or left/right sides)
-1. Adjusts the image contrast, saturation, etc,[^adjust] and tints it orange
+1. Adjusts the image contrast, saturation, etc,[^adjust], tints it orange and bulges it from the centre
 1. Writes the image to a temporary jpeg file---compressing it horribly---and then reads it back in
 1. Outputs a `magick-image` object that you can save with `magick::image_write()` and send to all your friend (sic)
 
@@ -104,8 +104,10 @@ fry <- function(
   cat("dunking meme... ")
   
   if (depth == "shallow") {
+    img <- img %>% image_implode(-0.5)  # bulge
     compress <- 8
   } else if (depth == "deep") {
+    img <- img %>% image_implode(-1)  # more bulge
     compress <- 1  # maximum compression
   } 
   
@@ -169,11 +171,11 @@ sponge_fried <-
 
 sponge_unfried <- image_read(sponge_path) |> 
   image_annotate(
-    text_top, "north", size = 80, font = "Impact",
+    top_txt, "north", size = 80, font = "Impact",
     color = "white", strokecolor = "black"
   ) |>
   image_annotate(
-    text_bottom, "south", size = 80, font = "Impact",
+    bot_txt, "south", size = 80, font = "Impact",
     color = "white", strokecolor = "black"
   ) |>
   image_scale("1000")
