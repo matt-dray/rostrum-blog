@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 13 day(s) ago: [{itdepends} on
+🆕 The latest post was published 14 day(s) ago: [{itdepends} on
 {lubridate}](https://www.rostrum.blog/2021/11/27/lubridate-fns/).
 
 📈 This 2D plot shows posts over time:
@@ -158,4 +158,4 @@ since 2018-04-14.
 
 -----
 
-*Updated 2021-12-10 02:46:11*
+*Updated 2021-12-11 02:44:36*
