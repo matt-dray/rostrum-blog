@@ -28,9 +28,9 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 🔢 There have been 110 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
-📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
+📅 That’s a post roughly every 12 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 21 day(s) ago: [{itdepends} on
+🆕 The latest post was published 24 day(s) ago: [{itdepends} on
 {lubridate}](https://www.rostrum.blog/2021/11/27/lubridate-fns/).
 
 📈 This 2D plot shows posts over time:
@@ -158,4 +158,4 @@ since 2018-04-14.
 
 -----
 
-*Updated 2021-12-18 02:50:27*
+*Updated 2021-12-21 02:47:09*
