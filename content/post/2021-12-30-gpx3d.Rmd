@@ -10,6 +10,7 @@ tags:
   - ggrgl
   - gpx3d
   - health
+  - interactive
   - r
 draft: no
 ---
@@ -32,7 +33,9 @@ But rather than try to emulate {strava}, I thought it might be 'fun' to incorpor
 
 # An alternate dimension
 
-Cut to the chase: I made a tiny package called {gpx3d}. You can download it from GitHub with help from the {remotes} package.
+Cut to the chase: I made a tiny package called {gpx3d}. For now it does what I want it to do.
+
+You can download it from GitHub with help from the {remotes} package.
 
 ```{r install, eval=FALSE}
 install.packages("remotes")  # if not yet installed
@@ -44,6 +47,11 @@ The package has two exported functions:
 * `extract_gpx3d()` reads a GPX file; parses the XML; extracts datetime, latitude and longitude and elevation; converts to sf-class; and calculates the distance covered
 * `plot_gpx3d()` takes the output from `extract_gpx3d()`, generates a '3D ggplot' using {ggrgl} and renders it as an interactive object to an external device
 
+There are also two demo files:
+
+* `segment.gpx`, a shorter, edited version of the route used in this blogpost, which you can access with `system.file("extdata", "segment.gpx", package = "gpx3d")` after installing the package
+* `gpx_segment`, an sf-class data.frame that's the result of using the `extract_gpx3d()` on the internal `segment.gpx` file
+
 Read on for an explanation and examples.
 
 ## Extract
@@ -52,27 +60,29 @@ There are already functions that can help read GPX files into R, like `gpx::read
 
 In short, the `extract_gpx3d()` function uses `read_xml()` to read the GPX file, then `as_list()` to convert it to a deeply nested list. A little wrangling is then required to create a data.frame: datetime and elevation can be hoisted out of the list okay, but the longitude and latitude are actually extracted from the attributes.
 
-After this, the data.frame is converted to the 'geography-aware' sf-class. I've done this for two reasons: (1) the output object can be taken away and will play nicely with various {sf} functions, letting you create various maps and perform further processing, and (2) it allowed me to calculate the distance between each recorded point, which could be summed for total distance.
+After this, the data.frame is converted to the 'geography-aware' sf-class.[^df] I've done this for two reasons: (1) the output object can be taken away and will play nicely with various {sf} functions, letting you create various maps and perform further processing, and (2) it allowed me to calculate the distance between each recorded point, which could be summed for total distance.
 
-To use `extract_gpx3d()`, simply pass a path to a GPX file. I've chosen a 10 km run I took on Christmas morning, which I have stored locally.
+To use `extract_gpx3d()`, simply pass a path to a GPX file. I've chosen a 10 km run I took on Christmas morning, which I downloaded from Apple Health and stored locally.[^demo]
 
 ```{r extract}
 file <- "~/Downloads/apple_health_export/workout-routes/route_2021-12-25_9.31am.gpx"
-route_sf <- gpx3d::extract_gpx3d(file)
-route_sf
+route <- gpx3d::extract_gpx3d(file)
+route[2000:2004, ]
 ```
 
-You can see the rows are basically a measurement per second of the coordinates and elevation, and that the sf-class metadata and geometry column are present.
+You can see the rows are basically a measurement per second (`time`) of the coordinates (`lon` and `lat`) and elevation (`ele`), and that the sf-class metadata and `geometry` column are present, along with the `distance` in metres from the previous to current point.
 
-You can take this dataset away and do stuff with it, like create a lat-long plot of the route (left), or the elevation over time (right).
+You can take this dataset away and do other stuff with it, like create a lat-long plot of the route (left), or the elevation over time (right).
 
 ```{r plot-2d, fig.height=3, fig.alt="Two plots: to the left a line showing the route of the run; to the right a line showing the elevation over time. The route is a single loop, roughly rectanglular but with several kinks. The elevation rises before dropping steeply to a plateau, then sharply rising again."}
 par(mfrow = c(1, 2), mar = rep(0, 4))
-with(route_sf, plot(lon, lat, type = "l", axes = FALSE))
-with(route_sf, plot(time, ele, type = "l", axes = FALSE))
+with(route, plot(lon, lat, type = "l", axes = FALSE))
+with(route, plot(time, ele, type = "l", axes = FALSE))
 ```
 
-Boo! Only two dimensions? You can instead use the plotting function built in to {gpx3d} for something a bit more exciting.
+Cute, especially the elevation plot in this case. 
+
+But boo! Only two dimensions? You can instead use the plotting function built in to {gpx3d} for something a bit more exciting.
 
 ## Plot
 
@@ -86,15 +96,15 @@ The function renders the plot as an interactive 3D object with {rgl} to an exter
 gpx3d::plot_gpx3d(route_sf)
 ```
 
-[Mouselick and drag the object below, or zoom with your scrollwheel]
+[Mouseclick and drag the object below, or zoom with your scrollwheel][^lick]
 
 ```{r plot-hidden, echo=FALSE}
-min_date   <- format(min(route_sf$time), "%Y-%m-%d")
-min_time   <- format(min(route_sf$time), "%H:%M:%S")
-max_time   <- format(max(route_sf$time), "%H:%M:%S")
-total_dist <- round(sum(route_sf$distance, na.rm = TRUE) / 1000, 1)
-min_elev   <- min(route_sf$ele)
-max_elev   <- max(route_sf$ele)
+min_date   <- format(min(route$time), "%Y-%m-%d")
+min_time   <- format(min(route$time), "%H:%M:%S")
+max_time   <- format(max(route$time), "%H:%M:%S")
+total_dist <- round(sum(route$distance, na.rm = TRUE) / 1000, 1)
+min_elev   <- min(route$ele)
+max_elev   <- max(route$ele)
 elev_diff  <- round(max_elev - min_elev)
 
 route_plot <-
@@ -109,7 +119,7 @@ route_plot <-
   ggplot2::xlab("Longitude") +
   ggplot2::ylab("Latitude") +
   ggrgl::geom_path_3d(
-    ggplot2::aes(route_sf$lon, route_sf$lat, z = route_sf$ele),
+    ggplot2::aes(route$lon, route$lat, z = route$ele),
     extrude = TRUE,
     extrude_edge_colour = 'grey20',
     extrude_face_fill = 'grey80',
@@ -130,24 +140,14 @@ You can see why I chose this particular route as an example, because it really s
 If there's too much 'junk' in the plot, you can also set the argument `route_only` to `TRUE` to get rid of all the chart elements and leave behind the path only.
 
 ```{r plot2, eval=FALSE}
-gpx3d::plot_gpx3d(route_sf, route_only = TRUE)
+gpx3d::plot_gpx3d(route, route_only = TRUE)
 ```
 
-[Mouseclick and drag the object below, or zoom with your scrollwheel]
+This time I've inserted a gif of what the output would look like:
 
-```{r plot2-hidden, echo=FALSE}
-route_plot <- route_plot +
-  ggplot2::theme_void() +
-  ggplot2::theme(text = ggplot2::element_blank())
-
-devoutrgl::rgldev(fov = 30, view_angle = -30)
-route_plot
-invisible(grDevices::dev.off())
-```
-
-```{r rglwidget2, echo=FALSE}
-if (!interactive()) rgl::rglwidget()
-```
+<div class="figure">
+<img src="/post/2021-12-30-gpx3d_files/gpx3d-demo.gif" alt="Gif showing an RGL device with a 3D interactive object representing a workout route. The z dimension is elevation and the route rises from low to high elevation. The object is spun and zoomed into to highglight the elevation change." width="100%"/>
+</div>
 
 Wish I'd got a 3D printer for Christmas now.
 
@@ -166,3 +166,6 @@ sessioninfo::session_info()
 
 [^activity]: [I wrote earlier in the year about wrangling my Nike Run Club data via Apple Health](https://www.rostrum.blog/2021/03/23/xml-health/). It seems as though NRC doesn't pass geographic information to Health, but now I also record my runs via the Workout app on the watch, which does regurgitate the geo-related data.
 [^rayshader]: I also realised later that [Tyler Morgan-Wall already did something like this with {rayshader}](https://twitter.com/tylermorganwall/status/1024996007094968320?s=20). I should have guessed.
+[^df]: Or you can return a simpler data.frame without the sf-class by passing `sf_out = FALSE` to `extract_gpx3d()`.
+[^demo]: You could try using the demo GPX file that's included in the package, using `file <- system.file("extdata", "segment.gpx", package = "gpx3d")`
+[^lick]: I originally wrote 'mouselick' instead of 'mouseclick'.
