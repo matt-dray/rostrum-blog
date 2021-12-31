@@ -21,19 +21,19 @@ draft: no
 
 # tl;dr
 
-You can extract coordinate and elevation data from a GPX file and then plot it as an interactive 3D object. I put some functions in [the tiny R package {gpx3d}](https://github.com/matt-dray/gpx3d) to help do this.
+You can use R to extract coordinate and elevation data from a GPX file and then plot it as an interactive 3D object. I put some functions in [the tiny R package {gpx3d}](https://github.com/matt-dray/gpx3d) to help do this.
 
 # Elevate to accumulate
 
 I've seen recently on Twitter some people using [Marcus Volz's {strava} R package](https://github.com/marcusvolz/strava/) to create pleasing visualisations of their running routes as small-multiples.
 
-I don't use Strava, but I downloaded my Apple Health data this week and it contained a folder of GPX files; one for each 'workout' activity recorded via my Apple Watch.[^activity] GPX files are basically just a type of XML used for storing GPS-related activity.
+I don't use Strava, but I downloaded my Apple Health data this week and it contained a folder of GPX files; one for each 'workout' activity recorded via my Apple Watch.[^activity] [GPX files are basically just a type of XML](https://wiki.openstreetmap.org/wiki/GPX) used for storing GPS-related activity.
 
 But rather than try to emulate {strava}, I thought it might be 'fun' to incorporate the elevation data from a GPX as a third dimension. I've also had [mikefc's {ggrgl} package](https://github.com/coolbutuseless/ggrgl)---'a 3D extension to ggplot'---on my to-do list for a while now.
 
 # An alternate dimension
 
-Cut to the chase: I made a tiny package called {gpx3d}. For now it does what I want it to do.
+Cut to the chase: I made a tiny package called {gpx3d}. For now it does what I want it to do and it works on my machine.
 
 You can download it from GitHub with help from the {remotes} package.
 
@@ -42,15 +42,18 @@ install.packages("remotes")  # if not yet installed
 remotes::install_github("matt-dray/gpx3d")
 ```
 
-The package has two exported functions:
+There are a number of dependencies, including many that are not available on CRAN; see [the README for {ggrgl}](https://coolbutuseless.github.io/package/ggrgl/index.html#installation)
+for details. You must also [install XQuartz](https://www.xquartz.org/), if you haven’t already.[^cmd]
 
-* `extract_gpx3d()` reads a GPX file; parses the XML; extracts datetime, latitude and longitude and elevation; converts to sf-class; and calculates the distance covered
-* `plot_gpx3d()` takes the output from `extract_gpx3d()`, generates a '3D ggplot' using {ggrgl} and renders it as an interactive object to an external device
+The package does two things and has two exported functions:
 
-There are also two demo files:
+* `extract_gpx3d()` gets the data out of a GPX file (i.e. it reads a GPX file; parses the XML; extracts datetime, latitude, longitude and elevation; converts to sf-class; and calculates the distance covered)
+* `plot_gpx3d()` plots the data as an interactive 3D object (i.e. it takes the output from `extract_gpx3d()`, generates a '3D ggplot' using {ggrgl} and renders it as an interactive object to an external device)
 
-* `segment.gpx`, a shorter, edited version of the route used in this blogpost, which you can access with `system.file("extdata", "segment.gpx", package = "gpx3d")` after installing the package
-* `gpx_segment`, an sf-class data.frame that's the result of using the `extract_gpx3d()` on the internal `segment.gpx` file
+There are also two demo datasets:
+
+* `segment.gpx`, a GPX file containing a shorter, edited version of the route used in this blogpost, which you can access with `system.file("extdata", "segment.gpx", package = "gpx3d")` after installing the package
+* `gpx_segment`, an sf-class data.frame that's the result of using the `extract_gpx3d()` on the built-in `segment.gpx` file
 
 Read on for an explanation and examples.
 
@@ -72,7 +75,7 @@ route[2000:2004, ]
 
 You can see the rows are basically a measurement per second (`time`) of the coordinates (`lon` and `lat`) and elevation (`ele`), and that the sf-class metadata and `geometry` column are present, along with the `distance` in metres from the previous to current point.
 
-You can take this dataset away and do other stuff with it, like create a lat-long plot of the route (left), or the elevation over time (right).
+You can take this dataset away and do other stuff with it, like create a lat-long plot of the route (below left), or the elevation over time (below right).
 
 ```{r plot-2d, fig.height=3, fig.alt="Two plots: to the left a line showing the route of the run; to the right a line showing the elevation over time. The route is a single loop, roughly rectanglular but with several kinks. The elevation rises before dropping steeply to a plateau, then sharply rising again."}
 par(mfrow = c(1, 2), mar = rep(0, 4))
@@ -137,9 +140,9 @@ invisible(grDevices::dev.off())
 if (!interactive()) rgl::rglwidget()
 ```
 
-You can see why I chose this particular route as an example, because it really shows off the power of the elevation data: I ran downhill to the seafront, where it was almost entirely flat, before running back up a relatively sharp ascent.
+Again, you can see why I chose this particular route for this demo; it really shows off the power of the elevation data. I ran anti-clockwise downhill to the seafront, where it was almost entirely flat, before running back up a relatively sharp ascent.
 
-If there's too much 'junk' in the plot, you can also set the argument `route_only` to `TRUE` to get rid of all the chart elements and leave behind the path only.
+If you think there's too much 'junk' in the plot, you can also set the argument `route_only` to `TRUE` to get rid of all the chart elements and leave behind the path only.
 
 ```{r plot2, eval=FALSE}
 gpx3d::plot_gpx3d(route, route_only = TRUE)
@@ -172,3 +175,4 @@ sessioninfo::session_info()
 [^demo]: You could try using the demo GPX file that's included in the package, using `file <- system.file("extdata", "segment.gpx", package = "gpx3d")`
 [^lick]: I originally wrote 'mouselick' instead of 'mouseclick'.
 [^location]: In a place I do not live, so minimal opsec-leaking here.
+[^cmd]: At time of writing, I can't get the R CMD check to pass for the {gpx3d} GitHub repo because {ggrgl} appears to require XQuartz to be installed; this is a problem when running continuous integration on a remote server. You'll know if I've managed to sort this out when the README badge changes from 'failing' to 'passing'.
