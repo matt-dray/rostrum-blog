@@ -28,9 +28,9 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 🔢 There have been 111 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
-📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
+📅 That’s a post roughly every 12 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 3 day(s) ago: [Your workout route (in
+🆕 The latest post was published 4 day(s) ago: [Your workout route (in
 three dimensions\!)](https://www.rostrum.blog/2021/12/30/gpx3d/).
 
 📈 This 2D plot shows posts over time:
@@ -159,4 +159,4 @@ three dimensions\!)](https://www.rostrum.blog/2021/12/30/gpx3d/).
 
 -----
 
-*Updated 2022-01-02 02:50:29*
+*Updated 2022-01-03 02:46:09*
