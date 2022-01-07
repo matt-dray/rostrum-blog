@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 7 day(s) ago: [Your workout route (in
+🆕 The latest post was published 8 day(s) ago: [Your workout route (in
 three dimensions\!)](https://www.rostrum.blog/2021/12/30/gpx3d/).
 
 📈 This 2D plot shows posts over time:
@@ -159,4 +159,4 @@ three dimensions\!)](https://www.rostrum.blog/2021/12/30/gpx3d/).
 
 -----
 
-*Updated 2022-01-06 02:52:28*
+*Updated 2022-01-07 02:50:33*
