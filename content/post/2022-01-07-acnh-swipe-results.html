@@ -1,0 +1,350 @@
+---
+title: 'The most popular Animal Crossing villagers'
+author: Matt Dray
+date: '2022-01-07'
+slug: acnh-swipe-results
+categories:
+  - app
+  - code
+tags:
+  - animal-crossing
+  - googlesheets4
+  - r
+  - shiny
+  - shinysense
+draft: no
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div class="figure">
+<p><img src="/post/2022-01-07-acnh-swipe-results_files/acnh-tinder-shiny.gif" alt="Gif showing a blue card on a green background. The card has a picture of a character from Nintendo's Animal Crossing game with their name, personality type, species and hobby. A mouse cursor swipes the card to the right, meaning 'like', and another card appears with a different character. The card is swiped to the left, meaning 'dislike'." width="100%"/></p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I wrote <a href="https://mattdray.shinyapps.io/acnh-swipe/">an R Shiny app</a> to run a popularity contest for Animal Crossing villagers. Surprise: cute ones are favourites.</p>
+</div>
+<div id="swiping-shinyswipe-code" class="section level1">
+<h1>Swiping {shinyswipe} code</h1>
+<p>A while back I wrote a Shiny app (<a href="https://mattdray.shinyapps.io/acnh-swipe/">site</a>, <a href="https://github.com/matt-dray/acnh-swipe">source</a>, <a href="https://www.rostrum.blog/2020/06/06/acnh-swipe/">blogpost</a>) for <a href="https://github.com/rfordatascience/tidytuesday/tree/2e9bd5a67e09b14d01f616b00f7f7e0931515d24/data/2020/2020-05-05">TidyTuesday</a> to replicate a <a href="https://en.wikipedia.org/wiki/Tinder_(app)">Tinder</a>-like experience using villagers from <a href="https://en.wikipedia.org/wiki/Animal_Crossing:_New_Horizons">Nintendo’s <em>Animal Crossing New Horizons</em> game</a>. It uses the swipe mechanic from <a href="http://nickstrayer.me/shinysense/">Nick Strayer’s {shinysense} package</a> to popularity: left for a ‘dislike’, right for a ‘like’.</p>
+<p>After exceeding 3000 total swipes, it’s time to take a look at the results.</p>
+</div>
+<div id="oh-sheet" class="section level1">
+<h1>Oh sheet</h1>
+<p>Data from each swipe in the app is automatically appended to <a href="https://docs.google.com/spreadsheets/d/1kMbmav6XvYqnTO202deyZQh37JeWtTK4ThIXdxGmEbs/">a public Google Sheets sheet</a> that can be read with {googlesheets4}. Public sheets don’t require authentication to download, so run <code>gs4_deauth()</code> before <code>read_sheet()</code> to prevent it.</p>
+<pre class="r"><code>library(googlesheets4)
+gs4_deauth()
+
+raw &lt;- read_sheet(
+  ss = &quot;1kMbmav6XvYqnTO202deyZQh37JeWtTK4ThIXdxGmEbs&quot;,
+  col_types = &quot;Tcc&quot;  # datetime, char, char
+)</code></pre>
+<pre><code>## ✓ Reading from &quot;acnh-swipe_results&quot;.</code></pre>
+<pre><code>## ✓ Range &#39;Sheet1&#39;.</code></pre>
+<p>First thing is to isolate the left and right swipes only. The {shinysense} package also allows for up and down swipes by default and I didn’t remove this capability from my app.</p>
+<pre class="r"><code>dat &lt;- raw[raw$swipe %in% c(&quot;left&quot;, &quot;right&quot;), ]
+dat[sample(rownames(dat), 5), ]  # random sample</code></pre>
+<pre><code>## # A tibble: 5 × 3
+##   date                name   swipe
+##   &lt;dttm&gt;              &lt;chr&gt;  &lt;chr&gt;
+## 1 2021-03-03 21:47:24 Judy   right
+## 2 2021-03-03 21:56:49 Frank  left 
+## 3 2021-06-20 23:43:39 Kody   right
+## 4 2021-11-04 10:17:32 Sydney left 
+## 5 2021-12-21 19:38:46 Alice  right</code></pre>
+<p>The data are one row per swipe, with columns for <code>date</code> (datetime of when the swipe happened), <code>name</code> (the villager’s name) and <code>swipe</code> (the swipe direction).</p>
+<p>But what we’re really after is a grouped table with a row per villager, plus new columns for the <code>total</code> number of swipes, the <code>diff</code>erence between right and left swipes and the percentage of swipes that were to the right (<code>pc_right</code>). These will let us better rank the characters.</p>
+<pre class="r"><code>df &lt;- with(dat, table(name, swipe)) |&gt;  # like dplyr::count()
+  as.data.frame(responseName = &quot;n&quot;) |&gt;
+  reshape(  # like tidyr::pivot_*()
+    v.names   = &quot;n&quot;,      # values_from
+    idvar     = &quot;name&quot;,   # id_cols
+    timevar   = &quot;swipe&quot;,  # names_from
+    direction = &quot;wide&quot;,   # i.e. pivot_wider()
+    sep       = &quot;_&quot;       # names_sep
+  ) |&gt; 
+  transform(  # like dplyr::mutate()
+    total    = n_left + n_right,
+    diff     = n_right - n_left,
+    pc_right = 100 * round(n_right / (n_right + n_left), 2)
+  )
+
+head(df)</code></pre>
+<pre><code>##      name n_left n_right total diff pc_right
+## 1 Admiral      5       4     9   -1       44
+## 2 Agent S      6       1     7   -5       14
+## 3   Agnes      4       5     9    1       56
+## 4      Al      6       3     9   -3       33
+## 5 Alfonso      5       5    10    0       50
+## 6   Alice      2       6     8    4       75</code></pre>
+<p>I think most readers of this blog are probably {tidyverse} users, so I’ll explain some of the base R approach I took here:</p>
+<ul>
+<li>I’ve used the base pipe (<code>|&gt;</code>) introduced in R v4.1 to chain the functions, which is analogous to {magrittr}’s pipe (<code>%&gt;%</code>) in this example</li>
+<li><code>with()</code> allows the bare column names in <code>table()</code> to be evaluated as columns of <code>dat</code>, which means you only write the name of the data object once</li>
+<li>a <code>table()</code> coerced with <code>as.data.frame()</code> is equivalent to <code>dplyr::count()</code>, basically</li>
+<li><code>reshape()</code> can be used like <code>tidyr::pivot_wider()</code> (I’ve added comments in the code block above to show how the arguments are used)</li>
+<li><a href="https://twitter.com/kearneymw/status/1476538812406788101">turns out</a> that <code>transform()</code> can be used like <code>dplyr::mutate()</code> to create new columns, thought the help files say it should only be used for interactive and that ‘you deserve whatever you get!’</li>
+</ul>
+<p>We can also bring in <a href="https://github.com/rfordatascience/tidytuesday/tree/2e9bd5a67e09b14d01f616b00f7f7e0931515d24/data/2020/2020-05-05">some additional villager data collected for TidyTuesday</a> and join it to the swipe data. This will come in useful later.</p>
+<pre class="r"><code>tt &lt;- read.csv(
+  paste0(
+    &quot;https://raw.githubusercontent.com/rfordatascience/tidytuesday/&quot;,
+    &quot;2e9bd5a67e09b14d01f616b00f7f7e0931515d24/data/&quot;,
+    &quot;2020/2020-05-05/villagers.csv&quot;
+  )
+)
+
+df &lt;- merge(df, tt, by = &quot;name&quot;)</code></pre>
+</div>
+<div id="new-horizons-scanning" class="section level1">
+<h1>New Horizons scanning</h1>
+<p>There are 391 villagers represented in these data, with a combined total of 3031 legitimate swipes.</p>
+<p>The total swipes per villager ranged from 2 to 17, with a mean of 7.8±2.7, so some characters didn’t really get enough swipes for proper assessment. You’d better go to the app and add some more swipes, eh?</p>
+<pre class="r"><code>par(bg = &quot;lightgreen&quot;)
+hist(
+  df$total,
+  main = &quot;Distribution of total swipes per villager&quot;,
+  xlab = &quot;Total swipes&quot;,
+  col = &quot;lightblue&quot;,
+  las = 1
+)</code></pre>
+<p><img src="/post/2022-01-07-acnh-swipe-results_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>If we focus on right swipes (i.e. ‘like’) adjusted for the total swipes per character, we can see that the distribution isn’t quite normal. The frequency of swipes below 50% is 216 and above 50% is 138. This implies that the majority of characters were disliked in a binary sense.</p>
+<pre class="r"><code>par(bg = &quot;lightgreen&quot;)
+hist(
+  df$pc_right,
+  main = &quot;Distribution of right swipes per villager&quot;,
+  xlab = &quot;Right swipes (%)&quot;,
+  col = &quot;lightblue&quot;,
+  las = 1
+)</code></pre>
+<p><img src="/post/2022-01-07-acnh-swipe-results_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>The bins at 0 and 100% tell you that there were some characters that were met with universal disapproval and approval, while the bin at 50% tells us that same characters split people’s opinions. Which were they?</p>
+</div>
+<div id="drumroll-please" class="section level1">
+<h1>Drumroll, please</h1>
+<p>So, onto the villager rankings.</p>
+<p>I’ve written a little function to output an HTML table where each character’s name links to their profile on <a href="https://animalcrossing.fandom.com/wiki/Animal_Crossing_Wiki">the Animal Crossing Wiki</a> and exposes their photo from <a href="https://villagerdb.com/">VillagerDB</a>.</p>
+<pre class="r"><code>entable &lt;- function(df) {
+  df$url &lt;- paste0(
+    &quot;&lt;img src=&#39;&quot;, df$url, &quot;&#39; &quot;,
+    &quot;width=50 &quot;,
+    &quot;alt=&#39;Animal Crossing villager &quot;, df$name,&quot;&#39;&gt;&quot;
+  )
+  df$name &lt;- paste0(
+    &quot;&lt;a href=&#39;https://animalcrossing.fandom.com/wiki/&quot;,
+    df$name, &quot;&#39;&gt;&quot;, df$name, &quot;&lt;/a&gt;&quot;
+  )
+  df &lt;- df[, c(&quot;name&quot;, &quot;url&quot;, &quot;pc_right&quot;, &quot;total&quot;)]
+  names(df) &lt;- c(&quot;Name&quot;, &quot;Picture&quot;, &quot;Right swipes (%)&quot;, &quot;Total swipes&quot;)
+  rownames(df) &lt;- NULL
+  knitr::kable(df)
+}</code></pre>
+<div id="least-popular" class="section level2">
+<h2>Least popular</h2>
+<p>To build tension, we’ll start with the least-liked villagers.</p>
+<pre class="r"><code>bot &lt;- df[order(df$pc_right, -df$n_left), ] |&gt; head()
+entable(bot)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Name</th>
+<th align="left">Picture</th>
+<th align="right">Right swipes (%)</th>
+<th align="right">Total swipes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Pinky'>Pinky</a></td>
+<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/pinky.9d28acc.png' width=50 alt='Animal Crossing villager Pinky'></td>
+<td align="right">0</td>
+<td align="right">10</td>
+</tr>
+<tr class="even">
+<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Cashmere'>Cashmere</a></td>
+<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/cashmere.3f42544.png' width=50 alt='Animal Crossing villager Cashmere'></td>
+<td align="right">0</td>
+<td align="right">9</td>
+</tr>
+<tr class="odd">
+<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Greta'>Greta</a></td>
+<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/greta.ab98e06.png' width=50 alt='Animal Crossing villager Greta'></td>
+<td align="right">0</td>
+<td align="right">9</td>
+</tr>
+<tr class="even">
+<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Harry'>Harry</a></td>
+<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/harry.886f4e0.png' width=50 alt='Animal Crossing villager Harry'></td>
+<td align="right">0</td>
+<td align="right">9</td>
+</tr>
+<tr class="odd">
+<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Truffles'>Truffles</a></td>
+<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/truffles.a71716a.png' width=50 alt='Animal Crossing villager Truffles'></td>
+<td align="right">0</td>
+<td align="right">7</td>
+</tr>
+<tr class="even">
+<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Benedict'>Benedict</a></td>
+<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/benedict.c5bf6e4.png' width=50 alt='Animal Crossing villager Benedict'></td>
+<td align="right">0</td>
+<td align="right">6</td>
+</tr>
+</tbody>
+</table>
+<p>Sorry Pinky. You are simply… too pink? Seems harsh.</p>
+</div>
+<div id="most-polarising" class="section level2">
+<h2>Most polarising</h2>
+<p>To build even more tension, let’s look at the characters who had a 50:50 ratio of likes to dislikes.</p>
+<pre class="r"><code>meh &lt;- subset(df[order(-df$total), ], diff == 0) |&gt; head()
+entable(meh)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Name</th>
+<th align="left">Picture</th>
+<th align="right">Right swipes (%)</th>
+<th align="right">Total swipes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Chevre'>Chevre</a></td>
+<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/chevre.1b3996a.png' width=50 alt='Animal Crossing villager Chevre'></td>
+<td align="right">50</td>
+<td align="right">14</td>
+</tr>
+<tr class="even">
+<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Rex'>Rex</a></td>
+<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/rex.33d6f95.png' width=50 alt='Animal Crossing villager Rex'></td>
+<td align="right">50</td>
+<td align="right">12</td>
+</tr>
+<tr class="odd">
+<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Vivian'>Vivian</a></td>
+<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/vivian.e4140f8.png' width=50 alt='Animal Crossing villager Vivian'></td>
+<td align="right">50</td>
+<td align="right">12</td>
+</tr>
+<tr class="even">
+<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Alfonso'>Alfonso</a></td>
+<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/alfonso.11327a1.png' width=50 alt='Animal Crossing villager Alfonso'></td>
+<td align="right">50</td>
+<td align="right">10</td>
+</tr>
+<tr class="odd">
+<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Cole'>Cole</a></td>
+<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/cole.0b902b2.png' width=50 alt='Animal Crossing villager Cole'></td>
+<td align="right">50</td>
+<td align="right">10</td>
+</tr>
+<tr class="even">
+<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Opal'>Opal</a></td>
+<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/opal.789783f.png' width=50 alt='Animal Crossing villager Opal'></td>
+<td align="right">50</td>
+<td align="right">10</td>
+</tr>
+</tbody>
+</table>
+<p>I’m not sure why these villagers are so controversial Perhaps they’re too ‘plain’ for some people? What’s for sure is that Cole… well, he’s seen some things.</p>
+</div>
+<div id="most-popular" class="section level2">
+<h2>Most popular</h2>
+<p>And finally, what you’ve all been waiting for.</p>
+<pre class="r"><code>top &lt;- df[order(-df$pc_right, -df$n_right), ] |&gt; head()
+entable(top)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Name</th>
+<th align="left">Picture</th>
+<th align="right">Right swipes (%)</th>
+<th align="right">Total swipes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Bea'>Bea</a></td>
+<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/bea.8f6a99c.png' width=50 alt='Animal Crossing villager Bea'></td>
+<td align="right">100</td>
+<td align="right">9</td>
+</tr>
+<tr class="even">
+<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Bill'>Bill</a></td>
+<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/bill.8510deb.png' width=50 alt='Animal Crossing villager Bill'></td>
+<td align="right">100</td>
+<td align="right">9</td>
+</tr>
+<tr class="odd">
+<td align="left"><a href='https://animalcrossing.fandom.com/wiki/June'>June</a></td>
+<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/june.6533f6c.png' width=50 alt='Animal Crossing villager June'></td>
+<td align="right">100</td>
+<td align="right">8</td>
+</tr>
+<tr class="even">
+<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Ellie'>Ellie</a></td>
+<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/ellie.5a144a6.png' width=50 alt='Animal Crossing villager Ellie'></td>
+<td align="right">100</td>
+<td align="right">7</td>
+</tr>
+<tr class="odd">
+<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Aurora'>Aurora</a></td>
+<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/aurora.e5f2dd3.png' width=50 alt='Animal Crossing villager Aurora'></td>
+<td align="right">100</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Eugene'>Eugene</a></td>
+<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/eugene.bf0f034.png' width=50 alt='Animal Crossing villager Eugene'></td>
+<td align="right">100</td>
+<td align="right">4</td>
+</tr>
+</tbody>
+</table>
+<p>So! Bea and Bill were unanimously approved with nine right swipes each. It’s not hard to see why these might be favourites; they’re cute. Although Bill is staring directly into my soul.</p>
+</div>
+</div>
+<div id="speciesism" class="section level1">
+<h1>Speciesism!</h1>
+<p>I know what you’re thinking: the results are on a villager-by-villager basis, but which species are the most popular? We can aggregate swipes and take a look.</p>
+<pre class="r"><code>sp_l &lt;- aggregate(n_left ~ species, sum, data = df)
+sp_r &lt;- aggregate(n_right ~ species, sum, data = df)
+sp_n &lt;- with(df, table(species)) |&gt; 
+  as.data.frame(responseName = &quot;n_villagers&quot;)
+
+sp &lt;- sp_n |&gt; 
+  merge(sp_l, by = &quot;species&quot;) |&gt; 
+  merge(sp_r, by = &quot;species&quot;) |&gt; 
+  transform(
+    total = n_right + n_left,
+    pc_right = 100 * round(n_right / (n_right + n_left), 2)
+  )</code></pre>
+<p>First, the species ranked by lowest proportion of right swipes.</p>
+<pre class="r"><code>sp_bot &lt;- sp[order(sp$pc_right, -sp$n_left), ]
+rownames(sp_bot) &lt;- NULL
+head(sp_bot)</code></pre>
+<pre><code>##   species n_villagers n_left n_right total pc_right
+## 1   mouse          15     86      19   105       18
+## 2   eagle           9     48      17    65       26
+## 3  monkey           8     46      16    62       26
+## 4   hippo           7     42      15    57       26
+## 5    bear          15     79      29   108       27
+## 6    bull           6     36      14    50       28</code></pre>
+<p>I can see how eagles, monkeys and hippos might not be that ‘cute’, per se, but what about <a href="https://animalcrossing.fandom.com/wiki/Mouse">the mice</a>? Although ‘cute’ is probably not the best term for <a href="https://animalcrossing.fandom.com/wiki/Limberg">the cranky mouse Limberg</a> (sorry Limberg).</p>
+<p>What about the most liked species?</p>
+<pre class="r"><code>sp_top &lt;- sp[order(-sp$pc_right, sp$n_right), ]
+rownames(sp_top) &lt;- NULL
+head(sp_top)</code></pre>
+<pre><code>##   species n_villagers n_left n_right total pc_right
+## 1 octopus           3      6      18    24       75
+## 2   koala           9     16      41    57       72
+## 3     dog          16     39      78   117       67
+## 4    deer          10     38      65   103       63
+## 5     cub          16     42      71   113       63
+## 6    wolf          11     33      47    80       59</code></pre>
+<p><a href="https://animalcrossing.fandom.com/wiki/Octopus_(villager)">Octopuses are on top</a>, although there’s relatively few octopus villagers. Personally, I like <a href="https://animalcrossing.fandom.com/wiki/Zucker">Zucker</a>, an octopus who looks like takoyaki and therefore delicious.</p>
+<p>This wasn’t meant to be about villager tastiness, was it? We may need a new app to rank by apparent edibility…</p>
+</div>

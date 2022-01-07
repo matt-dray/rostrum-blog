@@ -1,0 +1,225 @@
+---
+title: 'The most popular Animal Crossing villagers'
+author: Matt Dray
+date: '2022-01-07'
+slug: acnh-swipe-results
+categories:
+  - app
+  - code
+tags:
+  - animal-crossing
+  - googlesheets4
+  - r
+  - shiny
+  - shinysense
+draft: no
+---
+
+<div class="figure">
+<img src="/post/2022-01-07-acnh-swipe-results_files/acnh-tinder-shiny.gif" alt="Gif showing a blue card on a green background. The card has a picture of a character from Nintendo's Animal Crossing game with their name, personality type, species and hobby. A mouse cursor swipes the card to the right, meaning 'like', and another card appears with a different character. The card is swiped to the left, meaning 'dislike'." width="100%"/>
+</div>
+
+# tl;dr
+
+I wrote [an R Shiny app](https://mattdray.shinyapps.io/acnh-swipe/) to run a popularity contest for Animal Crossing villagers. Surprise: cute ones are favourites.
+
+# Swiping {shinyswipe} code
+
+A while back I wrote a Shiny app ([site](https://mattdray.shinyapps.io/acnh-swipe/), [source](https://github.com/matt-dray/acnh-swipe), [blogpost](https://www.rostrum.blog/2020/06/06/acnh-swipe/)) for [TidyTuesday](https://github.com/rfordatascience/tidytuesday/tree/2e9bd5a67e09b14d01f616b00f7f7e0931515d24/data/2020/2020-05-05) to replicate a [Tinder](https://en.wikipedia.org/wiki/Tinder_(app))-like experience using villagers from [Nintendo's _Animal Crossing New Horizons_ game](https://en.wikipedia.org/wiki/Animal_Crossing:_New_Horizons). It uses the swipe mechanic from [Nick Strayer's {shinysense} package](http://nickstrayer.me/shinysense/) to popularity: left for a 'dislike', right for a 'like'.
+
+After exceeding 3000 total swipes, it's time to take a look at the results.
+
+# Oh sheet
+
+Data from each swipe in the app is automatically appended to [a public Google Sheets sheet](https://docs.google.com/spreadsheets/d/1kMbmav6XvYqnTO202deyZQh37JeWtTK4ThIXdxGmEbs/) that can be read with {googlesheets4}. Public sheets don't require authentication to download, so run `gs4_deauth()` before `read_sheet()` to prevent it.
+
+```{r}
+library(googlesheets4)
+gs4_deauth()
+
+raw <- read_sheet(
+  ss = "1kMbmav6XvYqnTO202deyZQh37JeWtTK4ThIXdxGmEbs",
+  col_types = "Tcc"  # datetime, char, char
+)
+```
+
+First thing is to isolate the left and right swipes only. The {shinysense} package also allows for up and down swipes by default and I didn't remove this capability from my app.
+
+```{r}
+dat <- raw[raw$swipe %in% c("left", "right"), ]
+dat[sample(rownames(dat), 5), ]  # random sample
+```
+
+The data are one row per swipe, with columns for `date` (datetime of when the swipe happened), `name` (the villager's name) and `swipe` (the swipe direction). 
+
+But what we're really after is a grouped table with a row per villager, plus new columns for the `total` number of swipes, the `diff`erence between right and left swipes and the percentage of swipes that were to the right (`pc_right`). These will let us better rank the characters.
+
+```{r}
+df <- with(dat, table(name, swipe)) |>  # like dplyr::count()
+  as.data.frame(responseName = "n") |>
+  reshape(  # like tidyr::pivot_*()
+    v.names   = "n",      # values_from
+    idvar     = "name",   # id_cols
+    timevar   = "swipe",  # names_from
+    direction = "wide",   # i.e. pivot_wider()
+    sep       = "_"       # names_sep
+  ) |> 
+  transform(  # like dplyr::mutate()
+    total    = n_left + n_right,
+    diff     = n_right - n_left,
+    pc_right = 100 * round(n_right / (n_right + n_left), 2)
+  )
+
+head(df)
+```
+
+I think most readers of this blog are probably {tidyverse} users, so I'll explain some of the base R approach I took here:
+
+* I've used the base pipe (`|>`) introduced in R v4.1 to chain the functions, which is analogous to {magrittr}'s pipe (`%>%`) in this example
+* `with()` allows the bare column names in `table()` to be evaluated as columns of `dat`, which means you only write the name of the data object once
+* a `table()` coerced with `as.data.frame()` is equivalent to `dplyr::count()`, basically
+* `reshape()` can be used like `tidyr::pivot_wider()` (I've added comments in the code block above to show how the arguments are used)
+* [turns out](https://twitter.com/kearneymw/status/1476538812406788101) that `transform()` can be used like `dplyr::mutate()` to create new columns, thought the help files say it should only be used for interactive and that 'you deserve whatever you get!'
+
+We can also bring in [some additional villager data collected for TidyTuesday](https://github.com/rfordatascience/tidytuesday/tree/2e9bd5a67e09b14d01f616b00f7f7e0931515d24/data/2020/2020-05-05) and join it to the swipe data. This will come in useful later.
+
+```{r}
+tt <- read.csv(
+  paste0(
+    "https://raw.githubusercontent.com/rfordatascience/tidytuesday/",
+    "2e9bd5a67e09b14d01f616b00f7f7e0931515d24/data/",
+    "2020/2020-05-05/villagers.csv"
+  )
+)
+
+df <- merge(df, tt, by = "name")
+```
+
+# New Horizons scanning
+
+There are `r length(df$name)` villagers represented in these data, with a combined total of `r nrow(dat)` legitimate swipes.
+
+The total swipes per villager ranged from `r min(df$total)` to `r max(df$total)`, with a mean of `r round(mean(df$total), 1)`±`r round(sd(df$total), 1)`, so some characters didn't really get enough swipes for proper assessment. You'd better go to the app and add some more swipes, eh?
+
+```{r}
+par(bg = "lightgreen")
+hist(
+  df$total,
+  main = "Distribution of total swipes per villager",
+  xlab = "Total swipes",
+  col = "lightblue",
+  las = 1
+)
+```
+
+If we focus on right swipes (i.e. 'like') adjusted for the total swipes per character, we can see that the distribution isn't quite normal. The frequency of swipes below 50% is `r nrow(df[df$pc_right < 50, ])` and above 50% is `r nrow(df[df$pc_right > 50, ])`. This implies that the majority of characters were disliked in a binary sense.
+
+```{r}
+par(bg = "lightgreen")
+hist(
+  df$pc_right,
+  main = "Distribution of right swipes per villager",
+  xlab = "Right swipes (%)",
+  col = "lightblue",
+  las = 1
+)
+```
+
+The bins at 0 and 100% tell you that there were some characters that were met with universal disapproval and approval, while the bin at 50% tells us that same characters split people's opinions. Which were they?
+
+# Drumroll, please
+
+So, onto the villager rankings.
+
+I've written a little function to output an HTML table where each character's name links to their profile on [the Animal Crossing Wiki](https://animalcrossing.fandom.com/wiki/Animal_Crossing_Wiki) and exposes their photo from [VillagerDB](https://villagerdb.com/).
+
+```{r}
+entable <- function(df) {
+  df$url <- paste0(
+    "<img src='", df$url, "' ",
+    "width=50 ",
+    "alt='Animal Crossing villager ", df$name,"'>"
+  )
+  df$name <- paste0(
+    "<a href='https://animalcrossing.fandom.com/wiki/",
+    df$name, "'>", df$name, "</a>"
+  )
+  df <- df[, c("name", "url", "pc_right", "total")]
+  names(df) <- c("Name", "Picture", "Right swipes (%)", "Total swipes")
+  rownames(df) <- NULL
+  knitr::kable(df)
+}
+```
+
+## Least popular
+
+To build tension, we'll start with the least-liked villagers. 
+
+```{r}
+bot <- df[order(df$pc_right, -df$n_left), ] |> head()
+entable(bot)
+```
+
+Sorry Pinky. You are simply... too pink? Seems harsh.
+
+## Most polarising
+
+To build even more tension, let's look at the characters who had a 50:50 ratio of likes to dislikes.
+
+```{r}
+meh <- subset(df[order(-df$total), ], diff == 0) |> head()
+entable(meh)
+```
+
+I'm not sure why these villagers are so controversial Perhaps they're too 'plain' for some people? What's for sure is that Cole... well, he's seen some things.
+
+## Most popular
+
+And finally, what you've all been waiting for.
+
+```{r}
+top <- df[order(-df$pc_right, -df$n_right), ] |> head()
+entable(top)
+```
+
+So! Bea and Bill were unanimously approved with nine right swipes each. It's not hard to see why these might be favourites; they're cute. Although Bill is staring directly into my soul.
+
+# Speciesism!
+
+I know what you're thinking: the results are on a villager-by-villager basis, but which species are the most popular? We can aggregate swipes and take a look.
+
+```{r}
+sp_l <- aggregate(n_left ~ species, sum, data = df)
+sp_r <- aggregate(n_right ~ species, sum, data = df)
+sp_n <- with(df, table(species)) |> 
+  as.data.frame(responseName = "n_villagers")
+
+sp <- sp_n |> 
+  merge(sp_l, by = "species") |> 
+  merge(sp_r, by = "species") |> 
+  transform(
+    total = n_right + n_left,
+    pc_right = 100 * round(n_right / (n_right + n_left), 2)
+  )
+```
+
+First, the species ranked by lowest proportion of right swipes.
+
+```{r}
+sp_bot <- sp[order(sp$pc_right, -sp$n_left), ]
+rownames(sp_bot) <- NULL
+head(sp_bot)
+```
+
+I can see how eagles, monkeys and hippos might not be that 'cute', per se, but what about [the mice](https://animalcrossing.fandom.com/wiki/Mouse)? Although 'cute' is probably not the best term for [the cranky mouse Limberg](https://animalcrossing.fandom.com/wiki/Limberg) (sorry Limberg).
+
+What about the most liked species?
+
+```{r}
+sp_top <- sp[order(-sp$pc_right, sp$n_right), ]
+rownames(sp_top) <- NULL
+head(sp_top)
+```
+[Octopuses are on top](https://animalcrossing.fandom.com/wiki/Octopus_(villager)), although there's relatively few octopus villagers. Personally, I like [Zucker](https://animalcrossing.fandom.com/wiki/Zucker), an octopus who looks like takoyaki and therefore delicious. 
+
+This wasn't meant to be about villager tastiness, was it? We may need a new app to rank by apparent edibility...
