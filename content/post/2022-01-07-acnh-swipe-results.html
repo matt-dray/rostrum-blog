@@ -27,7 +27,7 @@ draft: no
 </div>
 <div id="swiping-shinyswipe-code" class="section level1">
 <h1>Swiping {shinyswipe} code</h1>
-<p>A while back I wrote a Shiny app (<a href="https://mattdray.shinyapps.io/acnh-swipe/">site</a>, <a href="https://github.com/matt-dray/acnh-swipe">source</a>, <a href="https://www.rostrum.blog/2020/06/06/acnh-swipe/">blogpost</a>) for <a href="https://github.com/rfordatascience/tidytuesday/tree/2e9bd5a67e09b14d01f616b00f7f7e0931515d24/data/2020/2020-05-05">TidyTuesday</a> to replicate a <a href="https://en.wikipedia.org/wiki/Tinder_(app)">Tinder</a>-like experience using villagers from <a href="https://en.wikipedia.org/wiki/Animal_Crossing:_New_Horizons">Nintendo’s <em>Animal Crossing New Horizons</em> game</a>. It uses the swipe mechanic from <a href="http://nickstrayer.me/shinysense/">Nick Strayer’s {shinysense} package</a> to popularity: left for a ‘dislike’, right for a ‘like’.</p>
+<p>A while back I wrote a Shiny app (<a href="https://mattdray.shinyapps.io/acnh-swipe/">site</a>, <a href="https://github.com/matt-dray/acnh-swipe">source</a>, <a href="https://www.rostrum.blog/2020/06/06/acnh-swipe/">blogpost</a>) for <a href="https://github.com/rfordatascience/tidytuesday/tree/2e9bd5a67e09b14d01f616b00f7f7e0931515d24/data/2020/2020-05-05">TidyTuesday</a> to replicate a <a href="https://en.wikipedia.org/wiki/Tinder_(app)">Tinder</a>-like experience using villagers from <a href="https://en.wikipedia.org/wiki/Animal_Crossing:_New_Horizons">Nintendo’s <em>Animal Crossing New Horizons</em> game</a>. It uses the swipe mechanic from <a href="http://nickstrayer.me/shinysense/">Nick Strayer’s {shinysense} package</a> to gauge popularity: left for a ‘dislike’, right for a ‘like’.</p>
 <p>After exceeding 3000 total swipes, it’s time to take a look at the results.</p>
 </div>
 <div id="oh-sheet" class="section level1">
@@ -46,13 +46,13 @@ raw &lt;- read_sheet(
 <pre class="r"><code>dat &lt;- raw[raw$swipe %in% c(&quot;left&quot;, &quot;right&quot;), ]
 dat[sample(rownames(dat), 5), ]  # random sample</code></pre>
 <pre><code>## # A tibble: 5 × 3
-##   date                name   swipe
-##   &lt;dttm&gt;              &lt;chr&gt;  &lt;chr&gt;
-## 1 2021-03-03 21:47:24 Judy   right
-## 2 2021-03-03 21:56:49 Frank  left 
-## 3 2021-06-20 23:43:39 Kody   right
-## 4 2021-11-04 10:17:32 Sydney left 
-## 5 2021-12-21 19:38:46 Alice  right</code></pre>
+##   date                name    swipe
+##   &lt;dttm&gt;              &lt;chr&gt;   &lt;chr&gt;
+## 1 2021-12-01 13:41:05 Rod     right
+## 2 2021-04-29 14:05:09 Alfonso right
+## 3 2021-12-21 19:33:50 Knox    left 
+## 4 2021-12-31 12:54:41 Jitters left 
+## 5 2020-06-11 02:16:58 Boyd    right</code></pre>
 <p>The data are one row per swipe, with columns for <code>date</code> (datetime of when the swipe happened), <code>name</code> (the villager’s name) and <code>swipe</code> (the swipe direction).</p>
 <p>But what we’re really after is a grouped table with a row per villager, plus new columns for the <code>total</code> number of swipes, the <code>diff</code>erence between right and left swipes and the percentage of swipes that were to the right (<code>pc_right</code>). These will let us better rank the characters.</p>
 <pre class="r"><code>df &lt;- with(dat, table(name, swipe)) |&gt;  # like dplyr::count()
