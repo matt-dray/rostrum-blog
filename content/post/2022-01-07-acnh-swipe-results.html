@@ -19,11 +19,11 @@ draft: no
 
 
 <div class="figure">
-<p><img src="/post/2022-01-07-acnh-swipe-results_files/acnh-tinder-shiny.gif" alt="Gif showing a blue card on a green background. The card has a picture of a character from Nintendo's Animal Crossing game with their name, personality type, species and hobby. A mouse cursor swipes the card to the right, meaning 'like', and another card appears with a different character. The card is swiped to the left, meaning 'dislike'." width="100%"/></p>
+<p><img src="/post/2022-01-07-acnh-swipe-results_files/acnh-tinder-shiny.gif" alt="Gif showing a blue card on a green background. The card has a picture of a villager from Nintendo's Animal Crossing game with their name, personality type, species and hobby. A mouse cursor swipes the card to the right, meaning 'like', and another card appears with a different character. The card is swiped to the left, meaning 'dislike'." width="100%"/></p>
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>I wrote <a href="https://mattdray.shinyapps.io/acnh-swipe/">an R Shiny app</a> to run a popularity contest for Animal Crossing villagers. Surprise: cute ones are favourites.</p>
+<p>I once wrote <a href="https://mattdray.shinyapps.io/acnh-swipe/">an R Shiny app</a> to run a popularity contest for Animal Crossing villagers. Surprise: cute ones are favourites.</p>
 </div>
 <div id="swiping-shinyswipe-code" class="section level1">
 <h1>Swiping {shinyswipe} code</h1>
@@ -42,17 +42,17 @@ raw &lt;- read_sheet(
 )</code></pre>
 <pre><code>## ✓ Reading from &quot;acnh-swipe_results&quot;.</code></pre>
 <pre><code>## ✓ Range &#39;Sheet1&#39;.</code></pre>
-<p>First thing is to isolate the left and right swipes only. The {shinysense} package also allows for up and down swipes by default and I didn’t remove this capability from my app.</p>
+<p>First thing is to isolate the left and right swipes only. The {shinysense} package also allows for up and down swipes by default and I wasn’t sure how to remove this capability from my app (i.e. work lazier, not harder).</p>
 <pre class="r"><code>dat &lt;- raw[raw$swipe %in% c(&quot;left&quot;, &quot;right&quot;), ]
 dat[sample(rownames(dat), 5), ]  # random sample</code></pre>
 <pre><code>## # A tibble: 5 × 3
 ##   date                name    swipe
 ##   &lt;dttm&gt;              &lt;chr&gt;   &lt;chr&gt;
-## 1 2021-12-01 13:41:05 Rod     right
-## 2 2021-04-29 14:05:09 Alfonso right
-## 3 2021-12-21 19:33:50 Knox    left 
-## 4 2021-12-31 12:54:41 Jitters left 
-## 5 2020-06-11 02:16:58 Boyd    right</code></pre>
+## 1 2021-01-31 22:48:29 Renée   right
+## 2 2020-11-09 02:16:26 Kid Cat right
+## 3 2022-01-08 05:27:15 Agent S right
+## 4 2020-09-29 04:18:40 Cleo    right
+## 5 2020-09-15 07:25:45 Goose   left</code></pre>
 <p>The data are one row per swipe, with columns for <code>date</code> (datetime of when the swipe happened), <code>name</code> (the villager’s name) and <code>swipe</code> (the swipe direction).</p>
 <p>But what we’re really after is a grouped table with a row per villager, plus new columns for the <code>total</code> number of swipes, the <code>diff</code>erence between right and left swipes and the percentage of swipes that were to the right (<code>pc_right</code>). These will let us better rank the characters.</p>
 <pre class="r"><code>df &lt;- with(dat, table(name, swipe)) |&gt;  # like dplyr::count()
@@ -73,11 +73,11 @@ dat[sample(rownames(dat), 5), ]  # random sample</code></pre>
 head(df)</code></pre>
 <pre><code>##      name n_left n_right total diff pc_right
 ## 1 Admiral      5       4     9   -1       44
-## 2 Agent S      6       1     7   -5       14
+## 2 Agent S      6       3     9   -3       33
 ## 3   Agnes      4       5     9    1       56
 ## 4      Al      6       3     9   -3       33
 ## 5 Alfonso      5       5    10    0       50
-## 6   Alice      2       6     8    4       75</code></pre>
+## 6   Alice      3       7    10    4       70</code></pre>
 <p>I think most readers of this blog are probably {tidyverse} users, so I’ll explain some of the base R approach I took here:</p>
 <ul>
 <li>I’ve used the base pipe (<code>|&gt;</code>) introduced in R v4.1 to chain the functions, which is analogous to {magrittr}’s pipe (<code>%&gt;%</code>) in this example</li>
@@ -99,8 +99,8 @@ df &lt;- merge(df, tt, by = &quot;name&quot;)</code></pre>
 </div>
 <div id="new-horizons-scanning" class="section level1">
 <h1>New Horizons scanning</h1>
-<p>There are 391 villagers represented in these data, with a combined total of 3031 legitimate swipes.</p>
-<p>The total swipes per villager ranged from 2 to 17, with a mean of 7.8±2.7, so some characters didn’t really get enough swipes for proper assessment. You’d better go to the app and add some more swipes, eh?</p>
+<p>There are 391 villagers represented in these data, with a combined total of 3234 legitimate swipes.</p>
+<p>The total swipes per villager ranged from 2 to 17, with a mean of 8.3±2.7, so some characters didn’t really get enough swipes for proper assessment. You’d better go to the app and add some more swipes, eh?</p>
 <pre class="r"><code>par(bg = &quot;lightgreen&quot;)
 hist(
   df$total,
@@ -109,8 +109,8 @@ hist(
   col = &quot;lightblue&quot;,
   las = 1
 )</code></pre>
-<p><img src="/post/2022-01-07-acnh-swipe-results_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
-<p>If we focus on right swipes (i.e. ‘like’) adjusted for the total swipes per character, we can see that the distribution isn’t quite normal. The frequency of swipes below 50% is 216 and above 50% is 138. This implies that the majority of characters were disliked in a binary sense.</p>
+<p><img src="/post/2022-01-07-acnh-swipe-results_files/figure-html/plot-total-swipes-1.png" title="Histogram of total swipes per villager. It's roughly normally distributed between 5 and 10 swipes, but slightly left-skewed with a tail going beyond 15 swipes." alt="Histogram of total swipes per villager. It's roughly normally distributed between 5 and 10 swipes, but slightly left-skewed with a tail going beyond 15 swipes." width="672" /></p>
+<p>What if we look now at right swipes (i.e. ‘likes’), adjusted for the total swipes per character?</p>
 <pre class="r"><code>par(bg = &quot;lightgreen&quot;)
 hist(
   df$pc_right,
@@ -119,7 +119,8 @@ hist(
   col = &quot;lightblue&quot;,
   las = 1
 )</code></pre>
-<p><img src="/post/2022-01-07-acnh-swipe-results_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p><img src="/post/2022-01-07-acnh-swipe-results_files/figure-html/plot-right-swipes-1.png" title="Histogram of the percentage of right swipes (likes) per villager. Nearly normal, with a slight skew to the left." alt="Histogram of the percentage of right swipes (likes) per villager. Nearly normal, with a slight skew to the left." width="672" /></p>
+<p>You can see that the distribution isn’t quite normal. The frequency of swipes below 50% is 227 and above 50% is 136. This implies that the majority of characters were disliked in a binary sense.</p>
 <p>The bins at 0 and 100% tell you that there were some characters that were met with universal disapproval and approval, while the bin at 50% tells us that same characters split people’s opinions. Which were they?</p>
 </div>
 <div id="drumroll-please" class="section level1">
@@ -160,7 +161,7 @@ entable(bot)</code></pre>
 <td align="left"><a href='https://animalcrossing.fandom.com/wiki/Pinky'>Pinky</a></td>
 <td align="left"><img src='https://villagerdb.com/images/villagers/thumb/pinky.9d28acc.png' width=50 alt='Animal Crossing villager Pinky'></td>
 <td align="right">0</td>
-<td align="right">10</td>
+<td align="right">12</td>
 </tr>
 <tr class="even">
 <td align="left"><a href='https://animalcrossing.fandom.com/wiki/Cashmere'>Cashmere</a></td>
@@ -181,16 +182,16 @@ entable(bot)</code></pre>
 <td align="right">9</td>
 </tr>
 <tr class="odd">
-<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Truffles'>Truffles</a></td>
-<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/truffles.a71716a.png' width=50 alt='Animal Crossing villager Truffles'></td>
+<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Curly'>Curly</a></td>
+<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/curly.1905df0.png' width=50 alt='Animal Crossing villager Curly'></td>
 <td align="right">0</td>
-<td align="right">7</td>
+<td align="right">8</td>
 </tr>
 <tr class="even">
 <td align="left"><a href='https://animalcrossing.fandom.com/wiki/Benedict'>Benedict</a></td>
 <td align="left"><img src='https://villagerdb.com/images/villagers/thumb/benedict.c5bf6e4.png' width=50 alt='Animal Crossing villager Benedict'></td>
 <td align="right">0</td>
-<td align="right">6</td>
+<td align="right">7</td>
 </tr>
 </tbody>
 </table>
@@ -218,38 +219,38 @@ entable(meh)</code></pre>
 <td align="right">14</td>
 </tr>
 <tr class="even">
-<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Rex'>Rex</a></td>
-<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/rex.33d6f95.png' width=50 alt='Animal Crossing villager Rex'></td>
+<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Julian'>Julian</a></td>
+<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/julian.f543df6.png' width=50 alt='Animal Crossing villager Julian'></td>
 <td align="right">50</td>
 <td align="right">12</td>
 </tr>
 <tr class="odd">
+<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Static'>Static</a></td>
+<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/static.6a22c41.png' width=50 alt='Animal Crossing villager Static'></td>
+<td align="right">50</td>
+<td align="right">12</td>
+</tr>
+<tr class="even">
 <td align="left"><a href='https://animalcrossing.fandom.com/wiki/Vivian'>Vivian</a></td>
 <td align="left"><img src='https://villagerdb.com/images/villagers/thumb/vivian.e4140f8.png' width=50 alt='Animal Crossing villager Vivian'></td>
 <td align="right">50</td>
 <td align="right">12</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><a href='https://animalcrossing.fandom.com/wiki/Alfonso'>Alfonso</a></td>
 <td align="left"><img src='https://villagerdb.com/images/villagers/thumb/alfonso.11327a1.png' width=50 alt='Animal Crossing villager Alfonso'></td>
 <td align="right">50</td>
 <td align="right">10</td>
 </tr>
-<tr class="odd">
-<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Cole'>Cole</a></td>
-<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/cole.0b902b2.png' width=50 alt='Animal Crossing villager Cole'></td>
-<td align="right">50</td>
-<td align="right">10</td>
-</tr>
 <tr class="even">
-<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Opal'>Opal</a></td>
-<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/opal.789783f.png' width=50 alt='Animal Crossing villager Opal'></td>
+<td align="left"><a href='https://animalcrossing.fandom.com/wiki/Blaire'>Blaire</a></td>
+<td align="left"><img src='https://villagerdb.com/images/villagers/thumb/blaire.8fd60b3.png' width=50 alt='Animal Crossing villager Blaire'></td>
 <td align="right">50</td>
 <td align="right">10</td>
 </tr>
 </tbody>
 </table>
-<p>I’m not sure why these villagers are so controversial Perhaps they’re too ‘plain’ for some people? What’s for sure is that Cole… well, he’s seen some things.</p>
+<p>I’m not sure why these villagers are so controversial Perhaps they’re too ‘plain’ for some people? But <a href="https://animalcrossing.fandom.com/wiki/Julian">Julian is a unicorn</a>! With a sick space-themed hoody!</p>
 </div>
 <div id="most-popular" class="section level2">
 <h2>Most popular</h2>
@@ -304,7 +305,8 @@ entable(top)</code></pre>
 </tr>
 </tbody>
 </table>
-<p>So! Bea and Bill were unanimously approved with nine right swipes each. It’s not hard to see why these might be favourites; they’re cute. Although Bill is staring directly into my soul.</p>
+<p>So! Bea and Bill were unanimously approved with nine right swipes each. I think the key trait here is ‘cuteness’: the favourites are generally small, big-eyed villagers (and Eugene’s Terminator aesthetic is charming on a koala).</p>
+<p>Although Bill is staring directly into my soul.</p>
 </div>
 </div>
 <div id="speciesism" class="section level1">
@@ -322,17 +324,22 @@ sp &lt;- sp_n |&gt;
     total = n_right + n_left,
     pc_right = 100 * round(n_right / (n_right + n_left), 2)
   )</code></pre>
-<p>First, the species ranked by lowest proportion of right swipes.</p>
+<p>A couple more base functions here for those not used to them:</p>
+<ul>
+<li><code>aggregate()</code> is like <code>dplyr::group_by()</code> followed by <code>dplyr::summarise()</code> and it allows for compact ‘formula syntax’, so we can say ‘aggregate y by x’ with <code>y ~ x</code></li>
+<li><code>merge()</code> is just like the <code>dplyr::*_join()</code> family</li>
+</ul>
+<p>So, firstly, the species ranked by lowest proportion of right swipes.</p>
 <pre class="r"><code>sp_bot &lt;- sp[order(sp$pc_right, -sp$n_left), ]
 rownames(sp_bot) &lt;- NULL
 head(sp_bot)</code></pre>
 <pre><code>##   species n_villagers n_left n_right total pc_right
-## 1   mouse          15     86      19   105       18
-## 2   eagle           9     48      17    65       26
-## 3  monkey           8     46      16    62       26
-## 4   hippo           7     42      15    57       26
-## 5    bear          15     79      29   108       27
-## 6    bull           6     36      14    50       28</code></pre>
+## 1   mouse          15     90      19   109       17
+## 2   eagle           9     54      17    71       24
+## 3   hippo           7     43      15    58       26
+## 4    bull           6     40      14    54       26
+## 5    bear          15     87      32   119       27
+## 6 chicken           9     49      20    69       29</code></pre>
 <p>I can see how eagles, monkeys and hippos might not be that ‘cute’, per se, but what about <a href="https://animalcrossing.fandom.com/wiki/Mouse">the mice</a>? Although ‘cute’ is probably not the best term for <a href="https://animalcrossing.fandom.com/wiki/Limberg">the cranky mouse Limberg</a> (sorry Limberg).</p>
 <p>What about the most liked species?</p>
 <pre class="r"><code>sp_top &lt;- sp[order(-sp$pc_right, sp$n_right), ]
@@ -340,11 +347,11 @@ rownames(sp_top) &lt;- NULL
 head(sp_top)</code></pre>
 <pre><code>##   species n_villagers n_left n_right total pc_right
 ## 1 octopus           3      6      18    24       75
-## 2   koala           9     16      41    57       72
-## 3     dog          16     39      78   117       67
-## 4    deer          10     38      65   103       63
-## 5     cub          16     42      71   113       63
-## 6    wolf          11     33      47    80       59</code></pre>
+## 2   koala           9     17      43    60       72
+## 3     cub          16     43      74   117       63
+## 4     dog          16     49      80   129       62
+## 5    deer          10     43      67   110       61
+## 6    wolf          11     33      50    83       60</code></pre>
 <p><a href="https://animalcrossing.fandom.com/wiki/Octopus_(villager)">Octopuses are on top</a>, although there’s relatively few octopus villagers. Personally, I like <a href="https://animalcrossing.fandom.com/wiki/Zucker">Zucker</a>, an octopus who looks like takoyaki and therefore delicious.</p>
 <p>This wasn’t meant to be about villager tastiness, was it? We may need a new app to rank by apparent edibility…</p>
 </div>

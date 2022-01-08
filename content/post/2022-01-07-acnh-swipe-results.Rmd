@@ -16,12 +16,12 @@ draft: no
 ---
 
 <div class="figure">
-<img src="/post/2022-01-07-acnh-swipe-results_files/acnh-tinder-shiny.gif" alt="Gif showing a blue card on a green background. The card has a picture of a character from Nintendo's Animal Crossing game with their name, personality type, species and hobby. A mouse cursor swipes the card to the right, meaning 'like', and another card appears with a different character. The card is swiped to the left, meaning 'dislike'." width="100%"/>
+<img src="/post/2022-01-07-acnh-swipe-results_files/acnh-tinder-shiny.gif" alt="Gif showing a blue card on a green background. The card has a picture of a villager from Nintendo's Animal Crossing game with their name, personality type, species and hobby. A mouse cursor swipes the card to the right, meaning 'like', and another card appears with a different character. The card is swiped to the left, meaning 'dislike'." width="100%"/>
 </div>
 
 # tl;dr
 
-I wrote [an R Shiny app](https://mattdray.shinyapps.io/acnh-swipe/) to run a popularity contest for Animal Crossing villagers. Surprise: cute ones are favourites.
+I once wrote [an R Shiny app](https://mattdray.shinyapps.io/acnh-swipe/) to run a popularity contest for Animal Crossing villagers. Surprise: cute ones are favourites.
 
 # Swiping {shinyswipe} code
 
@@ -43,7 +43,7 @@ raw <- read_sheet(
 )
 ```
 
-First thing is to isolate the left and right swipes only. The {shinysense} package also allows for up and down swipes by default and I didn't remove this capability from my app.
+First thing is to isolate the left and right swipes only. The {shinysense} package also allows for up and down swipes by default and I wasn't sure how to remove this capability from my app (i.e. work lazier, not harder).
 
 ```{r}
 dat <- raw[raw$swipe %in% c("left", "right"), ]
@@ -101,7 +101,7 @@ There are `r length(df$name)` villagers represented in these data, with a combin
 
 The total swipes per villager ranged from `r min(df$total)` to `r max(df$total)`, with a mean of `r round(mean(df$total), 1)`±`r round(sd(df$total), 1)`, so some characters didn't really get enough swipes for proper assessment. You'd better go to the app and add some more swipes, eh?
 
-```{r}
+```{r plot-total-swipes, fig.alt="Histogram of total swipes per villager. It's roughly normally distributed between 5 and 10 swipes, but slightly left-skewed with a tail going beyond 15 swipes."}
 par(bg = "lightgreen")
 hist(
   df$total,
@@ -112,9 +112,9 @@ hist(
 )
 ```
 
-If we focus on right swipes (i.e. 'like') adjusted for the total swipes per character, we can see that the distribution isn't quite normal. The frequency of swipes below 50% is `r nrow(df[df$pc_right < 50, ])` and above 50% is `r nrow(df[df$pc_right > 50, ])`. This implies that the majority of characters were disliked in a binary sense.
+What if we look now at right swipes (i.e. 'likes'), adjusted for the total swipes per character?
 
-```{r}
+```{r plot-right-swipes, fig.alt="Histogram of the percentage of right swipes (likes) per villager. Nearly normal, with a slight skew to the left."}
 par(bg = "lightgreen")
 hist(
   df$pc_right,
@@ -124,6 +124,8 @@ hist(
   las = 1
 )
 ```
+
+You can see that the distribution isn't quite normal. The frequency of swipes below 50% is `r nrow(df[df$pc_right < 50, ])` and above 50% is `r nrow(df[df$pc_right > 50, ])`. This implies that the majority of characters were disliked in a binary sense.
 
 The bins at 0 and 100% tell you that there were some characters that were met with universal disapproval and approval, while the bin at 50% tells us that same characters split people's opinions. Which were they?
 
@@ -171,7 +173,7 @@ meh <- subset(df[order(-df$total), ], diff == 0) |> head()
 entable(meh)
 ```
 
-I'm not sure why these villagers are so controversial Perhaps they're too 'plain' for some people? What's for sure is that Cole... well, he's seen some things.
+I'm not sure why these villagers are so controversial Perhaps they're too 'plain' for some people? But [Julian is a unicorn](https://animalcrossing.fandom.com/wiki/Julian)! With a sick space-themed hoody!
 
 ## Most popular
 
@@ -182,7 +184,9 @@ top <- df[order(-df$pc_right, -df$n_right), ] |> head()
 entable(top)
 ```
 
-So! Bea and Bill were unanimously approved with nine right swipes each. It's not hard to see why these might be favourites; they're cute. Although Bill is staring directly into my soul.
+So! Bea and Bill were unanimously approved with nine right swipes each. I think the key trait here is 'cuteness': the favourites are generally small, big-eyed villagers (and Eugene's Terminator aesthetic is charming on a koala). 
+
+Although Bill is staring directly into my soul.
 
 # Speciesism!
 
@@ -203,7 +207,12 @@ sp <- sp_n |>
   )
 ```
 
-First, the species ranked by lowest proportion of right swipes.
+A couple more base functions here for those not used to them: 
+
+* `aggregate()` is like `dplyr::group_by()` followed by `dplyr::summarise()` and it allows for compact 'formula syntax', so we can say 'aggregate y by x' with `y ~ x`
+* `merge()` is just like the `dplyr::*_join()` family
+
+So, firstly, the species ranked by lowest proportion of right swipes.
 
 ```{r}
 sp_bot <- sp[order(sp$pc_right, -sp$n_left), ]
