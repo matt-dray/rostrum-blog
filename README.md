@@ -25,13 +25,14 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 111 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 112 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
-📅 That’s a post roughly every 12 days, or about 2.4 posts per month.
+📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 8 day(s) ago: [Your workout route (in
-three dimensions\!)](https://www.rostrum.blog/2021/12/30/gpx3d/).
+🆕 The latest post was published 1 day(s) ago: [The most popular Animal
+Crossing
+villagers](https://www.rostrum.blog/2022/01/07/acnh-swipe-results/).
 
 📈 This 2D plot shows posts over time:
 
@@ -43,6 +44,7 @@ three dimensions\!)](https://www.rostrum.blog/2021/12/30/gpx3d/).
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|    112 | 2022-01-07 | [The most popular Animal Crossing villagers](https://www.rostrum.blog/2022/01/07/acnh-swipe-results/)                     |
 |    111 | 2021-12-30 | [Your workout route (in three dimensions\!)](https://www.rostrum.blog/2021/12/30/gpx3d/)                                  |
 |    110 | 2021-11-27 | [{itdepends} on {lubridate}](https://www.rostrum.blog/2021/11/27/lubridate-fns/)                                          |
 |    109 | 2021-11-27 | [R has obscenely long function names](https://www.rostrum.blog/2021/11/27/long-fns/)                                      |
@@ -159,4 +161,4 @@ three dimensions\!)](https://www.rostrum.blog/2021/12/30/gpx3d/).
 
 -----
 
-*Updated 2022-01-07 02:50:33*
+*Updated 2022-01-08 02:51:47*
