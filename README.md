@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 5 day(s) ago: [The most popular Animal
+🆕 The latest post was published 6 day(s) ago: [The most popular Animal
 Crossing
 villagers](https://www.rostrum.blog/2022/01/07/acnh-swipe-results/).
 
@@ -161,4 +161,4 @@ villagers](https://www.rostrum.blog/2022/01/07/acnh-swipe-results/).
 
 -----
 
-*Updated 2022-01-12 02:50:30*
+*Updated 2022-01-13 02:48:46*
