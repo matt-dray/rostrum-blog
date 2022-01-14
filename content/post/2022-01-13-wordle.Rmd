@@ -1,0 +1,259 @@
+---
+title: 'Wordle, twirdle and eldrow'
+author: Matt Dray
+date: '2022-01-14'
+slug: wordle
+categories:
+  - code
+tags:
+  - games
+  - r
+  - wordle
+draft: no
+---
+
+<div class="figure">
+<img src="/post/2022-01-13-wordle_files/werdz.png" alt="Five green squares containing the letters w, e, r, d and z in fancy comic sans." width="100%"/>
+</div>
+
+# tl;dr
+
+Two toy R functions for playing with [Wordle](https://www.powerlanguage.co.uk/wordle/) results: `twirdle()` extracts gameplay data from tweets, and `eldrow()` finds potential prior guesses given the answer.
+
+# What's the Wordle?
+
+Nothing is more zeitgeisty right now than [Wordle](https://www.powerlanguage.co.uk/wordle/), a once-a-day web-based five-letter-word-guessing puzzle-logic game.
+
+The app lets you copy your results in a consistent format for pasting into a tweet or whatever. 
+
+<div class="figure">
+<img src="/post/2022-01-13-wordle_files/wordle-result.png" alt="An example results output from Wordle edition 209 that took three attempts. The first row of coloured square emojis is the first guess, showing a letter in the wrong place (yellow) and one in the right place (green). The second guess has two in the wrong place and one correct. The last line shows victory. The black emojis show incorrect guesses." width="50%"/>
+</div>
+
+It begins with a string of meta information, 'Wordle X Y/Z', where X is the edition number, Y is the attempts taken and Z is the maximum allowed guesses. Then there's a grid of coloured emoji squares, where each row represents a guessed word and each emoji a letter.
+
+Green emojis represent a letter in the correct place, yellow in the wrong place and black or white for an incorrect letter (depending on whether you're playing in dark or light mode). The emojis obscure your guesses so that people can see how well you did without spoiling the answer.
+
+Folks have already put together some neat R tools, like solvers and ways to play in the console or in other languages. See [mikefc's {wordle} R package](https://github.com/coolbutuseless/wordle) and [Pachá's Shiny app](https://pacha.dev/blog/2022/01/14/shinywordle-a-shiny-app-to-solve-the-game-worldle-and-the-power-of-regular-expressions/), for example. 
+
+# Showerthoughts
+
+Surprise: I haven't actually played the game. 
+
+But that didn't stop me from writing a couple of modest functions to practice my regex and base-R skills: `twirdle()` and `eldrow()`.[^fndd] 
+
+As ever, I can call them 'toy' functions and get away without proper error-checking and code optimisation.
+
+## twirdle
+
+The consistent template makes it straightforward to extract people's results from tweets. I've made the `twirdle()` function to do this.[^twitter]
+
+`twirdle()` makes use of regular expressions and functions like `regmatches()` and `regexpr()` to extract: 
+
+* the Wordle `edition` number, e.g. '206'
+* the `attempt`s required, e.g. '4'
+* the maximum `allowed` attempts (`max`), i.e. '6'
+* whether the user was playing in light or dark `mode`
+* a string of characters representing the emoji `grid`, e.g. `"YG----G-GYGGGGG"`, to symbolise a correct guess (`G`reen emoji), a correct letter but in the wrong place (`Y`ellow), and a miss (`-`)
+* the tweet status ID so you can visit the original tweets
+
+<details><summary>Click for the full `twirdle()` function definition</summary>
+```{r twirdle-fn}
+twirdle <- function(tweets) {
+  
+  meta_rx <- "Wordle \\d{1,} \\d{1}/6"  # e.g. 'Wordle 206 3/6'
+  g_sq <- "\U1F7E9"  # unicode green square emoji
+  y_sq <- "\U1F7E8"  # yellow square
+  b_sq <- "\U2B1B"   # black square
+  w_sq <- "\U2B1C"   # white square
+  rx_sq <- paste(b_sq, w_sq, y_sq, g_sq, sep = "|")  # squares regex
+  rx_sq_fail <- paste(b_sq, w_sq, sep = "|")  # wrong letter regex
+  
+  tweets$meta <- regexpr(meta_rx, tweets$text)
+  tweets$meta <- setNames(
+    tweets$meta,
+    ifelse(tweets$meta < 0, FALSE, TRUE)
+  )
+  tweets$meta <- ifelse(
+    names(tweets$meta),
+    regmatches(tweets$text, tweets$meta),
+    NA_character_
+  )
+  
+  tweets <- tweets[!is.na(tweets$meta), ]
+  
+  tweets$edition <- regmatches(
+    tweets$meta,
+    regexpr("\\d{1,}", tweets$meta)
+  )
+  
+  tweets$attempts <- regmatches(
+    tweets$meta,
+    regexpr("\\d{1}(?=/)", tweets$meta, perl = TRUE)
+  )
+  
+  tweets$allowed <- regmatches(
+    tweets$meta,
+    regexpr("(?<=/)\\d{1}", tweets$meta, perl = TRUE)
+  )
+  
+  tweets$grid <- regmatches(
+    tweets$text, 
+    gregexpr(rx_sq, tweets$text) 
+  ) 
+  tweets$grid <- lapply(
+    tweets$grid, 
+    function(x) paste(x, collapse = "")
+  )
+  tweets$grid <- gsub(g_sq, "G", tweets$grid)
+  tweets$grid <- gsub(y_sq, "Y", tweets$grid)
+  tweets$grid <- gsub(rx_sq_fail, "-", tweets$grid)
+  
+  tweets$mode <- ifelse(
+    grepl(b_sq, tweets$text), "dark",
+    ifelse(grepl(w_sq, tweets$text), "light", "unknown")
+  )
+  
+  tweets[, c("edition", "attempts", "allowed", 
+             "mode", "grid", "status_id")]
+  
+}
+```
+</details>
+
+I put the code for the function [in a GitHub Gist](https://gist.github.com/matt-dray/996d066ead78acfaca47c0d37b966e8a), along with a version that uses {tidyverse} packages rather than base R.
+
+To give an example of `twirdle()` in action, let's first grab a small number of tweets using [the {rtweet} package by Mike Kearney](https://docs.ropensci.org/rtweet/). Qualifying tweets contain at least the word 'Wordle' and a string of five green emoji that indicate a win, so we use these in our query string. I've chosen to focus on wins only; I think it's easier to find these tweets.
+
+```{r rtweet}
+tweets <- rtweet::search_tweets(
+  q = "Wordle \U1F7E9\U1F7E9\U1F7E9\U1F7E9\U1F7E9",
+  n = 10,  # return 10 tweets
+  include_rts = FALSE  # ignore retweets
+)
+```
+
+And now we can pass the returned dataframe of tweets to `twirdle()`. It outputs a row per tweet, but there may be fewer tweets than we asked for because the content doesn't conform to the output provided by Wordle. Sometimes people add their own comments into the results, disrupting the expected format.
+
+```{r twirdle-ex}
+twirdle(tweets)
+```
+
+You could use this to do a number of things, like calculate the mean number of attempts for each day's puzzle, look at-scale for patterns in guesses, or maybe [see whether dark-mode users are more skilled than light-mode users](https://twitter.com/mattdray/status/1481071855465287680?s=20).
+
+## eldrow
+
+Of course, the whole purpose of sharing an encoded emoji grid is to prevent spoilers. No-one reading your result can see the answer or your guesses.
+
+But, if you do know the answer, could you backwards-engineer prior guesses from the emoji grid? 
+
+Introducing `eldrow()`,[^backwards] which does exactly this with some help from [mikefc's {wordle} package](https://github.com/coolbutuseless/wordle) for filtering from the Wordle wordlist.
+
+You pass to it the `answer` and the encoding of the last `guess` in the form `"Y-GY-"`. As per the `twirdle()` output, the characters `G`, `Y` and `-` refer to a letter in the right place, wrong place, or not in the word. The function returns a vector of all the possible words given the `guess` and the `answer`.
+
+<details><summary>Click for the full `eldrow()` definition</summary>
+```{r eldrow-fn}
+eldrow <- function(guess, answer, words = wordle::wordle_dict){
+  
+  answer <- tolower(answer)
+  guess <- toupper(guess)
+  
+  guess_chars <- strsplit(guess, "")[[1]]
+  answer_chars <- strsplit(answer, "")[[1]]
+  
+  exact <- ifelse(guess_chars == "G", answer_chars, ".") |>
+    paste0(collapse = "")
+  
+  wrong_spot <- gsub(
+    "\\.", "", ifelse(guess_chars == "Y", answer_chars, ".")
+  )
+  
+  exact_chars <- regmatches(exact, gregexpr("\\w", exact))[[1]]
+  correct_chars_table <- table(
+    c(exact_chars, wrong_spot[wrong_spot != ""])
+  )
+  min_count <- as.vector(correct_chars_table)
+  names(min_count) <- names(correct_chars_table)
+  
+  possibles <- wordle::filter_words(
+    words, exact, wrong_spot, min_count, min_count
+  )
+  
+  possibles <- possibles[which(possibles != answer)]
+  possibles[order(possibles)]
+  
+}
+```
+</details>
+
+I also put the code for this [in a GitHub Gist](https://gist.github.com/matt-dray/fe1f236f21abe7d2e4b2a594d5b207e1).
+
+So, let's say someone took three attempts at the word 'shirt'[^shirt] and their first and second guesses gave encodings of `YGG--` then `-GGG-`.
+
+We can start by passing the answer and the encoding for the prior guess.
+
+```{r eldrow-penultimate}
+guess_2 <- eldrow(guess = "-GGG-", answer = "shirt")
+guess_2
+```
+
+Okay, so locigcally they could have guessed any of these `r length(guess_2)` options before their final, correct guess.
+
+Naturally, we can extrapolate one step further back and infer the earlier potential guesses.
+
+You can iterate over these `r length(guess_2)` possible words as the `answer` argument to `eldrow()`, setting the `guess` argument to the encoding for the previous attempt (i.e. `"YGG--"` was the first guess in our example).
+
+```{r eldrow-guess-list}
+guesses_1_2 <- lapply(
+  guess_2,
+  \(x) eldrow("YGG--", x)
+) |> 
+  lapply(\(x) x[which(x != "shirt")]) |>
+  setNames(guess_2)
+
+str(guesses_1_2)
+```
+
+The output is a list with elements containing the potential first guesses and is named for each of the potential second guesses. So, logically, a possible set of guesses by this imaginary person was 'shift' then 'third' then 'shirts'.
+
+Of course, you can eliminate any potential second guesses that failed to yield a potential first guess, like 'whirl'in this example.
+
+You'll also notice a number of the potential first guesses are the same word. The more they appear, the more likely that word is to have been the actual starting guess.
+
+```{r eldrow-likeliest}
+words <- c()
+for (i in guesses_1_2) {
+  words <- c(words, i)
+}
+
+counts <- as.data.frame(
+  table(words),
+  responseName = "n"
+)
+counts$total <- sum(counts$n)
+counts$percent <- round(100 * (counts$n / counts$total), 1)
+
+likeliest <- counts[order(-counts$percent), ]
+rownames(likeliest) <- NULL
+head(likeliest, 3)
+```
+
+So, purely on the basis of this frequency, 'thick' was most likely to be the first guess in this contrived example. You might want to consider how likely someone is to actually submit some of these words, given their obscurity.
+
+# Hurdle?
+
+I hope you weren't expecting anything more from this post. Maybe consider some meme variants, like [Curdle](https://twitter.com/Hooper_b13/status/1480838944812158977?s=20), [Birdle](https://twitter.com/BebeNeuwirth/status/1479966069469204483?s=20), [Tetris](https://twitter.com/Foone/status/1480643494985146372?s=20), or [this absolute banger](https://twitter.com/AaronChewning/status/1481701906808516610?s=20).
+
+Okay, show's over, you can stop the Wordling now.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^shirt]: No spoilers here. I have no idea if this word has ever been a correct answer in Wordle to date.
+[^fndd]: Us pros call this 'function-name driven development', or FNDD. It's very simple, you just choose a funny function name and work backwards from there.
+[^backwards]: DO YOU SEE IT IS LIKE 'WORDLE' BACKWARDS? HA HA HA.
+[^twitter]: DO YOU SEE IT IS LIKE 'TWITTER' AND 'WORDLE' FUSED TOGETHER, LOL.

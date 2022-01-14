@@ -1,0 +1,317 @@
+---
+title: 'Wordle, twirdle and eldrow'
+author: Matt Dray
+date: '2022-01-14'
+slug: wordle
+categories:
+  - code
+tags:
+  - games
+  - r
+  - wordle
+draft: no
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div class="figure">
+<p><img src="/post/2022-01-13-wordle_files/werdz.png" alt="Five green squares containing the letters w, e, r, d and z in fancy comic sans." width="100%"/></p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>Two toy R functions for playing with <a href="https://www.powerlanguage.co.uk/wordle/">Wordle</a> results: <code>twirdle()</code> extracts gameplay data from tweets, and <code>eldrow()</code> finds potential prior guesses given the answer.</p>
+</div>
+<div id="whats-the-wordle" class="section level1">
+<h1>What’s the Wordle?</h1>
+<p>Nothing is more zeitgeisty right now than <a href="https://www.powerlanguage.co.uk/wordle/">Wordle</a>, a once-a-day web-based five-letter-word-guessing puzzle-logic game.</p>
+<p>The app lets you copy your results in a consistent format for pasting into a tweet or whatever.</p>
+<div class="figure">
+<p><img src="/post/2022-01-13-wordle_files/wordle-result.png" alt="An example results output from Wordle edition 209 that took three attempts. The first row of coloured square emojis is the first guess, showing a letter in the wrong place (yellow) and one in the right place (green). The second guess has two in the wrong place and one correct. The last line shows victory. The black emojis show incorrect guesses." width="50%"/></p>
+</div>
+<p>It begins with a string of meta information, ‘Wordle X Y/Z’, where X is the edition number, Y is the attempts taken and Z is the maximum allowed guesses. Then there’s a grid of coloured emoji squares, where each row represents a guessed word and each emoji a letter.</p>
+<p>Green emojis represent a letter in the correct place, yellow in the wrong place and black or white for an incorrect letter (depending on whether you’re playing in dark or light mode). The emojis obscure your guesses so that people can see how well you did without spoiling the answer.</p>
+<p>Folks have already put together some neat R tools, like solvers and ways to play in the console or in other languages. See <a href="https://github.com/coolbutuseless/wordle">mikefc’s {wordle} R package</a> and <a href="https://pacha.dev/blog/2022/01/14/shinywordle-a-shiny-app-to-solve-the-game-worldle-and-the-power-of-regular-expressions/">Pachá’s Shiny app</a>, for example.</p>
+</div>
+<div id="showerthoughts" class="section level1">
+<h1>Showerthoughts</h1>
+<p>Surprise: I haven’t actually played the game.</p>
+<p>But that didn’t stop me from writing a couple of modest functions to practice my regex and base-R skills: <code>twirdle()</code> and <code>eldrow()</code>.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>As ever, I can call them ‘toy’ functions and get away without proper error-checking and code optimisation.</p>
+<div id="twirdle" class="section level2">
+<h2>twirdle</h2>
+<p>The consistent template makes it straightforward to extract people’s results from tweets. I’ve made the <code>twirdle()</code> function to do this.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p><code>twirdle()</code> makes use of regular expressions and functions like <code>regmatches()</code> and <code>regexpr()</code> to extract:</p>
+<ul>
+<li>the Wordle <code>edition</code> number, e.g. ‘206’</li>
+<li>the <code>attempt</code>s required, e.g. ‘4’</li>
+<li>the maximum <code>allowed</code> attempts (<code>max</code>), i.e. ‘6’</li>
+<li>whether the user was playing in light or dark <code>mode</code></li>
+<li>a string of characters representing the emoji <code>grid</code>, e.g. <code>"YG----G-GYGGGGG"</code>, to symbolise a correct guess (<code>G</code>reen emoji), a correct letter but in the wrong place (<code>Y</code>ellow), and a miss (<code>-</code>)</li>
+<li>the tweet status ID so you can visit the original tweets</li>
+</ul>
+<details>
+<summary>
+Click for the full <code>twirdle()</code> function definition
+</summary>
+<pre class="r"><code>twirdle &lt;- function(tweets) {
+  
+  meta_rx &lt;- &quot;Wordle \\d{1,} \\d{1}/6&quot;  # e.g. &#39;Wordle 206 3/6&#39;
+  g_sq &lt;- &quot;\U1F7E9&quot;  # unicode green square emoji
+  y_sq &lt;- &quot;\U1F7E8&quot;  # yellow square
+  b_sq &lt;- &quot;\U2B1B&quot;   # black square
+  w_sq &lt;- &quot;\U2B1C&quot;   # white square
+  rx_sq &lt;- paste(b_sq, w_sq, y_sq, g_sq, sep = &quot;|&quot;)  # squares regex
+  rx_sq_fail &lt;- paste(b_sq, w_sq, sep = &quot;|&quot;)  # wrong letter regex
+  
+  tweets$meta &lt;- regexpr(meta_rx, tweets$text)
+  tweets$meta &lt;- setNames(
+    tweets$meta,
+    ifelse(tweets$meta &lt; 0, FALSE, TRUE)
+  )
+  tweets$meta &lt;- ifelse(
+    names(tweets$meta),
+    regmatches(tweets$text, tweets$meta),
+    NA_character_
+  )
+  
+  tweets &lt;- tweets[!is.na(tweets$meta), ]
+  
+  tweets$edition &lt;- regmatches(
+    tweets$meta,
+    regexpr(&quot;\\d{1,}&quot;, tweets$meta)
+  )
+  
+  tweets$attempts &lt;- regmatches(
+    tweets$meta,
+    regexpr(&quot;\\d{1}(?=/)&quot;, tweets$meta, perl = TRUE)
+  )
+  
+  tweets$allowed &lt;- regmatches(
+    tweets$meta,
+    regexpr(&quot;(?&lt;=/)\\d{1}&quot;, tweets$meta, perl = TRUE)
+  )
+  
+  tweets$grid &lt;- regmatches(
+    tweets$text, 
+    gregexpr(rx_sq, tweets$text) 
+  ) 
+  tweets$grid &lt;- lapply(
+    tweets$grid, 
+    function(x) paste(x, collapse = &quot;&quot;)
+  )
+  tweets$grid &lt;- gsub(g_sq, &quot;G&quot;, tweets$grid)
+  tweets$grid &lt;- gsub(y_sq, &quot;Y&quot;, tweets$grid)
+  tweets$grid &lt;- gsub(rx_sq_fail, &quot;-&quot;, tweets$grid)
+  
+  tweets$mode &lt;- ifelse(
+    grepl(b_sq, tweets$text), &quot;dark&quot;,
+    ifelse(grepl(w_sq, tweets$text), &quot;light&quot;, &quot;unknown&quot;)
+  )
+  
+  tweets[, c(&quot;edition&quot;, &quot;attempts&quot;, &quot;allowed&quot;, 
+             &quot;mode&quot;, &quot;grid&quot;, &quot;status_id&quot;)]
+  
+}</code></pre>
+</details>
+<p>I put the code for the function <a href="https://gist.github.com/matt-dray/996d066ead78acfaca47c0d37b966e8a">in a GitHub Gist</a>, along with a version that uses {tidyverse} packages rather than base R.</p>
+<p>To give an example of <code>twirdle()</code> in action, let’s first grab a small number of tweets using <a href="https://docs.ropensci.org/rtweet/">the {rtweet} package by Mike Kearney</a>. Qualifying tweets contain at least the word ‘Wordle’ and a string of five green emoji that indicate a win, so we use these in our query string. I’ve chosen to focus on wins only; I think it’s easier to find these tweets.</p>
+<pre class="r"><code>tweets &lt;- rtweet::search_tweets(
+  q = &quot;Wordle \U1F7E9\U1F7E9\U1F7E9\U1F7E9\U1F7E9&quot;,
+  n = 10,  # return 10 tweets
+  include_rts = FALSE  # ignore retweets
+)</code></pre>
+<p>And now we can pass the returned dataframe of tweets to <code>twirdle()</code>. It outputs a row per tweet, but there may be fewer tweets than we asked for because the content doesn’t conform to the output provided by Wordle. Sometimes people add their own comments into the results, disrupting the expected format.</p>
+<pre class="r"><code>twirdle(tweets)</code></pre>
+<pre><code>## # A tibble: 10 × 6
+##    edition attempts allowed mode  grid                           status_id      
+##    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;   &lt;chr&gt; &lt;chr&gt;                          &lt;chr&gt;          
+##  1 210     3        6       dark  Y-Y--YG-GYGGGGG                14821389694797…
+##  2 209     6        6       light --Y----------Y-G--G------GGGGG 14821389633892…
+##  3 209     3        6       dark  G-Y--GG--GGGGGG                14821389629279…
+##  4 209     3        6       light Y--YYGGGG-GGGGG                14821389602813…
+##  5 210     3        6       dark  -----G-G--GGGGG                14821389592244…
+##  6 210     4        6       light -G----G-Y-YGY-YGGGGG           14821389487722…
+##  7 210     5        6       light -G----GYY-GGYY-GGGG-GGGGG      14821389441083…
+##  8 209     3        6       dark  -G-Y-YG-YYGGGGG                14821389441040…
+##  9 210     4        6       dark  -G----G-G--G-GYGGGGG           14821389405387…
+## 10 210     4        6       dark  --Y-YYY----GGGGGGGGG           14821389396830…</code></pre>
+<p>You could use this to do a number of things, like calculate the mean number of attempts for each day’s puzzle, look at-scale for patterns in guesses, or maybe <a href="https://twitter.com/mattdray/status/1481071855465287680?s=20">see whether dark-mode users are more skilled than light-mode users</a>.</p>
+</div>
+<div id="eldrow" class="section level2">
+<h2>eldrow</h2>
+<p>Of course, the whole purpose of sharing an encoded emoji grid is to prevent spoilers. No-one reading your result can see the answer or your guesses.</p>
+<p>But, if you do know the answer, could you backwards-engineer prior guesses from the emoji grid?</p>
+<p>Introducing <code>eldrow()</code>,<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> which does exactly this with some help from <a href="https://github.com/coolbutuseless/wordle">mikefc’s {wordle} package</a> for filtering from the Wordle wordlist.</p>
+<p>You pass to it the <code>answer</code> and the encoding of the last <code>guess</code> in the form <code>"Y-GY-"</code>. As per the <code>twirdle()</code> output, the characters <code>G</code>, <code>Y</code> and <code>-</code> refer to a letter in the right place, wrong place, or not in the word. The function returns a vector of all the possible words given the <code>guess</code> and the <code>answer</code>.</p>
+<details>
+<summary>
+Click for the full <code>eldrow()</code> definition
+</summary>
+<pre class="r"><code>eldrow &lt;- function(guess, answer, words = wordle::wordle_dict){
+  
+  answer &lt;- tolower(answer)
+  guess &lt;- toupper(guess)
+  
+  guess_chars &lt;- strsplit(guess, &quot;&quot;)[[1]]
+  answer_chars &lt;- strsplit(answer, &quot;&quot;)[[1]]
+  
+  exact &lt;- ifelse(guess_chars == &quot;G&quot;, answer_chars, &quot;.&quot;) |&gt;
+    paste0(collapse = &quot;&quot;)
+  
+  wrong_spot &lt;- gsub(
+    &quot;\\.&quot;, &quot;&quot;, ifelse(guess_chars == &quot;Y&quot;, answer_chars, &quot;.&quot;)
+  )
+  
+  exact_chars &lt;- regmatches(exact, gregexpr(&quot;\\w&quot;, exact))[[1]]
+  correct_chars_table &lt;- table(
+    c(exact_chars, wrong_spot[wrong_spot != &quot;&quot;])
+  )
+  min_count &lt;- as.vector(correct_chars_table)
+  names(min_count) &lt;- names(correct_chars_table)
+  
+  possibles &lt;- wordle::filter_words(
+    words, exact, wrong_spot, min_count, min_count
+  )
+  
+  possibles &lt;- possibles[which(possibles != answer)]
+  possibles[order(possibles)]
+  
+}</code></pre>
+</details>
+<p>I also put the code for this <a href="https://gist.github.com/matt-dray/fe1f236f21abe7d2e4b2a594d5b207e1">in a GitHub Gist</a>.</p>
+<p>So, let’s say someone took three attempts at the word ‘shirt’<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> and their first and second guesses gave encodings of <code>YGG--</code> then <code>-GGG-</code>.</p>
+<p>We can start by passing the answer and the encoding for the prior guess.</p>
+<pre class="r"><code>guess_2 &lt;- eldrow(guess = &quot;-GGG-&quot;, answer = &quot;shirt&quot;)
+guess_2</code></pre>
+<pre><code>##  [1] &quot;chirk&quot; &quot;chirl&quot; &quot;chirm&quot; &quot;chiro&quot; &quot;chirp&quot; &quot;chirt&quot; &quot;chiru&quot; &quot;shire&quot; &quot;shirk&quot;
+## [10] &quot;shirs&quot; &quot;third&quot; &quot;thirl&quot; &quot;whirl&quot; &quot;whirs&quot;</code></pre>
+<p>Okay, so locigcally they could have guessed any of these 14 options before their final, correct guess.</p>
+<p>Naturally, we can extrapolate one step further back and infer the earlier potential guesses.</p>
+<p>You can iterate over these 14 possible words as the <code>answer</code> argument to <code>eldrow()</code>, setting the <code>guess</code> argument to the encoding for the previous attempt (i.e. <code>"YGG--"</code> was the first guess in our example).</p>
+<pre class="r"><code>guesses_1_2 &lt;- lapply(
+  guess_2,
+  \(x) eldrow(&quot;YGG--&quot;, x)
+) |&gt; 
+  lapply(\(x) x[which(x != &quot;shirt&quot;)]) |&gt;
+  setNames(guess_2)
+
+str(guesses_1_2)</code></pre>
+<pre><code>## List of 14
+##  $ chirk: chr &quot;thick&quot;
+##  $ chirl: chr &quot;thick&quot;
+##  $ chirm: chr &quot;thick&quot;
+##  $ chiro: chr &quot;thick&quot;
+##  $ chirp: chr &quot;thick&quot;
+##  $ chirt: chr &quot;thick&quot;
+##  $ chiru: chr &quot;thick&quot;
+##  $ shire: chr [1:22] &quot;chias&quot; &quot;chibs&quot; &quot;chics&quot; &quot;chiks&quot; ...
+##  $ shirk: chr [1:22] &quot;chias&quot; &quot;chibs&quot; &quot;chics&quot; &quot;chiks&quot; ...
+##  $ shirs: chr [1:22] &quot;chias&quot; &quot;chibs&quot; &quot;chics&quot; &quot;chiks&quot; ...
+##  $ third: chr [1:13] &quot;ahint&quot; &quot;chirt&quot; &quot;chits&quot; &quot;shift&quot; ...
+##  $ thirl: chr [1:13] &quot;ahint&quot; &quot;chirt&quot; &quot;chits&quot; &quot;shift&quot; ...
+##  $ whirl: chr(0) 
+##  $ whirs: chr(0)</code></pre>
+<p>The output is a list with elements containing the potential first guesses and is named for each of the potential second guesses. So, logically, a possible set of guesses by this imaginary person was ‘shift’ then ‘third’ then ‘shirts’.</p>
+<p>Of course, you can eliminate any potential second guesses that failed to yield a potential first guess, like ’whirl’in this example.</p>
+<p>You’ll also notice a number of the potential first guesses are the same word. The more they appear, the more likely that word is to have been the actual starting guess.</p>
+<pre class="r"><code>words &lt;- c()
+for (i in guesses_1_2) {
+  words &lt;- c(words, i)
+}
+
+counts &lt;- as.data.frame(
+  table(words),
+  responseName = &quot;n&quot;
+)
+counts$total &lt;- sum(counts$n)
+counts$percent &lt;- round(100 * (counts$n / counts$total), 1)
+
+likeliest &lt;- counts[order(-counts$percent), ]
+rownames(likeliest) &lt;- NULL
+head(likeliest, 3)</code></pre>
+<pre><code>##   words n total percent
+## 1 thick 7    99     7.1
+## 2 chits 5    99     5.1
+## 3 whist 5    99     5.1</code></pre>
+<p>So, purely on the basis of this frequency, ‘thick’ was most likely to be the first guess in this contrived example. You might want to consider how likely someone is to actually submit some of these words, given their obscurity.</p>
+</div>
+</div>
+<div id="hurdle" class="section level1">
+<h1>Hurdle?</h1>
+<p>I hope you weren’t expecting anything more from this post. Maybe consider some meme variants, like <a href="https://twitter.com/Hooper_b13/status/1480838944812158977?s=20">Curdle</a>, <a href="https://twitter.com/BebeNeuwirth/status/1479966069469204483?s=20">Birdle</a>, <a href="https://twitter.com/Foone/status/1480643494985146372?s=20">Tetris</a>, or <a href="https://twitter.com/AaronChewning/status/1481701906808516610?s=20">this absolute banger</a>.</p>
+<p>Okay, show’s over, you can stop the Wordling now.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.1.1 (2021-08-10)
+##  os       macOS Mojave 10.14.6        
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2022-01-14                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date       lib source                                
+##  askpass       1.1     2019-01-13 [1] CRAN (R 4.1.0)                        
+##  blogdown      1.5     2021-09-02 [1] CRAN (R 4.1.0)                        
+##  bookdown      0.24    2021-09-02 [1] CRAN (R 4.1.0)                        
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.1.0)                        
+##  cli           3.1.0   2021-10-27 [1] CRAN (R 4.1.0)                        
+##  crayon        1.4.2   2021-10-29 [1] CRAN (R 4.1.0)                        
+##  curl          4.3.2   2021-06-23 [1] CRAN (R 4.1.0)                        
+##  digest        0.6.28  2021-09-23 [1] CRAN (R 4.1.0)                        
+##  ellipsis      0.3.2   2021-04-29 [1] CRAN (R 4.1.0)                        
+##  evaluate      0.14    2019-05-28 [1] CRAN (R 4.1.0)                        
+##  fansi         0.5.0   2021-05-25 [1] CRAN (R 4.1.0)                        
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.1.0)                        
+##  hms           1.1.1   2021-09-26 [1] CRAN (R 4.1.0)                        
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.1.0)                        
+##  httr          1.4.2   2020-07-20 [1] CRAN (R 4.1.0)                        
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.1.0)                        
+##  jsonlite      1.7.2   2020-12-09 [1] CRAN (R 4.1.0)                        
+##  knitr         1.36    2021-09-29 [1] CRAN (R 4.1.0)                        
+##  lifecycle     1.0.1   2021-09-24 [1] CRAN (R 4.1.1)                        
+##  magrittr      2.0.1   2020-11-17 [1] CRAN (R 4.1.0)                        
+##  openssl       1.4.5   2021-09-02 [1] CRAN (R 4.1.0)                        
+##  pillar        1.6.4   2021-10-18 [1] CRAN (R 4.1.0)                        
+##  pkgconfig     2.0.3   2019-09-22 [1] CRAN (R 4.1.0)                        
+##  prettyunits   1.1.1   2020-01-24 [1] CRAN (R 4.1.0)                        
+##  progress      1.2.2   2019-05-16 [1] CRAN (R 4.1.0)                        
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.1.0)                        
+##  rlang         0.4.12  2021-10-18 [1] CRAN (R 4.1.0)                        
+##  rmarkdown     2.11    2021-09-14 [1] CRAN (R 4.1.0)                        
+##  rstudioapi    0.13    2020-11-12 [1] CRAN (R 4.1.0)                        
+##  rtweet        0.7.0   2020-01-08 [1] CRAN (R 4.1.0)                        
+##  sass          0.4.0   2021-05-12 [1] CRAN (R 4.1.0)                        
+##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.1.0)                        
+##  stringi       1.7.6   2021-11-29 [1] CRAN (R 4.1.0)                        
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.1.0)                        
+##  tibble        3.1.6   2021-11-07 [1] CRAN (R 4.1.0)                        
+##  utf8          1.2.2   2021-07-24 [1] CRAN (R 4.1.0)                        
+##  vctrs         0.3.8   2021-04-29 [1] CRAN (R 4.1.0)                        
+##  withr         2.4.3   2021-11-30 [1] CRAN (R 4.1.1)                        
+##  wordle        0.1.6   2022-01-12 [1] Github (coolbutuseless/wordle@3436617)
+##  xfun          0.26    2021-09-14 [1] CRAN (R 4.1.0)                        
+##  yaml          2.2.1   2020-02-01 [1] CRAN (R 4.1.0)                        
+## 
+## [1] /Users/matt.dray/Library/R/x86_64/4.1/library
+## [2] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
+</details>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Us pros call this ‘function-name driven development’, or FNDD. It’s very simple, you just choose a funny function name and work backwards from there.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>DO YOU SEE IT IS LIKE ‘TWITTER’ AND ‘WORDLE’ FUSED TOGETHER, LOL.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>DO YOU SEE IT IS LIKE ‘WORDLE’ BACKWARDS? HA HA HA.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>No spoilers here. I have no idea if this word has ever been a correct answer in Wordle to date.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
