@@ -38,7 +38,7 @@ Folks have already put together some neat R tools, like solvers and ways to play
 
 # Showerthoughts
 
-Surprise: I haven't actually played the game. 
+Surprise: I haven't actually played the game.[^manipulate]
 
 But that didn't stop me from writing a couple of modest functions to practice my regex and base-R skills: `twirdle()` and `eldrow()`.[^fndd] 
 
@@ -71,8 +71,7 @@ twirdle <- function(tweets) {
   
   tweets$meta <- regexpr(meta_rx, tweets$text)
   tweets$meta <- setNames(
-    tweets$meta,
-    ifelse(tweets$meta < 0, FALSE, TRUE)
+    tweets$meta, ifelse(tweets$meta < 0, FALSE, TRUE)
   )
   tweets$meta <- ifelse(
     names(tweets$meta),
@@ -83,18 +82,15 @@ twirdle <- function(tweets) {
   tweets <- tweets[!is.na(tweets$meta), ]
   
   tweets$edition <- regmatches(
-    tweets$meta,
-    regexpr("\\d{1,}", tweets$meta)
+    tweets$meta, regexpr("\\d{1,}", tweets$meta)
   )
   
   tweets$attempts <- regmatches(
-    tweets$meta,
-    regexpr("\\d{1}(?=/)", tweets$meta, perl = TRUE)
+    tweets$meta, regexpr("\\d{1}(?=/)", tweets$meta, perl = TRUE)
   )
   
   tweets$allowed <- regmatches(
-    tweets$meta,
-    regexpr("(?<=/)\\d{1}", tweets$meta, perl = TRUE)
+    tweets$meta, regexpr("(?<=/)\\d{1}", tweets$meta, perl = TRUE)
   )
   
   tweets$grid <- regmatches(
@@ -114,6 +110,9 @@ twirdle <- function(tweets) {
     ifelse(grepl(w_sq, tweets$text), "light", "unknown")
   )
   
+  tweets$edition  <- as.numeric(tweets$edition)
+  tweets$attempts <- as.numeric(tweets$attempts)
+  tweets$allowed  <- as.numeric(tweets$allowed)
   tweets[, c("edition", "attempts", "allowed", 
              "mode", "grid", "status_id")]
   
@@ -188,7 +187,7 @@ eldrow <- function(guess, answer, words = wordle::wordle_dict){
 
 I also put the code for this [in a GitHub Gist](https://gist.github.com/matt-dray/fe1f236f21abe7d2e4b2a594d5b207e1).
 
-So, let's say someone took three attempts at the word 'shirt'[^shirt] and their first and second guesses gave encodings of `YGG--` then `-GGG-`.
+So, let's say someone took three attempts at the word 'shirt'[^shirt] and their first and second guesses gave encodings of `"YGG--"` then `"-GGG-"`.
 
 We can start by passing the answer and the encoding for the prior guess.
 
@@ -216,9 +215,9 @@ str(guesses_1_2)
 
 The output is a list with elements containing the potential first guesses and is named for each of the potential second guesses. So, logically, a possible set of guesses by this imaginary person was 'shift' then 'third' then 'shirts'.
 
-Of course, you can eliminate any potential second guesses that failed to yield a potential first guess, like 'whirl'in this example.
+Of course, you can eliminate any potential second guesses that failed to yield a potential first guess, like 'whirl' in this example.
 
-You'll also notice a number of the potential first guesses are the same word. The more they appear, the more likely that word is to have been the actual starting guess.
+You'll also notice a number of the potential first guesses are the same word. The more they appear, the more likely that word is to have been the actual starting guess, I suppose?
 
 ```{r eldrow-likeliest}
 words <- c()
@@ -238,7 +237,7 @@ rownames(likeliest) <- NULL
 head(likeliest, 3)
 ```
 
-So, purely on the basis of this frequency, 'thick' was most likely to be the first guess in this contrived example. You might want to consider how likely someone is to actually submit some of these words, given their obscurity.
+So, purely on the basis of this frequency, 'thick' was most likely to be the first guess in this contrived example. You might want to consider how likely someone is to actually submit some of these words, given their obscurity.[^thick]
 
 # Hurdle?
 
@@ -257,3 +256,5 @@ sessioninfo::session_info()
 [^fndd]: Us pros call this 'function-name driven development', or FNDD. It's very simple, you just choose a funny function name and work backwards from there.
 [^backwards]: DO YOU SEE IT IS LIKE 'WORDLE' BACKWARDS? HA HA HA.
 [^twitter]: DO YOU SEE IT IS LIKE 'TWITTER' AND 'WORDLE' FUSED TOGETHER, LOL.
+[^manipulate]: I am simply manipulating you for clicks.
+[^thick]: 'Thick Chitswhist' is a Star Wars Expanded Universe character, I think?

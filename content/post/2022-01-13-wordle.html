@@ -35,12 +35,12 @@ draft: no
 </div>
 <div id="showerthoughts" class="section level1">
 <h1>Showerthoughts</h1>
-<p>Surprise: I haven’t actually played the game.</p>
-<p>But that didn’t stop me from writing a couple of modest functions to practice my regex and base-R skills: <code>twirdle()</code> and <code>eldrow()</code>.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>Surprise: I haven’t actually played the game.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>But that didn’t stop me from writing a couple of modest functions to practice my regex and base-R skills: <code>twirdle()</code> and <code>eldrow()</code>.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
 <p>As ever, I can call them ‘toy’ functions and get away without proper error-checking and code optimisation.</p>
 <div id="twirdle" class="section level2">
 <h2>twirdle</h2>
-<p>The consistent template makes it straightforward to extract people’s results from tweets. I’ve made the <code>twirdle()</code> function to do this.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>The consistent template makes it straightforward to extract people’s results from tweets. I’ve made the <code>twirdle()</code> function to do this.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
 <p><code>twirdle()</code> makes use of regular expressions and functions like <code>regmatches()</code> and <code>regexpr()</code> to extract:</p>
 <ul>
 <li>the Wordle <code>edition</code> number, e.g. ‘206’</li>
@@ -66,8 +66,7 @@ Click for the full <code>twirdle()</code> function definition
   
   tweets$meta &lt;- regexpr(meta_rx, tweets$text)
   tweets$meta &lt;- setNames(
-    tweets$meta,
-    ifelse(tweets$meta &lt; 0, FALSE, TRUE)
+    tweets$meta, ifelse(tweets$meta &lt; 0, FALSE, TRUE)
   )
   tweets$meta &lt;- ifelse(
     names(tweets$meta),
@@ -78,18 +77,15 @@ Click for the full <code>twirdle()</code> function definition
   tweets &lt;- tweets[!is.na(tweets$meta), ]
   
   tweets$edition &lt;- regmatches(
-    tweets$meta,
-    regexpr(&quot;\\d{1,}&quot;, tweets$meta)
+    tweets$meta, regexpr(&quot;\\d{1,}&quot;, tweets$meta)
   )
   
   tweets$attempts &lt;- regmatches(
-    tweets$meta,
-    regexpr(&quot;\\d{1}(?=/)&quot;, tweets$meta, perl = TRUE)
+    tweets$meta, regexpr(&quot;\\d{1}(?=/)&quot;, tweets$meta, perl = TRUE)
   )
   
   tweets$allowed &lt;- regmatches(
-    tweets$meta,
-    regexpr(&quot;(?&lt;=/)\\d{1}&quot;, tweets$meta, perl = TRUE)
+    tweets$meta, regexpr(&quot;(?&lt;=/)\\d{1}&quot;, tweets$meta, perl = TRUE)
   )
   
   tweets$grid &lt;- regmatches(
@@ -109,6 +105,9 @@ Click for the full <code>twirdle()</code> function definition
     ifelse(grepl(w_sq, tweets$text), &quot;light&quot;, &quot;unknown&quot;)
   )
   
+  tweets$edition  &lt;- as.numeric(tweets$edition)
+  tweets$attempts &lt;- as.numeric(tweets$attempts)
+  tweets$allowed  &lt;- as.numeric(tweets$allowed)
   tweets[, c(&quot;edition&quot;, &quot;attempts&quot;, &quot;allowed&quot;, 
              &quot;mode&quot;, &quot;grid&quot;, &quot;status_id&quot;)]
   
@@ -124,25 +123,25 @@ Click for the full <code>twirdle()</code> function definition
 <p>And now we can pass the returned dataframe of tweets to <code>twirdle()</code>. It outputs a row per tweet, but there may be fewer tweets than we asked for because the content doesn’t conform to the output provided by Wordle. Sometimes people add their own comments into the results, disrupting the expected format.</p>
 <pre class="r"><code>twirdle(tweets)</code></pre>
 <pre><code>## # A tibble: 10 × 6
-##    edition attempts allowed mode  grid                           status_id      
-##    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;   &lt;chr&gt; &lt;chr&gt;                          &lt;chr&gt;          
-##  1 210     3        6       dark  Y-Y--YG-GYGGGGG                14821389694797…
-##  2 209     6        6       light --Y----------Y-G--G------GGGGG 14821389633892…
-##  3 209     3        6       dark  G-Y--GG--GGGGGG                14821389629279…
-##  4 209     3        6       light Y--YYGGGG-GGGGG                14821389602813…
-##  5 210     3        6       dark  -----G-G--GGGGG                14821389592244…
-##  6 210     4        6       light -G----G-Y-YGY-YGGGGG           14821389487722…
-##  7 210     5        6       light -G----GYY-GGYY-GGGG-GGGGG      14821389441083…
-##  8 209     3        6       dark  -G-Y-YG-YYGGGGG                14821389441040…
-##  9 210     4        6       dark  -G----G-G--G-GYGGGGG           14821389405387…
-## 10 210     4        6       dark  --Y-YYY----GGGGGGGGG           14821389396830…</code></pre>
+##    edition attempts allowed mode  grid                      status_id          
+##      &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt;                     &lt;chr&gt;              
+##  1     209        5       6 light -Y--YG-Y-YG-G--GGGG-GGGGG 1482144294299488256
+##  2     210        3       6 light --YGY-GGG-GGGGG           1482144292000968706
+##  3     210        3       6 light Y-Y--GGY--GGGGG           1482144290675601412
+##  4     210        4       6 light Y-Y-----Y---YY-GGGGG      1482144289740279811
+##  5     210        3       6 dark  -G-G-YG-GYGGGGG           1482144288502956032
+##  6     210        4       6 light -Y-YYYGG---GGY-GGGGG      1482144286149910536
+##  7     210        4       6 dark  -------Y--G-YG-GGGGG      1482144285420290052
+##  8     210        4       6 dark  --GY-YGG---GGY-GGGGG      1482144285139128320
+##  9     209        4       6 light ----Y-Y-Y-YG-YGGGGGG      1482144284782391296
+## 10     210        4       6 light --Y--GG---GGY--GGGGG      1482144284489003010</code></pre>
 <p>You could use this to do a number of things, like calculate the mean number of attempts for each day’s puzzle, look at-scale for patterns in guesses, or maybe <a href="https://twitter.com/mattdray/status/1481071855465287680?s=20">see whether dark-mode users are more skilled than light-mode users</a>.</p>
 </div>
 <div id="eldrow" class="section level2">
 <h2>eldrow</h2>
 <p>Of course, the whole purpose of sharing an encoded emoji grid is to prevent spoilers. No-one reading your result can see the answer or your guesses.</p>
 <p>But, if you do know the answer, could you backwards-engineer prior guesses from the emoji grid?</p>
-<p>Introducing <code>eldrow()</code>,<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> which does exactly this with some help from <a href="https://github.com/coolbutuseless/wordle">mikefc’s {wordle} package</a> for filtering from the Wordle wordlist.</p>
+<p>Introducing <code>eldrow()</code>,<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> which does exactly this with some help from <a href="https://github.com/coolbutuseless/wordle">mikefc’s {wordle} package</a> for filtering from the Wordle wordlist.</p>
 <p>You pass to it the <code>answer</code> and the encoding of the last <code>guess</code> in the form <code>"Y-GY-"</code>. As per the <code>twirdle()</code> output, the characters <code>G</code>, <code>Y</code> and <code>-</code> refer to a letter in the right place, wrong place, or not in the word. The function returns a vector of all the possible words given the <code>guess</code> and the <code>answer</code>.</p>
 <details>
 <summary>
@@ -180,7 +179,7 @@ Click for the full <code>eldrow()</code> definition
 }</code></pre>
 </details>
 <p>I also put the code for this <a href="https://gist.github.com/matt-dray/fe1f236f21abe7d2e4b2a594d5b207e1">in a GitHub Gist</a>.</p>
-<p>So, let’s say someone took three attempts at the word ‘shirt’<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> and their first and second guesses gave encodings of <code>YGG--</code> then <code>-GGG-</code>.</p>
+<p>So, let’s say someone took three attempts at the word ‘shirt’<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> and their first and second guesses gave encodings of <code>"YGG--"</code> then <code>"-GGG-"</code>.</p>
 <p>We can start by passing the answer and the encoding for the prior guess.</p>
 <pre class="r"><code>guess_2 &lt;- eldrow(guess = &quot;-GGG-&quot;, answer = &quot;shirt&quot;)
 guess_2</code></pre>
@@ -213,8 +212,8 @@ str(guesses_1_2)</code></pre>
 ##  $ whirl: chr(0) 
 ##  $ whirs: chr(0)</code></pre>
 <p>The output is a list with elements containing the potential first guesses and is named for each of the potential second guesses. So, logically, a possible set of guesses by this imaginary person was ‘shift’ then ‘third’ then ‘shirts’.</p>
-<p>Of course, you can eliminate any potential second guesses that failed to yield a potential first guess, like ’whirl’in this example.</p>
-<p>You’ll also notice a number of the potential first guesses are the same word. The more they appear, the more likely that word is to have been the actual starting guess.</p>
+<p>Of course, you can eliminate any potential second guesses that failed to yield a potential first guess, like ‘whirl’ in this example.</p>
+<p>You’ll also notice a number of the potential first guesses are the same word. The more they appear, the more likely that word is to have been the actual starting guess, I suppose?</p>
 <pre class="r"><code>words &lt;- c()
 for (i in guesses_1_2) {
   words &lt;- c(words, i)
@@ -234,7 +233,7 @@ head(likeliest, 3)</code></pre>
 ## 1 thick 7    99     7.1
 ## 2 chits 5    99     5.1
 ## 3 whist 5    99     5.1</code></pre>
-<p>So, purely on the basis of this frequency, ‘thick’ was most likely to be the first guess in this contrived example. You might want to consider how likely someone is to actually submit some of these words, given their obscurity.</p>
+<p>So, purely on the basis of this frequency, ‘thick’ was most likely to be the first guess in this contrived example. You might want to consider how likely someone is to actually submit some of these words, given their obscurity.<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a></p>
 </div>
 </div>
 <div id="hurdle" class="section level1">
@@ -256,7 +255,7 @@ Session info
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2022-01-14                  
+##  date     2022-01-15                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
 ##  package     * version date       lib source                                
@@ -309,9 +308,11 @@ Session info
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>Us pros call this ‘function-name driven development’, or FNDD. It’s very simple, you just choose a funny function name and work backwards from there.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>DO YOU SEE IT IS LIKE ‘TWITTER’ AND ‘WORDLE’ FUSED TOGETHER, LOL.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
-<li id="fn3"><p>DO YOU SEE IT IS LIKE ‘WORDLE’ BACKWARDS? HA HA HA.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
-<li id="fn4"><p>No spoilers here. I have no idea if this word has ever been a correct answer in Wordle to date.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn1"><p>I am simply manipulating you for clicks.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>Us pros call this ‘function-name driven development’, or FNDD. It’s very simple, you just choose a funny function name and work backwards from there.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>DO YOU SEE IT IS LIKE ‘TWITTER’ AND ‘WORDLE’ FUSED TOGETHER, LOL.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>DO YOU SEE IT IS LIKE ‘WORDLE’ BACKWARDS? HA HA HA.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>No spoilers here. I have no idea if this word has ever been a correct answer in Wordle to date.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+<li id="fn6"><p>‘Thick Chitswhist’ is a Star Wars Expanded Universe character, I think?<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
