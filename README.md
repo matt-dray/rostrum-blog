@@ -25,14 +25,13 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 112 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 113 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 7 day(s) ago: [The most popular Animal
-Crossing
-villagers](https://www.rostrum.blog/2022/01/07/acnh-swipe-results/).
+🆕 The latest post was published 1 day(s) ago: [Wordle, twirdle and
+eldrow](https://www.rostrum.blog/2022/01/14/wordle/).
 
 📈 This 2D plot shows posts over time:
 
@@ -44,6 +43,7 @@ villagers](https://www.rostrum.blog/2022/01/07/acnh-swipe-results/).
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|    113 | 2022-01-14 | [Wordle, twirdle and eldrow](https://www.rostrum.blog/2022/01/14/wordle/)                                                 |
 |    112 | 2022-01-07 | [The most popular Animal Crossing villagers](https://www.rostrum.blog/2022/01/07/acnh-swipe-results/)                     |
 |    111 | 2021-12-30 | [Your workout route (in three dimensions\!)](https://www.rostrum.blog/2021/12/30/gpx3d/)                                  |
 |    110 | 2021-11-27 | [{itdepends} on {lubridate}](https://www.rostrum.blog/2021/11/27/lubridate-fns/)                                          |
@@ -161,4 +161,4 @@ villagers](https://www.rostrum.blog/2022/01/07/acnh-swipe-results/).
 
 -----
 
-*Updated 2022-01-14 02:48:29*
+*Updated 2022-01-15 02:54:19*
