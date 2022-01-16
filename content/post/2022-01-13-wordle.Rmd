@@ -150,6 +150,8 @@ Introducing `eldrow()`,[^backwards] which does exactly this with some help from 
 
 You pass to it the `answer` and the encoding of the last `guess` in the form `"Y-GY-"`. As per the `twirdle()` output, the characters `G`, `Y` and `-` refer to a letter in the right place, wrong place, or not in the word. The function returns a vector of all the possible words given the `guess` and the `answer`.
 
+One thing it doesn't deal with is whether people are playing in 'hard mode', where 'any revealed hints must be used in subsequent guesses'. I think you could infer if someone was playing this way, but you could never be completely sure.
+
 <details><summary>Click for the full `eldrow()` definition</summary>
 ```{r eldrow-fn}
 eldrow <- function(guess, answer, words = wordle::wordle_dict){
@@ -196,7 +198,7 @@ guess_2 <- eldrow(guess = "-GGG-", answer = "shirt")
 guess_2
 ```
 
-Okay, so locigcally they could have guessed any of these `r length(guess_2)` options before their final, correct guess.
+Okay, so logicically they could have guessed any of these `r length(guess_2)` options before their final, correct guess.
 
 Naturally, we can extrapolate one step further back and infer the earlier potential guesses.
 

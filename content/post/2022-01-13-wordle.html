@@ -122,18 +122,19 @@ Click for the full <code>twirdle()</code> function definition
 )</code></pre>
 <p>And now we can pass the returned dataframe of tweets to <code>twirdle()</code>. It outputs a row per tweet, but there may be fewer tweets than we asked for because the content doesn’t conform to the output provided by Wordle. Sometimes people add their own comments into the results, disrupting the expected format.</p>
 <pre class="r"><code>twirdle(tweets)</code></pre>
-<pre><code>## # A tibble: 9 × 6
-##   edition attempts allowed mode    grid                      status_id          
-##     &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;                     &lt;chr&gt;              
-## 1     210        2       6 light   -----GGGGG                1482148124840067072
-## 2     210        3       6 light   -G-G--G-GYGGGGG           1482148124298776576
-## 3     210        2       6 dark    --YGYGGGGG                1482148121639624704
-## 4     210        2       6 light   ---Y-Y-Y---GG--GGG--GGGGG 1482148119534276611
-## 5     210        2       6 dark    --YG-GGGGG                1482148119278149634
-## 6     210        4       6 light   G-GG-GGGGG                1482148118615502850
-## 7     210        1       6 light   --YY--GY--YG---GGGGG      1482148117978005509
-## 8     210        5       6 unknown GGGGG                     1482148116514099202
-## 9     210        2       6 dark    --Y-----Y--GY--Y-YY-GGGGG 1482148116346425344</code></pre>
+<pre><code>## # A tibble: 10 × 6
+##    edition attempts allowed mode  grid                      status_id          
+##      &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt;                     &lt;chr&gt;              
+##  1     211        4       6 light YY-Y--G---GGYY-GGGGG      1482727567769493504
+##  2     211        4       6 dark  G-YG-GG--GGG-GGGGGGG      1482727566700072972
+##  3     211        3       6 light --YY-G-GG-GGGGG           1482727566360338432
+##  4     211        3       6 dark  G--G-G--GGGGGGG           1482727565810937858
+##  5     211        4       6 light -Y--YG-YY-GYG--GGGGG      1482727564493967361
+##  6     211        4       6 dark  YY-Y--G---GG-GGGGGGG      1482727559129407489
+##  7     211        3       6 dark  --GY-GYG--GGGGG           1482727558881976320
+##  8     211        5       6 dark  -GY-----GY-GGGG-GGGGGGGGG 1482727556453441541
+##  9     211        4       6 dark  --YY-YY--YG--GGGGGGG      1482727554079506432
+## 10     211        4       6 dark  -Y--Y-YY-YGYG--GGGGG      1482727553400033284</code></pre>
 <p>You could use this to do a number of things, like calculate the mean number of attempts for each day’s puzzle, look at-scale for patterns in guesses, or maybe <a href="https://twitter.com/mattdray/status/1481071855465287680?s=20">see whether dark-mode users are more skilled than light-mode users</a>.</p>
 </div>
 <div id="eldrow" class="section level2">
@@ -142,6 +143,7 @@ Click for the full <code>twirdle()</code> function definition
 <p>But, if you do know the answer, could you backwards-engineer prior guesses from the emoji grid?</p>
 <p>Introducing <code>eldrow()</code>,<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> which does exactly this with some help from <a href="https://github.com/coolbutuseless/wordle">mikefc’s {wordle} package</a> for filtering from the Wordle wordlist.<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a></p>
 <p>You pass to it the <code>answer</code> and the encoding of the last <code>guess</code> in the form <code>"Y-GY-"</code>. As per the <code>twirdle()</code> output, the characters <code>G</code>, <code>Y</code> and <code>-</code> refer to a letter in the right place, wrong place, or not in the word. The function returns a vector of all the possible words given the <code>guess</code> and the <code>answer</code>.</p>
+<p>One thing it doesn’t deal with is whether people are playing in ‘hard mode’, where ‘any revealed hints must be used in subsequent guesses’. I think you could infer if someone was playing this way, but you could never be completely sure.</p>
 <details>
 <summary>
 Click for the full <code>eldrow()</code> definition
@@ -184,7 +186,7 @@ Click for the full <code>eldrow()</code> definition
 guess_2</code></pre>
 <pre><code>##  [1] &quot;chirk&quot; &quot;chirl&quot; &quot;chirm&quot; &quot;chiro&quot; &quot;chirp&quot; &quot;chirt&quot; &quot;chiru&quot; &quot;shire&quot; &quot;shirk&quot;
 ## [10] &quot;shirs&quot; &quot;third&quot; &quot;thirl&quot; &quot;whirl&quot; &quot;whirs&quot;</code></pre>
-<p>Okay, so locigcally they could have guessed any of these 14 options before their final, correct guess.</p>
+<p>Okay, so logicically they could have guessed any of these 14 options before their final, correct guess.</p>
 <p>Naturally, we can extrapolate one step further back and infer the earlier potential guesses.</p>
 <p>You can iterate over these 14 possible words as the <code>answer</code> argument to <code>eldrow()</code>, setting the <code>guess</code> argument to the encoding for the previous attempt (i.e. <code>"YGG--"</code> was the first guess in our example).</p>
 <pre class="r"><code>guesses_1_2 &lt;- lapply(
@@ -254,7 +256,7 @@ Session info
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2022-01-15                  
+##  date     2022-01-16                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
 ##  package     * version date       lib source                                
