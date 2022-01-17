@@ -13,7 +13,7 @@ draft: no
 ---
 
 <div class="figure">
-<img src="/post/2022-01-13-wordle_files/werdz.png" alt="Five green squares containing the letters w, e, r, d and z in fancy comic sans." width="100%"/>
+<img src="/post/2022-01-13-wordle_files/werdz.png" alt="Five green squares containing the letters w, e, r, d and z in fancy comic sans." width="50%"/>
 </div>
 
 # tl;dr
@@ -46,30 +46,32 @@ As ever, I can call them 'toy' functions and get away without proper error-check
 
 ## twirdle
 
-The consistent template makes it straightforward to extract people's results from tweets. I've made the `twirdle()` function to do this.[^twitter]
+The consistent Wordle template makes it straightforward to extract people's results from tweets. I've made the `twirdle()` function to do this.[^twitter]
 
 `twirdle()` makes use of regular expressions and functions like `regmatches()` and `regexpr()` to extract: 
 
 * the Wordle `edition` number, e.g. '206'
-* the `attempt`s required, e.g. '4'
+* the `attempt`s required, e.g. '4', but also failures symbolised with 'X'
 * the maximum `allowed` attempts (`max`), i.e. '6'
 * whether the user was playing in light or dark `mode`
 * a string of characters representing the emoji `grid`, e.g. `"YG----G-GYGGGGG"`, to symbolise a correct guess (`G`reen emoji), a correct letter but in the wrong place (`Y`ellow), and a miss (`-`)
-* the tweet status ID so you can visit the original tweets
+* the tweet `status_id` so you can visit the original tweets
+
+### Code
 
 <details><summary>Click for the full `twirdle()` function definition</summary>
 ```{r twirdle-fn}
 twirdle <- function(tweets) {
   
-  meta_rx <- "Wordle \\d{1,} \\d{1}/6"  # e.g. 'Wordle 206 3/6'
+  meta_rx <- "Wordle \\d{1,} [\\d{1}|X]/\\d{1}"  # e.g. 'Wordle 206 3/6'
   g_sq <- "\U1F7E9"  # unicode green square emoji
   y_sq <- "\U1F7E8"  # yellow square
   b_sq <- "\U2B1B"   # black square
   w_sq <- "\U2B1C"   # white square
-  rx_sq <- paste(b_sq, w_sq, y_sq, g_sq, sep = "|")  # squares regex
-  rx_sq_fail <- paste(b_sq, w_sq, sep = "|")  # wrong letter regex
+  rx_sq <- paste(b_sq, w_sq, y_sq, g_sq, sep = "|")
+  rx_sq_fail <- paste(b_sq, w_sq, sep = "|")
   
-  tweets$meta <- regexpr(meta_rx, tweets$text)
+  tweets$meta <- regexpr(meta_rx, tweets$text, perl = TRUE)
   tweets$meta <- setNames(
     tweets$meta, ifelse(tweets$meta < 0, FALSE, TRUE)
   )
@@ -81,16 +83,26 @@ twirdle <- function(tweets) {
   
   tweets <- tweets[!is.na(tweets$meta), ]
   
-  tweets$edition <- regmatches(
-    tweets$meta, regexpr("\\d{1,}", tweets$meta)
+  tweets$edition <- as.numeric(
+    regmatches(
+      tweets$meta, regexpr("\\d{1,}", tweets$meta)
+    )
   )
   
   tweets$attempts <- regmatches(
-    tweets$meta, regexpr("\\d{1}(?=/)", tweets$meta, perl = TRUE)
+    tweets$meta, regexpr("[\\d{1}|X](?=/)", tweets$meta, perl = TRUE)
   )
+  tweets$attempts <- ifelse(
+    tweets$attempts == "X",
+    NA_character_,
+    tweets$attempts
+  )
+  tweets$attempts <- as.numeric(tweets$attempts)
   
-  tweets$allowed <- regmatches(
-    tweets$meta, regexpr("(?<=/)\\d{1}", tweets$meta, perl = TRUE)
+  tweets$allowed <- as.numeric(
+    regmatches(
+      tweets$meta, regexpr("(?<=/)\\d{1}", tweets$meta, perl = TRUE)
+    )
   )
   
   tweets$grid <- regmatches(
@@ -110,9 +122,6 @@ twirdle <- function(tweets) {
     ifelse(grepl(w_sq, tweets$text), "light", "unknown")
   )
   
-  tweets$edition  <- as.numeric(tweets$edition)
-  tweets$attempts <- as.numeric(tweets$attempts)
-  tweets$allowed  <- as.numeric(tweets$allowed)
   tweets[, c("edition", "attempts", "allowed", 
              "mode", "grid", "status_id")]
   
@@ -120,25 +129,29 @@ twirdle <- function(tweets) {
 ```
 </details>
 
-I put the code for the function [in a GitHub Gist](https://gist.github.com/matt-dray/996d066ead78acfaca47c0d37b966e8a), along with a version that uses {tidyverse} packages rather than base R.
+I also put the code for the function [in a GitHub Gist](https://gist.github.com/matt-dray/996d066ead78acfaca47c0d37b966e8a).
 
-To give an example of `twirdle()` in action, let's first grab a small number of tweets using [the {rtweet} package by Mike Kearney](https://docs.ropensci.org/rtweet/). Qualifying tweets contain at least the word 'Wordle' and a string of five green emoji that indicate a win, so we use these in our query string. I've chosen to focus on wins only; I think it's easier to find these tweets.
+### Example
+
+To give an example of `twirdle()` in action, let's first grab a small number of tweets using [the {rtweet} package by Mike Kearney](https://docs.ropensci.org/rtweet/). I think it's best to supply the query string of `search_tweets()` with the word 'Wordle' and at least one white or black emoji (signifying an incorrect letter).[^query]
 
 ```{r rtweet}
 tweets <- rtweet::search_tweets(
-  q = "Wordle \U1F7E9\U1F7E9\U1F7E9\U1F7E9\U1F7E9",
+  q = "Wordle \U2B1B OR \U2B1C",
   n = 10,  # return 10 tweets
-  include_rts = FALSE  # ignore retweets
+  include_rts = FALSE  # no retweets
 )
 ```
 
-And now we can pass the returned dataframe of tweets to `twirdle()`. It outputs a row per tweet, but there may be fewer tweets than we asked for because the content doesn't conform to the output provided by Wordle. Sometimes people add their own comments into the results, disrupting the expected format.
+And now we can pass the returned dataframe of tweets to `twirdle()`. It outputs a row per tweet, but there may be fewer tweets than we asked for because the content doesn't conform to the output provided by Wordle. Sometimes people add their own comments into the results, disrupting the expected format. There's also a Spanish version that has '(ES)' in the meta information that we're going to exclude for our purposes.
+
+Note that anyone who didn't complete the puzzle in six tries gets a score of 'X/6', which is returned as `NA_real_` in the `attempts` column.
 
 ```{r twirdle-ex}
 twirdle(tweets)
 ```
 
-You could use this to do a number of things, like calculate the mean number of attempts for each day's puzzle, look at-scale for patterns in guesses, or maybe [see whether dark-mode users are more skilled than light-mode users](https://twitter.com/mattdray/status/1481071855465287680?s=20).
+You could use this to do a number of things, like calculate the mean number of attempts for each day's puzzle, look for guess patterns at scale, or maybe [see whether dark-mode users are more skilled than light-mode users](https://twitter.com/mattdray/status/1481071855465287680?s=20).
 
 ## eldrow
 
@@ -151,6 +164,8 @@ Introducing `eldrow()`,[^backwards] which does exactly this with some help from 
 You pass to it the `answer` and the encoding of the last `guess` in the form `"Y-GY-"`. As per the `twirdle()` output, the characters `G`, `Y` and `-` refer to a letter in the right place, wrong place, or not in the word. The function returns a vector of all the possible words given the `guess` and the `answer`.
 
 One thing it doesn't deal with is whether people are playing in 'hard mode', where 'any revealed hints must be used in subsequent guesses'. I think you could infer if someone was playing this way, but you could never be completely sure.
+
+### Code
 
 <details><summary>Click for the full `eldrow()` definition</summary>
 ```{r eldrow-fn}
@@ -188,6 +203,8 @@ eldrow <- function(guess, answer, words = wordle::wordle_dict){
 </details>
 
 I also put the code for this [in a GitHub Gist](https://gist.github.com/matt-dray/fe1f236f21abe7d2e4b2a594d5b207e1).
+
+### Example
 
 So, let's say someone took three attempts at the word 'shirt'[^shirt] and their first and second guesses gave encodings of `"YGG--"` then `"-GGG-"`.
 
@@ -261,3 +278,4 @@ sessioninfo::session_info()
 [^manipulate]: I am simply manipulating you for clicks.
 [^thick]: 'Thick Chitswhist' is a Star Wars Expanded Universe character, I think?
 [^cbu]: This is a little manoeuvre I like to call 'mikefc-Driven Development' (MDD). See [a very recent post on this blog ](https://www.rostrum.blog/2021/12/30/gpx3d/) for an extremely recent example.
+[^query]: I initially put five green emoji in the query string, since all successful Wordles end this way. But then you miss out those people who didn't get a correct answer by the sixth guess.
