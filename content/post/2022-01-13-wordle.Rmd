@@ -32,11 +32,11 @@ The app lets you copy your results in a consistent format for pasting into a twe
 
 It begins with a string of meta information, 'Wordle X Y/Z', where X is the edition number, Y is the attempts taken and Z is the maximum allowed guesses. Then there's a grid of coloured emoji squares, where each row represents a guessed word and each emoji a letter.
 
-Green emojis represent a letter in the correct place, yellow in the wrong place and black or white for an incorrect letter (depending on whether you're playing in dark or light mode). The emojis obscure your guesses so that people can see how well you did without spoiling the answer.
+Green emojis (orange in colorblind mode) represent a letter in the correct place, yellow (blue in colorblind mode) in the wrong place and white for an incorrect letter (or black if playing in dark mode). The emojis obscure your guesses so that people can see how well you did without spoiling the answer.
 
 Folks have already put together some neat R tools, like solvers and ways to play in the console or in other languages. See [mikefc's {wordle} R package](https://github.com/coolbutuseless/wordle) and [Pachá's Shiny app](https://pacha.dev/blog/2022/01/14/shinywordle-a-shiny-app-to-solve-the-game-worldle-and-the-power-of-regular-expressions/), for example. 
 
-# Showerthoughts
+# Wordle up
 
 Surprise: I haven't actually played the game.[^manipulate]
 
@@ -54,7 +54,8 @@ The consistent Wordle template makes it straightforward to extract people's resu
 * the `attempt`s required, e.g. '4', but also failures symbolised with 'X'
 * the maximum `allowed` attempts (`max`), i.e. '6'
 * whether the user was playing in light or dark `mode`
-* a string of characters representing the emoji `grid`, e.g. `"YG----G-GYGGGGG"`, to symbolise a correct guess (`G`reen emoji), a correct letter but in the wrong place (`Y`ellow), and a miss (`-`)
+* whether the user was using `colorblind` mode
+* a string of characters representing the emoji `grid`, e.g. `"YG----G-GYGGGGG"`, to symbolise a correct guess (i.e. a `G`reen emoji), a correct letter but in the wrong place (i.e. `Y`ellow), and a miss (`-`)
 * the tweet `status_id` so you can visit the original tweets
 
 ### Code
@@ -63,18 +64,30 @@ The consistent Wordle template makes it straightforward to extract people's resu
 ```{r twirdle-fn}
 twirdle <- function(tweets) {
   
-  meta_rx <- "Wordle \\d{1,} [\\d{1}|X]/\\d{1}"  # e.g. 'Wordle 206 3/6'
-  g_sq <- "\U1F7E9"  # unicode green square emoji
-  y_sq <- "\U1F7E8"  # yellow square
-  b_sq <- "\U2B1B"   # black square
-  w_sq <- "\U2B1C"   # white square
-  rx_sq <- paste(b_sq, w_sq, y_sq, g_sq, sep = "|")
-  rx_sq_fail <- paste(b_sq, w_sq, sep = "|")
+  g   <- "\U1F7E9"
+  o   <- "\U1F7E7"
+  y   <- "\U1F7E8"
+  blu <- "\U1F7E6"
+  bla <- "\U2B1B"
+  w   <- "\U2B1C"
   
-  tweets$meta <- regexpr(meta_rx, tweets$text, perl = TRUE)
-  tweets$meta <- setNames(
-    tweets$meta, ifelse(tweets$meta < 0, FALSE, TRUE)
+  rx_all   <- paste(g, o, y, blu, bla, w, sep = "|")
+  rx_right <- paste(g, o, sep = "|")
+  rx_place <- paste(y, blu, sep = "|")
+  rx_wrong <- paste(bla, w, sep = "|")
+  rx_color <- paste(o, blu, sep = "|")
+
+  tweets$meta <- regexpr(
+    "Wordle \\d{1,} [\\d{1}|X]/\\d{1}",
+    tweets$text,
+    perl = TRUE
   )
+  
+  tweets$meta <- setNames(
+    tweets$meta, 
+    ifelse(tweets$meta < 0, FALSE, TRUE)
+  )
+  
   tweets$meta <- ifelse(
     names(tweets$meta),
     regmatches(tweets$text, tweets$meta),
@@ -85,45 +98,56 @@ twirdle <- function(tweets) {
   
   tweets$edition <- as.numeric(
     regmatches(
-      tweets$meta, regexpr("\\d{1,}", tweets$meta)
+      tweets$meta, 
+      regexpr("\\d{1,}", tweets$meta)
     )
   )
   
   tweets$attempts <- regmatches(
-    tweets$meta, regexpr("[\\d{1}|X](?=/)", tweets$meta, perl = TRUE)
+    tweets$meta,
+    regexpr("[\\d{1}|X](?=/)", tweets$meta, perl = TRUE)
   )
+  
   tweets$attempts <- ifelse(
     tweets$attempts == "X",
     NA_character_,
     tweets$attempts
   )
+  
   tweets$attempts <- as.numeric(tweets$attempts)
   
   tweets$allowed <- as.numeric(
     regmatches(
-      tweets$meta, regexpr("(?<=/)\\d{1}", tweets$meta, perl = TRUE)
+      tweets$meta, 
+      regexpr("(?<=/)\\d{1}", tweets$meta, perl = TRUE)
     )
   )
   
   tweets$grid <- regmatches(
     tweets$text, 
-    gregexpr(rx_sq, tweets$text) 
-  ) 
+    gregexpr(rx_all, tweets$text) 
+  )
+  
   tweets$grid <- lapply(
     tweets$grid, 
     function(x) paste(x, collapse = "")
   )
-  tweets$grid <- gsub(g_sq, "G", tweets$grid)
-  tweets$grid <- gsub(y_sq, "Y", tweets$grid)
-  tweets$grid <- gsub(rx_sq_fail, "-", tweets$grid)
   
-  tweets$mode <- ifelse(
-    grepl(b_sq, tweets$text), "dark",
-    ifelse(grepl(w_sq, tweets$text), "light", "unknown")
+  tweets$colorblind <- ifelse(
+    grepl(rx_color, tweets$grid), TRUE, FALSE
   )
   
-  tweets[, c("edition", "attempts", "allowed", 
-             "mode", "grid", "status_id")]
+  tweets$mode <- ifelse(
+    grepl(bla, tweets$grid), "dark",
+    ifelse(grepl(w, tweets$grid), "light", "unknown")
+  )
+  
+  tweets$grid <- gsub(rx_right, "G", tweets$grid)
+  tweets$grid <- gsub(rx_place, "Y", tweets$grid)
+  tweets$grid <- gsub(rx_wrong, "-", tweets$grid)
+  
+  tweets[, c("edition", "attempts", "allowed", "mode",
+             "colorblind", "grid", "status_id")]
   
 }
 ```
@@ -277,5 +301,5 @@ sessioninfo::session_info()
 [^twitter]: DO YOU SEE IT IS LIKE 'TWITTER' AND 'WORDLE' FUSED TOGETHER, LOL.
 [^manipulate]: I am simply manipulating you for clicks.
 [^thick]: 'Thick Chitswhist' is a Star Wars Expanded Universe character, I think?
-[^cbu]: This is a little manoeuvre I like to call 'mikefc-Driven Development' (MDD). See [a very recent post on this blog ](https://www.rostrum.blog/2021/12/30/gpx3d/) for an extremely recent example.
+[^cbu]: This is a little manoeuvre I like to call 'mikefc-Driven Development' (MDD). See [a very recent post on this blog ](https://www.rostrum.blog/2021/12/30/gpx3d/) for an example.
 [^query]: I initially put five green emoji in the query string, since all successful Wordles end this way. But then you miss out those people who didn't get a correct answer by the sixth guess.

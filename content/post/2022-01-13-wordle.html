@@ -30,11 +30,11 @@ draft: no
 <p><img src="/post/2022-01-13-wordle_files/wordle-result.png" alt="An example results output from Wordle edition 209 that took three attempts. The first row of coloured square emojis is the first guess, showing a letter in the wrong place (yellow) and one in the right place (green). The second guess has two in the wrong place and one correct. The last line shows victory. The black emojis show incorrect guesses." width="50%"/></p>
 </div>
 <p>It begins with a string of meta information, ‘Wordle X Y/Z’, where X is the edition number, Y is the attempts taken and Z is the maximum allowed guesses. Then there’s a grid of coloured emoji squares, where each row represents a guessed word and each emoji a letter.</p>
-<p>Green emojis represent a letter in the correct place, yellow in the wrong place and black or white for an incorrect letter (depending on whether you’re playing in dark or light mode). The emojis obscure your guesses so that people can see how well you did without spoiling the answer.</p>
+<p>Green emojis (orange in colorblind mode) represent a letter in the correct place, yellow (blue in colorblind mode) in the wrong place and white for an incorrect letter (or black if playing in dark mode). The emojis obscure your guesses so that people can see how well you did without spoiling the answer.</p>
 <p>Folks have already put together some neat R tools, like solvers and ways to play in the console or in other languages. See <a href="https://github.com/coolbutuseless/wordle">mikefc’s {wordle} R package</a> and <a href="https://pacha.dev/blog/2022/01/14/shinywordle-a-shiny-app-to-solve-the-game-worldle-and-the-power-of-regular-expressions/">Pachá’s Shiny app</a>, for example.</p>
 </div>
-<div id="showerthoughts" class="section level1">
-<h1>Showerthoughts</h1>
+<div id="wordle-up" class="section level1">
+<h1>Wordle up</h1>
 <p>Surprise: I haven’t actually played the game.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
 <p>But that didn’t stop me from writing a couple of modest functions to practice my regex and base-R skills: <code>twirdle()</code> and <code>eldrow()</code>.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
 <p>As ever, I can call them ‘toy’ functions and get away without proper error-checking and code optimisation.</p>
@@ -47,7 +47,8 @@ draft: no
 <li>the <code>attempt</code>s required, e.g. ‘4’, but also failures symbolised with ‘X’</li>
 <li>the maximum <code>allowed</code> attempts (<code>max</code>), i.e. ‘6’</li>
 <li>whether the user was playing in light or dark <code>mode</code></li>
-<li>a string of characters representing the emoji <code>grid</code>, e.g. <code>"YG----G-GYGGGGG"</code>, to symbolise a correct guess (<code>G</code>reen emoji), a correct letter but in the wrong place (<code>Y</code>ellow), and a miss (<code>-</code>)</li>
+<li>whether the user was using <code>colorblind</code> mode</li>
+<li>a string of characters representing the emoji <code>grid</code>, e.g. <code>"YG----G-GYGGGGG"</code>, to symbolise a correct guess (i.e. a <code>G</code>reen emoji), a correct letter but in the wrong place (i.e. <code>Y</code>ellow), and a miss (<code>-</code>)</li>
 <li>the tweet <code>status_id</code> so you can visit the original tweets</li>
 </ul>
 <div id="code" class="section level3">
@@ -58,18 +59,30 @@ Click for the full <code>twirdle()</code> function definition
 </summary>
 <pre class="r"><code>twirdle &lt;- function(tweets) {
   
-  meta_rx &lt;- &quot;Wordle \\d{1,} [\\d{1}|X]/\\d{1}&quot;  # e.g. &#39;Wordle 206 3/6&#39;
-  g_sq &lt;- &quot;\U1F7E9&quot;  # unicode green square emoji
-  y_sq &lt;- &quot;\U1F7E8&quot;  # yellow square
-  b_sq &lt;- &quot;\U2B1B&quot;   # black square
-  w_sq &lt;- &quot;\U2B1C&quot;   # white square
-  rx_sq &lt;- paste(b_sq, w_sq, y_sq, g_sq, sep = &quot;|&quot;)
-  rx_sq_fail &lt;- paste(b_sq, w_sq, sep = &quot;|&quot;)
+  g   &lt;- &quot;\U1F7E9&quot;
+  o   &lt;- &quot;\U1F7E7&quot;
+  y   &lt;- &quot;\U1F7E8&quot;
+  blu &lt;- &quot;\U1F7E6&quot;
+  bla &lt;- &quot;\U2B1B&quot;
+  w   &lt;- &quot;\U2B1C&quot;
   
-  tweets$meta &lt;- regexpr(meta_rx, tweets$text, perl = TRUE)
-  tweets$meta &lt;- setNames(
-    tweets$meta, ifelse(tweets$meta &lt; 0, FALSE, TRUE)
+  rx_all   &lt;- paste(g, o, y, blu, bla, w, sep = &quot;|&quot;)
+  rx_right &lt;- paste(g, o, sep = &quot;|&quot;)
+  rx_place &lt;- paste(y, blu, sep = &quot;|&quot;)
+  rx_wrong &lt;- paste(bla, w, sep = &quot;|&quot;)
+  rx_color &lt;- paste(o, blu, sep = &quot;|&quot;)
+
+  tweets$meta &lt;- regexpr(
+    &quot;Wordle \\d{1,} [\\d{1}|X]/\\d{1}&quot;,
+    tweets$text,
+    perl = TRUE
   )
+  
+  tweets$meta &lt;- setNames(
+    tweets$meta, 
+    ifelse(tweets$meta &lt; 0, FALSE, TRUE)
+  )
+  
   tweets$meta &lt;- ifelse(
     names(tweets$meta),
     regmatches(tweets$text, tweets$meta),
@@ -80,45 +93,56 @@ Click for the full <code>twirdle()</code> function definition
   
   tweets$edition &lt;- as.numeric(
     regmatches(
-      tweets$meta, regexpr(&quot;\\d{1,}&quot;, tweets$meta)
+      tweets$meta, 
+      regexpr(&quot;\\d{1,}&quot;, tweets$meta)
     )
   )
   
   tweets$attempts &lt;- regmatches(
-    tweets$meta, regexpr(&quot;[\\d{1}|X](?=/)&quot;, tweets$meta, perl = TRUE)
+    tweets$meta,
+    regexpr(&quot;[\\d{1}|X](?=/)&quot;, tweets$meta, perl = TRUE)
   )
+  
   tweets$attempts &lt;- ifelse(
     tweets$attempts == &quot;X&quot;,
     NA_character_,
     tweets$attempts
   )
+  
   tweets$attempts &lt;- as.numeric(tweets$attempts)
   
   tweets$allowed &lt;- as.numeric(
     regmatches(
-      tweets$meta, regexpr(&quot;(?&lt;=/)\\d{1}&quot;, tweets$meta, perl = TRUE)
+      tweets$meta, 
+      regexpr(&quot;(?&lt;=/)\\d{1}&quot;, tweets$meta, perl = TRUE)
     )
   )
   
   tweets$grid &lt;- regmatches(
     tweets$text, 
-    gregexpr(rx_sq, tweets$text) 
-  ) 
+    gregexpr(rx_all, tweets$text) 
+  )
+  
   tweets$grid &lt;- lapply(
     tweets$grid, 
     function(x) paste(x, collapse = &quot;&quot;)
   )
-  tweets$grid &lt;- gsub(g_sq, &quot;G&quot;, tweets$grid)
-  tweets$grid &lt;- gsub(y_sq, &quot;Y&quot;, tweets$grid)
-  tweets$grid &lt;- gsub(rx_sq_fail, &quot;-&quot;, tweets$grid)
   
-  tweets$mode &lt;- ifelse(
-    grepl(b_sq, tweets$text), &quot;dark&quot;,
-    ifelse(grepl(w_sq, tweets$text), &quot;light&quot;, &quot;unknown&quot;)
+  tweets$colorblind &lt;- ifelse(
+    grepl(rx_color, tweets$grid), TRUE, FALSE
   )
   
-  tweets[, c(&quot;edition&quot;, &quot;attempts&quot;, &quot;allowed&quot;, 
-             &quot;mode&quot;, &quot;grid&quot;, &quot;status_id&quot;)]
+  tweets$mode &lt;- ifelse(
+    grepl(bla, tweets$grid), &quot;dark&quot;,
+    ifelse(grepl(w, tweets$grid), &quot;light&quot;, &quot;unknown&quot;)
+  )
+  
+  tweets$grid &lt;- gsub(rx_right, &quot;G&quot;, tweets$grid)
+  tweets$grid &lt;- gsub(rx_place, &quot;Y&quot;, tweets$grid)
+  tweets$grid &lt;- gsub(rx_wrong, &quot;-&quot;, tweets$grid)
+  
+  tweets[, c(&quot;edition&quot;, &quot;attempts&quot;, &quot;allowed&quot;, &quot;mode&quot;,
+             &quot;colorblind&quot;, &quot;grid&quot;, &quot;status_id&quot;)]
   
 }</code></pre>
 </details>
@@ -135,19 +159,16 @@ Click for the full <code>twirdle()</code> function definition
 <p>And now we can pass the returned dataframe of tweets to <code>twirdle()</code>. It outputs a row per tweet, but there may be fewer tweets than we asked for because the content doesn’t conform to the output provided by Wordle. Sometimes people add their own comments into the results, disrupting the expected format. There’s also a Spanish version that has ‘(ES)’ in the meta information that we’re going to exclude for our purposes.</p>
 <p>Note that anyone who didn’t complete the puzzle in six tries gets a score of ‘X/6’, which is returned as <code>NA_real_</code> in the <code>attempts</code> column.</p>
 <pre class="r"><code>twirdle(tweets)</code></pre>
-<pre><code>## # A tibble: 10 × 6
-##    edition attempts allowed mode  grid                           status_id      
-##      &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt;                          &lt;chr&gt;          
-##  1     212        2       6 light -G-YYGGGGG                     14831560340300…
-##  2     212        5       6 light -YG-G----YG-GGGGGGG-GGGGG      14831560335057…
-##  3     213       NA       6 light Y----Y--Y--G----GG---GG-YGGG-- 14831560329817…
-##  4     212        3       6 light ---YYYY---GGGGG                14831560300161…
-##  5     212        5       6 dark  -YY---YY-YG-YG-GGYG-GGGGG      14831560281706…
-##  6     212        2       6 light ----GGGGGG                     14831560269249…
-##  7     213        4       6 light ---Y-G-Y-GGYY-GGGGGG           14831560266227…
-##  8     212        5       6 light -YYY-G---GG-GGGG-GGGGGGGG      14831560248319…
-##  9     212        3       6 dark  -Y-GYG--GGGGGGG                14831560162504…
-## 10     212        4       6 light YY--GG----G-GGGGGGGG           14831560147990…</code></pre>
+<pre><code>## # A tibble: 7 × 7
+##   edition attempts allowed mode  colorblind grid                 status_id      
+##     &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt; &lt;lgl&gt;      &lt;chr&gt;                &lt;chr&gt;          
+## 1     213        5       6 light FALSE      GY--YGGG--GGG--GGG-… 14834445690229…
+## 2     213        3       6 dark  FALSE      Y-----YY--GGGGG      14834445680161…
+## 3     213        6       6 dark  FALSE      --Y-----YG-G--G--G-… 14834445678988…
+## 4     213        6       6 light FALSE      -----Y------Y-G-G--… 14834445674540…
+## 5     213       NA       6 light FALSE      ---Y---G-YGGG--GGG-… 14834445662083…
+## 6     213        5       6 dark  FALSE      -G------YYGGG--GGG-… 14834445661120…
+## 7     213        3       6 dark  FALSE      ----Y--GY--GG--GGG-… 14834445648075…</code></pre>
 <p>You could use this to do a number of things, like calculate the mean number of attempts for each day’s puzzle, look for guess patterns at scale, or maybe <a href="https://twitter.com/mattdray/status/1481071855465287680?s=20">see whether dark-mode users are more skilled than light-mode users</a>.</p>
 </div>
 </div>
@@ -276,7 +297,7 @@ Session info
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2022-01-17                  
+##  date     2022-01-18                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
 ##  package     * version date       lib source                                
@@ -334,7 +355,7 @@ Session info
 <li id="fn3"><p>DO YOU SEE IT IS LIKE ‘TWITTER’ AND ‘WORDLE’ FUSED TOGETHER, LOL.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
 <li id="fn4"><p>I initially put five green emoji in the query string, since all successful Wordles end this way. But then you miss out those people who didn’t get a correct answer by the sixth guess.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
 <li id="fn5"><p>DO YOU SEE IT IS LIKE ‘WORDLE’ BACKWARDS? HA HA HA.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
-<li id="fn6"><p>This is a little manoeuvre I like to call ‘mikefc-Driven Development’ (MDD). See <a href="https://www.rostrum.blog/2021/12/30/gpx3d/">a very recent post on this blog</a> for an extremely recent example.<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
+<li id="fn6"><p>This is a little manoeuvre I like to call ‘mikefc-Driven Development’ (MDD). See <a href="https://www.rostrum.blog/2021/12/30/gpx3d/">a very recent post on this blog</a> for an example.<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
 <li id="fn7"><p>No spoilers here. I have no idea if this word has ever been a correct answer in Wordle to date.<a href="#fnref7" class="footnote-back">↩︎</a></p></li>
 <li id="fn8"><p>‘Thick Chitswhist’ is a Star Wars Expanded Universe character, I think?<a href="#fnref8" class="footnote-back">↩︎</a></p></li>
 </ol>
