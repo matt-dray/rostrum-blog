@@ -1,0 +1,193 @@
+---
+title: 'Impress with {keypress}'
+author: Matt Dray
+date: '2022-01-19'
+slug: keypress
+categories:
+  - code
+tags:
+  - games
+  - keypress
+  - r
+draft: no
+---
+
+```{r setup, echo = FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+<div class="figure">
+<img src="/post/2022-01-18-keypress_files/foe.png" alt="A hand-drawn face of sorts made with curly braces for the face, letter O for the eyes, and an underscore for the mouth. To the right is some Comic Sans Neue text saying 10 HP. This simulates the 'battle' function from the 'hokey' package." width="100%"/>
+</div>
+
+# tl;dr
+
+[The {keypress} package by Gábor Csárdi](https://github.com/gaborcsardi/keypress) records input from a simple keyboard-button press. You can use this to control games, like the ones in [the tiny {hokey} package](https://github.com/matt-dray/hokey).
+
+# Whaddup gameRs?
+
+I've made some silly games in R using [the {R6} package](https://r6.r-lib.org/index.html) for [encapsulated OOP](https://adv-r.hadley.nz/r6.html). For example:
+
+* {ActionSquirrel} a 2D action-adventure game ([blog](the accompanying blog post), [source](https://github.com/matt-dray/ActionSquirrel))
+* {safar6} a text-based recreation of _Pokémon_'s Safari Zone ([blog](https://www.rostrum.blog/2021/01/04/safar6/), [source](https://github.com/matt-dray/safar6))
+* an 'Automatic Bell Dispenser' to mimics the cash machine used in _Animal Crossing: New Horizons_ ([blog](https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/))
+
+Problem. In {ActionSquirrel} you move a character around a 2D grid. To go up you type `x$move("up")`, which means 'apply the `move` method to the previously-initialised R6 object called `x`, and supply to the `where` argument the direction `"up"`'. A bit long-winded, eh?
+
+It would be more natural to provide a single keyboard input to a game scenario, so a left-arrow press moves the player to the left, right? Right.[^right]
+
+# Record inputs
+
+Sure, R's `readline()` can take user input, but you would literally have to type `l`, `e`, `f`, `t`, and then hit 'enter', because the function doesn't recognise key presses directly.
+
+This is where [Gábor Csárdi's {keypress} package](https://github.com/gaborcsardi/keypress) comes in. It can accept single button presses from the keyboard, including the arrow keys. The user is prompted and a left-arrow press results in the text `"left"`, for example. 
+
+It's available on CRAN:
+
+```{r install}
+install.packages("keypress")
+```
+
+{keypress} works in the terminal but doesn't work everywhere, such as RStudio. Use `keypress::has_keypress_support()` to see if it's supported by the console you're using. See the [package README](https://github.com/gaborcsardi/keypress/blob/x/README.md) for details of the platforms supported and the keys that are accepted as input.
+
+# Quick ideas
+
+I thought I'd try out with {keypress} with three tiny interactive games, which I've bundled into [a pico package](https://www.rostrum.blog/2021/04/18/pico-pkg/)[^pico] called [{hokey}](https://github.com/matt-dray/hokey). 
+
+```{r}
+remotes::install_github("matt-dray/hokey")
+```
+
+Each one takes a keypress input from `keypress::keypress()` to affect the game, which is just a bunch of `if` or `while` statements, basically. You can [see the functions in the {hokey} package itself](https://github.com/matt-dray/hokey/blob/main/R/functions.R), if you're a nerd.[^nerd]
+
+The games in order of complexity:
+
+1. `type()`, a test of typing skills
+2. `adventure()`, a 2D side-scrollling adventure
+3. `battle()`, a clicker-style monster smasher
+
+These aren't properly documented ot tested or anything. They're just for demo's sake. 
+
+The rest of this post describes the games with a dash of dry humour.
+
+## 1. Typing test
+
+How fast you can you type randomly-selected letters?
+
+In the `type()` game a countdown will begin and then you'll be prompted to type one letter at a time, the total number of which can be controlled with the `n` argument.
+
+Here's what a completed game might look like, where each letter is revealed sequentially after typing the previous one.
+
+```{r type-demo}
+hokey::type(n = 5)
+```
+
+```
+3... 2... 1... Go!
+Press 'r'! Hit!
+Press 'o'! Hit!
+Press 'f'! Hit!
+Press 'l'! 'h'? Miss!
+Press 'z'! Hit!
+End! 4/5 in 5.403 seconds.
+```
+Yes, three decimal places in the elapsed time so that people can be more easily ranked on [speedruns.com](https://www.speedrun.com/).
+
+## 2. An adventure
+
+You've played 2D games (e.g. Mario). You've played 2.5D games (e.g. Mario). You've played 3D games (e.g. Mario).
+
+You're thinking the future is four-dimensional Mario. But you're wrong.
+
+Instead, `hokey::adventure()` explores the full power of moving along a one-dimensional line.
+
+Take control of the hero. Which is a dot. Move around the overworld. Which is a line. Simulate the lustrous points of Lineland from [Edwin A Abbott's Flatland](https://en.wikipedia.org/wiki/Flatland)!
+
+```{r adventure-demo}
+hokey::adventure(len = 10)
+```
+```
+Press left/right arrow keys
+--.------- 
+```
+
+As prompted, move with the arrow keys. If you go too far left, you 'bump' into the end and bounce back. See if you can reach the far-right end. You can do it!
+
+Here's what happens if you input the left-arrow key twice, then multiple presses of the right arrow key. The symbol on the end explains what's happened (`<` is left, `>` is right, `x` is an illegal move, `!` is a win).
+
+```
+Press left/right arrow keys
+--.------- 
+-.-------- < 
+.--------- x 
+-.-------- > 
+--.------- > 
+---.------ > 
+----.----- > 
+-----.---- > 
+------.--- > 
+-------.-- > 
+--------.- > 
+---------. ! 
+```
+
+Such graphics! Such dimensons!
+
+## 3. A clicker
+
+Ever heard of [Cookie Clicker](https://en.wikipedia.org/wiki/Cookie_Clicker)? It's a game where you click. A cookie. A whole bunch of times. Like, seriously, a while bunch of times. Why? To _win_, of course.
+
+Here's a keypress equivalent where you tap keys to vanquish randomised foes. Are there upgrades? No. Are there cool sprites? Not really. But do you click a lot? Also no, but you get to _press buttons_ a lot.
+
+So, initiate a battle with `hokey::battle()` and you're faced with monstrous foes, who have randomised faces made of letters and symbols.
+
+```{r cicker-demo}
+hokey::battle(n = 3)
+```
+```
+NEW FOE! { O _ O } 10 HP 
+```
+
+Tap keys to deplete the foe's hit points (HP) until they're defeated. Each hit is printed as a period. 
+
+```
+NEW FOE! { O _ O } 10 HP 
+..........
+VICTORY! { x _ x }  0 HP
+```
+
+Incrementally more powerful foes will appear!
+
+```
+NEW FOE! | - o - | 20 HP 
+....................
+VICTORY! | x o x |  0 HP
+
+NEW FOE! [ ' v ' ] 30 HP 
+..............................
+VICTORY! [ x v x ]  0 HP
+```
+
+You know they're beaten because their eyes become crosses.
+
+# Period
+
+Challenging. A test of wits. Worth your time.
+
+All are phrases that do not sum up the games of {hokey}.
+
+But, for me at least, I've got a better understanding of how {keypress} could be used for  games written in R, a burgeoning field in the world of R programming.[^games]
+
+Let me know how much you enjoyed these games and how much it's going to suck to go back to your cutting-edge Neo Geo or Master System or whatever the kids are playing these days. 
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^right]: Yeah, left.
+[^nerd]: I'm not going to shame you, but you are 100% a nerd. Why else are you here?
+[^games]: Is it though?
+[^pico]: This means it's built with the absolute bare skeleton for an R package, because it's not intended for 'real' consumption. It's just for experimentation.
