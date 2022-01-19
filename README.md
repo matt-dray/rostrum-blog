@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 4 day(s) ago: [Wordle, twirdle and
+🆕 The latest post was published 5 day(s) ago: [Wordle, twirdle and
 eldrow](https://www.rostrum.blog/2022/01/14/wordle/).
 
 📈 This 2D plot shows posts over time:
@@ -161,4 +161,4 @@ eldrow](https://www.rostrum.blog/2022/01/14/wordle/).
 
 -----
 
-*Updated 2022-01-18 02:47:30*
+*Updated 2022-01-19 02:39:18*
