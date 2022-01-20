@@ -25,13 +25,13 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 113 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 114 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 5 day(s) ago: [Wordle, twirdle and
-eldrow](https://www.rostrum.blog/2022/01/14/wordle/).
+🆕 The latest post was published 1 day(s) ago: [Impress with
+{keypress}](https://www.rostrum.blog/2022/01/19/keypress/).
 
 📈 This 2D plot shows posts over time:
 
@@ -43,6 +43,7 @@ eldrow](https://www.rostrum.blog/2022/01/14/wordle/).
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|    114 | 2022-01-19 | [Impress with {keypress}](https://www.rostrum.blog/2022/01/19/keypress/)                                                  |
 |    113 | 2022-01-14 | [Wordle, twirdle and eldrow](https://www.rostrum.blog/2022/01/14/wordle/)                                                 |
 |    112 | 2022-01-07 | [The most popular Animal Crossing villagers](https://www.rostrum.blog/2022/01/07/acnh-swipe-results/)                     |
 |    111 | 2021-12-30 | [Your workout route (in three dimensions\!)](https://www.rostrum.blog/2021/12/30/gpx3d/)                                  |
@@ -161,4 +162,4 @@ eldrow](https://www.rostrum.blog/2022/01/14/wordle/).
 
 -----
 
-*Updated 2022-01-19 02:39:18*
+*Updated 2022-01-20 02:50:22*
