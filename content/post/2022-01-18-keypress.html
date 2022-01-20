@@ -20,7 +20,7 @@ draft: no
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p><a href="https://github.com/gaborcsardi/keypress">The {keypress} package by Gábor Csárdi</a> records input from a simple keyboard-button press. You can use this to control games, like the ones in <a href="https://github.com/matt-dray/hokey">the tiny {hokey} package</a>.</p>
+<p><a href="https://github.com/gaborcsardi/keypress">The {keypress} R package by Gábor Csárdi</a> records input from a simple keyboard-button press. You can use this to control games, like the ones in <a href="https://github.com/matt-dray/hokey">the tiny {hokey} package</a>.</p>
 </div>
 <div id="whaddup-gamers" class="section level1">
 <h1>Whaddup gameRs?</h1>
@@ -30,19 +30,21 @@ draft: no
 <li>{safar6} a text-based recreation of <em>Pokémon</em>’s Safari Zone (<a href="https://www.rostrum.blog/2021/01/04/safar6/">blog</a>, <a href="https://github.com/matt-dray/safar6">source</a>)</li>
 <li>an ‘Automatic Bell Dispenser’ to mimics the cash machine used in <em>Animal Crossing: New Horizons</em> (<a href="https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/">blog</a>)</li>
 </ul>
-<p>Problem. In {ActionSquirrel} you move a character around a 2D grid. To go up you type <code>x$move("up")</code>, which means ‘apply the <code>move</code> method to the previously-initialised R6 object called <code>x</code>, and supply to the <code>where</code> argument the direction <code>"up"</code>’. A bit long-winded, eh?</p>
+<p>In {ActionSquirrel} you move a character around a 2D grid. Problem (kinda): to go up you type <code>x$move("up")</code>, which means ‘apply the <code>move</code> method to the previously-initialised R6 object called <code>x</code>, and supply to the <code>where</code> argument the direction <code>"up"</code>’. A bit long-winded, eh?</p>
 <p>It would be more natural to provide a single keyboard input to a game scenario, so a left-arrow press moves the player to the left, right? Right.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
 </div>
 <div id="record-inputs" class="section level1">
 <h1>Record inputs</h1>
-<p>Sure, R’s <code>readline()</code> can take user input, but you would literally have to type <code>l</code>, <code>e</code>, <code>f</code>, <code>t</code>, and then hit ‘enter’, because the function doesn’t recognise key presses directly.</p>
-<p>This is where <a href="https://github.com/gaborcsardi/keypress">Gábor Csárdi’s {keypress} package</a> comes in. It can accept single button presses from the keyboard, including the arrow keys. The user is prompted and a left-arrow press results in the text <code>"left"</code>, for example.</p>
-<p>It’s available on CRAN:</p>
-<pre class="r"><code>install.packages(&quot;keypress&quot;)</code></pre>
+<p>Sure, R’s <code>readline()</code> can take user input, but you would literally have to type <kbd>l</kbd>, <kbd>e</kbd>, <kbd>f</kbd>, <kbd>t</kbd> and <kbd>Enter</kbd>, because the function doesn’t recognise key presses directly.</p>
+<p>This is where <a href="https://github.com/gaborcsardi/keypress">Gábor Csárdi’s {keypress} package</a> comes in. It accepts a single button press from the keyboard, including the arrow keys. It’s available on CRAN:</p>
+<pre class="r"><code>install.packages(&quot;keypress&quot;)
+key &lt;- keypress::keypress()  # up arrow pressed
+key</code></pre>
+<pre><code>&quot;up&quot;</code></pre>
 <p>{keypress} works in the terminal but doesn’t work everywhere, such as RStudio. Use <code>keypress::has_keypress_support()</code> to see if it’s supported by the console you’re using. See the <a href="https://github.com/gaborcsardi/keypress/blob/x/README.md">package README</a> for details of the platforms supported and the keys that are accepted as input.</p>
 </div>
-<div id="quick-ideas" class="section level1">
-<h1>Quick ideas</h1>
+<div id="minigames" class="section level1">
+<h1>Minigames</h1>
 <p>I thought I’d try out with {keypress} with three tiny interactive games, which I’ve bundled into <a href="https://www.rostrum.blog/2021/04/18/pico-pkg/">a pico package</a><a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> called <a href="https://github.com/matt-dray/hokey">{hokey}</a>.</p>
 <pre class="r"><code>remotes::install_github(&quot;matt-dray/hokey&quot;)</code></pre>
 <p>Each one takes a keypress input from <code>keypress::keypress()</code> to affect the game, which is just a bunch of <code>if</code> or <code>while</code> statements, basically. You can <a href="https://github.com/matt-dray/hokey/blob/main/R/functions.R">see the functions in the {hokey} package itself</a>, if you’re a nerd.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
@@ -78,8 +80,8 @@ End! 4/5 in 5.403 seconds.</code></pre>
 <pre class="r"><code>hokey::adventure(len = 10)</code></pre>
 <pre><code>Press left/right arrow keys
 --.------- </code></pre>
-<p>As prompted, move with the arrow keys. If you go too far left, you ‘bump’ into the end and bounce back. See if you can reach the far-right end. You can do it!</p>
-<p>Here’s what happens if you input the left-arrow key twice, then multiple presses of the right arrow key. The symbol on the end explains what’s happened (<code>&lt;</code> is left, <code>&gt;</code> is right, <code>x</code> is an illegal move, <code>!</code> is a win).</p>
+<p>Below is a demo of what happens if you start the game and travel to the dangerous lands of the west (two left-key presses, resulting in you being bumped back on course), before heading for the utopian kingdom in the east (multiple right-key presses).</p>
+<p>The symbol to the right of the line explains what’s happened (<code>&lt;</code> is left, <code>&gt;</code> is right, <code>x</code> is an illegal move, <code>!</code> is a win).</p>
 <pre><code>Press left/right arrow keys
 --.------- 
 -.-------- &lt; 
@@ -93,16 +95,16 @@ End! 4/5 in 5.403 seconds.</code></pre>
 -------.-- &gt; 
 --------.- &gt; 
 ---------. ! </code></pre>
-<p>Such graphics! Such dimensons!</p>
+<p>Such graphics! Such dimensions!</p>
 </div>
 <div id="a-clicker" class="section level2">
 <h2>3. A clicker</h2>
-<p>Ever heard of <a href="https://en.wikipedia.org/wiki/Cookie_Clicker">Cookie Clicker</a>? It’s a game where you click. A cookie. A whole bunch of times. Like, seriously, a while bunch of times. Why? To <em>win</em>, of course.</p>
-<p>Here’s a keypress equivalent where you tap keys to vanquish randomised foes. Are there upgrades? No. Are there cool sprites? Not really. But do you click a lot? Also no, but you get to <em>press buttons</em> a lot.</p>
-<p>So, initiate a battle with <code>hokey::battle()</code> and you’re faced with monstrous foes, who have randomised faces made of letters and symbols.</p>
+<p>Ever heard of <a href="https://en.wikipedia.org/wiki/Cookie_Clicker">Cookie Clicker</a>? It’s a game where you click. A cookie. A whole bunch of times. Like, seriously, a whole bunch of times. Why? To <em>win</em>, of course.</p>
+<p>Here instead is a ‘presser’, where where you tap keys to vanquish randomised foes. Are there upgrades? No. Are there cool sprites? Not really. But do you click a lot? Also no, but you get to <em>press buttons</em> a lot.</p>
+<p>So, initiate a battle with <code>hokey::battle()</code> and you’re faced with monstrous foes, who have terrifying randomised faces made of letters and symbols.</p>
 <pre class="r"><code>hokey::battle(n = 3)</code></pre>
 <pre><code>NEW FOE! { O _ O } 10 HP </code></pre>
-<p>Tap keys to deplete the foe’s hit points (HP) until they’re defeated. Each hit is printed as a period.</p>
+<p>Smash a key (I recommend <kbd>Enter</kbd> because of its large surface area) to deplete the foe’s hit points (HP) until they’re defeated. Each hit is printed as a period.</p>
 <pre><code>NEW FOE! { O _ O } 10 HP 
 ..........
 VICTORY! { x _ x }  0 HP</code></pre>
@@ -117,8 +119,8 @@ VICTORY! [ x v x ]  0 HP</code></pre>
 <p>You know they’re beaten because their eyes become crosses.</p>
 </div>
 </div>
-<div id="period" class="section level1">
-<h1>Period</h1>
+<div id="game-over" class="section level1">
+<h1>Game over</h1>
 <p>Challenging. A test of wits. Worth your time.</p>
 <p>All are phrases that do not sum up the games of {hokey}.</p>
 <p>But, for me at least, I’ve got a better understanding of how {keypress} could be used for games written in R, a burgeoning field in the world of R programming.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>

@@ -23,7 +23,7 @@ library(hokey)
 
 # tl;dr
 
-[The {keypress} package by Gábor Csárdi](https://github.com/gaborcsardi/keypress) records input from a simple keyboard-button press. You can use this to control games, like the ones in [the tiny {hokey} package](https://github.com/matt-dray/hokey).
+[The {keypress} R package by Gábor Csárdi](https://github.com/gaborcsardi/keypress) records input from a simple keyboard-button press. You can use this to control games, like the ones in [the tiny {hokey} package](https://github.com/matt-dray/hokey).
 
 # Whaddup gameRs?
 
@@ -33,25 +33,29 @@ I've made some silly games in R using [the {R6} package](https://r6.r-lib.org/in
 * {safar6} a text-based recreation of _Pokémon_'s Safari Zone ([blog](https://www.rostrum.blog/2021/01/04/safar6/), [source](https://github.com/matt-dray/safar6))
 * an 'Automatic Bell Dispenser' to mimics the cash machine used in _Animal Crossing: New Horizons_ ([blog](https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/))
 
-Problem. In {ActionSquirrel} you move a character around a 2D grid. To go up you type `x$move("up")`, which means 'apply the `move` method to the previously-initialised R6 object called `x`, and supply to the `where` argument the direction `"up"`'. A bit long-winded, eh?
+In {ActionSquirrel} you move a character around a 2D grid. Problem (kinda): to go up you type `x$move("up")`, which means 'apply the `move` method to the previously-initialised R6 object called `x`, and supply to the `where` argument the direction `"up"`'. A bit long-winded, eh?
 
 It would be more natural to provide a single keyboard input to a game scenario, so a left-arrow press moves the player to the left, right? Right.[^right]
 
 # Record inputs
 
-Sure, R's `readline()` can take user input, but you would literally have to type `l`, `e`, `f`, `t`, and then hit 'enter', because the function doesn't recognise key presses directly.
+Sure, R's `readline()` can take user input, but you would literally have to type <kbd>l</kbd>, <kbd>e</kbd>, <kbd>f</kbd>, <kbd>t</kbd> and <kbd>Enter</kbd>, because the function doesn't recognise key presses directly.
 
-This is where [Gábor Csárdi's {keypress} package](https://github.com/gaborcsardi/keypress) comes in. It can accept single button presses from the keyboard, including the arrow keys. The user is prompted and a left-arrow press results in the text `"left"`, for example. 
-
-It's available on CRAN:
+This is where [Gábor Csárdi's {keypress} package](https://github.com/gaborcsardi/keypress) comes in. It accepts a single button press from the keyboard, including the arrow keys. It's available on CRAN:
 
 ```{r install}
 install.packages("keypress")
+key <- keypress::keypress()  # up arrow pressed
+key
+```
+
+```
+"up"
 ```
 
 {keypress} works in the terminal but doesn't work everywhere, such as RStudio. Use `keypress::has_keypress_support()` to see if it's supported by the console you're using. See the [package README](https://github.com/gaborcsardi/keypress/blob/x/README.md) for details of the platforms supported and the keys that are accepted as input.
 
-# Quick ideas
+# Minigames
 
 I thought I'd try out with {keypress} with three tiny interactive games, which I've bundled into [a pico package](https://www.rostrum.blog/2021/04/18/pico-pkg/)[^pico] called [{hokey}](https://github.com/matt-dray/hokey). 
 
@@ -112,9 +116,9 @@ Press left/right arrow keys
 --.------- 
 ```
 
-As prompted, move with the arrow keys. If you go too far left, you 'bump' into the end and bounce back. See if you can reach the far-right end. You can do it!
+Below is a demo of what happens if you start the game and travel to the dangerous lands of the west (two left-key presses, resulting in you being bumped back on course), before heading for the utopian kingdom in the east (multiple right-key presses).
 
-Here's what happens if you input the left-arrow key twice, then multiple presses of the right arrow key. The symbol on the end explains what's happened (`<` is left, `>` is right, `x` is an illegal move, `!` is a win).
+The symbol to the right of the line explains what's happened (`<` is left, `>` is right, `x` is an illegal move, `!` is a win).
 
 ```
 Press left/right arrow keys
@@ -132,15 +136,15 @@ Press left/right arrow keys
 ---------. ! 
 ```
 
-Such graphics! Such dimensons!
+Such graphics! Such dimensions!
 
 ## 3. A clicker
 
-Ever heard of [Cookie Clicker](https://en.wikipedia.org/wiki/Cookie_Clicker)? It's a game where you click. A cookie. A whole bunch of times. Like, seriously, a while bunch of times. Why? To _win_, of course.
+Ever heard of [Cookie Clicker](https://en.wikipedia.org/wiki/Cookie_Clicker)? It's a game where you click. A cookie. A whole bunch of times. Like, seriously, a whole bunch of times. Why? To _win_, of course.
 
-Here's a keypress equivalent where you tap keys to vanquish randomised foes. Are there upgrades? No. Are there cool sprites? Not really. But do you click a lot? Also no, but you get to _press buttons_ a lot.
+Here instead is a 'presser', where where you tap keys to vanquish randomised foes. Are there upgrades? No. Are there cool sprites? Not really. But do you click a lot? Also no, but you get to _press buttons_ a lot.
 
-So, initiate a battle with `hokey::battle()` and you're faced with monstrous foes, who have randomised faces made of letters and symbols.
+So, initiate a battle with `hokey::battle()` and you're faced with monstrous foes, who have terrifying randomised faces made of letters and symbols.
 
 ```{r cicker-demo}
 hokey::battle(n = 3)
@@ -149,7 +153,7 @@ hokey::battle(n = 3)
 NEW FOE! { O _ O } 10 HP 
 ```
 
-Tap keys to deplete the foe's hit points (HP) until they're defeated. Each hit is printed as a period. 
+Smash a key (I recommend <kbd>Enter</kbd> because of its large surface area) to deplete the foe's hit points (HP) until they're defeated. Each hit is printed as a period. 
 
 ```
 NEW FOE! { O _ O } 10 HP 
@@ -171,7 +175,7 @@ VICTORY! [ x v x ]  0 HP
 
 You know they're beaten because their eyes become crosses.
 
-# Period
+# Game over
 
 Challenging. A test of wits. Worth your time.
 
