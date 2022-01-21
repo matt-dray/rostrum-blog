@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 1 day(s) ago: [Impress with
+🆕 The latest post was published 2 day(s) ago: [Impress with
 {keypress}](https://www.rostrum.blog/2022/01/19/keypress/).
 
 📈 This 2D plot shows posts over time:
@@ -162,4 +162,4 @@ since 2018-04-14.
 
 -----
 
-*Updated 2022-01-20 02:50:22*
+*Updated 2022-01-21 02:42:14*
