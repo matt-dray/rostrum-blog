@@ -1,0 +1,224 @@
+---
+title: 'Introduce me to your {soccercolleagues}'
+author: Matt Dray
+date: '2022-02-04'
+slug: soccercolleagues
+categories:
+  - code
+  - package
+tags:
+  - football
+  - quiz
+  - r
+  - soccer
+  - worldfootballR
+draft: no
+---
+
+```{r setup, echo=FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+library(soccercolleagues)
+```
+
+<div class="figure">
+<img src="https://media.giphy.com/media/s1h7IGyZC1cQ/giphy.gif" alt="Gif of two Newcastle United team mates fight each other on a football pitch." width="100%"/>
+<p class="caption">Lee Bowyer and Kieran Dyer: 'team mates' ([BBC via Giphy](https://giphy.com/gifs/h-br-s1h7IGyZC1cQ))</p>
+</div>
+
+# tl;dr
+
+I made [a quick R package called {soccercolleagues}](https://github.com/matt-dray/soccercolleagues) that for a given player, or players, lets you (a) find all their former team mates in common and (b) sample from them for quiz-based purposes.
+
+# Lord of the Ings
+
+Quiz question:
+
+> Which current Premier League footballer has been team mates with each of the following: Kevin Phillips, Mark Viduka, Dejan Lovren, Danny Ings and Nicky Butt?
+
+I've seen this type of question in pub quizzes, on social media and forwarded on by assorted football nerds. Some are harder than a Roy Keane challenge
+
+But why use your brain when you could backwards-engineer it programmatically?
+
+I figured I could use R and [the {worldfootballR} package by Jason Zivkovic](https://jaseziv.github.io/worldfootballR/) to fetch squad data from the [Transfermarkt](https://www.transfermarkt.co.uk/) website, then isolate team mates that these players have in common. 
+
+And why not make it an R package in the process?
+
+# Announce {soccercolleagues}!
+
+I'm pleased to announce the signing of the promising young [{soccercolleagues}](https://github.com/matt-dray/soccercolleagues)[^name] package on a free. Will it live up to the hype?
+
+The package is available [via GitHub](https://github.com/matt-dray/soccercolleagues), which you can install with help from {remotes}. 
+
+```{r install, eval=FALSE}
+install.packages("remotes")  # if not already installed
+remotes::install_github("matt-dray/soccercolleagues")
+library(soccercolleagues)
+```
+
+In a departure from my usual package production, I've made use of the tidyverse in this one. It also uses the native R pipe, so you'll need R v4.1 or above.[^v4] It works on my computer, which is good enough for me.
+
+As with many packages showcased on this blog, you should consider this a low-effort artisanal meme. Definitely a proof of concept. I'm not sure if I'll ever come back and improve it. Feel free to [add issues or submit pull requests](https://github.com/matt-dray/soccercolleagues).
+
+# Get stuck in
+
+{soccercolleageus} has three main functions:
+
+1. `get_players()` to fetch squad data from Transfermarkt
+1. `get_colleagues()` to return all the players by season who have been team mates with a named set of players
+1. `sample_colleagues()` to select a random set of team mates for a named player or players
+
+There's also a secret tiny Shiny app, accessed with `open_colleagues_quiz()`, but it (literally) only presents five player names with buttons to (a) reveal a sampled team mate in common, and (b) generate a new set of player names. You'll need to install {shiny} and {shinyjs} separately if you want to use it (don't use it).
+
+Let's talk through the main functions.
+
+## 1. Get squads by league and season
+
+First, let's get all the players from all teams in a given league for a given set of seasons.
+
+I designed the package entirely with the English Premier League in mind because that's the league I'm most accustomed to and because Transfermarkt has data for all its seasons, which began in 1992.[^seriea]
+
+You pass to `get_players()` the `seasons` you want and the `country` that the league is from.
+
+```{r get-players}
+epl_players <- get_players(
+  seasons = 1992:2020,
+  country = "England"
+)
+
+glimpse(epl_players)
+```
+```
+Rows: 20,643
+Columns: 11
+$ player_name    <chr> "Paul Gerrard", "Jon Hallworth", "John Keeley", "Ian Gray", "Craig…
+$ player_pos     <chr> "Goalkeeper", "Goalkeeper", "Goalkeeper", "Goalkeeper", "Centre-Ba…
+$ player_age     <dbl> 19, 26, 30, 17, 20, 19, 19, 40, 29, 26, 27, 24, 26, 26, 26, 25, 26…
+$ nationality    <chr> "England", "England", "England", "England", "England", "England", …
+$ in_squad       <dbl> 27, 16, 29, 12, 35, 1, 35, 1, 40, 9, 33, 36, 41, 37, 6, 42, 15, 32…
+$ appearances    <dbl> 25, 16, 1, 0, 24, 0, 33, 0, 40, 5, 33, 31, 41, 32, 6, 42, 14, 32, …
+$ goals          <dbl> 0, 0, 0, 0, 0, 0, 4, 0, 2, 0, 3, 0, 5, 9, 0, 3, 3, 6, 0, 3, 3, 2, …
+$ minutes_played <dbl> 2250, 1440, 90, 0, 2114, 0, 2953, 0, 3600, 341, 2799, 2522, 3647, …
+$ team_url       <chr> "https://www.transfermarkt.com/oldham-athletic/startseite/verein/1…
+$ team_name      <chr> "oldham-athletic", "oldham-athletic", "oldham-athletic", "oldham-a…
+$ season         <chr> "1992", "1992", "1992", "1992", "1992", "1992", "1992", "1992", "1…
+```
+
+A dataframe is returned with lots of handy stuff like the player name, team name, season and a bunch of player data. Obviously you could take this data away and do whatever you like with it, it's quite a neat dataset for other, less esoteric analysis of the history of the Premier League.
+
+## 2. Find team mates
+
+Now to filter this information for a given focus player or players.
+
+You provide the dataframe output of `get_players()` to `get_colleagues()` as the `all_players()` argument, along with a vector of `players` names. The function filters the dataframe down to just the team mates of the selected player or players for the teams and seasons in which they played together.
+
+```{r get-colleagues}
+teammates <- get_colleagues(
+  all_players = epl_players,
+  players = c("Kolo Touré", "Yaya Touré")
+)
+```
+
+```
+Rows: 348
+Columns: 12
+$ focus_name     <chr> "Kolo Touré", "Kolo Touré", "Kolo Touré", "Kolo Touré", "Kolo Tour…
+$ player_name    <chr> "Stuart Taylor", "Richard Wright", "Patrick Vieira", "Stuart Taylo…
+$ player_pos     <chr> "Goalkeeper", "Goalkeeper", "Defensive Midfield", "Goalkeeper", "D…
+$ player_age     <dbl> 20, 23, 25, 21, 26, 22, 17, 27, 23, 18, 28, 19, 21, 20, 22, 21, 24…
+$ nationality    <chr> "England", "England", "France", "England", "France", "England", "F…
+$ in_squad       <dbl> 21, 43, 54, 20, 42, 4, 31, 44, 7, 26, 44, 14, 13, 40, 45, 50, 41, …
+$ appearances    <dbl> 15, 22, 54, 13, 42, 0, 22, 44, 0, 24, 44, 11, 13, 40, 44, 49, 40, …
+$ goals          <dbl> 0, 0, 3, 0, 4, 0, 0, 3, 0, 0, 7, 0, 4, 0, 12, 0, 1, 30, 1, 0, 7, 1…
+$ minutes_played <dbl> 1220, 1929, 4702, 1081, 3563, 0, 1347, 3822, 0, 1456, 3926, 728, 1…
+$ team_url       <chr> "https://www.transfermarkt.com/fc-arsenal/startseite/verein/11/sai…
+$ team_name      <chr> "fc-arsenal", "fc-arsenal", "fc-arsenal", "fc-arsenal", "fc-arsena…
+$ season         <chr> "2001", "2001", "2001", "2002", "2002", "2003", "2003", "2003", "2…
+```
+
+You can see how this could be used to solve our original problem: you can take a named player's unique team mates and find how many are in common with other named players.
+
+While `get_colleagues()` effectively returns a filtered dataframe, there's another function to whittle this down to simpler output.
+
+## 3. Sample from common team mates
+
+Given a named player or players, the `sample_colleagues()` function returns a vector of team mates of size `n`. These are sampled with a weighting by the total number of Premier League minutes played (a very rough way of outputting more well-known players).
+
+You could apply the function to a single named player if you want, which outputs five sampled team mates.
+
+```{r sample-single}
+sample_colleagues(
+  all_players = epl_players,
+  players = "Craig Bellamy"
+)
+```
+```
+## [1] "Jordan Henderson"   "Rob Lee"  "Freddie Ljungberg"
+## [4] "Patrick Vieira"   "Celestine Babayaro"
+```
+
+Of course, if your chosen player is the _only_ common team mate for the set of output players, then you've got a decent quiz question to test your pals with! 
+
+To check, we can feed these names back into `sample_colleagues()`. I've set the argument `n = 2`: if we get two names then we know the player isn't the only one in common for these five.
+
+```{r sample-multi}
+sample_colleagues(
+  all_players = epl_players,
+  players = c(
+    "Jordan Henderson",
+    "Rob Lee",
+    "Freddie Ljungberg",
+    "Patrick Vieira",
+    "Celestine Babayaro"
+  ),
+  n = 2 
+)
+```
+```
+## [1] Craig Bellamy
+```
+
+Legend, journeyman.
+
+# There's only one [insert player]
+
+So what's the answer to the original question?[^answer]
+
+> Which current Premier League footballer was team mates with each of the following: Kevin Phillips, Mark Viduka, Dejan Lovren, Danny Ings and Nicky Butt?
+
+Now we can answer programmatically.
+
+```{r question}
+sample_colleagues(
+  all_players = epl_players,
+  players = c(
+    "Kevin Phillips",
+    "Mark Viduka",
+    "Dejan Lovren",
+    "Danny Ings",
+    "Nicky Butt"
+  ),
+  n = 1
+)
+```
+
+<details><summary>Click for answer!</summary>
+```
+## [1] James Milner
+```
+</details>
+
+Did you get it? Was it too easy, too _boring_?[^clue]
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^answer]: I don't think this is too hard. A friend sent me a harder one where the answer was Alan Hutton, so.
+[^name]: Yeah, couldn't think of a pun quick enough, but I thought the idea of team mates as 'colleagues' is quite funny to me.
+[^v4]: I'm not trying to be restrictive, I just started coding it this way and don't have the time to refactor it.
+[^clue]: A sneaky clue there.
+[^seriea]: You could instead try [one of the many other leagues](https://github.com/JaseZiv/worldfootballR_data/blob/master/raw-data/transfermarkt_leagues/main_comp_seasons.csv)
+like Italy's Serie A, South Korea's K League, or Tunisia's Ligue I Pro.

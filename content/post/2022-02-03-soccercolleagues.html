@@ -1,0 +1,182 @@
+---
+title: 'Introduce me to your {soccercolleagues}'
+author: Matt Dray
+date: '2022-02-04'
+slug: soccercolleagues
+categories:
+  - code
+  - package
+tags:
+  - football
+  - quiz
+  - r
+  - soccer
+  - worldfootballR
+draft: no
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div class="figure">
+<img src="https://media.giphy.com/media/s1h7IGyZC1cQ/giphy.gif" alt="Gif of two Newcastle United team mates fight each other on a football pitch." width="100%"/>
+<p class="caption">
+Lee Bowyer and Kieran Dyer: ‘team mates’ (<a href="https://giphy.com/gifs/h-br-s1h7IGyZC1cQ">BBC via Giphy</a>)
+</p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I made <a href="https://github.com/matt-dray/soccercolleagues">a quick R package called {soccercolleagues}</a> that for a given player, or players, lets you (a) find all their former team mates in common and (b) sample from them for quiz-based purposes.</p>
+</div>
+<div id="lord-of-the-ings" class="section level1">
+<h1>Lord of the Ings</h1>
+<p>Quiz question:</p>
+<blockquote>
+<p>Which current Premier League footballer has been team mates with each of the following: Kevin Phillips, Mark Viduka, Dejan Lovren, Danny Ings and Nicky Butt?</p>
+</blockquote>
+<p>I’ve seen this type of question in pub quizzes, on social media and forwarded on by assorted football nerds. Some are harder than a Roy Keane challenge</p>
+<p>But why use your brain when you could backwards-engineer it programmatically?</p>
+<p>I figured I could use R and <a href="https://jaseziv.github.io/worldfootballR/">the {worldfootballR} package by Jason Zivkovic</a> to fetch squad data from the <a href="https://www.transfermarkt.co.uk/">Transfermarkt</a> website, then isolate team mates that these players have in common.</p>
+<p>And why not make it an R package in the process?</p>
+</div>
+<div id="announce-soccercolleagues" class="section level1">
+<h1>Announce {soccercolleagues}!</h1>
+<p>I’m pleased to announce the signing of the promising young <a href="https://github.com/matt-dray/soccercolleagues">{soccercolleagues}</a><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> package on a free. Will it live up to the hype?</p>
+<p>The package is available <a href="https://github.com/matt-dray/soccercolleagues">via GitHub</a>, which you can install with help from {remotes}.</p>
+<pre class="r"><code>install.packages(&quot;remotes&quot;)  # if not already installed
+remotes::install_github(&quot;matt-dray/soccercolleagues&quot;)
+library(soccercolleagues)</code></pre>
+<p>In a departure from my usual package production, I’ve made use of the tidyverse in this one. It also uses the native R pipe, so you’ll need R v4.1 or above.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> It works on my computer, which is good enough for me.</p>
+<p>As with many packages showcased on this blog, you should consider this a low-effort artisanal meme. Definitely a proof of concept. I’m not sure if I’ll ever come back and improve it. Feel free to <a href="https://github.com/matt-dray/soccercolleagues">add issues or submit pull requests</a>.</p>
+</div>
+<div id="get-stuck-in" class="section level1">
+<h1>Get stuck in</h1>
+<p>{soccercolleageus} has three main functions:</p>
+<ol style="list-style-type: decimal">
+<li><code>get_players()</code> to fetch squad data from Transfermarkt</li>
+<li><code>get_colleagues()</code> to return all the players by season who have been team mates with a named set of players</li>
+<li><code>sample_colleagues()</code> to select a random set of team mates for a named player or players</li>
+</ol>
+<p>There’s also a secret tiny Shiny app, accessed with <code>open_colleagues_quiz()</code>, but it (literally) only presents five player names with buttons to (a) reveal a sampled team mate in common, and (b) generate a new set of player names. You’ll need to install {shiny} and {shinyjs} separately if you want to use it (don’t use it).</p>
+<p>Let’s talk through the main functions.</p>
+<div id="get-squads-by-league-and-season" class="section level2">
+<h2>1. Get squads by league and season</h2>
+<p>First, let’s get all the players from all teams in a given league for a given set of seasons.</p>
+<p>I designed the package entirely with the English Premier League in mind because that’s the league I’m most accustomed to and because Transfermarkt has data for all its seasons, which began in 1992.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<p>You pass to <code>get_players()</code> the <code>seasons</code> you want and the <code>country</code> that the league is from.</p>
+<pre class="r"><code>epl_players &lt;- get_players(
+  seasons = 1992:2020,
+  country = &quot;England&quot;
+)
+
+glimpse(epl_players)</code></pre>
+<pre><code>Rows: 20,643
+Columns: 11
+$ player_name    &lt;chr&gt; &quot;Paul Gerrard&quot;, &quot;Jon Hallworth&quot;, &quot;John Keeley&quot;, &quot;Ian Gray&quot;, &quot;Craig…
+$ player_pos     &lt;chr&gt; &quot;Goalkeeper&quot;, &quot;Goalkeeper&quot;, &quot;Goalkeeper&quot;, &quot;Goalkeeper&quot;, &quot;Centre-Ba…
+$ player_age     &lt;dbl&gt; 19, 26, 30, 17, 20, 19, 19, 40, 29, 26, 27, 24, 26, 26, 26, 25, 26…
+$ nationality    &lt;chr&gt; &quot;England&quot;, &quot;England&quot;, &quot;England&quot;, &quot;England&quot;, &quot;England&quot;, &quot;England&quot;, …
+$ in_squad       &lt;dbl&gt; 27, 16, 29, 12, 35, 1, 35, 1, 40, 9, 33, 36, 41, 37, 6, 42, 15, 32…
+$ appearances    &lt;dbl&gt; 25, 16, 1, 0, 24, 0, 33, 0, 40, 5, 33, 31, 41, 32, 6, 42, 14, 32, …
+$ goals          &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 4, 0, 2, 0, 3, 0, 5, 9, 0, 3, 3, 6, 0, 3, 3, 2, …
+$ minutes_played &lt;dbl&gt; 2250, 1440, 90, 0, 2114, 0, 2953, 0, 3600, 341, 2799, 2522, 3647, …
+$ team_url       &lt;chr&gt; &quot;https://www.transfermarkt.com/oldham-athletic/startseite/verein/1…
+$ team_name      &lt;chr&gt; &quot;oldham-athletic&quot;, &quot;oldham-athletic&quot;, &quot;oldham-athletic&quot;, &quot;oldham-a…
+$ season         &lt;chr&gt; &quot;1992&quot;, &quot;1992&quot;, &quot;1992&quot;, &quot;1992&quot;, &quot;1992&quot;, &quot;1992&quot;, &quot;1992&quot;, &quot;1992&quot;, &quot;1…</code></pre>
+<p>A dataframe is returned with lots of handy stuff like the player name, team name, season and a bunch of player data. Obviously you could take this data away and do whatever you like with it, it’s quite a neat dataset for other, less esoteric analysis of the history of the Premier League.</p>
+</div>
+<div id="find-team-mates" class="section level2">
+<h2>2. Find team mates</h2>
+<p>Now to filter this information for a given focus player or players.</p>
+<p>You provide the dataframe output of <code>get_players()</code> to <code>get_colleagues()</code> as the <code>all_players()</code> argument, along with a vector of <code>players</code> names. The function filters the dataframe down to just the team mates of the selected player or players for the teams and seasons in which they played together.</p>
+<pre class="r"><code>teammates &lt;- get_colleagues(
+  all_players = epl_players,
+  players = c(&quot;Kolo Touré&quot;, &quot;Yaya Touré&quot;)
+)</code></pre>
+<pre><code>Rows: 348
+Columns: 12
+$ focus_name     &lt;chr&gt; &quot;Kolo Touré&quot;, &quot;Kolo Touré&quot;, &quot;Kolo Touré&quot;, &quot;Kolo Touré&quot;, &quot;Kolo Tour…
+$ player_name    &lt;chr&gt; &quot;Stuart Taylor&quot;, &quot;Richard Wright&quot;, &quot;Patrick Vieira&quot;, &quot;Stuart Taylo…
+$ player_pos     &lt;chr&gt; &quot;Goalkeeper&quot;, &quot;Goalkeeper&quot;, &quot;Defensive Midfield&quot;, &quot;Goalkeeper&quot;, &quot;D…
+$ player_age     &lt;dbl&gt; 20, 23, 25, 21, 26, 22, 17, 27, 23, 18, 28, 19, 21, 20, 22, 21, 24…
+$ nationality    &lt;chr&gt; &quot;England&quot;, &quot;England&quot;, &quot;France&quot;, &quot;England&quot;, &quot;France&quot;, &quot;England&quot;, &quot;F…
+$ in_squad       &lt;dbl&gt; 21, 43, 54, 20, 42, 4, 31, 44, 7, 26, 44, 14, 13, 40, 45, 50, 41, …
+$ appearances    &lt;dbl&gt; 15, 22, 54, 13, 42, 0, 22, 44, 0, 24, 44, 11, 13, 40, 44, 49, 40, …
+$ goals          &lt;dbl&gt; 0, 0, 3, 0, 4, 0, 0, 3, 0, 0, 7, 0, 4, 0, 12, 0, 1, 30, 1, 0, 7, 1…
+$ minutes_played &lt;dbl&gt; 1220, 1929, 4702, 1081, 3563, 0, 1347, 3822, 0, 1456, 3926, 728, 1…
+$ team_url       &lt;chr&gt; &quot;https://www.transfermarkt.com/fc-arsenal/startseite/verein/11/sai…
+$ team_name      &lt;chr&gt; &quot;fc-arsenal&quot;, &quot;fc-arsenal&quot;, &quot;fc-arsenal&quot;, &quot;fc-arsenal&quot;, &quot;fc-arsena…
+$ season         &lt;chr&gt; &quot;2001&quot;, &quot;2001&quot;, &quot;2001&quot;, &quot;2002&quot;, &quot;2002&quot;, &quot;2003&quot;, &quot;2003&quot;, &quot;2003&quot;, &quot;2…</code></pre>
+<p>You can see how this could be used to solve our original problem: you can take a named player’s unique team mates and find how many are in common with other named players.</p>
+<p>While <code>get_colleagues()</code> effectively returns a filtered dataframe, there’s another function to whittle this down to simpler output.</p>
+</div>
+<div id="sample-from-common-team-mates" class="section level2">
+<h2>3. Sample from common team mates</h2>
+<p>Given a named player or players, the <code>sample_colleagues()</code> function returns a vector of team mates of size <code>n</code>. These are sampled with a weighting by the total number of Premier League minutes played (a very rough way of outputting more well-known players).</p>
+<p>You could apply the function to a single named player if you want, which outputs five sampled team mates.</p>
+<pre class="r"><code>sample_colleagues(
+  all_players = epl_players,
+  players = &quot;Craig Bellamy&quot;
+)</code></pre>
+<pre><code>## [1] &quot;Jordan Henderson&quot;   &quot;Rob Lee&quot;  &quot;Freddie Ljungberg&quot;
+## [4] &quot;Patrick Vieira&quot;   &quot;Celestine Babayaro&quot;</code></pre>
+<p>Of course, if your chosen player is the <em>only</em> common team mate for the set of output players, then you’ve got a decent quiz question to test your pals with!</p>
+<p>To check, we can feed these names back into <code>sample_colleagues()</code>. I’ve set the argument <code>n = 2</code>: if we get two names then we know the player isn’t the only one in common for these five.</p>
+<pre class="r"><code>sample_colleagues(
+  all_players = epl_players,
+  players = c(
+    &quot;Jordan Henderson&quot;,
+    &quot;Rob Lee&quot;,
+    &quot;Freddie Ljungberg&quot;,
+    &quot;Patrick Vieira&quot;,
+    &quot;Celestine Babayaro&quot;
+  ),
+  n = 2 
+)</code></pre>
+<pre><code>## [1] Craig Bellamy</code></pre>
+<p>Legend, journeyman.</p>
+</div>
+</div>
+<div id="theres-only-one-insert-player" class="section level1">
+<h1>There’s only one [insert player]</h1>
+<p>So what’s the answer to the original question?<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
+<blockquote>
+<p>Which current Premier League footballer was team mates with each of the following: Kevin Phillips, Mark Viduka, Dejan Lovren, Danny Ings and Nicky Butt?</p>
+</blockquote>
+<p>Now we can answer programmatically.</p>
+<pre class="r"><code>sample_colleagues(
+  all_players = epl_players,
+  players = c(
+    &quot;Kevin Phillips&quot;,
+    &quot;Mark Viduka&quot;,
+    &quot;Dejan Lovren&quot;,
+    &quot;Danny Ings&quot;,
+    &quot;Nicky Butt&quot;
+  ),
+  n = 1
+)</code></pre>
+<details>
+<summary>
+Click for answer!
+</summary>
+<pre><code>## [1] James Milner</code></pre>
+</details>
+<p>Did you get it? Was it too easy, too <em>boring</em>?<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a></p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+</details>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Yeah, couldn’t think of a pun quick enough, but I thought the idea of team mates as ‘colleagues’ is quite funny to me.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>I’m not trying to be restrictive, I just started coding it this way and don’t have the time to refactor it.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>You could instead try <a href="https://github.com/JaseZiv/worldfootballR_data/blob/master/raw-data/transfermarkt_leagues/main_comp_seasons.csv">one of the many other leagues</a>
+like Italy’s Serie A, South Korea’s K League, or Tunisia’s Ligue I Pro.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>I don’t think this is too hard. A friend sent me a harder one where the answer was Alan Hutton, so.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>A sneaky clue there.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
