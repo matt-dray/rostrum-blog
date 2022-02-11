@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 6 day(s) ago: [Introduce me to your
+🆕 The latest post was published 7 day(s) ago: [Introduce me to your
 {soccercolleagues}](https://www.rostrum.blog/2022/02/04/soccercolleagues/).
 
 📈 This 2D plot shows posts over time:
@@ -163,4 +163,4 @@ since 2018-04-14.
 
 -----
 
-*Updated 2022-02-10 02:37:48*
+*Updated 2022-02-11 02:40:11*
