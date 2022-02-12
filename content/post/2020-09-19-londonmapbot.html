@@ -19,10 +19,7 @@ tags:
 
 
 <div class="figure">
-<img src="/post/2020-09-21-londonmapbot_files/londonmapbot-profile.png" alt="The Twitter profile page for londonmapbot." width="80%"/>
-<p class="caption">
-<a href="https://www.twitter.com/londonmapbot">@londonmapbot</a> on Twitter.
-</p>
+<p><img src="/post/2020-09-21-londonmapbot_files/londonmapbot-profile.png" alt="The Twitter profile page for londonmapbot, showing satellite images of the city." width="80%"/></p>
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
@@ -32,7 +29,7 @@ tags:
 <h1>London from (socially-distant) space</h1>
 <p>I’ve wanted to make a Twitter bot for a while, but it seemed like Hard Work. Spoiler: it’s not.</p>
 <p>So, I’ve made <a href="https://www.twitter.com/londonmapbot">@londonmapbot</a>: a completely unsophisticated proof-of-concept Twitter bot.</p>
-<p>What does it do? It posts a satellite image from random coordinates in Greater London (well, from a bounding box roughly within the M25 motorway) every half hour. Below is an example image from <a href="https://twitter.com/londonmapbot/status/1309199157530431489?s=20">an existing @londonmapbot tweet</a>. Can you guess where it is?<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>What does it do? It posts a satellite image from random coordinates in Greater London (well, from a bounding box roughly within the M25 motorway) on schedule. Below is an example image from <a href="https://twitter.com/londonmapbot/status/1309199157530431489?s=20">an existing @londonmapbot tweet</a>. Can you guess where it is?<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
 <div class="figure">
 <img src="/post/2020-09-21-londonmapbot_files/mystery-location.jpg" alt="A satellite image of part of London, showing what looks like a large number of tennis courts, including some in stadia." width=600/>
 <p class="caption">
@@ -46,14 +43,14 @@ tags:
 <h1>The components</h1>
 <p>The <a href="https://github.com/matt-dray/londonmapbot">source code</a> is quite simple. There’s two files, basically:</p>
 <ul>
-<li><a href="https://github.com/matt-dray/londonmapbot">a single YAML file</a> containing the action</li>
+<li><a href="https://github.com/matt-dray/londonmapbot">a single YAML file</a> containing the action<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></li>
 <li><a href="https://github.com/matt-dray/londonmapbot/blob/master/londonmapbot-tweet.R">a single R script</a> that generates the tweet and posts it</li>
 </ul>
 <p>Let’s look at the GitHub Actions code in the YAML file and the use of {rtweet} and Mapbox in the R file.</p>
 <div id="github-actions" class="section level2">
 <h2>GitHub Actions</h2>
-<p><a href="https://docs.github.com/en/actions">GitHub Actions</a> is a platform for automating workflows remotely. In short, you write a small YAML file in the <code>.github/workflows/</code> subfolder of your repo, which contains instructions for the code you want to run and when to run it. I’ve written before about <a href="https://www.rostrum.blog/2020/08/09/ghactions-pkgs/">using GitHub Actions for continuous integration of R packages</a>, for example.</p>
-<p>An action can be triggered by an event, like a <code>git push</code> to your repo. You can also schedule it with a <a href="https://simple.wikipedia.org/wiki/Cron">cron job</a>. I took advantage of this for londonmapbot, which executes every half-hour on :00 and :30 past each hour.</p>
+<p><a href="https://docs.github.com/en/actions">GitHub Actions</a> is a platform for automating workflows remotely. In short, you write a small YAML file in the <code>.github/workflows/</code> subfolder of your repo, which contains instructions for the code you want to run and when to run it.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> I’ve written before about <a href="https://www.rostrum.blog/2020/08/09/ghactions-pkgs/">using GitHub Actions for continuous integration of R packages</a>, for example.</p>
+<p>An action can be triggered by an event, like a <code>git push</code> to your repo. You can also schedule it with a <a href="https://simple.wikipedia.org/wiki/Cron">cron job</a>, to run every hour, once a day, or whatever.</p>
 <p>Here’s what <a href="https://github.com/matt-dray/londonmapbot/blob/master/.github/workflows/londonmapbot.yml">the YAML file</a> looks like for the londonmapbot action:</p>
 <pre><code>name: londonmapbot
 
@@ -80,7 +77,7 @@ jobs:
 <p>It’s interpreted like so:</p>
 <ul>
 <li>this action is called ‘londonmapbot’</li>
-<li>run this code at :00 and :30 past each hour<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></li>
+<li>run this code at :00 and :30 past each hour<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></li>
 <li>the first (and only) job in this action is called londonmapbot-post</li>
 <li>start up a remote machine with the latest macOS operating system installed (this is where your code will be run)</li>
 <li>set some environmental variables, in this case keys that will be used to access the Twitter and Mapbox APIs (see the <a href="#secrets">‘Secrets’</a> section later in this post)</li>
@@ -97,7 +94,13 @@ jobs:
 <div id="rtweet" class="section level2">
 <h2>{rtweet}</h2>
 <p>The action runs an R script that generates content for a tweet and then posts it. This script makes use of the package <a href="https://docs.ropensci.org/rtweet/">{rtweet}</a> by <a href="https://mikewk.com/">Mike Kearney</a>, which lets you interact with <a href="https://developer.twitter.com/en/docs/twitter-api">the Twitter API</a> with R functions.</p>
-<p>You need a Twitter account, of course, and also to <a href="https://developer.twitter.com/en/apply-for-access">sign up as a Twitter developer</a> to access the API. As a developer, you can <a href="developer.twitter.com/en/apps">create ‘apps’</a> to obtain keys: private alphanumeric passcodes that grant you access to the API.</p>
+<p>You need a Twitter account, of course, and also to <a href="https://developer.twitter.com/en/apply-for-access">sign up as a Twitter developer</a> to access the API.</p>
+<div class="tip">
+<p><svg aria-hidden="true" role="img" viewBox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;"><path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"/></svg> <b>Update</b></p>
+<p>Twitter has <a href="https://blog.twitter.com/developer/en_us/topics/tools/2021/build-whats-next-with-the-new-twitter-developer-platform">moved to version 2.0 of their API</a> since this post was written. As things stand in February 2022 (hello from the future), you will need to <a href="https://developer.twitter.com/en/docs/twitter-api/getting-started/about-twitter-api">ask for ‘elevated’ access</a> in Twitter’s Developer Portal to ensure you can reach version 1.1 of the API, which is what {rtweet} is set up to communicate with.</p>
+<p>Huge thanks to <a href="https://oscarbaruffa.com/">Oscar Baruffa</a>, who <a href="https://oscarbaruffa.com/twitterbot/">learnt about this hard way</a> when setting up <a href="https://twitter.com/BigBookofR">a Twitter bot for the excellent Big Book of R</a> (an index of 250+ free books for R programming).</p>
+</div>
+<p>As a developer, you can <a href="developer.twitter.com/en/apps">create ‘apps’</a> to obtain keys: private alphanumeric passcodes that grant you access to the API.</p>
 <p>Typically, when working locally, you would either provide these keys as bare strings, or put them in <a href="https://rstats.wtf/r-startup.html#renviron">your .Renviron file</a>. With the latter, you can then use <code>Sys.getenv()</code> to call them from your .Renviron, which stops you exposing the raw keys in your code.</p>
 <p>Below is an example of how you can use {rtweet} to post a tweet from R if you’ve added the keys to your .Renviron.</p>
 <pre class="r"><code># Install the package from CRAN
@@ -120,10 +123,10 @@ rtweet::post_tweet(status = &quot;This is a test tweet.&quot;)</code></pre>
 <div id="mapbox" class="section level2">
 <h2>Mapbox</h2>
 <p><a href="https://www.mapbox.com/">Mapbox</a> is a company with services for mapping, geocoding and navigation, which developers can use for integrating into their apps for things like asset tracking, route optimisation or anything that requires a map interface for users.</p>
-<p>Again, you’ll need to set up a Mapbox account to get a key for using the API. While the target audience is largely commercial, there’s a generous allowance of 50,000 free requests for static satellite images.</p>
+<p>Again, you’ll need to set up a Mapbox account to get a key for using the API. While the target audience is largely commercial, there appears to be a generous free allowance of <a href="https://docs.mapbox.com/api/maps/static-images/#static-images-api-restrictions-and-limits">1250 requests per minute</a> for the static image API.</p>
 <p>You can then pass parameters to the Mapbox API via a URL. This is well explained in <a href="https://docs.mapbox.com/api/maps/#static-images">the Mapbox Documentation</a>, which has <a href="https://docs.mapbox.com/playground/static/">an excellent ‘playground’ interface</a> for you to test out your call.</p>
 <p>You basically modify a particular URL string to ask the API for what you want. For example, you can ask for a <code>300x200</code> pixel <code>satellite</code> image of the coordinates of <code>-0.1709</code> and <code>51.5065</code> with zoom level <code>12</code>, which is <a href="https://en.wikipedia.org/wiki/Hyde_Park,_London">Hyde Park</a>:</p>
-<pre><code>https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/-0.1709,51.5065,12,0/300x200?access_token=YOUR_MAPBOX_ACCESS_TOKEN</code></pre>
+<p><code>https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/-0.1709,51.5065,12,0/300x200?access_token=YOUR_MAPBOX_ACCESS_TOKEN</code></p>
 <p>Visiting the URL in your browser returns the requested image as a JPEG:</p>
 <div class="figure">
 <img src="/post/2020-09-21-londonmapbot_files/hyde.jpg" alt="A satellite view of Hyde Park in London, with watermarks of copyrights for Mapbox, OpenStreetMap and Maxar." width=300/>
@@ -172,20 +175,62 @@ Keep it secret… keep it safe.
 <li>inspect the <a href="https://github.com/matt-dray/londonmapbot/blob/master/.github/workflows/londonmapbot.yml">YAML file</a> that runs the action</li>
 <li>see <a href="https://github.com/matt-dray/londonmapbot/blob/master/.github/workflows/londonmapbot.yml">the R script</a> that generates and posts the image</li>
 </ul>
-<p>The <a href="https://github.com/matt-dray/londonmapbot/blob/master/README.md">GitHub README</a> also lists a few other map bots that have taken inspiration from londonmapbot; take a look at those too.</p>
-<p>Unfortunately, it doesn’t post successfully 100% of the time. You can see why by checking the actions log, which is accessed from <a href="https://github.com/matt-dray/londonmapbot/actions">the ‘Actions’ tab on the repo</a>. The failed ones, with red crosses, seem mostly due to an ‘empty reply from server’. I’m okay with this for now.</p>
-<div class="tip">
-<p><svg aria-hidden="true" role="img" viewBox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;"><path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"/></svg> <b>Update</b></p>
-<p>Actually, the action eventually righted itself and runs without any problems now. For context, you can <a href="https://github.com/matt-dray/londonmapbot/issues/4">read a discussion</a> about what might have been going on at the time.</p>
-</div>
-<p>In the first iteration of the action I passed the R code as a single line in the YAML file, which is suboptimal. I later tidied the code into a separate R script and declared the secrets in the YAML file. I looked at actions by <a href="https://lapsedgeographer.london/2020-04/automating-pdf-scraping/#using-github-actions-to-schedule-the-process">Matt Kerlogue</a> and <a href="https://github.com/rfortherestofus/rrutweets">David Keyes</a> to do this. David’s repo is interesting from a Twitter perspective because it automates tweets provided via a Google Sheet.</p>
-<p>I should also note that there are already <a href="https://github.com/marketplace?query=tweet">actions on the GitHub Marketplace for tweeting</a>, but they didn’t quite do what I wanted. I also wanted to write the juicy bit with R code, which I’m most familiar with.</p>
+<p>The <a href="https://github.com/matt-dray/londonmapbot/blob/master/README.md">GitHub README</a> also lists a few other map bots—which I’ve christened the ‘mapbotverse’—that have taken inspiration from londonmapbot; take a look at those too.</p>
+<p>Of course, you should fork the repo, or use it as a template, to create your own bot. Let me know what you get up to.</p>
 <p>Do give me suggestions and pull requests, or tell me how good you are at identifying the granular location in each image.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.1.0 (2021-05-18)
+##  os       macOS Big Sur 10.16         
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2022-02-12                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date       lib source        
+##  blogdown      1.4     2021-07-23 [1] CRAN (R 4.1.0)
+##  bookdown      0.23    2021-08-13 [1] CRAN (R 4.1.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.1.0)
+##  cli           3.1.0   2021-10-27 [1] CRAN (R 4.1.0)
+##  digest        0.6.29  2021-12-01 [1] CRAN (R 4.1.0)
+##  evaluate      0.14    2019-05-28 [1] CRAN (R 4.1.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.1.0)
+##  fontawesome   0.2.2   2021-07-02 [1] CRAN (R 4.1.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.1.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.1.0)
+##  jsonlite      1.7.2   2020-12-09 [1] CRAN (R 4.1.0)
+##  knitr         1.37    2021-12-16 [1] CRAN (R 4.1.0)
+##  magrittr      2.0.1   2020-11-17 [1] CRAN (R 4.1.0)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.1.0)
+##  rlang         0.4.12  2021-10-18 [1] CRAN (R 4.1.0)
+##  rmarkdown     2.10    2021-08-06 [1] CRAN (R 4.1.0)
+##  rstudioapi    0.13    2020-11-12 [1] CRAN (R 4.1.0)
+##  sass          0.4.0   2021-05-12 [1] CRAN (R 4.1.0)
+##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.1.0)
+##  stringi       1.7.6   2021-11-29 [1] CRAN (R 4.1.0)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.1.0)
+##  withr         2.4.3   2021-11-30 [1] CRAN (R 4.1.0)
+##  xfun          0.29    2021-12-14 [1] CRAN (R 4.1.0)
+##  yaml          2.2.1   2020-02-01 [1] CRAN (R 4.1.0)
+## 
+## [1] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
+</details>
 </div>
 <div class="footnotes">
 <hr />
 <ol>
 <li id="fn1"><p>Those look suspiciously like a large number of tennis courts, including some in stadia. Where could that be? The coordinates are <a href="https://goo.gl/maps/LAkdSRTkrEKHu3hi9">51.4317, -0.2151</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>There’s a number of sites that can help you build <a href="https://crontab.guru/">a cron string</a>. I built <a href="https://www.rostrum.blog/2021/04/10/dialga/">a toy package, {dialga}</a>, to help convert from R to cron to English. I may change the specific posting frequency for londonmapbot in future.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>In the first iteration of the action I passed the R code as a single line in the YAML file, which is suboptimal. I later tidied the code into a separate R script and declared the secrets in the YAML file. I looked at actions by <a href="https://lapsedgeographer.london/2020-04/automating-pdf-scraping/#using-github-actions-to-schedule-the-process">Matt Kerlogue</a> and <a href="https://github.com/rfortherestofus/rrutweets">David Keyes</a> to do this. David’s repo is interesting from a Twitter perspective because it automates tweets provided via a Google Sheet.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>I should note that there are already <a href="https://github.com/marketplace?query=tweet">actions on the GitHub Marketplace built specifically for tweeting</a>, but they didn’t quite do what I wanted. I also wanted to write the juicy bit with R code, which I’m most familiar with.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>There’s a number of sites that can help you build <a href="https://crontab.guru/">a cron string</a>. I built <a href="https://www.rostrum.blog/2021/04/10/dialga/">a toy package, {dialga}</a>, to help convert from R to cron to English. I may change the specific posting frequency for londonmapbot in future.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
