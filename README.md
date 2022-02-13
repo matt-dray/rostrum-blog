@@ -25,13 +25,13 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 115 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 116 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 8 day(s) ago: [Introduce me to your
-{soccercolleagues}](https://www.rostrum.blog/2022/02/04/soccercolleagues/).
+🆕 The latest post was published 1 day(s) ago: [londonmapbot at
+LondonR](https://www.rostrum.blog/2022/02/12/mapbotr-londonr/).
 
 📈 This 2D plot shows posts over time:
 
@@ -43,6 +43,7 @@ since 2018-04-14.
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|    116 | 2022-02-12 | [londonmapbot at LondonR](https://www.rostrum.blog/2022/02/12/mapbotr-londonr/)                                           |
 |    115 | 2022-02-04 | [Introduce me to your {soccercolleagues}](https://www.rostrum.blog/2022/02/04/soccercolleagues/)                          |
 |    114 | 2022-01-19 | [Impress with {keypress}](https://www.rostrum.blog/2022/01/19/keypress/)                                                  |
 |    113 | 2022-01-14 | [Wordle, twirdle and eldrow](https://www.rostrum.blog/2022/01/14/wordle/)                                                 |
@@ -163,4 +164,4 @@ since 2018-04-14.
 
 -----
 
-*Updated 2022-02-12 02:45:54*
+*Updated 2022-02-13 02:39:10*
