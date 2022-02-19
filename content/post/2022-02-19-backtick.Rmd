@@ -1,0 +1,180 @@
+---
+title: 'Adding an RStudio Addin to add in text'
+author: 'Matt Dray'
+date: '2022-02-19'
+slug: backtick
+categories:
+  - code
+  - package
+  - tutorial
+tags:
+  - backtick
+  - blogsnip
+  - r
+  - rstudio-addin
+  - rstudioapi
+  - snorkel
+draft: no
+---
+
+<img src="/post/2022-02-19-backtick_files/backtick.gif" alt="Gif of RStudio script pane. An RStudio addin called backtick is being used to insert a single backtick, surround selected text with bacticks, surround selected text with backticks as inline R code, and surround selected text with an R code chunk." width="100%"/>
+
+# tl;dr
+
+How can you write a quick RStudio Addin? I demonstrate with [a tiny R package I wrote called {backtick}](https://github.com/matt-dray/backtick), which contains an RStudio Addin with a handful of functions for inserting backticks into your R scripts and R Markdown documents.
+
+# Plus one
+
+[RStudio Addins](https://rstudio.github.io/rstudioaddins/) let you select an R function from a dropdown menu in the RStudio IDE. They're often functions that you don't need in your executed script, but can make your life easier by performing some kind of supportive action.
+
+For example, you can use the RStudio Addin in [the {remedy} package from ThinkR](https://thinkr-open.github.io/remedy/) to add Markdown formatting to your text. [RStudio's {reprex} package](https://reprex.tidyverse.org/) has a built-in RStudio Addin to create a reproducible example from highlighted code. Or [how about Miles McBain's {datapasta} Addin](https://milesmcbain.github.io/datapasta/index.html) for pasting conveniently into R scripts from external sources?
+
+You can find many more examples in [Dean Attali's {addinslist} package](https://github.com/daattali/addinslist), which itself contains an Addin for... adding more Addins.
+
+# In addition
+
+I've written about RStudio Addins before. 
+
+I have [a GitHub-hosted package called {blogsnip}](https://github.com/matt-dray/blogsnip) with an Rstudio Addin to help me insert code into these blogposts.[^serdar] For example, to insert the session-information block at the end of each post, or to insert HTML to create more accessible images.
+
+{blogsnip} also hosts a concept function [to add a comment to each closing bracket with the name of the function being closed](https://www.rostrum.blog/2021/08/31/add-biscuits/). I've found it useful for keeping on top of deeply-nested Shiny apps.
+
+A while back I also [added an RStudio Addin](https://www.rostrum.blog/2020/11/14/hello-r2eng/) to [the {r2eng} package](https://matt-dray.github.io/r2eng/) to let your computer speak R code aloud as an English sentence.
+
+I also recently created [the {snorkel} R package](https://github.com/matt-dray/snorkel), which contains an RStudio Addin to help you insert {roxygen2} formatting to your function documentation. Turns out [Jozef wrote a detailed series about how you can do something similar](https://jozef.io/r102-addin-roxytags/).
+
+<div class="figure">
+<img src="/post/2022-02-19-backtick_files/snorkel.gif" alt="Gif of RStudio Addin being used to add roxygen2 tags to selected text in the documentation for a function. Addins used are: format as bold, link to function in another package, and make hyperlink." width="100%"/>
+<p class="caption">You put a snorkel in your mouth to help you breathe oxygen; you put a {snorkel} in your addins to help you write with {roxygen2}.</p>
+</div>
+
+I wanted to write something about how to quickly set up a package to insert or replace text, which I think is probably the most common (simple) use of RStudio Addins. 
+
+Eventually [I was nerdsniped (unintentionally) on Twitter by Calum](https://twitter.com/ShinyBlackShoe/status/1494987656924737537?s=20&t=OxfNuCkFsR7TfZCkt6DlHg) to do something about it.
+
+# The problem
+
+Calum's backtick key, <kbd>`</kbd>, is [being used to activate additional software](https://twitter.com/ShinyBlackShoe/status/1494987656924737537?s=20&t=52-4AXxnjPvSEnTHUsRamg) that's awkward to toggle on and off every time they wanted to use the backtick for R coding. For example, you might use the backtick key to refer to variables with spaces in them, or else in R Markdown documents where you want to indicate code styling, inline R execution or a code chunk.
+
+To solve Calum's problem, you could try to use [a custom keyboard shortcut](https://t.co/JxZuhfbl2P) perhaps, or maybe [a snippet](https://t.co/aZakMQ3Nvu). And RStudio already has a button and shortcut in its IDE for inserting R Markdown code chunks, which require triple backticks to demarcate the start and end of the chunk.
+
+But an RStudio Addin is another viable method that means you can bundle up a set of functions that insert each of the backtick 'constructions', from a single backtick to an R Markdown chunk. 
+
+You can also set the functions of an RStudio Addin to custom keyboard shortcuts and quickly access them from [the RStudio command palette](https://www.rstudio.com/blog/rstudio-v1-4-preview-command-palette/) (just hit Shift+Cmd+P/Shift+Ctrl+P then 'backtick').
+
+# A solution
+
+So, the (very specific!) user need was 'obvious' and I created [the {backtick} package](https://github.com/matt-dray/backtick). Sure, [it's a sledgehammer to crack a nut](https://twitter.com/mattdray/status/1495102567650672645?s=20&t=52-4AXxnjPvSEnTHUsRamg),[^nut] but has functions to: 
+
+* insert a single backtick (just <code>`</code>)
+* surround selected text with single backticks (i.e. `selection` becomes `` `selection` ``)
+* surround selected text with backticks for execution as inline R code in an R Markdown document (as above, but inserts an `r` and space after the first backtick)
+* surround selected text with backticks for execution as an R code chunk in an R Markdown document (`selection` is surrounded by `` ```{r} `` above and `` ``` `` below)
+
+That last one is especially neat because the in-built RStudio function doesn't appear to put selected text inside an R markdown chunk' it simply inserts the skeleton of a chunk.
+
+[Calum notes that this solution worked](https://twitter.com/ShinyBlackShoe/status/1495096159957880834?s=20&t=52-4AXxnjPvSEnTHUsRamg), and that they was able to set the insert backtick Addin to the keyboard shortcut <kbd>Alt<kbd> + <kbd>`</kbd> (lol).
+
+There must be [a relevant xkcd](https://xkcd.com/) for this: why fix the real problem when you can write more software to paper the cracks?
+
+# Add your own
+
+I wanted to record for posterity how you (and me) can create this sort of thing.
+
+1. First, create a new package---I like to use `usethis::create_package()`---and complete basic things like the DESCRIPTION file ([I wrote about this before](https://www.rostrum.blog/2019/11/01/usethis/))
+1. [Write functions in an R script](https://github.com/matt-dray/backtick/blob/main/R/backticks.R)---I like to use `usethis::use_r()` to create this script in the package---that insert code or replace selected text using [the {rstudioapi} package](https://rstudio.github.io/rstudio-extensions/pkgdown/rstudioapi/index.html))
+1. Add [an `inst/rstudio/addins.dcf` file](https://github.com/matt-dray/backtick/blob/main/inst/rstudio/addins.dcf)[^dcf] that declares each of your Addins
+
+Points 2 and 3 are in scope for this quick post.
+
+## Use {rstudioapi}
+
+What do I mean by 'write functions that insert or replace' text?
+
+Well, insertion is straightforward. Here's the full function definition from {backtick} to insert a single backtick:
+
+```{r eval=FALSE}
+#' Insert Backtick
+#'
+#' Insert a single backtick. In R Markdown file, one backtick will be inserted.
+#' RStudio automatically adds a second backtick when this function is used in
+#' an R script.
+#'
+#' @export
+bt_backtick <- function() {
+
+  rstudioapi::insertText("`")
+
+}
+```
+
+In other words, it's as simple as a function that contains `rstudioapi::insertText()`. This fetches information from the IDE to know where the cursor is placed in your script, which is where a supplied text string (a single backtick in this case) will be inserted.
+
+And what about text replacement? A similar story: the {rstudioapi} package is used to detect the selected text, which can then be pasted together with other strings to produce and insert a new compound string. Here's an example from {backtick} for surrounding selected text with backticks:
+
+```{r eval=FALSE}
+#' Insert Backticks
+#'
+#' Surround selected text with backticks. Use it to style strings as code when
+#' rendering an R Markdown file, or to reference variable names that contain
+#' spaces.
+#'
+#' @export
+bt_backticks <- function() {
+
+  active_doc <- rstudioapi::getSourceEditorContext()
+
+  if (!is.null(active_doc)) {
+
+    selected_text <- active_doc$selection[[1]]$text
+
+    text_replace <- paste0("`", selected_text, "`")
+
+    rstudioapi::modifyRange(active_doc$selection[[1]]$range, text_replace)
+
+  }
+
+}
+```
+
+So, in short, `rstudioapi::getSourceEditorContext()` fetches information about the script pane, including the current `selection`. That selection can be pasted with other strings, such as a backtick character at the start and end, and then inserted back into the script pane with `rstudioapi::modifyRange()` to replace the original selection.
+
+And, well... that's it for functions. All you need to do now is create a special text file so that the functions can be interpreted as RStudio Addins.
+
+## Create a dcf
+
+So, for example, the `bt_bactick()` function can be exposed as an Addin function by adding the following to [the `inst/rstudio/addins.dcf` file](https://github.com/matt-dray/backtick/blob/main/inst/rstudio/addins.dcf):
+
+```
+Name: Insert Backtick
+Description: Insert a single backtick. In R Markdown file, one backtick will be
+    inserted. RStudio automatically adds a second backtick when this function is
+    used in an R script.
+Binding: bt_backtick
+Interactive: false
+```
+
+This is pretty straightforward: you provide a name (which will be the name you see in the RStudio Addins dropdown menu) and a description (I just copied the description I wrote for the function documentation), along with the binding (just he function name). There's also an 'interactive, which tells RStudio if it needs to wait for the user to do something (no, or `false` in our example).
+
+# Addintional resources
+
+This was a quick roundup to help you (and me) remember quickly how to create this kind of simple insert/replace type of Rstudio Addin.
+
+I recommend you check out a number of more in-depth sources for creating RStudio Addins:
+
+* [Sharon's excellent video 'Write your own RStudio addins'](https://www.infoworld.com/article/3336059/do-more-with-r-write-your-own-rstudio-addins.html)
+* [Jozef's in-depth blog series](https://jozef.io/r101-addin-reproducibility/)
+* [RStudio's very own introduction](https://rstudio.github.io/rstudioaddins/)
+
+Let me know about other useful Addins or resources for making them.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^serdar]: Shoutout to Serdar, who has contributed functions to {blogsnip}!
+[^dcf]: 'Debian Control File' if you must know, but it doesn't really matter.
+[^nut]: There's a thousand better answers to the conundrum, I'm sure. Re-map the other software to another key? Easier said than done if it's a work computer you're using. Turn off the other software when you're not using it? But what if you forget to switch it back on? Etc, etc. Relax, this is just a silly blog post.
