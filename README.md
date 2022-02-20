@@ -25,13 +25,13 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 116 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 117 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 7 day(s) ago: [londonmapbot at
-LondonR](https://www.rostrum.blog/2022/02/12/mapbotr-londonr/).
+🆕 The latest post was published 1 day(s) ago: [Add in an RStudio Addin
+to add in backticks](https://www.rostrum.blog/2022/02/19/backtick/).
 
 📈 This 2D plot shows posts over time:
 
@@ -43,6 +43,7 @@ LondonR](https://www.rostrum.blog/2022/02/12/mapbotr-londonr/).
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|    117 | 2022-02-19 | [Add in an RStudio Addin to add in backticks](https://www.rostrum.blog/2022/02/19/backtick/)                              |
 |    116 | 2022-02-12 | [londonmapbot at LondonR](https://www.rostrum.blog/2022/02/12/mapbotr-londonr/)                                           |
 |    115 | 2022-02-04 | [Introduce me to your {soccercolleagues}](https://www.rostrum.blog/2022/02/04/soccercolleagues/)                          |
 |    114 | 2022-01-19 | [Impress with {keypress}](https://www.rostrum.blog/2022/01/19/keypress/)                                                  |
@@ -164,4 +165,4 @@ LondonR](https://www.rostrum.blog/2022/02/12/mapbotr-londonr/).
 
 -----
 
-*Updated 2022-02-19 02:41:13*
+*Updated 2022-02-20 02:39:25*
