@@ -50,13 +50,13 @@ You put a snorkel in your mouth to help you breathe oxygen; you put a {snorkel} 
 <div id="the-problem" class="section level1">
 <h1>The problem</h1>
 <p>Calum’s backtick key, <kbd>`</kbd>, is <a href="https://twitter.com/ShinyBlackShoe/status/1494987656924737537?s=20&amp;t=52-4AXxnjPvSEnTHUsRamg">being used to activate additional software</a> that’s awkward to toggle on and off every time they wanted to use the backtick for R coding. For example, you might use the backtick key to refer to variables with spaces in them, or else in R Markdown documents where you want to indicate code styling, inline R execution or a code chunk.</p>
-<p>To solve Calum’s problem (<a href="https://commons.wikimedia.org/wiki/File:Italian_Keyboard_layout.svg">and Italy’s?</a>), you could try to use <a href="https://t.co/JxZuhfbl2P">a custom keyboard shortcut</a> perhaps, or maybe <a href="https://t.co/aZakMQ3Nvu">a snippet</a>. And RStudio already has a button and shortcut in its IDE for inserting R Markdown code chunks, which require triple backticks to demarcate the start and end of the chunk.</p>
+<p>To solve Calum’s problem (<a href="https://commons.wikimedia.org/wiki/File:Italian_Keyboard_layout.svg">and Italy’s?</a><a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>), you could try to use <a href="https://t.co/JxZuhfbl2P">a custom keyboard shortcut</a> perhaps, or maybe <a href="https://t.co/aZakMQ3Nvu">a snippet</a>. And RStudio already has a button and shortcut in its IDE for inserting R Markdown code chunks, which require triple backticks to demarcate the start and end of the chunk.</p>
 <p>But an RStudio Addin is another viable method that means you can bundle up a set of functions that insert each of the backtick ‘constructions’, from a single backtick to an R Markdown chunk.</p>
-<p>You can also set the functions of an RStudio Addin to custom keyboard shortcuts and quickly access them from <a href="https://www.rstudio.com/blog/rstudio-v1-4-preview-command-palette/">the RStudio command palette</a> (just hit <kbd>Shift</kbd> + <kbd>Cmd</kbd> + <kbd>P</kbd>, or <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>P</kbd>, then <kbd><code>`</code></kbd>).</p>
+<p>You can also set the functions of an RStudio Addin to <a href="https://support.rstudio.com/hc/en-us/articles/206382178-Customizing-Keyboard-Shortcuts-in-the-RStudio-IDE">custom keyboard shortcuts</a> and quickly access them from <a href="https://www.rstudio.com/blog/rstudio-v1-4-preview-command-palette/">the RStudio command palette</a> (just hit <kbd>Shift</kbd> + <kbd>Cmd</kbd> + <kbd>P</kbd>, or <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>P</kbd>, then type the word ‘backtick’).</p>
 </div>
 <div id="a-solution" class="section level1">
 <h1>A solution</h1>
-<p>So, the (very specific!) user need was ‘obvious’ and I created <a href="https://github.com/matt-dray/backtick">the {backtick} package</a>. Sure, <a href="https://twitter.com/mattdray/status/1495102567650672645?s=20&amp;t=52-4AXxnjPvSEnTHUsRamg">it’s a sledgehammer to crack a nut</a>,<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> but has functions to:</p>
+<p>So, the (very specific!) user need was ‘obvious’ and I created <a href="https://github.com/matt-dray/backtick">the {backtick} package</a>. Sure, <a href="https://twitter.com/mattdray/status/1495102567650672645?s=20&amp;t=52-4AXxnjPvSEnTHUsRamg">it’s a sledgehammer to crack a nut</a>,<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> but has functions to:</p>
 <ul>
 <li>insert a single backtick (just <code>`</code>)</li>
 <li>surround selected text with single backticks (i.e. <code>selection</code> becomes <code>`selection`</code>)</li>
@@ -73,7 +73,7 @@ You put a snorkel in your mouth to help you breathe oxygen; you put a {snorkel} 
 <ol style="list-style-type: decimal">
 <li>First, create a new package—I like to use <code>usethis::create_package()</code>—and complete basic things like the DESCRIPTION file (<a href="https://www.rostrum.blog/2019/11/01/usethis/">I wrote about this before</a>)</li>
 <li><a href="https://github.com/matt-dray/backtick/blob/main/R/backticks.R">Write functions in an R script</a>—I like to use <code>usethis::use_r()</code> to create this script in the package—that insert code or replace selected text using <a href="https://rstudio.github.io/rstudio-extensions/pkgdown/rstudioapi/index.html">the {rstudioapi} package</a>)</li>
-<li>Add <a href="https://github.com/matt-dray/backtick/blob/main/inst/rstudio/addins.dcf">an <code>inst/rstudio/addins.dcf</code> file</a><a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> that declares each of your Addins</li>
+<li>Add <a href="https://github.com/matt-dray/backtick/blob/main/inst/rstudio/addins.dcf">an <code>inst/rstudio/addins.dcf</code> file</a><a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> that declares each of your Addins</li>
 </ol>
 <p>Points 2 and 3 are in scope for this quick post.</p>
 <div id="use-rstudioapi" class="section level2">
@@ -148,50 +148,52 @@ Session info
 </summary>
 <pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
 ##  setting  value                       
-##  version  R version 4.1.0 (2021-05-18)
-##  os       macOS Big Sur 10.16         
+##  version  R version 4.1.1 (2021-08-10)
+##  os       macOS Mojave 10.14.6        
 ##  system   x86_64, darwin17.0          
 ##  ui       X11                         
 ##  language (EN)                        
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2022-02-20                  
+##  date     2022-02-21                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
 ##  package     * version date       lib source        
-##  blogdown      1.4     2021-07-23 [1] CRAN (R 4.1.0)
-##  bookdown      0.23    2021-08-13 [1] CRAN (R 4.1.0)
+##  blogdown      1.5     2021-09-02 [1] CRAN (R 4.1.0)
+##  bookdown      0.24    2021-09-02 [1] CRAN (R 4.1.0)
 ##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.1.0)
-##  cli           3.1.0   2021-10-27 [1] CRAN (R 4.1.0)
-##  digest        0.6.29  2021-12-01 [1] CRAN (R 4.1.0)
+##  cli           3.1.1   2022-01-20 [1] CRAN (R 4.1.2)
+##  digest        0.6.28  2021-09-23 [1] CRAN (R 4.1.0)
 ##  evaluate      0.14    2019-05-28 [1] CRAN (R 4.1.0)
 ##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.1.0)
 ##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.1.0)
 ##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.1.0)
 ##  jsonlite      1.7.3   2022-01-17 [1] CRAN (R 4.1.2)
-##  knitr         1.37    2021-12-16 [1] CRAN (R 4.1.0)
+##  knitr         1.36    2021-09-29 [1] CRAN (R 4.1.0)
 ##  magrittr      2.0.2   2022-01-26 [1] CRAN (R 4.1.2)
 ##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.1.0)
 ##  rlang         1.0.1   2022-02-03 [1] CRAN (R 4.1.2)
-##  rmarkdown     2.10    2021-08-06 [1] CRAN (R 4.1.0)
+##  rmarkdown     2.11    2021-09-14 [1] CRAN (R 4.1.0)
 ##  rstudioapi    0.13    2020-11-12 [1] CRAN (R 4.1.0)
 ##  sass          0.4.0   2021-05-12 [1] CRAN (R 4.1.0)
 ##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.1.0)
 ##  stringi       1.7.6   2021-11-29 [1] CRAN (R 4.1.0)
 ##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.1.0)
-##  withr         2.4.3   2021-11-30 [1] CRAN (R 4.1.0)
+##  withr         2.4.3   2021-11-30 [1] CRAN (R 4.1.1)
 ##  xfun          0.29    2021-12-14 [1] CRAN (R 4.1.0)
 ##  yaml          2.2.2   2022-01-25 [1] CRAN (R 4.1.2)
 ## 
-## [1] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
+## [1] /Users/matt.dray/Library/R/x86_64/4.1/library
+## [2] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
 </details>
 </div>
 <div class="footnotes">
 <hr />
 <ol>
 <li id="fn1"><p>Shoutout to Serdar, who has contributed functions to {blogsnip}!<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>There’s a thousand better answers to the conundrum, I’m sure. Re-map the other software to another key? Easier said than done if it’s a work computer you’re using. Turn off the other software when you’re not using it? But what if you forget to switch it back on? Etc, etc. Relax, this is just a silly blog post.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
-<li id="fn3"><p>‘Debian Control File’ if you must know, but it doesn’t really matter.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p><a href="https://twitter.com/alearrigo/status/1495306360560439298?s=20&amp;t=h6HXxEG0rTzuDiCQ5z49Ng">Confirmed by a real-life Italian (as far as I can tell)!</a><a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>There’s a thousand better answers to the conundrum, I’m sure. Re-map the other software to another key? Easier said than done if it’s a work computer you’re using. Turn off the other software when you’re not using it? But what if you forget to switch it back on? Etc, etc. Relax, this is just a silly blog post.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>‘Debian Control File’ if you must know, but it doesn’t really matter.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
