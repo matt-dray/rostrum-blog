@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 11 day(s) ago: [Add in an RStudio Addin
+🆕 The latest post was published 12 day(s) ago: [Add in an RStudio Addin
 to add in backticks](https://www.rostrum.blog/2022/02/19/backtick/).
 
 📈 This 2D plot shows posts over time:
@@ -165,4 +165,4 @@ to add in backticks](https://www.rostrum.blog/2022/02/19/backtick/).
 
 -----
 
-*Updated 2022-03-02 02:47:55*
+*Updated 2022-03-03 02:54:11*
