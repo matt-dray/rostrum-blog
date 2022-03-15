@@ -1,0 +1,117 @@
+---
+title: 'Reproducible {distill} posts with {renv} profiles'
+author: 'Matt Dray'
+date: '2022-03-15'
+slug: renv-profiles
+categories:
+  - code
+  - blog-meta
+  - tutorial
+tags:
+  - blog
+  - distill
+  - r
+  - renv
+  - reproducibility
+draft: yes
+---
+
+<div class="figure">
+<img src="/post/2022-03-14-renv-profiles_files/profiles.png" alt="Diagram showing two squares represening blog posts, each inside seprate squares representing {renv} profiles, both inside a larger rectabgle representing the blog profile." width="100%"/>
+</div>
+
+# tl;dr
+
+I think you can use [the {renv} package](https://rstudio.github.io/renv/index.html) to create separate [reproducible environment profiles](https://rstudio.github.io/renv/articles/profiles.html) for each of your [{distill} blog posts](https://rstudio.github.io/distill/).
+
+# Profiled
+
+Functionality comes and goes in R packages. How do you deal with that in the context of a blog built with R? What if you need to go back and change something in a post from four years ago?[^four]
+
+I built [a demo {distill} blog](https://renv-profiles-test.netlify.app/)[^blogdown] to test whether [the {renv} package](https://rstudio.github.io/renv/index.html) might be a viable solution for reproducibility on a post-by-post basis.
+
+{renv} typically works on the scale of a whole project, but [since version 0.13.0](https://rstudio.github.io/renv/articles/profiles.html) you can have multiple profiles _within_ a given project.
+
+I think this means that each post can have its own profile with its own distinct set of packages and package versions.
+
+That means you can easily recreate a specific environment for a given post at a given time if you need to alter and re-render it in future.
+
+# Example
+
+I'm presenting this here as a theory, really, but I've also [made a demo blog](https://renv-profiles-test.netlify.app/) to try it out. It seems to work.
+
+There are two posts on the demo blog. They both use the {dplyr} package, but [one depends on an old version](https://renv-profiles-test.netlify.app/posts/2022-03-14-dplyr-085/) (0.8.5) and [one depends on the current version](https://renv-profiles-test.netlify.app/posts/2022-03-14-dplyr-108/) (1.0.8).
+
+Using {renv} profiles means that these package versions don’t interfere with each other.
+
+The [post depending on the older {dplyr} version](https://renv-profiles-test.netlify.app/posts/2022-03-14-dplyr-085/) _can’t_ access [the `across()` function](https://dplyr.tidyverse.org/reference/across.html), but [the post depending on the newer {dplyr} version](https://renv-profiles-test.netlify.app/posts/2022-03-14-dplyr-108/) _can_ use `across()`. 
+
+In other words, the environments associated with the profiles for each post are totally isolated from each other.
+
+# How to
+
+Of course, you first need a blog. You can [follow the guidance](https://rstudio.github.io/distill/), but basically:
+
+1. Create your blog with `distill::create_blog()`
+1. Build it with `rmarkdown::render_site()` (or 'Build Website' from the Build pane of RStudio)
+1. Initiate a reproducible environment for the blog as a whole with `renv::init()`
+
+And then a new-post workflow could look like this:
+
+1. Create a new post with `distill_create_post()`
+1. Activate a profile for the new post with `renv::activate()`, providing a unique name to the profile argument (I suggest the post’s folder name as seen in [the blog’s _posts/ folder](https://github.com/matt-dray/renv-profiles-test/tree/main/_posts))
+1. Install the packages you need for the post with `renv::install()`
+1. Capture the dependencies in the profile’s lockfile with `renv::snapshot()`
+
+In code, that might look a bit like this:
+
+```{r eval=FALSE}
+distill::create_post("new-post")
+
+renv::activate(profile = "YYYY-MM-DD-new-post")
+
+renv::install(
+  "distill",
+  "rmarkdown",
+  "palmerpenguins",
+  "dplyr"
+)
+
+renv::snapshot()
+```
+
+For [the demo blog](https://renv-profiles-test.netlify.app/), I called the two profiles '2022-03-14-dplyr-085' and '2022-03-14-dplyr-108', which [you can see in the renv/profiles/ folder](https://github.com/matt-dray/renv-profiles-test/tree/main/renv/profiles) of the project repo.
+
+These are [named uniquely for the two separate folders in the _posts/ directory](https://github.com/matt-dray/renv-profiles-test/tree/main/_posts) that contain each post's files. This naming structure should make it easy to remember the profile associated with each post.
+
+As I worked on the posts, I switched between the two profiles with `renv::activate()`, passing the relevant profile name to the `profile` argument.
+
+Note that passing `NULL` as the `profile` argument means you switch to the default profile associated with the project as a whole, i.e. when you ran `renv::init()`.
+
+# Yeah, but?
+
+There are obvious pros and cons to this approach.
+
+For example, maybe it's a bit too dependent on the user: they have to remember to switch between the profiles, etc. 
+
+And I don't think you can properly rebuild the site again with `rmarkdown::render_site()`, because this function will run based only the currently active {renv} profile, rather than rendering each post in the context of its own specific profile.
+
+But ultimately isn't it worthwhile to be able to rebuild a post in future if you need to change or update something? Maybe.
+
+I'd be interested to hear other criticisms, especially before I try and use this approach for real.
+
+I know that [Danielle Navarro has looked into this](https://blog.djnavarro.net/posts/2021-09-30_on-blogging-reproducibly/) and created [a work-in-progress package called {refinery}](https://github.com/djnavarro/refinery) to help build a separate environment for each post in [a {distill} blog](https://rstudio.github.io/distill/blog.html).
+
+It's a more thought-ou and sophisticated
+
+Danielle's blog does a brilliant job of explaining the problem of blog reproducibility and the technicals behind it. I suggest you [read that post](https://blog.djnavarro.net/posts/2021-09-30_on-blogging-reproducibly/) if you want to know more.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^four]: Yes, I'm thinking about this because this blog is nearly four years old and I've had some headaches trying to rebuild posts from that long ago.
+[^blogdown]: Yes, this post is built with {blogdown}, not {distill}. But I figure the main target audience (other than me) are probably {distill} users these days.

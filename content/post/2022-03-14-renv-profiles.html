@@ -1,0 +1,141 @@
+---
+title: 'Reproducible {distill} posts with {renv} profiles'
+author: 'Matt Dray'
+date: '2022-03-15'
+slug: renv-profiles
+categories:
+  - code
+  - blog-meta
+  - tutorial
+tags:
+  - blog
+  - distill
+  - r
+  - renv
+  - reproducibility
+draft: yes
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div class="figure">
+<p><img src="/post/2022-03-14-renv-profiles_files/profiles.png" alt="Diagram showing two squares represening blog posts, each inside seprate squares representing {renv} profiles, both inside a larger rectabgle representing the blog profile." width="100%"/></p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I think you can use <a href="https://rstudio.github.io/renv/index.html">the {renv} package</a> to create separate <a href="https://rstudio.github.io/renv/articles/profiles.html">reproducible environment profiles</a> for each of your <a href="https://rstudio.github.io/distill/">{distill} blog posts</a>.</p>
+</div>
+<div id="profiled" class="section level1">
+<h1>Profiled</h1>
+<p>Functionality comes and goes in R packages. How do you deal with that in the context of a blog built with R? What if you need to go back and change something in a post from four years ago?<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>I built <a href="https://renv-profiles-test.netlify.app/">a demo {distill} blog</a><a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> to test whether <a href="https://rstudio.github.io/renv/index.html">the {renv} package</a> might be a viable solution for reproducibility on a post-by-post basis.</p>
+<p>{renv} typically works on the scale of a whole project, but <a href="https://rstudio.github.io/renv/articles/profiles.html">since version 0.13.0</a> you can have multiple profiles <em>within</em> a given project.</p>
+<p>I think this means that each post can have its own profile with its own distinct set of packages and package versions.</p>
+<p>That means you can easily recreate a specific environment for a given post at a given time if you need to alter and re-render it in future.</p>
+</div>
+<div id="example" class="section level1">
+<h1>Example</h1>
+<p>I’m presenting this here as a theory, really, but I’ve also <a href="https://renv-profiles-test.netlify.app/">made a demo blog</a> to try it out. It seems to work.</p>
+<p>There are two posts on the demo blog. They both use the {dplyr} package, but <a href="https://renv-profiles-test.netlify.app/posts/2022-03-14-dplyr-085/">one depends on an old version</a> (0.8.5) and <a href="https://renv-profiles-test.netlify.app/posts/2022-03-14-dplyr-108/">one depends on the current version</a> (1.0.8).</p>
+<p>Using {renv} profiles means that these package versions don’t interfere with each other.</p>
+<p>The <a href="https://renv-profiles-test.netlify.app/posts/2022-03-14-dplyr-085/">post depending on the older {dplyr} version</a> <em>can’t</em> access <a href="https://dplyr.tidyverse.org/reference/across.html">the <code>across()</code> function</a>, but <a href="https://renv-profiles-test.netlify.app/posts/2022-03-14-dplyr-108/">the post depending on the newer {dplyr} version</a> <em>can</em> use <code>across()</code>.</p>
+<p>In other words, the environments associated with the profiles for each post are totally isolated from each other.</p>
+</div>
+<div id="how-to" class="section level1">
+<h1>How to</h1>
+<p>Of course, you first need a blog. You can <a href="https://rstudio.github.io/distill/">follow the guidance</a>, but basically:</p>
+<ol style="list-style-type: decimal">
+<li>Create your blog with <code>distill::create_blog()</code></li>
+<li>Build it with <code>rmarkdown::render_site()</code> (or ‘Build Website’ from the Build pane of RStudio)</li>
+<li>Initiate a reproducible environment for the blog as a whole with <code>renv::init()</code></li>
+</ol>
+<p>And then a new-post workflow could look like this:</p>
+<ol style="list-style-type: decimal">
+<li>Create a new post with <code>distill_create_post()</code></li>
+<li>Activate a profile for the new post with <code>renv::activate()</code>, providing a unique name to the profile argument (I suggest the post’s folder name as seen in <a href="https://github.com/matt-dray/renv-profiles-test/tree/main/_posts">the blog’s _posts/ folder</a>)</li>
+<li>Install the packages you need for the post with <code>renv::install()</code></li>
+<li>Capture the dependencies in the profile’s lockfile with <code>renv::snapshot()</code></li>
+</ol>
+<p>In code, that might look a bit like this:</p>
+<pre class="r"><code>distill::create_post(&quot;new-post&quot;)
+
+renv::activate(profile = &quot;YYYY-MM-DD-new-post&quot;)
+
+renv::install(
+  &quot;distill&quot;,
+  &quot;rmarkdown&quot;,
+  &quot;palmerpenguins&quot;,
+  &quot;dplyr&quot;
+)
+
+renv::snapshot()</code></pre>
+<p>For <a href="https://renv-profiles-test.netlify.app/">the demo blog</a>, I called the two profiles ‘2022-03-14-dplyr-085’ and ‘2022-03-14-dplyr-108’, which <a href="https://github.com/matt-dray/renv-profiles-test/tree/main/renv/profiles">you can see in the renv/profiles/ folder</a> of the project repo.</p>
+<p>These are <a href="https://github.com/matt-dray/renv-profiles-test/tree/main/_posts">named uniquely for the two separate folders in the _posts/ directory</a> that contain each post’s files. This naming structure should make it easy to remember the profile associated with each post.</p>
+<p>As I worked on the posts, I switched between the two profiles with <code>renv::activate()</code>, passing the relevant profile name to the <code>profile</code> argument.</p>
+<p>Note that passing <code>NULL</code> as the <code>profile</code> argument means you switch to the default profile associated with the project as a whole, i.e. when you ran <code>renv::init()</code>.</p>
+</div>
+<div id="yeah-but" class="section level1">
+<h1>Yeah, but?</h1>
+<p>There are obvious pros and cons to this approach.</p>
+<p>For example, maybe it’s a bit too dependent on the user: they have to remember to switch between the profiles, etc.</p>
+<p>And I don’t think you can properly rebuild the site again with <code>rmarkdown::render_site()</code>, because this function will run based only the currently active {renv} profile, rather than rendering each post in the context of its own specific profile.</p>
+<p>But ultimately isn’t it worthwhile to be able to rebuild a post in future if you need to change or update something? Maybe.</p>
+<p>I’d be interested to hear other criticisms, especially before I try and use this approach for real.</p>
+<p>I know that <a href="https://blog.djnavarro.net/posts/2021-09-30_on-blogging-reproducibly/">Danielle Navarro has looked into this</a> and created <a href="https://github.com/djnavarro/refinery">a work-in-progress package called {refinery}</a> to help build a separate environment for each post in <a href="https://rstudio.github.io/distill/blog.html">a {distill} blog</a>.</p>
+<p>It’s a more thought-ou and sophisticated</p>
+<p>Danielle’s blog does a brilliant job of explaining the problem of blog reproducibility and the technicals behind it. I suggest you <a href="https://blog.djnavarro.net/posts/2021-09-30_on-blogging-reproducibly/">read that post</a> if you want to know more.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.1.1 (2021-08-10)
+##  os       macOS Mojave 10.14.6        
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2022-03-15                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date       lib source        
+##  blogdown      1.5     2021-09-02 [1] CRAN (R 4.1.0)
+##  bookdown      0.24    2021-09-02 [1] CRAN (R 4.1.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.1.0)
+##  cli           3.1.1   2022-01-20 [1] CRAN (R 4.1.2)
+##  digest        0.6.28  2021-09-23 [1] CRAN (R 4.1.0)
+##  evaluate      0.15    2022-02-18 [1] CRAN (R 4.1.2)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.1.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.1.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.1.0)
+##  jsonlite      1.7.3   2022-01-17 [1] CRAN (R 4.1.2)
+##  knitr         1.37    2021-12-16 [1] CRAN (R 4.1.0)
+##  magrittr      2.0.2   2022-01-26 [1] CRAN (R 4.1.2)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.1.0)
+##  rlang         1.0.1   2022-02-03 [1] CRAN (R 4.1.2)
+##  rmarkdown     2.11    2021-09-14 [1] CRAN (R 4.1.0)
+##  rstudioapi    0.13    2020-11-12 [1] CRAN (R 4.1.0)
+##  sass          0.4.0   2021-05-12 [1] CRAN (R 4.1.0)
+##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.1.0)
+##  stringi       1.7.6   2021-11-29 [1] CRAN (R 4.1.0)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.1.0)
+##  withr         2.4.3   2021-11-30 [1] CRAN (R 4.1.1)
+##  xfun          0.30    2022-03-02 [1] CRAN (R 4.1.2)
+##  yaml          2.3.5   2022-02-21 [1] CRAN (R 4.1.2)
+## 
+## [1] /Users/matt.dray/Library/R/x86_64/4.1/library
+## [2] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
+</details>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Yes, I’m thinking about this because this blog is nearly four years old and I’ve had some headaches trying to rebuild posts from that long ago.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>Yes, this post is built with {blogdown}, not {distill}. But I figure the main target audience (other than me) are probably {distill} users these days.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
