@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 0 day(s) ago: [Reproducible {distill}
+🆕 The latest post was published 1 day(s) ago: [Reproducible {distill}
 posts with {renv}
 profiles](https://www.rostrum.blog/2022/03/15/renv-profiles/).
 
@@ -167,4 +167,4 @@ profiles](https://www.rostrum.blog/2022/03/15/renv-profiles/).
 
 -----
 
-*Updated 2022-03-15 02:49:41*
+*Updated 2022-03-16 02:52:58*
