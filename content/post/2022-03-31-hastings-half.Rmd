@@ -1,0 +1,92 @@
+---
+title: 'Interactive maps of Hastings Half Marathon'
+author: 'Matt Dray'
+date: '2022-03-31'
+slug: hastings-half
+categories:
+  - code
+tags:
+  - flexdashboard
+  - ggrgl
+  - gpx3d
+  - health
+  - interactive
+  - leaflet
+  - plotly
+  - r
+---
+
+<div class="figure">
+<img src="/post/2022-03-31-hastings-half_files/route.png" alt="Webpage titled Hastings Half Marathon. There's a map showing a circular course with numbered markers along the length." width="100%"/>
+</div>
+
+
+# tl;dr
+
+I made [a small R Markdown site](https://matt-dray.github.io/hastings-half/) that contains interactive maps of the route of [the Hastings Half Marathon](https://www.hastings-half.co.uk/).
+
+# Half distance, double delay
+
+I signed up for [the Hastings Half Marathon](https://www.hastings-half.co.uk/) in March 2019 and finally got to run it in March 2022 after two years of pandemic-related cancellations.
+
+[I managed a time of 1:44:15](http://www.sportsystems.co.uk/ss/results/athlete/?entId=DRAYD-DROMM-MATTI)[^onefourfour] in terrific conditions and raised money for [Sands, the stillbirth and neonatal death charity](https://www.sands.org.uk/) (at time of writing [you can still donate](https://www.justgiving.com/fundraising/matt-dray)).
+
+As a nice bonus, the finisher's medal featured [Alan Turing](https://en.wikipedia.org/wiki/Alan_Turing), who [spent some of his childhood in the area](https://www.bbc.co.uk/news/uk-england-sussex-18580826).
+
+<img src="/post/2022-03-31-hastings-half_files/brass2022.png" alt="A finisher's medal for Hastings Half Marathon 2022, featuring an image of the Bombe code-breaking machine developed by Turing in the Second World War and the words 'father of computer science'." width="25%"/>
+</div>
+
+# Running or climbing?
+
+The Hastings Half is a popular and an interesting course, mostly because of the third dimension: there are two short, sharp early climbs, then a long sweeping one, later returning downhill to finish along the seafront of the town.[^wind]
+
+There are precious few resources online that illustrate the course, however. You can find [a low-quality map on the official website](https://www.hastings-half.co.uk/article.php/33/race_information_and_prize_list) and get [an elevation profile elsewhere](https://www.goodrunguide.co.uk/ElevationGraph.asp?RunType=A&RunID=260), but I thought it might be useful to create a quick and tiny webpage with the x, y and z dimensions in an interactive format.
+
+# Run route, run code
+
+So, I recorded the route with my Apple Watch and downloaded the data as a GPX file, which contains geospatial data in an XML-like format. I've [talked about Apple Health data before](https://www.rostrum.blog/2021/03/23/xml-health/), and also [about a small package I made to read GPX data](https://www.rostrum.blog/2021/12/30/gpx3d/), called [{gpx3d}](https://matt-dray.github.io/gpx3d/), which came in handy.
+
+With that data I made three interactive maps using R:
+
+1. A birds-eye view with [{leaflet}](https://rstudio.github.io/leaflet/), which allows zooming and panning and has markers for each of the kilometres
+2. An elevation profile with [{plotly}](https://plotly.com/r/), which shows the distance and elevation on hover
+3. A 3D trace of the course with [{ggrgl}](https://coolbutuseless.github.io/package/ggrgl/index.html), which can be dragged to show relative distance and elevation 
+
+I embedded these maps in three separate tabs of a [{flexdashboard}](https://pkgs.rstudio.com/flexdashboard/), an R Markdown format that lets you create simple, single page dashboards. I used [{bslib}](https://rstudio.github.io/bslib/), [{thematic}](https://rstudio.github.io/thematic/), [{emo}](https://github.com/hadley/emo) and [Google Fonts](https://fonts.google.com/) for styles and embellishment.
+
+I pushed the files to [a GitHub repo](https://github.com/matt-dray/hastings-half) and [served the HTML via GitHub Pages](https://pages.github.com/) to a dedicated webpage at [matt-dray.github.io/hastings-half/](https://matt-dray.github.io/hastings-half/).
+
+Here are some screenshots of each page:
+
+<div class="figure">
+<img src="/post/2022-03-31-hastings-half_files/route.png" alt="Webpage titled Hastings Half Marathon. There's a map showing a circular course with numbered markers along the length." width="100%"/>
+<p class="caption">Screenshot of the interactive route map, made with {leaflet}</p>
+</div>
+
+<div class="figure">
+<img src="/post/2022-03-31-hastings-half_files/profile.png" alt="Webpage titled Hastings Half Marathon. There's a plot showing distance against elevation. There is a large incline about a third of the way from right to left, and a corresponding decline two-thirds in before flattening out." width="100%"/>
+<p class="caption">Screenshot of the interactive elevation profile, made with {plotly}</p>
+</div>
+
+<div class="figure">
+<img src="/post/2022-03-31-hastings-half_files/3d.png" alt="Webpage titled Hastings Half Marathon. There's a map showing a three-dimensional view of a line, which is plotted with axes for latitude, longitude and elevation." width="100%"/>
+<p class="caption">Screenshot of the interactive 3D trace, made with {ggrgl}</p>
+</div>
+
+# See you in 2023
+
+Ultimately the webpage is a very quick demo, but I hope others will be able to use to get a sense of the course.
+
+The next step will be to add fourth and fifth dimensions: smell and sound. As soon as you reach the bottom of All Saints Street you hit the historic Old Town seafront, where you're immediately perked up by the scent of frying chips and the screech of extremely raucous seagulls.
+
+There's no place like home.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^onefourfour]: A time of 1:44 while wearing number 144, coincidentally.
+[^wind]: Just pray that the cold sea wind isn't blowing in your face for those several kilometres; it feels like running in frozen treacle.
