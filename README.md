@@ -25,14 +25,14 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 118 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 119 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
-📅 That’s a post roughly every 12 days, or about 2.4 posts per month.
+📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 16 day(s) ago: [Reproducible {distill}
-posts with {renv}
-profiles](https://www.rostrum.blog/2022/03/15/renv-profiles/).
+🆕 The latest post was published 1 day(s) ago: [Interactive maps of
+Hastings Half
+Marathon](https://www.rostrum.blog/2022/03/31/hastings-half/).
 
 📈 This 2D plot shows posts over time:
 
@@ -44,6 +44,7 @@ profiles](https://www.rostrum.blog/2022/03/15/renv-profiles/).
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|    119 | 2022-03-31 | [Interactive maps of Hastings Half Marathon](https://www.rostrum.blog/2022/03/31/hastings-half/)                          |
 |    118 | 2022-03-15 | [Reproducible {distill} posts with {renv} profiles](https://www.rostrum.blog/2022/03/15/renv-profiles/)                   |
 |    117 | 2022-02-19 | [Add in an RStudio Addin to add in backticks](https://www.rostrum.blog/2022/02/19/backtick/)                              |
 |    116 | 2022-02-12 | [londonmapbot at LondonR](https://www.rostrum.blog/2022/02/12/mapbotr-londonr/)                                           |
@@ -167,4 +168,4 @@ profiles](https://www.rostrum.blog/2022/03/15/renv-profiles/).
 
 -----
 
-*Updated 2022-03-31 03:02:52*
+*Updated 2022-04-01 03:25:48*
