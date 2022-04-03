@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 2 day(s) ago: [Interactive maps of
+🆕 The latest post was published 3 day(s) ago: [Interactive maps of
 Hastings Half
 Marathon](https://www.rostrum.blog/2022/03/31/hastings-half/).
 
@@ -168,4 +168,4 @@ Marathon](https://www.rostrum.blog/2022/03/31/hastings-half/).
 
 -----
 
-*Updated 2022-04-02 03:02:46*
+*Updated 2022-04-03 03:01:44*
