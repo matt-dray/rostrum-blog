@@ -28,9 +28,9 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 🔢 There have been 119 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
-📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
+📅 That’s a post roughly every 12 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 10 day(s) ago: [Interactive maps of
+🆕 The latest post was published 11 day(s) ago: [Interactive maps of
 Hastings Half
 Marathon](https://www.rostrum.blog/2022/03/31/hastings-half/).
 
@@ -168,4 +168,4 @@ Marathon](https://www.rostrum.blog/2022/03/31/hastings-half/).
 
 -----
 
-*Updated 2022-04-10 03:06:30*
+*Updated 2022-04-11 03:18:18*
