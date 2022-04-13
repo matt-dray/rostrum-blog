@@ -1,0 +1,116 @@
+---
+title: 'Building a {r.oguelike} in R'
+author: 'Matt Dray'
+date: '2022-04-13'
+slug: r.oguelike-dev
+categories:
+  - code
+  - package
+tags:
+  - game
+  - r
+  - r.oguelike
+draft: yes
+---
+
+# tl;dr
+
+I've begun writing [a roguelike game](https://en.wikipedia.org/wiki/Roguelike) in [an R package called {r.oguelike}](https://matt-dray.github.io/r.oguelike/reference/start_game.html).
+
+# Roguelikes
+
+Video game genres: beat 'em up, platformer, rhythm, MMORPG, sports, puzzle. 
+
+But [have you heard of roguelikes](https://en.wikipedia.org/wiki/Roguelike)?
+
+The name is an odd one. But it's literal: these games are like the game _Rogue_.
+
+[_Rogue_ is a very early (circa 1980) and extremely basic dungeon-explorer](https://en.wikipedia.org/wiki/Rogue_%28video_game%29) that uses characters like `@` and `.` as 'graphics'. 
+
+Roguelikes even have a (mostly) accepted ['Berlin Interpretation'](http://www.roguebasin.com/index.php/Berlin_Interpretation) that lays out the strict requirements of what makes a roguelike.
+
+# In R?
+
+So, what would it take to make a roguelike using R?
+
+The closest I've come (by accident) is making a silly little [game-in-a-package called {ActionSquirrel}](https://www.rostrum.blog/2021/10/03/squirrel/). You control an emoji squirrel on the R console, moving around an emoji forest grid to collect randomly-placed nuts. Collect enough nuts to survive winter, which arrives within a certain number of turns, while avoiding a randomly-moving owl.
+
+That's not far off the Berlin interpretation: it has randomness and permadeath and is  turn-based is grid-based and has non-modality. But it's missing complexity, resource management, hack 'n' slash gameplay and exploration.
+
+# {r.oguelike}
+
+So I built an R package containing an 'engine' for a game in this style: {r.oguelike}.
+
+```{r eval=FALSE}
+remotes::install_github("matt-dray/r.oguelike")
+```
+
+At time of writing, it has the following features:
+
+* movement by player-input
+* randomised dungeon size and item placement 
+* a hit-point (HP) system
+* stationary enemies
+* enemy battles that resolve instantly, but inflict damage on both parties based on attack strength and HP
+* an inventory
+* collectible money that goes in the inventory
+* an apple item that goes in the inventory and is assigned to a key that replenishes HP when the player chooses
+
+When you begin the game, a dungeon space is filled with a player ('@'), enemy ('E'), apple ('a') and money ('$').
+
+Looks pretty roguelike to me, graphics-wise!
+
+# How to play
+
+From your console:
+
+```{r eval=FALSE}
+r.oguelike::start_game()
+```
+
+It's turn-by-turn game and the user is first prompted to move. There are two methods:
+
+* press <kbd>W</kbd>, <kbd>A</kbd>, <kbd>S</kbd> or <kbd>D</kbd> for up, left, down or right and hit <kbd>Enter</kbd>
+* just press an arrow key [if your console supports {keypress}](https://github.com/gaborcsardi/keypress) (not available in RStudio), a package from Gábor Csárdi that [I wrote about recently](https://www.rostrum.blog/2022/01/19/keypress/).
+
+Pressing '1' will allow you to consume a collected apple, if it's in your inventory.
+
+# Binder
+
+But! Who has time to install the package and run it from their own console? Sheesh.
+
+So! I've setup [a Binder instance](https://mybinder.org/) of RStudio--with RStudio installed--so you can just [click a link](https://mybinder.org/v2/gh/matt-dray/play-r.oguelike/main?urlpath=rstudio) and play the game in your browser.
+
+[![Launch Rstudio Binder](http://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/matt-dray/play-r.oguelike/main?urlpath=rstudio)
+
+You can even [play this from your phone](https://twitter.com/mattdray/status/1486458576516399104?s=20&t=dVwpJPwmMeBP3NTUhrn9gQ), lol.
+
+# Future
+
+So far I've written everything in base R; the only dependency is {keypress} to make inputs easier for consoles that support it.
+
+But this is a bit cumbersome. There's only so many if-else statements you can write before your brain explodes. To this end, I'm working in a branch to make use of the object-oriented approach of [the {R6} package](https://r6.r-lib.org/articles/Introduction.html)--as used in {ActionSquirrel}--to create general objects like enemies, rooms, etc, that should make it easier to handle and work with the elements of the game.
+
+# Devlog
+
+You can consider this a sort-of 'devlog': a record of how a work-in-progress is getting along. 
+
+Basically I've been watching on YouTube a bunch of videos by:
+
+* [Sebastian Lague](https://www.youtube.com/c/SebastianLague)
+* [Karl (ThinMatrix)](https://www.youtube.com/c/ThinMatrix/)
+* [Dani](https://www.youtube.com/c/DaniDev)
+
+All of whom make videos to update on progress in the video games they're making.
+
+I'd like to see more of this in the R scene. I want to see more 'creators' making videos or posts that talk about the thought-processes behind an R package as its being built. Great examples are from:
+
+* Bruno Rodrigues on YouTube, particularly [his {chronicler} package]()
+* mikefc (coolbutuseless) giving [sneak peaks on Twitter]() for ongoing projects
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>

@@ -1,0 +1,138 @@
+---
+title: 'Building a {r.oguelike} in R'
+author: 'Matt Dray'
+date: '2022-04-13'
+slug: r.oguelike-dev
+categories:
+  - code
+  - package
+tags:
+  - game
+  - r
+  - r.oguelike
+draft: yes
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I’ve begun writing <a href="https://en.wikipedia.org/wiki/Roguelike">a roguelike game</a> in <a href="https://matt-dray.github.io/r.oguelike/reference/start_game.html">an R package called {r.oguelike}</a>.</p>
+</div>
+<div id="roguelikes" class="section level1">
+<h1>Roguelikes</h1>
+<p>Video game genres: beat ’em up, platformer, rhythm, MMORPG, sports, puzzle.</p>
+<p>But <a href="https://en.wikipedia.org/wiki/Roguelike">have you heard of roguelikes</a>?</p>
+<p>The name is an odd one. But it’s literal: these games are like the game <em>Rogue</em>.</p>
+<p><a href="https://en.wikipedia.org/wiki/Rogue_%28video_game%29"><em>Rogue</em> is a very early (circa 1980) and extremely basic dungeon-explorer</a> that uses characters like <code>@</code> and <code>.</code> as ‘graphics’.</p>
+<p>Roguelikes even have a (mostly) accepted <a href="http://www.roguebasin.com/index.php/Berlin_Interpretation">‘Berlin Interpretation’</a> that lays out the strict requirements of what makes a roguelike.</p>
+</div>
+<div id="in-r" class="section level1">
+<h1>In R?</h1>
+<p>So, what would it take to make a roguelike using R?</p>
+<p>The closest I’ve come (by accident) is making a silly little <a href="https://www.rostrum.blog/2021/10/03/squirrel/">game-in-a-package called {ActionSquirrel}</a>. You control an emoji squirrel on the R console, moving around an emoji forest grid to collect randomly-placed nuts. Collect enough nuts to survive winter, which arrives within a certain number of turns, while avoiding a randomly-moving owl.</p>
+<p>That’s not far off the Berlin interpretation: it has randomness and permadeath and is turn-based is grid-based and has non-modality. But it’s missing complexity, resource management, hack ‘n’ slash gameplay and exploration.</p>
+</div>
+<div id="r.oguelike" class="section level1">
+<h1>{r.oguelike}</h1>
+<p>So I built an R package containing an ‘engine’ for a game in this style: {r.oguelike}.</p>
+<pre class="r"><code>remotes::install_github(&quot;matt-dray/r.oguelike&quot;)</code></pre>
+<p>At time of writing, it has the following features:</p>
+<ul>
+<li>movement by player-input</li>
+<li>randomised dungeon size and item placement</li>
+<li>a hit-point (HP) system</li>
+<li>stationary enemies</li>
+<li>enemy battles that resolve instantly, but inflict damage on both parties based on attack strength and HP</li>
+<li>an inventory</li>
+<li>collectible money that goes in the inventory</li>
+<li>an apple item that goes in the inventory and is assigned to a key that replenishes HP when the player chooses</li>
+</ul>
+<p>When you begin the game, a dungeon space is filled with a player (‘@’), enemy (‘E’), apple (‘a’) and money (‘$’).</p>
+<p>Looks pretty roguelike to me, graphics-wise!</p>
+</div>
+<div id="how-to-play" class="section level1">
+<h1>How to play</h1>
+<p>From your console:</p>
+<pre class="r"><code>r.oguelike::start_game()</code></pre>
+<p>It’s turn-by-turn game and the user is first prompted to move. There are two methods:</p>
+<ul>
+<li>press <kbd>W</kbd>, <kbd>A</kbd>, <kbd>S</kbd> or <kbd>D</kbd> for up, left, down or right and hit <kbd>Enter</kbd></li>
+<li>just press an arrow key <a href="https://github.com/gaborcsardi/keypress">if your console supports {keypress}</a> (not available in RStudio), a package from Gábor Csárdi that <a href="https://www.rostrum.blog/2022/01/19/keypress/">I wrote about recently</a>.</li>
+</ul>
+<p>Pressing ‘1’ will allow you to consume a collected apple, if it’s in your inventory.</p>
+</div>
+<div id="binder" class="section level1">
+<h1>Binder</h1>
+<p>But! Who has time to install the package and run it from their own console? Sheesh.</p>
+<p>So! I’ve setup <a href="https://mybinder.org/">a Binder instance</a> of RStudio–with RStudio installed–so you can just <a href="https://mybinder.org/v2/gh/matt-dray/play-r.oguelike/main?urlpath=rstudio">click a link</a> and play the game in your browser.</p>
+<p><a href="https://mybinder.org/v2/gh/matt-dray/play-r.oguelike/main?urlpath=rstudio"><img src="http://mybinder.org/badge_logo.svg" alt="Launch Rstudio Binder" /></a></p>
+<p>You can even <a href="https://twitter.com/mattdray/status/1486458576516399104?s=20&amp;t=dVwpJPwmMeBP3NTUhrn9gQ">play this from your phone</a>, lol.</p>
+</div>
+<div id="future" class="section level1">
+<h1>Future</h1>
+<p>So far I’ve written everything in base R; the only dependency is {keypress} to make inputs easier for consoles that support it.</p>
+<p>But this is a bit cumbersome. There’s only so many if-else statements you can write before your brain explodes. To this end, I’m working in a branch to make use of the object-oriented approach of <a href="https://r6.r-lib.org/articles/Introduction.html">the {R6} package</a>–as used in {ActionSquirrel}–to create general objects like enemies, rooms, etc, that should make it easier to handle and work with the elements of the game.</p>
+</div>
+<div id="devlog" class="section level1">
+<h1>Devlog</h1>
+<p>You can consider this a sort-of ‘devlog’: a record of how a work-in-progress is getting along.</p>
+<p>Basically I’ve been watching on YouTube a bunch of videos by:</p>
+<ul>
+<li><a href="https://www.youtube.com/c/SebastianLague">Sebastian Lague</a></li>
+<li><a href="https://www.youtube.com/c/ThinMatrix/">Karl (ThinMatrix)</a></li>
+<li><a href="https://www.youtube.com/c/DaniDev">Dani</a></li>
+</ul>
+<p>All of whom make videos to update on progress in the video games they’re making.</p>
+<p>I’d like to see more of this in the R scene. I want to see more ‘creators’ making videos or posts that talk about the thought-processes behind an R package as its being built. Great examples are from:</p>
+<ul>
+<li>Bruno Rodrigues on YouTube, particularly <a href="">his {chronicler} package</a></li>
+<li>mikefc (coolbutuseless) giving <a href="">sneak peaks on Twitter</a> for ongoing projects</li>
+</ul>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value                       
+##  version  R version 4.1.3 (2022-03-10)
+##  os       macOS Big Sur/Monterey 10.16
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2022-04-13                  
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date       lib source        
+##  blogdown      1.4     2021-07-23 [1] CRAN (R 4.1.0)
+##  bookdown      0.23    2021-08-13 [1] CRAN (R 4.1.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.1.0)
+##  cli           3.2.0   2022-02-14 [1] CRAN (R 4.1.2)
+##  digest        0.6.29  2021-12-01 [1] CRAN (R 4.1.0)
+##  evaluate      0.14    2019-05-28 [1] CRAN (R 4.1.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.1.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.1.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.1.0)
+##  jsonlite      1.7.3   2022-01-17 [1] CRAN (R 4.1.2)
+##  knitr         1.37    2021-12-16 [1] CRAN (R 4.1.0)
+##  magrittr      2.0.2   2022-01-26 [1] CRAN (R 4.1.2)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.1.0)
+##  rlang         1.0.2   2022-03-04 [1] CRAN (R 4.1.2)
+##  rmarkdown     2.10    2021-08-06 [1] CRAN (R 4.1.0)
+##  rstudioapi    0.13    2020-11-12 [1] CRAN (R 4.1.0)
+##  sass          0.4.0   2021-05-12 [1] CRAN (R 4.1.0)
+##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.1.0)
+##  stringi       1.7.6   2021-11-29 [1] CRAN (R 4.1.0)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.1.0)
+##  withr         2.4.3   2021-11-30 [1] CRAN (R 4.1.0)
+##  xfun          0.29    2021-12-14 [1] CRAN (R 4.1.0)
+##  yaml          2.2.2   2022-01-25 [1] CRAN (R 4.1.2)
+## 
+## [1] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
+</details>
+</div>
