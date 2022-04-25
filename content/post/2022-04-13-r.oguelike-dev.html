@@ -1,95 +1,216 @@
 ---
 title: 'Building a {r.oguelike} in R'
 author: 'Matt Dray'
-date: '2022-04-13'
+date: '2022-04-25'
 slug: r.oguelike-dev
 categories:
   - code
   - package
 tags:
+  - ActionSquirrel
   - game
+  - keypress
   - r
   - r.oguelike
-draft: yes
+  - R6
+draft: no
 ---
 
 <script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
 
 
+<div class="figure">
+<p><img src="/post/2022-04-13-r.oguelike-dev_files/at-player.png" alt="An at symbol with arms and legs. It holds a shield in one hand and is raising a sword with the other." width="50%"/></p>
+</div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>I’ve begun writing <a href="https://en.wikipedia.org/wiki/Roguelike">a roguelike game</a> in <a href="https://matt-dray.github.io/r.oguelike/reference/start_game.html">an R package called {r.oguelike}</a>.</p>
+<p>I started writing <a href="https://en.wikipedia.org/wiki/Roguelike">a roguelike game</a> in <a href="https://matt-dray.github.io/r.oguelike/">an R package called {r.oguelike}</a>.</p>
 </div>
-<div id="roguelikes" class="section level1">
-<h1>Roguelikes</h1>
-<p>Video game genres: beat ’em up, platformer, rhythm, MMORPG, sports, puzzle.</p>
-<p>But <a href="https://en.wikipedia.org/wiki/Roguelike">have you heard of roguelikes</a>?</p>
-<p>The name is an odd one. But it’s literal: these games are like the game <em>Rogue</em>.</p>
-<p><a href="https://en.wikipedia.org/wiki/Rogue_%28video_game%29"><em>Rogue</em> is a very early (circa 1980) and extremely basic dungeon-explorer</a> that uses characters like <code>@</code> and <code>.</code> as ‘graphics’.</p>
-<p>Roguelikes even have a (mostly) accepted <a href="http://www.roguebasin.com/index.php/Berlin_Interpretation">‘Berlin Interpretation’</a> that lays out the strict requirements of what makes a roguelike.</p>
+<div id="rogue-like" class="section level1">
+<h1>Rogue… like?</h1>
+<p>There’s loads of video game genres: beat ’em up, platformer, rhythm, MMORPG, sports, puzzle. <a href="https://en.wikipedia.org/wiki/Roguelike">Have you heard of roguelikes</a>?</p>
+<p>The name is literal: they’re <a href="https://en.wikipedia.org/wiki/Rogue_%28video_game%29">games that play like <em>Rogue</em></a>, a legendary dungeon-explorer from 1980 that set the bar for role-playing games.</p>
+<p>Perhaps most recognisably, it used ASCII text as ‘graphics’: the player controls a character denoted by the at symbol (<code>@</code>), while floor tiles are made of periods (<code>.</code>), for example.</p>
+<div class="figure">
+<img src="/post/2022-04-13-r.oguelike-dev_files/rogue.png" alt="Screenshot of the game Rogue, which has graphics made entirely from ASCII characters. Several rooms are outlined with hyphens and pipes, with hashmark corridors between them. The player character is an at symbol. Some rooms have items in them, marked with various symbols. There's some commentary text printed above the map, which says '4 pieces of gold', and an inventory below, which says things like 'Hp 11." width="100%"/>
+<p class="caption">
+Screenshot of Rogue <a href="https://en.wikipedia.org/wiki/Roguelike#/media/File:Rogue_Screenshot.png">via Thedarkb on Wikipedia</a>
+</p>
 </div>
-<div id="in-r" class="section level1">
-<h1>In R?</h1>
+<p>There are many interpretations of what exactly constitutes a ‘roguelike’, one of which is the strict <a href="http://www.roguebasin.com/index.php/Berlin_Interpretation">‘Berlin Interpretation’</a><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>. Must-haves include:</p>
+<ul>
+<li>randomly-generated dungeons (a different playing surface every time)</li>
+<li>permadeath (it’s game over when you die)</li>
+<li>turn-based battles (limitless thinking time, then one action)</li>
+<li>grid-based (everything takes up one tile of space)</li>
+<li>non-modal (all actions are possible at any time)</li>
+<li>complexity (rich problem solving with items, characters and interactions)</li>
+<li>resource management (items are limited and must be managed)</li>
+<li>hack ‘n’ slash (kill lots of monsters)</li>
+<li>exploration and discovery (find all corners of the map to solve problems)</li>
+</ul>
+<p>These aren’t necessarily hard and fast rules—many games have added their own twist—but they provide the essence of the genre.</p>
+</div>
+<div id="like-rogue" class="section level1">
+<h1>Like Rogue!</h1>
 <p>So, what would it take to make a roguelike using R?</p>
-<p>The closest I’ve come (by accident) is making a silly little <a href="https://www.rostrum.blog/2021/10/03/squirrel/">game-in-a-package called {ActionSquirrel}</a>. You control an emoji squirrel on the R console, moving around an emoji forest grid to collect randomly-placed nuts. Collect enough nuts to survive winter, which arrives within a certain number of turns, while avoiding a randomly-moving owl.</p>
-<p>That’s not far off the Berlin interpretation: it has randomness and permadeath and is turn-based is grid-based and has non-modality. But it’s missing complexity, resource management, hack ‘n’ slash gameplay and exploration.</p>
+<p>I once made a tiny <a href="https://www.rostrum.blog/2021/10/03/squirrel/">game-in-a-package called {ActionSquirrel}</a>. You control an emoji squirrel on the R console, moving around a forest grid to collect randomly-placed nuts. Collect enough nuts to survive winter, which arrives within a certain number of turns, while avoiding a randomly-moving owl.</p>
+<pre class="r"><code>x &lt;- ActionSquirrel::ActionSquirrel$new()</code></pre>
+<pre><code>## 🌳 🌳 🌳 🌳 🌳 
+## 🌳 🌳 🌰 🌳 🌳 
+## 🌳 🌳 🌳 🐿 🌳 
+## 🌳 🦉 🌳 🌳 🌳 
+## 🌳 🌳 🌳 🌳 🌳 
+## Moves: 0 
+## Nuts: 0</code></pre>
+<p>That’s not far off from some of the roguelike requirements: it has randomness and permadeath, is turn-based and grid-based and has non-modality. But it’s missing complexity, resource management, hack ‘n’ slash gameplay and exploration.</p>
+<p>And the aesthetic isn’t particularly… dungeony?</p>
 </div>
 <div id="r.oguelike" class="section level1">
 <h1>{r.oguelike}</h1>
-<p>So I built an R package containing an ‘engine’ for a game in this style: {r.oguelike}.</p>
+<p>So I started to build an R package containing an ‘engine’ for a game in the roguelike style, called {r.oguelike}.</p>
+<p>You can <a href="https://matt-dray.github.io/r.oguelike/">visit the package website</a> or <a href="https://github.com/matt-dray/r.oguelike">look at the source code in the GitHub repo</a>.</p>
+<p>For now it’s just a toy to demo some possible approaches for some of the main game elements: ‘graphics’, movement, an inventory, item use and battling.</p>
+<p>As ever, everything in the package is subject to change and improvement (though I also may never revisit it). Consider this a quick devlog<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>.</p>
+<div id="install-or-dont" class="section level2">
+<h2>Install (or don’t)</h2>
+<p>You can install from GitHub to make the package available on your machine.</p>
 <pre class="r"><code>remotes::install_github(&quot;matt-dray/r.oguelike&quot;)</code></pre>
-<p>At time of writing, it has the following features:</p>
-<ul>
-<li>movement by player-input</li>
-<li>randomised dungeon size and item placement</li>
-<li>a hit-point (HP) system</li>
-<li>stationary enemies</li>
-<li>enemy battles that resolve instantly, but inflict damage on both parties based on attack strength and HP</li>
-<li>an inventory</li>
-<li>collectible money that goes in the inventory</li>
-<li>an apple item that goes in the inventory and is assigned to a key that replenishes HP when the player chooses</li>
-</ul>
-<p>When you begin the game, a dungeon space is filled with a player (‘@’), enemy (‘E’), apple (‘a’) and money (‘$’).</p>
-<p>Looks pretty roguelike to me, graphics-wise!</p>
-</div>
-<div id="how-to-play" class="section level1">
-<h1>How to play</h1>
-<p>From your console:</p>
-<pre class="r"><code>r.oguelike::start_game()</code></pre>
-<p>It’s turn-by-turn game and the user is first prompted to move. There are two methods:</p>
-<ul>
-<li>press <kbd>W</kbd>, <kbd>A</kbd>, <kbd>S</kbd> or <kbd>D</kbd> for up, left, down or right and hit <kbd>Enter</kbd></li>
-<li>just press an arrow key <a href="https://github.com/gaborcsardi/keypress">if your console supports {keypress}</a> (not available in RStudio), a package from Gábor Csárdi that <a href="https://www.rostrum.blog/2022/01/19/keypress/">I wrote about recently</a>.</li>
-</ul>
-<p>Pressing ‘1’ will allow you to consume a collected apple, if it’s in your inventory.</p>
-</div>
-<div id="binder" class="section level1">
-<h1>Binder</h1>
-<p>But! Who has time to install the package and run it from their own console? Sheesh.</p>
-<p>So! I’ve setup <a href="https://mybinder.org/">a Binder instance</a> of RStudio–with RStudio installed–so you can just <a href="https://mybinder.org/v2/gh/matt-dray/play-r.oguelike/main?urlpath=rstudio">click a link</a> and play the game in your browser.</p>
+<p>If you prefer, you can also play in your browser without having to install anything. I’ve set up <a href="https://mybinder.org/">a Binder instance</a> of RStudio with {r.oguelike} preinstalled so you can just click the button below to launch it (it may take a moment to load):</p>
 <p><a href="https://mybinder.org/v2/gh/matt-dray/play-r.oguelike/main?urlpath=rstudio"><img src="http://mybinder.org/badge_logo.svg" alt="Launch Rstudio Binder" /></a></p>
-<p>You can even <a href="https://twitter.com/mattdray/status/1486458576516399104?s=20&amp;t=dVwpJPwmMeBP3NTUhrn9gQ">play this from your phone</a>, lol.</p>
+<p>This also means it’s possible to <a href="https://twitter.com/mattdray/status/1486458576516399104?s=20&amp;t=dVwpJPwmMeBP3NTUhrn9gQ">play this game from your phone</a>, lol.</p>
 </div>
-<div id="future" class="section level1">
-<h1>Future</h1>
-<p>So far I’ve written everything in base R; the only dependency is {keypress} to make inputs easier for consoles that support it.</p>
-<p>But this is a bit cumbersome. There’s only so many if-else statements you can write before your brain explodes. To this end, I’m working in a branch to make use of the object-oriented approach of <a href="https://r6.r-lib.org/articles/Introduction.html">the {R6} package</a>–as used in {ActionSquirrel}–to create general objects like enemies, rooms, etc, that should make it easier to handle and work with the elements of the game.</p>
+<div id="demo" class="section level2">
+<h2>Demo</h2>
+<p>Remember to improve immersion by changing your console colour palette to dark mode!</p>
+<p>To begin:</p>
+<pre class="r"><code>r.oguelike::start_game()</code></pre>
+<p>When you start, the console clears and the user interface is printed.</p>
+<pre><code># # # # # # # # # 
+# . . $ . . E . # 
+# . . . . . . . # 
+# . . . . a . . # 
+# . . . . . @ . # 
+# # # # # # # # # 
+T: 25 | HP: 10 | G: 0 | A: 0
+Press key to start
+Input: </code></pre>
+<p>At the top is a map of a dungeon room, made of floor (<code>.</code>) and wall (<code>#</code>) tiles. The room has randomly-selected dimensions from within a certain range. Within the room are randomly-placed characters and objects: the player (<code>@</code>), an enemy (<code>E</code>), and a collectible apple (<code>a</code>) and gold (<code>$</code>).</p>
+<p>Below the dungeon room there’s:</p>
+<ul>
+<li>a status/inventory bar, which gives a numeric value for <code>T</code>urns remaining, <code>H</code>it <code>P</code>oints, <code>G</code>old and <code>A</code>pples</li>
+<li>a status message to provide information, usually to let the user know what has just happened</li>
+<li>a prompt for the user to input a key press</li>
+</ul>
+<p>The game is turn-based and begins when the user chooses a direction to move the player character. There are two methods for registering a key press:</p>
+<ul>
+<li>press <kbd>W</kbd>, <kbd>A</kbd>, <kbd>S</kbd> or <kbd>D</kbd> (i.e. up, left, down or right) and hit <kbd>Enter</kbd></li>
+<li>just press an arrow key <a href="https://github.com/gaborcsardi/keypress">if your console supports {keypress}</a> (not available in RStudio), a package from Gábor Csárdi that <a href="https://www.rostrum.blog/2022/01/19/keypress/">I wrote about recently</a></li>
+</ul>
+<p>In this demo, let’s aim first for the apple. The apple will return us 1 HP when consumed, so it’s a good idea to get it in our inventory as soon as possible. So, let’s input <kbd>W</kbd> and <kbd>Enter</kbd> (or press the up arrow if {keypress} is enabled).</p>
+<pre><code># # # # # # # # # 
+# . . $ . . E . # 
+# . . . . . . . # 
+# . . . . a @ . # 
+# . . . . . . . # 
+# # # # # # # # # 
+T: 24 | HP: 10 | G: 0 | A: 0
+Moved up
+Input: </code></pre>
+<p>The console will wipe the user interface will be re-printed. You’ll notice that your character has moved up one tile, the turn counter has decreased by 1 and the status message has changed to say ‘Moved up’.</p>
+<p>Now we can move left to collect the apple.</p>
+<pre><code># # # # # # # # # 
+# . . $ . . E . # 
+# . . . . . . . # 
+# . . . . @ . . # 
+# . . . . . . . # 
+# # # # # # # # # 
+T: 23 | HP: 10 | G: 0 | A: 1
+Collected apple (+1 A)
+Input: </code></pre>
+<p>Again, you can see the player has progressed one tile and the turn counter decreased. You’ll notice that the inventory spot for the apple increased by 1 and the status message has changed to <code>Collected apple (+1 A)</code> so we know what happened.</p>
+<p>What next? Let’s aim for the loot, signified by <code>$</code> on the map. I’ll fast-forward to show you what happens after moving left twice and up twice.</p>
+<pre><code># # # # # # # # # 
+# . . @ . . E . # 
+# . . . . . . . # 
+# . . . . . . . # 
+# . . . . . . . # 
+# # # # # # # # # 
+T: 19 | HP: 10 | G: 1 | A: 1
+Found gold (+1 G)
+Input: </code></pre>
+<p>The player now occupies the space where the gold was and the turn counter has decreased by 4. You’ll see that the status messages has updated to <code>Found gold (+1 G)</code> and the gold spot in the inventory has increased by 1, but note that the amount of gold is randomly selected from a range of possible values.</p>
+<p>There’s one obvious target left: the enemy character (<code>E</code>). So if we move right twice, we’ll start an encounter.</p>
+<p>When you occupy the space of the enemy, you begin a turn-based battle. At the moment, this is actually an ‘auto-battler’: a routine is run under-the-hood where the player and enemy trade blows until one is vanquished.</p>
+<p>Each character has attack and HP values. Of course, you can see that the player has 10 HP to start, but they also have attack strength of 2. The enemy character starts with a randomly selected HP value from within a range, and their attack strength is 1. The player attacks first, so will receive three points of damage from the enemy that has 4 HP, for example.</p>
+<pre><code># # # # # # # # # 
+# . . . . . @ . # 
+# . . . . . . . # 
+# . . . . . . . # 
+# . . . . . . . # 
+# # # # # # # # # 
+T: 12 | HP: 6 | G: 1 | A: 1
+You win! (-3 HP)
+Input: </code></pre>
+<p>So we know we won because the status message changed to <code>You win!</code> and a note of how many hit points we lost: <code>(-3 HP)</code>. Concurrently the HP in the inventory bar has reduced by that amount.</p>
+<p>Having lost some HP, we can add some back by consuming the apple, an action mapped to the number <kbd>1</kbd> key on your keyboard (regardless of whether you’re using {keypress} or not).</p>
+<pre><code># # # # # # # # # 
+# . . . . . @ . # 
+# . . . . . . . # 
+# . . . . . . . # 
+# . . . . . . . # 
+# # # # # # # # # 
+T: 11 | HP: 7 | G: 1 | A: 0
+Ate apple (+1 HP)
+Input: </code></pre>
+<p>So we get a message <code>Ate apple</code> and that our hit points have increased as a result: <code>(+1 HP)</code>. Of course, this means that the apple spot in the inventory has decreased to zero. Note that the HP maxes out at 10, so eating the apple won’t raise the HP value above that.</p>
+<p>This is the end of the demo: you’ve collected all the items and defeated the enemy. But I also added a lose condition, which occurs when you run out of turns.</p>
+<pre><code># # # # # # # # # 
+# . . . . . . . # 
+# . . . . . . . # 
+# . . . . . . . # 
+# @ . . . . . . # 
+# # # # # # # # # 
+T: 1 | HP: 7 | G: 1 | A: 0
+Moved left
+Input: a
+You died (max turns)! Try again!
+&gt; </code></pre>
+<p>The game ends and the command prompt (<code>&gt;</code>) returns.</p>
 </div>
-<div id="devlog" class="section level1">
-<h1>Devlog</h1>
-<p>You can consider this a sort-of ‘devlog’: a record of how a work-in-progress is getting along.</p>
-<p>Basically I’ve been watching on YouTube a bunch of videos by:</p>
+<div id="engine" class="section level2">
+<h2>Engine?</h2>
+<p>The technicals aren’t much to marvel at, really, but you can <a href="https://github.com/matt-dray/r.oguelike">take a look at the code in the GitHub repo</a> or <a href="https://matt-dray.github.io/r.oguelike/">on the website</a>.</p>
+<p>I called it an ‘engine’ earlier, but that was deceitful, lol.</p>
+<p>It’s just a <code>while</code> loop that keeps running so long as the <code>is_alive</code> state is set to <code>TRUE</code>. So running out of turns sets the <code>is_alive</code> value to <code>FALSE</code> and the loop is broken.</p>
+<p>The content of the loop is run after the player inputs a key press, which results in various counters being adjusted for the HP, etc. The loop concludes by printing the room with updated player locations, inventory bar and status messsage, ready for the next input.</p>
+<p>The room itself is just a matrix. When you move the player, a small calculation is done to determine where the player character should be in the next iteration. Imagine the player is in the centre of a 3 by 3 room, i.e. they’re in position [2,2] of a matrix with x and y dimensions of 3. If they move down, that’s equivalent to adding 1 to their current position, so 5 + 1 = 6. Similarly, moving right would be equivalent to adding 3, so 5 + 3 = 8.</p>
+<pre class="r"><code>matrix(1:9, 3)</code></pre>
+<pre><code>##      [,1] [,2] [,3]
+## [1,]    1    4    7
+## [2,]    2    5    8
+## [3,]    3    6    9</code></pre>
+<p>The code is pretty rough and you can see that the logic can start to become complicated quickly, but remember it’s just a demo for now.</p>
+</div>
+<div id="obvious-improvements" class="section level2">
+<h2>Obvious improvements</h2>
+<p>There’s some obvious user-facing improvements to the features that are already in place:</p>
 <ul>
-<li><a href="https://www.youtube.com/c/SebastianLague">Sebastian Lague</a></li>
-<li><a href="https://www.youtube.com/c/ThinMatrix/">Karl (ThinMatrix)</a></li>
-<li><a href="https://www.youtube.com/c/DaniDev">Dani</a></li>
+<li>interactive turn-based battles, where the user can choose what move to make (perhaps defensive moves, HP replenishment or magic)</li>
+<li>enemy movement, so they aren’t just stationary</li>
+<li>different enemy types, with differing ‘AI’ (random movement, ‘chase’ player, etc) and attack/HP stats</li>
+<li>traps (e.g. certain tiles are hidden traps, some collectible items are bogus)</li>
+<li>fog of war/vision cones (you can’t see what’s ahead until you get there, or you can only see a certain distance around you at all times)</li>
 </ul>
-<p>All of whom make videos to update on progress in the video games they’re making.</p>
-<p>I’d like to see more of this in the R scene. I want to see more ‘creators’ making videos or posts that talk about the thought-processes behind an R package as its being built. Great examples are from:</p>
-<ul>
-<li>Bruno Rodrigues on YouTube, particularly <a href="">his {chronicler} package</a></li>
-<li>mikefc (coolbutuseless) giving <a href="">sneak peaks on Twitter</a> for ongoing projects</li>
-</ul>
+<p>There’s also a big-ticket item I haven’t touched: randomised or procedural dungeon generation. This is quite a big task and might end up as a blog post of its own. I encourage you to <a href="Roguelike%20Celebration">watch Herbert Wolverson’s talk at Roguelike Celebration 2020</a> for some ideas on this. At least at first, it could simply involve letting the player walk through doors to a few other rooms that contain randomised items.</p>
+<p>On the back-end, I’ve so far written everything in base R; the only dependency is {keypress} to make inputs easier for consoles that support it. But there’s only so many if-else statements you can write before your brain explodes. To this end, I’m working in a branch to make use of the object-oriented approach of <a href="https://r6.r-lib.org/articles/Introduction.html">the {R6} package</a>–as used in {ActionSquirrel}–to create general objects like enemies, rooms, etc, that should make it easier to handle and work with the elements of the game.</p>
+</div>
+</div>
+<div id="the-future" class="section level1">
+<h1>The future</h1>
+<p>Obviously I’ll need some seed funding to set up my indie game company so I can begin making a cool 3D version of this. <a href="https://twitter.com/coolbutuseless/status/1495500110758883332?s=20&amp;t=FZSlvFFs3HBfS_pnAUtHLw">Oh, wait, mifekc is already on the case!</a></p>
+<p>Alright, nevermind. How about, erm, a roguelike-themed Wordle? Oh wait, <a href="https://twitter.com/st33d/status/1502425657493671944?s=20&amp;t=FZSlvFFs3HBfS_pnAUtHLw">it’s already been done!</a></p>
+<p>Might just take a nap instead, to be honest.</p>
 <hr />
 <details>
 <summary>
@@ -105,34 +226,42 @@ Session info
 ##  collate  en_GB.UTF-8                 
 ##  ctype    en_GB.UTF-8                 
 ##  tz       Europe/London               
-##  date     2022-04-13                  
+##  date     2022-04-25                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
-##  package     * version date       lib source        
-##  blogdown      1.4     2021-07-23 [1] CRAN (R 4.1.0)
-##  bookdown      0.23    2021-08-13 [1] CRAN (R 4.1.0)
-##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.1.0)
-##  cli           3.2.0   2022-02-14 [1] CRAN (R 4.1.2)
-##  digest        0.6.29  2021-12-01 [1] CRAN (R 4.1.0)
-##  evaluate      0.14    2019-05-28 [1] CRAN (R 4.1.0)
-##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.1.0)
-##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.1.0)
-##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.1.0)
-##  jsonlite      1.7.3   2022-01-17 [1] CRAN (R 4.1.2)
-##  knitr         1.37    2021-12-16 [1] CRAN (R 4.1.0)
-##  magrittr      2.0.2   2022-01-26 [1] CRAN (R 4.1.2)
-##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.1.0)
-##  rlang         1.0.2   2022-03-04 [1] CRAN (R 4.1.2)
-##  rmarkdown     2.10    2021-08-06 [1] CRAN (R 4.1.0)
-##  rstudioapi    0.13    2020-11-12 [1] CRAN (R 4.1.0)
-##  sass          0.4.0   2021-05-12 [1] CRAN (R 4.1.0)
-##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.1.0)
-##  stringi       1.7.6   2021-11-29 [1] CRAN (R 4.1.0)
-##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.1.0)
-##  withr         2.4.3   2021-11-30 [1] CRAN (R 4.1.0)
-##  xfun          0.29    2021-12-14 [1] CRAN (R 4.1.0)
-##  yaml          2.2.2   2022-01-25 [1] CRAN (R 4.1.2)
+##  package        * version date       lib source        
+##  ActionSquirrel   0.1.0   2021-10-03 [1] local         
+##  blogdown         1.4     2021-07-23 [1] CRAN (R 4.1.0)
+##  bookdown         0.23    2021-08-13 [1] CRAN (R 4.1.0)
+##  bslib            0.3.1   2021-10-06 [1] CRAN (R 4.1.0)
+##  cli              3.2.0   2022-02-14 [1] CRAN (R 4.1.2)
+##  digest           0.6.29  2021-12-01 [1] CRAN (R 4.1.0)
+##  evaluate         0.14    2019-05-28 [1] CRAN (R 4.1.0)
+##  fastmap          1.1.0   2021-01-25 [1] CRAN (R 4.1.0)
+##  htmltools        0.5.2   2021-08-25 [1] CRAN (R 4.1.0)
+##  jquerylib        0.1.4   2021-04-26 [1] CRAN (R 4.1.0)
+##  jsonlite         1.7.3   2022-01-17 [1] CRAN (R 4.1.2)
+##  knitr            1.37    2021-12-16 [1] CRAN (R 4.1.0)
+##  magrittr         2.0.2   2022-01-26 [1] CRAN (R 4.1.2)
+##  R6               2.5.1   2021-08-19 [1] CRAN (R 4.1.0)
+##  rlang            1.0.2   2022-03-04 [1] CRAN (R 4.1.2)
+##  rmarkdown        2.10    2021-08-06 [1] CRAN (R 4.1.0)
+##  rstudioapi       0.13    2020-11-12 [1] CRAN (R 4.1.0)
+##  sass             0.4.0   2021-05-12 [1] CRAN (R 4.1.0)
+##  sessioninfo      1.1.1   2018-11-05 [1] CRAN (R 4.1.0)
+##  stringi          1.7.6   2021-11-29 [1] CRAN (R 4.1.0)
+##  stringr          1.4.0   2019-02-10 [1] CRAN (R 4.1.0)
+##  withr            2.4.3   2021-11-30 [1] CRAN (R 4.1.0)
+##  xfun             0.29    2021-12-14 [1] CRAN (R 4.1.0)
+##  yaml             2.2.2   2022-01-25 [1] CRAN (R 4.1.2)
 ## 
 ## [1] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
 </details>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>The <a href="https://www.youtube.com/watch?v=uM588ci-sMQ">Design Doc YouTube channel has a nice explainer</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>I’ve been watching game devlogs on YouTube by people like <a href="https://www.youtube.com/c/SebastianLague">Sebastian Lague</a>, <a href="https://www.youtube.com/c/ThinMatrix/">Karl (ThinMatrix)</a> and <a href="https://www.youtube.com/c/DaniDev">Dani</a>. I’d love to see more of this sort of thing for R package development, like what Bruno Rodrigues has been doing for the in development of <a href="https://www.youtube.com/c/BrunoRodrigues1988/videos">the {chronicler} package</a>, for example.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+</ol>
 </div>
