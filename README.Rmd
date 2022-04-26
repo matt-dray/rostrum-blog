@@ -10,11 +10,15 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ```{r attach-pkgs, message=FALSE}
 # Attach packages
-library(tidyverse) # CRAN v1.3.0
-library(rvest)     # CRAN v1.0.0
-library(lubridate) # CRAN v1.7.10
-library(knitr)     # CRAN v1.31
-library(emo)       # [github::hadley/emo] v0.0.0.9000
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(stringr)
+  library(ggplot2)
+  library(rvest)
+  library(lubridate)
+  library(knitr)
+  library(emo)
+})
 ```
 
 ```{r scrape-blog}
@@ -24,18 +28,18 @@ html <- read_html("https://rostrum.blog/")
 # Extract the post titles
 title <- html %>%
   html_nodes(".archive-item-link") %>%  # extract title node
-  html_text()                           # extract text
+  html_text()                          # extract text
 
 # Extract the post URLs
 link <- html %>% 
   html_nodes(".archive-item-link") %>%  # extract title node
-  html_attr("href")                     # extract href attribute
+  html_attr("href")                    # extract href attribute
 
 # Extract the post dates
 date <- html %>%
   html_nodes(".archive-item-date") %>%  # extract date nodes only
   html_text() %>%                       # extract text
-  str_replace_all("[:space:]", "")      # remove newline/space
+  str_replace_all("[:space:]", "")     # remove newline/space
 
 # Dataframe of titles and dates
 posts <- tibble(date, title, link) %>% 
@@ -51,8 +55,16 @@ posts <- tibble(date, title, link) %>%
 # Create plot object
 p <- posts %>%
   ggplot(aes(x = publish_date, y = 1)) +
-  geom_point(shape = "|", size = 10, stroke = 1, color = "#1D8016") + 
-  theme_void()
+  geom_point(shape = "|", size = 10, stroke = 1, color = "#1D8016") +
+  theme(
+    legend.position = "none",
+    panel.grid = element_blank(),
+    axis.title = element_blank(),
+    axis.text.x = element_text(colour = "#1D8016"),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank(),
+    panel.background = element_blank()
+  ) 
 ```
 
 <img src="https://raw.githubusercontent.com/matt-dray/stickers/master/output/rostrum_hex.png" alt="Hexagonal design containing the text 'rostrum.blog' and the blog's logo of a 16-bit insect." width="150" align="right">
@@ -95,7 +107,6 @@ posts %>%
   kable()
 ```
 </details>
-
 
 ---
 
