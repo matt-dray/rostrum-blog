@@ -1,0 +1,148 @@
+---
+title: "Turn the {tide} on R's secret spreadsheet editor"
+author: 'Matt Dray'
+date: '2022-04-27'
+slug: tide
+categories:
+  - code
+  - package
+tags:
+  - base
+  - edit
+  - r
+  - reproducibility
+  - tide
+draft: yes
+---
+
+<div class="figure">
+<img src="/post/2022-04-27-tide_files/tide.gif" alt="Screencast of the tide function from the tide package being used on a dataframe in RStudio. An editor window opens and a couple of values are adjusted. The updated dataframe is then shown in the console with the message 'Code copied to clipboard'. The generated code is then pasted into the console, showing the values that need to be overwritten by their indices in the original dataframe to reproduce the change." width="100%"/>
+</div>
+
+# tl;dr
+
+R has an interactive spreadsheet editor for dataframes, which you can access with `edit()`. [I made the function `tide::tide()`](https://github.com/matt-dray/tide) to generate automatically some code that will reproduce the changes you made manually with `edit()`.
+
+# Edit
+
+R's `edit()` function[^basefn] invokes a text editor so you can amend an R object.[^tweet]
+
+Something special happens If you `edit()` a data.frame object: a somewhat-janky interactive spreadsheet-like editor appears in a new window.[^platform]
+
+Click in a cell to amend a value, or click in the header for a menu that lets you change the column name, or switch between real and character classes. There are even buttons to copy and paste values.
+
+Click the 'quit' button to confirm your changes. The edited data is returned to you back in the console.
+
+But [that's not very reproducible](https://twitter.com/TrevorABranch/status/1518420680491945984?s=20&t=X0VR706pMtDQrUMLn_YHoA). How can anyone recreate the amended dataframe from the original if your clicks and keypresses weren't recorded? 
+
+Can we make `edit()` more reproducible?
+
+# Tide
+
+Basic premise: [create a function](https://github.com/matt-dray/tide/blob/main/R/tide.R) that accepts a dataframe as input, opens the edit menu, observes the updated values and generates code to reproduce the new object from the old.
+
+[I've created the concept package, {tide}, to do this](https://github.com/matt-dray/tide).[^concept] It has only one, eponymous function: `tide()`.
+
+Why 'tide'? Well, it's 'edit' backwards. And we're 'turning the tide' on the `edit()` function to make it reproducible, geddit?[^canute]
+
+You can install {tide} from GitHub. [The {clipr} package](http://matthewlincoln.net/clipr/), which can copy text to your clipboard, will also be installed.
+
+```{r install-pkg, eval=FALSE}
+if (!require(remotes)) install.packages("remotes")
+install_github("matt-dray/tide")
+```
+
+So let's get our feet wet with an example. Here's a thematically-related data.frame of [the tide table for London Bridge](https://www.bbc.co.uk/weather/coast-and-sea/tide-tables/2/113) on May 1 2022.
+
+```{r demo-data}
+tide_table <- data.frame(
+  type = c("High", "Low", NA_character_, "Low"),
+  time_bst = c("02:58", "09:42", "15:20", "21:58"),
+  height_m = c(7.0, 0.5, 6.9, 70)
+)
+
+tide_table
+```
+
+But whoops: the missing value should be 'High' and the height is wrong by two orders of magnitude for the 21:58 low tide.
+
+So, let's use `tide::tide()` on the dataframe to edit those values.
+
+```{r run-tide, eval=FALSE}
+library(tide)
+tide(tide_table)
+```
+
+This opens a separate data-editor window. Here's how it looks when it opens:[^platform]
+
+<div class="figure">
+<img src="/post/2022-04-27-tide_files/editor.png" alt="Screenshot of a very simple spreadsheet editor with some edits to be made. There are buttons for copy, paste and quit." width="50%"/>
+</div>
+
+And once I've made the adjustments manually:
+
+<div class="figure">
+<img src="/post/2022-04-27-tide_files/editor2.png" alt="Screenshot of a very simple spreadsheet editor after some edits have been made. There are buttons for copy, paste and quit." width="50%"/>
+</div>
+
+And here's what's returned to the console once I've clicked the 'Quit' button:
+
+```
+Wrote code to clipboard
+##   type time_bst height_m
+## 1 High    02:58      7.0
+## 2  Low    09:42      0.5
+## 3 High    15:20      6.9
+## 4  Low    21:58      0.7
+```
+
+You can see the edits have been successfully returned. This is also what you'd see if you just used `edit()`.
+
+The extra feature from `tide()` is evident in the message `Wrote code to clipboard`: the function generated some lines of code that will take you from the original to the edited object.
+
+So if we now paste from the clipboard we get:
+
+```{r pasted-lines}
+tide_table[3, 1] <- "High"
+tide_table[4, 3] <- 0.7
+```
+
+In other words, 'replace the value in row 3, column 1 of the `tide_table` object with the string value `"High"`', for example.
+
+And if we actually run those lines, we can recreate the amended data.frame from the original:
+
+```{r df-after-code}
+tide_table
+```
+
+So, hurrah, we now have a method of manually editing the table and getting some code back that can reproduce it.
+
+# Diet
+
+To borrow another anagram of 'edit' the capability of the package is quite... lightweight. [Some issues](https://github.com/matt-dray/tide/issues) are that:
+
+* the function currently only works if you amend individual values, not if you change headers, or add rows and columns
+* the returned code will operate on a cell-by-cell basis, so you might get `x[1, 1] <- "A"` and `x[2, 1] <- "B"` where actually it could have been the more convenient to get `x[1:2, 1] <- c("A", "B")`
+* the returned code refers to columns by index, even though it's more explicit to refer to them by name, like `x[1, "col1"] <- "A"`
+* the returned code will be written in base R and will edit in place by index (i.e. `[<-`), it doesn't return {data.table}- or tidyverse-compliant code
+* you only get the code in your clipboard, it isn't returned from the function
+
+I might update the package to handle this stuff in future, or [you can do it for me with a pull request in the GitHub repo](https://github.com/matt-dray/tide).
+
+But to be honest, the data editor is probably a bit too clunky and simple to be useful in almost all use cases. So there's not much point expanding this package beyond a concept.
+
+Or maybe the approach will pick up pace like [the Severn Estuary tidal bore](https://en.wikipedia.org/wiki/Severn_bore), who knows? Or maybe you think this post is a bore.[^puns]
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^basefn]: The `edit()` function feels like another one of those 'hidden' base functions. There's not really a good reason for you to know about it unless someone told you about it. I got it from an old-school textbook when first learning R, just like the `locator()` function for retrieving interactively the coordinates from a plot, which [I wrote about in a previous post](https://www.rostrum.blog/2021/11/04/kanto-locator/).
+[^concept]: 'Concept' means I can put it out there without any guarantees or polish, and I don't even have to complete it if I don't want to!
+[^puns]: You came here for the wordplay anyway, right?
+[^canute]: Also consider the allusion to [King Canute trying to turn back the tide](https://en.wikipedia.org/wiki/King_Canute_and_the_tide). It can be pretty hard to stop people writing non-reproducible code. And this package isn't going to change that.
+[^tweet]: I think this was new to quite a lot of people, based on [a tweet I wrote about it](https://twitter.com/mattdray/status/1518374831993069570?s=20&t=X0VR706pMtDQrUMLn_YHoA).
+[^platform]: Note that the help for `?dataentry`, which underlies `edit()`, says 'the data entry editor is only available on some platforms and GUIs' and 'the details of interface to the data grid may differ by platform and GUI'.
