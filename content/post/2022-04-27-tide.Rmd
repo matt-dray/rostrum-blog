@@ -12,7 +12,7 @@ tags:
   - r
   - reproducibility
   - tide
-draft: yes
+draft: no
 ---
 
 <div class="figure">
@@ -21,11 +21,11 @@ draft: yes
 
 # tl;dr
 
-R has an interactive spreadsheet editor for dataframes, which you can access with `edit()`. [I made the function `tide::tide()`](https://github.com/matt-dray/tide) to generate automatically some code that will reproduce the changes you made manually with `edit()`.
+R has an interactive spreadsheet editor for dataframes that you can access with `edit()`. [I made the function `tide::tide()`](https://github.com/matt-dray/tide) to generate automatically some code that will reproduce the changes you made manually with `edit()`.
 
 # Edit
 
-R's `edit()` function[^basefn] invokes a text editor so you can amend an R object.[^tweet]
+R's `edit()` function invokes a text editor so you can amend an R object.[^tweet]
 
 Something special happens If you `edit()` a data.frame object: a somewhat-janky interactive spreadsheet-like editor appears in a new window.[^platform]
 
@@ -52,7 +52,7 @@ if (!require(remotes)) install.packages("remotes")
 install_github("matt-dray/tide")
 ```
 
-So let's get our feet wet with an example. Here's a thematically-related data.frame of [the tide table for London Bridge](https://www.bbc.co.uk/weather/coast-and-sea/tide-tables/2/113) on May 1 2022.
+So let's get our feet wet with an example. Here's a thematically-related data.frame of [the tide table for London Bridge](https://www.bbc.co.uk/weather/coast-and-sea/tide-tables/2/113) for May 1 2022.
 
 ```{r demo-data}
 tide_table <- data.frame(
@@ -121,7 +121,7 @@ So, hurrah, we now have a method of manually editing the table and getting some 
 
 To borrow another anagram of 'edit' the capability of the package is quite... lightweight. [Some issues](https://github.com/matt-dray/tide/issues) are that:
 
-* the function currently only works if you amend individual values, not if you change headers, or add rows and columns
+* the function currently only works if you amend individual values (cells), not if you change headers, or add rows and columns
 * the returned code will operate on a cell-by-cell basis, so you might get `x[1, 1] <- "A"` and `x[2, 1] <- "B"` where actually it could have been the more convenient to get `x[1:2, 1] <- c("A", "B")`
 * the returned code refers to columns by index, even though it's more explicit to refer to them by name, like `x[1, "col1"] <- "A"`
 * the returned code will be written in base R and will edit in place by index (i.e. `[<-`), it doesn't return {data.table}- or tidyverse-compliant code
@@ -129,7 +129,7 @@ To borrow another anagram of 'edit' the capability of the package is quite... li
 
 I might update the package to handle this stuff in future, or [you can do it for me with a pull request in the GitHub repo](https://github.com/matt-dray/tide).
 
-But to be honest, the data editor is probably a bit too clunky and simple to be useful in almost all use cases. So there's not much point expanding this package beyond a concept.
+But to be honest, the data editor is probably a bit too clunky and simple to be useful for most use cases. So there's not much point expanding this package beyond a concept.
 
 Or maybe the approach will pick up pace like [the Severn Estuary tidal bore](https://en.wikipedia.org/wiki/Severn_bore), who knows? Or maybe you think this post is a bore.[^puns]
 
@@ -140,9 +140,8 @@ sessioninfo::session_info()
 ```
 </details>
 
-[^basefn]: The `edit()` function feels like another one of those 'hidden' base functions. There's not really a good reason for you to know about it unless someone told you about it. I got it from an old-school textbook when first learning R, just like the `locator()` function for retrieving interactively the coordinates from a plot, which [I wrote about in a previous post](https://www.rostrum.blog/2021/11/04/kanto-locator/).
+[^tweet]: I think this was new to quite a lot of people, based on [a recent tweet I wrote about it](https://twitter.com/mattdray/status/1518374831993069570?s=20&t=X0VR706pMtDQrUMLn_YHoA). The `edit()` function feels like another one of those 'hidden' base functions. There's not really a good reason for you to know about it unless someone told you about it. I got it from an old-school textbook when first learning R, just like the `locator()` function for retrieving interactively the coordinates from a plot, which [I wrote about in a previous post](https://www.rostrum.blog/2021/11/04/kanto-locator/).
 [^concept]: 'Concept' means I can put it out there without any guarantees or polish, and I don't even have to complete it if I don't want to!
 [^puns]: You came here for the wordplay anyway, right?
 [^canute]: Also consider the allusion to [King Canute trying to turn back the tide](https://en.wikipedia.org/wiki/King_Canute_and_the_tide). It can be pretty hard to stop people writing non-reproducible code. And this package isn't going to change that.
-[^tweet]: I think this was new to quite a lot of people, based on [a tweet I wrote about it](https://twitter.com/mattdray/status/1518374831993069570?s=20&t=X0VR706pMtDQrUMLn_YHoA).
 [^platform]: Note that the help for `?dataentry`, which underlies `edit()`, says 'the data entry editor is only available on some platforms and GUIs' and 'the details of interface to the data grid may differ by platform and GUI'.

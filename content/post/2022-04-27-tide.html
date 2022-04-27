@@ -12,10 +12,9 @@ tags:
   - r
   - reproducibility
   - tide
-draft: yes
+draft: no
 ---
 
-<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
 
 
 <div class="figure">
@@ -23,12 +22,12 @@ draft: yes
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>R has an interactive spreadsheet editor for dataframes, which you can access with <code>edit()</code>. <a href="https://github.com/matt-dray/tide">I made the function <code>tide::tide()</code></a> to generate automatically some code that will reproduce the changes you made manually with <code>edit()</code>.</p>
+<p>R has an interactive spreadsheet editor for dataframes that you can access with <code>edit()</code>. <a href="https://github.com/matt-dray/tide">I made the function <code>tide::tide()</code></a> to generate automatically some code that will reproduce the changes you made manually with <code>edit()</code>.</p>
 </div>
 <div id="edit" class="section level1">
 <h1>Edit</h1>
-<p>R’s <code>edit()</code> function<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> invokes a text editor so you can amend an R object.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
-<p>Something special happens If you <code>edit()</code> a data.frame object: a somewhat-janky interactive spreadsheet-like editor appears in a new window.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<p>R’s <code>edit()</code> function invokes a text editor so you can amend an R object.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>Something special happens If you <code>edit()</code> a data.frame object: a somewhat-janky interactive spreadsheet-like editor appears in a new window.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
 <p>Click in a cell to amend a value, or click in the header for a menu that lets you change the column name, or switch between real and character classes. There are even buttons to copy and paste values.</p>
 <p>Click the ‘quit’ button to confirm your changes. The edited data is returned to you back in the console.</p>
 <p>But <a href="https://twitter.com/TrevorABranch/status/1518420680491945984?s=20&amp;t=X0VR706pMtDQrUMLn_YHoA">that’s not very reproducible</a>. How can anyone recreate the amended dataframe from the original if your clicks and keypresses weren’t recorded?</p>
@@ -37,12 +36,12 @@ draft: yes
 <div id="tide" class="section level1">
 <h1>Tide</h1>
 <p>Basic premise: <a href="https://github.com/matt-dray/tide/blob/main/R/tide.R">create a function</a> that accepts a dataframe as input, opens the edit menu, observes the updated values and generates code to reproduce the new object from the old.</p>
-<p><a href="https://github.com/matt-dray/tide">I’ve created the concept package, {tide}, to do this</a>.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> It has only one, eponymous function: <code>tide()</code>.</p>
-<p>Why ‘tide’? Well, it’s ‘edit’ backwards. And we’re ‘turning the tide’ on the <code>edit()</code> function to make it reproducible, geddit?<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a></p>
+<p><a href="https://github.com/matt-dray/tide">I’ve created the concept package, {tide}, to do this</a>.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> It has only one, eponymous function: <code>tide()</code>.</p>
+<p>Why ‘tide’? Well, it’s ‘edit’ backwards. And we’re ‘turning the tide’ on the <code>edit()</code> function to make it reproducible, geddit?<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
 <p>You can install {tide} from GitHub. <a href="http://matthewlincoln.net/clipr/">The {clipr} package</a>, which can copy text to your clipboard, will also be installed.</p>
 <pre class="r"><code>if (!require(remotes)) install.packages(&quot;remotes&quot;)
 install_github(&quot;matt-dray/tide&quot;)</code></pre>
-<p>So let’s get our feet wet with an example. Here’s a thematically-related data.frame of <a href="https://www.bbc.co.uk/weather/coast-and-sea/tide-tables/2/113">the tide table for London Bridge</a> on May 1 2022.</p>
+<p>So let’s get our feet wet with an example. Here’s a thematically-related data.frame of <a href="https://www.bbc.co.uk/weather/coast-and-sea/tide-tables/2/113">the tide table for London Bridge</a> for May 1 2022.</p>
 <pre class="r"><code>tide_table &lt;- data.frame(
   type = c(&quot;High&quot;, &quot;Low&quot;, NA_character_, &quot;Low&quot;),
   time_bst = c(&quot;02:58&quot;, &quot;09:42&quot;, &quot;15:20&quot;, &quot;21:58&quot;),
@@ -59,7 +58,7 @@ tide_table</code></pre>
 <p>So, let’s use <code>tide::tide()</code> on the dataframe to edit those values.</p>
 <pre class="r"><code>library(tide)
 tide(tide_table)</code></pre>
-<p>This opens a separate data-editor window. Here’s how it looks when it opens:<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a></p>
+<p>This opens a separate data-editor window. Here’s how it looks when it opens:<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a></p>
 <div class="figure">
 <p><img src="/post/2022-04-27-tide_files/editor.png" alt="Screenshot of a very simple spreadsheet editor with some edits to be made. There are buttons for copy, paste and quit." width="50%"/></p>
 </div>
@@ -93,15 +92,15 @@ tide_table[4, 3] &lt;- 0.7</code></pre>
 <h1>Diet</h1>
 <p>To borrow another anagram of ‘edit’ the capability of the package is quite… lightweight. <a href="https://github.com/matt-dray/tide/issues">Some issues</a> are that:</p>
 <ul>
-<li>the function currently only works if you amend individual values, not if you change headers, or add rows and columns</li>
+<li>the function currently only works if you amend individual values (cells), not if you change headers, or add rows and columns</li>
 <li>the returned code will operate on a cell-by-cell basis, so you might get <code>x[1, 1] &lt;- "A"</code> and <code>x[2, 1] &lt;- "B"</code> where actually it could have been the more convenient to get <code>x[1:2, 1] &lt;- c("A", "B")</code></li>
 <li>the returned code refers to columns by index, even though it’s more explicit to refer to them by name, like <code>x[1, "col1"] &lt;- "A"</code></li>
 <li>the returned code will be written in base R and will edit in place by index (i.e. <code>[&lt;-</code>), it doesn’t return {data.table}- or tidyverse-compliant code</li>
 <li>you only get the code in your clipboard, it isn’t returned from the function</li>
 </ul>
 <p>I might update the package to handle this stuff in future, or <a href="https://github.com/matt-dray/tide">you can do it for me with a pull request in the GitHub repo</a>.</p>
-<p>But to be honest, the data editor is probably a bit too clunky and simple to be useful in almost all use cases. So there’s not much point expanding this package beyond a concept.</p>
-<p>Or maybe the approach will pick up pace like <a href="https://en.wikipedia.org/wiki/Severn_bore">the Severn Estuary tidal bore</a>, who knows? Or maybe you think this post is a bore.<a href="#fn7" class="footnote-ref" id="fnref7"><sup>7</sup></a></p>
+<p>But to be honest, the data editor is probably a bit too clunky and simple to be useful for most use cases. So there’s not much point expanding this package beyond a concept.</p>
+<p>Or maybe the approach will pick up pace like <a href="https://en.wikipedia.org/wiki/Severn_bore">the Severn Estuary tidal bore</a>, who knows? Or maybe you think this post is a bore.<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a></p>
 <hr />
 <details>
 <summary>
@@ -109,8 +108,8 @@ Session info
 </summary>
 <pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
 ##  setting  value                       
-##  version  R version 4.1.3 (2022-03-10)
-##  os       macOS Big Sur/Monterey 10.16
+##  version  R version 4.1.1 (2021-08-10)
+##  os       macOS Mojave 10.14.6        
 ##  system   x86_64, darwin17.0          
 ##  ui       X11                         
 ##  language (EN)                        
@@ -121,42 +120,42 @@ Session info
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
 ##  package     * version date       lib source        
-##  blogdown      1.4     2021-07-23 [1] CRAN (R 4.1.0)
-##  bookdown      0.23    2021-08-13 [1] CRAN (R 4.1.0)
+##  blogdown      1.5     2021-09-02 [1] CRAN (R 4.1.0)
+##  bookdown      0.25    2022-03-16 [1] CRAN (R 4.1.2)
 ##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.1.0)
 ##  cli           3.2.0   2022-02-14 [1] CRAN (R 4.1.2)
 ##  digest        0.6.29  2021-12-01 [1] CRAN (R 4.1.0)
-##  evaluate      0.14    2019-05-28 [1] CRAN (R 4.1.0)
+##  evaluate      0.15    2022-02-18 [1] CRAN (R 4.1.2)
 ##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.1.0)
 ##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.1.0)
 ##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.1.0)
-##  jsonlite      1.7.3   2022-01-17 [1] CRAN (R 4.1.2)
-##  knitr         1.37    2021-12-16 [1] CRAN (R 4.1.0)
-##  magrittr      2.0.2   2022-01-26 [1] CRAN (R 4.1.2)
+##  jsonlite      1.8.0   2022-02-22 [1] CRAN (R 4.1.2)
+##  knitr         1.38    2022-03-25 [1] CRAN (R 4.1.2)
+##  magrittr      2.0.3   2022-03-30 [1] CRAN (R 4.1.2)
 ##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.1.0)
 ##  rlang         1.0.2   2022-03-04 [1] CRAN (R 4.1.2)
-##  rmarkdown     2.10    2021-08-06 [1] CRAN (R 4.1.0)
+##  rmarkdown     2.13    2022-03-10 [1] CRAN (R 4.1.2)
 ##  rstudioapi    0.13    2020-11-12 [1] CRAN (R 4.1.0)
-##  sass          0.4.0   2021-05-12 [1] CRAN (R 4.1.0)
+##  sass          0.4.1   2022-03-23 [1] CRAN (R 4.1.2)
 ##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.1.0)
 ##  stringi       1.7.6   2021-11-29 [1] CRAN (R 4.1.0)
 ##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.1.0)
-##  withr         2.4.3   2021-11-30 [1] CRAN (R 4.1.0)
-##  xfun          0.29    2021-12-14 [1] CRAN (R 4.1.0)
-##  yaml          2.2.2   2022-01-25 [1] CRAN (R 4.1.2)
+##  withr         2.5.0   2022-03-03 [1] CRAN (R 4.1.2)
+##  xfun          0.30    2022-03-02 [1] CRAN (R 4.1.2)
+##  yaml          2.3.5   2022-02-21 [1] CRAN (R 4.1.2)
 ## 
-## [1] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
+## [1] /Users/matt.dray/Library/R/x86_64/4.1/library
+## [2] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
 </details>
 </div>
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>The <code>edit()</code> function feels like another one of those ‘hidden’ base functions. There’s not really a good reason for you to know about it unless someone told you about it. I got it from an old-school textbook when first learning R, just like the <code>locator()</code> function for retrieving interactively the coordinates from a plot, which <a href="https://www.rostrum.blog/2021/11/04/kanto-locator/">I wrote about in a previous post</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>I think this was new to quite a lot of people, based on <a href="https://twitter.com/mattdray/status/1518374831993069570?s=20&amp;t=X0VR706pMtDQrUMLn_YHoA">a tweet I wrote about it</a>.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
-<li id="fn3"><p>Note that the help for <code>?dataentry</code>, which underlies <code>edit()</code>, says ‘the data entry editor is only available on some platforms and GUIs’ and ‘the details of interface to the data grid may differ by platform and GUI’.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
-<li id="fn4"><p>‘Concept’ means I can put it out there without any guarantees or polish, and I don’t even have to complete it if I don’t want to!<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
-<li id="fn5"><p>Also consider the allusion to <a href="https://en.wikipedia.org/wiki/King_Canute_and_the_tide">King Canute trying to turn back the tide</a>. It can be pretty hard to stop people writing non-reproducible code. And this package isn’t going to change that.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
-<li id="fn6"><p>Note that the help for <code>?dataentry</code>, which underlies <code>edit()</code>, says ‘the data entry editor is only available on some platforms and GUIs’ and ‘the details of interface to the data grid may differ by platform and GUI’.<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
-<li id="fn7"><p>You came here for the wordplay anyway, right?<a href="#fnref7" class="footnote-back">↩︎</a></p></li>
+<li id="fn1"><p>I think this was new to quite a lot of people, based on <a href="https://twitter.com/mattdray/status/1518374831993069570?s=20&amp;t=X0VR706pMtDQrUMLn_YHoA">a recent tweet I wrote about it</a>. The <code>edit()</code> function feels like another one of those ‘hidden’ base functions. There’s not really a good reason for you to know about it unless someone told you about it. I got it from an old-school textbook when first learning R, just like the <code>locator()</code> function for retrieving interactively the coordinates from a plot, which <a href="https://www.rostrum.blog/2021/11/04/kanto-locator/">I wrote about in a previous post</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>Note that the help for <code>?dataentry</code>, which underlies <code>edit()</code>, says ‘the data entry editor is only available on some platforms and GUIs’ and ‘the details of interface to the data grid may differ by platform and GUI’.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>‘Concept’ means I can put it out there without any guarantees or polish, and I don’t even have to complete it if I don’t want to!<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>Also consider the allusion to <a href="https://en.wikipedia.org/wiki/King_Canute_and_the_tide">King Canute trying to turn back the tide</a>. It can be pretty hard to stop people writing non-reproducible code. And this package isn’t going to change that.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>Note that the help for <code>?dataentry</code>, which underlies <code>edit()</code>, says ‘the data entry editor is only available on some platforms and GUIs’ and ‘the details of interface to the data grid may differ by platform and GUI’.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+<li id="fn6"><p>You came here for the wordplay anyway, right?<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
