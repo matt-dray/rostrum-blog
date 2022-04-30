@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 2 day(s) ago: [Turn the {tide} on R’s
+🆕 The latest post was published 3 day(s) ago: [Turn the {tide} on R’s
 secret spreadsheet editor](https://www.rostrum.blog/2022/04/27/tide/).
 
 📈 This 2D plot shows posts over time:
@@ -169,4 +169,4 @@ secret spreadsheet editor](https://www.rostrum.blog/2022/04/27/tide/).
 
 -----
 
-*Updated 2022-04-29 03:41:19*
+*Updated 2022-04-30 03:24:04*
