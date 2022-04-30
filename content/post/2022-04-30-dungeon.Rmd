@@ -1,0 +1,196 @@
+---
+title: "Simple procedural dungeons in R"
+author: 'Matt Dray'
+date: '2022-05-01'
+slug: dungeon
+categories:
+  - code
+  - package
+tags:
+  - game
+  - procedural
+  - r
+  - randomisation
+  - r.oguelike
+draft: no
+---
+
+```{r, include=FALSE}
+library(r.oguelike)
+```
+
+<div class="figure">
+<img src="/post/2022-04-30-dungeon_files/r.oguelike-generate.gif" alt="Gif showing the steps to generate an ASCII-character tiled dungeon in R. First, a map is created with four randomly-placed floor tiles, then they're connected with corridors, then the tiles around the floor tiles are converted from wall to floor tiles, randomly, for three iterations." width="100%"/>
+</div>
+
+# tl;dr
+
+I wrote a (very!) basic procedure to generate randomised ASCII-character tile-based dungeons for [{r.oguelike}, an in-development roguelike-game-in-a-package for R](https://matt-dray.github.io/r.oguelike/).
+
+# Generate to accumulate
+
+[I wrote recently](https://www.rostrum.blog/2022/04/25/r.oguelike-dev/) about [the {r.oguelike} R package](https://matt-dray.github.io/r.oguelike/), which contains the beginnings of [a roguelike game](https://en.wikipedia.org/wiki/Roguelike) written entirely in R.
+
+A key element of roguelike games is that [the dungeons should be procedurally generated](http://www.roguebasin.com/index.php/Berlin_Interpretation)[^procedural] so that the player gets a different one each time they play.
+
+There are some great examples of algorithmic systems used for dungeon creation. See [the talk by Herbert Wolverson at Roguelike Celebration](https://www.youtube.com/watch?v=TlLIOgWYVpI), for example.
+
+I thought I'd go with something a bit more... _naïve_. Simple enough for my little game. And no maths!
+
+# Excavations
+
+## Prepare
+
+You can [install the (currently work-in-progress) {r.oguelike} package from GitHub](https://github.com/matt-dray/r.oguelike).
+
+```{r install, eval=FALSE}
+if (!require(remotes)) install.packages("remotes")
+install_github("matt-dray/r.oguelike")
+```
+
+Before we begin, note that we can talk about generative 'dungeons' in the context of connected rooms, like in [_The Binding of Isaac_](https://en.wikipedia.org/wiki/The_Binding_of_Isaac_(video_game)), or more freeform structures, like world maps in [_Dwarf Fortress_](https://en.wikipedia.org/wiki/Dwarf_Fortress). We're going for the latter, which amounts to interconnected caverns.
+
+The function we'll be using is called `generate_dungeon()`, which prints to the console a cavern that differs each time you run it.[^export] You can alter the output using the arguments:
+
+* `iterations` is the number of times to 'grow' the caverns
+* `n_row` and `n_col` give the map dimensions
+* `n_rooms` is the number of rooms to spawn
+* `is_snake` for a cavern that is continuous from left to right and wiggly
+* `is_organic` for a more freeform vs 'square' look to the caverns
+* `colour` to print the output in colour
+
+There's also a `seed` argument that lets you generate the same dungeon every time you run the function with the same parameters.
+
+## Demo
+
+So here's a smallish dungeon with 3 growth iterations for 3 starting rooms, on a map with tile dimensions of 20 rows by 30 columns, which you can reproduce by using the seed `123`.[^changes]
+
+```{r generate-dungeon, eval=FALSE}
+dungeon <- r.oguelike::generate_dungeon(3, 20, 30, 4, seed = 123)
+```
+
+Here's a screenshot of the output so you can see it in colour.
+
+<div class="figure">
+<img src="/post/2022-04-30-dungeon_files/dungeon.png" alt="A tile-based map made of ASCII. Red hashmarks for cave walls. Black periods for cavern-floor tiles. Yellow hyphens and pipes for the boundary of the map. The cavern has a number of interconnected tunnels and some short dead-ends." width="100%"/>
+</div>
+
+<details><summary>Click for the actual console output.</summary>
+```
+| - - - - - - - - - - - - - - - - - - - - - - - - - - - - | 
+| # # # # # # . # # # # # # # # # # # # # # # # # # # # # | 
+| # # . # . . . . # # # # # . # # # # # # # # # # # # # # | 
+| # . . . . # . . # # # . . . . # # # # # # # # # # # # # | 
+| # . . . . . . . . . . . . . . . # # # # # # # # # # # # | 
+| . . . # . . # . . # # . . . . . # # # # # # # # # # # # | 
+| . . . . # # # . # # # # # . . # # # # # # # # # # # # # | 
+| . . # # # # # # # # # # # . # # # # # # # # # # # # # # | 
+| . . . . # # # # # # # # . . . # # # # # # # # # # # # # | 
+| . . . . # # # # # # # # # . . # # # # # # # # # # # # # | 
+| . . . # # # # # # # . # . . . # # # # # # # # # # # # # | 
+| . . . # # # # # # . . . . . . . # # # # # # # # # # # # | 
+| . . . # # . . # . . # . . . . . . . . . # . . . # # # # | 
+| . . . . . . . . . . . . . . . . . . . . . . . . # # # # | 
+| . . # # . . . # . # . . . # . . . # # . . # . . # # # # | 
+| # # # # . . . # . # # # # # . # . # # # # . . . # # # # | 
+| # # # # # # # # # # # # # # # # # # # # . . . . # # # # | 
+| # # # # # # # # # # # # # # # # # # # # . . . # # # # # | 
+| # # # # # # # # # # # # # # # # # # # # # # . # # # # # | 
+| - - - - - - - - - - - - - - - - - - - - - - - - - - - - | 
+```
+</details>
+
+So, in this example you can see we have a little cavern with some interconnected areas and a dead-end in the lower right. The tiles represent:
+
+* cavern-floor tiles (black periods), which is where the character can traverse
+* cave wall tiles (red hashmarks)
+* a boundary around the edge (yellow hyphens and pipe symbols)
+
+Note that the actual output from the function---a matrix that represents the dungeon tiles---is returned invisibly.
+
+<details><summary>Click for the returned matrix.</summary>
+```{r matrix-out-preview, eval=FALSE}
+# Preview first 10 rows and columns
+dungeon[1:10, 1:10]
+```
+```
+      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]
+ [1,] "|"  "-"  "-"  "-"  "-"  "-"  "-"  "-"  "-"  "-"  
+ [2,] "|"  "#"  "#"  "#"  "#"  "#"  "#"  "."  "#"  "#"  
+ [3,] "|"  "#"  "#"  "."  "#"  "."  "."  "."  "."  "#"  
+ [4,] "|"  "#"  "."  "."  "."  "."  "#"  "."  "."  "#"  
+ [5,] "|"  "#"  "."  "."  "."  "."  "."  "."  "."  "."  
+ [6,] "|"  "."  "."  "."  "#"  "."  "."  "#"  "."  "."  
+ [7,] "|"  "."  "."  "."  "."  "#"  "#"  "#"  "."  "#"  
+ [8,] "|"  "."  "."  "#"  "#"  "#"  "#"  "#"  "#"  "#"  
+ [9,] "|"  "."  "."  "."  "."  "#"  "#"  "#"  "#"  "#"  
+[10,] "|"  "."  "."  "."  "."  "#"  "#"  "#"  "#"  "#"  
+```
+</detail>
+
+# The procedure
+
+How is the output created? The procedure is very simple: lay a map; select random sites for rooms[^rooms]; connect them with corridors; expand the rooms generatively.
+
+These steps are handled in [the `generate_dungeon()` function](https://github.com/matt-dray/r.oguelike/blob/main/R/dungeon.R) by a few [sub-functions](https://github.com/matt-dray/r.oguelike/blob/main/R/dungeon-utils.R), which looks a bit like this:
+
+```{r eval=FALSE}
+m <- .create_dungeon(n_row, n_col, n_rooms, seed)
+
+m <- .connect_dungeon(m, is_snake)
+
+i <- 0
+
+while (i < iterations) {
+  m <- .grow_dungeon(m)
+  i <- i + 1
+}
+
+.draw_dungeon(m, colour)
+```
+
+Not much right? But what's actually happening?
+
+1. First, `.create_dungeon()`:
+    - prepares a matrix with dimensions `n_row` and `n_col`
+    - fills the matrix with tiles that represent non-traversable rocky cave walls (`#`)
+    - selects randomly an `n_rooms` number of non-edge tiles in that map and mark them with traversable cavern-floor tiles (`.`)
+1. Then `.connect_dungeon()` (if the argument `is_organic` is `TRUE`):
+    - connects rooms with straight, right-angled corridors made of cavern tiles (connected from lowest to highest if `is_snake = TRUE`, otherwise randomly)
+1. Now the iterative bit, `.grow_dungeon()`, which happens in a while-loop whose `iterations` are determined, which:
+    - expands the cavern where each cavern-floor tile spawns randomly a new cavern-floor tile to its north, south, east or west, using `sample()`
+1. Finally, `.draw_dungeon()`:
+    - prints to the console, using `cat()`, each line of the matrix in turn
+    - colours the output with [the {crayon} package](https://github.com/r-lib/crayon), if requested
+
+And we can look at the output at each step to see what's going on:
+
+<div class="figure">
+<img src="/post/2022-04-30-dungeon_files/r.oguelike-generate.gif" alt="Gif showing the steps to generate an ASCII-character tiled dungeon in R. First, a map is created with four randomly-placed floor tiles, then they're connected with corridors, then the tiles around the floor tiles are converted from wall to floor tiles, randomly, for three iterations." width="100%"/>
+</div>
+
+We started here with the map that has randomly-selected room tiles, then joined them with corridors, then iterated 1, 2, 3 times to expand out the cavern floor space.
+
+# Going deeper
+
+So! I encourage you to play with this. Mess around with the arguments and see what you can come up with. I recommend a much larger dungeon map than demonstrated here, with a larger `n_rooms` value. Try out `is_organic = FALSE`, because I think the results generally look more 'artificial', i.e. the resulting dungeon looks more 'man-made'. I think `is_snake = TRUE` results in something that could be more like a gauntlet: get from the start, on the left, to the end, on the right, via whatever obstacles you put in the way.
+
+I could've shown you more examples of what happens when you toy with these arguments, but this is a technique that we in the business call 'getting you to download the package and try it yourself'.
+
+Smashing, right, so what do we do this? Well, the {r.oguelike} package already has the rudiments of a 'game', and now has the rudiments of dungeon maps. We step closer to release on all major videogame platforms and the promise of billions of dollars in sales.
+
+Next is to place characters, enemies and items into these dungeon spaces. Ideally we can create a system to place certain objects in certain spaces, like treasure in the far reaches of a dead-end, or a monster that's in a narrow corridor and must be defeated to advance.
+
+That's much more roguelike-like, like, amirite?
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^procedural]: I'm not a computer scientist, but Wikipedia says 'procedural' involves 'creating data algorithmically as opposed to manually, typically through a combination of human-generated assets and algorithms coupled with computer-generated randomness and processing power'. The page [specifically points out roguelikes](https://en.wikipedia.org/wiki/Procedural_generation#Video_games) as having these properties, so I assume what I've done can be described as 'procedural'?
+[^export]: In future, this function will be integrated into the `start_game()` function, but I may still export it so people (i.e. me) can use it for fun.
+[^changes]: Underlying changes to the code may prevent this from being recreated in future. I'm using v0.0.0.9005 (this ridiculous number means it's _very_ dev) of the {r.oguelike} package for this post.
+[^rooms]: Akshually, it's not just a case of choosing a random set of four points within the length of the matrix. The vector of the sequence of the length of the matrix is split `n_rooms` times and we sample from within each of those chunks. This, hopefully, should keep the dungeons relatively-well spread out.
