@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 4 day(s) ago: [Simple procedural
+🆕 The latest post was published 5 day(s) ago: [Simple procedural
 dungeons in R](https://www.rostrum.blog/2022/05/01/dungeon/).
 
 📈 This 2D plot shows posts over time:
@@ -170,4 +170,4 @@ dungeons in R](https://www.rostrum.blog/2022/05/01/dungeon/).
 
 -----
 
-*Updated 2022-05-05 03:41:05*
+*Updated 2022-05-06 03:18:24*
