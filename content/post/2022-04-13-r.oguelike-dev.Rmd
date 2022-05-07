@@ -39,7 +39,7 @@ Perhaps most recognisably, it used ASCII text as 'graphics': the player controls
 
 There are many interpretations of what exactly constitutes a 'roguelike', one of which is the strict ['Berlin Interpretation'](http://www.roguebasin.com/index.php/Berlin_Interpretation)[^dd]. Must-haves include:
 
-* randomly-generated dungeons (a different playing surface every time)
+* randomly-generated dungeons (a different map every time)
 * permadeath (it's game over when you die)
 * turn-based battles (limitless thinking time, then one action)
 * grid-based (everything takes up one tile of space)
@@ -73,13 +73,14 @@ You can [visit the package website](https://matt-dray.github.io/r.oguelike/) or 
 
 For now it's just a toy to demo some possible approaches for some of the main game elements: 'graphics', movement, an inventory, item use and battling.
 
-As ever, everything in the package is subject to change and improvement (though I also may never revisit it). Consider this a quick devlog[^devlog].
+As ever, everything in the package is subject to change and improvement (though I also may never revisit it). Consider this a quick devlog.[^devlog]
 
 ## Install (or don't)
 
 You can install from GitHub to make the package available on your machine.
 
 ```{r eval=FALSE}
+# install.packages("remotes")  # if not already installed
 remotes::install_github("matt-dray/r.oguelike")
 ```
 
@@ -91,7 +92,13 @@ This also means it's possible to [play this game from your phone](https://twitte
 
 ## Demo
 
-Top-tip: improve immersion by changing your console colour palette to dark mode, naturally.
+<div class="tip"> `r fontawesome::fa("exclamation-circle")` <b>Note</b>
+
+The {r.oguelike} package is a work in progress and is developing at pace. Many things explained below may have been superseded or changed by the time you read this.
+
+</div>
+
+Top-tip: improve immersion by changing your console colour palette to dark mode, so it's like you're really inside a cave, wow.
 
 To begin:
 
@@ -187,12 +194,12 @@ Each character has attack and HP values. Of course, you can see that the player 
 # . . . . . . . # 
 # . . . . . . . # 
 # # # # # # # # # 
-T: 12 | HP: 6 | G: 1 | A: 1
+T: 12 | HP: 7 | G: 1 | A: 1
 You win! (-3 HP)
 Input: 
 ```
 
-So we know we won because the status message changed to `You win!` and a note of how many hit points we lost: `(-3 HP)`. Concurrently the HP in the inventory bar has reduced by that amount[^hp].
+So we know we won because the status message changed to `You win!` and a note of how many hit points we lost: `(-3 HP)`. Concurrently the HP in the inventory bar has reduced by that amount.
 
 Having lost some HP, we can add some back by consuming the apple, an action mapped to the number <kbd>1</kbd> key on your keyboard (regardless of whether you're using {keypress} or not).
 
@@ -203,7 +210,7 @@ Having lost some HP, we can add some back by consuming the apple, an action mapp
 # . . . . . . . # 
 # . . . . . . . # 
 # # # # # # # # # 
-T: 11 | HP: 7 | G: 1 | A: 0
+T: 11 | HP: 8 | G: 1 | A: 0
 Ate apple (+1 HP)
 Input: 
 ```
@@ -219,7 +226,7 @@ This is the end of the demo: you've collected all the items and defeated the ene
 # . . . . . . . # 
 # @ . . . . . . # 
 # # # # # # # # # 
-T: 1 | HP: 7 | G: 1 | A: 0
+T: 1 | HP: 8 | G: 1 | A: 0
 Moved left
 Input: a
 You died (max turns)! Try again!
@@ -262,6 +269,8 @@ On the back-end, I've so far written everything in base R; the only dependency i
 
 # The future
 
+The package will change and grow as I add stuff, so do [check out the repo on GitHub](https://github.com/matt-dray/r.oguelike) for any updates that may happened since you read this post.
+
 Obviously I'll need some seed funding to set up my indie game company so I can begin making a cool 3D version of this. [Oh, wait, mifekc is already on the case!](https://twitter.com/coolbutuseless/status/1495500110758883332?s=20&t=FZSlvFFs3HBfS_pnAUtHLw)
 
 Alright, nevermind. How about, erm, a roguelike-themed Wordle? Oh wait, [it's already been done!](https://twitter.com/st33d/status/1502425657493671944?s=20&t=FZSlvFFs3HBfS_pnAUtHLw)
@@ -277,5 +286,4 @@ sessioninfo::session_info()
 
 [^dd]: The [Design Doc YouTube channel has a nice explainer](https://www.youtube.com/watch?v=uM588ci-sMQ).
 [^devlog]: I've been watching game devlogs on YouTube by people like [Sebastian Lague](https://www.youtube.com/c/SebastianLague), [Karl (ThinMatrix)](https://www.youtube.com/c/ThinMatrix/) and [Dani](https://www.youtube.com/c/DaniDev). I'd love to see more of this sort of thing for R package development, like what Bruno Rodrigues has been doing for the in development of [the {chronicler} package](https://www.youtube.com/c/BrunoRodrigues1988/videos), for example.
-[^hp]: Haha, yes, 10 minus 3 is not 6. This is a little bug I discovered when writing this blog post. Maybe I'll fix it eventually.
-[^symbols]: Why are they `$` and `a` on the map, but `G` and `A` in the inventory bar? Good question.
+[^symbols]: Why are they `$` and `a` on the map, but `G` and `A` in the inventory bar? Good question. I'll probably change that in future.

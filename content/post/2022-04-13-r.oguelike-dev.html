@@ -16,7 +16,6 @@ tags:
 draft: no
 ---
 
-<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
 
 
 <div class="figure">
@@ -39,7 +38,7 @@ Screenshot of Rogue <a href="https://en.wikipedia.org/wiki/Roguelike#/media/File
 </div>
 <p>There are many interpretations of what exactly constitutes a ‘roguelike’, one of which is the strict <a href="http://www.roguebasin.com/index.php/Berlin_Interpretation">‘Berlin Interpretation’</a><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>. Must-haves include:</p>
 <ul>
-<li>randomly-generated dungeons (a different playing surface every time)</li>
+<li>randomly-generated dungeons (a different map every time)</li>
 <li>permadeath (it’s game over when you die)</li>
 <li>turn-based battles (limitless thinking time, then one action)</li>
 <li>grid-based (everything takes up one tile of space)</li>
@@ -71,18 +70,23 @@ Screenshot of Rogue <a href="https://en.wikipedia.org/wiki/Roguelike#/media/File
 <p>So I started to build an R package containing an ‘engine’ for a game in the roguelike style, called {r.oguelike}.</p>
 <p>You can <a href="https://matt-dray.github.io/r.oguelike/">visit the package website</a> or <a href="https://github.com/matt-dray/r.oguelike">look at the source code in the GitHub repo</a>.</p>
 <p>For now it’s just a toy to demo some possible approaches for some of the main game elements: ‘graphics’, movement, an inventory, item use and battling.</p>
-<p>As ever, everything in the package is subject to change and improvement (though I also may never revisit it). Consider this a quick devlog<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>.</p>
+<p>As ever, everything in the package is subject to change and improvement (though I also may never revisit it). Consider this a quick devlog.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
 <div id="install-or-dont" class="section level2">
 <h2>Install (or don’t)</h2>
 <p>You can install from GitHub to make the package available on your machine.</p>
-<pre class="r"><code>remotes::install_github(&quot;matt-dray/r.oguelike&quot;)</code></pre>
+<pre class="r"><code># install.packages(&quot;remotes&quot;)  # if not already installed
+remotes::install_github(&quot;matt-dray/r.oguelike&quot;)</code></pre>
 <p>If you prefer, you can also play in your browser without having to install anything. I’ve set up <a href="https://mybinder.org/">a Binder instance</a> of RStudio with {r.oguelike} preinstalled so you can just click the button below to launch it (it may take a moment to load):</p>
 <p><a href="https://mybinder.org/v2/gh/matt-dray/play-r.oguelike/main?urlpath=rstudio"><img src="https://mybinder.org/badge_logo.svg" alt="Launch Rstudio Binder" /></a></p>
 <p>This also means it’s possible to <a href="https://twitter.com/mattdray/status/1486458576516399104?s=20&amp;t=dVwpJPwmMeBP3NTUhrn9gQ">play this game from your phone</a>, lol.</p>
 </div>
 <div id="demo" class="section level2">
 <h2>Demo</h2>
-<p>Top-tip: improve immersion by changing your console colour palette to dark mode, naturally.</p>
+<div class="tip">
+<p><svg aria-hidden="true" role="img" viewBox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;"><path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"/></svg> <b>Note</b></p>
+<p>The {r.oguelike} package is a work in progress and is developing at pace. Many things explained below may have been superseded or changed by the time you read this.</p>
+</div>
+<p>Top-tip: improve immersion by changing your console colour palette to dark mode, so it’s like you’re really inside a cave, wow.</p>
 <p>To begin:</p>
 <pre class="r"><code>r.oguelike::start_game()</code></pre>
 <p>When you start, the console clears and the user interface is printed.</p>
@@ -149,10 +153,10 @@ Input: </code></pre>
 # . . . . . . . # 
 # . . . . . . . # 
 # # # # # # # # # 
-T: 12 | HP: 6 | G: 1 | A: 1
+T: 12 | HP: 7 | G: 1 | A: 1
 You win! (-3 HP)
 Input: </code></pre>
-<p>So we know we won because the status message changed to <code>You win!</code> and a note of how many hit points we lost: <code>(-3 HP)</code>. Concurrently the HP in the inventory bar has reduced by that amount<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>.</p>
+<p>So we know we won because the status message changed to <code>You win!</code> and a note of how many hit points we lost: <code>(-3 HP)</code>. Concurrently the HP in the inventory bar has reduced by that amount.</p>
 <p>Having lost some HP, we can add some back by consuming the apple, an action mapped to the number <kbd>1</kbd> key on your keyboard (regardless of whether you’re using {keypress} or not).</p>
 <pre><code># # # # # # # # # 
 # . . . . . @ . # 
@@ -160,7 +164,7 @@ Input: </code></pre>
 # . . . . . . . # 
 # . . . . . . . # 
 # # # # # # # # # 
-T: 11 | HP: 7 | G: 1 | A: 0
+T: 11 | HP: 8 | G: 1 | A: 0
 Ate apple (+1 HP)
 Input: </code></pre>
 <p>So we get a message <code>Ate apple</code> and that our hit points have increased as a result: <code>(+1 HP)</code>. Of course, this means that the apple spot in the inventory has decreased to zero. Note that the HP maxes out at 10, so eating the apple won’t raise the HP value above that.</p>
@@ -171,7 +175,7 @@ Input: </code></pre>
 # . . . . . . . # 
 # @ . . . . . . # 
 # # # # # # # # # 
-T: 1 | HP: 7 | G: 1 | A: 0
+T: 1 | HP: 8 | G: 1 | A: 0
 Moved left
 Input: a
 You died (max turns)! Try again!
@@ -208,6 +212,7 @@ You died (max turns)! Try again!
 </div>
 <div id="the-future" class="section level1">
 <h1>The future</h1>
+<p>The package will change and grow as I add stuff, so do <a href="https://github.com/matt-dray/r.oguelike">check out the repo on GitHub</a> for any updates that may happened since you read this post.</p>
 <p>Obviously I’ll need some seed funding to set up my indie game company so I can begin making a cool 3D version of this. <a href="https://twitter.com/coolbutuseless/status/1495500110758883332?s=20&amp;t=FZSlvFFs3HBfS_pnAUtHLw">Oh, wait, mifekc is already on the case!</a></p>
 <p>Alright, nevermind. How about, erm, a roguelike-themed Wordle? Oh wait, <a href="https://twitter.com/st33d/status/1502425657493671944?s=20&amp;t=FZSlvFFs3HBfS_pnAUtHLw">it’s already been done!</a></p>
 <p>Might just take a nap instead, to be honest.</p>
@@ -217,53 +222,55 @@ You died (max turns)! Try again!
 Session info
 </summary>
 <pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
-##  setting  value                       
-##  version  R version 4.1.3 (2022-03-10)
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
 ##  os       macOS Big Sur/Monterey 10.16
-##  system   x86_64, darwin17.0          
-##  ui       X11                         
-##  language (EN)                        
-##  collate  en_GB.UTF-8                 
-##  ctype    en_GB.UTF-8                 
-##  tz       Europe/London               
-##  date     2022-04-27                  
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_GB.UTF-8
+##  ctype    en_GB.UTF-8
+##  tz       Europe/London
+##  date     2022-05-07
+##  pandoc   2.17.1.1 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/ (via rmarkdown)
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
-##  package        * version date       lib source        
-##  ActionSquirrel   0.1.0   2021-10-03 [1] local         
-##  blogdown         1.4     2021-07-23 [1] CRAN (R 4.1.0)
-##  bookdown         0.23    2021-08-13 [1] CRAN (R 4.1.0)
-##  bslib            0.3.1   2021-10-06 [1] CRAN (R 4.1.0)
-##  cli              3.2.0   2022-02-14 [1] CRAN (R 4.1.2)
-##  digest           0.6.29  2021-12-01 [1] CRAN (R 4.1.0)
-##  evaluate         0.14    2019-05-28 [1] CRAN (R 4.1.0)
-##  fastmap          1.1.0   2021-01-25 [1] CRAN (R 4.1.0)
-##  htmltools        0.5.2   2021-08-25 [1] CRAN (R 4.1.0)
-##  jquerylib        0.1.4   2021-04-26 [1] CRAN (R 4.1.0)
-##  jsonlite         1.7.3   2022-01-17 [1] CRAN (R 4.1.2)
-##  knitr            1.37    2021-12-16 [1] CRAN (R 4.1.0)
-##  magrittr         2.0.2   2022-01-26 [1] CRAN (R 4.1.2)
-##  R6               2.5.1   2021-08-19 [1] CRAN (R 4.1.0)
-##  rlang            1.0.2   2022-03-04 [1] CRAN (R 4.1.2)
-##  rmarkdown        2.10    2021-08-06 [1] CRAN (R 4.1.0)
-##  rstudioapi       0.13    2020-11-12 [1] CRAN (R 4.1.0)
-##  sass             0.4.0   2021-05-12 [1] CRAN (R 4.1.0)
-##  sessioninfo      1.1.1   2018-11-05 [1] CRAN (R 4.1.0)
-##  stringi          1.7.6   2021-11-29 [1] CRAN (R 4.1.0)
-##  stringr          1.4.0   2019-02-10 [1] CRAN (R 4.1.0)
-##  withr            2.4.3   2021-11-30 [1] CRAN (R 4.1.0)
-##  xfun             0.29    2021-12-14 [1] CRAN (R 4.1.0)
-##  yaml             2.2.2   2022-01-25 [1] CRAN (R 4.1.2)
+##  package        * version date (UTC) lib source
+##  ActionSquirrel   0.1.0   2022-05-07 [1] Github (matt-dray/ActionSquirrel@19cd339)
+##  blogdown         1.9     2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown         0.26    2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib            0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+##  cli              3.2.0   2022-02-14 [1] CRAN (R 4.2.0)
+##  digest           0.6.29  2021-12-01 [1] CRAN (R 4.2.0)
+##  evaluate         0.15    2022-02-18 [1] CRAN (R 4.2.0)
+##  fastmap          1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  fontawesome      0.2.2   2021-07-02 [1] CRAN (R 4.2.0)
+##  htmltools        0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib        0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite         1.8.0   2022-02-22 [1] CRAN (R 4.2.0)
+##  knitr            1.39    2022-04-26 [1] CRAN (R 4.2.0)
+##  magrittr         2.0.3   2022-03-30 [1] CRAN (R 4.2.0)
+##  R6               2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+##  rlang            1.0.2   2022-03-04 [1] CRAN (R 4.2.0)
+##  rmarkdown        2.14    2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi       0.13    2020-11-12 [1] CRAN (R 4.2.0)
+##  sass             0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo      1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+##  stringi          1.7.6   2021-11-29 [1] CRAN (R 4.2.0)
+##  stringr          1.4.0   2019-02-10 [1] CRAN (R 4.2.0)
+##  xfun             0.30    2022-03-02 [1] CRAN (R 4.2.0)
+##  yaml             2.3.5   2022-02-21 [1] CRAN (R 4.2.0)
 ## 
-## [1] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
 </details>
 </div>
-<div class="footnotes">
+<div class="footnotes footnotes-end-of-document">
 <hr />
 <ol>
 <li id="fn1"><p>The <a href="https://www.youtube.com/watch?v=uM588ci-sMQ">Design Doc YouTube channel has a nice explainer</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
 <li id="fn2"><p>I’ve been watching game devlogs on YouTube by people like <a href="https://www.youtube.com/c/SebastianLague">Sebastian Lague</a>, <a href="https://www.youtube.com/c/ThinMatrix/">Karl (ThinMatrix)</a> and <a href="https://www.youtube.com/c/DaniDev">Dani</a>. I’d love to see more of this sort of thing for R package development, like what Bruno Rodrigues has been doing for the in development of <a href="https://www.youtube.com/c/BrunoRodrigues1988/videos">the {chronicler} package</a>, for example.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
-<li id="fn3"><p>Why are they <code>$</code> and <code>a</code> on the map, but <code>G</code> and <code>A</code> in the inventory bar? Good question.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
-<li id="fn4"><p>Haha, yes, 10 minus 3 is not 6. This is a little bug I discovered when writing this blog post. Maybe I’ll fix it eventually.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>Why are they <code>$</code> and <code>a</code> on the map, but <code>G</code> and <code>A</code> in the inventory bar? Good question. I’ll probably change that in future.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
