@@ -15,11 +15,13 @@ tags:
 draft: no
 ---
 
-<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
 
 
 <div class="figure">
-<p><img src="/post/2022-04-30-dungeon_files/r.oguelike-generate.gif" alt="Gif showing the steps to generate an ASCII-character tiled dungeon in R. First, a map is created with four randomly-placed floor tiles, then they're connected with corridors, then the tiles around the floor tiles are converted from wall to floor tiles, randomly, for three iterations." width="100%"/></p>
+<img src="/post/2022-04-30-dungeon_files/r.oguelike-generate.gif" alt="Gif showing the steps to generate an ASCII-character tiled dungeon in R. First, a map is created with four randomly-placed floor tiles, then they're connected with corridors, then the tiles around the floor tiles are converted from wall to floor tiles, randomly, for three iterations." width="100%"/>
+<p class="caption">
+Three iterations to expand four randomly-placed floor tiles into a cavern.
+</p>
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
@@ -29,7 +31,7 @@ draft: no
 <h1>Generate to accumulate</h1>
 <p><a href="https://www.rostrum.blog/2022/04/25/r.oguelike-dev/">I wrote recently</a> about <a href="https://matt-dray.github.io/r.oguelike/">the {r.oguelike} R package</a>, which contains the beginnings of <a href="https://en.wikipedia.org/wiki/Roguelike">a roguelike game</a> written entirely in R.</p>
 <p>A key element of roguelike games is that <a href="http://www.roguebasin.com/index.php/Berlin_Interpretation">the dungeons should be procedurally generated</a><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> so that the player gets a different one each time they play.</p>
-<p>There are some great examples of algorithmic systems used for dungeon creation. See <a href="https://www.youtube.com/watch?v=TlLIOgWYVpI">the talk by Herbert Wolverson at Roguelike Celebration</a>, for example.</p>
+<p>There are some great examples of algorithmic systems used for dungeon creation, like wave function collapse, binary space partitions, cellular automata, etc.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> See <a href="https://www.youtube.com/watch?v=TlLIOgWYVpI">the talk by Herbert Wolverson at Roguelike Celebration</a>, for example.</p>
 <p>I thought I’d go with something a bit more… <em>naïve</em>. Simple enough for my little game. And no maths!</p>
 </div>
 <div id="excavations" class="section level1">
@@ -39,8 +41,12 @@ draft: no
 <p>You can <a href="https://github.com/matt-dray/r.oguelike">install the (currently work-in-progress) {r.oguelike} package from GitHub</a>.</p>
 <pre class="r"><code>if (!require(remotes)) install.packages(&quot;remotes&quot;)
 install_github(&quot;matt-dray/r.oguelike&quot;)</code></pre>
+<div class="tip">
+<p><svg aria-hidden="true" role="img" viewBox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;"><path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"/></svg> <b>Note</b></p>
+<p>The {r.oguelike} package is a work in progress and is developing at pace. Many things explained below may have been superseded or changed by the time you read this.</p>
+</div>
 <p>Before we begin, note that we can talk about generative ‘dungeons’ in the context of connected rooms, like in <a href="https://en.wikipedia.org/wiki/The_Binding_of_Isaac_(video_game)"><em>The Binding of Isaac</em></a>, or more freeform structures, like world maps in <a href="https://en.wikipedia.org/wiki/Dwarf_Fortress"><em>Dwarf Fortress</em></a>. We’re going for the latter, which amounts to interconnected caverns.</p>
-<p>The function we’ll be using is called <code>generate_dungeon()</code>, which prints to the console a cavern that differs each time you run it.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> You can alter the output using the arguments:</p>
+<p>The function we’ll be using is called <code>generate_dungeon()</code>, which prints to the console a cavern that differs each time you run it.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> You can alter the output using the arguments:</p>
 <ul>
 <li><code>iterations</code> is the number of times to ‘grow’ the caverns</li>
 <li><code>n_row</code> and <code>n_col</code> give the map dimensions</li>
@@ -49,12 +55,12 @@ install_github(&quot;matt-dray/r.oguelike&quot;)</code></pre>
 <li><code>is_organic</code> for a more freeform vs ‘square’ look to the caverns</li>
 <li><code>colour</code> to print the output in colour</li>
 </ul>
-<p>There’s also a <code>seed</code> argument that lets you generate the same dungeon every time you run the function with the same parameters.</p>
+<p>You can always run <code>set.seed()</code> before <code>generate_dungeon()</code> to create the same dungeon every time you run the function with the same parameters.</p>
 </div>
 <div id="demo" class="section level2">
 <h2>Demo</h2>
-<p>So here’s a smallish dungeon with 3 growth iterations for 3 starting rooms, on a map with tile dimensions of 20 rows by 30 columns, which you can reproduce by using the seed <code>123</code>.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
-<pre class="r"><code>dungeon &lt;- r.oguelike::generate_dungeon(3, 20, 30, 4, seed = 123)</code></pre>
+<p>So here’s a smallish dungeon with 3 growth iterations for 3 starting rooms, on a map with tile dimensions of 20 rows by 30 columns.</p>
+<pre class="r"><code>dungeon &lt;- r.oguelike::generate_dungeon(3, 20, 30, 4)</code></pre>
 <p>Here’s a screenshot of the output so you can see it in colour.</p>
 <div class="figure">
 <p><img src="/post/2022-04-30-dungeon_files/dungeon.png" alt="A tile-based map made of ASCII. Red hashmarks for cave walls. Black periods for cavern-floor tiles. Yellow hyphens and pipes for the boundary of the map. The cavern has a number of interconnected tunnels and some short dead-ends." width="100%"/></p>
@@ -87,26 +93,26 @@ Click for the actual console output.
 <p>So, in this example you can see we have a little cavern with some interconnected areas and a dead-end in the lower right. The tiles represent:</p>
 <ul>
 <li>cavern-floor tiles (black periods), which is where the character can traverse</li>
-<li>cave wall tiles (red hashmarks)</li>
+<li>cave wall tiles (red hashmarks, which can’t be passed through)</li>
 <li>a boundary around the edge (yellow hyphens and pipe symbols)</li>
 </ul>
 <p>Note that the actual output from the function—a matrix that represents the dungeon tiles—is returned invisibly.</p>
 <details>
 <summary>
-Click for the returned matrix.
+Click for a preview of for the returned matrix.
 </summary>
 <pre class="r"><code># Preview first 10 rows and columns
 dungeon[1:10, 1:10]</code></pre>
-<pre><code>      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]
- [1,] &quot;|&quot;  &quot;-&quot;  &quot;-&quot;  &quot;-&quot;  &quot;-&quot;  &quot;-&quot;  &quot;-&quot;  &quot;-&quot;  &quot;-&quot;  &quot;-&quot;  
- [2,] &quot;|&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;.&quot;  &quot;#&quot;  &quot;#&quot;  
- [3,] &quot;|&quot;  &quot;#&quot;  &quot;#&quot;  &quot;.&quot;  &quot;#&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;#&quot;  
- [4,] &quot;|&quot;  &quot;#&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;#&quot;  &quot;.&quot;  &quot;.&quot;  &quot;#&quot;  
- [5,] &quot;|&quot;  &quot;#&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  
- [6,] &quot;|&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;#&quot;  &quot;.&quot;  &quot;.&quot;  &quot;#&quot;  &quot;.&quot;  &quot;.&quot;  
- [7,] &quot;|&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;.&quot;  &quot;#&quot;  
- [8,] &quot;|&quot;  &quot;.&quot;  &quot;.&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  
- [9,] &quot;|&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  
+<pre><code>[,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]
+[1,] &quot;|&quot;  &quot;-&quot;  &quot;-&quot;  &quot;-&quot;  &quot;-&quot;  &quot;-&quot;  &quot;-&quot;  &quot;-&quot;  &quot;-&quot;  &quot;-&quot;  
+[2,] &quot;|&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;.&quot;  &quot;#&quot;  &quot;#&quot;  
+[3,] &quot;|&quot;  &quot;#&quot;  &quot;#&quot;  &quot;.&quot;  &quot;#&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;#&quot;  
+[4,] &quot;|&quot;  &quot;#&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;#&quot;  &quot;.&quot;  &quot;.&quot;  &quot;#&quot;  
+[5,] &quot;|&quot;  &quot;#&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  
+[6,] &quot;|&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;#&quot;  &quot;.&quot;  &quot;.&quot;  &quot;#&quot;  &quot;.&quot;  &quot;.&quot;  
+[7,] &quot;|&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;.&quot;  &quot;#&quot;  
+[8,] &quot;|&quot;  &quot;.&quot;  &quot;.&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  
+[9,] &quot;|&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  
 [10,] &quot;|&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;.&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  &quot;#&quot;  </code></pre>
 <p></detail></p>
 </div>
@@ -125,11 +131,22 @@ dungeon[1:10, 1:10]</code></pre>
 <div class="figure">
 <p><img src="/post/2022-04-30-dungeon_files/dungeon-snake.png" alt="A dungeonlike map made from ASCII characters. Cave tiles are marked with a period and are black. Rock wall tiles are marked with red hashmarks. The outer boundary wall is made of yellow hyphens and pipe symbols. The corridor is a single snaking corridor from left to write, wiggling from top to bottom." width="100%"/></p>
 </div>
+<p>Here’s what happens if we set <code>is_organic = FALSE</code> and <code>is_snake = TRUE</code>. You get much obvious ‘rooms’ connected by small corridors:</p>
+<div class="figure">
+<p><img src="/post/2022-04-30-dungeon_files/dungeon-rooms.png" alt="A dungeonlike map made from ASCII characters. Cave tiles are marked with a period and are black. Rock wall tiles are marked with red hashmarks. Four small, discrete rooms made of floor tiles are connected from left-to-right with corridors that are a single tile wide." width="100%"/></p>
+</div>
+<p>And if we set <code>is_organic = FALSE</code> and <code>is_snake = FALSE</code> we get something interconnected, but looks more ‘artificial’ or manmade with its mostly square walls:</p>
+<div class="figure">
+<p><img src="/post/2022-04-30-dungeon_files/dungeon-artificial.png" alt="A dungeonlike map made from ASCII characters. Cave tiles are marked with a period and are black. Rock wall tiles are marked with red hashmarks. There are many straight-line corridors of different widths, which looks less organic and cavelike and more man-made." width="100%"/></p>
+</div>
+<p>You can see how the shape of these dungeons can be used as part of the storytelling. Is the player in a big cavern, hollowed out long in the past, or perhaps in an underground city, chiselled-out by dwarves?</p>
 </div>
 </div>
 <div id="the-procedure" class="section level1">
 <h1>The procedure</h1>
 <p>How is the output created? The procedure is very simple: lay a map; select random sites for rooms<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>; connect them with corridors; expand the rooms generatively.</p>
+<div id="functions" class="section level2">
+<h2>Functions</h2>
 <p>These steps are handled in <a href="https://github.com/matt-dray/r.oguelike/blob/main/R/dungeon.R">the <code>generate_dungeon()</code> function</a> by a few <a href="https://github.com/matt-dray/r.oguelike/blob/main/R/dungeon-utils.R">sub-functions</a>, which looks a bit like this:</p>
 <pre class="r"><code>m &lt;- .create_dungeon(n_row, n_col, n_rooms, seed)
 
@@ -145,38 +162,86 @@ while (i &lt; iterations) {
 .draw_dungeon(m, colour)</code></pre>
 <p>Not much right? But what’s actually happening?</p>
 <ol style="list-style-type: decimal">
-<li>First, <code>.create_dungeon()</code>:
+<li>First, <code>.create_dungeon()</code>:</li>
+</ol>
 <ul>
 <li>prepares a matrix with dimensions <code>n_row</code> and <code>n_col</code></li>
 <li>fills the matrix with tiles that represent non-traversable rocky cave walls (<code>#</code>)</li>
-<li>selects randomly an <code>n_rooms</code> number of non-edge tiles in that map and mark them with traversable cavern-floor tiles (<code>.</code>)</li>
-</ul></li>
-<li>Then <code>.connect_dungeon()</code> (if the argument <code>is_organic</code> is <code>TRUE</code>):
+<li>selects randomly an <code>n_rooms</code> number of non-edge tiles in that map and replaces them with traversable cavern-floor tiles (<code>.</code>)</li>
+</ul>
+<ol style="list-style-type: decimal">
+<li>Then <code>.connect_dungeon()</code> (this function is run now if <code>is_organic = TRUE</code>, otherwise after <code>.grow_dungeon()</code> in the next step):</li>
+</ol>
 <ul>
-<li>connects rooms with straight, right-angled corridors made of cavern tiles (connected from lowest to highest if <code>is_snake = TRUE</code>, otherwise randomly)</li>
-</ul></li>
-<li>Now the iterative bit, <code>.grow_dungeon()</code>, which happens in a while-loop whose <code>iterations</code> are determined, which:
+<li>connects rooms with straight, right-angled corridors made of floor tiles (connected from lowest to highest if <code>is_snake = TRUE</code>, otherwise randomly)</li>
+</ul>
+<ol style="list-style-type: decimal">
+<li>Now the iterative bit, <code>.grow_dungeon()</code>, which happens in a while-loop whose <code>iterations</code> are determined, which:</li>
+</ol>
 <ul>
-<li>expands the cavern where each cavern-floor tile spawns randomly a new cavern-floor tile to its north, south, east or west, using <code>sample()</code></li>
-</ul></li>
-<li>Finally, <code>.draw_dungeon()</code>:
+<li>spawns randomly with <code>sample()</code> a new cavern-floor tile to the north, south, east or west or current floor tiles</li>
+<li>performs one round of spawning for the number of <code>iterations</code> provided</li>
+</ul>
+<ol style="list-style-type: decimal">
+<li>Finally, <code>.draw_dungeon()</code>:</li>
+</ol>
 <ul>
 <li>prints to the console, using <code>cat()</code>, each line of the matrix in turn</li>
 <li>colours the output with <a href="https://github.com/r-lib/crayon">the {crayon} package</a>, if requested</li>
-</ul></li>
-</ol>
+</ul>
 <p>And we can look at the output at each step to see what’s going on:</p>
 <div class="figure">
 <p><img src="/post/2022-04-30-dungeon_files/r.oguelike-generate.gif" alt="Gif showing the steps to generate an ASCII-character tiled dungeon in R. First, a map is created with four randomly-placed floor tiles, then they're connected with corridors, then the tiles around the floor tiles are converted from wall to floor tiles, randomly, for three iterations." width="100%"/></p>
 </div>
-<p>We started here with the map that has randomly-selected room tiles, then joined them with corridors, then iterated 1, 2, 3 times to expand out the cavern floor space.</p>
+<p>The map started with four randomly-selected floor tiles; these were joined them with straight, right-angled corridors; then three iterations expanded out the floor space from the existing floor tiles.</p>
+</div>
+<div id="sampling" class="section level2">
+<h2>Sampling</h2>
+<p>Let’s focus on the simple bit of the <code>.grow_dungeon()</code> function that actually expands the floor.</p>
+<p>Here’s a tiny example matrix of wall tiles with a floor tile in the middle:</p>
+<pre class="r"><code>m &lt;- matrix(&quot;#&quot;, 3, 3)  # wall tiles
+m[2, 2] &lt;- &quot;.&quot;  # floor tiles
+m</code></pre>
+<pre><code>##      [,1] [,2] [,3]
+## [1,] &quot;#&quot;  &quot;#&quot;  &quot;#&quot; 
+## [2,] &quot;#&quot;  &quot;.&quot;  &quot;#&quot; 
+## [3,] &quot;#&quot;  &quot;#&quot;  &quot;#&quot;</code></pre>
+<p>Now we find the adjacent tiles and sample a random number of them to also become floor tiles.</p>
+<pre class="r"><code>start_tile &lt;- which(m == &quot;.&quot;)
+
+adjacent_tiles &lt;- c(
+  start_tile - 1,        # north
+  start_tile + 1,        # south
+  start_tile - ncol(m),  # east 
+  start_tile + ncol(m)   # west 
+)
+
+change_to_floor &lt;- sample(
+  adjacent_tiles,
+  sample(1:length(adjacent_tiles), 1)
+)
+
+m[change_to_floor] &lt;- &quot;.&quot;
+
+m</code></pre>
+<pre><code>##      [,1] [,2] [,3]
+## [1,] &quot;#&quot;  &quot;.&quot;  &quot;#&quot; 
+## [2,] &quot;#&quot;  &quot;.&quot;  &quot;.&quot; 
+## [3,] &quot;#&quot;  &quot;.&quot;  &quot;#&quot;</code></pre>
+<p>So between one and all of the adjacent tiles could be turned to a floor tile.</p>
+<p>This is then repeated for the number of <code>iterations</code> provided by the user.</p>
+</div>
 </div>
 <div id="going-deeper" class="section level1">
 <h1>Going deeper</h1>
-<p>So! I encourage you to play with this. Mess around with the arguments and see what you can come up with. I recommend a much larger dungeon map than demonstrated here, with a larger <code>n_rooms</code> value. Try out <code>is_organic = FALSE</code>, because I think the results generally look more ‘artificial’, i.e. the resulting dungeon looks more ‘man-made’. I think <code>is_snake = TRUE</code> results in something that could be more like a gauntlet: get from the start, on the left, to the end, on the right, via whatever obstacles you put in the way.</p>
-<p>I could’ve shown you more examples of what happens when you toy with these arguments, but this is a technique that we in the business call ‘getting you to download the package and try it yourself’.</p>
-<p>Smashing, right, so what do we do this? Well, the {r.oguelike} package already has the rudiments of a ‘game’, and now has the rudiments of dungeon maps. We step closer to release on all major videogame platforms and the promise of billions of dollars in sales.</p>
-<p>Next is to place characters, enemies and items into these dungeon spaces. Ideally we can create a system to place certain objects in certain spaces, like treasure in the far reaches of a dead-end, or a monster that’s in a narrow corridor and must be defeated to advance.</p>
+<p>So! I encourage you to play with this.</p>
+<p>Mess around with the arguments and see what you can come up with. I recommend larger maps, with a larger <code>n_rooms</code> value. Try out <code>is_organic = FALSE</code> (the results generally look more ‘artificial’, i.e. the resulting dungeon looks more ‘man-made’) and <code>is_snake = TRUE</code> (looks more like a gauntlet from one end to the other).</p>
+<p>Smashing, right, so what do we do this? Well, the {r.oguelike} package already has the rudiments of a ‘game’, and now has the rudiments of dungeon maps. Next is to place characters, enemies and items into these dungeon spaces.</p>
+<div class="tip">
+<p><svg aria-hidden="true" role="img" viewBox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;"><path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"/></svg> <b>Update</b></p>
+<p>Just after writing this post, I put together the dungeon-generating code with the the code for placing characters/items and <a href="https://twitter.com/mattdray/status/1522289244445753344?s=20&amp;t=lk0UHHNf23MYC2ir018ZTg">it seems to work pretty well</a>. We step closer to release on all major videogame platforms and the promise of billions of dollars in sales!</p>
+</div>
+<p>Ideally we can also create a system to place certain objects in certain spaces, like treasure in the far reaches of a dead-end, or a monster that’s in a narrow corridor and must be defeated to advance. Stuff like locked doors would be great too.</p>
 <p>That’s much more roguelike-like, like, amirite?</p>
 <hr />
 <details>
@@ -184,53 +249,56 @@ while (i &lt; iterations) {
 Session info
 </summary>
 <pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
-##  setting  value                       
-##  version  R version 4.1.3 (2022-03-10)
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
 ##  os       macOS Big Sur/Monterey 10.16
-##  system   x86_64, darwin17.0          
-##  ui       X11                         
-##  language (EN)                        
-##  collate  en_GB.UTF-8                 
-##  ctype    en_GB.UTF-8                 
-##  tz       Europe/London               
-##  date     2022-05-01                  
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_GB.UTF-8
+##  ctype    en_GB.UTF-8
+##  tz       Europe/London
+##  date     2022-05-07
+##  pandoc   2.17.1.1 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/ (via rmarkdown)
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
-##  package     * version    date       lib source        
-##  blogdown      1.4        2021-07-23 [1] CRAN (R 4.1.0)
-##  bookdown      0.23       2021-08-13 [1] CRAN (R 4.1.0)
-##  bslib         0.3.1      2021-10-06 [1] CRAN (R 4.1.0)
-##  cli           3.2.0      2022-02-14 [1] CRAN (R 4.1.2)
-##  digest        0.6.29     2021-12-01 [1] CRAN (R 4.1.0)
-##  evaluate      0.14       2019-05-28 [1] CRAN (R 4.1.0)
-##  fastmap       1.1.0      2021-01-25 [1] CRAN (R 4.1.0)
-##  htmltools     0.5.2      2021-08-25 [1] CRAN (R 4.1.0)
-##  jquerylib     0.1.4      2021-04-26 [1] CRAN (R 4.1.0)
-##  jsonlite      1.7.3      2022-01-17 [1] CRAN (R 4.1.2)
-##  knitr         1.37       2021-12-16 [1] CRAN (R 4.1.0)
-##  magrittr      2.0.2      2022-01-26 [1] CRAN (R 4.1.2)
-##  r.oguelike  * 0.0.0.9005 2022-04-30 [1] local         
-##  R6            2.5.1      2021-08-19 [1] CRAN (R 4.1.0)
-##  rlang         1.0.2      2022-03-04 [1] CRAN (R 4.1.2)
-##  rmarkdown     2.10       2021-08-06 [1] CRAN (R 4.1.0)
-##  rstudioapi    0.13       2020-11-12 [1] CRAN (R 4.1.0)
-##  sass          0.4.0      2021-05-12 [1] CRAN (R 4.1.0)
-##  sessioninfo   1.1.1      2018-11-05 [1] CRAN (R 4.1.0)
-##  stringi       1.7.6      2021-11-29 [1] CRAN (R 4.1.0)
-##  stringr       1.4.0      2019-02-10 [1] CRAN (R 4.1.0)
-##  withr         2.4.3      2021-11-30 [1] CRAN (R 4.1.0)
-##  xfun          0.29       2021-12-14 [1] CRAN (R 4.1.0)
-##  yaml          2.2.2      2022-01-25 [1] CRAN (R 4.1.2)
+##  package     * version    date (UTC) lib source
+##  blogdown      1.9        2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26       2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1      2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.2.0      2022-02-14 [1] CRAN (R 4.2.0)
+##  digest        0.6.29     2021-12-01 [1] CRAN (R 4.2.0)
+##  evaluate      0.15       2022-02-18 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0      2021-01-25 [1] CRAN (R 4.2.0)
+##  fontawesome   0.2.2      2021-07-02 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2      2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4      2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.0      2022-02-22 [1] CRAN (R 4.2.0)
+##  knitr         1.39       2022-04-26 [1] CRAN (R 4.2.0)
+##  magrittr      2.0.3      2022-03-30 [1] CRAN (R 4.2.0)
+##  r.oguelike  * 0.0.0.9005 2022-05-07 [1] Github (matt-dray/r.oguelike@901617c)
+##  R6            2.5.1      2021-08-19 [1] CRAN (R 4.2.0)
+##  rlang         1.0.2      2022-03-04 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14       2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.13       2020-11-12 [1] CRAN (R 4.2.0)
+##  sass          0.4.1      2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2      2021-12-06 [1] CRAN (R 4.2.0)
+##  stringi       1.7.6      2021-11-29 [1] CRAN (R 4.2.0)
+##  stringr       1.4.0      2019-02-10 [1] CRAN (R 4.2.0)
+##  xfun          0.30       2022-03-02 [1] CRAN (R 4.2.0)
+##  yaml          2.3.5      2022-02-21 [1] CRAN (R 4.2.0)
 ## 
-## [1] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
 </details>
 </div>
-<div class="footnotes">
+<div class="footnotes footnotes-end-of-document">
 <hr />
 <ol>
 <li id="fn1"><p>I’m not a computer scientist, but Wikipedia says ‘procedural’ involves ‘creating data algorithmically as opposed to manually, typically through a combination of human-generated assets and algorithms coupled with computer-generated randomness and processing power’. The page <a href="https://en.wikipedia.org/wiki/Procedural_generation#Video_games">specifically points out roguelikes</a> as having these properties, so I assume what I’ve done can be described as ‘procedural’?<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>In future, this function will be integrated into the <code>start_game()</code> function, but I may still export it so people (i.e. me) can use it for fun.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
-<li id="fn3"><p>Underlying changes to the code may prevent this from being recreated in future. I’m using v0.0.0.9005 (this ridiculous number means it’s <em>very</em> dev) of the {r.oguelike} package for this post.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>Definitely one of these should be the name for your new band.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>In future, this function will be integrated into the <code>start_game()</code> function, but I may still export it so people (i.e. me) can use it for fun.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
 <li id="fn4"><p>Akshually, it’s not just a case of choosing a random set of four points within the length of the matrix. The vector of the sequence of the length of the matrix is split <code>n_rooms</code> times and we sample from within each of those chunks. This, hopefully, should keep the dungeons relatively-well spread out.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
