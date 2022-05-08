@@ -38,9 +38,9 @@ I wrote a (very!) basic procedure to generate randomised ASCII-character tile-ba
 
 A key element of roguelike games is that [the dungeons should be procedurally generated](http://www.roguebasin.com/index.php/Berlin_Interpretation)[^procedural] so that the player gets a different one each time they play.
 
-There are some great examples of algorithmic systems used for dungeon creation, like wave function collapse, binary space partitions, cellular automata, etc.[^bands] See [the talk by Herbert Wolverson at Roguelike Celebration](https://www.youtube.com/watch?v=TlLIOgWYVpI), for example.
+There are many algorithmic systems for dungeon creation, like wave function collapse, perlin noise, binary space partitioning, cellular automata, etc.[^bands] See [the talk by Herbert Wolverson at Roguelike Celebration](https://www.youtube.com/watch?v=TlLIOgWYVpI), for example.
 
-I thought I'd go with something a bit more... _naïve_. Simple enough for my little game (for now). And no maths!
+I plan to take a look at these approaches in future, but I wanted to start with something a bit more... _naïve_. I just want a simple interconnected space that spawns with randomised rooms, corridors and galleries.
 
 # Excavations
 
@@ -80,7 +80,7 @@ You can always run `set.seed()` before `generate_dungeon()` to create the same d
 
 ## Demo
 
-So here's a smallish dungeon with 3 growth iterations for 3 starting rooms, on a map with tile dimensions of 20 rows by 30 columns.
+So here's a smallish dungeon with 3 growth iterations for 4 starting rooms, on a map with tile dimensions of 20 rows by 30 columns.
 
 ```{r generate-dungeon, eval=FALSE}
 dungeon <- r.oguelike::generate_dungeon(3, 20, 30, 4)
@@ -185,6 +185,8 @@ You can see how the shape of these dungeons can be used as part of the storytell
 
 What's the actual process for generating these maps? The procedure is very simple: lay a map made entirely of wall tiles; select random sites for rooms[^rooms] and replace with floor tiles; connect them with floor-tile corridors; expand the floor tiles generatively.
 
+The corridors are particularly important. Laying corridors is a cheap way of making all areas of the dungeon accessible, which maximises the opportunity for exploration. Vanilla implementations of some other approaches, like using perlin noise, would need post-processing to make sure isolated caves are connected up.
+
 ## Functions
 
 These steps are handled in [the `generate_dungeon()` function](https://github.com/matt-dray/r.oguelike/blob/main/R/dungeon.R) by a few [sub-functions](https://github.com/matt-dray/r.oguelike/blob/main/R/dungeon-utils.R), which looks a bit like this:
@@ -225,7 +227,7 @@ And we can look at the output at each step to see what's going on:
 <img src="/post/2022-04-30-dungeon_files/r.oguelike-generate.gif" alt="Gif showing the steps to generate an ASCII-character tiled dungeon in R. First, a map is created with four randomly-placed floor tiles, then they're connected with corridors, then the tiles around the floor tiles are converted from wall to floor tiles, randomly, for three iterations." width="100%"/>
 </div>
 
-The map started with four randomly-selected floor tiles; these were joined with straight, right-angled corridors; then three iterations expanded out the floor space from the existing floor tiles.
+So, the map started with four randomly-selected floor tiles; these were joined with straight, right-angled corridors; then three iterations expanded out the floor space from the existing floor tiles.
 
 ## Sampling
 
