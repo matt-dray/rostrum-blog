@@ -30,23 +30,31 @@ Three iterations to expand four randomly-placed floor tiles into a cavern.
 <div id="generate-to-accumulate" class="section level1">
 <h1>Generate to accumulate</h1>
 <p><a href="https://www.rostrum.blog/2022/04/25/r.oguelike-dev/">I wrote recently</a> about <a href="https://matt-dray.github.io/r.oguelike/">the {r.oguelike} R package</a>, which contains the beginnings of <a href="https://en.wikipedia.org/wiki/Roguelike">a roguelike game</a> written entirely in R.</p>
+<div class="figure">
+<p><img src="/post/2022-04-30-dungeon_files/r.oguelike-hex.png" alt="Hex sticker design for the 'r.oguelike' R package. Black background with bright green font, reminiscent of old computer terminal output. In the centre, a three-by-ten arrangement of hashmarks and periods, along with a single at symbol and dollar sign, which looks like a classic ACII tile-based roguelike game. The text 'r.oguelike' is underneath." width="25%"/></p>
+</div>
 <p>A key element of roguelike games is that <a href="http://www.roguebasin.com/index.php/Berlin_Interpretation">the dungeons should be procedurally generated</a><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> so that the player gets a different one each time they play.</p>
 <p>There are some great examples of algorithmic systems used for dungeon creation, like wave function collapse, binary space partitions, cellular automata, etc.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> See <a href="https://www.youtube.com/watch?v=TlLIOgWYVpI">the talk by Herbert Wolverson at Roguelike Celebration</a>, for example.</p>
-<p>I thought I’d go with something a bit more… <em>naïve</em>. Simple enough for my little game. And no maths!</p>
+<p>I thought I’d go with something a bit more… <em>naïve</em>. Simple enough for my little game (for now). And no maths!</p>
 </div>
 <div id="excavations" class="section level1">
 <h1>Excavations</h1>
-<div id="prepare" class="section level2">
-<h2>Prepare</h2>
-<p>You can <a href="https://github.com/matt-dray/r.oguelike">install the (currently work-in-progress) {r.oguelike} package from GitHub</a>.</p>
-<pre class="r"><code>if (!require(remotes)) install.packages(&quot;remotes&quot;)
-install_github(&quot;matt-dray/r.oguelike&quot;)</code></pre>
 <div class="tip">
 <p><svg aria-hidden="true" role="img" viewBox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;"><path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"/></svg> <b>Note</b></p>
 <p>The {r.oguelike} package is a work in progress and is developing at pace. Many things explained below may have been superseded or changed by the time you read this.</p>
 </div>
+<div id="installlaunch" class="section level2">
+<h2>Install/launch</h2>
+<p>You can <a href="https://github.com/matt-dray/r.oguelike">install the (currently work-in-progress) {r.oguelike} package from GitHub</a>, via {remotes}.</p>
+<pre class="r"><code># install.packages(&quot;remotes&quot;)  # if not already installed
+install_github(&quot;matt-dray/r.oguelike&quot;)</code></pre>
+<p>You can also launch RStudio in the browser with {r.oguelike} preinstalled, <a href="https://mybinder.org/">thanks to Binder</a><a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> (may take a couple of minutes to load):</p>
+<p><a href="https://mybinder.org/v2/gh/matt-dray/play-r.oguelike/main?urlpath=rstudio"><img src="https://mybinder.org/badge_logo.svg" alt="Launch Rstudio Binder" /></a></p>
+</div>
+<div id="prepare" class="section level2">
+<h2>Prepare</h2>
 <p>Before we begin, note that we can talk about generative ‘dungeons’ in the context of connected rooms, like in <a href="https://en.wikipedia.org/wiki/The_Binding_of_Isaac_(video_game)"><em>The Binding of Isaac</em></a>, or more freeform structures, like world maps in <a href="https://en.wikipedia.org/wiki/Dwarf_Fortress"><em>Dwarf Fortress</em></a>. We’re going for the latter, which amounts to interconnected caverns.</p>
-<p>The function we’ll be using is called <code>generate_dungeon()</code>, which prints to the console a cavern that differs each time you run it.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> You can alter the output using the arguments:</p>
+<p>The function we’ll be using is called <code>generate_dungeon()</code>, which prints to the console a cavern that differs each time you run it.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> You can alter the output using the arguments:</p>
 <ul>
 <li><code>iterations</code> is the number of times to ‘grow’ the caverns</li>
 <li><code>n_row</code> and <code>n_col</code> give the map dimensions</li>
@@ -139,12 +147,12 @@ dungeon[1:10, 1:10]</code></pre>
 <div class="figure">
 <p><img src="/post/2022-04-30-dungeon_files/dungeon-artificial.png" alt="A dungeonlike map made from ASCII characters. Cave tiles are marked with a period and are black. Rock wall tiles are marked with red hashmarks. There are many straight-line corridors of different widths, which looks less organic and cavelike and more man-made." width="100%"/></p>
 </div>
-<p>You can see how the shape of these dungeons can be used as part of the storytelling. Is the player in a big cavern, hollowed out long in the past, or perhaps in an underground city, chiselled-out by dwarves?</p>
+<p>You can see how the shape of these dungeons can be used as part of the storytelling. Is the player in a big cavern, hollowed out long ago by natural processes? Or perhaps in an underground city, chiselled-out by dwarves?</p>
 </div>
 </div>
 <div id="the-procedure" class="section level1">
 <h1>The procedure</h1>
-<p>How is the output created? The procedure is very simple: lay a map; select random sites for rooms<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>; connect them with corridors; expand the rooms generatively.</p>
+<p>What’s the actual process for generating these maps? The procedure is very simple: lay a map made entirely of wall tiles; select random sites for rooms<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> and replace with floor tiles; connect them with floor-tile corridors; expand the floor tiles generatively.</p>
 <div id="functions" class="section level2">
 <h2>Functions</h2>
 <p>These steps are handled in <a href="https://github.com/matt-dray/r.oguelike/blob/main/R/dungeon.R">the <code>generate_dungeon()</code> function</a> by a few <a href="https://github.com/matt-dray/r.oguelike/blob/main/R/dungeon-utils.R">sub-functions</a>, which looks a bit like this:</p>
@@ -187,11 +195,11 @@ while (i &lt; iterations) {
 <div class="figure">
 <p><img src="/post/2022-04-30-dungeon_files/r.oguelike-generate.gif" alt="Gif showing the steps to generate an ASCII-character tiled dungeon in R. First, a map is created with four randomly-placed floor tiles, then they're connected with corridors, then the tiles around the floor tiles are converted from wall to floor tiles, randomly, for three iterations." width="100%"/></p>
 </div>
-<p>The map started with four randomly-selected floor tiles; these were joined them with straight, right-angled corridors; then three iterations expanded out the floor space from the existing floor tiles.</p>
+<p>The map started with four randomly-selected floor tiles; these were joined with straight, right-angled corridors; then three iterations expanded out the floor space from the existing floor tiles.</p>
 </div>
 <div id="sampling" class="section level2">
 <h2>Sampling</h2>
-<p>Let’s focus on the simple bit of the <code>.grow_dungeon()</code> function that actually expands the floor.</p>
+<p>What does it mean to ‘expand out the floor space’? Let’s focus on the little bit of the <code>.grow_dungeon()</code> function that actually does this.</p>
 <p>Here’s a tiny example matrix of wall tiles with a floor tile in the middle:</p>
 <pre class="r"><code>m &lt;- matrix(&quot;#&quot;, 3, 3)  # wall tiles
 m[2, 2] &lt;- &quot;.&quot;  # floor tiles
@@ -219,21 +227,20 @@ m[change_to_floor] &lt;- &quot;.&quot;
 
 m</code></pre>
 <pre><code>##      [,1] [,2] [,3]
-## [1,] &quot;#&quot;  &quot;.&quot;  &quot;#&quot; 
-## [2,] &quot;.&quot;  &quot;.&quot;  &quot;.&quot; 
+## [1,] &quot;#&quot;  &quot;#&quot;  &quot;#&quot; 
+## [2,] &quot;.&quot;  &quot;.&quot;  &quot;#&quot; 
 ## [3,] &quot;#&quot;  &quot;.&quot;  &quot;#&quot;</code></pre>
-<p>So between one and all of the adjacent tiles could be turned to a floor tile.</p>
+<p>So one, two, three, or all of the adjacent tiles could be turned to a floor tile.</p>
 <p>This is then repeated for the number of <code>iterations</code> provided by the user.</p>
 </div>
 </div>
 <div id="going-deeper" class="section level1">
 <h1>Going deeper</h1>
-<p>So! I encourage you to play with this.</p>
-<p>Mess around with the arguments and see what you can come up with. I recommend larger maps, with a larger <code>n_rooms</code> value. Try out <code>is_organic = FALSE</code> (the results generally look more ‘artificial’, i.e. the resulting dungeon looks more ‘man-made’) and <code>is_snake = TRUE</code> (looks more like a gauntlet from one end to the other).</p>
-<p>Smashing, right, so what do we do this? Well, the {r.oguelike} package already has the rudiments of a ‘game’, and now has the rudiments of dungeon maps. Next is to place characters, enemies and items into these dungeon spaces.</p>
+<p>So! I encourage you to play with this. Mess around with the arguments and see what you can come up with.</p>
+<p>What now for developing the package? Well, the {r.oguelike} package already has <a href="https://www.rostrum.blog/2022/04/25/r.oguelike-dev/">the rudiments of gameplay in the <code>start_game()</code> function</a>, so the next step is to place the player, enemies and items into these dungeon spaces and let the player explore them.</p>
 <div class="tip">
 <p><svg aria-hidden="true" role="img" viewBox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;"><path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"/></svg> <b>Update</b></p>
-<p>Just after writing this post, I put together the dungeon-generating code with the the code for placing characters/items and <a href="https://twitter.com/mattdray/status/1522289244445753344?s=20&amp;t=lk0UHHNf23MYC2ir018ZTg">it seems to work pretty well</a>. We step closer to release on all major videogame platforms and the promise of billions of dollars in sales!</p>
+<p>Just after writing this post, I added code from <code>generate_dungeon()</code> into <code>start_game()</code>, so new games will now start with a procedural dungeon. <a href="https://twitter.com/mattdray/status/1522289244445753344?s=20&amp;t=lk0UHHNf23MYC2ir018ZTg">It seems to work pretty well</a>.</p>
 </div>
 <p>Ideally we can also create a system to place certain objects in certain spaces, like treasure in the far reaches of a dead-end, or a monster that’s in a narrow corridor and must be defeated to advance. Stuff like locked doors would be great too.</p>
 <p>That’s much more roguelike-like, like, amirite?</p>
@@ -252,7 +259,7 @@ Session info
 ##  collate  en_GB.UTF-8
 ##  ctype    en_GB.UTF-8
 ##  tz       Europe/London
-##  date     2022-05-07
+##  date     2022-05-08
 ##  pandoc   2.17.1.1 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/ (via rmarkdown)
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
@@ -292,7 +299,8 @@ Session info
 <ol>
 <li id="fn1"><p>I’m not a computer scientist, but Wikipedia says ‘procedural’ involves ‘creating data algorithmically as opposed to manually, typically through a combination of human-generated assets and algorithms coupled with computer-generated randomness and processing power’. The page <a href="https://en.wikipedia.org/wiki/Procedural_generation#Video_games">specifically points out roguelikes</a> as having these properties, so I assume what I’ve done can be described as ‘procedural’?<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
 <li id="fn2"><p>Definitely one of these should be the name for your new band.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
-<li id="fn3"><p>In future, this function will be integrated into the <code>start_game()</code> function, but I may still export it so people (i.e. me) can use it for fun.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
-<li id="fn4"><p>Akshually, it’s not just a case of choosing a random set of four points within the length of the matrix. The vector of the sequence of the length of the matrix is split <code>n_rooms</code> times and we sample from within each of those chunks. This, hopefully, should keep the dungeons relatively-well spread out.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>There’s no such thing as a free <em>launch</em>, unless it’s with Binder (why have I not thought of this incredible wordplay before and how much should I charge the Binder team for its use?).<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>In future, this function will be integrated into the <code>start_game()</code> function, but I may still export it so people (i.e. me) can use it for fun.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>Akshually, it’s not just a case of choosing a random set of four points within the length of the matrix. The 1D matrix is split <code>n_rooms</code> times and we sample from within each of those chunks. This, hopefully, should keep the dungeons relatively-well spread out.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>

@@ -17,6 +17,7 @@ draft: no
 
 ```{r, include=FALSE}
 library(r.oguelike)
+set.seed(1337)
 ```
 
 <div class="figure">
@@ -31,28 +32,38 @@ I wrote a (very!) basic procedure to generate randomised ASCII-character tile-ba
 
 [I wrote recently](https://www.rostrum.blog/2022/04/25/r.oguelike-dev/) about [the {r.oguelike} R package](https://matt-dray.github.io/r.oguelike/), which contains the beginnings of [a roguelike game](https://en.wikipedia.org/wiki/Roguelike) written entirely in R.
 
+<div class="figure">
+<img src="/post/2022-04-30-dungeon_files/r.oguelike-hex.png" alt="Hex sticker design for the 'r.oguelike' R package. Black background with bright green font, reminiscent of old computer terminal output. In the centre, a three-by-ten arrangement of hashmarks and periods, along with a single at symbol and dollar sign, which looks like a classic ACII tile-based roguelike game. The text 'r.oguelike' is underneath." width="25%"/>
+</div>
+
 A key element of roguelike games is that [the dungeons should be procedurally generated](http://www.roguebasin.com/index.php/Berlin_Interpretation)[^procedural] so that the player gets a different one each time they play.
 
 There are some great examples of algorithmic systems used for dungeon creation, like wave function collapse, binary space partitions, cellular automata, etc.[^bands] See [the talk by Herbert Wolverson at Roguelike Celebration](https://www.youtube.com/watch?v=TlLIOgWYVpI), for example.
 
-I thought I'd go with something a bit more... _naïve_. Simple enough for my little game. And no maths!
+I thought I'd go with something a bit more... _naïve_. Simple enough for my little game (for now). And no maths!
 
 # Excavations
-
-## Prepare
-
-You can [install the (currently work-in-progress) {r.oguelike} package from GitHub](https://github.com/matt-dray/r.oguelike).
-
-```{r install, eval=FALSE}
-if (!require(remotes)) install.packages("remotes")
-install_github("matt-dray/r.oguelike")
-```
 
 <div class="tip"> `r fontawesome::fa("exclamation-circle")` <b>Note</b>
 
 The {r.oguelike} package is a work in progress and is developing at pace. Many things explained below may have been superseded or changed by the time you read this.
 
 </div>
+
+## Install/launch
+
+You can [install the (currently work-in-progress) {r.oguelike} package from GitHub](https://github.com/matt-dray/r.oguelike), via {remotes}.
+
+```{r install, eval=FALSE}
+# install.packages("remotes")  # if not already installed
+install_github("matt-dray/r.oguelike")
+```
+
+You can also launch RStudio in the browser with {r.oguelike} preinstalled, [thanks to Binder](https://mybinder.org/)[^launch] (may take a couple of minutes to load):
+
+[![Launch Rstudio Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/matt-dray/play-r.oguelike/main?urlpath=rstudio)
+
+## Prepare
 
 Before we begin, note that we can talk about generative 'dungeons' in the context of connected rooms, like in [_The Binding of Isaac_](https://en.wikipedia.org/wiki/The_Binding_of_Isaac_(video_game)), or more freeform structures, like world maps in [_Dwarf Fortress_](https://en.wikipedia.org/wiki/Dwarf_Fortress). We're going for the latter, which amounts to interconnected caverns.
 
@@ -168,12 +179,11 @@ And if we set `is_organic = FALSE` and `is_snake = FALSE` we get something inter
 <img src="/post/2022-04-30-dungeon_files/dungeon-artificial.png" alt="A dungeonlike map made from ASCII characters. Cave tiles are marked with a period and are black. Rock wall tiles are marked with red hashmarks. There are many straight-line corridors of different widths, which looks less organic and cavelike and more man-made." width="100%"/>
 </div>
 
-You can see how the shape of these dungeons can be used as part of the storytelling. Is the player in a big cavern, hollowed out long in the past, or perhaps in an underground city, chiselled-out by dwarves?
+You can see how the shape of these dungeons can be used as part of the storytelling. Is the player in a big cavern, hollowed out long ago by natural processes? Or perhaps in an underground city, chiselled-out by dwarves?
 
 # The procedure
 
-How is the output created? The procedure is very simple: lay a map; select random sites for rooms[^rooms]; connect them with corridors; expand the rooms generatively.
-
+What's the actual process for generating these maps? The procedure is very simple: lay a map made entirely of wall tiles; select random sites for rooms[^rooms] and replace with floor tiles; connect them with floor-tile corridors; expand the floor tiles generatively.
 
 ## Functions
 
@@ -215,11 +225,11 @@ And we can look at the output at each step to see what's going on:
 <img src="/post/2022-04-30-dungeon_files/r.oguelike-generate.gif" alt="Gif showing the steps to generate an ASCII-character tiled dungeon in R. First, a map is created with four randomly-placed floor tiles, then they're connected with corridors, then the tiles around the floor tiles are converted from wall to floor tiles, randomly, for three iterations." width="100%"/>
 </div>
 
-The map started with four randomly-selected floor tiles; these were joined them with straight, right-angled corridors; then three iterations expanded out the floor space from the existing floor tiles.
+The map started with four randomly-selected floor tiles; these were joined with straight, right-angled corridors; then three iterations expanded out the floor space from the existing floor tiles.
 
 ## Sampling
 
-Let's focus on the simple bit of the `.grow_dungeon()` function that actually expands the floor.
+What does it mean to 'expand out the floor space'? Let's focus on the little bit of the `.grow_dungeon()` function that actually does this.
 
 Here's a tiny example matrix of wall tiles with a floor tile in the middle:
 
@@ -251,21 +261,19 @@ m[change_to_floor] <- "."
 m
 ```
 
-So between one and all of the adjacent tiles could be turned to  a floor tile. 
+So one, two, three, or all of the adjacent tiles could be turned to a floor tile. 
 
 This is then repeated for the number of `iterations` provided by the user.
 
 # Going deeper
 
-So! I encourage you to play with this. 
+So! I encourage you to play with this. Mess around with the arguments and see what you can come up with.
 
-Mess around with the arguments and see what you can come up with. I recommend larger maps, with a larger `n_rooms` value. Try out `is_organic = FALSE` (the results generally look more 'artificial', i.e. the resulting dungeon looks more 'man-made') and `is_snake = TRUE` (looks more like a gauntlet from one end to the other).
-
-Smashing, right, so what do we do this? Well, the {r.oguelike} package already has the rudiments of a 'game', and now has the rudiments of dungeon maps. Next is to place characters, enemies and items into these dungeon spaces.
+What now for developing the package? Well, the {r.oguelike} package already has [the rudiments of gameplay in the `start_game()` function](https://www.rostrum.blog/2022/04/25/r.oguelike-dev/), so the next step is to place the player, enemies and items into these dungeon spaces and let the player explore them.
 
 <div class="tip"> `r fontawesome::fa("exclamation-circle")` <b>Update</b>
 
-Just after writing this post, I put together the dungeon-generating code with the the code for placing characters/items and [it seems to work pretty well](https://twitter.com/mattdray/status/1522289244445753344?s=20&t=lk0UHHNf23MYC2ir018ZTg). We step closer to release on all major videogame platforms and the promise of billions of dollars in sales!
+Just after writing this post, I added code from `generate_dungeon()` into `start_game()`, so new games will now start with a procedural dungeon. [It seems to work pretty well](https://twitter.com/mattdray/status/1522289244445753344?s=20&t=lk0UHHNf23MYC2ir018ZTg).
 
 </div>
 
@@ -283,4 +291,5 @@ sessioninfo::session_info()
 [^bands]: Definitely one of these should be the name for your new band.
 [^procedural]: I'm not a computer scientist, but Wikipedia says 'procedural' involves 'creating data algorithmically as opposed to manually, typically through a combination of human-generated assets and algorithms coupled with computer-generated randomness and processing power'. The page [specifically points out roguelikes](https://en.wikipedia.org/wiki/Procedural_generation#Video_games) as having these properties, so I assume what I've done can be described as 'procedural'?
 [^export]: In future, this function will be integrated into the `start_game()` function, but I may still export it so people (i.e. me) can use it for fun.
-[^rooms]: Akshually, it's not just a case of choosing a random set of four points within the length of the matrix. The vector of the sequence of the length of the matrix is split `n_rooms` times and we sample from within each of those chunks. This, hopefully, should keep the dungeons relatively-well spread out.
+[^rooms]: Akshually, it's not just a case of choosing a random set of four points within the length of the matrix. The 1D matrix is split `n_rooms` times and we sample from within each of those chunks. This, hopefully, should keep the dungeons relatively-well spread out.
+[^launch]: There's no such thing as a free _launch_, unless it's with Binder (why have I not thought of this incredible wordplay before and how much should I charge the Binder team for its use?).
