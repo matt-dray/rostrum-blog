@@ -154,6 +154,10 @@ dungeon[1:10, 1:10]</code></pre>
 <h1>The procedure</h1>
 <p>What’s the actual process for generating these maps? The procedure is very simple: lay a map made entirely of wall tiles; select random sites for rooms<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> and replace with floor tiles; connect them with floor-tile corridors; expand the floor tiles generatively.</p>
 <p>The corridors are particularly important. Laying corridors is a cheap way of making all areas of the dungeon accessible, which maximises the opportunity for exploration. Vanilla implementations of some other approaches, like using perlin noise, would need post-processing to make sure isolated caves are connected up.</p>
+<div class="tip">
+<p><svg aria-hidden="true" role="img" viewBox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;"><path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"/></svg> <b>Update</b></p>
+<p>After publishing this post, I had a quick play around with <a href="https://en.wikipedia.org/wiki/Perlin_noise">perlin noise</a> for seeding dungeons. I put code and an example output <a href="https://gist.github.com/matt-dray/fd5bf4b6560638e154353e4ec5c8b98a">in a small GitHub Gist</a>. It <a href="https://ambient.data-imaginist.com/reference/noise_perlin.html">uses <code>noise_perlin()</code> from the {ambient} package</a>.</p>
+</div>
 <div id="functions" class="section level2">
 <h2>Functions</h2>
 <p>These steps are handled in <a href="https://github.com/matt-dray/r.oguelike/blob/main/R/dungeon.R">the <code>generate_dungeon()</code> function</a> by a few <a href="https://github.com/matt-dray/r.oguelike/blob/main/R/dungeon-utils.R">sub-functions</a>, which looks a bit like this:</p>
@@ -251,51 +255,50 @@ m</code></pre>
 Session info
 </summary>
 <pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
-##  setting  value
-##  version  R version 4.2.0 (2022-04-22)
-##  os       macOS Big Sur/Monterey 10.16
-##  system   x86_64, darwin17.0
-##  ui       X11
-##  language (EN)
-##  collate  en_GB.UTF-8
-##  ctype    en_GB.UTF-8
-##  tz       Europe/London
-##  date     2022-05-09
-##  pandoc   2.17.1.1 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/ (via rmarkdown)
+##  setting  value                       
+##  version  R version 4.1.1 (2021-08-10)
+##  os       macOS Mojave 10.14.6        
+##  system   x86_64, darwin17.0          
+##  ui       X11                         
+##  language (EN)                        
+##  collate  en_GB.UTF-8                 
+##  ctype    en_GB.UTF-8                 
+##  tz       Europe/London               
+##  date     2022-05-09                  
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
-##  package     * version    date (UTC) lib source
-##  blogdown      1.9        2022-03-28 [1] CRAN (R 4.2.0)
-##  bookdown      0.26       2022-04-15 [1] CRAN (R 4.2.0)
-##  bslib         0.3.1      2021-10-06 [1] CRAN (R 4.2.0)
-##  cli           3.2.0      2022-02-14 [1] CRAN (R 4.2.0)
-##  digest        0.6.29     2021-12-01 [1] CRAN (R 4.2.0)
-##  evaluate      0.15       2022-02-18 [1] CRAN (R 4.2.0)
-##  fastmap       1.1.0      2021-01-25 [1] CRAN (R 4.2.0)
-##  fontawesome   0.2.2      2021-07-02 [1] CRAN (R 4.2.0)
-##  htmltools     0.5.2      2021-08-25 [1] CRAN (R 4.2.0)
-##  jquerylib     0.1.4      2021-04-26 [1] CRAN (R 4.2.0)
-##  jsonlite      1.8.0      2022-02-22 [1] CRAN (R 4.2.0)
-##  knitr         1.39       2022-04-26 [1] CRAN (R 4.2.0)
-##  magrittr      2.0.3      2022-03-30 [1] CRAN (R 4.2.0)
-##  r.oguelike  * 0.0.0.9005 2022-05-07 [1] Github (matt-dray/r.oguelike@901617c)
-##  R6            2.5.1      2021-08-19 [1] CRAN (R 4.2.0)
-##  rlang         1.0.2      2022-03-04 [1] CRAN (R 4.2.0)
-##  rmarkdown     2.14       2022-04-25 [1] CRAN (R 4.2.0)
-##  rstudioapi    0.13       2020-11-12 [1] CRAN (R 4.2.0)
-##  sass          0.4.1      2022-03-23 [1] CRAN (R 4.2.0)
-##  sessioninfo   1.2.2      2021-12-06 [1] CRAN (R 4.2.0)
-##  stringi       1.7.6      2021-11-29 [1] CRAN (R 4.2.0)
-##  stringr       1.4.0      2019-02-10 [1] CRAN (R 4.2.0)
-##  xfun          0.30       2022-03-02 [1] CRAN (R 4.2.0)
-##  yaml          2.3.5      2022-02-21 [1] CRAN (R 4.2.0)
+##  package     * version    date       lib source        
+##  blogdown      1.5        2021-09-02 [1] CRAN (R 4.1.0)
+##  bookdown      0.25       2022-03-16 [1] CRAN (R 4.1.2)
+##  bslib         0.3.1      2021-10-06 [1] CRAN (R 4.1.0)
+##  cli           3.2.0      2022-02-14 [1] CRAN (R 4.1.2)
+##  digest        0.6.29     2021-12-01 [1] CRAN (R 4.1.0)
+##  evaluate      0.15       2022-02-18 [1] CRAN (R 4.1.2)
+##  fastmap       1.1.0      2021-01-25 [1] CRAN (R 4.1.0)
+##  fontawesome   0.2.2      2021-07-02 [1] CRAN (R 4.1.0)
+##  htmltools     0.5.2      2021-08-25 [1] CRAN (R 4.1.0)
+##  jquerylib     0.1.4      2021-04-26 [1] CRAN (R 4.1.0)
+##  jsonlite      1.8.0      2022-02-22 [1] CRAN (R 4.1.2)
+##  knitr         1.38       2022-03-25 [1] CRAN (R 4.1.2)
+##  magrittr      2.0.3      2022-03-30 [1] CRAN (R 4.1.2)
+##  r.oguelike  * 0.0.0.9005 2022-05-05 [1] local         
+##  R6            2.5.1      2021-08-19 [1] CRAN (R 4.1.0)
+##  rlang         1.0.2      2022-03-04 [1] CRAN (R 4.1.2)
+##  rmarkdown     2.13       2022-03-10 [1] CRAN (R 4.1.2)
+##  rstudioapi    0.13       2020-11-12 [1] CRAN (R 4.1.0)
+##  sass          0.4.1      2022-03-23 [1] CRAN (R 4.1.2)
+##  sessioninfo   1.1.1      2018-11-05 [1] CRAN (R 4.1.0)
+##  stringi       1.7.6      2021-11-29 [1] CRAN (R 4.1.0)
+##  stringr       1.4.0      2019-02-10 [1] CRAN (R 4.1.0)
+##  withr         2.5.0      2022-03-03 [1] CRAN (R 4.1.2)
+##  xfun          0.30       2022-03-02 [1] CRAN (R 4.1.2)
+##  yaml          2.3.5      2022-02-21 [1] CRAN (R 4.1.2)
 ## 
-##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
-## 
-## ──────────────────────────────────────────────────────────────────────────────</code></pre>
+## [1] /Users/matt.dray/Library/R/x86_64/4.1/library
+## [2] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
 </details>
 </div>
-<div class="footnotes footnotes-end-of-document">
+<div class="footnotes">
 <hr />
 <ol>
 <li id="fn1"><p>I’m not a computer scientist, but Wikipedia says ‘procedural’ involves ‘creating data algorithmically as opposed to manually, typically through a combination of human-generated assets and algorithms coupled with computer-generated randomness and processing power’. The page <a href="https://en.wikipedia.org/wiki/Procedural_generation#Video_games">specifically points out roguelikes</a> as having these properties, so I assume what I’ve done can be described as ‘procedural’?<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
