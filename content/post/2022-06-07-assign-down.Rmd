@@ -1,0 +1,141 @@
+---
+title: "Down with R's assignment flamwewars!"
+author: 'Matt Dray'
+date: '2022-06-07'
+slug: assign-down
+categories:
+  - code
+tags:
+  - assignment
+  - flamewar
+  - r
+draft: no
+---
+
+<div class="figure">
+<img src="/post/2022-06-07-assign-down_files/cmm2.png" alt="The 'change my mind' meme. A man sits at a table with a banner showing a made-up downward-pointing R assignment operator composed of a vertical pipe symbol with a letter v below it, and underneath it says 'absolutely no need to change my mind'." width="100%"/>
+</div>
+
+# tl;dr
+
+All `<-` vs `=` flamewars are nullified forever with the introduction of my new 'down assign' operator for the R language:
+
+```
+|
+v
+```
+
+# Get down
+
+I no longer set my calendar by the movement of the Earth around the hottest _point_ in the solar system. I now set it by the recurrent emergence of the hottest _take_ in the solar system: that R's assignment operator `<-` is garbage and R users should be ashamed of themselves.[^take]
+
+Last time I spoke about this I made clear that our Strong Pointy Lad was the One True Operator for assignment. In that post, like some kind of modern Prometheus, [I gave mortals the power to detect and destroy R scripts containing the weak and mundane equals assignment operator](https://www.rostrum.blog/2021/03/13/assign/).
+
+But with deference, I have come to realise something profound: we shouldn't fight about this. It's not worth anyone's time to debate the relative merits of using `<-` or `=`. We should all relax. We can live in harmony.
+
+...Because I've invented a new assignment concept. Folks, say hello to the _down assign_ operator.
+
+```{r eval=FALSE}
+|
+v
+```
+
+Yes, it's still an 'arrow', but I think everyone will agree that it makes sense this time. Lateral assignment is unnatural and inefficient and is out of the natural order of things. 
+
+Now the the value falls effortlessly down your script, under the weight of gravity, into the name of the object. If it's good enough Sir Isaac Newton, it's good enough for me. Or don't you believe in gravity? Exactly.
+
+So `x <- 1` (or, shudder, `x = 1`) translates to:
+
+```{r eval=FALSE}
+1
+|
+v
+x
+```
+
+Elegant, isn't it?
+
+While R Core perform the trivial task of cementing this feature into base R, I've prepared a small function that will take care of rudimentary usage for now.
+
+First I'll write a demo script to temporary file. It assigns the values of `1` and `2` to `x` and `y`, respectively, then adds them together.
+
+```{r}
+demo_script <- "
+1
+|
+v
+x
+
+2
+|
+v
+y
+
+x + y
+"
+
+demo_file <- tempfile(fileext = ".R")
+writeLines(demo_script, demo_file)
+```
+
+Now to define the function. It reads our script file, finds the down pipes, substitutes them, returns them back to the expression from whence they came, then executes the script.
+
+```{r}
+point_down <- function(file) {
+  
+  content <- readLines(file)
+  
+  for (i in seq(content)) {
+    
+    if (content[i] == "|" & content[i + 1] == "v") {
+      
+      combos <- paste0(
+        content[i - 1], content[i], content[i + 1], content[i + 2]
+      )
+      
+      rm_index <- c(i - 1, i, i + 1, i + 2)
+      
+      content[rm_index[1]] <- combos
+      content[rm_index[2:4]] <- ""
+      content <- gsub("\\|v", "->", content)
+      
+    }
+    
+  }
+  
+  path <- tempfile(fileext = ".R")
+  writeLines(content, path)
+  eval(parse(path))
+  
+}
+```
+
+Note that this function won't work in an interactive session; it takes the filepath to a script as its input. But that's okay: I think `<-` haters are often computer-scientist types and 1337 h4x0rz who never sully their code by playing around in filthy IDEs and notebooks. Obviously we should emanate them.
+
+And now we execute.
+
+```{r}
+point_down(demo_file)
+```
+
+Simply: wow.
+
+# Down and away
+
+My next step for unifying the community around R operators is the 'down pipe':
+
+```
+_
+v
+```
+
+Some use the term 'down pipe' to mean the exterior drainage tube that takes wastewater away from their homes. I hope we can use the down pipe operator as a way of siphoning away all the bilge around the `%>%` vs `|>` arguments once and for all. You're welcome.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^take]: [The latest](https://twitter.com/ryxcommar/status/1533522184299331584)?

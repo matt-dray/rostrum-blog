@@ -1,0 +1,153 @@
+---
+title: "Down with R's assignment flamwewars!"
+author: 'Matt Dray'
+date: '2022-06-07'
+slug: assign-down
+categories:
+  - code
+tags:
+  - assignment
+  - flamewar
+  - r
+draft: no
+---
+
+
+
+<div class="figure">
+<p><img src="/post/2022-06-07-assign-down_files/cmm2.png" alt="The 'change my mind' meme. A man sits at a table with a banner showing a made-up downward-pointing R assignment operator composed of a vertical pipe symbol with a letter v below it, and underneath it says 'absolutely no need to change my mind'." width="100%"/></p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>All <code>&lt;-</code> vs <code>=</code> flamewars are nullified forever with the introduction of my new ‘down assign’ operator for the R language:</p>
+<pre><code>|
+v</code></pre>
+</div>
+<div id="get-down" class="section level1">
+<h1>Get down</h1>
+<p>I no longer set my calendar by the movement of the Earth around the hottest <em>point</em> in the solar system. I now set it by the recurrent emergence of the hottest <em>take</em> in the solar system: that R’s assignment operator <code>&lt;-</code> is garbage and R users should be ashamed of themselves.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>Last time I spoke about this I made clear that our Strong Pointy Lad was the One True Operator for assignment. In that post, like some kind of modern Prometheus, <a href="https://www.rostrum.blog/2021/03/13/assign/">I gave mortals the power to detect and destroy R scripts containing the weak and mundane equals assignment operator</a>.</p>
+<p>But with deference, I have come to realise something profound: we shouldn’t fight about this. It’s not worth anyone’s time to debate the relative merits of using <code>&lt;-</code> or <code>=</code>. We should all relax. We can live in harmony.</p>
+<p>…Because I’ve invented a new assignment concept. Folks, say hello to the <em>down assign</em> operator.</p>
+<pre class="r"><code>|
+v</code></pre>
+<p>Yes, it’s still an ‘arrow’, but I think everyone will agree that it makes sense this time. Lateral assignment is unnatural and inefficient and is out of the natural order of things.</p>
+<p>Now the the value falls effortlessly down your script, under the weight of gravity, into the name of the object. If it’s good enough Sir Isaac Newton, it’s good enough for me. Or don’t you believe in gravity? Exactly.</p>
+<p>So <code>x &lt;- 1</code> (or, shudder, <code>x = 1</code>) translates to:</p>
+<pre class="r"><code>1
+|
+v
+x</code></pre>
+<p>Elegant, isn’t it?</p>
+<p>While R Core perform the trivial task of cementing this feature into base R, I’ve prepared a small function that will take care of rudimentary usage for now.</p>
+<p>First I’ll write a demo script to temporary file. It assigns the values of <code>1</code> and <code>2</code> to <code>x</code> and <code>y</code>, respectively, then adds them together.</p>
+<pre class="r"><code>demo_script &lt;- &quot;
+1
+|
+v
+x
+
+2
+|
+v
+y
+
+x + y
+&quot;
+
+demo_file &lt;- tempfile(fileext = &quot;.R&quot;)
+writeLines(demo_script, demo_file)</code></pre>
+<p>Now to define the function. It reads our script file, finds the down pipes, substitutes them, returns them back to the expression from whence they came, then executes the script.</p>
+<pre class="r"><code>point_down &lt;- function(file) {
+  
+  content &lt;- readLines(file)
+  
+  for (i in seq(content)) {
+    
+    if (content[i] == &quot;|&quot; &amp; content[i + 1] == &quot;v&quot;) {
+      
+      combos &lt;- paste0(
+        content[i - 1], content[i], content[i + 1], content[i + 2]
+      )
+      
+      rm_index &lt;- c(i - 1, i, i + 1, i + 2)
+      
+      content[rm_index[1]] &lt;- combos
+      content[rm_index[2:4]] &lt;- &quot;&quot;
+      content &lt;- gsub(&quot;\\|v&quot;, &quot;-&gt;&quot;, content)
+      
+    }
+    
+  }
+  
+  path &lt;- tempfile(fileext = &quot;.R&quot;)
+  writeLines(content, path)
+  eval(parse(path))
+  
+}</code></pre>
+<p>Note that this function won’t work in an interactive session; it takes the filepath to a script as its input. But that’s okay: I think <code>&lt;-</code> haters are often computer-scientist types and 1337 h4x0rz who never sully their code by playing around in filthy IDEs and notebooks. Obviously we should emanate them.</p>
+<p>And now we execute.</p>
+<pre class="r"><code>point_down(demo_file)</code></pre>
+<pre><code>## [1] 3</code></pre>
+<p>Simply: wow.</p>
+</div>
+<div id="down-and-away" class="section level1">
+<h1>Down and away</h1>
+<p>My next step for unifying the community around R operators is the ‘down pipe’:</p>
+<pre><code>_
+v</code></pre>
+<p>Some use the term ‘down pipe’ to mean the exterior drainage tube that takes wastewater away from their homes. I hope we can use the down pipe operator as a way of siphoning away all the bilge around the <code>%&gt;%</code> vs <code>|&gt;</code> arguments once and for all. You’re welcome.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
+##  os       macOS Big Sur/Monterey 10.16
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_GB.UTF-8
+##  ctype    en_GB.UTF-8
+##  tz       Europe/London
+##  date     2022-06-07
+##  pandoc   2.17.1.1 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/ (via rmarkdown)
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date (UTC) lib source
+##  blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.3.0   2022-04-25 [1] CRAN (R 4.2.0)
+##  digest        0.6.29  2021-12-01 [1] CRAN (R 4.2.0)
+##  evaluate      0.15    2022-02-18 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.0   2022-02-22 [1] CRAN (R 4.2.0)
+##  knitr         1.39    2022-04-26 [1] CRAN (R 4.2.0)
+##  magrittr      2.0.3   2022-03-30 [1] CRAN (R 4.2.0)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+##  rlang         1.0.2   2022-03-04 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.13    2020-11-12 [1] CRAN (R 4.2.0)
+##  sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+##  stringi       1.7.6   2021-11-29 [1] CRAN (R 4.2.0)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.2.0)
+##  xfun          0.30    2022-03-02 [1] CRAN (R 4.2.0)
+##  yaml          2.3.5   2022-02-21 [1] CRAN (R 4.2.0)
+## 
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p><a href="https://twitter.com/ryxcommar/status/1533522184299331584">The latest</a>?<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
