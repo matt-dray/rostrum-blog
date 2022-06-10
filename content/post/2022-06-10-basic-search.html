@@ -1,0 +1,428 @@
+---
+title: "Automated pathfinding in {r.oguelike}"
+author: 'Matt Dray'
+date: '2022-06-10'
+slug: basic-search
+categories:
+  - code
+  - package
+tags:
+  - breadth-first
+  - pathfinding
+  - r
+  - r.oguelike
+  - search
+draft: no
+---
+
+
+
+<div class="figure">
+<img src="/post/2022-06-10-basic-search_files/pathfind-dungeon.gif" alt="Animation of an R console, showing a rectangular grid of tiles that represents a dungeon room. Floor tiles are periods. Surrounding walls are hashmarks. There's an enemy character represented by a letter 'E' in the lower left, and a player character represented by an 'at' symbol toward the right. There's some obstacle walls separating them. The enemy character moves tile by tile around the obstacle until it reaches the player." width="100%"/>
+<p class="caption">
+Automated pathfinding in R. Look out behind you!
+</p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I’ve implemented simple breadth-first search in <a href="https://github.com/matt-dray/r.oguelike">{r.oguelike}</a> that lets enemies chase down the player character.</p>
+</div>
+<div id="hunting-the-hunter" class="section level1">
+<h1>Hunting the hunter</h1>
+<p>I’ve <a href="https://www.rostrum.blog/2022/04/25/r.oguelike-dev/">written before about the inception of {r.oguelike}</a>, a simple work-in-progress <a href="https://en.wikipedia.org/wiki/Roguelike">roguelike game</a> in an R package, as well as a simple method for creating <a href="https://www.rostrum.blog/2022/05/01/dungeon/">procedural tile-based cave-like dungeons</a>.</p>
+<div class="figure">
+<p><img src="/post/2022-04-13-r.oguelike-dev_files/r.oguelike-hex.png" alt="Hex sticker design for the 'r.oguelike' R package. Black background with bright green font, reminiscent of old computer terminal output. In the centre, a three-by-ten arrangement of hashmarks and periods, along with a single at symbol and dollar sign, which looks like a classic ACII tile-based roguelike game. The text 'r.oguelike' is underneath." width="25%"/></p>
+</div>
+<p>The enemies have been stationary and it’s been bothering me. I could either let the enemy wander randomly (easy to implement, but boring and unrealistic) or—much better— introduce some kind of pathfinding so the enemy can ‘hunt down’ the player (various levels of difficulty for implementation, but more realistic).</p>
+</div>
+<div id="layers-deep" class="section level1">
+<h1>Layers deep</h1>
+<p>So in this we’ll look at pathfinding in R with what I’m calling ‘layered’ matrices. One matrix is the tile map, which holds the tiles the user sees (i.e. <code>#</code> for walls, <code>.</code> for floor, <code>@</code> for the player character, <code>E</code> for enemy). The second matrix isn’t seen by the user, but holds travel-distance scores used by the enemy character to find a path to the target.</p>
+<p>I’ll use <code>m</code> throughout as the name of the matrix object holding the tile map and <code>d</code> as the name of the matrix object holding the distance map.</p>
+</div>
+<div id="dont-keep-it-simple-stupid" class="section level1">
+<h1>Don’t keep it simple, stupid</h1>
+<p>Consider this very basic dungeon room that hosts an enemy character <code>E</code> that is seeking the player character <code>@</code>. It’s just an R matrix object.</p>
+<details>
+<summary>
+Click for R code
+</summary>
+<p>Manually create a basic, rectangular dungeon room:</p>
+<pre class="r"><code># Create room
+n_rows &lt;- 9
+n_cols &lt;- 10
+m &lt;- matrix(rep(&quot;.&quot;, n_rows * n_cols), n_rows, n_cols)
+m[1, ] &lt;- &quot;#&quot;  # walls
+m[, 1] &lt;- &quot;#&quot;
+m[nrow(m), ] &lt;- &quot;#&quot;
+m[, ncol(m)] &lt;- &quot;#&quot;
+
+# Add player and enemy
+m[7, 3] &lt;- &quot;@&quot;  # player
+m[3, 3] &lt;- &quot;E&quot;  # enemy</code></pre>
+<p>For convenience, a function that pretty-prints the matrix to the console:</p>
+<pre class="r"><code># Function to print the map nicely
+print_tiles &lt;- function(x) {
+  for (i in seq(nrow(x))) {
+    cat(x[i, ], &quot;\n&quot;)
+  }
+}</code></pre>
+<pre class="r"><code>print_tiles(m)</code></pre>
+</details>
+<pre><code># # # # # # # # # # 
+# . . . . . . . . # 
+# . E . . . . . . # 
+# . . . . . . . . # 
+# . . . . . . . . # 
+# . . . . . . . . # 
+# . @ . . . . . . # 
+# . . . . . . . . # 
+# # # # # # # # # # </code></pre>
+<p>The simplest approach would be to label every traversable tile with <a href="https://en.wikipedia.org/wiki/Taxicab_geometry">a Manhattan-distance score</a> (i.e. like a taxicab would move on the gridded streets of New York) away from the player’s position, then have the enemy check its neighbouring tiles and select the next largest score until it reaches the player.</p>
+<p>Here I’ve created a distance map by assigning the player position a score of 100, then I’ve decreased the score by 1 with each additional tile away from the player. Walls score zero, so they’re effectively ignored.</p>
+<details>
+<summary>
+Click for R code
+</summary>
+<pre class="r"><code>get_distance &lt;- function(m, peak_score) {
+
+  # Initiate distance matrix filled with zero
+  n_rows &lt;- nrow(m)
+  n_cols &lt;- ncol(m)
+  d &lt;- matrix(rep(0, n_cols * n_rows), n_rows, n_cols)
+
+  # Player location gets peak_score
+  player_loc &lt;- which(m == &quot;@&quot;, arr.ind = TRUE)
+  m[player_loc[1], player_loc[2]] &lt;- peak_score
+
+  # Surrounding tiles get successively smaller distance scores
+  for (col_ind in seq(n_cols)) {
+    for (row_ind in seq(n_rows)) {
+      distance &lt;- abs(player_loc[1] - row_ind) + abs(player_loc[2] - col_ind)
+      value &lt;- peak_score - distance
+      if (value &lt; 0) value &lt;- 0
+      d[row_ind, col_ind] &lt;- value
+    }
+  }
+
+  # Walls aren&#39;t traversable, assign low value
+  walls &lt;- which(m == &quot;#&quot;)
+  d[walls] &lt;- 0
+
+  d
+
+}</code></pre>
+<pre class="r"><code>get_distance(m, 100)</code></pre>
+</details>
+<pre><code>      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]
+ [1,]    0    0    0    0    0    0    0    0    0     0
+ [2,]    0   94   95   94   93   92   91   90   89     0
+ [3,]    0   95   96   95   94   93   92   91   90     0
+ [4,]    0   96   97   96   95   94   93   92   91     0
+ [5,]    0   97   98   97   96   95   94   93   92     0
+ [6,]    0   98   99   98   97   96   95   94   93     0
+ [7,]    0   99  100   99   98   97   96   95   94     0
+ [8,]    0   98   99   98   97   96   95   94   93     0
+ [9,]    0    0    0    0    0    0    0    0    0     0</code></pre>
+<p>So the enemy would move from its start position at [3,3] to the target position at [7,3], moving along a score gradient of 96 to 100.</p>
+<p>There’s an issue with this though: obstacles. What do you think will happen if we put a dividing wall between the characters?</p>
+<details>
+<summary>
+Click for R code
+</summary>
+<pre class="r"><code>m[5, 2:8] &lt;- &quot;#&quot;</code></pre>
+<pre class="r"><code>print_tiles(m)</code></pre>
+</details>
+<pre><code># # # # # # # # # # 
+# . . . . . . . . # 
+# . E . . . . . . # 
+# . . . . . . . . # 
+# # # # # # # # . # 
+# . . . . . . . . # 
+# . @ . . . . . . # 
+# . . . . . . . . # 
+# # # # # # # # # # </code></pre>
+<details>
+<summary>
+Click for R code
+</summary>
+<pre class="r"><code>d &lt;- get_distance(m, 100)
+
+d</code></pre>
+</details>
+<pre><code>      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]
+ [1,]    0    0    0    0    0    0    0    0    0     0
+ [2,]    0   94   95   94   93   92   91   90   89     0
+ [3,]    0   95   96   95   94   93   92   91   90     0
+ [4,]    0   96   97   96   95   94   93   92   91     0
+ [5,]    0    0    0    0    0    0    0    0   92     0
+ [6,]    0   98   99   98   97   96   95   94   93     0
+ [7,]    0   99  100   99   98   97   96   95   94     0
+ [8,]    0   98   99   98   97   96   95   94   93     0
+ [9,]    0    0    0    0    0    0    0    0    0     0</code></pre>
+<p>Yeah, the enemy will make a beeline directly for the player and get stuck if anything is in the way.</p>
+<p>The enemy starts on 96 at [3,3] and will move south to 97 on [4,3]. Now what? The wall has been scored as zero, so the enemy looks around for the largest value of its remaining neighbours and randomly selects west, north or east, which all have a distance score of 96.</p>
+<p>The enemy will then be stuck in an infinite loop between the adjacent scores of 96 and 97. This isn’t very intelligent.</p>
+</div>
+<div id="here-comes-the-flood-fill" class="section level1">
+<h1>Here comes the flood-fill</h1>
+<p>Perhaps a better approach is to ‘flood fill’ distance scores, starting from the player character’s tile, so that scores can ‘wrap around’ obstacles. Enemies will therefore be capable of navigating around a blockage.</p>
+<p>There are several ways to achieve this. Perhaps the most basic is <a href="https://en.wikipedia.org/wiki/Breadth-first_search">‘breadth-first’</a>, which visits tiles in a ‘frontier’ expanding from the start point and assigns distance scores to frontier tiles that are in a ‘queue’. This is slightly expensive because every traversable tile has to be assessed, but it means that multiple enemies can all use the same distance map to navigate.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>We don’t need to get too complicated for {r.oguelike}; it just has to work. I’ll illustrate the breadth-first approach with a pretty basic and verbose implementation.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<div id="deep-breadth-first" class="section level2">
+<h2>Deep breadth-first</h2>
+<p>I’m going to use three functions:</p>
+<ol style="list-style-type: decimal">
+<li><code>initiate_distance_map()</code>, which creates a distance-map matrix of equal size to the tile map and fills all traversable spaces with <code>0</code> and all non-traversable spaces with <code>Inf</code>inity</li>
+<li><code>populate_distance_map</code>, which ‘flood-fills’ the traversable space by expanding a ‘frontier’ from the start point, assigning a distance score to each neighbour that’s +1 of the score of the parent tile and adding those neighbours to the frontier queue so they can be inspected next</li>
+<li><code>move_enemy()</code> to move the enemy character from the largest distance score to the lowest, where the player character is</li>
+</ol>
+<div id="distance-map" class="section level3">
+<h3>1. Distance map</h3>
+<p>First, to initiate the distance map:</p>
+<pre class="r"><code>initiate_distance_map &lt;- function(m) {
+
+  d &lt;- m  # copy the tile map
+  d[which(d != &quot;#&quot;)] &lt;- 0  # set non-wall tiles to 0
+  d[which(d == &quot;#&quot;)] &lt;- Inf  # set wall tiles to infinity
+  matrix(as.numeric(d), nrow(d), ncol(d))  # recast as numeric
+
+}</code></pre>
+<p>Now we can adjust those distance scores. The algorithm is basically:</p>
+<ol style="list-style-type: decimal">
+<li>Create a ‘frontier’ vector of tile indices (i.e. the edges of the flood-fill as it moves outward) and add the starting tile (i.e. the tile index that holds the player character)</li>
+<li>Create a vector to hold tile indices that we’ve already visited</li>
+<li>Begin a loop where:
+<ul>
+<li>the first tile in the frontier queue becomes the ‘current’ tile</li>
+<li>the current tile is removed to the frontier</li>
+<li>the current tile is added to the visited list</li>
+<li>the tile indices of the current tile’s neighbours (north, south, east and west) are identified</li>
+<li>if not yet visited, the neighbours are assigned distance scores that are +1 of the current tile</li>
+</ul></li>
+<li>Continue the loop until you run out of tiles in the frontier queue</li>
+</ol>
+</div>
+<div id="calculate-distances" class="section level3">
+<h3>Calculate distances</h3>
+<p>I’ve written a sub-function to handle the neighbour-finding:</p>
+<pre class="r"><code>get_neighbours &lt;- function(m, current) {
+
+  n_rows &lt;- nrow(m)
+
+  c(
+    if (m[current - n_rows] != &quot;#&quot;) current - n_rows,
+    if (m[current - 1] != &quot;#&quot;) current - 1,
+    if (m[current + 1] != &quot;#&quot;) current + 1,
+    if (m[current + n_rows] != &quot;#&quot;) current + n_rows
+  )
+
+}</code></pre>
+<p>Which plugs into the main function for assigning scores to the distance matrix:</p>
+<pre class="r"><code>populate_distance_map &lt;- function(m, d) {
+
+  start &lt;- which(m == &quot;@&quot;)  # start tile, i.e. player tile
+  
+  # Initiate vectors
+  frontier &lt;- start  # to be assessed
+  visited &lt;- c()  # have been assessed
+
+  while (length(frontier) &gt; 0) {
+
+    current  &lt;- frontier[1]  # set first tile of frontier as current
+    frontier &lt;- frontier[!frontier == current]  # remove current tile from frontier
+    visited  &lt;- append(visited, current)  # mark current as visited
+
+    neighbours &lt;- get_neighbours(m, current)  # get vector of neighbour indices
+    neighbours &lt;- neighbours[!neighbours %in% visited]
+
+    for (neighbour in neighbours) {
+      if (!neighbour %in% visited) {  # only assign distance to unvisited neighbours
+        d[neighbour] &lt;- d[current] + 1  # assign distance, one more than parent
+      }
+    }
+
+    frontier &lt;- append(frontier, neighbours)  # add neighbour to the frontier
+
+  }
+
+  d
+
+}</code></pre>
+</div>
+<div id="move-to-target" class="section level3">
+<h3>Move to target</h3>
+<p>Finally, a function that allows the enemy to check its neighbours for the lowest distance score and move there:</p>
+<pre class="r"><code>move_enemy &lt;- function(m, d) {
+
+  # Find tiles of interest
+  en_loc &lt;- which(m == &quot;E&quot;)
+  player_loc &lt;- which(m == &quot;@&quot;)
+  n_rows &lt;- nrow(m)
+
+  # Get neighbour tile indices
+  ind &lt;- c(
+    n = en_loc - 1,
+    s = en_loc + 1,
+    e = en_loc + n_rows,
+    w = en_loc - n_rows
+  )
+
+  # Get tile content for neighbours
+  tiles &lt;- c(
+    n = m[ind[&quot;n&quot;]],
+    s = m[ind[&quot;s&quot;]],
+    e = m[ind[&quot;e&quot;]],
+    w = m[ind[&quot;w&quot;]]
+  )
+
+  # Get the distance score for a tile if traversable/target
+  dist &lt;- c(
+    n = if (tiles[&quot;n&quot;] %in% c(&quot;.&quot;, &quot;@&quot;)) d[ind[&quot;n&quot;]],
+    s = if (tiles[&quot;s&quot;] %in% c(&quot;.&quot;, &quot;@&quot;)) d[ind[&quot;s&quot;]],
+    e = if (tiles[&quot;e&quot;] %in% c(&quot;.&quot;, &quot;@&quot;)) d[ind[&quot;e&quot;]],
+    w = if (tiles[&quot;w&quot;] %in% c(&quot;.&quot;, &quot;@&quot;)) d[ind[&quot;w&quot;]]
+  )
+
+  # Sample a direction if there&#39;s ties, move there
+  direction &lt;- sample(names(dist[dist == min(dist)]), 1)
+  en_loc_new &lt;- ind[names(ind) == direction]
+  m[en_loc] &lt;- &quot;.&quot;  # replace old location with floor tile
+  m[en_loc_new] &lt;- &quot;E&quot;  # place enemy in new location
+
+  m
+
+}</code></pre>
+</div>
+<div id="put-it-all-together" class="section level3">
+<h3>Put it all together</h3>
+<p>Now let’s put the functions together. First, a reminder of the dungeon room with its minor obstacle:</p>
+<pre class="r"><code>print_tiles(m)</code></pre>
+<pre><code># # # # # # # # # # 
+# . . . . . . . . # 
+# . E . . . . . . # 
+# . . . . . . . . # 
+# # # # # # # # . # 
+# . . . . . . . . # 
+# . @ . . . . . . # 
+# . . . . . . . . # 
+# # # # # # # # # # </code></pre>
+<p>Now we initiate the complementary distance map:</p>
+<pre class="r"><code>d &lt;- initiate_distance_map(m)
+d</code></pre>
+<pre><code>      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]
+ [1,]  Inf  Inf  Inf  Inf  Inf  Inf  Inf  Inf  Inf   Inf
+ [2,]  Inf    0    0    0    0    0    0    0    0   Inf
+ [3,]  Inf    0    0    0    0    0    0    0    0   Inf
+ [4,]  Inf    0    0    0    0    0    0    0    0   Inf
+ [5,]  Inf  Inf  Inf  Inf  Inf  Inf  Inf  Inf    0   Inf
+ [6,]  Inf    0    0    0    0    0    0    0    0   Inf
+ [7,]  Inf    0    0    0    0    0    0    0    0   Inf
+ [8,]  Inf    0    0    0    0    0    0    0    0   Inf
+ [9,]  Inf  Inf  Inf  Inf  Inf  Inf  Inf  Inf  Inf   Inf</code></pre>
+<p>Then populate the distance values from the target:</p>
+<pre class="r"><code>d &lt;- populate_distance_map(m, d)
+d</code></pre>
+<pre><code>      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]
+ [1,]  Inf  Inf  Inf  Inf  Inf  Inf  Inf  Inf  Inf   Inf
+ [2,]  Inf   18   17   16   15   14   13   12   11   Inf
+ [3,]  Inf   17   16   15   14   13   12   11   10   Inf
+ [4,]  Inf   16   15   14   13   12   11   10    9   Inf
+ [5,]  Inf  Inf  Inf  Inf  Inf  Inf  Inf  Inf    8   Inf
+ [6,]  Inf    2    1    2    3    4    5    6    7   Inf
+ [7,]  Inf    1    0    1    2    3    4    5    6   Inf
+ [8,]  Inf    2    1    2    3    4    5    6    7   Inf
+ [9,]  Inf  Inf  Inf  Inf  Inf  Inf  Inf  Inf  Inf   Inf</code></pre>
+<p>Success. You can see the player’s tile at [7,3] scores 0 and emanates out to the right, around the obstacle, before wrapping back to the top-left and toward the enemy at position [3,3].</p>
+<p>The enemy needs only to move to the neighbouring tile with the lowest distance score. So from 16 to 15 on either [4,3] or [3,4]. See how this time it won’t get stuck trying to move south? The distance scores decrease from left to right before curving round the wall in the direction of the player’s tile.</p>
+<p>For fun, we can print to the console an animation of the movement, which I’ve captured in gif form.</p>
+<details>
+<summary>
+Click for R code
+</summary>
+<pre class="r"><code>repeat {
+  cat(&quot;\014&quot;)  # clear console
+  m &lt;- move_enemy(m, d)  # move enemy
+  print_tiles(m)  # print to console
+  Sys.sleep(0.5)  # wait
+  if (!any(m == &quot;@&quot;)) break  # stop if player captured
+}</code></pre>
+</details>
+<div class="figure">
+<img src="/post/2022-06-10-basic-search_files/pathfind.gif" alt="Animation of an R console, showing a rectangular grid of tiles that represents a dungeon room. Floor tiles are periods. Surrounding walls are hashmarks. There's an enemy character represented by a letter 'E' in the upper left, and a player character represented by an 'at' symbol in the lower left. There's an obstacle wall separating them. The enemy character moves tile by tile around the obstacle until it reaches the player." width="50%"/>
+<p class="caption">
+Look it him go!
+</p>
+</div>
+<p>You can see the enemy go round the wall and reach the player using a pretty efficient path.</p>
+</div>
+</div>
+</div>
+<div id="the-end-of-the-tunnel" class="section level1">
+<h1>The end of the tunnel?</h1>
+<p>I’ve smashed this together quickly with some completely un-optimised code. Once I’ve ironed out some kinks, it’ll go into <a href="https://github.com/matt-dray/r.oguelike">the {r.oguelike} package</a> proper.</p>
+<p>Of course, it’ll need to take into account a moving player-character as well, so the distances map will need to be updated every turn.</p>
+<p>Also, it might make sense to limit the range of the frontier to some specified distance away from the player, so that an enemy will only begin pathfinding when a player is closer and more ‘detectable’.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<p>I think different enemy types should behave differently too. Maybe some could move randomly, or won’t hone in on the player until they’re very close by (e.g. when a few tiles away), while others are ‘smarter’ and begin encroaching immediately.</p>
+<p>As a basic preview, here’s what it looks like when you throw the pathfinding into <a href="https://www.rostrum.blog/2022/05/01/dungeon/">a procedurally-generated dungeon from {r.oguelike}</a>:</p>
+<div class="figure">
+<p><img src="/post/2022-06-10-basic-search_files/pathfind-dungeon.gif" alt="Animation of an R console, showing a rectangular grid of tiles that represents a dungeon room. Floor tiles are periods. Surrounding walls are hashmarks. There's an enemy character represented by a letter 'E' in the lower left, and a player character represented by an 'at' symbol toward the right. There's some obstacle walls separating them. The enemy character moves tile by tile around the obstacle until it reaches the player." width="75%"/></p>
+</div>
+<p>This gives a nice impression of the panic that might set in if you’re down to 1 HP and a monster is chasing you into a dead-end.</p>
+<p>A quintessential roguelike ‘feature’!</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>─ Session info ───────────────────────────────────────────────────────────────
+ setting  value
+ version  R version 4.2.0 (2022-04-22)
+ os       macOS Big Sur/Monterey 10.16
+ system   x86_64, darwin17.0
+ ui       X11
+ language (EN)
+ collate  en_GB.UTF-8
+ ctype    en_GB.UTF-8
+ tz       Europe/London
+ date     2022-06-10
+ pandoc   2.17.1.1 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/ (via rmarkdown)
+
+─ Packages ───────────────────────────────────────────────────────────────────
+ package     * version date (UTC) lib source
+ blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+ bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+ bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+ cli           3.3.0   2022-04-25 [1] CRAN (R 4.2.0)
+ digest        0.6.29  2021-12-01 [1] CRAN (R 4.2.0)
+ evaluate      0.15    2022-02-18 [1] CRAN (R 4.2.0)
+ fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+ htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+ jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+ jsonlite      1.8.0   2022-02-22 [1] CRAN (R 4.2.0)
+ knitr         1.39    2022-04-26 [1] CRAN (R 4.2.0)
+ magrittr      2.0.3   2022-03-30 [1] CRAN (R 4.2.0)
+ R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+ rlang         1.0.2   2022-03-04 [1] CRAN (R 4.2.0)
+ rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+ rstudioapi    0.13    2020-11-12 [1] CRAN (R 4.2.0)
+ sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+ sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+ stringi       1.7.6   2021-11-29 [1] CRAN (R 4.2.0)
+ stringr       1.4.0   2019-02-10 [1] CRAN (R 4.2.0)
+ xfun          0.30    2022-03-02 [1] CRAN (R 4.2.0)
+ yaml          2.3.5   2022-02-21 [1] CRAN (R 4.2.0)
+
+ [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+
+──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>Yes, there are cleverer ways to do this. More advanced techniques include <a href="https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm">Dijkstra</a>, which allows for weighted edges (e.g. a ‘cost’ for travelling over terrain types), and <a href="https://en.wikipedia.org/wiki/A*_search_algorithm">A-star</a>, which uses a heuristic to improve the efficiency of finding the shortest path between two points. Learn more in sensational <a href="https://www.redblobgames.com/pathfinding/a-star/introduction.html">introductions</a> and <a href="https://www.redblobgames.com/pathfinding/a-star/implementation.html">implementations</a> on <a href="https://www.redblobgames.com/">Red Blob Games</a> by <a href="https://twitter.com/redblobgames">Amit Patel</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>Perhaps unsurprisingly, there’s not much on the web about implementing these algorithms in R for purposes of tile-based game development, specifically. There are implementations of theses algorithms, however, like <a href="https://github.com/machow/astar-r">Michael Chow’s A-star on GitHub</a>, which could be adapted.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>This behaviour probably makes more in-game sense. Unless you imagine the enemy has really great senses of smell or hearing and can detect the player wherever they are. Or your player character has just rolled low dexterity and is clumsy and loud.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
