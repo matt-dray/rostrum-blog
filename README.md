@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 2 day(s) ago: [Down with R’s assignment
+🆕 The latest post was published 3 day(s) ago: [Down with R’s assignment
 flamwewars\!](https://www.rostrum.blog/2022/06/07/assign-down/).
 
 📈 This 2D plot shows posts over time:
@@ -172,4 +172,4 @@ flamwewars\!](https://www.rostrum.blog/2022/06/07/assign-down/).
 
 -----
 
-*Updated 2022-06-09 03:37:17*
+*Updated 2022-06-10 03:31:38*
