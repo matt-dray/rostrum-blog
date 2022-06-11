@@ -25,13 +25,13 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 124 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 125 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 3 day(s) ago: [Down with R’s assignment
-flamwewars\!](https://www.rostrum.blog/2022/06/07/assign-down/).
+🆕 The latest post was published 1 day(s) ago: [Automated pathfinding in
+{r.oguelike}](https://www.rostrum.blog/2022/06/10/basic-search/).
 
 📈 This 2D plot shows posts over time:
 
@@ -43,6 +43,7 @@ flamwewars\!](https://www.rostrum.blog/2022/06/07/assign-down/).
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|    125 | 2022-06-10 | [Automated pathfinding in {r.oguelike}](https://www.rostrum.blog/2022/06/10/basic-search/)                                |
 |    124 | 2022-06-07 | [Down with R’s assignment flamwewars\!](https://www.rostrum.blog/2022/06/07/assign-down/)                                 |
 |    123 | 2022-06-01 | [Try R v4.2 in your browser](https://www.rostrum.blog/2022/06/01/try-r/)                                                  |
 |    122 | 2022-05-01 | [Simple procedural dungeons in R](https://www.rostrum.blog/2022/05/01/dungeon/)                                           |
@@ -172,4 +173,4 @@ flamwewars\!](https://www.rostrum.blog/2022/06/07/assign-down/).
 
 -----
 
-*Updated 2022-06-10 03:31:38*
+*Updated 2022-06-11 03:25:38*
