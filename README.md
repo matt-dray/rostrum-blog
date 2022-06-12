@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
 
-🆕 The latest post was published 1 day(s) ago: [Automated pathfinding in
+🆕 The latest post was published 2 day(s) ago: [Automated pathfinding in
 {r.oguelike}](https://www.rostrum.blog/2022/06/10/basic-search/).
 
 📈 This 2D plot shows posts over time:
@@ -173,4 +173,4 @@ since 2018-04-14.
 
 -----
 
-*Updated 2022-06-11 03:25:38*
+*Updated 2022-06-12 03:34:36*
