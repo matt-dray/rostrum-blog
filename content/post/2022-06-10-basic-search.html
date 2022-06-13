@@ -22,7 +22,7 @@ draft: no
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>I’ve experimented with simple breadth-first search for <a href="https://github.com/matt-dray/r.oguelike">{r.oguelike}</a>, a work-in-progress game-in-a-package for R. This means enemies can pathfind and chase down the player character.</p>
+<p>I’ve experimented with simple <a href="https://en.wikipedia.org/wiki/Breadth-first_search">breadth-first search</a> for <a href="https://github.com/matt-dray/r.oguelike">{r.oguelike}</a>, a work-in-progress game-in-a-package for R. This means enemies can pathfind and chase down the player character.</p>
 </div>
 <div id="hunting-the-hunter" class="section level1">
 <h1>Hunting the hunter</h1>
@@ -31,8 +31,8 @@ draft: no
 <p><img src="/post/2022-04-13-r.oguelike-dev_files/r.oguelike-hex.png" alt="Hex sticker design for the 'r.oguelike' R package. Black background with bright green font, reminiscent of old computer terminal output. In the centre, a three-by-ten arrangement of hashmarks and periods, along with a single at symbol and dollar sign, which looks like a classic ACII tile-based roguelike game. The text 'r.oguelike' is underneath." width="25%"/></p>
 </div>
 <p>So far the enemies in the game have been stationary.</p>
-<p>I could let the enemy wander randomly on each turn, which is easy to implement, but boring and unrealistic. Far better would be to introduce some kind of pathfinding via an algorithm, which would make enemies head toward the player character to engage in battle.</p>
-<p>In this post I’ll start with a naive approach—simply labelling all tiles with distance from the target—then show how an approach called ‘breadth-first search’ can alleviate the problem.</p>
+<p>I could let them wander randomly on each turn, which is easy to implement, but boring and unrealistic. Far better would be to introduce some kind of pathfinding via an algorithm, which would make enemies head toward the player character to engage in battle.</p>
+<p>In this post I’ll start with a naive approach—simply labelling all tiles with distance from the target—then show how an approach called <a href="https://en.wikipedia.org/wiki/Breadth-first_search">‘breadth-first search’</a> can alleviate the problem.</p>
 </div>
 <div id="layers-deep" class="section level1">
 <h1>Layers deep</h1>
@@ -70,6 +70,7 @@ print_tiles &lt;- function(x) {
 }</code></pre>
 <pre class="r"><code>print_tiles(m)</code></pre>
 </details>
+<pre class="r"><code>print_tiles(m)</code></pre>
 <pre><code># # # # # # # # # # 
 # . . . . . . . . # 
 # . E . . . . . . # 
@@ -363,11 +364,11 @@ Click for R code
 <div id="the-end-of-the-tunnel" class="section level1">
 <h1>The end of the tunnel?</h1>
 <p>I’ve smashed this together quickly with some completely un-optimised code. Once I’ve ironed out some kinks, it’ll go into <a href="https://github.com/matt-dray/r.oguelike">the {r.oguelike} package</a> proper.</p>
-<p>Of course, it’ll need to consider:</p>
+<p>Of course, I’ll need to consider:</p>
 <ul>
-<li>a moving player-character, so the distances map will need to be updated every turn.</li>
+<li>a moving player-character, so the distances map will need to be updated every turn</li>
 <li>limiting the range of the frontier to some specified distance away from the player, so that an enemy will only begin pathfinding when a player is closer and more ‘detectable’<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></li>
-<li>allowing different enemy classes to move differently, e.g. randomly, or when the player is within a certain distance, or they begin hunting immediately</li>
+<li>allowing different enemy classes to move differently, e.g. attack immediately, randomly, or when the player is within a certain distance</li>
 </ul>
 <p>As a basic preview, here’s what it looks like when you throw the pathfinding into <a href="https://www.rostrum.blog/2022/05/01/dungeon/">a procedurally-generated dungeon from {r.oguelike}</a>:</p>
 <div class="figure">
@@ -390,7 +391,7 @@ Session info
  collate  en_GB.UTF-8
  ctype    en_GB.UTF-8
  tz       Europe/London
- date     2022-06-11
+ date     2022-06-13
  pandoc   2.17.1.1 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/ (via rmarkdown)
 
 ─ Packages ───────────────────────────────────────────────────────────────────

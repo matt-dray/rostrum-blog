@@ -25,7 +25,7 @@ knitr::opts_chunk$set(comment = "")
 
 # tl;dr
 
-I've experimented with simple breadth-first search for [{r.oguelike}](https://github.com/matt-dray/r.oguelike), a work-in-progress  game-in-a-package for R. This means enemies can pathfind and chase down the player character.
+I've experimented with simple [breadth-first search](https://en.wikipedia.org/wiki/Breadth-first_search) for [{r.oguelike}](https://github.com/matt-dray/r.oguelike), a work-in-progress  game-in-a-package for R. This means enemies can pathfind and chase down the player character.
 
 # Hunting the hunter
 
@@ -37,9 +37,9 @@ I've [written before about the inception of {r.oguelike}](https://www.rostrum.bl
 
 So far the enemies in the game have been stationary.
 
-I could let the enemy wander randomly on each turn, which is easy to implement, but boring and unrealistic. Far better would be to introduce some kind of pathfinding via an algorithm, which would make enemies head toward the player character to engage in battle.
+I could let them wander randomly on each turn, which is easy to implement, but boring and unrealistic. Far better would be to introduce some kind of pathfinding via an algorithm, which would make enemies head toward the player character to engage in battle.
 
-In this post I'll start with a naive approach---simply labelling all tiles with distance from the target---then show how an approach called 'breadth-first search' can alleviate the problem.
+In this post I'll start with a naive approach---simply labelling all tiles with distance from the target---then show how an approach called ['breadth-first search'](https://en.wikipedia.org/wiki/Breadth-first_search) can alleviate the problem.
 
 # Layers deep
 
@@ -89,7 +89,7 @@ print_tiles(m)
 ```
 </details>
 
-```{r echo=FALSE}
+```{r}
 print_tiles(m)
 ```
 
@@ -376,11 +376,11 @@ You can see the enemy go round the wall and reach the player using a pretty effi
 
 I've smashed this together quickly with some completely un-optimised code. Once I've ironed out some kinks, it'll go into [the {r.oguelike} package](https://github.com/matt-dray/r.oguelike) proper.
 
-Of course, it'll need to consider:
+Of course, I'll need to consider:
 
-* a moving player-character, so the distances map will need to be updated every turn.
+* a moving player-character, so the distances map will need to be updated every turn
 * limiting the range of the frontier to some specified distance away from the player, so that an enemy will only begin pathfinding when a player is closer and more 'detectable'[^detect]
-* allowing different enemy classes to move differently, e.g. randomly, or when the player is within a certain distance, or they begin hunting immediately
+* allowing different enemy classes to move differently, e.g. attack immediately, randomly, or when the player is within a certain distance
 
 As a basic preview, here's what it looks like when you throw the pathfinding into [a procedurally-generated dungeon from {r.oguelike}](https://www.rostrum.blog/2022/05/01/dungeon/):
 
