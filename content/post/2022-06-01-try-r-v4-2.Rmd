@@ -23,13 +23,13 @@ draft: no
 
 # tl;dr
 
-I made it so you can [launch RStudio in the browser](https://mybinder.org/v2/gh/matt-dray/try-Rv4.2/main?urlpath=rstudio) with R v4.2 installed, so you can try out the new `|>` and `\()` syntax without installing anything.
+I made it so you can [launch RStudio in the browser](https://mybinder.org/v2/gh/matt-dray/try-Rv4.2/main?urlpath=rstudio) with R v4.2 installed---thanks to [the Binder service](https://mybinder.org/)---so you can try out the new pipe `|>` and anonymous-function `\()` syntax.
 
 # Just browsering
 
 Want to try R v4.2 from the safety of your browser without installing any software? 
 
-Maybe your organisation hasn't moved to version 4.1 or higher yet, but you want a chance to noodle around with the cool new syntax that all the hip young trendsetters are yakking about.
+Maybe your organisation hasn't moved to version 4.1 or higher yet, but you want a chance to noodle around with its cool new syntax that all the hip young trendsetters are yakking about.
 
 Click the 'launch binder' badge below to launch R v4.2 and RStudio in your browser, thanks to [the Binder project](https://mybinder.org/) and [{holepunch} package](https://github.com/karthik/holepunch).[^repo] You may need to wait a few moments for it to build.
 
@@ -39,12 +39,13 @@ Once loaded, click on the `get-started.R` file in the 'files' pane for a very si
 
 Two packages are also installed with the Binder instance:
 
-1. [The {dplyr} package](https://dplyr.tidyverse.org/) authored by Hadley Wickham, Romain François, Lionel Henry and Kirill Müller. Installed so you can compare the base pipe against the {magrittr} pipe (`%>%`), which was created by [Stefan Milton-Bache](https://stefanbache.dk/) and made popular by the tidyverse.
-2. [The {pipebind} package](https://cran.r-project.org/package=pipebind) by [Brenton Wiernik](https://wiernik.org/). Installed for you to [explore some methods](https://github.com/bwiernik/pipebind/blob/main/README.md) for extending the functionality of the base pipe.
+1. [The {dplyr} package](https://dplyr.tidyverse.org/), authored by Hadley Wickham, Romain François, Lionel Henry and Kirill Müller, so you can compare the base pipe against the {magrittr} pipe (`%>%`), which was created by [Stefan Milton-Bache](https://stefanbache.dk/) and made popular by the tidyverse.
+2. [The {pipebind} package](https://cran.r-project.org/package=pipebind) by [Brenton Wiernik](https://wiernik.org/), so you can [explore some methods](https://github.com/bwiernik/pipebind/blob/main/README.md) for extending the functionality of the base pipe
 
 # Untaxing syntax
 
-There are two major new features to try: the base pipe `|>` and lambda syntax `\()`, which were both introduced in R v4.1 (May 2021). From [R news](https://cran.r-project.org/doc/manuals/r-devel/NEWS.html):
+There are two major new features to try: the base pipe `|>` and anonymous-function syntax `\()` (sometimes referred to as 'lambdas'), which were both introduced in R v4.1 (May 2021). 
+From [R news](https://cran.r-project.org/doc/manuals/r-devel/NEWS.html):
 
 > R now provides a simple native forward pipe syntax |>. The simple form of the forward pipe inserts the left-hand side as the first argument in the right-hand side call. The pipe implementation as a syntax transformation was motivated by suggestions from Jim Hester and Lionel Henry.
 
@@ -56,12 +57,14 @@ An underscore placeholder `_` for the right-hand side of a base pipe was introdu
 
 # Who's been piping up?
 
+This post isn't about how to use the new syntax or the motivation behind it.
+
 This post exists, at best, to help you play with R v4.2 and the latest features without installing anything. At worst, it might make you aware that the base pipe exists, or that Binder is magic.
 
-What this post doesn't do is explain in depth what the new features are all about. I suggest you take a look at the following materials for inspiration:
+I suggest you take a look at the following materials for more information:
 
 * [Hadley Wickham's 'Pipes' chapter](https://r4ds.hadley.nz/workflow-pipes.html) in the work-in-progress second edition of R for Data Science (R4DS), which talks about why to use it and how it compares to `%>%`
-* [Michael Barrowman's post](https://michaelbarrowman.co.uk/post/the-new-base-pipe/) ] about the speed of the new base pipe and what it's doing under the hood
+* [Michael Barrowman's post](https://michaelbarrowman.co.uk/post/the-new-base-pipe/) about the speed of the new base pipe and what it's doing under the hood
 * [Sharon Machlis's post](https://www.infoworld.com/article/3621369/use-the-new-r-pipe-built-into-r-41.html) that provides an introduction and also points to materials for running different R versions in a Docker container
 * [Isabella Velásquez's post](https://ivelasq.rbind.io/blog/understanding-the-r-pipe/), with a story about solving a plotting problem with the base pipe
 * [Elio Campitelli's post](https://eliocamp.github.io/codigo-r/en/2021/05/r-pipa-nativa/) that covers a number of things, including implications for {data.table}
@@ -81,4 +84,4 @@ sessioninfo::session_info()
 </details>
 
 [^repo]: If you're interested in the source, [it's on GitHub](https://github.com/matt-dray/try-Rv4.2).
-[^placeholder]: Basically, you couldn't pipe into an anonymous function like this: `mtcars |> \(x) lm(hp ~ cyl, data = x)`. You had to use 'dog balls' or 'eyes', `()()`, like this: `mtcars |> (\(x) lm(hp ~ cyl, data = x))()`. Not pleasing. As of R v4.2, you can use the placeholder to do this: `mtcars |> lm(hp ~ cyl, data = _)`. However, you will still need the balls if you want to use the placeholder more than once on the right-hand side.
+[^placeholder]: Basically, you couldn't pipe into an anonymous function like this: `mtcars |> \(x) lm(hp ~ cyl, data = x)`. You had to use 'dog balls' or 'eyes', `()()`, like this: `mtcars |> (\(x) lm(hp ~ cyl, data = x))()`. Not pleasing. As of R v4.2, you can use the placeholder to do this: `mtcars |> lm(hp ~ cyl, data = _)`. However, you will still need the balls if you want to use the placeholder more than once on the right-hand side (or you could use [Brenton's {pipebind} package](https://github.com/bwiernik/pipebind/)).
