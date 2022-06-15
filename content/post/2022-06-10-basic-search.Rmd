@@ -20,7 +20,8 @@ knitr::opts_chunk$set(comment = "")
 ```
 
 <div class="figure">
-<img src="/post/2022-06-10-basic-search_files/pathfind-dungeon.gif" alt="Animation of an R console, showing a rectangular grid of tiles that represents a dungeon room. Floor tiles are periods. Surrounding walls are hashmarks. There's an enemy character represented by a letter 'E' in the lower left, and a player character represented by an 'at' symbol toward the right. There's some obstacle walls separating them. The enemy character moves tile by tile around the obstacle until it reaches the player." width="100%"/>
+<img src="/post/2022-06-10-basic-search_files/chase.gif" alt="Animation of an R console, showing a rectangular grid of tiles that represents a dungeon room. Floor tiles are periods. Surrounding walls are hashmarks. There's an enemy character represented by a letter 'E' and a player character represented by an 'at' symbol. There's some obstacle walls separating them. The enemy character moves tile by tile around the obstacle until towards the player who is running away." width="100%"/>
+<p class="caption">The enemy `E` chases the player `@` who collects gold `$` and and an apple `a`</p>
 </div>
 
 # tl;dr
@@ -372,6 +373,12 @@ repeat {
 
 You can see the enemy go round the wall and reach the player using a pretty efficient path.
 
+And in a more dungeonlike room:
+
+<div class="figure">
+<img src="/post/2022-06-10-basic-search_files/pathfind-dungeon.gif" alt="Animation of an R console, showing a rectangular grid of tiles that represents a dungeon room. Floor tiles are periods. Surrounding walls are hashmarks. There's an enemy character represented by a letter 'E' in the lower left, and a player character represented by an 'at' symbol toward the right. There's some obstacle walls separating them. The enemy character moves tile by tile around the obstacle until it reaches the player." width="100%"/>
+</div>
+
 # The end of the tunnel?
 
 I've smashed this together quickly with some completely un-optimised code. Once I've ironed out some kinks, it'll go into [the {r.oguelike} package](https://github.com/matt-dray/r.oguelike) proper.
@@ -380,12 +387,13 @@ Of course, I'll need to consider:
 
 * a moving player-character, so the distances map will need to be updated every turn
 * limiting the range of the frontier to some specified distance away from the player, so that an enemy will only begin pathfinding when a player is closer and more 'detectable'[^detect]
+* a 'vision-cone' so the enemy only 'sees' the player if there's a clear set of floor tiles between them
 * allowing different enemy classes to move differently, e.g. attack immediately, randomly, or when the player is within a certain distance
 
 As a basic preview, here's what it looks like when you throw the pathfinding into [a procedurally-generated dungeon from {r.oguelike}](https://www.rostrum.blog/2022/05/01/dungeon/):
 
 <div class="figure">
-<img src="/post/2022-06-10-basic-search_files/pathfind-dungeon.gif" alt="Animation of an R console, showing a rectangular grid of tiles that represents a dungeon room. Floor tiles are periods. Surrounding walls are hashmarks. There's an enemy character represented by a letter 'E' in the lower left, and a player character represented by an 'at' symbol toward the right. There's some obstacle walls separating them. The enemy character moves tile by tile around the obstacle until it reaches the player." width="100%"/>
+<img src="/post/2022-06-10-basic-search_files/chase.gif" alt="Animation of an R console, showing a rectangular grid of tiles that represents a dungeon room. Floor tiles are periods. Surrounding walls are hashmarks. There's an enemy character represented by a letter 'E' and a player character represented by an 'at' symbol. There's some obstacle walls separating them. The enemy character moves tile by tile around the obstacle until towards the player who is running away." width="100%"/>
 </div>
 
 This gives a nice impression of the panic that might set in if you're down to 1 HP and a monster is chasing you into a dead-end. 

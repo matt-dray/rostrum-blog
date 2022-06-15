@@ -18,7 +18,10 @@ draft: no
 
 
 <div class="figure">
-<p><img src="/post/2022-06-10-basic-search_files/pathfind-dungeon.gif" alt="Animation of an R console, showing a rectangular grid of tiles that represents a dungeon room. Floor tiles are periods. Surrounding walls are hashmarks. There's an enemy character represented by a letter 'E' in the lower left, and a player character represented by an 'at' symbol toward the right. There's some obstacle walls separating them. The enemy character moves tile by tile around the obstacle until it reaches the player." width="100%"/></p>
+<img src="/post/2022-06-10-basic-search_files/chase.gif" alt="Animation of an R console, showing a rectangular grid of tiles that represents a dungeon room. Floor tiles are periods. Surrounding walls are hashmarks. There's an enemy character represented by a letter 'E' and a player character represented by an 'at' symbol. There's some obstacle walls separating them. The enemy character moves tile by tile around the obstacle until towards the player who is running away." width="100%"/>
+<p class="caption">
+The enemy <code>E</code> chases the player <code>@</code> who collects gold <code>$</code> and and an apple <code>a</code>
+</p>
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
@@ -358,6 +361,10 @@ Click for R code
 <p><img src="/post/2022-06-10-basic-search_files/pathfind.gif" alt="Animation of an R console, showing a rectangular grid of tiles that represents a dungeon room. Floor tiles are periods. Surrounding walls are hashmarks. There's an enemy character represented by a letter 'E' in the upper left, and a player character represented by an 'at' symbol in the lower left. There's an obstacle wall separating them. The enemy character moves tile by tile around the obstacle until it reaches the player." width="50%"/></p>
 </div>
 <p>You can see the enemy go round the wall and reach the player using a pretty efficient path.</p>
+<p>And in a more dungeonlike room:</p>
+<div class="figure">
+<p><img src="/post/2022-06-10-basic-search_files/pathfind-dungeon.gif" alt="Animation of an R console, showing a rectangular grid of tiles that represents a dungeon room. Floor tiles are periods. Surrounding walls are hashmarks. There's an enemy character represented by a letter 'E' in the lower left, and a player character represented by an 'at' symbol toward the right. There's some obstacle walls separating them. The enemy character moves tile by tile around the obstacle until it reaches the player." width="100%"/></p>
+</div>
 </div>
 </div>
 </div>
@@ -368,11 +375,12 @@ Click for R code
 <ul>
 <li>a moving player-character, so the distances map will need to be updated every turn</li>
 <li>limiting the range of the frontier to some specified distance away from the player, so that an enemy will only begin pathfinding when a player is closer and more ‘detectable’<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></li>
+<li>a ‘vision-cone’ so the enemy only ‘sees’ the player if there’s a clear set of floor tiles between them</li>
 <li>allowing different enemy classes to move differently, e.g. attack immediately, randomly, or when the player is within a certain distance</li>
 </ul>
 <p>As a basic preview, here’s what it looks like when you throw the pathfinding into <a href="https://www.rostrum.blog/2022/05/01/dungeon/">a procedurally-generated dungeon from {r.oguelike}</a>:</p>
 <div class="figure">
-<p><img src="/post/2022-06-10-basic-search_files/pathfind-dungeon.gif" alt="Animation of an R console, showing a rectangular grid of tiles that represents a dungeon room. Floor tiles are periods. Surrounding walls are hashmarks. There's an enemy character represented by a letter 'E' in the lower left, and a player character represented by an 'at' symbol toward the right. There's some obstacle walls separating them. The enemy character moves tile by tile around the obstacle until it reaches the player." width="100%"/></p>
+<p><img src="/post/2022-06-10-basic-search_files/chase.gif" alt="Animation of an R console, showing a rectangular grid of tiles that represents a dungeon room. Floor tiles are periods. Surrounding walls are hashmarks. There's an enemy character represented by a letter 'E' and a player character represented by an 'at' symbol. There's some obstacle walls separating them. The enemy character moves tile by tile around the obstacle until towards the player who is running away." width="100%"/></p>
 </div>
 <p>This gives a nice impression of the panic that might set in if you’re down to 1 HP and a monster is chasing you into a dead-end.</p>
 <p>A quintessential roguelike ‘feature’!</p>
@@ -391,7 +399,7 @@ Session info
  collate  en_GB.UTF-8
  ctype    en_GB.UTF-8
  tz       Europe/London
- date     2022-06-13
+ date     2022-06-15
  pandoc   2.17.1.1 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/ (via rmarkdown)
 
 ─ Packages ───────────────────────────────────────────────────────────────────
