@@ -1,0 +1,149 @@
+---
+title: "An isometric dungeon chase in R"
+author: 'Matt Dray'
+date: '2022-06-28'
+slug: isometric-dungeon
+categories:
+  - code
+  - package
+tags:
+  - eventloop
+  - isocubes
+  - isometric
+  - pathfinding
+  - r
+  - r.oguelike
+draft: no
+---
+
+
+
+<div class="figure">
+<p><img src="/post/2022-06-24-isocubes-dungeon_files/04-isocubes-chase.gif" alt="Gif of an R graphics window showing a tiled dungeon space made of isometric cubes. A user is controlling the movement of a blue cube around the black floor within the brown walls. A yellow cube chases the player around, narrowing the distance over time. When the enemy and player inhabit the same tile, they fuse to become a green cube that moves around as a single entity." width="100%"/></p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I made an interactive isometric-dungeon demo in R, thanks to <a href="https://matt-dray.github.io/r.oguelike/">{r.oguelike}</a> for dungeon building and <a href="https://twitter.com/coolbutuseless">mikefc</a>’s <a href="https://github.com/coolbutuseless/isocubes">{isocubes}</a> for drawing isometric cube graphics and <a href="https://github.com/coolbutuseless/eventloop">{eventloop}</a> for continuous keypress inputs.</p>
+</div>
+<div id="a-new-dimension" class="section level1">
+<h1>A new dimension</h1>
+<p><a href="https://twitter.com/coolbutuseless">Mike</a> (AKA mikefc, AKA coolbutuseless, ) is well known for off-label R creations that desecrate the assumption that <a href="https://twitter.com/mattdray/status/1539371338250522624">‘R is a language for statistical computing’</a>.</p>
+<p>Mike revealed <a href="https://github.com/coolbutuseless/isocubes">the {isocubes} package</a> recently, which lets you print objects made of isometric cubes to a graphics device. I immediately thought of <a href="https://matt-dray.github.io/r.oguelike/">the toy {r.oguelike} package</a> I’ve <a href="https://www.rostrum.blog/2022/04/25/r.oguelike-dev/">been developing recently</a>, which has the goal of creating basic features of <a href="https://en.wikipedia.org/wiki/Roguelike">a roguelike game</a> in R. The dungeons are currently ASCII tiles printed to the console. How would it look in isometric?</p>
+<p>In a frenzied series of tweets, I built up a little toy that creates a procedural isometric dungeon and adds a user-controlled player character and a pathfinding enemy. The steps were to:</p>
+<ol style="list-style-type: decimal">
+<li>Build an isometric dungeon (<a href="https://twitter.com/mattdray/status/1539281300619763718">tweet</a>)</li>
+<li>Add a player (<a href="https://twitter.com/mattdray/status/1539370837219868673">tweet</a>)</li>
+<li>Accept continuous input (<a href="https://twitter.com/mattdray/status/1539400843409207296">tweet</a>)</li>
+<li>Add a pathfinding enemy (<a href="https://twitter.com/mattdray/status/1540107713681788928?s=20&amp;t=qSAr7E_czIYCa4kpJU7DBA">tweet</a>)</li>
+</ol>
+<p>This post talks through those steps. You can <a href="https://gist.github.com/matt-dray/dcbd5cd2f4bdc471921e5c741a1233c0">find the code for the final product in a GitHub Gist</a>. It is absolutely not polished and really is just a Frankenstein’s monster of togue code that I stapled together.</p>
+<div id="build-an-isometric-dungeon" class="section level2">
+<h2>1. Build an isometric dungeon</h2>
+<p>{r.oguelike} creates procedural dungeons in the form of a matrix where <code>#</code> symbols are non-traversable wall tiles and <code>.</code> indicates traversable floor tiles. I wrote about the inception of the package <a href="https://www.rostrum.blog/2022/05/01/dungeon/">in a recent blog post</a>.</p>
+<p>We can swap the characters for height values, where the floor is <code>1</code> and the walls are <code>2</code>, and {isocubes} will project the walls one cube above the plane of the floor. We can also use this information to provide colours; black for the floor and brown for the walls, for example, so it looks like a cavern.</p>
+<p>Here’s a few examples:</p>
+<div class="figure">
+<p><img src="/post/2022-06-24-isocubes-dungeon_files/01-isocubes-dungeons.gif" alt="A gif of several successive procedural dungeons composed of isometric cubes. The bottom cube layer represents the floor. The top layer is composed of brown 'wall' cubes. Gaps in the second layer expose the black floor cubes beneath. The result is an enclosed cavern-like space. Each frame is a new random pattern of open floor space." width="100%"/></p>
+</div>
+<p>I think that looks pretty good (ignore the graphical artefacts from the gif compression). I didn’t time how long it took for each image to be rendered because it was near-instantaneous.</p>
+<p>But we don’t want to just look at pictures of dungeons, we want to explore them.</p>
+</div>
+<div id="add-a-player" class="section level2">
+<h2>2. Add a player</h2>
+<p>{r.oguelike} lets a user move a character around the the floor tiles. The player is represented by <code>@</code> in the dungeon matrix, which we can substitute with a height value of <code>1</code> (so it projetcs higher than the floor) and the colour blue (to distinguish it from the walls).</p>
+<p>The user’s keyboard input is accepted by <code>readline()</code> and this determines the character’s movement. Typing <kbd>W</kbd> will make the player move north one tile, for example. The current location is overwritten with a floor tile (<code>.</code>), the tile above is replaced with the player symbol (<code>@</code>) and the matrix is re-printed to the console.</p>
+<p>Again, this all takes place inside the matrix that represents the dungeon, so we can also just lift this functionality into the {isocubes} version. Here you can see a series of user inputs to the console that result in the player moving around the floor tiles.</p>
+<div class="figure">
+<p><img src="/post/2022-06-24-isocubes-dungeon_files/02-isocubes-readline.gif" alt="Gif of a procedural dungeon in RStudio, which is composed of isometric cubes. The bottom cube layer represents the floor. The top layer is composed of brown 'wall' cubes. Gaps in the second layer expose the black floor cubes beneath. The result is an enclosed cavern-like space. A blue 'player' cube is controlled by inputs to the console: W, A, S and D keypresses move it up, left, down and right." width="100%"/></p>
+</div>
+<p>It was really pleasing when I got this to work, but it’s also quite tedious to tap in a key and hit enter for each movement.</p>
+</div>
+<div id="accept-continuous-input" class="section level2">
+<h2>3. Accept continuous input</h2>
+<p>{r.oguelike} simply prints the dungeon matrix to the console at the end of each turn, whereas our {isocubes} version takes place in a graphics window that’s refreshed with every turn.</p>
+<p>Mike also has <a href="https://github.com/coolbutuseless/eventloop">a package called {eventloop}</a>, which he suggested might be useful for continuous input, which can accept user keypresses continuously. It’s way more seamless.</p>
+<p>Here you can see the result of a user pressing the arrow keys, which are also printed to the console to prove it works.</p>
+<div class="figure">
+<p><img src="/post/2022-06-24-isocubes-dungeon_files/03-isocubes-eventloop.gif" alt="Gif of an R graphics window showing a dungeon space made of isometric cubes. A user is controlling the movement of a blue cube around the black floor within the brown walls. The latest input is shown in the console as 'pressed left', etc." width="100%"/></p>
+</div>
+<p>This is great, but it would be great to make this more of a ‘game’.</p>
+</div>
+<div id="add-a-pathfinding-enemy" class="section level2">
+<h2>4. Add a pathfinding enemy</h2>
+<p>{r.oguelike} has an enemy character, represented in the dungeon matrix as <code>E</code>. Again, we can replace this with a height of <code>1</code> and colour it yellow, for example.</p>
+<p><a href="https://www.rostrum.blog/2022/06/10/basic-search/">I wrote recently about implementing simple breadth-first pathfinding</a> so that the enemy can head toward wherever the player currently is. At time of writing I haven’t fully implemented the pathfinding into {r.oguelike}, but that didn’t stop me adding it into the code for this isometric demo.</p>
+<p>Here you can see the enemy cube (yellow) hunting down the player-controlled cube (blue). I was motivated to add a capture condition and decided to have fun with it.</p>
+<div class="figure">
+<p><img src="/post/2022-06-24-isocubes-dungeon_files/04-isocubes-chase.gif" alt="Gif of an R graphics window showing a tiled dungeon space made of isometric cubes. A user is controlling the movement of a blue cube around the black floor within the brown walls. A yellow cube chases the player around, narrowing the distance over time. When the enemy and player inhabit the same tile, they fuse to become a green cube that moves around as a single entity." width="100%"/></p>
+</div>
+<p>I hope you enjoyed the victory dance at the end of the gif (it was the best I could do with the limited graphics).<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+</div>
+</div>
+<div id="the-fourth-dimension" class="section level1">
+<h1>The fourth dimension</h1>
+<p>I need to tie up some loose ends in the current version of {r.oguelike}, but I’m considering the possibilities for {isocubes} and {eventloop} in future. Maybe the <code>start_game()</code> function could have an argument where the user can choose 2D or 3D representations of the game.</p>
+<p>I also have a few ideas of how I can use my basic {r.oguelike} ‘engine’ with {isocubes} to develop some other, non-roguelike games. For example, <a href="https://twitter.com/dmi3k/status/1539501583431610370?s=20&amp;t=8ISf5STWoTvHJuq8bQnF7g">Dmytro (AKA Deemah) suggested {rsokoban}</a>. <a href="https://en.wikipedia.org/wiki/Sokoban">Sokoban</a> is a game where you solve small tile-based puzzles by pushing crates onto designated spots. I was also reminded of <a href="https://en.wikipedia.org/wiki/Q*bert">Q*bert</a>, where you try and touch all the floor tiles to change their colour.</p>
+<p>So many ideas for off-label R use, so little time.</p>
+</div>
+<div id="postscript" class="section level1">
+<h1>Postscript</h1>
+<p>I lied a bit earlier. The actual first thought I had when seeing {isocubes} was pixel art. <a href="https://www.rostrum.blog/2021/06/28/pixel-art/">I wrote a post (exactly) one year ago</a> where I converted some vectors into little pixel drawings using R’s <code>image()</code> function.</p>
+<p>It’s fairly straightforward to convert those vectors into a format accepted by {isocubes}, which means you can have an <a href="https://twitter.com/mattdray/status/1538869234410967041?s=20&amp;t=yZYP5pC1_68UJHDz-pTVIQ">isometric sprite of Link from Legend Of Zelda</a>, or <a href="https://twitter.com/mattdray/status/1538862896855359499?s=20&amp;t=yZYP5pC1_68UJHDz-pTVIQ">a rainbow version of the logo for this blog</a>.</p>
+<div class="figure">
+<p><img src="/post/2022-06-24-isocubes-dungeon_files/isometric-link-rostrum.png" alt="Two images side-by-side. A sprite of Link from the Legend of Zelda on the NES, rendered with isometric cubes thanks to the 'isocubes' R package. A pixelated image of an insect—the logo of rostrum.blog—rendered with isometric cubes, thanks to the 'isocube' package. The cubes are rainbow-coloured from left to right." width="100%"/></p>
+</div>
+<p>I wrote <a href="https://gist.github.com/matt-dray/389af1afa61a778bbd1f286912b43627">a GitHub Gist with the code for these images</a>, so feel free to steal.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>─ Session info ───────────────────────────────────────────────────────────────
+ setting  value
+ version  R version 4.2.0 (2022-04-22)
+ os       macOS Big Sur/Monterey 10.16
+ system   x86_64, darwin17.0
+ ui       X11
+ language (EN)
+ collate  en_GB.UTF-8
+ ctype    en_GB.UTF-8
+ tz       Europe/London
+ date     2022-06-28
+ pandoc   2.17.1.1 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/ (via rmarkdown)
+
+─ Packages ───────────────────────────────────────────────────────────────────
+ package     * version date (UTC) lib source
+ blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+ bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+ bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+ cli           3.3.0   2022-04-25 [1] CRAN (R 4.2.0)
+ digest        0.6.29  2021-12-01 [1] CRAN (R 4.2.0)
+ evaluate      0.15    2022-02-18 [1] CRAN (R 4.2.0)
+ fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+ htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+ jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+ jsonlite      1.8.0   2022-02-22 [1] CRAN (R 4.2.0)
+ knitr         1.39    2022-04-26 [1] CRAN (R 4.2.0)
+ magrittr      2.0.3   2022-03-30 [1] CRAN (R 4.2.0)
+ R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+ rlang         1.0.2   2022-03-04 [1] CRAN (R 4.2.0)
+ rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+ rstudioapi    0.13    2020-11-12 [1] CRAN (R 4.2.0)
+ sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+ sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+ stringi       1.7.6   2021-11-29 [1] CRAN (R 4.2.0)
+ stringr       1.4.0   2019-02-10 [1] CRAN (R 4.2.0)
+ xfun          0.30    2022-03-02 [1] CRAN (R 4.2.0)
+ yaml          2.3.5   2022-02-21 [1] CRAN (R 4.2.0)
+
+ [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+
+──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>Yes, the ‘game’ is an existential one: was the enemy chasing you, or <em>were you the enemy all along?</em><a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
