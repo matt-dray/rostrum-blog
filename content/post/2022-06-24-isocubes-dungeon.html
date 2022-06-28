@@ -27,14 +27,14 @@ draft: no
 </div>
 <div id="a-new-dimension" class="section level1">
 <h1>A new dimension</h1>
-<p><a href="https://twitter.com/coolbutuseless">Mike</a> (AKA mikefc, AKA coolbutuseless, ) is well known for off-label R creations that desecrate the assumption that <a href="https://twitter.com/mattdray/status/1539371338250522624">‘R is a language for statistical computing’</a>.</p>
+<p><a href="https://twitter.com/coolbutuseless">Mike</a> (AKA mikefc, AKA coolbutuseless) is well known for off-label R creations that desecrate the assumption that <a href="https://twitter.com/mattdray/status/1539371338250522624">‘R is a language for statistical computing’</a>.</p>
 <p>Mike revealed <a href="https://github.com/coolbutuseless/isocubes">the {isocubes} package</a> recently, which lets you print objects made of isometric cubes to a graphics device. I immediately thought of <a href="https://matt-dray.github.io/r.oguelike/">the toy {r.oguelike} package</a> I’ve <a href="https://www.rostrum.blog/2022/04/25/r.oguelike-dev/">been developing recently</a>, which has the goal of creating (really) basic features of <a href="https://en.wikipedia.org/wiki/Roguelike">a roguelike game</a> in R.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> The dungeons are currently ASCII tiles printed to the console. How would it look in isometric?</p>
 <p>In a frenzied series of tweets, I built up a little toy that creates a procedural isometric dungeon and adds a user-controlled player character and a pathfinding enemy. The steps were to:</p>
 <ol style="list-style-type: decimal">
 <li>Build an isometric dungeon (<a href="https://twitter.com/mattdray/status/1539281300619763718">tweet</a>)</li>
 <li>Add a player (<a href="https://twitter.com/mattdray/status/1539370837219868673">tweet</a>)</li>
 <li>Accept continuous input (<a href="https://twitter.com/mattdray/status/1539400843409207296">tweet</a>)</li>
-<li>Add a pathfinding enemy (<a href="https://twitter.com/mattdray/status/1540107713681788928?s=20&amp;t=qSAr7E_czIYCa4kpJU7DBA">tweet</a>)</li>
+<li>Add a pathfinding enemy (<a href="https://twitter.com/mattdray/status/1540107713681788928">tweet</a>)</li>
 </ol>
 <p>This post talks through those steps. You can <a href="https://gist.github.com/matt-dray/dcbd5cd2f4bdc471921e5c741a1233c0">find the code for the final product in a GitHub Gist</a>. It is absolutely not polished and really is just a Frankenstein’s monster of togue code that I stapled together.</p>
 <div id="build-an-isometric-dungeon" class="section level2">
@@ -72,7 +72,7 @@ draft: no
 <h2>4. Add a pathfinding enemy</h2>
 <p>{r.oguelike} has an enemy character, represented in the dungeon matrix as <code>E</code>. Again, we can replace this with a height of <code>1</code> and colour it yellow, for example.</p>
 <p><a href="https://www.rostrum.blog/2022/06/10/basic-search/">I wrote recently about implementing simple breadth-first pathfinding</a> so that the enemy can head toward wherever the player currently is. At time of writing I haven’t fully implemented the pathfinding into {r.oguelike}, but that didn’t stop me adding it into the code for this isometric demo.</p>
-<p>Here you can see the enemy cube (yellow) hunting down the player-controlled cube (blue). I was motivated to add a capture condition and decided to have fun with it.</p>
+<p>Here you can see the enemy cube (yellow) hunting down the player-controlled cube (blue). I was <a href="https://twitter.com/coolbutuseless/status/1540080432829665281">motivated to add a capture condition</a> and decided to have fun with it.</p>
 <div class="figure">
 <p><img src="/post/2022-06-24-isocubes-dungeon_files/04-isocubes-chase.gif" alt="Gif of an R graphics window showing a tiled dungeon space made of isometric cubes. A user is controlling the movement of a blue cube around the black floor within the brown walls. A yellow cube chases the player around, narrowing the distance over time. When the enemy and player inhabit the same tile, they fuse to become a green cube that moves around as a single entity." width="100%"/></p>
 </div>
@@ -82,13 +82,13 @@ draft: no
 <div id="the-fourth-dimension" class="section level1">
 <h1>The fourth dimension</h1>
 <p>I need to tie up some loose ends in the current version of {r.oguelike}, but I’m considering the possibilities for {isocubes} and {eventloop} in future. Maybe the <code>start_game()</code> function could have an argument where the user can choose 2D or 3D representations of the game.</p>
-<p>I also have a few ideas of how I can use my basic {r.oguelike} ‘engine’ with {isocubes} to develop some other, non-roguelike games. For example, <a href="https://twitter.com/dmi3k/status/1539501583431610370?s=20&amp;t=8ISf5STWoTvHJuq8bQnF7g">Dmytro (AKA Deemah) suggested {rsokoban}</a>. <a href="https://en.wikipedia.org/wiki/Sokoban">Sokoban</a> is a game where you solve small tile-based puzzles by pushing crates onto designated spots. I was also reminded of <a href="https://en.wikipedia.org/wiki/Q*bert">Q*bert</a>, where you try and touch all the floor tiles to change their colour.</p>
+<p>I also have a few ideas of how I can use my basic {r.oguelike} ‘engine’ with {isocubes} to develop some other, non-roguelike games. For example, <a href="https://twitter.com/dmi3k/status/1539501583431610370">Dmytro (AKA Deemah) suggested {rsokoban}</a>. <a href="https://en.wikipedia.org/wiki/Sokoban">Sokoban</a> is a game where you solve small tile-based puzzles by pushing crates onto designated spots. I was also reminded of <a href="https://en.wikipedia.org/wiki/Q*bert">Q*bert</a>, where you try and touch all the floor tiles to change their colour.</p>
 <p>So many ideas for off-label R use, so little time.</p>
 </div>
 <div id="postscript" class="section level1">
 <h1>Postscript</h1>
 <p>I lied a bit earlier. The actual first thought I had when seeing {isocubes} was pixel art. <a href="https://www.rostrum.blog/2021/06/28/pixel-art/">I wrote a post (exactly) one year ago</a> where I converted some vectors into little pixel drawings using R’s <code>image()</code> function.</p>
-<p>It’s fairly straightforward to convert those vectors into a format accepted by {isocubes}, which means you can have an <a href="https://twitter.com/mattdray/status/1538869234410967041?s=20&amp;t=yZYP5pC1_68UJHDz-pTVIQ">isometric sprite of Link from Legend Of Zelda</a>, or <a href="https://twitter.com/mattdray/status/1538862896855359499?s=20&amp;t=yZYP5pC1_68UJHDz-pTVIQ">a rainbow version of the logo for this blog</a>.</p>
+<p>It’s fairly straightforward to convert those vectors into a format accepted by {isocubes}, which means you can have an <a href="https://twitter.com/mattdray/status/1538869234410967041">isometric sprite of Link from Legend Of Zelda</a>, or <a href="https://twitter.com/mattdray/status/1538862896855359499">a rainbow version of the logo for this blog</a>.</p>
 <div class="figure">
 <p><img src="/post/2022-06-24-isocubes-dungeon_files/isometric-link-rostrum.png" alt="Two images side-by-side. A sprite of Link from the Legend of Zelda on the NES, rendered with isometric cubes thanks to the 'isocubes' R package. A pixelated image of an insect—the logo of rostrum.blog—rendered with isometric cubes, thanks to the 'isocube' package. The cubes are rainbow-coloured from left to right." width="100%"/></p>
 </div>
@@ -144,7 +144,7 @@ Session info
 <div class="footnotes footnotes-end-of-document">
 <hr />
 <ol>
-<li id="fn1"><p>But yo, <a href="https://twitter.com/wviechtb/status/1539701716844781573?s=20&amp;t=yZYP5pC1_68UJHDz-pTVIQ">have you seen what Wolfgang has been up to</a> re roguelikes in R? <em>What the actual heck.</em><a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn1"><p>But yo, <a href="https://twitter.com/wviechtb/status/1539701716844781573">have you seen what Wolfgang has been up to</a> re roguelikes in R? <em>What the actual heck.</em><a href="#fnref1" class="footnote-back">↩︎</a></p></li>
 <li id="fn2"><p>Yes, the ‘game’ is an existential one: was the enemy chasing you, or <em>were you the enemy all along?</em><a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
