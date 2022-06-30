@@ -36,7 +36,7 @@ draft: no
 <li>Accept continuous input (<a href="https://twitter.com/mattdray/status/1539400843409207296">tweet</a>)</li>
 <li>Add a pathfinding enemy (<a href="https://twitter.com/mattdray/status/1540107713681788928">tweet</a>)</li>
 </ol>
-<p>This post talks through those steps. You can <a href="https://gist.github.com/matt-dray/dcbd5cd2f4bdc471921e5c741a1233c0">find the code for the final product in a GitHub Gist</a>. It is absolutely not polished and really is just a Frankenstein’s monster of togue code that I stapled together.</p>
+<p>This post talks through those steps. You can <a href="https://gist.github.com/matt-dray/dcbd5cd2f4bdc471921e5c741a1233c0">find the code for the final product in a GitHub Gist</a>. It is absolutely not polished and really is just a Frankenstein’s monster of code that I stapled together.</p>
 <div id="build-an-isometric-dungeon" class="section level2">
 <h2>1. Build an isometric dungeon</h2>
 <p>{r.oguelike} creates procedural dungeons in the form of a matrix where <code>#</code> symbols are non-traversable wall tiles and <code>.</code> indicates traversable floor tiles. I wrote about the inception of the package <a href="https://www.rostrum.blog/2022/05/01/dungeon/">in a recent blog post</a>.</p>
@@ -50,8 +50,8 @@ draft: no
 </div>
 <div id="add-a-player" class="section level2">
 <h2>2. Add a player</h2>
-<p>{r.oguelike} lets a user move a character around the the floor tiles. The player is represented by <code>@</code> in the dungeon matrix, which we can substitute with a height value of <code>1</code> (so it projetcs higher than the floor) and the colour blue (to distinguish it from the walls).</p>
-<p>The user’s keyboard input is accepted by <code>readline()</code> and this determines the character’s movement. Typing <kbd>W</kbd> will make the player move north one tile, for example. The current location is overwritten with a floor tile (<code>.</code>), the tile above is replaced with the player symbol (<code>@</code>) and the matrix is re-printed to the console.</p>
+<p>{r.oguelike} lets a user move a character around the the floor tiles. The player is represented by <code>@</code> in the dungeon matrix, which we can again substitute with a height value of <code>1</code> so it’s one cube higher than the floor. Of course, we should colour it to distinguish it from the walls; I chose blue.</p>
+<p>The user’s keyboard input is accepted by <code>readline()</code> and this determines the character’s movement. Typing <kbd>W</kbd> then <kbd>Enter</kbd> will make the player move north one tile, for example. in {r.oguelike}, a keypress input causes the current location to be overwritten with a floor tile (<code>.</code>); the tile above to be replaced with the player symbol (<code>@</code>); and then the updated matrix is re-printed to the console.</p>
 <p>Again, this all takes place inside the matrix that represents the dungeon, so we can also just lift this functionality into the {isocubes} version. Here you can see a series of user inputs to the console that result in the player moving around the floor tiles.</p>
 <div class="figure">
 <p><img src="/post/2022-06-24-isocubes-dungeon_files/02-isocubes-readline.gif" alt="Gif of a procedural dungeon in RStudio, which is composed of isometric cubes. The bottom cube layer represents the floor. The top layer is composed of brown 'wall' cubes. Gaps in the second layer expose the black floor cubes beneath. The result is an enclosed cavern-like space. A blue 'player' cube is controlled by inputs to the console: W, A, S and D keypresses move it up, left, down and right." width="100%"/></p>
@@ -61,12 +61,16 @@ draft: no
 <div id="accept-continuous-input" class="section level2">
 <h2>3. Accept continuous input</h2>
 <p>{r.oguelike} simply prints the dungeon matrix to the console at the end of each turn, whereas our {isocubes} version takes place in a graphics window that’s refreshed with every turn.</p>
-<p>Mike also has <a href="https://github.com/coolbutuseless/eventloop">a package called {eventloop}</a>, which he suggested might be useful for continuous input, which can accept user keypresses continuously. It’s way more seamless.</p>
-<p>Here you can see the result of a user pressing the arrow keys, which are also printed to the console to prove it works.</p>
+<p>Mike also has <a href="https://github.com/coolbutuseless/eventloop">a package called {eventloop}</a>,<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> which he suggested might be useful for continuous input from the user. The package contains:</p>
+<blockquote>
+<p>a framework for rendering interactive graphics and handling mouse+keyboard events from the user at speeds fast enough to be considered interesting for games and other realtime applications</p>
+</blockquote>
+<p>Bear in mind that it doesn’t work on Windows. Read more about it in <a href="https://github.com/coolbutuseless/eventloop/blob/main/README.md">the GitHub README</a>.</p>
+<p>Here you can see the result of incorporating {eventloop}. The user is pressing the arrow keys—which you can see being printed to the console—to move the player. This is way more seamless than the previous <code>readline()</code> method.</p>
 <div class="figure">
 <p><img src="/post/2022-06-24-isocubes-dungeon_files/03-isocubes-eventloop.gif" alt="Gif of an R graphics window showing a dungeon space made of isometric cubes. A user is controlling the movement of a blue cube around the black floor within the brown walls. The latest input is shown in the console as 'pressed left', etc." width="100%"/></p>
 </div>
-<p>This is great, but it would be great to make this more of a ‘game’.</p>
+<p>This is a nice demo, but it would be great to make this more of a ‘game’.</p>
 </div>
 <div id="add-a-pathfinding-enemy" class="section level2">
 <h2>4. Add a pathfinding enemy</h2>
@@ -76,7 +80,7 @@ draft: no
 <div class="figure">
 <p><img src="/post/2022-06-24-isocubes-dungeon_files/04-isocubes-chase.gif" alt="Gif of an R graphics window showing a tiled dungeon space made of isometric cubes. A user is controlling the movement of a blue cube around the black floor within the brown walls. A yellow cube chases the player around, narrowing the distance over time. When the enemy and player inhabit the same tile, they fuse to become a green cube that moves around as a single entity." width="100%"/></p>
 </div>
-<p>I hope you enjoyed the victory dance at the end of the gif (it was the best I could do with the limited graphics).<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>I hope you enjoyed the victory dance at the end of the gif (it was the best I could do with the limited graphics).<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
 </div>
 </div>
 <div id="the-fourth-dimension" class="section level1">
@@ -88,11 +92,11 @@ draft: no
 <div id="postscript" class="section level1">
 <h1>Postscript</h1>
 <p>I lied a bit earlier. The actual first thought I had when seeing {isocubes} was pixel art. <a href="https://www.rostrum.blog/2021/06/28/pixel-art/">I wrote a post (exactly) one year ago</a> where I converted some vectors into little pixel drawings using R’s <code>image()</code> function.</p>
-<p>It’s fairly straightforward to convert those vectors into a format accepted by {isocubes}, which means you can have an <a href="https://twitter.com/mattdray/status/1538869234410967041">isometric sprite of Link from Legend Of Zelda</a>, or <a href="https://twitter.com/mattdray/status/1538862896855359499">a rainbow version of the logo for this blog</a>.</p>
+<p>It’s fairly straightforward to convert those vectors into a format accepted by {isocubes}, which means you can have an <a href="https://twitter.com/mattdray/status/1538869234410967041">isometric sprite of Link from The Legend of Zelda</a>, or <a href="https://twitter.com/mattdray/status/1538862896855359499">a rainbow version of the insect logo for this blog</a>.</p>
 <div class="figure">
 <p><img src="/post/2022-06-24-isocubes-dungeon_files/isometric-link-rostrum.png" alt="Two images side-by-side. A sprite of Link from the Legend of Zelda on the NES, rendered with isometric cubes thanks to the 'isocubes' R package. A pixelated image of an insect—the logo of rostrum.blog—rendered with isometric cubes, thanks to the 'isocube' package. The cubes are rainbow-coloured from left to right." width="100%"/></p>
 </div>
-<p>I wrote <a href="https://gist.github.com/matt-dray/389af1afa61a778bbd1f286912b43627">a GitHub Gist with the code for these images</a>, so feel free to steal.</p>
+<p>I wrote <a href="https://gist.github.com/matt-dray/389af1afa61a778bbd1f286912b43627">a GitHub Gist with the code for these images</a>, so feel free to steal. Let me know what you end up making.</p>
 <hr />
 <details>
 <summary>
@@ -108,7 +112,7 @@ Session info
  collate  en_GB.UTF-8
  ctype    en_GB.UTF-8
  tz       Europe/London
- date     2022-06-28
+ date     2022-06-30
  pandoc   2.17.1.1 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/ (via rmarkdown)
 
 ─ Packages ───────────────────────────────────────────────────────────────────
@@ -144,7 +148,8 @@ Session info
 <div class="footnotes footnotes-end-of-document">
 <hr />
 <ol>
-<li id="fn1"><p>But yo, <a href="https://twitter.com/wviechtb/status/1539701716844781573">have you seen what Wolfgang has been up to</a> re roguelikes in R? <em>What the actual heck.</em><a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>Yes, the ‘game’ is an existential one: was the enemy chasing you, or <em>were you the enemy all along?</em><a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn1"><p>But yo, <a href="https://twitter.com/wviechtb/status/1539701716844781573">have you seen what Wolfgang has been up to</a> re roguelikes in R? What the actual heck.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>You can find more examples of {eventloop} <a href="https://github.com/coolbutuseless/eventloop-examples/">in a dedicated GitHub repo</a>, including apps, games, sounds and graphics.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>Yes, the ‘game’ is an existential one: was the enemy chasing you, or <em>were you the enemy all along?</em><a href="#fnref3" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>

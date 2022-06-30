@@ -41,7 +41,7 @@ In a frenzied series of tweets, I built up a little toy that creates a procedura
 3. Accept continuous input ([tweet](https://twitter.com/mattdray/status/1539400843409207296))
 4. Add a pathfinding enemy ([tweet](https://twitter.com/mattdray/status/1540107713681788928))
 
-This post talks through those steps. You can [find the code for the final product in a GitHub Gist](https://gist.github.com/matt-dray/dcbd5cd2f4bdc471921e5c741a1233c0). It is absolutely not polished and really is just a Frankenstein's monster of togue code that I stapled together.
+This post talks through those steps. You can [find the code for the final product in a GitHub Gist](https://gist.github.com/matt-dray/dcbd5cd2f4bdc471921e5c741a1233c0). It is absolutely not polished and really is just a Frankenstein's monster of code that I stapled together.
 
 ## 1. Build an isometric dungeon
 
@@ -61,9 +61,9 @@ But we don't want to just look at pictures of dungeons, we want to explore them.
 
 ## 2. Add a player
 
-{r.oguelike} lets a user move a character around the the floor tiles. The player is represented by `@` in the dungeon matrix, which we can substitute with a height value of `1` (so it projetcs higher than the floor) and the colour blue (to distinguish it from the walls).
+{r.oguelike} lets a user move a character around the the floor tiles. The player is represented by `@` in the dungeon matrix, which we can again substitute with a height value of `1` so it's one cube higher than the floor. Of course, we should colour it to distinguish it from the walls; I chose blue.
 
-The user's keyboard input is accepted by `readline()` and this determines the character's movement. Typing <kbd>W</kbd> will make the player move north one tile, for example. The current location is overwritten with a floor tile (`.`), the tile above is replaced with the player symbol (`@`) and the matrix is re-printed to the console.
+The user's keyboard input is accepted by `readline()` and this determines the character's movement. Typing <kbd>W</kbd> then <kbd>Enter</kbd> will make the player move north one tile, for example. in {r.oguelike}, a keypress input causes the current location to be overwritten with a floor tile (`.`); the tile above to be replaced with the player symbol (`@`); and then the updated matrix is re-printed to the console.
 
 Again, this all takes place inside the matrix that represents the dungeon, so we can also just lift this functionality into the {isocubes} version. Here you can see a series of user inputs to the console that result in the player moving around the floor tiles.
 
@@ -77,15 +77,19 @@ It was really pleasing when I got this to work, but it's also quite tedious to t
 
 {r.oguelike} simply prints the dungeon matrix to the console at the end of each turn, whereas our {isocubes} version takes place in a graphics window that's refreshed with every turn. 
 
-Mike also has [a package called {eventloop}](https://github.com/coolbutuseless/eventloop), which he suggested might be useful for continuous input, which can accept user keypresses continuously. It's way more seamless.
+Mike also has [a package called {eventloop}](https://github.com/coolbutuseless/eventloop),[^eventloop] which he suggested might be useful for continuous input from the user. The package contains:
 
-Here you can see the result of a user pressing the arrow keys, which are also printed to the console to prove it works.
+> a framework for rendering interactive graphics and handling mouse+keyboard events from the user at speeds fast enough to be considered interesting for games and other realtime applications
+
+Bear in mind that it doesn't work on Windows. Read more about it in [the GitHub README](https://github.com/coolbutuseless/eventloop/blob/main/README.md).
+
+Here you can see the result of incorporating {eventloop}. The user is pressing the arrow keys---which you can see being printed to the console---to move the player. This is way more seamless than the previous `readline()` method.
 
 <div class="figure">
 <img src="/post/2022-06-24-isocubes-dungeon_files/03-isocubes-eventloop.gif" alt="Gif of an R graphics window showing a dungeon space made of isometric cubes. A user is controlling the movement of a blue cube around the black floor within the brown walls. The latest input is shown in the console as 'pressed left', etc." width="100%"/>
 </div>
 
-This is great, but it would be great to make this more of a 'game'.
+This is a nice demo, but it would be great to make this more of a 'game'.
 
 ## 4. Add a pathfinding enemy
 
@@ -113,13 +117,13 @@ So many ideas for off-label R use, so little time.
 
 I lied a bit earlier. The actual first thought I had when seeing {isocubes} was pixel art. [I wrote a post (exactly) one year ago](https://www.rostrum.blog/2021/06/28/pixel-art/) where I converted some vectors into little pixel drawings using R's `image()` function.
 
-It's fairly straightforward to convert those vectors into a format accepted by {isocubes}, which means you can have an [isometric sprite of Link from Legend Of Zelda](https://twitter.com/mattdray/status/1538869234410967041), or [a rainbow version of the logo for this blog](https://twitter.com/mattdray/status/1538862896855359499).
+It's fairly straightforward to convert those vectors into a format accepted by {isocubes}, which means you can have an [isometric sprite of Link from The Legend of Zelda](https://twitter.com/mattdray/status/1538869234410967041), or [a rainbow version of the insect logo for this blog](https://twitter.com/mattdray/status/1538862896855359499).
 
 <div class="figure">
 <img src="/post/2022-06-24-isocubes-dungeon_files/isometric-link-rostrum.png" alt="Two images side-by-side. A sprite of Link from the Legend of Zelda on the NES, rendered with isometric cubes thanks to the 'isocubes' R package. A pixelated image of an insect—the logo of rostrum.blog—rendered with isometric cubes, thanks to the 'isocube' package. The cubes are rainbow-coloured from left to right." width="100%"/>
 </div>
 
-I wrote [a GitHub Gist with the code for these images](https://gist.github.com/matt-dray/389af1afa61a778bbd1f286912b43627), so feel free to steal.
+I wrote [a GitHub Gist with the code for these images](https://gist.github.com/matt-dray/389af1afa61a778bbd1f286912b43627), so feel free to steal. Let me know what you end up making.
 
 ---
 <details><summary>Session info</summary>
@@ -128,5 +132,6 @@ sessioninfo::session_info()
 ```
 </details>
 
-[^wolfgang]: But yo, [have you seen what Wolfgang has been up to](https://twitter.com/wviechtb/status/1539701716844781573) re roguelikes in R? _What the actual heck._
+[^wolfgang]: But yo, [have you seen what Wolfgang has been up to](https://twitter.com/wviechtb/status/1539701716844781573) re roguelikes in R? What the actual heck.
 [^enemy]: Yes, the 'game' is an existential one: was the enemy chasing you, or _were you the enemy all along?_
+[^eventloop]: You can find more examples of {eventloop} [in a dedicated GitHub repo](https://github.com/coolbutuseless/eventloop-examples/), including apps, games, sounds and graphics.
