@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 8 day(s) ago: [An isometric dungeon
+🆕 The latest post was published 9 day(s) ago: [An isometric dungeon
 chase in R](https://www.rostrum.blog/2022/06/28/isometric-dungeon/).
 
 📈 This 2D plot shows posts over time:
@@ -174,4 +174,4 @@ chase in R](https://www.rostrum.blog/2022/06/28/isometric-dungeon/).
 
 -----
 
-*Updated 2022-07-06 03:54:45*
+*Updated 2022-07-07 03:54:25*
