@@ -1,0 +1,136 @@
+---
+title: "Stop opening the same RStudio Project twice"
+author: 'Matt Dray'
+date: '2022-07-08'
+slug: rproj-dupes
+categories:
+  - code
+tags:
+  - r
+  - RStudio
+draft: no
+---
+
+
+
+<div class="figure">
+<p><img src="/post/2022-07-08-rproj-dupes_files/rproj-dupes.png" alt="An RStudio console on startup. After the usual R startup text it says 'Warning message: You've got open RStudio Projects with the same name' followed by a bullet point that says 'sandbox.Rproj'. Overlaid is the macOS item switcher showing that there are indeed two RStudio instances open with that name. " width="100%"/></p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I keep opening more than one instance of the same RStudio Project and it’s annoying me, so I wrote a function to warn me on startup.</p>
+</div>
+<div id="double-trouble" class="section level1">
+<h1>Double trouble</h1>
+<p>Sometimes I write code in an RStudio Project and then go and do something else. My memory is terrible, so later I might open a second instance of the same project and wonder what happened to that code I’d written before.</p>
+<p>Is there a way to stop this from happening? Maybe there’s a setting in RStudio or something? Maybe I should just Google it?</p>
+<p>Nah, instead I hacked together a little function that can be run on startup to warn me if I have multiple RStudio sessions open with the same name. It’s called <code>check_rproj_dupes()</code>.</p>
+<p>Note that the function checks which OS you’re using with <code>.Platform$OS.type</code>, with the hope that one day I (or you) will write some corresponding code that will work on Windows. I don’t use Windows, so I can’t test anything.</p>
+<p>The code has a few steps:</p>
+<ol style="list-style-type: decimal">
+<li>Pass the <code>ps</code> (process status) command with flag <code>-e</code> (show all running processes) to the shell via the <code>system()</code> function, which is captured in a vector when <code>intern = TRUE</code></li>
+<li>Use <code>grepl()</code> to isolate the strings that contain the ‘.RProj’ RStudio Project extension</li>
+<li>Extract the full paths to the .RProj files</li>
+<li>Extract the basenames from the paths (i.e. just the filename for the .RProj)</li>
+<li>Compare the basenames to see which are duplicated</li>
+<li>Display any matches in a warning message</li>
+</ol>
+<p>Yeah, this could be simplified, but I’m no code golfer. I just want it to work and for it to be pretty obvious what it’s doing.</p>
+<p>Here it is (or see it <a href="https://gist.github.com/matt-dray/b4ff92f01093f512dae99b670e3eddb7">in a GitHub Gist</a>):</p>
+<pre class="r"><code>check_rproj_dupes &lt;- function() {
+  
+  os &lt;- .Platform$OS.type
+  
+  if (os == &quot;unix&quot;) {
+    
+    ps_out &lt;- system(&quot;ps -e&quot;, intern = TRUE)
+    ps_rproj &lt;- ps_out[grepl(&quot;.Rproj&quot;, ps_out)]
+    ps_split &lt;- strsplit(ps_rproj, &quot;\\s&quot;)
+    rproj_paths &lt;- lapply(ps_split, function(x) x[grepl(&quot;.Rproj$&quot;, x)])
+    rproj_basenames &lt;- lapply(rproj_paths, basename)
+    rproj_dupes &lt;- unlist(rproj_basenames[duplicated(rproj_basenames)])
+    
+  }
+  
+  if (os == &quot;windows&quot;) {
+    
+    stop(&quot;Sorry, check_rproj_dupes() doesn&#39;t work on Windows yet :-(&quot;)
+    
+  }
+  
+  if (length(rproj_dupes) &gt; 0) {
+    
+    warning(
+      &quot;You&#39;ve got open RStudio Projects with the same name:\n&quot;,
+      paste(&quot;-&quot;, rproj_dupes, collapse = &quot;\n&quot;),
+      call. = FALSE
+    )
+    
+  }
+  
+}
+
+check_rproj_dupes()</code></pre>
+<p>How would you actually use this though?</p>
+<p>You can add it to your hidden .Rprofile file, which is a place that you can store code that runs whenever RStudio is started.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> Perhaps the easiest way to open it is with <code>usethis::edit_r_profile()</code>. Then you can paste in all the code from the block above.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>On startup, the code will run and if there’s no problem, then you’ll see no message. No news is good news.</p>
+<p>But let’s say I had opened sandbox.Rproj earlier and was now opening the file again. In this second RStudio instance, the usual R startup message will print, followed by a warning:</p>
+<pre><code>Warning message:
+You&#39;ve got open RStudio Projects with the same name:
+- sandbox.Rproj </code></pre>
+<p>So hopefully now I will be less confused when trying to manage my RStudio sessions.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
+##  os       macOS Big Sur/Monterey 10.16
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_GB.UTF-8
+##  ctype    en_GB.UTF-8
+##  tz       Europe/London
+##  date     2022-07-08
+##  pandoc   2.17.1.1 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/ (via rmarkdown)
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date (UTC) lib source
+##  blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.3.0   2022-04-25 [1] CRAN (R 4.2.0)
+##  digest        0.6.29  2021-12-01 [1] CRAN (R 4.2.0)
+##  evaluate      0.15    2022-02-18 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.0   2022-02-22 [1] CRAN (R 4.2.0)
+##  knitr         1.39    2022-04-26 [1] CRAN (R 4.2.0)
+##  magrittr      2.0.3   2022-03-30 [1] CRAN (R 4.2.0)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+##  rlang         1.0.2   2022-03-04 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.13    2020-11-12 [1] CRAN (R 4.2.0)
+##  sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+##  stringi       1.7.6   2021-11-29 [1] CRAN (R 4.2.0)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.2.0)
+##  xfun          0.30    2022-03-02 [1] CRAN (R 4.2.0)
+##  yaml          2.3.5   2022-02-21 [1] CRAN (R 4.2.0)
+## 
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>I tend not to put anything in here that would hamper reproducibility, i.e. another user shouldn’t have to run anything in my .Rprofile to be able to re-run my scripts on their computer.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>The code is <a href="https://gist.github.com/matt-dray/b4ff92f01093f512dae99b670e3eddb7">in a GitHub Gist</a> too, so in theory you could pass <a href="https://gist.githubusercontent.com/matt-dray/b4ff92f01093f512dae99b670e3eddb7/raw/517ad944f5c7e2cb97db5515103d409144db7e54/check-rproj-dupes.R">the URL to the raw code</a> to <code>source()</code>. But don’t do that because you shouldn’t trust me or anyone. And also it won’t work if you aren’t connected to the internet.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>

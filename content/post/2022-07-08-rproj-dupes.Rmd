@@ -8,7 +8,7 @@ categories:
 tags:
   - r
   - RStudio
-draft: yes
+draft: no
 ---
 
 <div class="figure">
@@ -19,13 +19,13 @@ draft: yes
 
 I keep opening more than one instance of the same RStudio Project and it's annoying me, so I wrote a function to warn me on startup.
 
-# Doppelgangwarfare
+# Double trouble
 
 Sometimes I write code in an RStudio Project and then go and do something else. My memory is terrible, so later I might open a second instance of the same project and wonder what happened to that code I'd written before.
 
-Is there a way to stop this from happening? Maybe there's a setting in RStudio or something?
+Is there a way to stop this from happening? Maybe there's a setting in RStudio or something? Maybe I should just Google it?
 
-Well, I thought I'd hack together a little function that can be run on startup and warn me if I have multiple RStudio sessions that are opened from the same RStudio Project file. It's called `check_rproj_dupes()`.
+Nah, instead I hacked together a little function that can be run on startup to warn me if I have multiple RStudio sessions open with the same name. It's called `check_rproj_dupes()`.
 
 Note that the function checks which OS you're using with `.Platform$OS.type`, with the hope that one day I (or you) will write some corresponding code that will work on Windows. I don't use Windows, so I can't test anything.
 
@@ -39,6 +39,8 @@ The code has a few steps:
 6. Display any matches in a warning message
 
 Yeah, this could be simplified, but I'm no code golfer. I just want it to work and for it to be pretty obvious what it's doing.
+
+Here it is (or see it [in a GitHub Gist](https://gist.github.com/matt-dray/b4ff92f01093f512dae99b670e3eddb7)):
 
 ```{r fn, eval=FALSE}
 check_rproj_dupes <- function() {
@@ -77,7 +79,9 @@ check_rproj_dupes <- function() {
 check_rproj_dupes()
 ```
 
-How would you use this? You can add it to your hidden .Rprofile file, which is a place that you can store code that runs whenever RStudio is started.[^rprofile] Perhaps the easiest way to open it is with `usethis::edit_r_profile()`. Then you can paste in all the code in the block above.[^gist]
+How would you actually use this though? 
+
+You can add it to your hidden .Rprofile file, which is a place that you can store code that runs whenever RStudio is started.[^rprofile] Perhaps the easiest way to open it is with `usethis::edit_r_profile()`. Then you can paste in all the code from the block above.[^gist]
 
 On startup, the code will run and if there's no problem, then you'll see no message. No news is good news.
 
