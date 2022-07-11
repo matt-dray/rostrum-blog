@@ -25,7 +25,7 @@ Sometimes I write code in an RStudio Project and then go and do something else. 
 
 Is there a way to stop this from happening? Maybe there's a setting in RStudio or something? Maybe I should just Google it?
 
-Nah, instead I hacked together a little function that can be run on startup to warn me if I have multiple RStudio sessions open with the same name. It's called `check_rproj_dupes()`.
+Nah, instead I hacked together a little function that can be run on startup to warn me---via both text and audio---if I have multiple RStudio sessions open with the same name. It's called `check_rproj_dupes()`.
 
 Note that the function checks which OS you're using with `.Platform$OS.type`, with the hope that one day I (or you) will write some corresponding code that will work on Windows. I don't use Windows, so I can't test anything.
 
@@ -36,44 +36,57 @@ The code has a few steps:
 3. Extract the full paths to the .RProj files
 4. Extract the basenames from the paths (i.e. just the filename for the .RProj)
 5. Compare the basenames to see which are duplicated
-6. Display any matches in a warning message
+6. Display any matches in a warning message and, if `speak = TRUE`, read aloud a warning message that's passed to the `say` function via `system()`
 
 Yeah, this could be simplified, but I'm no code golfer. I just want it to work and for it to be pretty obvious what it's doing.
 
-Here it is (or see it [in a GitHub Gist](https://gist.github.com/matt-dray/b4ff92f01093f512dae99b670e3eddb7)):
+Here it is (or see it [in a GitHub Gist](https://gist.github.com/matt-dray/b4ff92f01093f512dae99b670e3eddb7), where you can write your suggestions for how to improve it):
 
 ```{r fn, eval=FALSE}
-check_rproj_dupes <- function() {
-  
+check_rproj_dupes <- function(speak = TRUE) {
+
   os <- .Platform$OS.type
-  
+
   if (os == "unix") {
-    
+
     ps_out <- system("ps -e", intern = TRUE)
     ps_rproj <- ps_out[grepl(".Rproj", ps_out)]
     ps_split <- strsplit(ps_rproj, "\\s")
     rproj_paths <- lapply(ps_split, function(x) x[grepl(".Rproj$", x)])
     rproj_basenames <- lapply(rproj_paths, basename)
-    rproj_dupes <- unlist(rproj_basenames[duplicated(rproj_basenames)])
-    
+    rproj_dupes <- sort(unlist(rproj_basenames[duplicated(rproj_basenames)]))
+
   }
-  
+
   if (os == "windows") {
-    
     stop("Sorry, check_rproj_dupes() doesn't work on Windows yet :-(")
-    
   }
-  
+
   if (length(rproj_dupes) > 0) {
-    
+
+    if (speak & os == "unix") {
+
+      dupes_string <- paste(rproj_dupes, collapse = ", ")
+      dupes_string_say <- gsub("\\.Rproj", " dot ar proj ", dupes_string)
+
+      message <- paste(
+        "say ha, you fool, you have more than one open RStudio Project with",
+        ifelse(length(rproj_dupes) == 1, "this name:", "these names:"),
+        dupes_string_say
+      )
+
+      system(message)
+
+    }
+
     warning(
       "You've got open RStudio Projects with the same name:\n",
-      paste("-", rproj_dupes, collapse = "\n"),
+      paste("-", rproj_dupes, collapse = "\n"), "\n",
       call. = FALSE
     )
-    
+
   }
-  
+
 }
 
 check_rproj_dupes()
@@ -93,7 +106,11 @@ You've got open RStudio Projects with the same name:
 - sandbox.Rproj 
 ```
 
-So hopefully now I will be less confused when trying to manage my RStudio sessions.
+If `speak = TRUE` then you'll also hear this:
+
+<html><audio controls><source src="/post/2022-07-08-rproj-dupes_files/duplicated.wav" type="audio/wav"></audio></html>
+
+So hopefully now I will be less confused when trying to manage my RStudio sessions. At worst I'll be shocked to hear the creepy computer voice tell me I'm a fool.
 
 ---
 <details><summary>Session info</summary>

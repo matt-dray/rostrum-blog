@@ -24,7 +24,7 @@ draft: no
 <h1>Double trouble</h1>
 <p>Sometimes I write code in an RStudio Project and then go and do something else. My memory is terrible, so later I might open a second instance of the same project and wonder what happened to that code I’d written before.</p>
 <p>Is there a way to stop this from happening? Maybe there’s a setting in RStudio or something? Maybe I should just Google it?</p>
-<p>Nah, instead I hacked together a little function that can be run on startup to warn me if I have multiple RStudio sessions open with the same name. It’s called <code>check_rproj_dupes()</code>.</p>
+<p>Nah, instead I hacked together a little function that can be run on startup to warn me—via both text and audio—if I have multiple RStudio sessions open with the same name. It’s called <code>check_rproj_dupes()</code>.</p>
 <p>Note that the function checks which OS you’re using with <code>.Platform$OS.type</code>, with the hope that one day I (or you) will write some corresponding code that will work on Windows. I don’t use Windows, so I can’t test anything.</p>
 <p>The code has a few steps:</p>
 <ol style="list-style-type: decimal">
@@ -33,41 +33,54 @@ draft: no
 <li>Extract the full paths to the .RProj files</li>
 <li>Extract the basenames from the paths (i.e. just the filename for the .RProj)</li>
 <li>Compare the basenames to see which are duplicated</li>
-<li>Display any matches in a warning message</li>
+<li>Display any matches in a warning message and, if <code>speak = TRUE</code>, read aloud a warning message that’s passed to the <code>say</code> function via <code>system()</code></li>
 </ol>
 <p>Yeah, this could be simplified, but I’m no code golfer. I just want it to work and for it to be pretty obvious what it’s doing.</p>
-<p>Here it is (or see it <a href="https://gist.github.com/matt-dray/b4ff92f01093f512dae99b670e3eddb7">in a GitHub Gist</a>):</p>
-<pre class="r"><code>check_rproj_dupes &lt;- function() {
-  
+<p>Here it is (or see it <a href="https://gist.github.com/matt-dray/b4ff92f01093f512dae99b670e3eddb7">in a GitHub Gist</a>, where you can write your suggestions for how to improve it):</p>
+<pre class="r"><code>check_rproj_dupes &lt;- function(speak = TRUE) {
+
   os &lt;- .Platform$OS.type
-  
+
   if (os == &quot;unix&quot;) {
-    
+
     ps_out &lt;- system(&quot;ps -e&quot;, intern = TRUE)
     ps_rproj &lt;- ps_out[grepl(&quot;.Rproj&quot;, ps_out)]
     ps_split &lt;- strsplit(ps_rproj, &quot;\\s&quot;)
     rproj_paths &lt;- lapply(ps_split, function(x) x[grepl(&quot;.Rproj$&quot;, x)])
     rproj_basenames &lt;- lapply(rproj_paths, basename)
-    rproj_dupes &lt;- unlist(rproj_basenames[duplicated(rproj_basenames)])
-    
+    rproj_dupes &lt;- sort(unlist(rproj_basenames[duplicated(rproj_basenames)]))
+
   }
-  
+
   if (os == &quot;windows&quot;) {
-    
     stop(&quot;Sorry, check_rproj_dupes() doesn&#39;t work on Windows yet :-(&quot;)
-    
   }
-  
+
   if (length(rproj_dupes) &gt; 0) {
-    
+
+    if (speak &amp; os == &quot;unix&quot;) {
+
+      dupes_string &lt;- paste(rproj_dupes, collapse = &quot;, &quot;)
+      dupes_string_say &lt;- gsub(&quot;\\.Rproj&quot;, &quot; dot ar proj &quot;, dupes_string)
+
+      message &lt;- paste(
+        &quot;say ha, you fool, you have more than one open RStudio Project with&quot;,
+        ifelse(length(rproj_dupes) == 1, &quot;this name:&quot;, &quot;these names:&quot;),
+        dupes_string_say
+      )
+
+      system(message)
+
+    }
+
     warning(
       &quot;You&#39;ve got open RStudio Projects with the same name:\n&quot;,
-      paste(&quot;-&quot;, rproj_dupes, collapse = &quot;\n&quot;),
+      paste(&quot;-&quot;, rproj_dupes, collapse = &quot;\n&quot;), &quot;\n&quot;,
       call. = FALSE
     )
-    
+
   }
-  
+
 }
 
 check_rproj_dupes()</code></pre>
@@ -78,7 +91,13 @@ check_rproj_dupes()</code></pre>
 <pre><code>Warning message:
 You&#39;ve got open RStudio Projects with the same name:
 - sandbox.Rproj </code></pre>
-<p>So hopefully now I will be less confused when trying to manage my RStudio sessions.</p>
+<p>If <code>speak = TRUE</code> then you’ll also hear this:</p>
+<html>
+<audio controls>
+<source src="/post/2022-07-08-rproj-dupes_files/duplicated.wav" type="audio/wav">
+</audio>
+</html>
+<p>So hopefully now I will be less confused when trying to manage my RStudio sessions. At worst I’ll be shocked to hear the creepy computer voice tell me I’m a fool.</p>
 <hr />
 <details>
 <summary>
@@ -94,7 +113,7 @@ Session info
 ##  collate  en_GB.UTF-8
 ##  ctype    en_GB.UTF-8
 ##  tz       Europe/London
-##  date     2022-07-08
+##  date     2022-07-11
 ##  pandoc   2.17.1.1 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/ (via rmarkdown)
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
