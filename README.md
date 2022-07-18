@@ -28,9 +28,9 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 🔢 There have been 127 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
-📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
+📅 That’s a post roughly every 12 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 9 day(s) ago: [Stop opening the same
+🆕 The latest post was published 10 day(s) ago: [Stop opening the same
 RStudio Project
 twice](https://www.rostrum.blog/2022/07/08/rproj-dupes/).
 
@@ -176,4 +176,4 @@ twice](https://www.rostrum.blog/2022/07/08/rproj-dupes/).
 
 -----
 
-*Updated 2022-07-17 03:51:14*
+*Updated 2022-07-18 04:00:08*
