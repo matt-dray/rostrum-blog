@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 10 day(s) ago: [Stop opening the same
+🆕 The latest post was published 11 day(s) ago: [Stop opening the same
 RStudio Project
 twice](https://www.rostrum.blog/2022/07/08/rproj-dupes/).
 
@@ -176,4 +176,4 @@ twice](https://www.rostrum.blog/2022/07/08/rproj-dupes/).
 
 -----
 
-*Updated 2022-07-18 04:00:08*
+*Updated 2022-07-19 04:08:49*
