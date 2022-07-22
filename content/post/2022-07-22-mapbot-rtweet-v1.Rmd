@@ -12,21 +12,20 @@ tags:
   - r
   - rtweet
   - twitter
-draft: yes
+draft: no
 ---
 
 <div class="figure">
 <img src="/post/2022-07-22-mapbot-rtweet-v1_files/tweet-alt.png" alt="Screenshot of a tweet by the londonmapbot account showing a satellite image of Greater London. The 'alt' button has been clicked, revealing a pop-up with some text that reads 'A satellite image of a random location in Greater London, provided by MapBox. Typically contains a residential or industrial area, some fields or a golf course'." width="100%"/>
-<p class="caption">Text</p>
 </div>
 
 # tl;dr 
 
-Version 1.0 of the {rtweet} package [has been released with breaking changes](https://ropensci.org/blog/2022/07/21/rtweet-1-0-0/). I've updated the R script of [londonmapbot](https://twitter.com/londonmapbot) so that the scheduled GitHub Action doesn't fail.
+Version 1.0 of the {rtweet} package [has been released with breaking changes](https://ropensci.org/blog/2022/07/21/rtweet-1-0-0/). I've updated [the R script](https://github.com/matt-dray/londonmapbot/blob/master/londonmapbot-tweet.R) of [londonmapbot](https://twitter.com/londonmapbot) so that [its scheduled GitHub Action](https://github.com/matt-dray/londonmapbot/blob/master/.github/workflows/londonmapbot.yml) doesn't fail.
 
 # New hymn sheet
 
-I wrote a Twitter bot a while ago called [londonmapbot](https://twitter.com/londonmapbot). See the recent talk at [LondonR]((https://www.rostrum.blog/2022/02/12/mapbotr-londonr/) or [the blogpost about its inception](https://www.rostrum.blog/2020/09/21/londonmapbot/).
+I wrote a Twitter bot a while ago called [londonmapbot](https://twitter.com/londonmapbot). See the recent talk at [LondonR](https://www.rostrum.blog/2022/02/12/mapbotr-londonr/) or [the blogpost about its inception](https://www.rostrum.blog/2020/09/21/londonmapbot/).
 
 Basically, an R script runs on schedule via a [GitHub Action](https://github.com/features/actions). It generates a random point in Greater London and pulls a corresponding satellite image from [MapBox](https://www.mapbox.com/). The picture, the coordinates and an OpenStreetMap link are then posted to Twitter with [the {rtweet} package](https://docs.ropensci.org/rtweet/).
 
@@ -34,28 +33,28 @@ I updated recently the R script in [the londonmapbot source code](https://github
 
 # Change your tune
 
-I made two major changes to [the londonmapbot R script](https://github.com/matt-dray/londonmapbot): 
+I made two major changes to [the londonmapbot R script](https://github.com/matt-dray/londonmapbot) given {rtweet} v1.0: 
 
 1. I used `rtweet_bot()` to authorise with the Twitter API, instead of `create_token()`
 2. I provided alt text with the `media_alt_text` argument to `post_tweet()`
 
 Other folks who use the same approach as londonmapbot will likely need to make these fundamental changes as well.[^mapbotverse]
 
-I also made a third change---to specify the filetype of the downloaded MapBox image---that will be relevant if you forked londonmapbot or if your tweets use a downloaded image.
+I also made a third change---to specify the filetype of the downloaded MapBox image---that will only be relevant if you forked londonmapbot or if your tweets use a downloaded image.
 
 ## 1. Authentication
 
-You need to authenticate with Twitter API before a tweet can be posted.
+You need to authenticate with the Twitter API before a tweet can be posted.
 
 Prior to {rtweet} v1.0 you provided your tokens and keys in the `create_token()` function, but this will now fail with the error `create_token() was deprecated in rtweet 1.0.0.`.
 
-There are now three options for passing tokens and keys, depending on the need: `rtweet_app()`, `rtweet_user()` and `rtweet_bot()`. The last of these is what we need, since it:
+There are now three options for passing tokens and keys, depending on the need: `rtweet_app()`, `rtweet_user()` and `rtweet_bot()`. The last of these is what we need, because:
 
-> authenticates a bot that takes actions on behalf of an app [which] is most appropriate if you want to create a Twitter account that is run by a computer, rather than a human
+> [It] authenticates a bot that takes actions on behalf of an app [which] is most appropriate if you want to create a Twitter account that is run by a computer, rather than a human
 
 As with `create_token()`, we still need to provide the `api_key`, `api_secret`, `access_token` and `access_secret`. As outlined [in the first londonmapbot blogpost](https://www.rostrum.blog/2020/09/21/londonmapbot/#secrets), these can be stored as named secrets in the GitHub repo itself and called into the environment with `Sys.getenv()`.
 
-So, the code was switched to this:
+So, I changed the R code to this:
 
 ```{r auth-new, eval=FALSE}
 londonmapbot_token <- rtweet::rtweet_bot(
@@ -66,7 +65,7 @@ londonmapbot_token <- rtweet::rtweet_bot(
 )
 ```
 
-And it was previously this:
+Where it was previously this:
 
 ```{r auth-old, eval=FALSE}
 londonmapbot_token <- rtweet::create_token(
@@ -90,7 +89,7 @@ Since the sampled location is different in every londonmapbot tweet, it's not id
 
 For now I've settled on a fixed string that will be posted as the alt text for every image. This is better than nothing, but should be improved so that it's more dynamic.
 
-Maybe we could infer something from the average colour of the image ([I wrote about this before](https://www.rostrum.blog/2021/07/23/london-colour/)) or maybe predict what the terrain is (we've plenty of training data from old londonmapbot tweets).
+Maybe we could infer something from the average colour of the image ([I wrote about this before](https://www.rostrum.blog/2021/07/23/london-colour/)) or maybe predict what the terrain is, given there's plenty of training data from old londonmapbot tweets.
 
 Regardless, I added alt text to the code like this:
 
@@ -109,7 +108,7 @@ rtweet::post_tweet(
 )
 ```
 
-And it was previously this:
+Where it was previously like this:
 
 ```{r alt-text-old, eval=FALSE}
 rtweet::post_tweet(
@@ -125,7 +124,7 @@ See the image at the top of this blogpost for an example of the alt text now pro
 
 The R script behind londonmapbot downloads a MapBox satellite image to a temporary file created with `tempfile()`. It was always bad practice to omit the argument `fileext = ".jpeg"` from this function, which is used to provide a file extension to the temporary filepath of the downloaded image.
 
-I noticed that the absence of an explicit file extension was causing an error in the execution of the R script under {rtweet} v1.0. So I made sure to change the code to this:
+I noticed that the absence of an explicit file extension seemed to be causing an error in the execution of the R script, so I made sure to change the code to this:
 
 ```{r file-ext-new, eval=FALSE}
 temp_file <- tempfile(fileext = ".jpeg")
@@ -143,7 +142,7 @@ A subtle change, but a necessary one. You may need to do this too if you followe
 
 # Rest
 
-This post may not have impacted you if you aren't the in niche user group of 'people who may have forked or used a repo template for londonmapbot to adapt and make their own Twitter bot based on {rtweet} and GitHub Actions, or otherwise used it as inspiration to create their own bot'.[^join]
+This post may not have impacted you if you aren't the in niche user group of 'people who may have forked or used a repo template for londonmapbot to adapt and make their own Twitter bot based on {rtweet} and GitHub Actions, or otherwise used it as inspiration to create their own bot'.[^joinus]
 
 But it's worth recording this in long-form in case you ever come across the sorts of {rtweet} errors I'm talking about here.
 

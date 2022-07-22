@@ -1,0 +1,166 @@
+---
+title: "Fixing londonmapbot for {rtweet} v1.0"
+author: 'Matt Dray'
+date: '2022-07-22'
+slug: mapbot-rtweet-v1
+categories:
+  - code
+tags:
+  - github-actions
+  - londonmapbot
+  - mapbox
+  - r
+  - rtweet
+  - twitter
+draft: no
+---
+
+
+
+<div class="figure">
+<p><img src="/post/2022-07-22-mapbot-rtweet-v1_files/tweet-alt.png" alt="Screenshot of a tweet by the londonmapbot account showing a satellite image of Greater London. The 'alt' button has been clicked, revealing a pop-up with some text that reads 'A satellite image of a random location in Greater London, provided by MapBox. Typically contains a residential or industrial area, some fields or a golf course'." width="100%"/></p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>Version 1.0 of the {rtweet} package <a href="https://ropensci.org/blog/2022/07/21/rtweet-1-0-0/">has been released with breaking changes</a>. I’ve updated <a href="https://github.com/matt-dray/londonmapbot/blob/master/londonmapbot-tweet.R">the R script</a> of <a href="https://twitter.com/londonmapbot">londonmapbot</a> so that <a href="https://github.com/matt-dray/londonmapbot/blob/master/.github/workflows/londonmapbot.yml">its scheduled GitHub Action</a> doesn’t fail.</p>
+</div>
+<div id="new-hymn-sheet" class="section level1">
+<h1>New hymn sheet</h1>
+<p>I wrote a Twitter bot a while ago called <a href="https://twitter.com/londonmapbot">londonmapbot</a>. See the recent talk at <a href="https://www.rostrum.blog/2022/02/12/mapbotr-londonr/">LondonR</a> or <a href="https://www.rostrum.blog/2020/09/21/londonmapbot/">the blogpost about its inception</a>.</p>
+<p>Basically, an R script runs on schedule via a <a href="https://github.com/features/actions">GitHub Action</a>. It generates a random point in Greater London and pulls a corresponding satellite image from <a href="https://www.mapbox.com/">MapBox</a>. The picture, the coordinates and an OpenStreetMap link are then posted to Twitter with <a href="https://docs.ropensci.org/rtweet/">the {rtweet} package</a>.</p>
+<p>I updated recently the R script in <a href="https://github.com/matt-dray/londonmapbot">the londonmapbot source code</a> due to some breaking changes in {rtweet}, which <a href="https://llrs.dev/">Lluís Revilla Sancho</a> recently bumped <a href="https://ropensci.org/blog/2022/07/21/rtweet-1-0-0/">to the landmark version 1.0</a>. Congratulations!</p>
+</div>
+<div id="change-your-tune" class="section level1">
+<h1>Change your tune</h1>
+<p>I made two major changes to <a href="https://github.com/matt-dray/londonmapbot">the londonmapbot R script</a> given {rtweet} v1.0:</p>
+<ol style="list-style-type: decimal">
+<li>I used <code>rtweet_bot()</code> to authorise with the Twitter API, instead of <code>create_token()</code></li>
+<li>I provided alt text with the <code>media_alt_text</code> argument to <code>post_tweet()</code></li>
+</ol>
+<p>Other folks who use the same approach as londonmapbot will likely need to make these fundamental changes as well.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>I also made a third change—to specify the filetype of the downloaded MapBox image—that will only be relevant if you forked londonmapbot or if your tweets use a downloaded image.</p>
+<div id="authentication" class="section level2">
+<h2>1. Authentication</h2>
+<p>You need to authenticate with the Twitter API before a tweet can be posted.</p>
+<p>Prior to {rtweet} v1.0 you provided your tokens and keys in the <code>create_token()</code> function, but this will now fail with the error <code>create_token() was deprecated in rtweet 1.0.0.</code>.</p>
+<p>There are now three options for passing tokens and keys, depending on the need: <code>rtweet_app()</code>, <code>rtweet_user()</code> and <code>rtweet_bot()</code>. The last of these is what we need, because:</p>
+<blockquote>
+<p>[It] authenticates a bot that takes actions on behalf of an app [which] is most appropriate if you want to create a Twitter account that is run by a computer, rather than a human</p>
+</blockquote>
+<p>As with <code>create_token()</code>, we still need to provide the <code>api_key</code>, <code>api_secret</code>, <code>access_token</code> and <code>access_secret</code>. As outlined <a href="https://www.rostrum.blog/2020/09/21/londonmapbot/#secrets">in the first londonmapbot blogpost</a>, these can be stored as named secrets in the GitHub repo itself and called into the environment with <code>Sys.getenv()</code>.</p>
+<p>So, I changed the R code to this:</p>
+<pre class="r"><code>londonmapbot_token &lt;- rtweet::rtweet_bot(
+  api_key       = Sys.getenv(&quot;TWITTER_CONSUMER_API_KEY&quot;),
+  api_secret    = Sys.getenv(&quot;TWITTER_CONSUMER_API_SECRET&quot;),
+  access_token  = Sys.getenv(&quot;TWITTER_ACCESS_TOKEN&quot;),
+  access_secret = Sys.getenv(&quot;TWITTER_ACCESS_TOKEN_SECRET&quot;)
+)</code></pre>
+<p>Where it was previously this:</p>
+<pre class="r"><code>londonmapbot_token &lt;- rtweet::create_token(
+  app = &quot;londonmapbot&quot;,
+  consumer_key    = Sys.getenv(&quot;TWITTER_CONSUMER_API_KEY&quot;),
+  consumer_secret = Sys.getenv(&quot;TWITTER_CONSUMER_API_SECRET&quot;),
+  access_token    = Sys.getenv(&quot;TWITTER_ACCESS_TOKEN&quot;),
+  access_secret   = Sys.getenv(&quot;TWITTER_ACCESS_TOKEN_SECRET&quot;)
+)</code></pre>
+<p>Note that you no longer need to pass the <code>app</code> name as an argument and that you use <code>api_*</code> rather than <code>consumer_*</code> in the arguments.</p>
+</div>
+<div id="alt-text" class="section level2">
+<h2>2. Alt text</h2>
+<p>You can no longer post an image without <a href="https://webaim.org/techniques/alttext/">alt text</a>, which is a positive move for the package. If you try to upload without alt text, you’ll get <code>Error: Media and alt_text must be character vectors.</code></p>
+<p>To add alt text, you must add the argument <code>media_alt_text</code> to the <code>post_tweet()</code> function.</p>
+<p>Since the sampled location is different in every londonmapbot tweet, it’s not ideal to provide a single blanket statement for all images that are returned from MapBox. Sometimes the image will contain an airport, sometimes the Thames, usually a golf course.</p>
+<p>For now I’ve settled on a fixed string that will be posted as the alt text for every image. This is better than nothing, but should be improved so that it’s more dynamic.</p>
+<p>Maybe we could infer something from the average colour of the image (<a href="https://www.rostrum.blog/2021/07/23/london-colour/">I wrote about this before</a>) or maybe predict what the terrain is, given there’s plenty of training data from old londonmapbot tweets.</p>
+<p>Regardless, I added alt text to the code like this:</p>
+<pre class="r"><code>alt_text &lt;- paste(
+  &quot;A satellite image of a random location in Greater London,&quot;,
+  &quot;provided by MapBox. Typically contains a residential or&quot;,
+  &quot;industrial area, some fields or a golf course.&quot;
+)
+
+rtweet::post_tweet(
+  status         = latlon_details,
+  media          = temp_file,
+  media_alt_text = alt_text,
+  token          = londonmapbot_token
+)</code></pre>
+<p>Where it was previously like this:</p>
+<pre class="r"><code>rtweet::post_tweet(
+  status = latlon_details,
+  media  = temp_file,
+  token  = londonmapbot_token
+)</code></pre>
+<p>See the image at the top of this blogpost for an example of the alt text now provided to each londonmapbot tweet.</p>
+</div>
+<div id="file-extension" class="section level2">
+<h2>3. File extension</h2>
+<p>The R script behind londonmapbot downloads a MapBox satellite image to a temporary file created with <code>tempfile()</code>. It was always bad practice to omit the argument <code>fileext = ".jpeg"</code> from this function, which is used to provide a file extension to the temporary filepath of the downloaded image.</p>
+<p>I noticed that the absence of an explicit file extension seemed to be causing an error in the execution of the R script, so I made sure to change the code to this:</p>
+<pre class="r"><code>temp_file &lt;- tempfile(fileext = &quot;.jpeg&quot;)
+download.file(img_url, temp_file)</code></pre>
+<p>From this:</p>
+<pre class="r"><code>temp_file &lt;- tempfile()
+download.file(img_url, temp_file)</code></pre>
+<p>A subtle change, but a necessary one. You may need to do this too if you followed what londonmapbot was doing previously.</p>
+</div>
+</div>
+<div id="rest" class="section level1">
+<h1>Rest</h1>
+<p>This post may not have impacted you if you aren’t the in niche user group of ‘people who may have forked or used a repo template for londonmapbot to adapt and make their own Twitter bot based on {rtweet} and GitHub Actions, or otherwise used it as inspiration to create their own bot’.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>But it’s worth recording this in long-form in case you ever come across the sorts of {rtweet} errors I’m talking about here.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
+##  os       macOS Big Sur/Monterey 10.16
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_GB.UTF-8
+##  ctype    en_GB.UTF-8
+##  tz       Europe/London
+##  date     2022-07-22
+##  pandoc   2.17.1.1 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/ (via rmarkdown)
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date (UTC) lib source
+##  blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.3.0   2022-04-25 [1] CRAN (R 4.2.0)
+##  digest        0.6.29  2021-12-01 [1] CRAN (R 4.2.0)
+##  evaluate      0.15    2022-02-18 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.0   2022-02-22 [1] CRAN (R 4.2.0)
+##  knitr         1.39    2022-04-26 [1] CRAN (R 4.2.0)
+##  magrittr      2.0.3   2022-03-30 [1] CRAN (R 4.2.0)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+##  rlang         1.0.2   2022-03-04 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.13    2020-11-12 [1] CRAN (R 4.2.0)
+##  sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+##  stringi       1.7.6   2021-11-29 [1] CRAN (R 4.2.0)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.2.0)
+##  xfun          0.30    2022-03-02 [1] CRAN (R 4.2.0)
+##  yaml          2.3.5   2022-02-21 [1] CRAN (R 4.2.0)
+## 
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>That may well be a number of people in <a href="https://twitter.com/i/lists/1492559073287581707">the Twitter list called ‘The mapbotverse’</a>, which is a collection of 25 or so bots that I think use code from, or were inspired by, londonmapbot.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>But you too could join us in this really neat club for cool folks! Follow the instructions in <a href="https://www.rostrum.blog/2022/02/12/mapbotr-londonr/">my LondonR talk</a> and take a look at <a href="https://oscarbaruffa.com/twitterbot/">Oscar Baruffa’s guide</a>.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
