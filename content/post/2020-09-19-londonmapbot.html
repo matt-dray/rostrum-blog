@@ -9,13 +9,13 @@ categories:
 tags:
   - api
   - github-actions
+  - londonmapbot
   - mapbox
   - r
   - rtweet
   - twitter
 ---
 
-<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
 
 
 <div class="figure">
@@ -107,17 +107,20 @@ jobs:
 install.packages(&quot;rtweet&quot;)
 
 # Create a token containing your Twitter keys
-rtweet::create_token(
-  app = &quot;londonmapbot&quot;,  # the name of the Twitter app
-  consumer_key = Sys.getenv(&quot;TWITTER_CONSUMER_API_KEY&quot;),
-  consumer_secret = Sys.getenv(&quot;TWITTER_CONSUMER_API_SECRET&quot;),
-  access_token = Sys.getenv(&quot;TWITTER_ACCESS_TOKEN&quot;),
+rtweet::rtweet_bot(
+  api_key       = Sys.getenv(&quot;TWITTER_CONSUMER_API_KEY&quot;),
+  api_secret    = Sys.getenv(&quot;TWITTER_CONSUMER_API_SECRET&quot;),
+  access_token  = Sys.getenv(&quot;TWITTER_ACCESS_TOKEN&quot;),
   access_secret = Sys.getenv(&quot;TWITTER_ACCESS_TOKEN_SECRET&quot;)
 )
 
 # Example: post a tweet via the API
 # The keys will are in your environment thanks to create_token()
 rtweet::post_tweet(status = &quot;This is a test tweet.&quot;)</code></pre>
+<div class="tip">
+<p><svg aria-hidden="true" role="img" viewBox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;"><path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"/></svg> <b>Update</b></p>
+<p>{rtweet} version 1.0 was <a href="https://ropensci.org/blog/2022/07/21/rtweet-1-0-0/">released with breaking changes in July 2022</a> and so I’ve changed the code above to use the function <code>rtweet_bot()</code> instead of <code>create_token()</code>. You <a href="https://www.rostrum.blog/2022/07/22/mapbot-rtweet-v1/">can read a separate blogpost</a> about these changes.</p>
+</div>
 <p>This is basically what happens in <a href="https://github.com/matt-dray/londonmapbot/blob/master/londonmapbot-tweet.R">the londonmapbot R script</a> too. When writing an action, the keys aren’t fetched from your .Renviron file, however. Instead, you can encrypt them on GitHub and provide them in the <code>env</code> call of your action’s YAML file. See the <a href="#secrets">‘Secrets’</a> section below for more detail on this.</p>
 </div>
 <div id="mapbox" class="section level2">
@@ -149,7 +152,7 @@ img_url &lt;- paste0(
 )
 
 # Download the image to a temporary location
-temp_file &lt;- tempfile()
+temp_file &lt;- tempfile(fileext = &quot;.jpeg&quot;)
 download.file(img_url, temp_file)</code></pre>
 <p>The code shows a <code>paste0()</code> statement that builds the URL with random latitude and longitude and the Mapbox key. The image from that URL is then downloaded into a temporary file, where it can be supplied to the <code>media</code> argument of <code>rtweet::create_tweet()</code> for posting to Twitter.</p>
 </div>
@@ -184,48 +187,50 @@ Keep it secret… keep it safe.
 Session info
 </summary>
 <pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
-##  setting  value                       
-##  version  R version 4.1.0 (2021-05-18)
-##  os       macOS Big Sur 10.16         
-##  system   x86_64, darwin17.0          
-##  ui       X11                         
-##  language (EN)                        
-##  collate  en_GB.UTF-8                 
-##  ctype    en_GB.UTF-8                 
-##  tz       Europe/London               
-##  date     2022-02-12                  
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
+##  os       macOS Big Sur/Monterey 10.16
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_GB.UTF-8
+##  ctype    en_GB.UTF-8
+##  tz       Europe/London
+##  date     2022-07-23
+##  pandoc   2.17.1.1 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/ (via rmarkdown)
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
-##  package     * version date       lib source        
-##  blogdown      1.4     2021-07-23 [1] CRAN (R 4.1.0)
-##  bookdown      0.23    2021-08-13 [1] CRAN (R 4.1.0)
-##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.1.0)
-##  cli           3.1.0   2021-10-27 [1] CRAN (R 4.1.0)
-##  digest        0.6.29  2021-12-01 [1] CRAN (R 4.1.0)
-##  evaluate      0.14    2019-05-28 [1] CRAN (R 4.1.0)
-##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.1.0)
-##  fontawesome   0.2.2   2021-07-02 [1] CRAN (R 4.1.0)
-##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.1.0)
-##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.1.0)
-##  jsonlite      1.7.2   2020-12-09 [1] CRAN (R 4.1.0)
-##  knitr         1.37    2021-12-16 [1] CRAN (R 4.1.0)
-##  magrittr      2.0.1   2020-11-17 [1] CRAN (R 4.1.0)
-##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.1.0)
-##  rlang         0.4.12  2021-10-18 [1] CRAN (R 4.1.0)
-##  rmarkdown     2.10    2021-08-06 [1] CRAN (R 4.1.0)
-##  rstudioapi    0.13    2020-11-12 [1] CRAN (R 4.1.0)
-##  sass          0.4.0   2021-05-12 [1] CRAN (R 4.1.0)
-##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.1.0)
-##  stringi       1.7.6   2021-11-29 [1] CRAN (R 4.1.0)
-##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.1.0)
-##  withr         2.4.3   2021-11-30 [1] CRAN (R 4.1.0)
-##  xfun          0.29    2021-12-14 [1] CRAN (R 4.1.0)
-##  yaml          2.2.1   2020-02-01 [1] CRAN (R 4.1.0)
+##  package     * version date (UTC) lib source
+##  blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.3.0   2022-04-25 [1] CRAN (R 4.2.0)
+##  digest        0.6.29  2021-12-01 [1] CRAN (R 4.2.0)
+##  evaluate      0.15    2022-02-18 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  fontawesome   0.2.2   2021-07-02 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.0   2022-02-22 [1] CRAN (R 4.2.0)
+##  knitr         1.39    2022-04-26 [1] CRAN (R 4.2.0)
+##  magrittr      2.0.3   2022-03-30 [1] CRAN (R 4.2.0)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+##  rlang         1.0.2   2022-03-04 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.13    2020-11-12 [1] CRAN (R 4.2.0)
+##  sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+##  stringi       1.7.6   2021-11-29 [1] CRAN (R 4.2.0)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.2.0)
+##  xfun          0.30    2022-03-02 [1] CRAN (R 4.2.0)
+##  yaml          2.3.5   2022-02-21 [1] CRAN (R 4.2.0)
 ## 
-## [1] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</code></pre>
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
 </details>
 </div>
-<div class="footnotes">
+<div class="footnotes footnotes-end-of-document">
 <hr />
 <ol>
 <li id="fn1"><p>Those look suspiciously like a large number of tennis courts, including some in stadia. Where could that be? The coordinates are <a href="https://goo.gl/maps/LAkdSRTkrEKHu3hi9">51.4317, -0.2151</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>

@@ -9,6 +9,7 @@ categories:
 tags:
   - api
   - github-actions
+  - londonmapbot
   - mapbox
   - r
   - rtweet
@@ -125,11 +126,10 @@ Below is an example of how you can use {rtweet} to post a tweet from R if you've
 install.packages("rtweet")
 
 # Create a token containing your Twitter keys
-rtweet::create_token(
-  app = "londonmapbot",  # the name of the Twitter app
-  consumer_key = Sys.getenv("TWITTER_CONSUMER_API_KEY"),
-  consumer_secret = Sys.getenv("TWITTER_CONSUMER_API_SECRET"),
-  access_token = Sys.getenv("TWITTER_ACCESS_TOKEN"),
+rtweet::rtweet_bot(
+  api_key       = Sys.getenv("TWITTER_CONSUMER_API_KEY"),
+  api_secret    = Sys.getenv("TWITTER_CONSUMER_API_SECRET"),
+  access_token  = Sys.getenv("TWITTER_ACCESS_TOKEN"),
   access_secret = Sys.getenv("TWITTER_ACCESS_TOKEN_SECRET")
 )
 
@@ -137,6 +137,12 @@ rtweet::create_token(
 # The keys will are in your environment thanks to create_token()
 rtweet::post_tweet(status = "This is a test tweet.")
 ```
+
+<div class="tip"> `r fontawesome::fa("exclamation-circle")` <b>Update</b>
+
+{rtweet} version 1.0 was [released with breaking changes in July 2022](https://ropensci.org/blog/2022/07/21/rtweet-1-0-0/) and so I've changed the code above to use the function `rtweet_bot()` instead of `create_token()`. You [can read a separate blogpost](https://www.rostrum.blog/2022/07/22/mapbot-rtweet-v1/) about these changes.
+
+</div>
 
 This is basically what happens in [the londonmapbot R script](https://github.com/matt-dray/londonmapbot/blob/master/londonmapbot-tweet.R) too. When writing an action, the keys aren't fetched from your .Renviron file, however. Instead, you can encrypt them on GitHub and provide them in the `env` call of your action's YAML file. See the ['Secrets'](#secrets) section below for more detail on this.
 
@@ -177,7 +183,7 @@ img_url <- paste0(
 )
 
 # Download the image to a temporary location
-temp_file <- tempfile()
+temp_file <- tempfile(fileext = ".jpeg")
 download.file(img_url, temp_file)
 ```
 
