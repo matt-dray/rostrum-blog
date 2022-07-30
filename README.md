@@ -28,9 +28,9 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 🔢 There have been 128 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
-📅 That’s a post roughly every 12 days, or about 2.5 posts per month.
+📅 That’s a post roughly every 12 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 6 day(s) ago: [Fixing londonmapbot for
+🆕 The latest post was published 8 day(s) ago: [Fixing londonmapbot for
 {rtweet} v1.0](https://www.rostrum.blog/2022/07/22/mapbot-rtweet-v1/).
 
 📈 This 2D plot shows posts over time:
@@ -176,4 +176,4 @@ since 2018-04-14.
 
 -----
 
-*Updated 2022-07-28 03:54:21*
+*Updated 2022-07-30 03:53:44*
