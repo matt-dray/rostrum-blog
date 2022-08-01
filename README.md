@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 9 day(s) ago: [Fixing londonmapbot for
+🆕 The latest post was published 10 day(s) ago: [Fixing londonmapbot for
 {rtweet} v1.0](https://www.rostrum.blog/2022/07/22/mapbot-rtweet-v1/).
 
 📈 This 2D plot shows posts over time:
@@ -176,4 +176,4 @@ since 2018-04-14.
 
 -----
 
-*Updated 2022-07-31 03:48:07*
+*Updated 2022-08-01 04:12:41*
