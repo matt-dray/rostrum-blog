@@ -1,7 +1,7 @@
 ---
 title: "Stop opening the same RStudio Project twice"
 author: 'Matt Dray'
-date: '2022-07-08'
+date: '2022-07-08' 
 slug: rproj-dupes
 categories:
   - code
@@ -37,7 +37,7 @@ draft: no
 </ol>
 <p>Yeah, this could be simplified, but I’m no code golfer. I just want it to work and for it to be pretty obvious what it’s doing.</p>
 <p>Here it is (or see it <a href="https://gist.github.com/matt-dray/b4ff92f01093f512dae99b670e3eddb7">in a GitHub Gist</a>, where you can write your suggestions for how to improve it):</p>
-<pre class="r"><code>check_rproj_dupes &lt;- function(speak = TRUE) {
+<pre class="r"><code>check_rproj_dupes &lt;- function(speak = FALSE) {
 
   os &lt;- .Platform$OS.type
 
@@ -83,9 +83,10 @@ draft: no
 
 }
 
-check_rproj_dupes()</code></pre>
+check_rproj_dupes()
+rm(check_rproj_dupes)</code></pre>
 <p>How would you actually use this though?</p>
-<p>You can add it to your hidden .Rprofile file, which is a place that you can store code that runs whenever RStudio is started.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> Perhaps the easiest way to open it is with <code>usethis::edit_r_profile()</code>. Then you can paste in all the code from the block above.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>You can add it to your ‘hidden’ .Rprofile file, which is a place that you can store code that runs whenever RStudio is started.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> Perhaps the easiest way to open it is with <code>usethis::edit_r_profile()</code>. Then you can paste in all the code from the block above.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
 <p>On startup, the code will run and if there’s no problem, then you’ll see no message. No news is good news.</p>
 <p>But let’s say I had opened sandbox.Rproj earlier and was now opening the file again. In this second RStudio instance, the usual R startup message will print, followed by a warning:</p>
 <pre><code>Warning message:
@@ -113,8 +114,8 @@ Session info
 ##  collate  en_GB.UTF-8
 ##  ctype    en_GB.UTF-8
 ##  tz       Europe/London
-##  date     2022-07-11
-##  pandoc   2.17.1.1 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/ (via rmarkdown)
+##  date     2022-08-10
+##  pandoc   2.18 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/tools/ (via rmarkdown)
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
 ##  package     * version date (UTC) lib source
