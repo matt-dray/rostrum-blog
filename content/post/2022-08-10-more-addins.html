@@ -1,0 +1,148 @@
+---
+title: "Two RStudio Addins: {quartostamp} and {snorkel}"
+author: 'Matt Dray'
+date: '2022-08-11'
+slug: quartostamp-snorkel
+categories:
+  - code
+  - package
+tags:
+  - r
+  - rstudio-addin
+  - quartostamp
+  - snorkel
+draft: no
+---
+
+
+
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I made two packages that contain RStudio Addins: <a href="https://matt-dray.github.io/quartostamp/">{quartostamp}</a> inserts little divs and classes into your <a href="https://quarto.org/">Quarto</a> documents, while <a href="https://github.com/matt-dray/snorkel">{snorkel}</a> inserts <a href="https://roxygen2.r-lib.org/">{roxygen2}</a> tags to your package-function documentation.</p>
+</div>
+<div id="al-addin" class="section level1">
+<h1>Al Addin</h1>
+<p>You can access R functions at the click of a button (or map them to a keyboard shortcut) with <a href="https://rstudio.github.io/rstudioaddins/">RStudio Addins</a>. I particularly like them for easy sharing of insertable pre-written code.</p>
+<p>See <a href="https://github.com/daattali/addinslist">Dean Attali’s Addins list of Addins</a> or the <a href="https://pkg.garrickadenbuie.com/shrtcts/">{shrtcts} package by Garrick Aden-Buie</a> for an alternative approach to inserting snippets.</p>
+<p>On my part:</p>
+<ul>
+<li>I <a href="https://www.rostrum.blog/2022/02/19/backtick/">wrote about</a> the little <a href="https://github.com/matt-dray/backtick">{backtick} Addin package</a> that inserts backticks (`) and backtick constructions<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></li>
+<li>I <a href="https://www.rostrum.blog/2020/11/14/hello-r2eng/">wrote about</a> the <a href="https://matt-dray.github.io/r2eng/">{r2eng} package</a>, which has an Addin that lets you highlight some R code and then speak that expression out loud in English</li>
+<li>I <a href="https://www.rostrum.blog/2019/10/22/blogsnip/">wrote about</a> the <a href="https://matt-dray.github.io/blogsnip/">{blogsnip} Addin package</a> that inserts code used to write this blog</li>
+</ul>
+<p>RStudio Addins are <a href="https://www.rostrum.blog/2022/02/19/backtick/#add-your-own">kinda straightforward to put together</a>. In your R package, put your functions in R/ as usual, then write an inst/rstudio/addins.dcf file to declare them (<a href="https://github.com/matt-dray/quartostamp/blob/main/inst/rstudio/addins.dcf">see an example</a>).</p>
+<p>Of late I’ve written two more packages—<a href="https://matt-dray.github.io/quartostamp/">{quartostamp}</a> and <a href="https://github.com/matt-dray/snorkel">{snorkel}</a>—that contain RStudio Addins to help me write code structures that I struggle to remember when writing <a href="https://quarto.org/">Quarto documents</a> and <a href="">{roxygen2} tags</a>.</p>
+<p>Others seem to have found these useful, so I thought I’d ‘officially’ signal that they exist.</p>
+</div>
+<div id="quartostamp" class="section level1">
+<h1>{quartostamp}</h1>
+<div class="figure">
+<p><img src="/post/2022-08-10-more-addins_files/quartostamp.gif" alt="Screenshot of RStudio window with a Quarto presentation file open. Some functions are selected from an RStudio Addin under the name 'quartostamp'. They insert a div that allows for column layout, a div for speaker notes, and a class that makes the text smaller on a slide." width="100%"/></p>
+</div>
+<p><a href="https://quarto.org/">Quarto</a> is all the rage right now, having been officially launched at <a href="https://www.rstudio.com/blog/four-announcements-from-rstudio-conf-2022/#use-quarto-for-creating-content-with-python-r-julia-and-observable">the recent rstudio::conf(2022) conference</a>.</p>
+<p>People are going nuts for tools and techniques to learn and implement Quarto.</p>
+<p>It’s like the new and trendier R Markdown that’s more platform and language independent. All the more important as the RStudio company <a href="https://www.rstudio.com/blog/rstudio-is-becoming-posit/">(soon-to-be Posit)</a> has embraced a wider audience than just R users.</p>
+<p>A good place to begin with Quarto is <a href="https://github.com/mcanouil/awesome-quarto">the Awesome Quarto GitHub repo</a> by Mickaël Canouil.</p>
+<p>Featured there is <a href="https://matt-dray.github.io/quartostamp/">{quartostamp}</a>, a little R package I made that contains an RStudio Addin to insert into your Quarto doc a number of useful divs and classes.</p>
+<p>As the README has it:</p>
+<blockquote>
+<p>Why ‘quartostamp’? You could physically stamp some pre-prepared type into <a href="https://en.wikipedia.org/wiki/Quarto">a literal quarto document</a>; you can digitally stamp some pre-written elements into your qmd file.</p>
+</blockquote>
+<p>I made this primarily for myself; I’m really bad at remembering syntax. Quarto has many in-built divs and things that I struggle to remember.</p>
+<p>So {quartostamp} acts as your brain outside your brain. For example, did you forget how to insert speaker notes into a presentation? Go to <em>Addins</em> &gt; <em>Insert Speaker Notes</em> and this will be inserted to your doc:</p>
+<pre class="r"><code>::: {.notes}
+Speaker notes go here.
+:::</code></pre>
+<p>That’s a straightforward one. It’s more complex to remember how to insert a two-column layout. Go to <em>Addins</em> &gt; <em>Insert Column Layout</em> and you get this:</p>
+<pre class="r"><code>:::: {.columns}
+
+::: {.column width=&#39;40%&#39;}
+Left column
+:::
+
+::: {.column width=&#39;60%&#39;}
+Right column
+:::
+
+::::</code></pre>
+<p>Go to the package website to <a href="https://matt-dray.github.io/quartostamp/reference/index.html">see the current list of functions</a> available in the Addin.</p>
+<p>Basically, the functions in the Addin input Quarto elements <a href="https://quarto.org/docs/reference/">lifted from the docs</a>, so big shoutout to the authors JJ Allaire, Charles Teague, Carlos Scheidegger, Yihui Xie and Christophe Dervieux.</p>
+</div>
+<div id="snorkel" class="section level1">
+<h1>{snorkel}</h1>
+<div class="figure">
+<p><img src="/post/2022-08-10-more-addins_files/snorkel.gif" alt="Gif of RStudio Addin being used to add roxygen2 tags to selected text in the documentation for a function. Addins used are: format as bold, link to function in another package, and make hyperlink." width="100%"/></p>
+</div>
+<p>I made <a href="https://www.github.com/matt-dray/snorkel">{snorkel}</a> a little while ago,<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> again to quench my own need to store syntax outside of my brain.</p>
+<p>In this case, to insert <a href="https://roxygen2.r-lib.org/">{roxygen2} tags</a> to help with formatting in function documentation.</p>
+<p>The reason for the name should be obvious.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> As the package README puts it:</p>
+<blockquote>
+<p>You put a snorkel in your mouth to help you breathe oxygen; you put a {snorkel} in your addins to help you write with {roxygen2}.</p>
+</blockquote>
+<p>Yes, this is package-name-driven development; I thought of the name before writing anything.</p>
+<p>So, like, how do you embolden a word in your function documentation? Highlight the word and then go to <em>Addins</em> &gt; <em>Format Bold</em> and you get:</p>
+<pre class="r"><code>#&#39; I am a \strong{bold} boy.</code></pre>
+<p>Here’s something more complex: how can you link to a function in an external package? Write the package function in the form <code>package::function</code>, highlight it and then select <em>Addins</em> &gt; <em>Link To Function (Another Package)</em> and you get:</p>
+<pre class="r"><code>#&#39; When the crowd say &#39;Bo \code{\link[dplyr]{select}}a&#39;.</code></pre>
+<p>Basically, the functions in the Addin insert {roxygen2} tags <a href="https://roxygen2.r-lib.org/articles/formatting.html">lifted from the docs</a>, so big shoutout to the authors Hadley Wickham, Peter Danenberg, Gabor Csárdi, Manuel Eugster and RStudio.</p>
+</div>
+<div id="addin-your-suggestions" class="section level1">
+<h1>Addin your suggestions</h1>
+<p>As ever, raise an issue or pull request in the GitHub repos for these packages (<a href="https://www.github.com/matt-dray/snorkel">here for {quartostamp}</a> and <a href="https://www.github.com/matt-dray/snorkel">herer for {snorkel}</a>) to submit an idea or add new functionality.</p>
+<p>Don’t be a cad, it would be maddenin’ and saddenin’ if you hadn’t added in your Addin ideas, so be a rad chad and add your addins in the Addins.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
+##  os       macOS Big Sur/Monterey 10.16
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_GB.UTF-8
+##  ctype    en_GB.UTF-8
+##  tz       Europe/London
+##  date     2022-08-11
+##  pandoc   2.18 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/tools/ (via rmarkdown)
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date (UTC) lib source
+##  blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.3.0   2022-04-25 [1] CRAN (R 4.2.0)
+##  digest        0.6.29  2021-12-01 [1] CRAN (R 4.2.0)
+##  evaluate      0.15    2022-02-18 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.0   2022-02-22 [1] CRAN (R 4.2.0)
+##  knitr         1.39    2022-04-26 [1] CRAN (R 4.2.0)
+##  magrittr      2.0.3   2022-03-30 [1] CRAN (R 4.2.0)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+##  rlang         1.0.2   2022-03-04 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.13    2020-11-12 [1] CRAN (R 4.2.0)
+##  sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+##  stringi       1.7.6   2021-11-29 [1] CRAN (R 4.2.0)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.2.0)
+##  xfun          0.30    2022-03-02 [1] CRAN (R 4.2.0)
+##  yaml          2.3.5   2022-02-21 [1] CRAN (R 4.2.0)
+## 
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>Italian keyboards don’t have a backtick?!<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>I sort-of announced this in <a href="https://www.rostrum.blog/2022/02/19/backtick/">the {backtick} post</a>, but then <a href="https://www.johnmackintosh.net/">John Mackintosh</a> signal-boosted it on Twitter and folks seemed interested, so here we are.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>Although I still like {aqualung} as a package name.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
