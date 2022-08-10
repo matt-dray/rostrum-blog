@@ -105,9 +105,53 @@ Here you can see the enemy cube (yellow) hunting down the player-controlled cube
 
 I hope you enjoyed the victory dance at the end of the gif (it was the best I could do with the limited graphics).[^enemy]
 
+<div class="tip"> `r fontawesome::fa("exclamation-circle")` <b>Update</b>
+
+After this post was published, [the {oblicubes} package](https://github.com/trevorld/oblicubes) was published by [Trevor L Davies](https://github.com/trevorld). It allows you to use oblique projections. So obviously I had a go with {r.oguelike}.
+
+<div class="figure">
+<img src="/post/2022-06-24-isocubes-dungeon_files/oblicubes-eventloop.gif" alt="A procedurally-generated tile-based dungeon room, made of obliquely-projected cubes. Walls are brown cubes of height one, floors are white. A player-controlled cube (blue) is chased and captured by a pathfinding enemy cube (yellow)." width="100%"/>
+</div>
+
+<details><summary>Click for the required code changes.</summary>
+
+In [the code I wrote](https://gist.github.com/matt-dray/dcbd5cd2f4bdc471921e5c741a1233c0), you pretty much replace:
+
+```
+coords <- isocubes::coords_heightmap(dungeon_h, col = dungeon_c)
+
+cubes  <- isocubes::isocubesGrob(
+  coords,
+  max_y = ncol(dungeon_h) + 0.1 * ncol(dungeon_h),
+  fill = coords$col,
+  xo = 0.7
+)
+
+grid::grid.newpage()  # 'clear'
+grid::grid.draw(cubes)  # render
+```
+
+With:
+
+```
+coords <- oblicubes::xyz_heightmap(
+  dungeon_h,
+  col = dungeon_c,
+  scale = 0.3,
+  ground = "xy"
+)
+
+grid::grid.newpage()  # 'clear'
+oblicubes::grid.oblicubes(coords)  # render
+```
+
+</details>
+
+</div>
+
 # The fourth dimension
 
-I need to tie up some loose ends in the current version of {r.oguelike}, but I'm considering the possibilities for {isocubes} and {eventloop} in future. Maybe the `start_game()` function could have an argument where the user can choose 2D or 3D representations of the game.
+I need to tie up some loose ends in the current version of {r.oguelike}, but I'm considering the possibilities for {isocubes} and {eventloop} in future. Maybe the `start_game()` function could have an argument where the user can choose 2D or 3D (isometric or oblique) representations of the game.
 
 I also have a few ideas of how I can use my basic {r.oguelike} 'engine' with {isocubes} to develop some other, non-roguelike games. For example, [Dmytro (AKA Deemah) suggested {rsokoban}](https://twitter.com/dmi3k/status/1539501583431610370). [Sokoban](https://en.wikipedia.org/wiki/Sokoban) is a game where you solve small tile-based puzzles by pushing crates onto designated spots. I was also reminded of [Q*bert](https://en.wikipedia.org/wiki/Q*bert), where you try and touch all the floor tiles to change their colour.
 

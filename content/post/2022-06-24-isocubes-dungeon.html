@@ -81,11 +81,45 @@ draft: no
 <p><img src="/post/2022-06-24-isocubes-dungeon_files/04-isocubes-chase.gif" alt="Gif of an R graphics window showing a tiled dungeon space made of isometric cubes. A user is controlling the movement of a blue cube around the black floor within the brown walls. A yellow cube chases the player around, narrowing the distance over time. When the enemy and player inhabit the same tile, they fuse to become a green cube that moves around as a single entity." width="100%"/></p>
 </div>
 <p>I hope you enjoyed the victory dance at the end of the gif (it was the best I could do with the limited graphics).<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<div class="tip">
+<p><svg aria-hidden="true" role="img" viewBox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;"><path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"/></svg> <b>Update</b></p>
+<p>After this post was published, <a href="https://github.com/trevorld/oblicubes">the {oblicubes} package</a> was published by <a href="https://github.com/trevorld">Trevor L Davies</a>. It allows you to use oblique projections. So obviously I had a go with {r.oguelike}.</p>
+<div class="figure">
+<p><img src="/post/2022-06-24-isocubes-dungeon_files/oblicubes-eventloop.gif" alt="A procedurally-generated tile-based dungeon room, made of obliquely-projected cubes. Walls are brown cubes of height one, floors are white. A player-controlled cube (blue) is chased and captured by a pathfinding enemy cube (yellow)." width="100%"/></p>
+</div>
+<details>
+<summary>
+Click for the required code changes.
+</summary>
+<p>In <a href="https://gist.github.com/matt-dray/dcbd5cd2f4bdc471921e5c741a1233c0">the code I wrote</a>, you pretty much replace:</p>
+<pre><code>coords &lt;- isocubes::coords_heightmap(dungeon_h, col = dungeon_c)
+
+cubes  &lt;- isocubes::isocubesGrob(
+  coords,
+  max_y = ncol(dungeon_h) + 0.1 * ncol(dungeon_h),
+  fill = coords$col,
+  xo = 0.7
+)
+
+grid::grid.newpage()  # &#39;clear&#39;
+grid::grid.draw(cubes)  # render</code></pre>
+<p>With:</p>
+<pre><code>coords &lt;- oblicubes::xyz_heightmap(
+  dungeon_h,
+  col = dungeon_c,
+  scale = 0.3,
+  ground = &quot;xy&quot;
+)
+
+grid::grid.newpage()  # &#39;clear&#39;
+oblicubes::grid.oblicubes(coords)  # render</code></pre>
+</details>
+</div>
 </div>
 </div>
 <div id="the-fourth-dimension" class="section level1">
 <h1>The fourth dimension</h1>
-<p>I need to tie up some loose ends in the current version of {r.oguelike}, but I’m considering the possibilities for {isocubes} and {eventloop} in future. Maybe the <code>start_game()</code> function could have an argument where the user can choose 2D or 3D representations of the game.</p>
+<p>I need to tie up some loose ends in the current version of {r.oguelike}, but I’m considering the possibilities for {isocubes} and {eventloop} in future. Maybe the <code>start_game()</code> function could have an argument where the user can choose 2D or 3D (isometric or oblique) representations of the game.</p>
 <p>I also have a few ideas of how I can use my basic {r.oguelike} ‘engine’ with {isocubes} to develop some other, non-roguelike games. For example, <a href="https://twitter.com/dmi3k/status/1539501583431610370">Dmytro (AKA Deemah) suggested {rsokoban}</a>. <a href="https://en.wikipedia.org/wiki/Sokoban">Sokoban</a> is a game where you solve small tile-based puzzles by pushing crates onto designated spots. I was also reminded of <a href="https://en.wikipedia.org/wiki/Q*bert">Q*bert</a>, where you try and touch all the floor tiles to change their colour.</p>
 <p>So many ideas for off-label R use, so little time.</p>
 </div>
@@ -112,8 +146,8 @@ Session info
  collate  en_GB.UTF-8
  ctype    en_GB.UTF-8
  tz       Europe/London
- date     2022-06-30
- pandoc   2.17.1.1 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/ (via rmarkdown)
+ date     2022-08-10
+ pandoc   2.18 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/tools/ (via rmarkdown)
 
 ─ Packages ───────────────────────────────────────────────────────────────────
  package     * version date (UTC) lib source
@@ -124,6 +158,7 @@ Session info
  digest        0.6.29  2021-12-01 [1] CRAN (R 4.2.0)
  evaluate      0.15    2022-02-18 [1] CRAN (R 4.2.0)
  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+ fontawesome   0.2.2   2021-07-02 [1] CRAN (R 4.2.0)
  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
  jsonlite      1.8.0   2022-02-22 [1] CRAN (R 4.2.0)
