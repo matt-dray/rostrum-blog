@@ -25,13 +25,14 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 128 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 129 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 19 day(s) ago: [Fixing londonmapbot for
-{rtweet} v1.0](https://www.rostrum.blog/2022/07/22/mapbot-rtweet-v1/).
+🆕 The latest post was published 0 day(s) ago: [Two RStudio Addins:
+{quartostamp} and
+{snorkel}](https://www.rostrum.blog/2022/08/11/quartostamp-snorkel/).
 
 📈 This 2D plot shows posts over time:
 
@@ -43,6 +44,7 @@ since 2018-04-14.
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|    129 | 2022-08-11 | [Two RStudio Addins: {quartostamp} and {snorkel}](https://www.rostrum.blog/2022/08/11/quartostamp-snorkel/)               |
 |    128 | 2022-07-22 | [Fixing londonmapbot for {rtweet} v1.0](https://www.rostrum.blog/2022/07/22/mapbot-rtweet-v1/)                            |
 |    127 | 2022-07-08 | [Stop opening the same RStudio Project twice](https://www.rostrum.blog/2022/07/08/rproj-dupes/)                           |
 |    126 | 2022-06-28 | [An isometric dungeon chase in R](https://www.rostrum.blog/2022/06/28/isometric-dungeon/)                                 |
@@ -176,4 +178,4 @@ since 2018-04-14.
 
 -----
 
-*Updated 2022-08-10 03:16:07*
+*Updated 2022-08-11 03:30:37*
