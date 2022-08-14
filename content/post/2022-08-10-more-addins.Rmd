@@ -9,18 +9,20 @@ categories:
 tags:
   - r
   - rstudio-addin
+  - quarto
   - quartostamp
+  - roxygen2
   - snorkel
 draft: no
 ---
 
 # tl;dr 
 
-I made two packages recently(ish) that contain RStudio Addins: [{quartostamp}](https://matt-dray.github.io/quartostamp/) inserts little divs and classes into your [Quarto](https://quarto.org/) documents, while [{snorkel}](https://github.com/matt-dray/snorkel) inserts [{roxygen2}](https://roxygen2.r-lib.org/) tags to your package-function documentation.
+I made a couple of packages that contain [RStudio Addins](https://rstudio.github.io/rstudioaddins/): [{quartostamp}](https://matt-dray.github.io/quartostamp/) inserts little divs and classes into your [Quarto](https://quarto.org/) documents, while [{snorkel}](https://github.com/matt-dray/snorkel) inserts [Rd tags](https://cran.r-project.org/doc/manuals/R-exts.html#Rd-format) into your [{roxygen2}](https://roxygen2.r-lib.org/) function documentation.
 
 # Al Addin
 
-You can access R functions interactively at the click of a button (or map them to a keyboard shortcut) with [RStudio Addins](https://rstudio.github.io/rstudioaddins/). I particularly like them for easy sharing of insertable pre-written code.
+[RStudio Addins](https://rstudio.github.io/rstudioaddins/) let you access R functions interactively at the click of a button (or [with a keyboard shortcut](https://support.rstudio.com/hc/en-us/articles/206382178-Customizing-Keyboard-Shortcuts-in-the-RStudio-IDE), or via [the RStudio command palette](https://www.rstudio.com/blog/rstudio-v1-4-preview-command-palette/)). I particularly like them for easy sharing of insertable pre-written code.
 
 See [Dean Attali's {addinslist} package](https://github.com/daattali/addinslist) for examples or the [{shrtcts} package by Garrick Aden-Buie](https://pkg.garrickadenbuie.com/shrtcts/) for an alternative approach to 'make anything an RStudio shortcut'.
 
@@ -29,12 +31,13 @@ On my part:
 * I [wrote about](https://www.rostrum.blog/2022/02/19/backtick/) the little [{backtick} Addin package](https://github.com/matt-dray/backtick) that inserts backticks (\`) and backtick constructions[^italy]
 * I [wrote about](https://www.rostrum.blog/2020/11/14/hello-r2eng/) the [{r2eng} package](https://matt-dray.github.io/r2eng/), which has an Addin that lets you highlight some R code and then speak that expression out loud in English
 * I [wrote about](https://www.rostrum.blog/2019/10/22/blogsnip/) the [{blogsnip} Addin package](https://matt-dray.github.io/blogsnip/) that can manipulate code used to write this blog
+* [the {a11ytables} package](https://co-analysis.github.io/a11ytables/articles/a11ytables.html) has an Addin to insert code skeletons for creating publishable best-practice spreadsheets
 
-RStudio Addins are [kinda straightforward to put together](https://www.rostrum.blog/2022/02/19/backtick/#add-your-own). In your R package, put your functions in the `R/` directory as usual, then write an `inst/rstudio/addins.dcf` file to declare them ([e.g. see {backtick}'s .dcf](https://github.com/matt-dray/backtick/blob/main/inst/rstudio/addins.dcf)). Learn more from [Sharon Machlis](https://www.infoworld.com/article/3336059/do-more-with-r-write-your-own-rstudio-addins.html) and [Jozef Hajnala](https://jozef.io/r101-addin-reproducibility/).
+RStudio Addins are [kinda straightforward to put into in an R package](https://www.rostrum.blog/2022/02/19/backtick/#add-your-own). Put your functions in `R/` as usual, then write an `inst/rstudio/addins.dcf` file to declare your functions ([e.g. see {backtick}'s .dcf](https://github.com/matt-dray/backtick/blob/main/inst/rstudio/addins.dcf)). Learn more from [Sharon Machlis](https://www.infoworld.com/article/3336059/do-more-with-r-write-your-own-rstudio-addins.html) and [Jozef Hajnala](https://jozef.io/r101-addin-reproducibility/).
 
 The user can then select the functions from the 'Addins' dropdown in the RStudio IDE.
 
-Of late I've written two more packages---[{quartostamp}](https://matt-dray.github.io/quartostamp/) and [{snorkel}](https://github.com/matt-dray/snorkel)---that contain RStudio Addins to help me write code structures that I struggle to remember when writing [Quarto documents](https://quarto.org/) and [{roxygen2} tags](https://roxygen2.r-lib.org/index.html). 
+Of late I've written two packages---[{quartostamp}](https://matt-dray.github.io/quartostamp/) and [{snorkel}](https://github.com/matt-dray/snorkel)---that contain RStudio Addins to help me write code structures that I struggle to remember when writing [Quarto documents](https://quarto.org/) and function documentation.
 
 Others seem to have found these useful, so I thought I'd 'officially' signal that they exist.
 
@@ -44,28 +47,25 @@ Others seem to have found these useful, so I thought I'd 'officially' signal tha
 <img src="/post/2022-08-10-more-addins_files/quartostamp.gif" alt="Screenshot of RStudio window with a Quarto presentation file open. Some functions are selected from an RStudio Addin under the name 'quartostamp'. They insert a div that allows for column layout, a div for speaker notes, and a class that makes the text smaller on a slide." width="100%"/>
 </div>
 
-[Quarto](https://quarto.org/) is all the rage right now, having been officially launched at [the recent rstudio::conf(2022) conference](https://www.rstudio.com/blog/four-announcements-from-rstudio-conf-2022/#use-quarto-for-creating-content-with-python-r-julia-and-observable).
+[Quarto](https://quarto.org/)---'new R Markdown'---is all the rage right now, having been officially launched at [the recent rstudio::conf(2022) conference](https://www.rstudio.com/blog/four-announcements-from-rstudio-conf-2022/#use-quarto-for-creating-content-with-python-r-julia-and-observable). Folks are going bonkers for tools and techniques to learn and implement it. A good place to begin is [the Awesome Quarto List](https://github.com/mcanouil/awesome-quarto) by Mickaël Canouil.
 
-It's like the new and trendier R Markdown that's more platform and language independent. All the more important as the RStudio company [(soon-to-be Posit)](https://www.rstudio.com/blog/rstudio-is-becoming-posit/) has embraced a wider audience than just R users.
-
-People are going nuts for tools and techniques to learn and implement Quarto. A good place to begin is [the Awesome Quarto List](https://github.com/mcanouil/awesome-quarto) by Mickaël Canouil.
-
-Featured there is [{quartostamp}](https://matt-dray.github.io/quartostamp/), a little R package I made that contains an RStudio Addin to insert into your Quarto doc a number of useful divs and classes. I'm going to continue expanding it as I have time, but do leave [an issue or pull request with ideas](https://www.github.com/matt-dray/quartostamp).
-
-As the README has it:
+Featured there is [{quartostamp}](https://matt-dray.github.io/quartostamp/), a little R package I made that contains an RStudio Addin to insert into your Quarto doc a number of useful divs and classes. As the README puts it:
 
 >Why 'quartostamp'? You could physically stamp some pre-prepared type into [a literal quarto document](https://en.wikipedia.org/wiki/Quarto); you can digitally stamp some pre-written elements into your qmd file.
 
-Install from GitHub like:
+<div class="figure">
+<img src="/post/2022-08-10-more-addins_files/logo.png" alt="Hex logo for the quartostamp package. Blue outline. Red 'flower stamp' emoji in the centre. It says 'quartostamp' in the top left and the URL matt-dray.github.io/quartostamp in the lower right, both in red text." width="30%"/>
+<p class="caption">{quartostamp}'s hex logo.</p>
+</div>
+
+You can install it from GitHub like:
 
 ```{r eval=FALSE}
 # install.packages("remotes")  # if not yet installed
 remotes::install_github("matt-dray/quartostamp")
 ```
 
-I made this primarily for myself; I'm really bad at remembering syntax. Quarto has many in-built divs and things that I struggle to remember.
-
-So {quartostamp} acts as your brain outside your brain. For example, did you forget how to insert speaker notes into a presentation? Go to _Addins_ > _Insert Speaker Notes_ and this will be inserted to your doc:
+As an example, did you forget how to insert speaker notes into a presentation? Go to _Addins_ > _Insert Speaker Notes_ and this will be inserted to your doc:
 
 ```{r eval=FALSE}
 ::: {.notes}
@@ -89,9 +89,13 @@ Right column
 ::::
 ```
 
-Go to the package website to [see the current list of functions](https://matt-dray.github.io/quartostamp/reference/index.html) available in the Addin.
+These elements are basically [lifted from the docs](https://quarto.org/docs/reference/), so big shoutout to the authors JJ Allaire, Charles Teague, Carlos Scheidegger, Yihui Xie and Christophe Dervieux.
 
-Basically, the functions in the Addin input Quarto elements [lifted from the docs](https://quarto.org/docs/reference/), so big shoutout to the authors JJ Allaire, Charles Teague, Carlos Scheidegger, Yihui Xie and Christophe Dervieux.
+Go to the package website to [see the current list of functions](https://matt-dray.github.io/quartostamp/reference/index.html) available in the Addin. Click them to learn more, including a preview of the actual text that will be inserted into your document.
+
+I think the limits of the package are the content that you would insert in the body of your Quarto doc, or to places like Revealjs slide headings. In other words, not Quarto YAML nor chunk options. These are autocompleted in RStudio, or otherwise dealt with already elsewhere.
+
+Do submit your ideas for {quartodown} as issues or pull requests in [the GitHub repo](https://www.github.com/matt-dray/quartostamp).
 
 # {snorkel}
 
@@ -99,9 +103,7 @@ Basically, the functions in the Addin input Quarto elements [lifted from the doc
 <img src="/post/2022-08-10-more-addins_files/snorkel.gif" alt="Gif of RStudio Addin being used to add roxygen2 tags to selected text in the documentation for a function. Addins used are: format as bold, link to function in another package, and make hyperlink." width="100%"/>
 </div>
 
-I made [{snorkel}](https://www.github.com/matt-dray/snorkel) a little while ago,[^announce] again to quench my need to store syntax outside of my brain.
-
-In this case, to insert [{roxygen2} tags](https://roxygen2.r-lib.org/) to help with formatting in function documentation.[^md]
+The [{snorkel}](https://www.github.com/matt-dray/snorkel) package[^announce] is another solution to storing syntax outside of my own brain. In this case, it helps out with formatting text in [{roxygen2} function documentation](https://roxygen2.r-lib.org/).[^md]
 
 The reason for the name should be obvious.[^aqualung] As the package README puts it:
 
@@ -128,13 +130,21 @@ Here's something more complex: how can you link to a function in an external pac
 #' When the crowd say 'Bo \code{\link[dplyr]{select}}a'.
 ```
 
-Basically, the functions in the Addin insert {roxygen2} tags [lifted from the docs](https://roxygen2.r-lib.org/articles/formatting.html), so big shoutout to the authors Hadley Wickham, Peter Danenberg, Gabor Csárdi, Manuel Eugster and RStudio.
+The functions in the Addin insert code [mentioned in the {roxygen2} docs](https://roxygen2.r-lib.org/articles/formatting.html), so big shoutout to the authors Hadley Wickham, Peter Danenberg, Gabor Csárdi, Manuel Eugster and RStudio.
+
+The package website has a [list of the functions](https://matt-dray.github.io/snorkel/reference/index.html) available in the Addin,[^breathe] which you can click to see previews of what each one will insert.
+
+For now I think the functions in the package should focus just on the Rd tags that format the documentation, rather than the {roxygen2} tags (like `@description`, `@params`, etc). The latter are already autocompleted in RStudio, so I feel like there's less need. Similarly, the package doesn't include [functions to insert Markdown](https://roxygen2.r-lib.org/articles/markdown.html) into function documentation, but perhaps it could be expanded in future.
+
+New functionality is always welcome; please raise an issue or pull request in [the GitHub repo](https://www.github.com/matt-dray/snorkel).
 
 # Addin your suggestions
 
-As ever, raise an issue or pull request in the GitHub repos for these packages ([here for {quartostamp}](https://www.github.com/matt-dray/quartostamp) and [here for {snorkel}](https://www.github.com/matt-dray/snorkel)) to submit an idea or add new functionality.
+I made these primarily for myself; I'm really bad at remembering syntax. I always need 'a brain outside my brain'. Maybe they'll be useful for you too.
 
-Don't be a cad, it would be maddenin' and saddenin' if you hadn't added in your Addin ideas, so be a rad chad and add your addins in the Addins.
+Perhaps you can help out by expanding the list of functions in these packages. Please add any suggestions or features in an issue or pull request in either GitHub repo.
+
+So, don't be a cad, it would be maddenin' and saddenin' if you hadn't added in your Addin ideas, so be a rad chad and add your addins in the Addins. 
 
 ---
 <details><summary>Session info</summary>
@@ -143,7 +153,8 @@ sessioninfo::session_info()
 ```
 </details>
 
-[^aqualung]: Although I still like {aqualung} as a package name.
-[^announce]: I sort-of announced this in [the {backtick} post](https://www.rostrum.blog/2022/02/19/backtick/), but then [John Mackintosh](https://www.johnmackintosh.net/) signal-boosted it on Twitter and folks seemed interested, so here we are.
-[^italy]: Italian keyboards [don't have a backtick](https://commons.wikimedia.org/wiki/File:Italian_Keyboard_layout.svg)?!
+[^aqualung]: Although I still like '{aqualung}' as a package name.
+[^announce]: I sort-of announced this before in [the {backtick} post](https://www.rostrum.blog/2022/02/19/backtick/), but then [John Mackintosh](https://www.johnmackintosh.net/) signal-boosted it on Twitter and folks seemed interested, so here we are.
+[^italy]: Yes, there are use cases for this! For example, Italian keyboards [don't have a backtick](https://commons.wikimedia.org/wiki/File:Italian_Keyboard_layout.svg)?!
 [^md]: But note that you can [write documentation with Markdown](https://roxygen2.r-lib.org/articles/markdown.html)! I may expand the package to cover this in future.
+[^breathe]: Yes, there is an Easter-egg function in the package for your wellbeing.
