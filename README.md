@@ -30,13 +30,13 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 13 day(s) ago: [Two RStudio Addins:
+🆕 The latest post was published 14 day(s) ago: [Two RStudio Addins:
 {quartostamp} and
 {snorkel}](https://www.rostrum.blog/2022/08/11/quartostamp-snorkel/).
 
 📈 This 2D plot shows posts over time:
 
-<img src="README_files/figure-gfm/plot-out-1.png" title="A 2D chart where each point represents a published blog post on a Y axis of time spanning from 2018 to the present. There are some gaps, but posts have been relatively consistent over time." alt="A 2D chart where each point represents a published blog post on a Y axis of time spanning from 2018 to the present. There are some gaps, but posts have been relatively consistent over time."  />
+<img src="README_files/figure-gfm/plot-out-1.png" alt="A 2D chart where each point represents a published blog post on a Y axis of time spanning from 2018 to the present. There are some gaps, but posts have been relatively consistent over time."  />
 
 <details>
 
@@ -178,4 +178,4 @@ since 2018-04-14.
 
 -----
 
-*Updated 2022-08-24 04:15:33*
+*Updated 2022-08-25 04:17:47*
