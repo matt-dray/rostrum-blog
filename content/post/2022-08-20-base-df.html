@@ -1,0 +1,384 @@
+---
+title: "Basic base R dataframes"
+author: 'Matt Dray'
+date: '2022-08-20'
+slug: base-df
+categories:
+  - code
+  - tutorial
+tags:
+  - base
+  - r
+draft: yes
+---
+
+
+
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>Placeholder.</p>
+</div>
+<div id="intro" class="section level1">
+<h1>Intro</h1>
+<p>Jump to:</p>
+<ul>
+<li>Example dataframe</li>
+<li>Basic summaries</li>
+<li>Access data</li>
+<li>Alter a value</li>
+<li>Rename columns</li>
+<li>Add new columns</li>
+<li>Subset data</li>
+<li>Rename factor levels</li>
+<li>Reorder factor levels</li>
+<li>Collapse factor levels</li>
+<li>Append dataframes</li>
+<li>Merge dataframes</li>
+</ul>
+</div>
+<div id="example-dataframe" class="section level1">
+<h1>Example dataframe</h1>
+<p>We are going to build a dataframe by specifying three vectors as objects using the gets notation (&lt;-), and then arranging them into columns using the data.frame function.
+This dataframe is used as the starting point for the manipulations covered in this post.</p>
+<pre class="r"><code>VAR1 &lt;- c(&quot;Ecol.Lett&quot;, &quot;Annu.Rev.Ecol.Evol.S&quot;, &quot;Ecol.Monogr&quot;, &quot;Front.Ecol.Environ&quot;,&quot;Glob.Ecol.Biogeogr&quot;, &quot;Glob.Change.Biol&quot;, &quot;Ecology&quot;, &quot;J.Ecol&quot;) # Journal titles
+VAR2 &lt;- c(&quot;BP&quot;, &quot;ARI&quot;, &quot;ESA&quot;, &quot;ESA&quot;, &quot;BP&quot;, &quot;BP&quot;, &quot;ESA&quot;, &quot;BP&quot;) # Abbreviated publisher names
+VAR3 &lt;- c(7.995, 7.019, 5.21, 3.644, 3.477, 3.425, 3.246, 3.145) # SCImago Journal Rank (SJR)
+data &lt;- data.frame(VAR1, VAR2, VAR3)
+data</code></pre>
+<pre><code>##                   VAR1 VAR2  VAR3
+## 1            Ecol.Lett   BP 7.995
+## 2 Annu.Rev.Ecol.Evol.S  ARI 7.019
+## 3          Ecol.Monogr  ESA 5.210
+## 4   Front.Ecol.Environ  ESA 3.644
+## 5   Glob.Ecol.Biogeogr   BP 3.477
+## 6     Glob.Change.Biol   BP 3.425
+## 7              Ecology  ESA 3.246
+## 8               J.Ecol   BP 3.145</code></pre>
+</div>
+<div id="basic-summaries" class="section level1">
+<h1>Basic summaries</h1>
+<p>The following functions allow you to look at the dataframe, or parts of it, and some simple summary statistics.</p>
+<pre class="r"><code>data # Show full dataframe</code></pre>
+<pre><code>##                   VAR1 VAR2  VAR3
+## 1            Ecol.Lett   BP 7.995
+## 2 Annu.Rev.Ecol.Evol.S  ARI 7.019
+## 3          Ecol.Monogr  ESA 5.210
+## 4   Front.Ecol.Environ  ESA 3.644
+## 5   Glob.Ecol.Biogeogr   BP 3.477
+## 6     Glob.Change.Biol   BP 3.425
+## 7              Ecology  ESA 3.246
+## 8               J.Ecol   BP 3.145</code></pre>
+<pre class="r"><code>head(data, n = 4) # Show first four rows, default is six</code></pre>
+<pre><code>##                   VAR1 VAR2  VAR3
+## 1            Ecol.Lett   BP 7.995
+## 2 Annu.Rev.Ecol.Evol.S  ARI 7.019
+## 3          Ecol.Monogr  ESA 5.210
+## 4   Front.Ecol.Environ  ESA 3.644</code></pre>
+<pre class="r"><code>names(data) # List variable (column) names</code></pre>
+<pre><code>## [1] &quot;VAR1&quot; &quot;VAR2&quot; &quot;VAR3&quot;</code></pre>
+<pre class="r"><code>nrow(data) # Number of rows</code></pre>
+<pre><code>## [1] 8</code></pre>
+<pre class="r"><code>ncol(data) # Number of columns</code></pre>
+<pre><code>## [1] 3</code></pre>
+<pre class="r"><code>summary(data) # Factor levels frequencies, quartiles and integer ranges</code></pre>
+<pre><code>##      VAR1               VAR2                VAR3      
+##  Length:8           Length:8           Min.   :3.145  
+##  Class :character   Class :character   1st Qu.:3.380  
+##  Mode  :character   Mode  :character   Median :3.561  
+##                                        Mean   :4.645  
+##                                        3rd Qu.:5.662  
+##                                        Max.   :7.995</code></pre>
+<pre class="r"><code>str(data) # STRucture of dataframe (data type, number of levels, first few values)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    8 obs. of  3 variables:
+##  $ VAR1: chr  &quot;Ecol.Lett&quot; &quot;Annu.Rev.Ecol.Evol.S&quot; &quot;Ecol.Monogr&quot; &quot;Front.Ecol.Environ&quot; ...
+##  $ VAR2: chr  &quot;BP&quot; &quot;ARI&quot; &quot;ESA&quot; &quot;ESA&quot; ...
+##  $ VAR3: num  8 7.02 5.21 3.64 3.48 ...</code></pre>
+</div>
+<div id="access-data" class="section level1">
+<h1>Access data</h1>
+<p>You will often need to access individual data points or groups of data points.
+This is done using dollar ($) or square bracket ([]) notation, or a hybrid of the two, to call upon specific rows and columns</p>
+<pre class="r"><code>data$VAR2 # Dollar notation; returns values from column &#39;VAR1&#39; in dataframe &#39;data&#39;</code></pre>
+<pre><code>## [1] &quot;BP&quot;  &quot;ARI&quot; &quot;ESA&quot; &quot;ESA&quot; &quot;BP&quot;  &quot;BP&quot;  &quot;ESA&quot; &quot;BP&quot;</code></pre>
+<pre class="r"><code>data[2] # Square-bracket notation (indexing); returns column 1 in dataframe &#39;data&#39;</code></pre>
+<pre><code>##   VAR2
+## 1   BP
+## 2  ARI
+## 3  ESA
+## 4  ESA
+## 5   BP
+## 6   BP
+## 7  ESA
+## 8   BP</code></pre>
+<pre class="r"><code>data[3, 2] # Value in 3rd row, 2nd column</code></pre>
+<pre><code>## [1] &quot;ESA&quot;</code></pre>
+<pre class="r"><code>data$VAR2[3] # Hybrid notation; returns value from the third row of column &#39;VAR1&#39; in dataframe &#39;data&#39;</code></pre>
+<pre><code>## [1] &quot;ESA&quot;</code></pre>
+</div>
+<div id="alter-a-value" class="section level1">
+<h1>Alter a value</h1>
+<p>Once you have located the value(s) you want changed, you can use the gets notation (&lt;-) to specify that location as a new value.</p>
+<pre class="r"><code>data$VAR3[1] # Shows incorrect value of 7.995</code></pre>
+<pre><code>## [1] 7.995</code></pre>
+<pre class="r"><code>data$VAR3[1] &lt;- 7.996 # You can use $, [], or a hybrid notation to locate data
+data$VAR3[1] # Value corrected to 7.996</code></pre>
+<pre><code>## [1] 7.996</code></pre>
+</div>
+<div id="rename-columns" class="section level1">
+<h1>Rename columns</h1>
+<p>Informative column headers can be used to replace boring ones from your dataframe (e.g. VAR1 in our example).</p>
+<p>The names function allows us to look at the column names, which we can change using the gets notation (&lt;-).</p>
+<p>You can change the column headers one by one, but it is easier to concatenate (c) a list of new column headers if you want to change several at once.</p>
+<pre class="r"><code>names(data) &lt;- c(&quot;Title&quot;, &quot;Publisher&quot;, &quot;SJR&quot;) # Rename multiple columns
+names(data)[3] &lt;- &quot;SJR&quot; # Rename the third column only
+data</code></pre>
+<pre><code>##                  Title Publisher   SJR
+## 1            Ecol.Lett        BP 7.996
+## 2 Annu.Rev.Ecol.Evol.S       ARI 7.019
+## 3          Ecol.Monogr       ESA 5.210
+## 4   Front.Ecol.Environ       ESA 3.644
+## 5   Glob.Ecol.Biogeogr        BP 3.477
+## 6     Glob.Change.Biol        BP 3.425
+## 7              Ecology       ESA 3.246
+## 8               J.Ecol        BP 3.145</code></pre>
+</div>
+<div id="add-new-columns" class="section level1">
+<h1>Add new columns</h1>
+<p>This is similar to the in the Example dataframe section above, where you specify a concatenated (c) list, or vector, of values to make up the new column.
+Create a new empty column in the dataframe using dollar notation (e.g. dframe1$column.one creates a new column called column.one in a dataframe called dframe1) and fill it with your vector using the gets notation (&lt;-)</p>
+<pre class="r"><code>data$H.index &lt;- c(127, 125, 98, 57, 71, 126, 172, 102) # Add new column called &#39;H.index&#39; with listed data
+data</code></pre>
+<pre><code>##                  Title Publisher   SJR H.index
+## 1            Ecol.Lett        BP 7.996     127
+## 2 Annu.Rev.Ecol.Evol.S       ARI 7.019     125
+## 3          Ecol.Monogr       ESA 5.210      98
+## 4   Front.Ecol.Environ       ESA 3.644      57
+## 5   Glob.Ecol.Biogeogr        BP 3.477      71
+## 6     Glob.Change.Biol        BP 3.425     126
+## 7              Ecology       ESA 3.246     172
+## 8               J.Ecol        BP 3.145     102</code></pre>
+</div>
+<div id="subset-data" class="section level1">
+<h1>Subset data</h1>
+<p>Subsetting allows you to focus on certain sections of your dataframe (e.g. you have a dataframe about Pokémon, but you want to narrow your analysis down to bug-types only).
+You can select the data you want by matching it to a list, using using logical operators to simplify the process: == means equal to; != means not equal to; %in% means match to a list of options.</p>
+<ol style="list-style-type: decimal">
+<li>Use the ‘subset’ function</li>
+</ol>
+<pre class="r"><code>data.BP &lt;- subset(data, Publisher == &quot;BP&quot;) # Dataframe containing publisher BP only
+data.notBP &lt;- subset(data, Publisher != &quot;BP&quot;) # Dataframe containing all publishers except BP
+data.ARIandESA &lt;- subset(data, Publisher %in% c(&quot;ARI&quot;, &quot;ESA&quot;)) # Dataframe containing publishers ARI and ESA only</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li>Use square-bracket notation (indexing)</li>
+</ol>
+<pre class="r"><code>data.BP &lt;- data[data$Publisher == &quot;BP&quot;, ] # Dataframe containing publisher BP only
+data.notBP &lt;- data[data$Publisher != &quot;BP&quot;, ] # Dataframe containing all publishers except BP
+data.ARIandESA &lt;- data[data$Publisher %in% c(&quot;ARI&quot;, &quot;ESA&quot;), ] # Blank space after the comma in the square brackets indicates inclusion of all columns
+data.ARIandESA &lt;- data[data$Treatment %in% c(&quot;ARI&quot;, &quot;ESA&quot;), c(2, 3)] # If we only want some of the columns (e.g. columns 2 and 3)</code></pre>
+</div>
+<div id="rename-factor-levels" class="section level1">
+<h1>Rename factor levels</h1>
+<p>This is similar to renaming columns (above), but uses the levels function instead of the names function.</p>
+<pre class="r"><code>summary(data$Title) # List original level names</code></pre>
+<pre><code>##    Length     Class      Mode 
+##         8 character character</code></pre>
+<pre class="r"><code>levels(data$Title) &lt;- c(&quot;AREES&quot;, &quot;EL&quot;, &quot;EM&quot;, &quot;Ecol&quot;, &quot;FEE&quot;, &quot;GCB&quot;, &quot;GEB&quot;, &quot;JE&quot;) # Replacing level names as ordered in the summary (alphabetically)
+summary(data$Title) # List new level names</code></pre>
+<pre><code>##    Length     Class      Mode 
+##         8 character character</code></pre>
+</div>
+<div id="reorder-factor-levels" class="section level1">
+<h1>Reorder factor levels</h1>
+<p>By default, factors are listed alphabetically, but you may want them to appear in a different order (this allows you to plot these data in the order you specify, too).</p>
+<pre class="r"><code>summary(data$Title) # Check the levels</code></pre>
+<pre><code>##    Length     Class      Mode 
+##         8 character character</code></pre>
+<pre class="r"><code>data$Title &lt;- factor(data$Title, levels = c(&quot;EM&quot;, &quot;AREES&quot;, &quot;FEE&quot;, &quot;GEB&quot;, &quot;EL&quot;,
+&quot;Ecol&quot;, &quot;GCB&quot;, &quot;JE&quot;)) # Order the levels as you please
+summary(data$Title) # Check order</code></pre>
+<pre><code>##    EM AREES   FEE   GEB    EL  Ecol   GCB    JE  NA&#39;s 
+##     0     0     0     0     0     0     0     0     8</code></pre>
+</div>
+<div id="collapse-factor-levels" class="section level1">
+<h1>Collapse factor levels</h1>
+<p>This can be done to simplify a model; perhaps there is not enough of a difference between Factors A and B, so they can be considered together.</p>
+<ol style="list-style-type: decimal">
+<li>Create new levels to collapse current levels into</li>
+</ol>
+<pre class="r"><code>data$Collapsed.titles &lt;- data$Title # Copy &#39;Title&#39; column to new column &#39;Collapsed.title&#39;
+levels(data$Collapsed.titles) # Factor list is AREES, EL, EM, Ecol, FEE, GCB&#39;, GEB, JE</code></pre>
+<pre><code>## [1] &quot;EM&quot;    &quot;AREES&quot; &quot;FEE&quot;   &quot;GEB&quot;   &quot;EL&quot;    &quot;Ecol&quot;  &quot;GCB&quot;   &quot;JE&quot;</code></pre>
+<pre class="r"><code>levels(data$Collapsed.titles) &lt;- c(levels(data$Collapsed.titles), &quot;Top4&quot;, &quot;Next4&quot;) # Introduce levels to collapse others into</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li>Collapse the current levels into the new levels</li>
+</ol>
+<pre class="r"><code>data$Collapsed.titles[data$Collapsed.titles %in% c(&quot;EL&quot;, &quot;AREES&quot;, &quot;EM&quot;, &quot;FEE&quot;)] &lt;- &quot;Top4&quot; # Four journals with highest SJR
+data$Collapsed.titles[data$Collapsed.titles %in% c(&quot;GEB&quot;, &quot;GCB&quot;, &quot;Ecol&quot;, &quot;JE&quot;)] &lt;- &quot;Next4&quot; # Four journals with next highest SJR</code></pre>
+<ol start="3" style="list-style-type: decimal">
+<li>Remove the now-unwanted old levels</li>
+</ol>
+<pre class="r"><code>summary(data$Collapsed.titles) # Unwanted levels still present</code></pre>
+<pre><code>##    EM AREES   FEE   GEB    EL  Ecol   GCB    JE  Top4 Next4  NA&#39;s 
+##     0     0     0     0     0     0     0     0     0     0     8</code></pre>
+<pre class="r"><code>data &lt;- droplevels(data) # Drop the unwanted levels
+summary(data$Collapsed.titles) # Unwanted levels gone</code></pre>
+<pre><code>## NA&#39;s 
+##    8</code></pre>
+</div>
+<div id="append-dataframes" class="section level1">
+<h1>Append dataframes</h1>
+<p>This allows you to attach two dataframes together vertically (‘one on top of the other’).
+The column names in each dataframe must match for this to work.</p>
+<ol style="list-style-type: decimal">
+<li>Set-up two example dataframes to append</li>
+</ol>
+<pre class="r"><code>Title &lt;- c(&quot;EL&quot;, &quot;AREES&quot;, &quot;EM&quot;, &quot;FEE&quot;, &quot;GEB&quot;, &quot;GCB&quot;, &quot;Ecol&quot;, &quot;JE&quot;)
+Publisher &lt;- c(&quot;BP&quot;, &quot;ARI&quot;, &quot;ESA&quot;, &quot;ESA&quot;, &quot;BP&quot;, &quot;BP&quot;, &quot;ESA&quot;, &quot;BP&quot;)
+SJR &lt;- c(7.996, 7.019, 5.21, 3.644, 3.477, 3.425, 3.246, 3.145)
+H.index &lt;- c(127, 125, 98, 57, 71, 126, 172, 102)
+data &lt;- data.frame(Title, Publisher, SJR, H.index)
+data</code></pre>
+<pre><code>##   Title Publisher   SJR H.index
+## 1    EL        BP 7.996     127
+## 2 AREES       ARI 7.019     125
+## 3    EM       ESA 5.210      98
+## 4   FEE       ESA 3.644      57
+## 5   GEB        BP 3.477      71
+## 6   GCB        BP 3.425     126
+## 7  Ecol       ESA 3.246     172
+## 8    JE        BP 3.145     102</code></pre>
+<pre class="r"><code>Title &lt;- c(&quot;Ecog&quot;, &quot;DD&quot;)
+Publisher &lt;- c(&quot;BP&quot;, &quot;BP&quot;)
+SJR &lt;- c(2.87, 2.811)
+H.index &lt;- c(72, 60)
+Published.2012 &lt;- c(134, 116)
+data2 &lt;- data.frame(Title, Publisher, SJR, H.index, Published.2012)
+data2</code></pre>
+<pre><code>##   Title Publisher   SJR H.index Published.2012
+## 1  Ecog        BP 2.870      72            134
+## 2    DD        BP 2.811      60            116</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li>Check column names match</li>
+</ol>
+<pre class="r"><code>names(data) == names(data2) # Check that columns match (&#39;data2&#39; has an extra column)</code></pre>
+<pre><code>## Warning in names(data) == names(data2): longer object length is not a multiple
+## of shorter object length</code></pre>
+<pre><code>## [1]  TRUE  TRUE  TRUE  TRUE FALSE</code></pre>
+<pre class="r"><code>data2$Published.2012 &lt;- NULL # Effectively deletes the column
+names(data) == names(data2) # Check again that columns match</code></pre>
+<pre><code>## [1] TRUE TRUE TRUE TRUE</code></pre>
+<ol start="3" style="list-style-type: decimal">
+<li>Append</li>
+</ol>
+<pre class="r"><code>data.2and3 &lt;- rbind(data, data2) # Append the dataframes
+data.2and3 # Check for success</code></pre>
+<pre><code>##    Title Publisher   SJR H.index
+## 1     EL        BP 7.996     127
+## 2  AREES       ARI 7.019     125
+## 3     EM       ESA 5.210      98
+## 4    FEE       ESA 3.644      57
+## 5    GEB        BP 3.477      71
+## 6    GCB        BP 3.425     126
+## 7   Ecol       ESA 3.246     172
+## 8     JE        BP 3.145     102
+## 9   Ecog        BP 2.870      72
+## 10    DD        BP 2.811      60</code></pre>
+</div>
+<div id="merge-dataframes" class="section level1">
+<h1>Merge dataframes</h1>
+<p>You have a second dataframe with further information about levels in the first dataframe.
+For instance, our example dataframe can be merged with a dataframe containing further information about the publishers.</p>
+<ol style="list-style-type: decimal">
+<li>Set-up two example dataframes to merge</li>
+</ol>
+<pre class="r"><code>Title &lt;- c(&quot;EL&quot;, &quot;AREES&quot;, &quot;EM&quot;, &quot;FEE&quot;, &quot;GEB&quot;, &quot;GCB&quot;, &quot;Ecol&quot;, &quot;JE&quot;)
+Publisher &lt;- c(&quot;BP&quot;, &quot;ARI&quot;, &quot;ESA&quot;, &quot;ESA&quot;, &quot;BP&quot;, &quot;BP&quot;, &quot;ESA&quot;, &quot;BP&quot;)
+SJR &lt;- c(7.996, 7.019, 5.21, 3.644, 3.477, 3.425, 3.246, 3.145)
+H.index &lt;- c(127, 125, 98, 57, 71, 126, 172, 102)
+data &lt;- data.frame(Title, Publisher, SJR, H.index)
+data</code></pre>
+<pre><code>##   Title Publisher   SJR H.index
+## 1    EL        BP 7.996     127
+## 2 AREES       ARI 7.019     125
+## 3    EM       ESA 5.210      98
+## 4   FEE       ESA 3.644      57
+## 5   GEB        BP 3.477      71
+## 6   GCB        BP 3.425     126
+## 7  Ecol       ESA 3.246     172
+## 8    JE        BP 3.145     102</code></pre>
+<pre class="r"><code>Publisher &lt;- c(&quot;BP&quot;, &quot;ARI&quot;, &quot;ESA&quot;)
+Country &lt;- c(&quot;UK&quot;, &quot;USA&quot;, &quot;USA&quot;)
+data3 &lt;- data.frame(Publisher, Country) # Note that this dataframe contains further information about factors in the dataframe &#39;data&#39; (the country that each publisher operates from)
+data3</code></pre>
+<pre><code>##   Publisher Country
+## 1        BP      UK
+## 2       ARI     USA
+## 3       ESA     USA</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li>Merge the two dataframes</li>
+</ol>
+<pre class="r"><code>data.merge &lt;- merge(data, data3, by = &quot;Publisher&quot;) # We&#39;ve now added extra information
+data.merge</code></pre>
+<pre><code>##   Publisher Title   SJR H.index Country
+## 1       ARI AREES 7.019     125     USA
+## 2        BP    EL 7.996     127      UK
+## 3        BP   GEB 3.477      71      UK
+## 4        BP   GCB 3.425     126      UK
+## 5        BP    JE 3.145     102      UK
+## 6       ESA    EM 5.210      98     USA
+## 7       ESA   FEE 3.644      57     USA
+## 8       ESA  Ecol 3.246     172     USA</code></pre>
+</div>
+<div id="todo" class="section level1">
+<h1>Todo</h1>
+<p>transform() and within() to add columns
+reshape() to pivot
+sort()</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
+##  os       macOS Big Sur/Monterey 10.16
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_GB.UTF-8
+##  ctype    en_GB.UTF-8
+##  tz       Europe/London
+##  date     2022-09-05
+##  pandoc   2.18 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/tools/ (via rmarkdown)
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date (UTC) lib source
+##  blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.3.0   2022-04-25 [1] CRAN (R 4.2.0)
+##  digest        0.6.29  2021-12-01 [1] CRAN (R 4.2.0)
+##  evaluate      0.15    2022-02-18 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.0   2022-02-22 [1] CRAN (R 4.2.0)
+##  knitr         1.39    2022-04-26 [1] CRAN (R 4.2.0)
+##  magrittr      2.0.3   2022-03-30 [1] CRAN (R 4.2.0)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+##  rlang         1.0.2   2022-03-04 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.13    2020-11-12 [1] CRAN (R 4.2.0)
+##  sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+##  stringi       1.7.6   2021-11-29 [1] CRAN (R 4.2.0)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.2.0)
+##  xfun          0.30    2022-03-02 [1] CRAN (R 4.2.0)
+##  yaml          2.3.5   2022-02-21 [1] CRAN (R 4.2.0)
+## 
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>

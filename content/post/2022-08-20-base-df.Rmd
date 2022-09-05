@@ -1,0 +1,315 @@
+---
+title: "Basic base R dataframes"
+author: 'Matt Dray'
+date: '2022-08-20'
+slug: base-df
+categories:
+  - code
+  - tutorial
+tags:
+  - base
+  - r
+draft: yes
+---
+
+# tl;dr 
+
+Placeholder.
+
+# Intro
+
+Jump to:
+
+* Example dataframe
+* Basic summaries
+* Access data
+* Alter a value
+* Rename columns
+* Add new columns
+* Subset data
+* Rename factor levels
+* Reorder factor levels
+* Collapse factor levels
+* Append dataframes
+* Merge dataframes
+
+# Example dataframe
+
+We are going to build a dataframe by specifying three vectors as objects using the gets notation (<-), and then arranging them into columns using the data.frame function.
+This dataframe is used as the starting point for the manipulations covered in this post.
+
+```{r}
+VAR1 <- c("Ecol.Lett", "Annu.Rev.Ecol.Evol.S", "Ecol.Monogr", "Front.Ecol.Environ","Glob.Ecol.Biogeogr", "Glob.Change.Biol", "Ecology", "J.Ecol") # Journal titles
+VAR2 <- c("BP", "ARI", "ESA", "ESA", "BP", "BP", "ESA", "BP") # Abbreviated publisher names
+VAR3 <- c(7.995, 7.019, 5.21, 3.644, 3.477, 3.425, 3.246, 3.145) # SCImago Journal Rank (SJR)
+data <- data.frame(VAR1, VAR2, VAR3)
+data
+```
+
+# Basic summaries
+
+The following functions allow you to look at the dataframe, or parts of it, and some simple summary statistics.
+
+```{r}
+data # Show full dataframe
+```
+
+
+
+```{r}
+head(data, n = 4) # Show first four rows, default is six
+```
+
+
+```{r}
+names(data) # List variable (column) names
+```
+
+
+```{r}
+nrow(data) # Number of rows
+```
+
+
+```{r}
+ncol(data) # Number of columns
+```
+
+
+```{r}
+summary(data) # Factor levels frequencies, quartiles and integer ranges
+```
+
+
+```{r}
+str(data) # STRucture of dataframe (data type, number of levels, first few values)
+```
+
+# Access data
+
+You will often need to access individual data points or groups of data points.
+This is done using dollar ($) or square bracket ([]) notation, or a hybrid of the two, to call upon specific rows and columns
+```{r}
+data$VAR2 # Dollar notation; returns values from column 'VAR1' in dataframe 'data'
+```
+
+
+```{r}
+data[2] # Square-bracket notation (indexing); returns column 1 in dataframe 'data'
+```
+
+```{r}
+data[3, 2] # Value in 3rd row, 2nd column
+```
+
+```{r}
+data$VAR2[3] # Hybrid notation; returns value from the third row of column 'VAR1' in dataframe 'data'
+```
+
+# Alter a value
+
+Once you have located the value(s) you want changed, you can use the gets notation (<-) to specify that location as a new value.
+
+```{r}
+data$VAR3[1] # Shows incorrect value of 7.995
+```
+
+```{r}
+data$VAR3[1] <- 7.996 # You can use $, [], or a hybrid notation to locate data
+data$VAR3[1] # Value corrected to 7.996
+```
+
+# Rename columns
+
+Informative column headers can be used to replace boring ones from your dataframe (e.g. VAR1 in our example).
+
+The names function allows us to look at the column names, which we can change using the gets notation (<-).
+
+You can change the column headers one by one, but it is easier to concatenate (c) a list of new column headers if you want to change several at once.
+
+```{r}
+names(data) <- c("Title", "Publisher", "SJR") # Rename multiple columns
+names(data)[3] <- "SJR" # Rename the third column only
+data
+```
+
+# Add new columns
+
+This is similar to the in the Example dataframe section above, where you specify a concatenated (c) list, or vector, of values to make up the new column.
+Create a new empty column in the dataframe using dollar notation (e.g. dframe1$column.one creates a new column called column.one in a dataframe called dframe1) and fill it with your vector using the gets notation (<-)
+
+```{r}
+data$H.index <- c(127, 125, 98, 57, 71, 126, 172, 102) # Add new column called 'H.index' with listed data
+data
+```
+
+# Subset data
+
+Subsetting allows you to focus on certain sections of your dataframe (e.g. you have a dataframe about Pokémon, but you want to narrow your analysis down to bug-types only).
+You can select the data you want by matching it to a list, using using logical operators to simplify the process: == means equal to; != means not equal to; %in% means match to a list of options.
+
+(1) Use the 'subset' function
+
+```{r}
+data.BP <- subset(data, Publisher == "BP") # Dataframe containing publisher BP only
+data.notBP <- subset(data, Publisher != "BP") # Dataframe containing all publishers except BP
+data.ARIandESA <- subset(data, Publisher %in% c("ARI", "ESA")) # Dataframe containing publishers ARI and ESA only
+```
+
+(2) Use square-bracket notation (indexing)
+
+```{r}
+data.BP <- data[data$Publisher == "BP", ] # Dataframe containing publisher BP only
+data.notBP <- data[data$Publisher != "BP", ] # Dataframe containing all publishers except BP
+data.ARIandESA <- data[data$Publisher %in% c("ARI", "ESA"), ] # Blank space after the comma in the square brackets indicates inclusion of all columns
+data.ARIandESA <- data[data$Treatment %in% c("ARI", "ESA"), c(2, 3)] # If we only want some of the columns (e.g. columns 2 and 3)
+```
+
+# Rename factor levels
+
+This is similar to renaming columns (above), but uses the levels function instead of the names function.
+
+```{r}
+summary(data$Title) # List original level names
+```
+
+```{r}
+levels(data$Title) <- c("AREES", "EL", "EM", "Ecol", "FEE", "GCB", "GEB", "JE") # Replacing level names as ordered in the summary (alphabetically)
+summary(data$Title) # List new level names
+```
+
+# Reorder factor levels
+
+By default, factors are listed alphabetically, but you may want them to appear in a different order (this allows you to plot these data in the order you specify, too).
+```{r}
+summary(data$Title) # Check the levels
+```
+
+
+```{r}
+data$Title <- factor(data$Title, levels = c("EM", "AREES", "FEE", "GEB", "EL",
+"Ecol", "GCB", "JE")) # Order the levels as you please
+summary(data$Title) # Check order
+```
+
+# Collapse factor levels
+
+This can be done to simplify a model; perhaps there is not enough of a difference between Factors A and B, so they can be considered together.
+
+(1) Create new levels to collapse current levels into
+
+```{r}
+data$Collapsed.titles <- data$Title # Copy 'Title' column to new column 'Collapsed.title'
+levels(data$Collapsed.titles) # Factor list is AREES, EL, EM, Ecol, FEE, GCB', GEB, JE
+```
+
+```{r}
+levels(data$Collapsed.titles) <- c(levels(data$Collapsed.titles), "Top4", "Next4") # Introduce levels to collapse others into
+```
+
+(2) Collapse the current levels into the new levels
+
+```{r}
+data$Collapsed.titles[data$Collapsed.titles %in% c("EL", "AREES", "EM", "FEE")] <- "Top4" # Four journals with highest SJR
+data$Collapsed.titles[data$Collapsed.titles %in% c("GEB", "GCB", "Ecol", "JE")] <- "Next4" # Four journals with next highest SJR
+```
+
+(3) Remove the now-unwanted old levels
+
+```{r}
+summary(data$Collapsed.titles) # Unwanted levels still present
+```
+
+```{r}
+data <- droplevels(data) # Drop the unwanted levels
+summary(data$Collapsed.titles) # Unwanted levels gone
+```
+
+# Append dataframes
+
+This allows you to attach two dataframes together vertically ('one on top of the other').
+The column names in each dataframe must match for this to work.
+
+(1) Set-up two example dataframes to append
+
+```{r}
+Title <- c("EL", "AREES", "EM", "FEE", "GEB", "GCB", "Ecol", "JE")
+Publisher <- c("BP", "ARI", "ESA", "ESA", "BP", "BP", "ESA", "BP")
+SJR <- c(7.996, 7.019, 5.21, 3.644, 3.477, 3.425, 3.246, 3.145)
+H.index <- c(127, 125, 98, 57, 71, 126, 172, 102)
+data <- data.frame(Title, Publisher, SJR, H.index)
+data
+```
+
+```{r}
+Title <- c("Ecog", "DD")
+Publisher <- c("BP", "BP")
+SJR <- c(2.87, 2.811)
+H.index <- c(72, 60)
+Published.2012 <- c(134, 116)
+data2 <- data.frame(Title, Publisher, SJR, H.index, Published.2012)
+data2
+```
+
+(2) Check column names match
+
+```{r}
+names(data) == names(data2) # Check that columns match ('data2' has an extra column)
+```
+
+```{r}
+data2$Published.2012 <- NULL # Effectively deletes the column
+names(data) == names(data2) # Check again that columns match
+```
+
+(3) Append
+
+```{r}
+data.2and3 <- rbind(data, data2) # Append the dataframes
+data.2and3 # Check for success
+```
+
+# Merge dataframes
+
+You have a second dataframe with further information about levels in the first dataframe.
+For instance, our example dataframe can be merged with a dataframe containing further information about the publishers.
+
+(1) Set-up two example dataframes to merge
+
+```{r}
+Title <- c("EL", "AREES", "EM", "FEE", "GEB", "GCB", "Ecol", "JE")
+Publisher <- c("BP", "ARI", "ESA", "ESA", "BP", "BP", "ESA", "BP")
+SJR <- c(7.996, 7.019, 5.21, 3.644, 3.477, 3.425, 3.246, 3.145)
+H.index <- c(127, 125, 98, 57, 71, 126, 172, 102)
+data <- data.frame(Title, Publisher, SJR, H.index)
+data
+```
+
+```{r}
+Publisher <- c("BP", "ARI", "ESA")
+Country <- c("UK", "USA", "USA")
+data3 <- data.frame(Publisher, Country) # Note that this dataframe contains further information about factors in the dataframe 'data' (the country that each publisher operates from)
+data3
+```
+
+(2) Merge the two dataframes
+
+```{r}
+data.merge <- merge(data, data3, by = "Publisher") # We've now added extra information
+data.merge
+```
+
+
+
+# Todo
+
+transform() and within() to add columns
+reshape() to pivot
+sort()
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
