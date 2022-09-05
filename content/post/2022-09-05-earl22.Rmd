@@ -1,0 +1,109 @@
+---
+title: "EARL 2022: {a11ytables} for best-practice spreadsheets"
+author: 'Matt Dray'
+date: '2022-09-05'
+slug: earl22
+categories:
+  - code
+  - event
+  - talk
+tags:
+  - a11ytables
+  - package
+  - quarto
+  - r
+  - spreadsheets
+draft: yes
+---
+
+<div class="figure">
+<img src="/post/2022-09-05-earl22_files/clippy.gif" alt="A gif that starts with a background of a government webpage for releasing egg statistics. The MS Office mascot Clippy eases in from the lower right with a speech bubble saying 'it looks like you're trying to improve a spreadsheet'. The background switches to a spreadsheet and Clippy moves to the top of the screen and then finally moves offscreen." width="100%"/>
+</div>
+
+# tl;dr 
+
+I [presented some slides](https://matt-dray.github.io/earl22-presentation/) at [the EARL 2022 conference](https://www.ascent.io/earl) about [{a11ytables}](https://co-analysis.github.io/a11ytables/): an R package that helps automate the production of reproducible and accessible spreadsheets, with a focus on publication of government statistics.
+
+# Counting sheets
+
+The UK government [publishes a lot of spreadsheets](https://www.gov.uk/search/research-and-statistics?content_store_document_type=statistics_published&order=updated-newest) that contain statistical tables. Compared to each other---and to themselves over time---these files are often:
+
+* inconsistent in structure (e.g. missing cover or contents sheets)
+* inconsistent in style (e.g. different fonts or shorthand codes for missing values)
+* inaccessible to users of assistive technology (e.g. they contain blank columns or unannounced footnotes)
+
+Luckily, there's now some excellent [guidance for releasing statistics in spreadsheets](https://analysisfunction.civilservice.gov.uk/policy-store/releasing-statistics-in-spreadsheets/) by the government's [Analysis Function](https://analysisfunction.civilservice.gov.uk/), with a focus on accessibility.
+
+The government's grassroots [Reproducible Analytical Pipelines (RAP)](https://analysisfunction.civilservice.gov.uk/support/reproducible-analytical-pipelines/) movement is also growing at pace. RAP's purpose is to overcome a legacy of fragmented point-and-click processes into code-driven end-to-end pipelines that improve speed, accuracy and reproducibility.
+
+It will take time for these important to spread to all corners of government, given factors like insufficient staffing, the need to train people and the inevitable inertia that comes with updating legacy processes.
+
+How can we grease the wheels?
+
+# Spreadsheet socialism
+
+I work in a government team that publishes data[^gov] and I wanted to make it easier for us to:
+
+* generate spreadsheets via R (the most commonly used language here)
+* be able to reproduce outputs in future (i.e. we produce files monthly, quarterly, annually)
+* apply accessible styles and structure (so we don't have to spend ages with checklists and point-and-click interfaces)
+
+First I looked for existing code-based solutions and found [the Python package gptables](https://gptables.readthedocs.io/en/latest/), written by the Analysis Function Core Team. At the time, the package created spreadsheets in accordance with an older version of the best-practice guidance. There was no R-native solution either, though it could be accessed in R via [{reticulate}](https://rstudio.github.io/reticulate/).
+
+As a result, I decided to create [{a11ytables}](https://co-analysis.github.io/a11ytables/): an R package to generate spreadsheets that meet the latest best-practice guidance for releasing statistics in spreadsheets.
+
+<div class="figure">
+<img src="/post/2022-09-05-earl22_files/a11ytables-hex.png" alt="Hex logo for the a11ytables R package. Four rows of light green cells, mimicking a spreadsheet. The second row down has the letters of 'a11y' in adjacent cells. The third row has the letters of 'tables' in adjacent cells." width="25%"/>
+</div>
+
+It can be [downloaded from GitHub](https://github.com/co-analysis/a11ytables/) (currently v0.1), which also installs [{openxlsx}](https://ycphs.github.io/openxlsx/) (which does all the hard work of building a workbook) and [{pillar}](https://github.com/r-lib/pillar) (for prettier printing).
+
+```{r eval=FALSE}
+install.packages("remotes")  # if not yet installed
+remotes::install_github("co-analysis/a11ytables")
+library(a11ytables)
+```
+
+Do [submit issues or pull requests to the repo](https://github.com/co-analysis/a11ytables/) if you have ideas or solutions.
+
+# Easy does it
+
+A major aim of {a11ytables} was to make it easy for stats producers to go from data to spreadsheet with minimal effort. As such, the workflow is relatively simple and is composed of only three functions (arguments ignored for brevity):
+
+```{r eval=FALSE}
+create_a11ytable() |> 
+  generate_workbook() |>
+  openxlsx::saveWorkbook()
+```
+
+Basically:
+
+1. Pass information and data as arguments to `create_a11ytable()`, which creates a special a11ytables-class dataframe representation of your spreadsheet content
+1. Pass that object to `generate_workbook()` to convert it to a Workbook-class object that applies the required structure and styling
+1. Use `saveWorkbook()` from the {openxlsx} package to write the spreadsheet output to an xlsx file
+
+I recommend that you [read the vignettes and function documentation on the package website](https://co-analysis.github.io/a11ytables/) to better understand how to use {a11ytables} and to learn about its caveats; I won't go into depth in this post.[^accessibility]
+
+# Over-easy does it
+
+I wrote a presentation about the package and presented it at the EARL 2022 conference[^earl] in London. Yes, to expose the package, but also to make a wider point about the general importance of reproducibility, accessibility and the power of reusable tools.
+
+You can [access the slides for my talk on the web](https://matt-dray.github.io/earl22-presentation/), or [find the source on GitHub](https://github.com/matt-dray/earl22-presentation). 
+
+The slides show an example of some tables published by the UK government---[the latest UK egg statistics](https://www.gov.uk/government/statistics/egg-statistics)[^egg]---and walks through how they might be developed using {a11ytables}.
+
+<iframe width="780" height="500" src="https://matt-dray.github.io/earl22-presentation" title="EARL 2022: {a11ytables}"></iframe>
+
+The slides were written using [Quarto](https://quarto.org/). Click the 'settings' in the hamburger menu (lower left) to go fullscreen, see presenter notes, or get a slide overview.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^egg]: Long-time readers may remember that [I've picked on this publication before to demonstrate the {drake} package](https://www.rostrum.blog/2019/07/23/can-drake-rap/) for workflow reproducibility.
+[^earl]: Long-time readers may remember that [I spoke at EARL in 2018 about the {crosstalk} package](https://www.rostrum.blog/2018/09/12/crosstalk-memes/), largely through the medium of memes.
+[^accessibility]: Note that the package is not intended for creating perfectly accessible spreadsheets but will help with the bulk of the work needed. Users of the package should refer back to [the main spreadsheet guidance](https://analysisfunction.civilservice.gov.uk/policy-store/releasing-statistics-in-spreadsheets/) or the [spreadsheet accessibility checklist](https://analysisfunction.civilservice.gov.uk/policy-store/making-spreadsheets-accessible-a-brief-checklist-of-the-basics/) after using it to make sure nothing has been missed. Please email [analysis.function@ons.gov.uk](mailto:analysis.function@ons.gov.uk) if you use the package so they can monitor its use and the outputs produced.
+[^gov]: This blog and everything on it is personal and doesn't represent government policy in any possible shape or form. Unless [the Geospatial Commission](https://www.gov.uk/government/organisations/geospatial-commission) needs me for [drawing procedural dungeon maps](https://www.rostrum.blog/2022/05/01/dungeon/), or whatever.
