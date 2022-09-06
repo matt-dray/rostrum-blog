@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 25 day(s) ago: [Two RStudio Addins:
+🆕 The latest post was published 26 day(s) ago: [Two RStudio Addins:
 {quartostamp} and
 {snorkel}](https://www.rostrum.blog/2022/08/11/quartostamp-snorkel/).
 
@@ -178,4 +178,4 @@ since 2018-04-14.
 
 -----
 
-*Updated 2022-09-05 04:25:49*
+*Updated 2022-09-06 04:28:41*
