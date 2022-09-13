@@ -1,0 +1,165 @@
+---
+title: "You are a halfling, trying to harvest {potato}"
+author: 'Matt Dray'
+date: '2022-09-13'
+slug: potato
+categories:
+  - code
+  - package
+tags:
+  - game
+  - halfling
+  - potato
+  - r
+  - rpg
+draft: yes
+---
+
+# tl;dr
+
+Play in your R console an interactive version of ['Potato'](https://twitter.com/deathbybadger/status/1567425842526945280), a one-page halfling-themed role-playing game (RPG) by Oliver Darkshire. Oliver is [@deathbybadger](https://www.twitter.com/deathbybadger) on Twitter and has [a Patreon](https://www.patreon.com/deathbybadger).
+
+# 'A dark lord rampages across the world'
+
+I've recently put together [a GitHub repo](https://github.com/matt-dray/awesome-r-games) to collect together a bunch of neat games that you can play.
+
+The twist? They were built using R. Yes, R: ['a FrEe SoFtWaRe EnViRoNmEnT fOr StAtIsTiCaL cOmPuTiNg AnD gRaPhIcS'](https://twitter.com/mattdray/status/1539371338250522624?s=20&t=rr2J9k0hDbTcDagYMv1TFQ).
+
+I think R is best suited to either text-based user-input games on the R console, or via a more dedicated interface, like Shiny.[^mike]
+
+I came across [Oliver Darkshire](https://www.twitter.com/deathbybadger)'s excellent ['Potato' game on Twitter](https://twitter.com/deathbybadger/status/1567425842526945280); a 'one-page role-playing game'. It seemed ripe for a basic R implementation, given a simple text interface, the need to update and keep track of variables, and clear win conditions.
+
+So... {potato}.
+
+# 'Mash them, boil them'
+
+You can install the {potato} package from GitHub thanks to {remotes}:
+
+```{r download, eval=FALSE}
+install.packages("remotes")  # if not yet installed
+remotes::install_github("matt-dray/potato")
+```
+
+And you start a game with:
+
+```{r start, eval=FALSE}
+potato::potato()
+```
+```
+--- POTATO ---
+
+A (one-page) RPG by Oliver Darkshire (@deathbybadger)
+These and more at https://www.patreon.com/deathbybadger
+
+You are a halfling, just trying to exist.
+Meanwhile, the dark lord rampages across the world.
+You do not care about this. You are trying to farm potatoes.
+Because what could a halfling possibly do about it anyway?
+
+Keep rolling until DESTINY, POTATO or ORC reach 10/10.
+
+- DESTINY: 0/10
+- POTATO:  0/10
+- ORC:     0/10
+- PAY:     1 POTATO to remove 1 ORC
+
+Press [ENTER] to roll... 
+```
+
+The game will ask you for input as you play. It's basically luck-based die rolls, though you will have the chance to intervene with an option to hurl a certain number of precious potatoes at an orc to make it clear off.
+
+You win when `POTATO` reaches `10`. You lose when `ORC` reaches `10`. You also... 'don't lose' if `DESTINY` reaches `10`.
+
+Please see [the one-page RPG itself that David put together](https://twitter.com/deathbybadger/status/1567425842526945280) and/or [support him on Patreon](https://www.patreon.com/deathbybadger) if you like it or any of the other hilarious one-page RPGs that he's made.
+
+I cannot stress enough that this is his work and all I've done is put it into an obscure format that literally three people might look at for a laugh.
+
+# 'What could a halfling possibly do about it anyway?'
+
+I could just leave it there, but I think the interesting thing for R users are the various little methods required to make the 'game' function.
+
+To display text to the user in the console, we can use `cat()` or `message()`. I kinda prefer `message()` because the user has more control over it, like `suppressMessages()` (which does what you think it does). There's a subtlety in presentation too, which is that the two functions return text in different colours.
+
+```{r hello, eval=FALSE}
+message("Hello world!")
+```
+
+The game loop itself runs inside a `repeat`, which might not be that common to a lot of R users. We're mostly used to `for` loops that iterate through a predefined list of things, whereas `repeat` will keep going until we specify a `break`.
+
+```{r repeat, eval=FALSE}
+repeat {
+  
+  if (keep_going) {
+    do_something()
+  }
+  
+  if (!keep_going) {
+    break
+  }
+  
+}
+```
+
+You can imagine a scenario where `keep_going` is set to `TRUE` and so some actions happen; and that if it becomes `FALSE` then the game loop ends. In {potato}, we make sure to first print the current values of `DESTINY`, `POTATO` and `ORC` so the user sees these before the game continues or ends.
+
+`DESTINY`, `POTATO` and `ORC`? Before we initiate that `repeat` loop we can specify a bunch of starting values for some variables. Stylistically it makes sense to use ALL CAPS for these (that's how they were written in the original game, after all), but there's also an old-school rule-of-thumb to specify variables this way in R code so you can more easily spot them in your code.
+
+```{r}
+DESTINY <- 0L
+POTATO  <- 0L
+ORC     <- 0L
+```
+
+Clearly we need user input to decide what to do during the game. Most of the time, a user's hand is forced and they need to roll. But sometimes they have the choice to remove one orc at the cost of one potato.
+
+This is a logical variable that we can keep track of, i.e. can the user pay?
+
+```{r}
+can_pay <- FALSE
+
+if (COST <= POTATO) {
+  can_pay <- TRUE
+} else if (COST > POTATO) {
+  can_pay <- FALSE
+}
+```
+
+If the cost to yeet an orc is equal-to or less-than the number of potatoes, we can elect to make the payment.
+
+Given the `can_pay` value, the user will get the option to either roll the die (`FALSE`):
+
+```{r}
+readline("Press [ENTER] to roll... ")
+```
+
+Or roll the die _or_ make the payment (`TRUE`):
+
+```{r}
+readline("Press [ENTER] to roll or [p] to pay 1 POTATO to remove 1 ORC... ")
+```
+
+Die-roll values pass through a series of `if` statements that are activated based on the number rolled. So if you roll `1` or `2`, you're `In the garden...`; if 3 or 4, you'll get `A knock on the door...`, else the potato cost per orc-yeet increases by 1) if the die falls on 5 or 6. 
+A second roll is made automatically when in the garden or when a knock is heard. Here's what happens if a `1` is rolled when in the garden:
+
+```{r}
+if (rolled_garden == 1L) {
+  message(paste(rolled_garden_msg, "You happily root about all day in your garden."))
+  message("- Result: +1 POTATO")
+  POTATO <- POTATO + 1L
+}
+```
+
+Excellent, the `POTATO` variable counter is increased by 1 in this case and confirmed to the user in a `message()`. The latest `DESTINY`, `POTATO` and `ORC` scores are then printed back to the user at the start of the next `repeat` loop.
+
+# 'Enjoy your well-earned rest'
+
+Once again, you can visit Oliver Darkshire on Twitter as [@deathbybadger](https://www.twitter.com/deathbybadger) and support him on [Patreon](https://www.patreon.com/deathbybadger).
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^mike]: Yeah, but have you seen the mind-boggling extent to which [Mike Cheng (AKA mikefc, AKA coolbutuseless, AKA R legend)](https://coolbutuseless.github.io/) has gone to [turn R into a real game engine?!](https://www.rstudio.com/conference/2022/talks/polygons-of-another-world-realtime/)
