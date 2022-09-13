@@ -85,8 +85,8 @@ Press [ENTER] to roll... </code></pre>
 <pre class="r"><code>DESTINY &lt;- 0L
 POTATO  &lt;- 0L
 ORC     &lt;- 0L</code></pre>
-<p>in addition, we clearly need user input to decide what to do during the game. Most of the time, a user’s hand is forced and they need to roll. But sometimes they have the choice to remove one orc at the cost of one potato.</p>
-<p>This is a logical variable that we can keep track of, i.e. can the user pay, <code>TRUE</code> or <code>FALSE</code>?</p>
+<p>in addition, we clearly need user input to decide what to do during the game. Most of the time, a user’s hand is forced and they need to roll. But sometimes they have the choice to remove an orc at the cost of one or more potatoes (depending on how the die falls).</p>
+<p>This is a logical variable that we can keep track of, i.e. can the user pay (<code>TRUE</code> or <code>FALSE</code>)?</p>
 <pre class="r"><code>can_pay &lt;- FALSE
 
 if (COST &lt;= POTATO) {
@@ -94,7 +94,7 @@ if (COST &lt;= POTATO) {
 } else if (COST &gt; POTATO) {
   can_pay &lt;- FALSE
 }</code></pre>
-<p>If the cost to yeet an orc is equal-to or less-than the number of potatoes, we can elect to make the payment. This is expressed in the options provided on the command line.</p>
+<p>If the cost to yeet an orc is equal-to or less-than the number of potatoes, we can elect to make the payment. This is expressed in the options provided to the user on the command line.</p>
 <p>Given the <code>can_pay</code> value, the user will get the option to either roll the die (<code>FALSE</code>):</p>
 <pre class="r"><code>event &lt;- readline(
   &quot;Press [ENTER] to roll... &quot;
@@ -103,9 +103,9 @@ if (COST &lt;= POTATO) {
 <pre class="r"><code>event &lt;- readline(
   &quot;Press [ENTER] to roll or [p] to pay 1 POTATO to remove 1 ORC... &quot;
 )</code></pre>
-<p>Both of which require user input at the command line, resulting in a value stored to the <code>event</code> object. Note that hitting <kbd>Enter</kbd> results in an empty string (<code>""</code>).</p>
-<p>Die-roll values pass through a series of <code>if</code> statements that are activated based on the number rolled. So if you roll <code>1</code> or <code>2</code>, you’re <code>In the garden...</code>; if 3 or 4, you’ll get <code>A knock on the door...</code>, else the potato cost per orc-yeet increases by 1) if the die falls on 5 or 6.
-A second roll is made automatically when in the garden or when a knock is heard. Here’s what happens if a <code>1</code> is rolled when in the garden:</p>
+<p>Both of which require user input that results in a value stored in the <code>event</code> object. Note that hitting <kbd>Enter</kbd> results in an empty string (<code>""</code>).</p>
+<p>Die-roll values pass through a series of <code>if</code> statements that are activated based on the number rolled. So if you roll <code>1</code> or <code>2</code>, you’re <code>In the garden...</code>; if 3 or 4, you’ll get <code>A knock on the door...</code>; else the potato cost per orc-yeet increases by 1).</p>
+<p>A second roll is made automatically when in the garden or when a knock is heard. Here’s what happens if a <code>1</code> is rolled when in the garden:</p>
 <pre class="r"><code>if (rolled_garden == 1L) {
   
   message(
@@ -121,6 +121,7 @@ A second roll is made automatically when in the garden or when a knock is heard.
   
 }</code></pre>
 <p>Excellent, the <code>POTATO</code> variable counter is increased by 1 in this case and confirmed to the user in a <code>message()</code>. The latest <code>DESTINY</code>, <code>POTATO</code> and <code>ORC</code> scores are then printed back to the user at the start of the next <code>repeat</code> loop.</p>
+<p>And then you just… keep potatoing.</p>
 </div>
 <div id="potato." class="section level1">
 <h1>Potato.</h1>
@@ -141,7 +142,7 @@ Session info
 ##  collate  en_GB.UTF-8
 ##  ctype    en_GB.UTF-8
 ##  tz       Europe/London
-##  date     2022-09-13
+##  date     2022-09-14
 ##  pandoc   2.18 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/tools/ (via rmarkdown)
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────

@@ -120,9 +120,9 @@ POTATO  <- 0L
 ORC     <- 0L
 ```
 
-in addition, we clearly need user input to decide what to do during the game. Most of the time, a user's hand is forced and they need to roll. But sometimes they have the choice to remove one orc at the cost of one potato.
+in addition, we clearly need user input to decide what to do during the game. Most of the time, a user's hand is forced and they need to roll. But sometimes they have the choice to remove an orc at the cost of one or more potatoes (depending on how the die falls).
 
-This is a logical variable that we can keep track of, i.e. can the user pay, `TRUE` or `FALSE`?
+This is a logical variable that we can keep track of, i.e. can the user pay (`TRUE` or `FALSE`)?
 
 ```{r can-pay, eval=FALSE}
 can_pay <- FALSE
@@ -134,7 +134,7 @@ if (COST <= POTATO) {
 }
 ```
 
-If the cost to yeet an orc is equal-to or less-than the number of potatoes, we can elect to make the payment. This is expressed in the options provided on the command line.
+If the cost to yeet an orc is equal-to or less-than the number of potatoes, we can elect to make the payment. This is expressed in the options provided to the user on the command line.
 
 Given the `can_pay` value, the user will get the option to either roll the die (`FALSE`):
 
@@ -152,9 +152,10 @@ event <- readline(
 )
 ```
 
-Both of which require user input at the command line, resulting in a value stored to the `event` object. Note that hitting <kbd>Enter</kbd> results in an empty string (`""`).
+Both of which require user input that results in a value stored in the `event` object. Note that hitting <kbd>Enter</kbd> results in an empty string (`""`).
 
-Die-roll values pass through a series of `if` statements that are activated based on the number rolled. So if you roll `1` or `2`, you're `In the garden...`; if 3 or 4, you'll get `A knock on the door...`, else the potato cost per orc-yeet increases by 1) if the die falls on 5 or 6. 
+Die-roll values pass through a series of `if` statements that are activated based on the number rolled. So if you roll `1` or `2`, you're `In the garden...`; if 3 or 4, you'll get `A knock on the door...`; else the potato cost per orc-yeet increases by 1).
+
 A second roll is made automatically when in the garden or when a knock is heard. Here's what happens if a `1` is rolled when in the garden:
 
 ```{r if-plus-potato, eval=FALSE}
@@ -175,6 +176,8 @@ if (rolled_garden == 1L) {
 ```
 
 Excellent, the `POTATO` variable counter is increased by 1 in this case and confirmed to the user in a `message()`. The latest `DESTINY`, `POTATO` and `ORC` scores are then printed back to the user at the start of the next `repeat` loop.
+
+And then you just... keep potatoing.
 
 # Potato.
 
