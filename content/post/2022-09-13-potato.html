@@ -1,0 +1,183 @@
+---
+title: "You are a halfling, trying to harvest {potato}"
+author: 'Matt Dray'
+date: '2022-09-13'
+slug: potato
+categories:
+  - code
+  - package
+tags:
+  - game
+  - halfling
+  - potato
+  - r
+  - rpg
+draft: no
+---
+
+
+
+<div class="figure">
+<p><img src="/post/2022-09-13-potato_files/potato.png" alt="A low-quality cartoon drawing of a potato with a little cute face." width="50%"/></p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>Play an interactive version of <a href="https://twitter.com/deathbybadger/status/1567425842526945280">‘Potato’</a>—a one-page halfling-themed role-playing game (RPG) by Oliver Darkshire (<a href="https://www.twitter.com/deathbybadger">Twitter</a>, <a href="https://www.patreon.com/deathbybadger">Patreon</a>)—in your R console with <a href="https://github.com/matt-dray/potato">the {potato} package</a>.</p>
+</div>
+<div id="potato" class="section level1">
+<h1>Potato?</h1>
+<p>I’ve recently put together <a href="https://github.com/matt-dray/awesome-r-games">a GitHub repo</a> to collect together a bunch of neat games that you can play. The twist? They were built using R.</p>
+<p>Yes, R: <a href="https://twitter.com/mattdray/status/1539371338250522624?s=20&amp;t=rr2J9k0hDbTcDagYMv1TFQ">‘a FrEe SoFtWaRe EnViRoNmEnT fOr StAtIsTiCaL cOmPuTiNg AnD gRaPhIcS’</a>.</p>
+<p>I think R is best suited to either text-based user-input games on the R console, or via a more dedicated interface, like Shiny.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>In this vein, <a href="https://www.twitter.com/deathbybadger">Oliver Darkshire</a> write an excellent ‘one-page role-playing game’ called <a href="https://twitter.com/deathbybadger/status/1567425842526945280">Potato</a> that seems ripe for plucking into an R implementation. A simple text interface; updating and tracking variables; clear win conditions. The basic desire to avoid action and simply tend to vegetables.</p>
+<p>So… {potato}.</p>
+</div>
+<div id="potato-1" class="section level1">
+<h1>Potato!</h1>
+<p>You can install <a href="https://github.com/matt-dray/potato">the {potato} package from GitHub</a> thanks to {remotes}:</p>
+<pre class="r"><code>install.packages(&quot;remotes&quot;)  # if not yet installed
+remotes::install_github(&quot;matt-dray/potato&quot;)</code></pre>
+<p>You start a game with:</p>
+<pre class="r"><code>potato::potato()</code></pre>
+<pre><code>--- POTATO ---
+
+A (one-page) RPG by Oliver Darkshire (@deathbybadger)
+These and more at https://www.patreon.com/deathbybadger
+
+You are a halfling, just trying to exist.
+Meanwhile, the dark lord rampages across the world.
+You do not care about this. You are trying to farm potatoes.
+Because what could a halfling possibly do about it anyway?
+
+Keep rolling until DESTINY, POTATO or ORC reach 10/10.
+
+- DESTINY: 0/10
+- POTATO:  0/10
+- ORC:     0/10
+- PAY:     1 POTATO to remove 1 ORC
+
+Press [ENTER] to roll... </code></pre>
+<p>The console will prompt you for input as you play. It’s basically luck-based die rolls, though you will have the chance to intervene with an option to hurl a certain number of precious potatoes at an orc to make it clear off.</p>
+<p>You win when <code>POTATO</code> reaches <code>10</code>. You lose when <code>ORC</code> reaches <code>10</code>. You also… ‘don’t lose’… if <code>DESTINY</code> reaches <code>10</code>.</p>
+<p>Please see <a href="https://twitter.com/deathbybadger/status/1567425842526945280">the one-page RPG that David put together</a> and/or <a href="https://www.patreon.com/deathbybadger">support him on Patreon</a> if you like it or any of the other hilarious one-page RPGs that he’s made.</p>
+<p>I cannot stress enough that this is his work and all I’ve done is put it into an obscure format that literally three people might look at for a laugh.</p>
+</div>
+<div id="potato-2" class="section level1">
+<h1>Potato…</h1>
+<p>I could just leave it there, but I think the interesting thing for R users are the various little methods required to make the ‘game’ function.</p>
+<p>To display text to the user in the console, we can use <code>cat()</code> or <code>message()</code>. I kinda prefer <code>message()</code> because the user has more control over it in general, like <code>suppressMessages()</code> (which does what you think it does).</p>
+<pre class="r"><code>message(&quot;Hello world!&quot;)</code></pre>
+<p>There’s a subtlety in presentation too, which is that the two functions return text in different colours.</p>
+<p>The game loop itself runs inside a <code>repeat</code>, which is maybe uncommon for a lot of R users. We’re mostly used to <code>for</code> or <code>while</code> loops for iteration with a known set of things to iterate over, whereas <code>repeat</code> will keep going until we specify a <code>break</code>.</p>
+<pre class="r"><code>repeat {
+  
+  if (keep_going) {
+    do_something()
+  }
+  
+  if (!keep_going) {
+    break
+  }
+  
+}</code></pre>
+<p>You can imagine a scenario where <code>keep_going</code> is set to <code>TRUE</code> and some actions happen as a result; and that if it becomes <code>FALSE</code> then the game loop ends. In {potato}, we make sure to first print the current values of <code>DESTINY</code>, <code>POTATO</code> and <code>ORC</code> so the user sees them before the game continues or ends.</p>
+<p>What are <code>DESTINY</code>, <code>POTATO</code> and <code>ORC</code>? Before we initiate that <code>repeat</code> loop we can specify a bunch of starting values for some important scoring variables. Stylistically, it makes sense to use ALL CAPS for these (that’s how they were written in the original game, after all), but there’s also an old-school rule-of-thumb to specify variables this way in R code so you can more easily spot them in your code.</p>
+<pre class="r"><code>DESTINY &lt;- 0L
+POTATO  &lt;- 0L
+ORC     &lt;- 0L</code></pre>
+<p>in addition, we clearly need user input to decide what to do during the game. Most of the time, a user’s hand is forced and they need to roll. But sometimes they have the choice to remove one orc at the cost of one potato.</p>
+<p>This is a logical variable that we can keep track of, i.e. can the user pay, <code>TRUE</code> or <code>FALSE</code>?</p>
+<pre class="r"><code>can_pay &lt;- FALSE
+
+if (COST &lt;= POTATO) {
+  can_pay &lt;- TRUE
+} else if (COST &gt; POTATO) {
+  can_pay &lt;- FALSE
+}</code></pre>
+<p>If the cost to yeet an orc is equal-to or less-than the number of potatoes, we can elect to make the payment. This is expressed in the options provided on the command line.</p>
+<p>Given the <code>can_pay</code> value, the user will get the option to either roll the die (<code>FALSE</code>):</p>
+<pre class="r"><code>event &lt;- readline(
+  &quot;Press [ENTER] to roll... &quot;
+)</code></pre>
+<p>Or choose to roll the die <em>or</em> make the payment (<code>TRUE</code>):</p>
+<pre class="r"><code>event &lt;- readline(
+  &quot;Press [ENTER] to roll or [p] to pay 1 POTATO to remove 1 ORC... &quot;
+)</code></pre>
+<p>Both of which require user input at the command line, resulting in a value stored to the <code>event</code> object. Note that hitting <kbd>Enter</kbd> results in an empty string (<code>""</code>).</p>
+<p>Die-roll values pass through a series of <code>if</code> statements that are activated based on the number rolled. So if you roll <code>1</code> or <code>2</code>, you’re <code>In the garden...</code>; if 3 or 4, you’ll get <code>A knock on the door...</code>, else the potato cost per orc-yeet increases by 1) if the die falls on 5 or 6.
+A second roll is made automatically when in the garden or when a knock is heard. Here’s what happens if a <code>1</code> is rolled when in the garden:</p>
+<pre class="r"><code>if (rolled_garden == 1L) {
+  
+  message(
+    paste(
+      rolled_garden_msg,
+      &quot;You happily root about all day in your garden.&quot;
+    )
+  )
+  
+  message(&quot;- Result: +1 POTATO&quot;)
+  
+  POTATO &lt;- POTATO + 1L
+  
+}</code></pre>
+<p>Excellent, the <code>POTATO</code> variable counter is increased by 1 in this case and confirmed to the user in a <code>message()</code>. The latest <code>DESTINY</code>, <code>POTATO</code> and <code>ORC</code> scores are then printed back to the user at the start of the next <code>repeat</code> loop.</p>
+</div>
+<div id="potato." class="section level1">
+<h1>Potato.</h1>
+<p>Once again, you can visit Oliver Darkshire on Twitter as <a href="https://www.twitter.com/deathbybadger"><span class="citation">@deathbybadger</span></a> and support him on <a href="https://www.patreon.com/deathbybadger">Patreon</a>.</p>
+<p>You can find <a href="https://github.com/matt-dray/potato">the source code for {potato} on GitHub</a>. Issues and pull requests welcome. Just make sure you can afford the charge of one potato to submit.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
+##  os       macOS Big Sur/Monterey 10.16
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_GB.UTF-8
+##  ctype    en_GB.UTF-8
+##  tz       Europe/London
+##  date     2022-09-13
+##  pandoc   2.18 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/tools/ (via rmarkdown)
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date (UTC) lib source
+##  blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.3.0   2022-04-25 [1] CRAN (R 4.2.0)
+##  digest        0.6.29  2021-12-01 [1] CRAN (R 4.2.0)
+##  evaluate      0.15    2022-02-18 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.0   2022-02-22 [1] CRAN (R 4.2.0)
+##  knitr         1.39    2022-04-26 [1] CRAN (R 4.2.0)
+##  magrittr      2.0.3   2022-03-30 [1] CRAN (R 4.2.0)
+##  potato      * 0.1.0   2022-09-13 [1] Github (matt-dray/potato@2eb37ea)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+##  rlang         1.0.2   2022-03-04 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.13    2020-11-12 [1] CRAN (R 4.2.0)
+##  sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+##  stringi       1.7.6   2021-11-29 [1] CRAN (R 4.2.0)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.2.0)
+##  xfun          0.30    2022-03-02 [1] CRAN (R 4.2.0)
+##  yaml          2.3.5   2022-02-21 [1] CRAN (R 4.2.0)
+## 
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>Yeah, but have you seen the mind-boggling extent to which <a href="https://coolbutuseless.github.io/">Mike Cheng (AKA mikefc, AKA coolbutuseless, AKA R legend)</a> has gone to <a href="https://www.rstudio.com/conference/2022/talks/polygons-of-another-world-realtime/">turn R into a proper game engine?</a><a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
