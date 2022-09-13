@@ -1,25 +1,30 @@
 ---
-title: "EARL 2022: {a11ytables} for best-practice spreadsheets"
+title: "EARL 22: {a11ytables} for better spreadsheets"
 author: 'Matt Dray'
-date: '2022-09-05'
+date: '2022-09-07'
 slug: earl22
 categories:
   - code
   - event
+  - package
   - talk
 tags:
   - a11ytables
-  - package
+  - conference
+  - earl
   - quarto
   - r
   - spreadsheets
-draft: yes
+draft: no
 ---
 
 
 
 <div class="figure">
-<p><img src="/post/2022-09-05-earl22_files/clippy.gif" alt="A gif that starts with a background of a government webpage for releasing egg statistics. The MS Office mascot Clippy eases in from the lower right with a speech bubble saying 'it looks like you're trying to improve a spreadsheet'. The background switches to a spreadsheet and Clippy moves to the top of the screen and then finally moves offscreen." width="100%"/></p>
+<img src="/post/2022-09-05-earl22_files/clippy.gif" alt="A gif that starts with a background of a government webpage for releasing egg statistics. The MS Office mascot Clippy eases in from the lower right with a speech bubble saying 'it looks like you're trying to improve a spreadsheet'. The background switches to a spreadsheet and Clippy moves to the top of the screen and then finally moves offscreen." width="100%"/>
+<p class="caption">
+Please don’t sue me for my fan art, Microsoft.
+</p>
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
@@ -29,25 +34,25 @@ draft: yes
 <h1>Counting sheets</h1>
 <p>The UK government <a href="https://www.gov.uk/search/research-and-statistics?content_store_document_type=statistics_published&amp;order=updated-newest">publishes a lot of spreadsheets</a> that contain statistical tables. Compared to each other—and to themselves over time—these files are often:</p>
 <ul>
-<li>inconsistent in structure (e.g. missing cover or contents sheets)</li>
-<li>inconsistent in style (e.g. different fonts or shorthand codes for missing values)</li>
+<li>inconsistent in structure (e.g. cover or contents sheets are missing)</li>
+<li>inconsistent in style (e.g. different fonts, different shorthand codes for suppressed values)</li>
 <li>inaccessible to users of assistive technology (e.g. they contain blank columns or unannounced footnotes)</li>
 </ul>
-<p>Luckily, there’s now some excellent <a href="https://analysisfunction.civilservice.gov.uk/policy-store/releasing-statistics-in-spreadsheets/">guidance for releasing statistics in spreadsheets</a> by the government’s <a href="https://analysisfunction.civilservice.gov.uk/">Analysis Function</a>, with a focus on accessibility.</p>
-<p>The government’s grassroots <a href="https://analysisfunction.civilservice.gov.uk/support/reproducible-analytical-pipelines/">Reproducible Analytical Pipelines (RAP)</a> movement is also growing at pace. RAP’s purpose is to overcome a legacy of fragmented point-and-click processes into code-driven end-to-end pipelines that improve speed, accuracy and reproducibility.</p>
-<p>It will take time for these important to spread to all corners of government, given factors like insufficient staffing, the need to train people and the inevitable inertia that comes with updating legacy processes.</p>
+<p>Luckily, the government’s <a href="https://analysisfunction.civilservice.gov.uk/">Analysis Function</a> released some excellent <a href="https://analysisfunction.civilservice.gov.uk/policy-store/releasing-statistics-in-spreadsheets/">guidance for releasing statistics in spreadsheets</a>, with particular attention to accessibility.</p>
+<p>The government’s grassroots <a href="https://analysisfunction.civilservice.gov.uk/support/reproducible-analytical-pipelines/">Reproducible Analytical Pipelines (RAP)</a> movement is also growing at pace. RAP’s purpose is to overcome a legacy of fragmented point-and-click processes into code-driven end-to-end pipelines that improve speed, accuracy and reproducibility; including workflows that generate statistical spreadsheets for publication.</p>
+<p>It will take time for these approaches to become 100% embedded across government, due to factors like the inevitable inertia that comes with trying to leave legacy processes behind.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
 <p>How can we grease the wheels?</p>
 </div>
 <div id="spreadsheet-socialism" class="section level1">
 <h1>Spreadsheet socialism</h1>
-<p>I work in a government team that publishes data<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> and I wanted to make it easier for us to:</p>
+<p>I work in a government team that publishes data<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> and I wanted to make it easier for us to:</p>
 <ul>
 <li>generate spreadsheets via R (the most commonly used language here)</li>
 <li>be able to reproduce outputs in future (i.e. we produce files monthly, quarterly, annually)</li>
 <li>apply accessible styles and structure (so we don’t have to spend ages with checklists and point-and-click interfaces)</li>
 </ul>
-<p>First I looked for existing code-based solutions and found <a href="https://gptables.readthedocs.io/en/latest/">the Python package gptables</a>, written by the Analysis Function Core Team. At the time, the package created spreadsheets in accordance with an older version of the best-practice guidance. There was no R-native solution either, though it could be accessed in R via <a href="https://rstudio.github.io/reticulate/">{reticulate}</a>.</p>
-<p>As a result, I decided to create <a href="https://co-analysis.github.io/a11ytables/">{a11ytables}</a>: an R package to generate spreadsheets that meet the latest best-practice guidance for releasing statistics in spreadsheets.</p>
+<p>First I looked for existing code-based solutions and found <a href="https://gptables.readthedocs.io/en/latest/">the Python package gptables</a>, written by the Analysis Function Core Team. At the time, the package created spreadsheets in accordance with an older version of the best-practice guidance. There was no R-native solution either, though gptables could be accessed in R via <a href="https://rstudio.github.io/reticulate/">{reticulate}</a>.</p>
+<p>As a result, I created <a href="https://co-analysis.github.io/a11ytables/">{a11ytables}</a>: an R package to generate spreadsheets that meet the latest best-practice guidance for releasing statistics in spreadsheets.</p>
 <div class="figure">
 <p><img src="/post/2022-09-05-earl22_files/a11ytables-hex.png" alt="Hex logo for the a11ytables R package. Four rows of light green cells, mimicking a spreadsheet. The second row down has the letters of 'a11y' in adjacent cells. The third row has the letters of 'tables' in adjacent cells." width="25%"/></p>
 </div>
@@ -59,7 +64,7 @@ library(a11ytables)</code></pre>
 </div>
 <div id="easy-does-it" class="section level1">
 <h1>Easy does it</h1>
-<p>A major aim of {a11ytables} was to make it easy for stats producers to go from data to spreadsheet with minimal effort. As such, the workflow is relatively simple and is composed of only three functions (arguments ignored for brevity):</p>
+<p>A major aim of {a11ytables} is to make it easy for stats producers to more easily complete the last mile of their ‘data-in to spreadsheet-out’ pipeline. As such, the workflow is relatively simple and is composed of only three functions (arguments ignored for brevity):</p>
 <pre class="r"><code>create_a11ytable() |&gt; 
   generate_workbook() |&gt;
   openxlsx::saveWorkbook()</code></pre>
@@ -69,16 +74,16 @@ library(a11ytables)</code></pre>
 <li>Pass that object to <code>generate_workbook()</code> to convert it to a Workbook-class object that applies the required structure and styling</li>
 <li>Use <code>saveWorkbook()</code> from the {openxlsx} package to write the spreadsheet output to an xlsx file</li>
 </ol>
-<p>I recommend that you <a href="https://co-analysis.github.io/a11ytables/">read the vignettes and function documentation on the package website</a> to better understand how to use {a11ytables} and to learn about its caveats; I won’t go into depth in this post.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>I recommend that you read the vignettes and function documentation <a href="https://co-analysis.github.io/a11ytables/">on the package website</a> to better understand how to use {a11ytables} and to learn about its caveats<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>; I won’t go into depth in this post.</p>
 </div>
 <div id="over-easy-does-it" class="section level1">
 <h1>Over-easy does it</h1>
-<p>I wrote a presentation about the package and presented it at the EARL 2022 conference<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> in London. Yes, to expose the package, but also to make a wider point about the general importance of reproducibility, accessibility and the power of reusable tools.</p>
+<p>I wrote some slides about the package and presented it at the EARL 2022 conference<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> in London. Yes, to expose the package, but also to make a wider point about the general importance of reproducibility, accessibility and the power of reusable tools.</p>
 <p>You can <a href="https://matt-dray.github.io/earl22-presentation/">access the slides for my talk on the web</a>, or <a href="https://github.com/matt-dray/earl22-presentation">find the source on GitHub</a>.</p>
-<p>The slides show an example of some tables published by the UK government—<a href="https://www.gov.uk/government/statistics/egg-statistics">the latest UK egg statistics</a><a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>—and walks through how they might be developed using {a11ytables}.</p>
+<p>The slides show an example of some tables published by the UK government—<a href="https://www.gov.uk/government/statistics/egg-statistics">the latest UK egg statistics</a><a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a>—and walks through how they might be developed using {a11ytables}.</p>
 <iframe width="780" height="500" src="https://matt-dray.github.io/earl22-presentation" title="EARL 2022: {a11ytables}">
 </iframe>
-<p>The slides were written using <a href="https://quarto.org/">Quarto</a>. Click the ‘settings’ in the hamburger menu (lower left) to go fullscreen, see presenter notes, or get a slide overview.</p>
+<p>I wrote the slides in <a href="https://quarto.org/">Quarto</a> and made heavy use of <a href="https://matt-dray.github.io/quartostamp/">{quartostamp}</a>—my package of Quarto helpers exposed as an RStudio Addin—which I <a href="https://www.rostrum.blog/2022/08/11/quartostamp-snorkel/">wrote about recently</a>. Click ‘settings’ in the hamburger menu (lower left) to go fullscreen, see presenter notes, or get a slide overview.</p>
 <hr />
 <details>
 <summary>
@@ -94,7 +99,7 @@ Session info
 ##  collate  en_GB.UTF-8
 ##  ctype    en_GB.UTF-8
 ##  tz       Europe/London
-##  date     2022-09-05
+##  date     2022-09-07
 ##  pandoc   2.18 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/tools/ (via rmarkdown)
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
@@ -130,9 +135,10 @@ Session info
 <div class="footnotes footnotes-end-of-document">
 <hr />
 <ol>
-<li id="fn1"><p>This blog and everything on it is personal and doesn’t represent government policy in any possible shape or form. Unless <a href="https://www.gov.uk/government/organisations/geospatial-commission">the Geospatial Commission</a> needs me for <a href="https://www.rostrum.blog/2022/05/01/dungeon/">drawing procedural dungeon maps</a>, or whatever.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>Note that the package is not intended for creating perfectly accessible spreadsheets but will help with the bulk of the work needed. Users of the package should refer back to <a href="https://analysisfunction.civilservice.gov.uk/policy-store/releasing-statistics-in-spreadsheets/">the main spreadsheet guidance</a> or the <a href="https://analysisfunction.civilservice.gov.uk/policy-store/making-spreadsheets-accessible-a-brief-checklist-of-the-basics/">spreadsheet accessibility checklist</a> after using it to make sure nothing has been missed. Please email <a href="mailto:analysis.function@ons.gov.uk">analysis.function@ons.gov.uk</a> if you use the package so they can monitor its use and the outputs produced.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
-<li id="fn3"><p>Long-time readers may remember that <a href="https://www.rostrum.blog/2018/09/12/crosstalk-memes/">I spoke at EARL in 2018 about the {crosstalk} package</a>, largely through the medium of memes.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
-<li id="fn4"><p>Long-time readers may remember that <a href="https://www.rostrum.blog/2019/07/23/can-drake-rap/">I’ve picked on this publication before to demonstrate the {drake} package</a> for workflow reproducibility.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn1"><p>Check out the excellent <a href="https://analysisfunction.civilservice.gov.uk/policy-store/reproducible-analytical-pipelines-strategy/">RAP strategy</a> and <a href="https://www.gov.uk/government/publications/better-broader-safer-using-health-data-for-research-and-analysis">Goldacre Review</a> for how this might be achieved.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>This blog and everything on it is personal and doesn’t represent government policy in any possible shape or form. Unless <a href="https://www.gov.uk/government/organisations/geospatial-commission">the Geospatial Commission</a> needs me for <a href="https://www.rostrum.blog/2022/05/01/dungeon/">drawing procedural dungeon maps</a>, or whatever.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>Note that the package is not intended for creating perfectly accessible spreadsheets but will help with the bulk of the work needed. Users of the package should refer back to <a href="https://analysisfunction.civilservice.gov.uk/policy-store/releasing-statistics-in-spreadsheets/">the main spreadsheet guidance</a> or the <a href="https://analysisfunction.civilservice.gov.uk/policy-store/making-spreadsheets-accessible-a-brief-checklist-of-the-basics/">spreadsheet accessibility checklist</a> after using it to make sure nothing has been missed. Please email <a href="mailto:analysis.function@ons.gov.uk">analysis.function@ons.gov.uk</a> if you use the package so they can monitor its use and the outputs produced.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>‘Enterprise Applications of the R Language’. Long-time readers may remember that <a href="https://www.rostrum.blog/2018/09/12/crosstalk-memes/">I spoke at EARL in 2018 about the {crosstalk} package</a>, largely through the medium of memes.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>Long-time readers may remember that <a href="https://www.rostrum.blog/2019/07/23/can-drake-rap/">I’ve used this publication before to demonstrate the {drake} package</a> for workflow reproducibility.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
