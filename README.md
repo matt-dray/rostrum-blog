@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 12 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 3 day(s) ago: [You are a halfling,
+🆕 The latest post was published 4 day(s) ago: [You are a halfling,
 trying to harvest
 {potato}](https://www.rostrum.blog/2022/09/13/potato/).
 
@@ -180,4 +180,4 @@ trying to harvest
 
 -----
 
-*Updated 2022-09-16 04:30:57*
+*Updated 2022-09-17 04:08:12*
