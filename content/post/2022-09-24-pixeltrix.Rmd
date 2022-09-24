@@ -1,0 +1,173 @@
+---
+title: "Interactive pixel art in R with {pixeltrix}"
+author: 'Matt Dray'
+date: '2022-09-24'
+slug: pixeltrix
+categories:
+  - code
+  - package
+tags:
+  - base
+  - image
+  - interactive
+  - locator
+  - pixel
+  - r
+  - sprite
+draft: no
+---
+
+```{r echo=FALSE}
+library(pixeltrix)
+```
+
+<div class="figure">
+<img src="/post/2022-09-24-pixeltrix_files/pixeltrix.gif" alt="Gif of RStudio window. The console is running the code pixeltrix::click_pixels(6, 7, 3) and a plot appears with a 6 by 7 square grid. Some squares are clicked, changing them to light grey. A second click turns them dark grey. Eventually a little square character with a face is created. A matrix encoded the image is shown in the console when the escape key is pressed." width="100%"/>
+</div>
+
+# tl;dr
+
+I've written [{pixeltrix}](https://github.com/matt-dray/pixeltrix), an R package that lets you select 'pixels' interactively from a plot window and returns your final image as a matrix. You could use it to design sprites.
+
+# Pixel perfect
+
+I've written before about [creating very simple pixel art in R](https://www.rostrum.blog/2021/06/28/pixel-art/). To create a sprite of Link from _The Legend of Zelda_ I had to write out by hand a vector that encoded its pixel values. It was tedious.
+
+There are, however, a couple of options in R to take an image and extract the pixels from it: see Florian Privé's Shiny app in [the {pixelart} package](https://github.com/privefl/pixelart) and Mike Cheng's (AKA coolbutuseless) [blog post](https://coolbutuseless.github.io/2018/08/13/gganimate-with-sprites/) that also describes how to animate them.[^voxel]
+
+But what if you want to create a sprite from scratch? It would be great if you could click pixels interactively and be returned a matrix encoding your image.
+
+I couldn't find an R package to do this, so I decided to make a very simple one: [{pixeltrix}](https://github.com/matt-dray/pixeltrix) (as in 'pixel' and 'matrix', but also as in 'tricks'[^michael], lol). 
+
+It's written entirely in base R (no Shiny needed) and takes advantage of a `repeat` loop that runs `image()` to plot squares (hereafter 'pixels') and `locator()` to let you click those pixels on and off.[^overhang] The coordinates of each click are matched to the nearest pixel centre, the pixel's value is incremented by 1 (or wrapped back to zero) and the image is redrawn.
+
+The package is still in development, but I think it's reached a useable state for my own purposes.
+
+# Enter the matrix
+
+The package is available for download [from GitHub](https://github.com/matt-dray/pixeltrix). There's plenty to improve, like use of colour palettes and the ability to provide your own matrix as input, rather than start with a blank canvas. Add your own ideas to the [issues tracker](https://github.com/matt-dray/pixeltrix/issues).
+
+```{r eval=FALSE}
+# install.packages(remotes)  # if not yet installed
+remotes::install_github("matt-dray/pixeltrix")
+```
+
+For now there's one function, `click_pixels()`, to which you pass plot dimensions (how many pixels tall and wide), the number of pixel 'states' (the number of values a pixel can take, so binary would be `2`) and whether you want to put a grid over the plot (makes it easier to see where the pixels are).
+
+```{r eval=FALSE}
+click_pixels(
+  n_rows = 3,
+  n_cols = 3,
+  n_states = 2,
+  grid = TRUE
+) -> x
+```
+
+This opens a plot window. Click a pixel to cycle it through the number of states you asked for. For example, `n_states = 4` means you cycle it through values of 0, 1, 2 and 4 (wrapping back to 0), which will be manifested in the plot as different shades of grey. You can only click one pixel at a time!
+
+When you're done, you press the <kbd>Esc</kbd> key, or the 'Finish' button in the plot window of RStudio.
+
+<img src="/post/2022-09-24-pixeltrix_files/simple.png" alt="A 3 by 3 square panel grid with darker squares in an x-shaped pattern.">
+
+You're returned a matrix that contains the value of each pixel in your image. So if you had set `n_states = 3`, a twice-clicked pixel gets the value 2, an unclicked pixel defaults to a value of 0, etc.
+
+```{r eval=FALSE}
+x
+#      [,1] [,2] [,3]
+# [1,]    1    0    1
+# [2,]    0    1    0
+# [3,]    1    0    1
+```
+
+This matrix is basically a blueprint of the image you created.
+
+# Sprite club
+
+I managed to create each of these sprites interactively in a minute or so. It would've taken much longer to write their matrices by hand and to keep passing the matrices to `image()` to visuliase them and make sure there aren't any mistakes.
+
+## Tamagotchi
+
+Here's a 1-bit original kuchipatchi sprite from [the original 90s Tamagotchi](https://en.wikipedia.org/wiki/Tamagotchi) digital pets. It uses the default of two pixel states: binary, so 0 for white and 1 for grey.
+
+```{r eval=FALSE}
+click_pixels(14, 14) -> tam_sprite
+```
+
+<img src="/post/2022-09-24-pixeltrix_files/kuchipatchi.png" alt="A 14 by 14 pixel grid with a two-toned sprite of a pet character from the original 90s Tamagotchi pets.">
+
+<details><summary>Click to expand matrix</summary>
+
+```{r eval=FALSE}
+tam_sprite
+#       [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10] [,11] [,12] [,13] [,14]
+#  [1,]    0    0    0    0    1    1    1    1    1     1     0     0     0     0
+#  [2,]    0    0    0    1    0    0    0    0    0     0     1     0     0     0
+#  [3,]    0    1    1    0    1    0    0    0    0     1     0     1     0     0
+#  [4,]    1    0    0    0    0    0    0    0    0     0     0     0     1     0
+#  [5,]    0    1    1    1    0    0    0    0    0     0     0     0     1     0
+#  [6,]    1    0    0    0    0    0    0    0    0     0     0     0     1     0
+#  [7,]    0    1    1    1    0    0    0    0    0     0     0     0     1     0
+#  [8,]    0    0    0    1    0    0    0    0    1     0     1     0     0     1
+#  [9,]    0    0    0    1    0    0    0    0    1     0     1     0     0     1
+# [10,]    0    0    0    1    0    0    0    0    0     1     0     0     0     1
+# [11,]    0    0    0    0    1    0    0    0    0     0     0     0     1     0
+# [12,]    0    0    0    0    0    1    0    1    1     1     0     1     0     0
+# [13,]    0    0    0    0    0    1    0    1    0     1     0     1     0     0
+# [14,]    0    0    0    0    0    0    1    0    0     0     1     0     0     0
+```
+
+</details>
+
+### Pokémon
+
+Here's the player character from [the first generation of Pokémon games](https://en.wikipedia.org/wiki/Pok%C3%A9mon_Red_and_Blue) on the Game Boy. It uses three states (`n_states = 3`): value 0 is white, 1 is light grey and 2 is dark grey.
+
+```{r eval=FALSE}
+click_pixels(14, 16, 3) -> poke_sprite
+```
+
+<img src="/post/2022-09-24-pixeltrix_files/ash.png" alt="A 14 by 16 pixel grid with a three-toned sprite of the main character from the first generation of Pokemon games for the Game Boy.">
+
+<details><summary>Click to expand matrix</summary>
+
+```{r eval=FALSE}
+poke_sprite
+#       [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10] [,11] [,12] [,13] [,14]
+#  [1,]    0    0    0    0    2    2    2    2    2     2     0     0     0     0
+#  [2,]    0    0    0    2    1    1    1    1    1     1     2     0     0     0
+#  [3,]    0    0    2    1    1    1    1    1    1     1     1     2     0     0
+#  [4,]    0    0    2    1    1    1    1    1    1     1     1     2     0     0
+#  [5,]    0    2    2    2    1    0    0    0    0     1     2     2     2     0
+#  [6,]    0    2    2    0    2    2    2    2    2     2     0     2     2     0
+#  [7,]    2    0    2    0    0    0    0    0    0     0     0     2     0     2
+#  [8,]    2    0    0    0    0    2    0    0    2     0     0     0     0     2
+#  [9,]    0    2    2    0    0    2    0    0    2     0     0     2     2     0
+# [10,]    0    2    2    2    0    0    1    1    0     0     2     2     2     0
+# [11,]    2    0    0    2    2    2    2    2    2     2     2     0     0     2
+# [12,]    2    0    0    2    2    2    2    2    2     2     2     0     0     2
+# [13,]    0    2    2    2    1    1    2    2    1     1     2     2     2     0
+# [14,]    0    0    2    1    2    2    1    1    2     2     1     2     0     0
+# [15,]    0    0    2    1    1    1    2    2    1     1     1     2     0     0
+# [16,]    0    0    0    2    2    2    0    0    2     2     2     0     0     0
+```
+
+</details>
+
+# Why?
+
+Turns out the {pixeltrix} package is actually yak-shaving for another package: [{tamRgo}](https://github.com/matt-dray/tamRgo/).
+
+{tamRgo} is a package for a Tamagotchi-like experience in the R console. You get a persistent interactive digital pet on your computer whose stats update in 'real time' while you're away.
+
+I want to print a largeish canvas of pixels to visualise multiple pet 'species' and for the various interactions you can have (playing, feeding, cleaning). {pixeltrix} makes it much easier to design these scenes and returns matrices that I can add directly to {tamRgo}.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^voxel]: You can even go into the third dimension (i.e. voxels) with Mike's [{isocubes}](https://github.com/coolbutuseless/isocubes) and its extension [{oblicubes}](https://github.com/trevorld/oblicubes) by Trevor L Davies. [I used these in a demo of '3D' dungeon-making](https://www.rostrum.blog/2022/06/28/isometric-dungeon/) with my [{r.oguelike}](https://github.com/matt-dray/r.oguelike) package.
+[^michael]: _Illusions, Michael._
+[^overhang]: The only awkward part is that `image()` doesn't plot with bounds of 0 to 1. There's an overhang dependent on the number of squares you want to draw. This results in some small but awkward calculations so that the clicks can be mapped properly to the nearest pixel adn so the grid overlay can be placed correctly.
