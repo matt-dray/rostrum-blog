@@ -27,7 +27,7 @@ library(pixeltrix)
 
 # tl;dr
 
-I've written [{pixeltrix}](https://github.com/matt-dray/pixeltrix), an R package that lets you select 'pixels' interactively from a plot window and returns your final image as a matrix. You could use it to design sprites.
+I've written [{pixeltrix}](https://github.com/matt-dray/pixeltrix), an R package that lets you select 'pixels' interactively from a plot window and returns your final image as a matrix. You could use it to design sprites, for example.
 
 # Pixel perfect
 
@@ -39,20 +39,20 @@ But what if you want to create a sprite from scratch? It would be great if you c
 
 I couldn't find an R package to do this, so I decided to make a very simple one: [{pixeltrix}](https://github.com/matt-dray/pixeltrix) (as in 'pixel' and 'matrix', but also as in 'tricks'[^michael], lol). 
 
-It's written entirely in base R (no Shiny needed) and takes advantage of a `repeat` loop that runs `image()` to plot squares (hereafter 'pixels') and `locator()` to let you click those pixels on and off.[^overhang] The coordinates of each click are matched to the nearest pixel centre, the pixel's value is incremented by 1 (or wrapped back to zero) and the image is redrawn.
+It's written entirely in base R (no Shiny or server needed) and can be run in the R console. It's basically a `repeat` loop that runs `image()` to plot squares[^overhang] (hereafter 'pixels') and `locator()`[^locator] to let you click those pixels on and off. The coordinates of each click are matched to the nearest pixel centre, the pixel's value is incremented by 1 (or wrapped back to zero) and the image is redrawn.
 
 The package is still in development, but I think it's reached a useable state for my own purposes.
 
 # Enter the matrix
 
-The package is available for download [from GitHub](https://github.com/matt-dray/pixeltrix). There's plenty to improve, like use of colour palettes and the ability to provide your own matrix as input, rather than start with a blank canvas. Add your own ideas to the [issues tracker](https://github.com/matt-dray/pixeltrix/issues).
+The package is available for download [from GitHub](https://github.com/matt-dray/pixeltrix). I have some ideas on how to improve it; go ahead and your own ideas to the [issues tracker](https://github.com/matt-dray/pixeltrix/issues).
 
 ```{r eval=FALSE}
 # install.packages(remotes)  # if not yet installed
 remotes::install_github("matt-dray/pixeltrix")
 ```
 
-For now there's one function, `click_pixels()`, to which you pass plot dimensions (how many pixels tall and wide), the number of pixel 'states' (the number of values a pixel can take, so binary would be `2`) and whether you want to put a grid over the plot (makes it easier to see where the pixels are).
+The main function is `click_pixels()`, to which you pass plot dimensions (how many pixels tall and wide), the number of pixel 'states' (the number of values a pixel can take, so binary would be `2`) and whether you want to put a grid over the plot (makes it easier to see where the pixels are).
 
 ```{r eval=FALSE}
 click_pixels(
@@ -63,9 +63,11 @@ click_pixels(
 ) -> x
 ```
 
-This opens a plot window. Click a pixel to cycle it through the number of states you asked for. For example, `n_states = 4` means you cycle it through values of 0, 1, 2 and 3 (wrapping back to 0), which will be manifested in the plot as different shades of grey. You can only click one pixel at a time!
+This opens a plot window. Repeatedly click a pixel to cycle it through the number of states you asked for. For example, `n_states = 4` means you cycle it through values of 0, 1, 2 and 3 (wrapping back to 0), which will be manifested in the plot as different shades of grey. 
 
-When you're done, you press the <kbd>Esc</kbd> key, or the 'Finish' button in the plot window of RStudio.
+Note that you can only click one pixel at a time and you'll have to do a lot of clicking if your `n_states` value is high.
+
+When you're done, you press the <kbd>Esc</kbd> key, or the 'Finish' button in the plot window of RStudio. I saved all the images below via the 'Export' button in RStudio.
 
 <img src="/post/2022-09-24-pixeltrix_files/simple.png" alt="A 3 by 3 square panel grid with darker squares in an x-shaped pattern.">
 
@@ -79,15 +81,17 @@ x
 # [3,]    1    0    1
 ```
 
-This matrix is basically a blueprint of the image you created.
+This matrix is basically a blueprint of the image you created. You can take this and do other things with it, like pass it to `ggplot()` and match each of the pixel state values to a colour. Maybe you'll use it to plan your crochet or cross-stitch.[^crochet] Or maybe you'll do some maths with it, idk.
 
 # Sprite club
 
-I managed to create each of these sprites interactively in a minute or so. It would've taken much longer to write their matrices by hand and to keep passing the matrices to `image()` to visuliase them and make sure there aren't any mistakes.
+My main purpose for the package is to create simple [sprites](https://en.wikipedia.org/wiki/Sprite_(computer_graphics)).
+
+I used {pixeltrix} to make each of the sprites below. They took about a minute each. It would've taken much longer to write their matrices by hand and to keep passing them to `image()` to visuliase them and make sure there weren't any mistakes.
 
 ## Tamagotchi
 
-Here's a 1-bit original kuchipatchi sprite from [the original 90s Tamagotchi](https://en.wikipedia.org/wiki/Tamagotchi) digital pets. It uses the default of two pixel states: binary, so 0 for white and 1 for grey.
+Here's a 1-bit original kuchipatchi sprite from [the original 90s Tamagotchi](https://en.wikipedia.org/wiki/Tamagotchi) digital pets. It uses the default of two pixel states (binary): so 0 for white and 1 for grey.
 
 ```{r eval=FALSE}
 click_pixels(14, 14) -> tam_sprite
@@ -155,9 +159,9 @@ poke_sprite
 
 # Why?
 
-Turns out the {pixeltrix} package is actually yak-shaving for another package: [{tamRgo}](https://github.com/matt-dray/tamRgo/).
+Turns out the {pixeltrix} package is actually [yak-shaving](https://en.wiktionary.org/wiki/yak_shaving) for another package I'm developing: [{tamRgo}](https://github.com/matt-dray/tamRgo/).
 
-{tamRgo} is a (very much work-in-progress) package for a Tamagotchi-like experience in the R console. You get a persistent interactive digital pet on your computer whose stats update in 'real time' while you're away.
+{tamRgo} is a (very much work-in-progress) conceptual package for a Tamagotchi-like experience in the R console. You get a persistent interactive digital pet on your computer whose stats update in 'real time' while you're away.
 
 I want to print a largeish canvas of pixels to visualise multiple pet 'species' and for the various interactions you can have (playing, feeding, cleaning). {pixeltrix} makes it much easier to design these scenes and returns matrices that I can add directly to {tamRgo}.
 
@@ -171,3 +175,5 @@ sessioninfo::session_info()
 [^voxel]: You can even go into the third dimension (i.e. voxels) with Mike's [{isocubes}](https://github.com/coolbutuseless/isocubes) and its extension [{oblicubes}](https://github.com/trevorld/oblicubes) by Trevor L Davies. [I used these in a demo of '3D' dungeon-making](https://www.rostrum.blog/2022/06/28/isometric-dungeon/) with my [{r.oguelike}](https://github.com/matt-dray/r.oguelike) package.
 [^michael]: _Illusions, Michael._
 [^overhang]: The only awkward part is that `image()` doesn't plot with bounds of 0 to 1. There's an overhang dependent on the number of squares you want to draw. This results in some small but awkward calculations so that the clicks can be mapped properly to the nearest pixel and so the grid overlay can be placed correctly.
+[^locator]: I've [written before](https://www.rostrum.blog/2021/11/04/kanto-locator/) about using the `locator()` function to select points on fictitious maps.
+[^crochet]: But see also [Sharon Machlis's 'Overlay Mosaic Crochet Pattern Chart Generator' Shiny app](https://apps.machlis.com/shiny/crochetapp/) for crochet patterns and [Ben Vigreux's {embroidr}](https://rdvark.net/2022/05/14/introducing-embroidr/) for planning embroidery projects.
