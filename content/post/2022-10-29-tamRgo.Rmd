@@ -1,0 +1,263 @@
+---
+title: "Tamagotchi in R"
+author: 'Matt Dray'
+date: '2022-10-29'
+slug: tamRgo
+categories:
+  - code
+  - package
+tags:
+  - game
+  - r
+  - tamagotchi
+  - tamRgo
+draft: yes
+---
+
+```{r echo=FALSE}
+library(tamRgo)
+```
+
+# tl;dr
+
+I've written [the concept R package {tamRgo}](https://github.com/matt-dray/tamRgo) to simulate a digital pet in your R console. It persists between sessions!
+
+# GameR
+
+R is meant to be for statistics or something? Its future is as a game engine.  Look no further than [Mike Cheng's rstudio::conf22 talk](https://www.youtube.com/watch?v=LPotWAJnE_s). I've written things like  [{ActionSquirrel}](https://github.com/matt-dray/ActionSquirrel), [{safar6}](https://github.com/matt-dray/safar6) and [{r.oguelike}](https://github.com/matt-dray/r.oguelike), and created the [awesome-r-games list](https://github.com/matt-dray/awesome-r-games) to demonstrate its potential.
+
+It's easy enough to write an R game that runs in a single session. But what if your game state could persist over different sessions? Different days? Doesn't that mean you could record some kind of 'save state'?
+
+Does this mean you could have a Tamagotchi-like digital pet on your computer that you can interact with via the R console? Spoiler: yes.
+
+# Tamagotchwhat?
+
+For the benefit of young people, [a Tamagotchi](https://en.wikipedia.org/wiki/Tamagotchi) was (is!) a little physical device that contains a 'digital pet', made popular in the late 90s. They have a little screen and physical buttons so you can see your pet and interact with it. Play with it, feed it, even reprimand it.
+
+It's not that hard to mock this up in R, so you can have some functions that let you interact with a pet on the command line. The missing piece is persistence. How do you ensure that the last state of your pet can be recalled into a new session? How can you mimic the idea that the pet is 'alive' and is existing while you aren't interacting with it?
+
+# R user, duh!
+
+Long-story short: as a package developer, you can store user-specific data with the `tools::R_user_dir()` function, which builds a platform-independent path to where the package is stored on a user's computer.[^rappdirs] You can read about this in [the R Packages book](https://r-pkgs.org/data.html#sec-data-persistent).
+
+This means you could write a data file to a user's computer that includes, for example, a sort of 'blueprint' for a digital pet. And you could write functions that update the values in that blueprint file each time you interact with it. 
+
+So: here's {tamRgo}!
+
+# Demo
+
+## Install
+
+You can install the package [from GitHub](https://github.com/matt-dray/tamRgo) using the {remotes} package. There's also [an accompanying website](https://matt-dray.github.io/tamRgo/) to read the documentation online.
+
+```{r eval=FALSE}
+# install.packages("tamRgo")  # if not yet installed
+remotes::install_github("matt-dray/tamRgo")
+library(tamRgo)
+```
+
+It has no package dependencies, but you'll need to be running a version of R greater than 4.0.
+
+Of course, it's just a toy to demonstrate a concept. I've built out a bit of a 'game loop', but it's just for fun and the code is not optimised. [Suggestions and code contributions welcome](https://github.com/matt-dray/tamRgo/issues)!
+
+## Lay an egg
+
+To begin, you'll need to generate a new pet by laying an egg. You'll be asked to confirm it's okay to save a blueprint file onto your computer, which is tiny list object stored as RDS.
+
+```{r eval=FALSE}
+> lay_egg(pet_name = "KEVIN")
+# Save pet blueprint? y/n: y
+# Saved pet blueprint.
+# You have a new egg... it hatched!
+# You can get_stats(), see_pet(), play(), feed(), clean().
+```
+
+So, you have a new pet. Now what? The hint suggests to check the stats, so let's do that.
+
+```{r eval=FALSE}
+get_stats()
+# Characteristics
+#   Name:    KEVIN
+#   Species: Z
+#   Age:     0
+#   Level:   0 (newborn)
+# Status
+#   Happy:   ■■■□□  
+#   Hungry:  ■■■□□  
+#   Dirty:   □□□□□  
+```
+
+You can see some characteristics and statuses. 'Name' is obvious; 'Species' is generated randomly; 'Age' is days since the 'birth' date; 'Level' relates to the amount of experience that's been accumulated. 'Happy', 'Hungry' and 'Dirty' are status values that change over time and can be adjusted with the functions `play()`, `feed()` and `clean()`, respectively.
+
+Let's quickly check what our pet looks like with `see_pet()`. It's appearance depends on the species and the level.
+
+```{r eval=FALSE}
+see_pet()
+#       
+#  ███  
+# █ █ █ 
+# █████ 
+# ██ ██ 
+#  ███  
+#       
+```
+
+## Feed
+
+Having just been born, KEVIN is a little peckish. Let's lower that 'Hungry' value by using `feed()`.
+
+```{r eval=FALSE}
+feed()
+# 'Hungry' status value is now 2/5
+```
+
+See how the 'Hungry' counter decreased by 1?
+
+```{r eval=FALSE}
+get_stats()
+# Characteristics
+#   Name:    KEVIN
+#   Species: Z
+#   Age:     0
+#   Level:   0 (newborn)
+# Status
+#   Happy:   ■■■□□  
+#   Hungry:  ■■□□□  
+#   Dirty:   □□□□□  
+```
+
+## Play
+
+You can increase the 'Happy' value with `play()`. This begins a game of 'higher or lower' with user input.
+
+```{r eval=FALSE}
+play()
+# The number is 4. Higher or lower? Type 'H' or 'L': H
+# Wrong! It was 1. Score: 0/5.
+# The number is 1. Higher or lower? Type 'H' or 'L': H
+# Correct! It was 8. Score: 1/5.
+# The number is 4. Higher or lower? Type 'H' or 'L': H
+# Correct! It was 6. Score: 2/5.
+# The number is 6. Higher or lower? Type 'H' or 'L': L
+# Correct! It was 5. Score: 3/5.
+# The number is 7. Higher or lower? Type 'H' or 'L': L
+# Wrong! It was 10. Score: 3/5.
+# Result: you scored 3/5!
+# 'Happy' status value is now 4/5
+```
+
+Rumour has it that the game is easier under some circumstances and that a higher score is better for your pet's wellbeing.
+
+## Clean
+
+Eventually your pet will become 'dirty' and you'll need to `clean()` it.
+
+```{r eval=FALSE}
+see_pet()
+#       
+#  ███  
+# █ █ █ 
+# █████ 
+# ██ ██ 
+#  ███  
+#       
+#       
+#   █   
+#  ███  
+# █████ 
+#       
+clean()
+# 'Dirty' status value is now 0/5
+```
+
+Your pet will level up over time (how?) and it's appearance will change.
+
+## 
+
+Maybe you forget about your pet. You remember it exists three days later. From _any_ R session on your computer you can check the stats.
+
+```{r eval=FALSE}
+# Characteristics
+#   Name:    KEVIN
+#   Species: Z
+#   Age:     5
+#   Level:   2 (youngling)
+# Status
+#   Happy:   □□□□□ !
+#   Hungry:  ■■■■■ !
+#   Dirty:   ■■■■■ !
+```
+
+Whoops, looks like it's pretty unhappy, pretty hungry and pretty dirty.
+
+You should look after your pet. Apparently there's a chance it might become... 'unalive'. Rumour has it that god owners have longer-living pets...
+
+Regardless, KEVIN has now reached level 2. What does he look like now?
+
+```{r eval=FALSE}
+see_pet()
+#          
+#  █    █  
+#   █  █   
+#  ██████  
+#  █ ██ █  
+#  ██████  
+# ███  ███ 
+#  ██████  
+#  █    █  
+#          
+#       
+#   █   
+#  ███  
+# █████ 
+#       
+```
+
+Cool antennae, bro. Might need to given him a clean.
+
+# Under the hood
+
+The underlying system is relatively simple. I don't want to give away too much about the specifics, since it might spoil the game a bit, but it's worth explaining some of the theory behind how the package works.
+
+## Blueprint
+
+The whole backend process is dependent on a simple 'blueprint' list. It contains details like the pet's name, species (randomly generated), 'date of birth', accumulated XP, status values (happy, hungry, dirty) and some other things. This is the object that gets stored on your computer in the `tools::R_user_dir()` location.
+
+The blueprint is read and updated whenever you use a function from {tamRgo}. The current datetime is compared to the last interaction, which is stored in the blueprint. The time difference is used to update other values in the blueprint, like the pet's age (in days), passive XP accumulation, the pet's level (if enough XP has been accumulated) and changes to status values (the pet will get less happy and more hungry and dirty with time).
+
+When the user then checks the pet's stats with `get_stats()`, they will see the updated values for their pet. This gives the impression that the pet has been 'alive' on their machine while they've been away.
+
+## Experience system
+
+The main goal is to accumulate XP and keep your pet alive. The XP system is quite simple:
+
+* a small amount of XP is accumulated passively every hour
+* XP is gained from `play()`, where a higher minigame score means more XP
+* certain XP thresholds will result in the pet levelling up, which affects their appearance when you `see_pet()`
+
+At a certain point, the pet will become 'unalive'. The chance of this happening is based on the pet's XP. Basically:
+
+* XP is 'frozen' at a certain age and this value is stored in the blueprint
+* the chance of becoming unalive is tied to the frozen XP value, where more XP means a lower chance
+* the number of days since the XP was frozen is used as a multiplier, so the chance of becoming unalive increases with time
+
+The current XP count is stored in the blueprint, but is hidden from the user. This moves focus away from tracking and improving a single number and hopefully towards a more general goal of keeping your pet happy, well-fed and clean.
+
+### Sprites
+
+There are character 'sprites' that change with age and species. The sprite for a newborn, mature and unalive pet are the same regardless of species, but the other levels are dependent on whether the pet is species X, Y or Z. Of course, these are blocky and pixellated to mimic the original Tamagotchi style.
+
+The sprites are stored as binary matrices where 1 indicates a filled 'pixel' and zero an empty pixel. To make it easy to create these matrices, I wrote the package [{pixeltrix}](), which I wrote about in [my last blog post](). It provides an interactive way to design sprites by turning pixels 'on' and 'off' in a plotting window, which returns a matrix. When `see_pet()` is called, the appropriate matrix is plotted row-by-row to the console.
+
+## Constants
+
+There's an internal data store that acts as a central source for values like the rate of passive XP accumulation, the XP thresholds to level up and matrices that represent the sprite graphics used in `see_pet()`. Keeping this data in one place means it only needs to be changed once if a certain value needs to be updated.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^rappdirs]: You may be familiar with [{rappdirs}](https://rappdirs.r-lib.org/), a package that helps you find directories. `tools::R_user_dir()` is nice because it's built into R, so no dependency is required.
