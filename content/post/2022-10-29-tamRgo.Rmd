@@ -1,7 +1,7 @@
 ---
-title: "Tamagotchi in R"
+title: "Tamagotchi in R?"
 author: 'Matt Dray'
-date: '2022-10-29'
+date: '2022-11-02'
 slug: tamRgo
 categories:
   - code
@@ -15,38 +15,27 @@ draft: yes
 ---
 
 ```{r echo=FALSE}
-library(tamRgo)
+suppressPackageStartupMessages(library(tamRgo))
 ```
+
+<div class="figure">
+<img src="/post/2022-10-29-tamRgo_files/evolve.png" alt="Six pixellated characters showing a progression from a small blob creature, through to a larger hat-wearing creature, through to a tombstone." width="100%"/>
+<p class="caption">Evolution of tamRgo species Y.</p>
+</div>
 
 # tl;dr
 
-I've written [the concept R package {tamRgo}](https://github.com/matt-dray/tamRgo) to simulate a persistent digital pet in your R console. Yes, really.
+I've written [the concept R package {tamRgo}](https://github.com/matt-dray/tamRgo) to simulate a persistent digital pet in your R console. Silliest, best thing I've ever made?
 
 # GameRs
 
-R is a game engine. Look no further than [Mike Cheng's rstudio::conf22 talk](https://www.youtube.com/watch?v=LPotWAJnE_s) or the [awesome-r-games list](https://github.com/matt-dray/awesome-r-games).
+R is a game engine; don't @ me.[^explain] As such, R has the ability to [keep a persistent save state](https://r-pkgs.org/data.html#sec-data-persistent).
 
-I've written things like  [{ActionSquirrel}](https://github.com/matt-dray/ActionSquirrel), [{safar6}](https://github.com/matt-dray/safar6) and [{r.oguelike}](https://github.com/matt-dray/r.oguelike).
+How? R developers can use [`tools::R_user_dir()`](https://rdrr.io/r/tools/userdir.html) to generate a platform-independent path to a local directory for storing user-specific data.[^rappdirs]
 
-<div class="figure">
-<img src="/post/2022-10-29-tamRgo_files/space-meme.jpg" alt="The 'always has been meme'. An astronaut looks at Earth and says 'wait, R is a language for making and playing games' and an astronaut behind them, who is pointing a gun at their head, says 'always has been'." width="100%"/>
-</div>
+Obviously I've used this to make a concept R package: [{tamRgo}](https://github.com/matt-dray/tamRgo). It saves locally a 'blueprint' for a  [_Tamgotchi_](https://en.wikipedia.org/wiki/Tamagotchi)-like pet[^tama]. The blueprint is read and updated in the background while you interact with your pet in the R console.
 
-Is it possible to persist a game state over different sessions? Could this allow for a _Tamagotchi_-like digital pet to live on your computer? Spoiler: yes.
-
-# Tamagotchwhat?
-
-For the benefit of youths, [a _Tamagotchi_](https://en.wikipedia.org/wiki/Tamagotchi) was (is!) a little physical device that contains a 'digital pet', made popular in the late 90s. They have a little screen and physical buttons so you can see your pet and interact with it. Play with it, feed it, even reprimand it.
-
-It's not that hard to mock this up in R, so you can have some functions that let you interact with a pet on the command line. The missing piece is persistence. How do you ensure that the last state of your pet can be recalled into a new session? How can you mimic the idea that the pet is 'alive' and is existing while you aren't interacting with it?
-
-# R user, duh!
-
-Long-story short: as a package developer, you can store user-specific data with the `tools::R_user_dir()` function, which builds a platform-independent path to where the package is stored on a user's computer.[^rappdirs] You can read about this in [the R Packages book](https://r-pkgs.org/data.html#sec-data-persistent).
-
-This means you could write a data file to a user's computer that includes, for example, a sort of 'blueprint' for a digital pet. And you could write functions that update the values in that blueprint file each time you interact with it. 
-
-So: here's {tamRgo}!
+_Tamago_ (egg) + _uotchi_ ('watch') = Tamagotchi. _Tamago_ + R = {tamRgo}.
 
 # Demo
 
@@ -76,7 +65,7 @@ To begin, you'll need to generate a new pet by laying an egg. You'll be asked to
 # You can get_stats(), see_pet(), play(), feed(), clean().
 ```
 
-You are free to destroy this file by navigating to the path resolved by `tools::R_user_dir("tamRgo", "data")` or, 
+You are free to destroy this file by navigating to the path resolved by `tools::R_user_dir("tamRgo", "data")` or, you can `release()` your pet into the wild. 
 
 So, you have a new pet. Now what? The hint suggests to check the stats, so let's do that.
 
@@ -282,6 +271,8 @@ sessioninfo::session_info()
 ```
 </details>
 
+[^explain]: Oh, wait, I have to explain myself? Look no further than [Mike Cheng's rstudio::conf22 talk](https://www.youtube.com/watch?v=LPotWAJnE_s) or the [awesome-r-games list](https://github.com/matt-dray/awesome-r-games). I've written toys like  [{ActionSquirrel}](https://github.com/matt-dray/ActionSquirrel), [{safar6}](https://github.com/matt-dray/safar6) and [{r.oguelike}](https://github.com/matt-dray/r.oguelike).
+[^tama]: For the benefit of youths, [a _Tamagotchi_](https://en.wikipedia.org/wiki/Tamagotchi) was (is!) a little physical device that contains a 'digital pet', made popular in the late 90s. They have a little screen and physical buttons so you can see your pet and interact with it. Play with it, feed it, even reprimand it.
 [^rappdirs]: You may be familiar with [{rappdirs}](https://rappdirs.r-lib.org/), a package that helps you find directories. `tools::R_user_dir()` is nice because it's built into R, so no dependency is required.
 [^dead]: A euphemism to protect the sensitive.
 [^gist]: You can [peruse the GitHub repo](https://github.com/matt-dray/tamRgo/tree/65301b8f362ec047555217611d13af79e4f00020) just before I moved from Gist-based to local blueprints.
