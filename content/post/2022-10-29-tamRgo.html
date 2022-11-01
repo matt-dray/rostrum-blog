@@ -1,0 +1,215 @@
+---
+title: "Tamagotchi in R"
+author: 'Matt Dray'
+date: '2022-10-29'
+slug: tamRgo
+categories:
+  - code
+  - package
+tags:
+  - game
+  - r
+  - tamagotchi
+  - tamRgo
+draft: yes
+---
+
+
+
+<pre><code>## Your pet, KEVIN 16, is pleased to see you!
+##  - Docs: &lt;https://matt-dray.github.io/tamRgo&gt;
+##  - You can get_stats(), see_pet(), play(), feed(), clean()</code></pre>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I’ve written <a href="https://github.com/matt-dray/tamRgo">the R package {tamRgo}</a> that simulates a digital pet on your computer.</p>
+</div>
+<div id="gamer" class="section level1">
+<h1>GameR</h1>
+<p>Regular readers know that R is a silly language and you can make silly things with it.</p>
+<p>R is meant to be for statistics or something? Its future is as a game engine. I’ve written things like <a href="https://github.com/matt-dray/ActionSquirrel">{ActionSquirrel}</a>, <a href="https://github.com/matt-dray/safar6">{safar6}</a> and <a href="https://github.com/matt-dray/r.oguelike">{r.oguelike}</a>, and created the <a href="https://github.com/matt-dray/awesome-r-games">awesome-r-games list</a> to demonstrate it’s potential. Look no further than <a href="https://www.youtube.com/watch?v=LPotWAJnE_s">Mike Cheng’s rstudio::conf22 talk</a>.</p>
+<p>It’s easy enough to write an R game that runs in a single session. But what if your game state could persist over different sessions? Different days?</p>
+<p>Stick with me: what if you could have a Tamagotchi on your computer that you interact with via R?</p>
+</div>
+<div id="tamagotchwhat" class="section level1">
+<h1>Tamagotchwhat</h1>
+<p>For the benefit of young people, <a href="">a Tamagotchi</a> is a little physical device that contains a ‘digital pet’, made popular in the late 90s<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>. They have a little screen and physical buttons so you can see your pet and interact with it. Play with it, feed it, even reprimand it.</p>
+<p>It’s not that hard to mock this up in R, so you can have some functions that let you interact with a pet on the command line, but the missing piece is persistence.</p>
+<p>How do you ensure that the last state of your pet can be recalled into a new session? How can you mimic the idea that the pet is ‘alive’ and is existing while you aren’t interacting with it?</p>
+</div>
+<div id="r-user-duh" class="section level1">
+<h1>R user, duh!</h1>
+<p>Long-story short: as a package developer, <code>tools::R_user_dir()</code> lets you store user-specific data in your package’s files.</p>
+<p>This means you could write a data file to a user’s computer that includes, for example, a sort of ‘blueprint’ for a digital pet. And you could write functions that update the values in that blueprint file each time you interact with it</p>
+</div>
+<div id="demo" class="section level1">
+<h1>Demo</h1>
+<p>You can install the package from GitHub using the {remotes} package.</p>
+<pre class="r"><code># install.packages(&quot;tamRgo&quot;)  # if not yet installed
+remotes::install_github(&quot;matt-dray/tamRgo&quot;)
+library(tamRgo)</code></pre>
+<p>To begin, you’ll need to generate a new pet by laying an egg. You’ll be asked to confirm it’s okay to save the blueprint file onto your computer, which is tiny list object stored as RDS.</p>
+<pre class="r"><code>&gt; lay_egg(pet_name = &quot;KEVIN&quot;)
+# Save pet blueprint? y/n: y
+# Saved pet blueprint.
+# You have a new egg... it hatched!
+# You can get_stats(), see_pet(), play(), feed(), clean().</code></pre>
+<p>So, you have a new pet. Now what? The hint suggests to check the stats, so let’s do that.</p>
+<pre class="r"><code>get_stats()
+# Characteristics
+#   Name:    KEVIN
+#   Species: X
+#   Age:     0
+#   Level:   0 (newborn)
+# Status
+#   Happy:   ■■■□□  
+#   Hungry:  ■■■□□  
+#   Dirty:   □□□□□  </code></pre>
+<p>You can see some characteristics and statuses. ‘Name’ is obvious; ‘Species’ is generated randomly; ‘Age’ is days since ‘birth’ date; ‘Level’ relates to the amount of (hidden) ‘experience points’ (XP) that have been accumulated. ‘Happy’, ‘Hungry’ and ‘Dirty’ are status values that change over time and can be adjusted with the functions <code>play()</code>, <code>feed()</code> and <code>clean()</code>, respectively.</p>
+<p>Let’s quickly check what our pet looks like with <code>see_pet()</code>. It’s appearance depends on the species and the level.</p>
+<pre class="r"><code>see_pet()
+#       
+#  ███  
+# █ █ █ 
+# █████ 
+# ██ ██ 
+#  ███  
+#       </code></pre>
+<p>Let’s lower that ‘Hungry’ value with <code>feed()</code>.</p>
+<pre class="r"><code>feed()
+# &#39;Hungry&#39; status value is now 2/5
+get_stats()
+# Characteristics
+#   Name:    KEVIN
+#   Species: X
+#   Age:     0
+#   Level:   0 (newborn)
+# Status
+#   Happy:   ■■■□□  
+#   Hungry:  ■■□□□  
+#   Dirty:   □□□□□  </code></pre>
+<p>And increase the ‘Happy’ value with <code>play()</code>. This begins a game of ‘higher or lower’. Rumour has it that the game is easier under some circumstances.</p>
+<pre class="r"><code>play()
+# The number is 4. Higher or lower? Type &#39;H&#39; or &#39;L&#39;: H
+# Wrong! It was 1. Score: 0/5.
+# The number is 1. Higher or lower? Type &#39;H&#39; or &#39;L&#39;: H
+# Correct! It was 8. Score: 1/5.
+# The number is 4. Higher or lower? Type &#39;H&#39; or &#39;L&#39;: H
+# Correct! It was 6. Score: 2/5.
+# The number is 6. Higher or lower? Type &#39;H&#39; or &#39;L&#39;: L
+# Correct! It was 5. Score: 3/5.
+# The number is 7. Higher or lower? Type &#39;H&#39; or &#39;L&#39;: L
+# Wrong! It was 10. Score: 3/5.
+# Result: you scored 3/5!
+# &#39;Happy&#39; status value is now 4/5</code></pre>
+<p>Eventually your pet will become ‘dirty’ and you’ll need to <code>clean()</code> it.</p>
+<pre class="r"><code>see_pet()
+#       
+#  ███  
+# █ █ █ 
+# █████ 
+# ██ ██ 
+#  ███  
+#       
+#       
+#   █   
+#  ███  
+# █████ 
+#       
+clean()
+# &#39;Dirty&#39; status value is now 0/5
+#       
+#  ███  
+# █ █ █ 
+# █████ 
+# ██ ██ 
+#  ███  
+#       </code></pre>
+<p>Your pet will level up over time (how?) and it’s appearance will change.</p>
+</div>
+<div id="but-wait" class="section level1">
+<h1>But wait!</h1>
+<p>Maybe you forget about your pet. You remember it exists three days later. From <em>any</em> R session you can check the stats.</p>
+<pre class="r"><code># Characteristics
+#   Name:    KEVIN
+#   Species: X
+#   Age:     3
+#   Level:   1 (newborn)
+# Status
+#   Happy:   □□□□□ !
+#   Hungry:  ■■■■■ !
+#   Dirty:   ■■■■■ !</code></pre>
+<p>And see how it looks now.</p>
+<pre class="r"><code>see_pet()</code></pre>
+<pre><code>## </code></pre>
+<pre><code>##   ███</code></pre>
+<pre><code>##  █ █ █</code></pre>
+<pre><code>##  █████</code></pre>
+<pre><code>##  ██ ██</code></pre>
+<pre><code>##   ███</code></pre>
+<pre><code>## </code></pre>
+<pre class="r"><code> #        
+ # ██████ 
+ # █ ██ █ 
+ # █ ██ █ 
+ # ██████ 
+ # ██  ██ 
+ # ██████ 
+ #        </code></pre>
+<p>Apparently your pet will eventually become ‘unalive’. Rumour has it that pets will live longer if they have good owners…</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value
+##  version  R version 4.1.1 (2021-08-10)
+##  os       macOS Monterey 12.3.1
+##  system   aarch64, darwin20
+##  ui       X11
+##  language (EN)
+##  collate  en_US.UTF-8
+##  ctype    en_US.UTF-8
+##  tz       Europe/London
+##  date     2022-10-29
+##  pandoc   2.18 @ /Users/matt.dray/Applications/RStudio.app/Contents/MacOS/quarto/bin/tools/ (via rmarkdown)
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version    date (UTC) lib source
+##  blogdown      1.10       2022-05-10 [1] CRAN (R 4.1.1)
+##  bookdown      0.29       2022-09-12 [1] CRAN (R 4.1.1)
+##  bslib         0.4.0      2022-07-16 [1] CRAN (R 4.1.1)
+##  cachem        1.0.6      2021-08-19 [1] CRAN (R 4.1.1)
+##  cli           3.4.1      2022-09-23 [1] CRAN (R 4.1.1)
+##  digest        0.6.30     2022-10-18 [1] CRAN (R 4.1.1)
+##  evaluate      0.17       2022-10-07 [1] CRAN (R 4.1.1)
+##  fastmap       1.1.0      2021-01-25 [1] CRAN (R 4.1.0)
+##  htmltools     0.5.3      2022-07-18 [1] CRAN (R 4.1.1)
+##  jquerylib     0.1.4      2021-04-26 [1] CRAN (R 4.1.0)
+##  jsonlite      1.8.3      2022-10-21 [1] CRAN (R 4.1.1)
+##  knitr         1.40       2022-08-24 [1] CRAN (R 4.1.1)
+##  magrittr      2.0.3      2022-03-30 [1] CRAN (R 4.1.1)
+##  R6            2.5.1      2021-08-19 [1] CRAN (R 4.1.1)
+##  rlang         1.0.6      2022-09-24 [1] CRAN (R 4.1.1)
+##  rmarkdown     2.17       2022-10-07 [1] CRAN (R 4.1.1)
+##  rstudioapi    0.14       2022-08-22 [1] CRAN (R 4.1.1)
+##  sass          0.4.2      2022-07-16 [1] CRAN (R 4.1.1)
+##  sessioninfo   1.2.2      2021-12-06 [1] CRAN (R 4.1.1)
+##  stringi       1.7.8      2022-07-11 [1] CRAN (R 4.1.1)
+##  stringr       1.4.1      2022-08-20 [1] CRAN (R 4.1.1)
+##  tamRgo      * 0.0.0.9007 2022-10-29 [1] local
+##  xfun          0.34       2022-10-18 [1] CRAN (R 4.1.1)
+##  yaml          2.3.6      2022-10-18 [1] CRAN (R 4.1.1)
+## 
+##  [1] /Users/matt.dray/Library/R/arm64/4.1/library
+##  [2] /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>Somehow <a href="">the franchise is still going</a>!<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
