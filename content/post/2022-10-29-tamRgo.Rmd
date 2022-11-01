@@ -20,19 +20,23 @@ library(tamRgo)
 
 # tl;dr
 
-I've written [the concept R package {tamRgo}](https://github.com/matt-dray/tamRgo) to simulate a digital pet in your R console. It persists between sessions!
+I've written [the concept R package {tamRgo}](https://github.com/matt-dray/tamRgo) to simulate a persistent digital pet in your R console. Yes, really.
 
-# GameR
+# GameRs
 
-R is meant to be for statistics or something? Its future is as a game engine.  Look no further than [Mike Cheng's rstudio::conf22 talk](https://www.youtube.com/watch?v=LPotWAJnE_s). I've written things like  [{ActionSquirrel}](https://github.com/matt-dray/ActionSquirrel), [{safar6}](https://github.com/matt-dray/safar6) and [{r.oguelike}](https://github.com/matt-dray/r.oguelike), and created the [awesome-r-games list](https://github.com/matt-dray/awesome-r-games) to demonstrate its potential.
+R is a game engine. Look no further than [Mike Cheng's rstudio::conf22 talk](https://www.youtube.com/watch?v=LPotWAJnE_s) or the [awesome-r-games list](https://github.com/matt-dray/awesome-r-games).
 
-It's easy enough to write an R game that runs in a single session. But what if your game state could persist over different sessions? Different days? Doesn't that mean you could record some kind of 'save state'?
+I've written things like  [{ActionSquirrel}](https://github.com/matt-dray/ActionSquirrel), [{safar6}](https://github.com/matt-dray/safar6) and [{r.oguelike}](https://github.com/matt-dray/r.oguelike).
 
-Does this mean you could have a Tamagotchi-like digital pet on your computer that you can interact with via the R console? Spoiler: yes.
+<div class="figure">
+<img src="/post/2022-10-29-tamRgo_files/space-meme.jpg" alt="The 'always has been meme'. An astronaut looks at Earth and says 'wait, R is a language for making and playing games' and an astronaut behind them, who is pointing a gun at their head, says 'always has been'." width="100%"/>
+</div>
+
+Is it possible to persist a game state over different sessions? Could this allow for a _Tamagotchi_-like digital pet to live on your computer? Spoiler: yes.
 
 # Tamagotchwhat?
 
-For the benefit of young people, [a Tamagotchi](https://en.wikipedia.org/wiki/Tamagotchi) was (is!) a little physical device that contains a 'digital pet', made popular in the late 90s. They have a little screen and physical buttons so you can see your pet and interact with it. Play with it, feed it, even reprimand it.
+For the benefit of youths, [a _Tamagotchi_](https://en.wikipedia.org/wiki/Tamagotchi) was (is!) a little physical device that contains a 'digital pet', made popular in the late 90s. They have a little screen and physical buttons so you can see your pet and interact with it. Play with it, feed it, even reprimand it.
 
 It's not that hard to mock this up in R, so you can have some functions that let you interact with a pet on the command line. The missing piece is persistence. How do you ensure that the last state of your pet can be recalled into a new session? How can you mimic the idea that the pet is 'alive' and is existing while you aren't interacting with it?
 
@@ -58,7 +62,7 @@ library(tamRgo)
 
 It has no package dependencies, but you'll need to be running a version of R greater than 4.0.
 
-Of course, it's just a toy to demonstrate a concept. I've built out a bit of a 'game loop', but it's just for fun and the code is not optimised. [Suggestions and code contributions welcome](https://github.com/matt-dray/tamRgo/issues)!
+Of course, it's just a toy to demonstrate a concept. I've built out a bit of a 'game loop', but it's just for fun and the code is not optimised. [Suggestions and code contributions always welcome](https://github.com/matt-dray/tamRgo/issues).
 
 ## Lay an egg
 
@@ -71,6 +75,8 @@ To begin, you'll need to generate a new pet by laying an egg. You'll be asked to
 # You have a new egg... it hatched!
 # You can get_stats(), see_pet(), play(), feed(), clean().
 ```
+
+You are free to destroy this file by navigating to the path resolved by `tools::R_user_dir("tamRgo", "data")` or, 
 
 So, you have a new pet. Now what? The hint suggests to check the stats, so let's do that.
 
@@ -172,7 +178,7 @@ clean()
 
 Your pet will level up over time (how?) and it's appearance will change.
 
-## 
+## It lives!
 
 Maybe you forget about your pet. You remember it exists three days later. From _any_ R session on your computer you can check the stats.
 
@@ -217,25 +223,25 @@ Cool antennae, bro. Might need to given him a clean.
 
 # Under the hood
 
-The underlying system is relatively simple. I don't want to give away too much about the specifics, since it might spoil the game a bit, but it's worth explaining some of the theory behind how the package works.
+The underlying 'engine for the game is very simple. I don't want to give away too many spoilers, but it's worth explaining some of the main components a bit.
 
 ## Blueprint
 
-The whole backend process is dependent on a simple 'blueprint' list. It contains details like the pet's name, species (randomly generated), 'date of birth', accumulated XP, status values (happy, hungry, dirty) and some other things. This is the object that gets stored on your computer in the `tools::R_user_dir()` location.
+The whole system is dependent on a 'blueprint' file, which is what gets stored at the `tools::R_user_dir()` location. It's a list object with elements like the pet's name, species (randomly generated), 'date of birth', accumulated XP, status values (happy, hungry, dirty) and some other things.
 
-The blueprint is read and updated whenever you use a function from {tamRgo}. The current datetime is compared to the last interaction, which is stored in the blueprint. The time difference is used to update other values in the blueprint, like the pet's age (in days), passive XP accumulation, the pet's level (if enough XP has been accumulated) and changes to status values (the pet will get less happy and more hungry and dirty with time).
+The blueprint is read and updated whenever you use a function from {tamRgo}. The current datetime is compared to the datetime of last interaction (stored in the blueprint) and the difference is used to calculate things like the pet's age, XP accumulation and level and status values.
 
-When the user then checks the pet's stats with `get_stats()`, they will see the updated values for their pet. This gives the impression that the pet has been 'alive' on their machine while they've been away.
+This gives the impression that the pet has been 'alive' on the player's machine while they've been away. A trick!
 
 ## Experience system
 
-The main goal is to accumulate XP and keep your pet alive. The XP system is quite simple:
+The main goal is to accumulate XP and keep your pet alive. XP:
 
-* a small amount of XP is accumulated passively every hour
-* XP is gained from `play()`, where a higher minigame score means more XP
-* certain XP thresholds will result in the pet levelling up, which affects their appearance when you `see_pet()`
+* is accumulated passively every hour
+* gained from the minigame in `play()`, where a higher score means more XP
+* will result in the pet levelling up when certain thresholds have been met, which alters their appearance
 
-At a certain point, the pet will become 'unalive'. The chance of this happening is based on the pet's XP. Basically:
+At a certain point, the pet will become 'unalive'.[^dead] The chance of this happening is based on the pet's accumulated XP. Basically:
 
 * XP is 'frozen' at a certain age and this value is stored in the blueprint
 * the chance of becoming unalive is tied to the frozen XP value, where more XP means a lower chance
@@ -243,15 +249,31 @@ At a certain point, the pet will become 'unalive'. The chance of this happening 
 
 The current XP count is stored in the blueprint, but is hidden from the user. This moves focus away from tracking and improving a single number and hopefully towards a more general goal of keeping your pet happy, well-fed and clean.
 
-### Sprites
+## Sprites
 
-There are character 'sprites' that change with age and species. The sprite for a newborn, mature and unalive pet are the same regardless of species, but the other levels are dependent on whether the pet is species X, Y or Z. Of course, these are blocky and pixellated to mimic the original Tamagotchi style.
+There are character 'sprites' that change with age and species. The sprite for a newborn, mature and unalive pet are the same regardless of species, but the other levels are dependent on whether the pet is species X, Y or Z. Of course, these are pixellated to mimic the original _Tamagotchi_ style.
 
-The sprites are stored as binary matrices where 1 indicates a filled 'pixel' and zero an empty pixel. To make it easy to create these matrices, I wrote the package [{pixeltrix}](), which I wrote about in [my last blog post](). It provides an interactive way to design sprites by turning pixels 'on' and 'off' in a plotting window, which returns a matrix. When `see_pet()` is called, the appropriate matrix is plotted row-by-row to the console.
+The sprites are stored as binary matrices where 1 indicates a filled 'pixel' and zero an empty pixel. To make it easy to create these matrices, I wrote the package [{pixeltrix}](https://github.com/matt-dray/pixeltrix), which I wrote about in [my last blog post](https://www.rostrum.blog/2022/09/24/pixeltrix/). It provides an interactive way to design sprites by turning pixels 'on' and 'off' in a plotting window, which returns a matrix. When `see_pet()` is called, the appropriate matrix is plotted row-by-row to the console.
 
-## Constants
+# Improvements
 
-There's an internal data store that acts as a central source for values like the rate of passive XP accumulation, the XP thresholds to level up and matrices that represent the sprite graphics used in `see_pet()`. Keeping this data in one place means it only needs to be changed once if a certain value needs to be updated.
+What else would I do to improve this? Plenty, including:
+
+* animated pixel graphics
+* the ability to transfer a blueprint between machines, so your pet can live across multiple devices
+* a battle system like _Digimon_
+* a more fun minigame in `play()` that will grant more XP with greater skill
+* more meaningful use of 'hungry' and 'dirty' statuses, perhaps a hidden HP gauge that is reduced when these statuses are at their maximum for an extended period
+
+My initial approach to {tamRgo} was to store blueprints remotely in [GitHub gists](https://gist.github.com/)[^gist]. The plus-side is that you could battle other pets by reading their blueprints from a URL. The downside is the overhead of requiring a GitHub account and API access. It's more fun if the full blueprint is obscured from the player.
+
+# So
+
+So you can store bits of persistent data on your users' machines. Should you? Maybe.
+
+Can you use it in a concept R package to help store a small list for purposes of fun? Well, yes, if you ask me.
+
+You can probably think of other ways to use `tools::R_user_dir()` for games in R. Maybe you could have a 'save state' that can be recalled each time a game is played.
 
 ---
 <details><summary>Session info</summary>
@@ -261,3 +283,5 @@ sessioninfo::session_info()
 </details>
 
 [^rappdirs]: You may be familiar with [{rappdirs}](https://rappdirs.r-lib.org/), a package that helps you find directories. `tools::R_user_dir()` is nice because it's built into R, so no dependency is required.
+[^dead]: A euphemism to protect the sensitive.
+[^gist]: You can [peruse the GitHub repo](https://github.com/matt-dray/tamRgo/tree/65301b8f362ec047555217611d13af79e4f00020) just before I moved from Gist-based to local blueprints.
