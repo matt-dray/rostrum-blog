@@ -15,7 +15,9 @@ Check out [R Weekly](https://rweekly.org/) for more R blog content.
 
 ### Matt Dray
 
-[Personal site](https://www.matt-dray.com) | [Twitter](https://twitter.com/mattdray) | [Github](https://github.com/matt-dray)
+[Personal site](https://www.matt-dray.com) | [Github](https://github.com/matt-dray) | [Twitter](https://twitter.com/mattdray) | <a rel="me" href="https://fosstodon.org/@mattdray">Mastodon</a>
+
+
 
 I like using R to learn and teach, particularly if it involves important pop-culture references like Pokémon and Dawson's Creek. I'm a datapoint influencer in the UK's public sector and have a PhD in watching leaves rot (Cardiff) and an Entomology MSc (Imperial). I'm not [the rapper](https://en.wikipedia.org/wiki/Dr._Dre). <img src="https://raw.githubusercontent.com/matt-dray/postcard/master/favicon.ico" alt="A 16-by-16 pixel favicon gif of the author, whose eyebrows are bobbing up and down."/>
 
