@@ -43,6 +43,11 @@ image(glider_m)                           # plot it</code></pre>
 <h1>Reprologoducibility</h1>
 <p>But really my motivation is to make a reproducible version of <a href="https://raw.githubusercontent.com/matt-dray/stickers/master/output/rostrum_hex.png">this blog’s logo</a>: an insect composed of ‘pixels’ in a 16-by-16 square.</p>
 <p>So, I’ve hand-coded a binary vector of length 256 (i.e. 16 * 16). The <code>0</code>s and <code>1</code>s here represent background and insect pixels, respectively. I’ve used line breaks to make it easier to create and edit the vector manually.</p>
+<div class="tip">
+<p><svg aria-hidden="true" role="img" viewBox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;"><path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"/></svg> <b>Update</b></p>
+<p>I’ve now written <a href="https://github.com/matt-dray/pixeltrix">a little R package called {pixeltrix}</a>, which lets you click on squares in a plot window to generate a matrix of ‘pixels’. This means you don’t have to type out any vectors by hand. You can read more in <a href="https://www.rostrum.blog/2022/09/24/pixeltrix/">another blog post</a>.</p>
+</div>
+<p>Here’s the vector that represents the logo:</p>
 <pre class="r"><code>logo_v &lt;- c(
   
   0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,
@@ -185,8 +190,9 @@ magick::image_animate(frames, fps = 2, dispose = &quot;previous&quot;)  # combin
 <h1>Hip to be square</h1>
 <p>I’m not the first person to think or do this in R, I’m sure.</p>
 <div class="tip">
-<p><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="rfa" style="height:0.75em;fill:currentColor;position:relative;"><path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"/></svg> <b>Update</b></p>
+<p><svg aria-hidden="true" role="img" viewBox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;"><path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"/></svg> <b>Update</b></p>
 <p>Turns out that <a href="https://twitter.com/coolbutuseless">mikefc, aka coolbutuseless</a>, (who else?) wrote <a href="https://coolbutuseless.github.io/2018/08/13/gganimate-with-sprites/">a great blog post</a> with a method for grabbing, plotting and animating sprites with the packages {png}, {raster}, {ggplot2} and {gganimate}. Slightly less painful than writing vectors by hand!</p>
+<p>If you want to design your own sprites rather than copy others, <a href="https://github.com/matt-dray/pixeltrix">try my little {pixeltrix} package</a> for interactive pixel selection from a plot window, which returns a matrix.</p>
 </div>
 <p>I did come across <a href="https://github.com/privefl/pixelart">a really neato {pixelart} package and Shiny app by Florian Privé</a> where you upload an image and it gets converted into a pixel form. As <a href="https://privefl.github.io/blog/shiny-app-for-making-pixel-art-models/">Florian said in his blogpost</a>:</p>
 <blockquote>
@@ -196,48 +202,53 @@ magick::image_animate(frames, fps = 2, dispose = &quot;previous&quot;)  # combin
 <p>Let me know if you know of any more packages or whatever that do this sort of thing.</p>
 <hr />
 <details>
-<p><summary>Session info</summary></p>
+<summary>
+Session info
+</summary>
 <pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
-##  setting  value                       
-##  version  R version 4.0.3 (2020-10-10)
-##  os       macOS Mojave 10.14.6        
-##  system   x86_64, darwin17.0          
-##  ui       X11                         
-##  language (EN)                        
-##  collate  en_GB.UTF-8                 
-##  ctype    en_GB.UTF-8                 
-##  tz       Europe/London               
-##  date     2021-07-27                  
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
+##  os       macOS Big Sur/Monterey 10.16
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_GB.UTF-8
+##  ctype    en_GB.UTF-8
+##  tz       Europe/London
+##  date     2022-11-05
+##  pandoc   2.18 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/tools/ (via rmarkdown)
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
-##  package     * version date       lib source        
-##  blogdown      0.21    2020-10-11 [1] CRAN (R 4.0.2)
-##  bookdown      0.21    2020-10-13 [1] CRAN (R 4.0.2)
-##  bslib         0.2.4   2021-01-25 [1] CRAN (R 4.0.2)
-##  cli           2.5.0   2021-04-26 [1] CRAN (R 4.0.2)
-##  digest        0.6.27  2020-10-24 [1] CRAN (R 4.0.2)
-##  evaluate      0.14    2019-05-28 [1] CRAN (R 4.0.1)
-##  fontawesome   0.1.0   2021-02-22 [1] CRAN (R 4.0.2)
-##  highr         0.9     2021-04-16 [1] CRAN (R 4.0.2)
-##  htmltools     0.5.1.1 2021-01-22 [1] CRAN (R 4.0.2)
-##  jquerylib     0.1.3   2020-12-17 [1] CRAN (R 4.0.2)
-##  jsonlite      1.7.2   2020-12-09 [1] CRAN (R 4.0.2)
-##  knitr         1.32    2021-04-14 [1] CRAN (R 4.0.2)
-##  magick        2.7.1   2021-03-20 [1] CRAN (R 4.0.2)
-##  magrittr      2.0.1   2020-11-17 [1] CRAN (R 4.0.2)
-##  R6            2.5.0   2020-10-28 [1] CRAN (R 4.0.2)
-##  Rcpp          1.0.6   2021-01-15 [1] CRAN (R 4.0.2)
-##  rlang         0.4.11  2021-04-30 [1] CRAN (R 4.0.2)
-##  rmarkdown     2.7     2021-02-19 [1] CRAN (R 4.0.2)
-##  sass          0.3.1   2021-01-24 [1] CRAN (R 4.0.2)
-##  sessioninfo   1.1.1   2018-11-05 [1] CRAN (R 4.0.2)
-##  stringi       1.6.1   2021-05-10 [1] CRAN (R 4.0.2)
-##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.0.2)
-##  withr         2.4.2   2021-04-18 [1] CRAN (R 4.0.2)
-##  xfun          0.22    2021-03-11 [1] CRAN (R 4.0.2)
-##  yaml          2.2.1   2020-02-01 [1] CRAN (R 4.0.2)
+##  package     * version date (UTC) lib source
+##  blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.3.0   2022-04-25 [1] CRAN (R 4.2.0)
+##  digest        0.6.29  2021-12-01 [1] CRAN (R 4.2.0)
+##  evaluate      0.15    2022-02-18 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  fontawesome   0.2.2   2021-07-02 [1] CRAN (R 4.2.0)
+##  highr         0.9     2021-04-16 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.0   2022-02-22 [1] CRAN (R 4.2.0)
+##  knitr         1.39    2022-04-26 [1] CRAN (R 4.2.0)
+##  magick        2.7.3   2021-08-18 [1] CRAN (R 4.2.0)
+##  magrittr      2.0.3   2022-03-30 [1] CRAN (R 4.2.0)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+##  Rcpp          1.0.8.3 2022-03-17 [1] CRAN (R 4.2.0)
+##  rlang         1.0.2   2022-03-04 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.13    2020-11-12 [1] CRAN (R 4.2.0)
+##  sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+##  stringi       1.7.6   2021-11-29 [1] CRAN (R 4.2.0)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.2.0)
+##  xfun          0.30    2022-03-02 [1] CRAN (R 4.2.0)
+##  yaml          2.3.5   2022-02-21 [1] CRAN (R 4.2.0)
 ## 
-## [1] /Users/matt.dray/Library/R/4.0/library
-## [2] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
 </details>
 </div>
