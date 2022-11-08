@@ -54,8 +54,15 @@ posts <- tibble(date, title, link) %>%
 ```{r plot-obj}
 # Create plot object
 p <- posts %>%
-  ggplot(aes(x = publish_date, y = 1)) +
-  geom_point(shape = "|", size = 10, stroke = 1, color = "#1D8016") +
+  ggplot() +
+  geom_point(  # markers for publishing dates
+    aes(x = publish_date, y = 1),
+    shape = "|", size = 10, stroke = 1, color = "#1D8016", alpha = 0.7
+  ) +
+  geom_point(  # marker for today's date
+    aes(x = Sys.Date(), y = 1),
+    shape = "|", size = 10, stroke = 1, color = "grey95"
+  ) +
   theme(
     legend.position = "none",
     panel.grid = element_blank(),
@@ -110,4 +117,4 @@ posts %>%
 
 ---
 
-_Updated `r Sys.time()`_
+_Updated on `r format(Sys.time(), "%Y-%m-%d at %H:%M")`._
