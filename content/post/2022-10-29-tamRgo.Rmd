@@ -25,21 +25,21 @@ suppressPackageStartupMessages(library(tamRgo))
 
 # tl;dr
 
-I've written [the concept R package {tamRgo}](https://github.com/matt-dray/tamRgo) to simulate a persistent digital pet in your R console. Silliest, best thing I've ever made?
+I've written [the concept R package {tamRgo}](https://github.com/matt-dray/tamRgo) to simulate a persistent digital pet in your R console. 
 
-# GameRs
+# Had an oeuf?
 
-R is a game engine[^explain]; don't @ me[^fosstodon]. As such, R has the ability to [keep a persistent save state](https://r-pkgs.org/data.html#sec-data-persistent).
+R is a game engine[^explain]; don't @ me[^fosstodon]. 
 
-How? R developers can use [`tools::R_user_dir()`](https://rdrr.io/r/tools/userdir.html) to generate a platform-independent path to a local directory for storing user-specific data.[^rappdirs]
+Naturally, R can [keep a save state](https://r-pkgs.org/data.html#sec-data-persistent): developers can write a file to the platform-independent path on a user's machine resolved by [`tools::R_user_dir()`](https://rdrr.io/r/tools/userdir.html).[^rappdirs]
 
-Obviously I've used this to make a concept R package: [{tamRgo}](https://github.com/matt-dray/tamRgo). It saves locally a 'blueprint' for a  [_Tamgotchi_](https://en.wikipedia.org/wiki/Tamagotchi)-like pet[^tama], which is read and updated when you interact with your pet in the R console.
+Obviously I've used this to make a concept R package: [{tamRgo}](https://github.com/matt-dray/tamRgo). It saves locally a 'blueprint' for a  [_Tamgotchi_](https://en.wikipedia.org/wiki/Tamagotchi)-like digital pet[^tama], which is read and updated when you interact with your it in the R console.
 
-_Tamago_ (egg) + _uotchi_ ('watch') = Tamagotchi. _Tamago_ + R = {tamRgo}.
+_Tamago_ (egg) + _uotchi_ ('watch') = _Tamagotchi_. _Tamago_ + R = {tamRgo}.
 
-# Demo
+# Crack it open
 
-## Install
+## Nuovo uovo
 
 Use {remotes} to install the package [from GitHub](https://github.com/matt-dray/tamRgo). There's also [an accompanying documentation website](https://matt-dray.github.io/tamRgo/).
 
@@ -53,12 +53,12 @@ It has no package dependencies, but you'll need to be running a version of R gre
 
 Of course, it's just a toy to demonstrate a concept. I've built out a bit of a 'game loop', but it's just for fun and the code is not optimised. [Suggestions and code contributions always welcome](https://github.com/matt-dray/tamRgo/issues).
 
-## Lay an egg
+## Nuovo uovo
 
 To begin, you'll need to generate a new pet by laying an egg. You'll be asked to confirm it's okay to save a blueprint file onto your computer, which is just a small list object stored as an RDS file.
 
 ```{r eval=FALSE}
-> lay_egg(pet_name = "KEVIN")
+> lay_egg(pet_name = "BERTHA")
 # Save pet blueprint? y/n: y
 # Saved pet blueprint.
 # You have a new egg... it hatched!
@@ -72,7 +72,7 @@ So, you have a new pet. Now what? The hint suggests to check the stats, so let's
 ```{r eval=FALSE}
 get_stats()
 # Characteristics
-#   Name:    KEVIN
+#   Name:    BERTHA
 #   Species: Z
 #   Age:     0
 #   Level:   0 (newborn)
@@ -84,33 +84,24 @@ get_stats()
 
 You can see some characteristics and statuses, which I think are pretty self-explanatory.
 
-Let's quickly check what our pet looks like with `see_pet()`. Its appearance depends on the species and the level, but newborns are pretty much a blob.
+Let's quickly check what our pet looks like with `see_pet()`. Its appearance depends on the species and the level, but newborns are pretty much a blob. It'll probably render better in your console than in your browser.
 
 ```{r eval=FALSE}
 see_pet()
 ```
-
-I'll paste here an image of how the pet looks in the console, since the blog doesn't render it particularly well.
-
-<div class="figure">
-<img src="/post/2022-10-29-tamRgo_files/y0.png" alt="Descriptive text." width="20%"/>
-</div>
-
-<details><summary>Click for console output.</summary>
 ```{r eval=FALSE}
-#       
-#  ███  
-# █ █ █ 
-# █████ 
-# ██ ██ 
-#  ███  
-#       
+## ░░░░░░░
+## ░░███░░
+## ░█░█░█░
+## ░█████░
+## ░██░██░
+## ░░███░░
+## ░░░░░░░
 ```
-<details>
 
 ## Feed
 
-Having just been born, KEVIN is a little peckish. Let's lower that 'Hungry' value by using `feed()`.
+Having just been born, BERTHA is a little peckish. Let's lower that 'Hungry' value by using `feed()`.
 
 ```{r eval=FALSE}
 feed()
@@ -122,7 +113,7 @@ See how the 'Hungry' counter decreased by 1?
 ```{r eval=FALSE}
 get_stats()
 # Characteristics
-#   Name:    KEVIN
+#   Name:    BERTHA
 #   Species: Z
 #   Age:     0
 #   Level:   0 (newborn)
@@ -161,30 +152,25 @@ Eventually your pet will become 'dirty' and you'll need to `clean()` it.
 ```{r eval=FALSE}
 see_pet()
 ```
-
-<details><summary>Click for console output.</summary>
 ```{r eval=FALSE}
-#       
-#  ███  
-# █ █ █ 
-# █████ 
-# ██ ██ 
-#  ███  
-#       
-#       
-#   █   
-#  ███  
-# █████ 
-#       
+## ░░░░░░░
+## ░░███░░
+## ░█░█░█░
+## ░█████░
+## ░██░██░
+## ░░███░░
+## ░░░░░░░
+## ░░░░░░░
+## ░░░█░░░
+## ░░███░░  
+## ░█████░ 
+## ░░░░░░░
 ```
-</details>
 
 ```{r eval=FALSE}
 clean()
 # 'Dirty' status value is now 0/5
 ```
-
-Your pet will level up over time (how?) and it's appearance will change.
 
 ## It lives!
 
@@ -192,7 +178,7 @@ Maybe you forget about your pet. You remember it exists three days later. From _
 
 ```{r eval=FALSE}
 # Characteristics
-#   Name:    KEVIN
+#   Name:    BERTHA
 #   Species: Z
 #   Age:     5
 #   Level:   2 (youngling)
@@ -206,37 +192,54 @@ Whoops, looks like it's pretty unhappy, pretty hungry and pretty dirty.
 
 You should look after your pet. Apparently there's a chance it might become... 'unalive'. Rumour has it that good owners have longer-living pets...
 
-Regardless, KEVIN has now reached level 2. What does he look like now?
+Regardless, BERTHA has now reached level 2. What does he look like now?
 
 ```{r eval=FALSE}
 see_pet()
 ```
-
-<details><summary>Click for console output.</summary>
 ```{r eval=FALSE}
-#          
-#  █    █  
-#   █  █   
-#  ██████  
-#  █ ██ █  
-#  ██████  
-# ███  ███ 
-#  ██████  
-#  █    █  
-#          
-#       
-#   █   
-#  ███  
-# █████ 
-#       
+## ░░░░░░░░░░
+## ░░█░░░░█░░
+## ░░░█░░█░░░
+## ░░██████░░
+## ░░█░██░█░░
+## ░░██████░░
+## ░███░░███░
+## ░░██████░░
+## ░░█░░░░█░░
+## ░░░░░░░░░░
+## ░░░░░░░
+## ░░░█░░░
+## ░░███░░  
+## ░█████░ 
+## ░░░░░░░
+## ░░░░░░░
+## ░░░█░░░
+## ░░███░░  
+## ░█████░ 
+## ░░░░░░░
+## ░░░░░░░
+## ░░░█░░░
+## ░░███░░  
+## ░█████░ 
+## ░░░░░░░
+## ░░░░░░░
+## ░░░█░░░
+## ░░███░░  
+## ░█████░ 
+## ░░░░░░░
+## ░░░░░░░
+## ░░░█░░░
+## ░░███░░  
+## ░█████░ 
+## ░░░░░░░
 ```
-</details>
 
-Cool antennae, bro. Might need to given him a clean.
+Erm, cool antennae, bro. Totally distracts from the mess.
 
-# Under the hood
+# Under the shell
 
-The underlying 'engine for the game is very simple. I don't want to give away too many spoilers, but it's worth explaining some of the main components a bit.
+The underlying logic is pretty simple. I don't want to give away too many spoilers, but it's worth explaining some of the main components a bit.
 
 ## Blueprint
 
@@ -256,7 +259,7 @@ The main goal is to accumulate XP and keep your pet alive. XP:
 
 At a certain point, the pet will become 'unalive'[^dead]. The chance of this happening is based on the pet's accumulated XP. Basically:
 
-* XP is 'frozen' at a certain age and this value is stored in the blueprint
+* XP is 'frozen' at a certain age and the value is stored in the blueprint
 * the chance of becoming unalive is tied to the frozen XP value, where more XP means a lower chance
 * the number of days since the XP was frozen is used as a multiplier, so the chance of becoming unalive increases with time
 
@@ -272,19 +275,19 @@ The sprites are called by `see_pet()` as binary matrices of filled and unfilled 
 <img src="/post/2022-09-24-pixeltrix_files/pixeltrix.gif" alt="Gif of RStudio window. The console is running the code pixeltrix::click_pixels(6, 7, 3) and a plot appears with a 6 by 7 square grid. Some squares are clicked, changing them to light grey. A second click turns them dark grey. Eventually a little square character with a face is created. A matrix encoded the image is shown in the console when the escape key is pressed." width="100%"/>
 </div>
 
-# Reflection
+# Practical yolk
 
-Anyway, like I said, this is a for-fun concept that's nowhere near feature complete[^others]. If I wanted to improve it, what would I do?  Plenty, including:
+It's not feature complete, lol[^others]. To improve it, I could:
 
-* animated pixel graphics
-* the ability to transfer a blueprint between machines, so your pet can live across multiple devices[^gist]
-* a battle system like _Digimon_
-* a more fun minigame in `play()` that grants more XP for greater skill
-* more meaningful use of 'hungry' and 'dirty' statuses, perhaps a hidden HP gauge that is reduced when these statuses are at their maximum for an extended period
+* animate the pixel graphics
+* allow blueprints to be transferred between machines, so your pet can live across multiple devices[^gist]
+* add a battle system like _Digimon_
+* make the `play()` minigame actually fun and so it grants more XP for greater skill
+* make more meaningful use of 'hungry' and 'dirty' statuses, perhaps include a hidden HP gauge that is reduced when these statuses are at their maximum for an extended period
 
 The main point of this toy was for me to work out how to store data on a user's machine. Should you actually do that? It depends. Can you use it in a silly R package for purposes of fun? Well, yes, if you ask me.
 
-You can probably think of other ways to use `tools::R_user_dir()` for games in R. Maybe you could have a 'save state' that can be recalled each time a game is played. Let me know when you've made a new triple-A game for R and I'll add it to [the list](https://github.com/matt-dray/awesome-r-games).
+You can probably think of other ways to use `tools::R_user_dir()` for games in R, particularly for 'save states. Let me know when you've made a new triple-A game for R and I'll add it to [the list](https://github.com/matt-dray/awesome-r-games).
 
 ---
 <details><summary>Session info</summary>
@@ -293,7 +296,7 @@ sessioninfo::session_info()
 ```
 </details>
 
-[^explain]: Oh, wait, I have to explain myself? Look no further than [Mike Cheng's rstudio::conf22 talk](https://www.youtube.com/watch?v=LPotWAJnE_s) or the [awesome-r-games list](https://github.com/matt-dray/awesome-r-games). I've written toys like  [{ActionSquirrel}](https://github.com/matt-dray/ActionSquirrel), [{safar6}](https://github.com/matt-dray/safar6) and [{r.oguelike}](https://github.com/matt-dray/r.oguelike).
+[^explain]: Oh, wait, I have to explain myself? Look no further than [Mike Cheng's rstudio::conf22 talk](https://www.youtube.com/watch?v=LPotWAJnE_s) or the [awesome-r-games list](https://github.com/matt-dray/awesome-r-games). I've written toys like  [{ActionSquirrel}](https://github.com/matt-dray/ActionSquirrel), [{safar6}](https://github.com/matt-dray/safar6), [{potato}](https://github.com/matt-dray/potato) and [{r.oguelike}](https://github.com/matt-dray/r.oguelike).
 [^tama]: For the benefit of youths, [a _Tamagotchi_](https://en.wikipedia.org/wiki/Tamagotchi) was (is!) a little physical device that contains a 'digital pet', made popular in the late 90s. They have a little screen and physical buttons so you can see your pet and interact with it. Play with it, feed it, even reprimand it.
 [^rappdirs]: You may be familiar with [{rappdirs}](https://rappdirs.r-lib.org/), a package that helps you find directories. `tools::R_user_dir()` is nice because it's built into R, so no dependency is required.
 [^dead]: A euphemism to protect the sensitive.

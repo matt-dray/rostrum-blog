@@ -24,19 +24,19 @@ Evolution line of a {tamRgo} digital pet (species Y, ‘hat guy’) in the R con
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>I’ve written <a href="https://github.com/matt-dray/tamRgo">the concept R package {tamRgo}</a> to simulate a persistent digital pet in your R console. Silliest, best thing I’ve ever made?</p>
+<p>I’ve written <a href="https://github.com/matt-dray/tamRgo">the concept R package {tamRgo}</a> to simulate a persistent digital pet in your R console.</p>
 </div>
-<div id="gamers" class="section level1">
-<h1>GameRs</h1>
-<p>R is a game engine<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>; don’t @ me<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>. As such, R has the ability to <a href="https://r-pkgs.org/data.html#sec-data-persistent">keep a persistent save state</a>.</p>
-<p>How? R developers can use <a href="https://rdrr.io/r/tools/userdir.html"><code>tools::R_user_dir()</code></a> to generate a platform-independent path to a local directory for storing user-specific data.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
-<p>Obviously I’ve used this to make a concept R package: <a href="https://github.com/matt-dray/tamRgo">{tamRgo}</a>. It saves locally a ‘blueprint’ for a <a href="https://en.wikipedia.org/wiki/Tamagotchi"><em>Tamgotchi</em></a>-like pet<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>, which is read and updated when you interact with your pet in the R console.</p>
-<p><em>Tamago</em> (egg) + <em>uotchi</em> (‘watch’) = Tamagotchi. <em>Tamago</em> + R = {tamRgo}.</p>
+<div id="had-an-oeuf" class="section level1">
+<h1>Had an oeuf?</h1>
+<p>R is a game engine<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>; don’t @ me<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>.</p>
+<p>Naturally, R can <a href="https://r-pkgs.org/data.html#sec-data-persistent">keep a save state</a>: developers can write a file to the platform-independent path on a user’s machine resolved by <a href="https://rdrr.io/r/tools/userdir.html"><code>tools::R_user_dir()</code></a>.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<p>Obviously I’ve used this to make a concept R package: <a href="https://github.com/matt-dray/tamRgo">{tamRgo}</a>. It saves locally a ‘blueprint’ for a <a href="https://en.wikipedia.org/wiki/Tamagotchi"><em>Tamgotchi</em></a>-like digital pet<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>, which is read and updated when you interact with your it in the R console.</p>
+<p><em>Tamago</em> (egg) + <em>uotchi</em> (‘watch’) = <em>Tamagotchi</em>. <em>Tamago</em> + R = {tamRgo}.</p>
 </div>
-<div id="demo" class="section level1">
-<h1>Demo</h1>
-<div id="install" class="section level2">
-<h2>Install</h2>
+<div id="crack-it-open" class="section level1">
+<h1>Crack it open</h1>
+<div id="nuovo-uovo" class="section level2">
+<h2>Nuovo uovo</h2>
 <p>Use {remotes} to install the package <a href="https://github.com/matt-dray/tamRgo">from GitHub</a>. There’s also <a href="https://matt-dray.github.io/tamRgo/">an accompanying documentation website</a>.</p>
 <pre class="r"><code># install.packages(&quot;tamRgo&quot;)  # if not yet installed
 remotes::install_github(&quot;matt-dray/tamRgo&quot;)
@@ -44,10 +44,10 @@ library(tamRgo)</code></pre>
 <p>It has no package dependencies, but you’ll need to be running a version of R greater than 4.0.</p>
 <p>Of course, it’s just a toy to demonstrate a concept. I’ve built out a bit of a ‘game loop’, but it’s just for fun and the code is not optimised. <a href="https://github.com/matt-dray/tamRgo/issues">Suggestions and code contributions always welcome</a>.</p>
 </div>
-<div id="lay-an-egg" class="section level2">
-<h2>Lay an egg</h2>
+<div id="nuovo-uovo-1" class="section level2">
+<h2>Nuovo uovo</h2>
 <p>To begin, you’ll need to generate a new pet by laying an egg. You’ll be asked to confirm it’s okay to save a blueprint file onto your computer, which is just a small list object stored as an RDS file.</p>
-<pre class="r"><code>&gt; lay_egg(pet_name = &quot;KEVIN&quot;)
+<pre class="r"><code>&gt; lay_egg(pet_name = &quot;BERTHA&quot;)
 # Save pet blueprint? y/n: y
 # Saved pet blueprint.
 # You have a new egg... it hatched!
@@ -56,7 +56,7 @@ library(tamRgo)</code></pre>
 <p>So, you have a new pet. Now what? The hint suggests to check the stats, so let’s do that.</p>
 <pre class="r"><code>get_stats()
 # Characteristics
-#   Name:    KEVIN
+#   Name:    BERTHA
 #   Species: Z
 #   Age:     0
 #   Level:   0 (newborn)
@@ -65,34 +65,25 @@ library(tamRgo)</code></pre>
 #   Hungry:  ■■■□□  
 #   Dirty:   □□□□□  </code></pre>
 <p>You can see some characteristics and statuses, which I think are pretty self-explanatory.</p>
-<p>Let’s quickly check what our pet looks like with <code>see_pet()</code>. Its appearance depends on the species and the level, but newborns are pretty much a blob.</p>
+<p>Let’s quickly check what our pet looks like with <code>see_pet()</code>. Its appearance depends on the species and the level, but newborns are pretty much a blob. It’ll probably render better in your console than in your browser.</p>
 <pre class="r"><code>see_pet()</code></pre>
-<p>I’ll paste here an image of how the pet looks in the console, since the blog doesn’t render it particularly well.</p>
-<div class="figure">
-<p><img src="/post/2022-10-29-tamRgo_files/y0.png" alt="Descriptive text." width="20%"/></p>
-</div>
-<details>
-<summary>
-Click for console output.
-</summary>
-<pre class="r"><code>#       
-#  ███  
-# █ █ █ 
-# █████ 
-# ██ ██ 
-#  ███  
-#       </code></pre>
-<details>
+<pre class="r"><code>## ░░░░░░░
+## ░░███░░
+## ░█░█░█░
+## ░█████░
+## ░██░██░
+## ░░███░░
+## ░░░░░░░</code></pre>
 </div>
 <div id="feed" class="section level2">
 <h2>Feed</h2>
-<p>Having just been born, KEVIN is a little peckish. Let’s lower that ‘Hungry’ value by using <code>feed()</code>.</p>
+<p>Having just been born, BERTHA is a little peckish. Let’s lower that ‘Hungry’ value by using <code>feed()</code>.</p>
 <pre class="r"><code>feed()
 # &#39;Hungry&#39; status value is now 2/5</code></pre>
 <p>See how the ‘Hungry’ counter decreased by 1?</p>
 <pre class="r"><code>get_stats()
 # Characteristics
-#   Name:    KEVIN
+#   Name:    BERTHA
 #   Species: Z
 #   Age:     0
 #   Level:   0 (newborn)
@@ -123,32 +114,26 @@ Click for console output.
 <h2>Clean</h2>
 <p>Eventually your pet will become ‘dirty’ and you’ll need to <code>clean()</code> it.</p>
 <pre class="r"><code>see_pet()</code></pre>
-<details>
-<summary>
-Click for console output.
-</summary>
-<pre class="r"><code>#       
-#  ███  
-# █ █ █ 
-# █████ 
-# ██ ██ 
-#  ███  
-#       
-#       
-#   █   
-#  ███  
-# █████ 
-#       </code></pre>
-</details>
+<pre class="r"><code>## ░░░░░░░
+## ░░███░░
+## ░█░█░█░
+## ░█████░
+## ░██░██░
+## ░░███░░
+## ░░░░░░░
+## ░░░░░░░
+## ░░░█░░░
+## ░░███░░  
+## ░█████░ 
+## ░░░░░░░</code></pre>
 <pre class="r"><code>clean()
 # &#39;Dirty&#39; status value is now 0/5</code></pre>
-<p>Your pet will level up over time (how?) and it’s appearance will change.</p>
 </div>
 <div id="it-lives" class="section level2">
 <h2>It lives!</h2>
 <p>Maybe you forget about your pet. You remember it exists three days later. From <em>any</em> R session on your computer you can check the stats.</p>
 <pre class="r"><code># Characteristics
-#   Name:    KEVIN
+#   Name:    BERTHA
 #   Species: Z
 #   Age:     5
 #   Level:   2 (youngling)
@@ -158,34 +143,49 @@ Click for console output.
 #   Dirty:   ■■■■■ !</code></pre>
 <p>Whoops, looks like it’s pretty unhappy, pretty hungry and pretty dirty.</p>
 <p>You should look after your pet. Apparently there’s a chance it might become… ‘unalive’. Rumour has it that good owners have longer-living pets…</p>
-<p>Regardless, KEVIN has now reached level 2. What does he look like now?</p>
+<p>Regardless, BERTHA has now reached level 2. What does he look like now?</p>
 <pre class="r"><code>see_pet()</code></pre>
-<details>
-<summary>
-Click for console output.
-</summary>
-<pre class="r"><code>#          
-#  █    █  
-#   █  █   
-#  ██████  
-#  █ ██ █  
-#  ██████  
-# ███  ███ 
-#  ██████  
-#  █    █  
-#          
-#       
-#   █   
-#  ███  
-# █████ 
-#       </code></pre>
-</details>
-<p>Cool antennae, bro. Might need to given him a clean.</p>
+<pre class="r"><code>## ░░░░░░░░░░
+## ░░█░░░░█░░
+## ░░░█░░█░░░
+## ░░██████░░
+## ░░█░██░█░░
+## ░░██████░░
+## ░███░░███░
+## ░░██████░░
+## ░░█░░░░█░░
+## ░░░░░░░░░░
+## ░░░░░░░
+## ░░░█░░░
+## ░░███░░  
+## ░█████░ 
+## ░░░░░░░
+## ░░░░░░░
+## ░░░█░░░
+## ░░███░░  
+## ░█████░ 
+## ░░░░░░░
+## ░░░░░░░
+## ░░░█░░░
+## ░░███░░  
+## ░█████░ 
+## ░░░░░░░
+## ░░░░░░░
+## ░░░█░░░
+## ░░███░░  
+## ░█████░ 
+## ░░░░░░░
+## ░░░░░░░
+## ░░░█░░░
+## ░░███░░  
+## ░█████░ 
+## ░░░░░░░</code></pre>
+<p>Erm, cool antennae, bro. Totally distracts from the mess.</p>
 </div>
 </div>
-<div id="under-the-hood" class="section level1">
-<h1>Under the hood</h1>
-<p>The underlying ’engine for the game is very simple. I don’t want to give away too many spoilers, but it’s worth explaining some of the main components a bit.</p>
+<div id="under-the-shell" class="section level1">
+<h1>Under the shell</h1>
+<p>The underlying logic is pretty simple. I don’t want to give away too many spoilers, but it’s worth explaining some of the main components a bit.</p>
 <div id="blueprint" class="section level2">
 <h2>Blueprint</h2>
 <p>The whole system is dependent on a ‘blueprint’ file, which is what gets stored at the <code>tools::R_user_dir()</code> location. It’s a list object with elements like the pet’s name, species (randomly generated), ‘date of birth’, accumulated XP, status values (happy, hungry, dirty) and some other things.</p>
@@ -202,7 +202,7 @@ Click for console output.
 </ul>
 <p>At a certain point, the pet will become ‘unalive’<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a>. The chance of this happening is based on the pet’s accumulated XP. Basically:</p>
 <ul>
-<li>XP is ‘frozen’ at a certain age and this value is stored in the blueprint</li>
+<li>XP is ‘frozen’ at a certain age and the value is stored in the blueprint</li>
 <li>the chance of becoming unalive is tied to the frozen XP value, where more XP means a lower chance</li>
 <li>the number of days since the XP was frozen is used as a multiplier, so the chance of becoming unalive increases with time</li>
 </ul>
@@ -217,18 +217,18 @@ Click for console output.
 </div>
 </div>
 </div>
-<div id="reflection" class="section level1">
-<h1>Reflection</h1>
-<p>Anyway, like I said, this is a for-fun concept that’s nowhere near feature complete<a href="#fn7" class="footnote-ref" id="fnref7"><sup>7</sup></a>. If I wanted to improve it, what would I do? Plenty, including:</p>
+<div id="practical-yolk" class="section level1">
+<h1>Practical yolk</h1>
+<p>It’s not feature complete, lol<a href="#fn7" class="footnote-ref" id="fnref7"><sup>7</sup></a>. To improve it, I could:</p>
 <ul>
-<li>animated pixel graphics</li>
-<li>the ability to transfer a blueprint between machines, so your pet can live across multiple devices<a href="#fn8" class="footnote-ref" id="fnref8"><sup>8</sup></a></li>
-<li>a battle system like <em>Digimon</em></li>
-<li>a more fun minigame in <code>play()</code> that grants more XP for greater skill</li>
-<li>more meaningful use of ‘hungry’ and ‘dirty’ statuses, perhaps a hidden HP gauge that is reduced when these statuses are at their maximum for an extended period</li>
+<li>animate the pixel graphics</li>
+<li>allow blueprints to be transferred between machines, so your pet can live across multiple devices<a href="#fn8" class="footnote-ref" id="fnref8"><sup>8</sup></a></li>
+<li>add a battle system like <em>Digimon</em></li>
+<li>make the <code>play()</code> minigame actually fun and so it grants more XP for greater skill</li>
+<li>make more meaningful use of ‘hungry’ and ‘dirty’ statuses, perhaps include a hidden HP gauge that is reduced when these statuses are at their maximum for an extended period</li>
 </ul>
 <p>The main point of this toy was for me to work out how to store data on a user’s machine. Should you actually do that? It depends. Can you use it in a silly R package for purposes of fun? Well, yes, if you ask me.</p>
-<p>You can probably think of other ways to use <code>tools::R_user_dir()</code> for games in R. Maybe you could have a ‘save state’ that can be recalled each time a game is played. Let me know when you’ve made a new triple-A game for R and I’ll add it to <a href="https://github.com/matt-dray/awesome-r-games">the list</a>.</p>
+<p>You can probably think of other ways to use <code>tools::R_user_dir()</code> for games in R, particularly for ’save states. Let me know when you’ve made a new triple-A game for R and I’ll add it to <a href="https://github.com/matt-dray/awesome-r-games">the list</a>.</p>
 <hr />
 <details>
 <summary>
@@ -244,7 +244,7 @@ Session info
 ##  collate  en_GB.UTF-8
 ##  ctype    en_GB.UTF-8
 ##  tz       Europe/London
-##  date     2022-11-07
+##  date     2022-11-11
 ##  pandoc   2.18 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/tools/ (via rmarkdown)
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
@@ -281,7 +281,7 @@ Session info
 <div class="footnotes footnotes-end-of-document">
 <hr />
 <ol>
-<li id="fn1"><p>Oh, wait, I have to explain myself? Look no further than <a href="https://www.youtube.com/watch?v=LPotWAJnE_s">Mike Cheng’s rstudio::conf22 talk</a> or the <a href="https://github.com/matt-dray/awesome-r-games">awesome-r-games list</a>. I’ve written toys like <a href="https://github.com/matt-dray/ActionSquirrel">{ActionSquirrel}</a>, <a href="https://github.com/matt-dray/safar6">{safar6}</a> and <a href="https://github.com/matt-dray/r.oguelike">{r.oguelike}</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn1"><p>Oh, wait, I have to explain myself? Look no further than <a href="https://www.youtube.com/watch?v=LPotWAJnE_s">Mike Cheng’s rstudio::conf22 talk</a> or the <a href="https://github.com/matt-dray/awesome-r-games">awesome-r-games list</a>. I’ve written toys like <a href="https://github.com/matt-dray/ActionSquirrel">{ActionSquirrel}</a>, <a href="https://github.com/matt-dray/safar6">{safar6}</a>, <a href="https://github.com/matt-dray/potato">{potato}</a> and <a href="https://github.com/matt-dray/r.oguelike">{r.oguelike}</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
 <li id="fn2"><p>If you do try and @ me, then you can now do it over at <a href="https://fosstodon.org/@mattdray"><span class="citation">@mattdray</span><span class="citation">@fosstodon.org</span></a>.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 <li id="fn3"><p>You may be familiar with <a href="https://rappdirs.r-lib.org/">{rappdirs}</a>, a package that helps you find directories. <code>tools::R_user_dir()</code> is nice because it’s built into R, so no dependency is required.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
 <li id="fn4"><p>For the benefit of youths, <a href="https://en.wikipedia.org/wiki/Tamagotchi">a <em>Tamagotchi</em></a> was (is!) a little physical device that contains a ‘digital pet’, made popular in the late 90s. They have a little screen and physical buttons so you can see your pet and interact with it. Play with it, feed it, even reprimand it.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
