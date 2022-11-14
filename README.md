@@ -25,13 +25,13 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 132 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 133 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 50 day(s) ago: [Interactive pixel art in
-R with {pixeltrix}](https://www.rostrum.blog/2022/09/24/pixeltrix/).
+🆕 The latest post was published 1 day(s) ago: [Tamagotchi in
+R?](https://www.rostrum.blog/2022/11/13/tamrgo/).
 
 📈 This 2D plot shows posts over time:
 
@@ -43,6 +43,7 @@ R with {pixeltrix}](https://www.rostrum.blog/2022/09/24/pixeltrix/).
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|    133 | 2022-11-13 | [Tamagotchi in R?](https://www.rostrum.blog/2022/11/13/tamrgo/)                                                           |
 |    132 | 2022-09-24 | [Interactive pixel art in R with {pixeltrix}](https://www.rostrum.blog/2022/09/24/pixeltrix/)                             |
 |    131 | 2022-09-13 | [You are a halfling, trying to harvest {potato}](https://www.rostrum.blog/2022/09/13/potato/)                             |
 |    130 | 2022-09-07 | [EARL 22: {a11ytables} for better spreadsheets](https://www.rostrum.blog/2022/09/07/earl22/)                              |
@@ -180,4 +181,4 @@ R with {pixeltrix}](https://www.rostrum.blog/2022/09/24/pixeltrix/).
 
 -----
 
-*Updated on 2022-11-13 at 03:41.*
+*Updated on 2022-11-14 at 03:41.*
