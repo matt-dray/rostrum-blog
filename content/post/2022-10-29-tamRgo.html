@@ -29,7 +29,7 @@ Hex logo: evolution line of a {tamRgo} digital pet (species Y, ‘hat guy’).
 <div id="had-an-oeuf" class="section level1">
 <h1>Had an oeuf?</h1>
 <p>R is a game engine<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>. Don’t @ me<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>.</p>
-<p>Turns out that R can <a href="https://r-pkgs.org/data.html#sec-data-persistent">keep a save state</a>: developers can write a persistent file to the platform-independent path on a user’s machine resolved by <a href="https://rdrr.io/r/tools/userdir.html"><code>tools::R_user_dir()</code></a><a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>.</p>
+<p><a href="https://r-pkgs.org/data.html#sec-data-persistent">Turns out that R can keep a ‘save state’</a>: developers can write a persistent file to the platform-independent path on a user’s machine resolved by <a href="https://rdrr.io/r/tools/userdir.html"><code>tools::R_user_dir()</code></a><a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>.</p>
 <p>Of course, I’ve used this to make a concept R package. <a href="https://github.com/matt-dray/tamRgo">{tamRgo}</a> saves locally a ‘blueprint’ for a <a href="https://en.wikipedia.org/wiki/Tamagotchi"><em>Tamgotchi</em></a>-like digital pet<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>, which is read and updated when you interact with it in the R console.</p>
 <p><em>Tamago</em> (egg) + <em>uotchi</em> (‘watch’) = <em>Tamagotchi</em>. <em>Tamago</em> + R = {tamRgo}.</p>
 </div>
@@ -69,8 +69,8 @@ library(tamRgo)</code></pre>
 ##   Happy:   ■■■□□  
 ##   Hungry:  ■■■□□  
 ##   Dirty:   □□□□□  </code></pre>
-<p>You can see some characteristics and statuses, which I think are pretty self-explanatory.</p>
-<p>Let’s quickly check what our pet looks like with <code>see_pet()</code>. Its appearance depends on the species and the level, but newborns are pretty much a blob. It’ll probably render better in your R console than in your browser.</p>
+<p>You can see some characteristics: the name you provided, the pet’s species (X, Y or Z) and their age (days since ‘birth’). You can see the pet’s level (whatever that means) and whether they are currently alive. There’s also status values, which are followed by five-point gauges, some of which are filled.</p>
+<p>Let’s quickly check what our pet looks like with <code>see_pet()</code>. Its appearance depends on the species and the level; newborns are pretty much a blob, but your pet will grow and develop as it levels. The quality of the ‘sprite’ rendering will depend on the settings in your console, but hopefully you get the idea.</p>
 <pre class="r"><code>see_pet()</code></pre>
 <pre class="r"><code>## ░░░░░░░
 ## ░░███░░
@@ -79,14 +79,14 @@ library(tamRgo)</code></pre>
 ## ░██░██░
 ## ░░███░░
 ## ░░░░░░░</code></pre>
-<p>Beautiful boy.</p>
+<p>Congratulations! KEVIN is a beautiful little chap.</p>
 </div>
 <div id="feed" class="section level2">
 <h2>Feed</h2>
-<p>Having just been born, KEVIN is a little peckish. Let’s lower that ‘Hungry’ value by using <code>feed()</code>.</p>
+<p>Having just been born, KEVIN is a bit peckish. You can tell because the ‘Hungry’ gauge is partially filled. Let’s lower the value by using <code>feed()</code>.</p>
 <pre class="r"><code>feed()</code></pre>
 <pre class="r"><code># &#39;Hungry&#39; status value is now 2/5</code></pre>
-<p>See how the ‘Hungry’ counter decreased by 1?</p>
+<p>See how the ‘Hungry’ counter decreased by 1 to 2?</p>
 <pre class="r"><code>get_stats()</code></pre>
 <pre class="r"><code>## Characteristics
 ##   Name:    KEVIN
@@ -101,7 +101,7 @@ library(tamRgo)</code></pre>
 </div>
 <div id="play" class="section level2">
 <h2>Play</h2>
-<p>You can increase the ‘Happy’ value with <code>play()</code>. This begins a game of ‘higher or lower’ with user input.</p>
+<p>You can increase the ‘Happy’ value, which is currently 0, with <code>play()</code>. This begins a game of ‘higher or lower’ with user input. Yes, it’s not much of a skill-based game, but there’s a rumour that it’s easier under some circumstances and that a higher score is better for your pet’s wellbeing.</p>
 <pre class="r"><code>play()</code></pre>
 <pre class="r"><code>## Higher or lower than 4? Type h or l: h
 ## Wrong! It was 1. Score: 0/5.
@@ -115,11 +115,10 @@ library(tamRgo)</code></pre>
 ## Wrong! It was 10. Score: 3/5.
 ## Result: you scored 3/5!
 ## &#39;Happy&#39; status value is now 4/5</code></pre>
-<p>Rumour has it that the game is easier under some circumstances and that a higher score is better for your pet’s wellbeing.</p>
 </div>
 <div id="clean" class="section level2">
 <h2>Clean</h2>
-<p>Eventually your pet will become ‘dirty’ and you’ll need to <code>clean()</code> it.</p>
+<p>After some time, your pet will become ‘dirty’, represented by a small pile of filth underneath your their sprite.</p>
 <pre class="r"><code>see_pet()</code></pre>
 <pre class="r"><code>## ░░░░░░░
 ## ░░███░░
@@ -133,12 +132,14 @@ library(tamRgo)</code></pre>
 ## ░░███░░  
 ## ░█████░ 
 ## ░░░░░░░</code></pre>
+<p>Almost as big as KEVIN himself, wow. You’ll just need to <code>clean()</code> it away.</p>
 <pre class="r"><code>clean()</code></pre>
 <pre class="r"><code>## &#39;Dirty&#39; status value is now 0/5</code></pre>
 </div>
 <div id="persistence" class="section level2">
 <h2>Persistence</h2>
-<p>Maybe you forgot about your pet (whoops) and three days later you remember that it exists. From any R session on your computer you can check the stats.</p>
+<p>Perhaps the most important thing to know is that you can end your R session and come back later and your pet will still be available. In fact, it will continue to live and grow on your computer while you’re away.</p>
+<p>Maybe you come back five days later. Here’s what you might see if you check your pet’s stats from any R session on your computer.</p>
 <pre class="r"><code>get_stats()</code></pre>
 <pre class="r"><code>## Characteristics
 ##   Name:    KEVIN
@@ -150,8 +151,9 @@ library(tamRgo)</code></pre>
 ##   Happy:   □□□□□ !
 ##   Hungry:  ■■■■■ !
 ##   Dirty:   ■■■■■ !</code></pre>
-<p>Whoops, looks like it’s pretty unhappy, pretty hungry and pretty dirty.</p>
-<p>Regardless, KEVIN has now reached level 2. What does he look like now?</p>
+<p>Aha, so KEVIN’s age and level have increased since you’ve been away, even though you haven’t interacted with him for a while. But uh-oh, looks like his status values are at their worst.</p>
+<p>Pay attention to these status values. Look after your pet! Apparently there’s a chance it might become… ‘unalive’. Rumour has it that good owners have longer-living pets…</p>
+<p>Anyway, let’s quickly check KEVIN’s appearance now he’s level 2.</p>
 <pre class="r"><code>see_pet()</code></pre>
 <pre class="r"><code>## ░░░░░░░░░░
 ## ░░█░░░░█░░
@@ -189,7 +191,6 @@ library(tamRgo)</code></pre>
 ## ░█████░ 
 ## ░░░░░░░</code></pre>
 <p>Erm, well, cool antennae, bro. Totally distracts from the mess. Might need to <code>clean()</code> him.</p>
-<p>Pay attention to the status values. Look after your pet! Apparently there’s a chance it might become… ‘unalive’. Rumour has it that good owners have longer-living pets…</p>
 </div>
 </div>
 <div id="under-the-shell" class="section level1">
@@ -220,7 +221,7 @@ library(tamRgo)</code></pre>
 <div id="sprites" class="section level2">
 <h2>Sprites</h2>
 <p>There are character ‘sprites’ that change with age and species (see the image at the top of this post). The sprite for a newborn, mature and unalive pet are the same regardless of species, but the other levels are dependent on whether the pet is species X, Y or Z. Of course, these are pixellated to mimic <a href="https://static.wikia.nocookie.net/tamagotchi/images/5/52/Tama_diagram.png/revision/latest?cb=20191126143322">the original <em>Tamagotchi</em> style</a>.</p>
-<p>The sprites are called by <code>see_pet()</code> as binary matrices of filled and unfilled ‘pixels’. I wrote the package <a href="https://github.com/matt-dray/pixeltrix">{pixeltrix}</a>, which I wrote about in <a href="https://www.rostrum.blog/2022/09/24/pixeltrix/">my last blog post</a> for a simple interactive way to design sprites by turning pixels ‘on’ and ‘off’ in a plotting window. Here’s a preview of an original Tamgotchi character</p>
+<p>The sprites are called by <code>see_pet()</code> as binary matrices of filled and unfilled ‘pixels’. I wrote the package <a href="https://github.com/matt-dray/pixeltrix">{pixeltrix}</a>, which I wrote about in <a href="https://www.rostrum.blog/2022/09/24/pixeltrix/">my last blog post</a> for a simple interactive way to design sprites by turning pixels ‘on’ and ‘off’ in a plotting window. Here’s a preview of a totally original little cyberfriend being incepted.</p>
 <div class="figure">
 <p><img src="/post/2022-09-24-pixeltrix_files/pixeltrix.gif" alt="Gif of RStudio window. The console is running the code pixeltrix::click_pixels(6, 7, 3) and a plot appears with a 6 by 7 square grid. Some squares are clicked, changing them to light grey. A second click turns them dark grey. Eventually a little square character with a face is created. A matrix encoded the image is shown in the console when the escape key is pressed." width="100%"/></p>
 </div>
@@ -253,7 +254,7 @@ Session info
 ##  collate  en_GB.UTF-8
 ##  ctype    en_GB.UTF-8
 ##  tz       Europe/London
-##  date     2022-11-13
+##  date     2022-11-14
 ##  pandoc   2.18 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/tools/ (via rmarkdown)
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────

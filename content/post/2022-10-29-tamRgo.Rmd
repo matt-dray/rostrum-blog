@@ -31,7 +31,7 @@ I've written [the concept R package {tamRgo}](https://github.com/matt-dray/tamRg
 
 R is a game engine[^explain]. Don't @ me[^fosstodon]. 
 
-Turns out that R can [keep a save state](https://r-pkgs.org/data.html#sec-data-persistent): developers can write a persistent file to the platform-independent path on a user's machine resolved by [`tools::R_user_dir()`](https://rdrr.io/r/tools/userdir.html)[^rappdirs].
+[Turns out that R can keep a 'save state'](https://r-pkgs.org/data.html#sec-data-persistent): developers can write a persistent file to the platform-independent path on a user's machine resolved by [`tools::R_user_dir()`](https://rdrr.io/r/tools/userdir.html)[^rappdirs].
 
 Of course, I've used this to make a concept R package. [{tamRgo}](https://github.com/matt-dray/tamRgo) saves locally a 'blueprint' for a  [_Tamgotchi_](https://en.wikipedia.org/wiki/Tamagotchi)-like digital pet[^tama], which is read and updated when you interact with it in the R console.
 
@@ -93,9 +93,9 @@ get_stats()
 ##   Dirty:   □□□□□  
 ```
 
-You can see some characteristics and statuses, which I think are pretty self-explanatory.
+You can see some characteristics: the name you provided, the pet's species (X, Y or Z) and their age (days since 'birth'). You can see the pet's level (whatever that means) and whether they are currently alive. There's also status values, which are followed by five-point gauges, some of which are filled.
 
-Let's quickly check what our pet looks like with `see_pet()`. Its appearance depends on the species and the level, but newborns are pretty much a blob. It'll probably render better in your R console than in your browser.
+Let's quickly check what our pet looks like with `see_pet()`. Its appearance depends on the species and the level; newborns are pretty much a blob, but your pet will grow and develop as it levels. The quality of the 'sprite' rendering will depend on the settings in your console, but hopefully you get the idea.
 
 ```{r eval=FALSE}
 see_pet()
@@ -110,11 +110,11 @@ see_pet()
 ## ░░░░░░░
 ```
 
-Beautiful boy.
+Congratulations! KEVIN is a beautiful little chap.
 
 ## Feed
 
-Having just been born, KEVIN is a little peckish. Let's lower that 'Hungry' value by using `feed()`.
+Having just been born, KEVIN is a bit peckish. You can tell because the 'Hungry' gauge is partially filled. Let's lower the value by using `feed()`.
 
 ```{r eval=FALSE}
 feed()
@@ -123,7 +123,7 @@ feed()
 # 'Hungry' status value is now 2/5
 ```
 
-See how the 'Hungry' counter decreased by 1?
+See how the 'Hungry' counter decreased by 1 to 2?
 
 ```{r eval=FALSE}
 get_stats()
@@ -143,7 +143,7 @@ get_stats()
 
 ## Play
 
-You can increase the 'Happy' value with `play()`. This begins a game of 'higher or lower' with user input.
+You can increase the 'Happy' value, which is currently 0, with `play()`. This begins a game of 'higher or lower' with user input. Yes, it's not much of a skill-based game, but there's a rumour that it's easier under some circumstances and that a higher score is better for your pet's wellbeing.
 
 ```{r eval=FALSE}
 play()
@@ -163,11 +163,9 @@ play()
 ## 'Happy' status value is now 4/5
 ```
 
-Rumour has it that the game is easier under some circumstances and that a higher score is better for your pet's wellbeing.
-
 ## Clean
 
-Eventually your pet will become 'dirty' and you'll need to `clean()` it.
+After some time, your pet will become 'dirty', represented by a small pile of filth underneath your their sprite.
 
 ```{r eval=FALSE}
 see_pet()
@@ -187,6 +185,8 @@ see_pet()
 ## ░░░░░░░
 ```
 
+Almost as big as KEVIN himself, wow. You'll just need to `clean()` it away.
+
 ```{r eval=FALSE}
 clean()
 ```
@@ -196,7 +196,9 @@ clean()
 
 ## Persistence
 
-Maybe you forgot about your pet (whoops) and three days later you remember that it exists. From any R session on your computer you can check the stats.
+Perhaps the most important thing to know is that you can end your R session and come back later and your pet will still be available. In fact, it will continue to live and grow on your computer while you're away.
+
+Maybe you come back five days later. Here's what you might see if you check your pet's stats from any R session on your computer.
 
 ```{r eval=FALSE}
 get_stats()
@@ -214,9 +216,11 @@ get_stats()
 ##   Dirty:   ■■■■■ !
 ```
 
-Whoops, looks like it's pretty unhappy, pretty hungry and pretty dirty.
+Aha, so KEVIN's age and level have increased since you've been away, even though you haven't interacted with him for a while. But uh-oh, looks like his status values are at their worst.
 
-Regardless, KEVIN has now reached level 2. What does he look like now?
+Pay attention to these status values. Look after your pet! Apparently there's a chance it might become... 'unalive'. Rumour has it that good owners have longer-living pets...
+
+Anyway, let's quickly check KEVIN's appearance now he's level 2.
 
 ```{r eval=FALSE}
 see_pet()
@@ -260,8 +264,6 @@ see_pet()
 ```
 
 Erm, well, cool antennae, bro. Totally distracts from the mess. Might need to `clean()` him.
-
-Pay attention to the status values. Look after your pet! Apparently there's a chance it might become... 'unalive'. Rumour has it that good owners have longer-living pets...
 
 # Under the shell
 
