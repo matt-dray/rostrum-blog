@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 12 day(s) ago: [Tamagotchi in
+🆕 The latest post was published 13 day(s) ago: [Tamagotchi in
 R?](https://www.rostrum.blog/2022/11/13/tamrgo/).
 
 📈 This 2D plot shows posts over time:
@@ -181,4 +181,4 @@ R?](https://www.rostrum.blog/2022/11/13/tamrgo/).
 
 -----
 
-*Updated on 2022-11-25 at 03:15.*
+*Updated on 2022-11-26 at 03:00.*
