@@ -27,13 +27,23 @@ tags:
 
 You can trigger [GitHub Actions](https://github.com/features/actions){target="_blank"} to build and test your R package after a push or pull request. Create `.github/workflows/` in your repo and add  [pre-prepared actions by the r-lib team](https://github.com/r-lib/actions/tree/master/examples){target="_blank"} with `usethis::use_github_action()`. 
 
+# Shortcut
+
+I refer back to this post a lot, so here's some jump-links to the sections with the code I need:
+
+1. [Build check](#build)
+2. [Test coverage](#test)
+3. [Build {pkgdown} site](#pkgdown)
+
+Otherwise read on for a more thorough explanation of GitHub Actions in the context of R packages.
+
 # Lights, camera...
 
 [GitHub Actions](https://github.com/features/actions){target="_blank"} is a service that can be triggered to run workflows that build, test and deploy your code on GitHub. In other words, a [continuous integration](https://en.wikipedia.org/wiki/Continuous_integration){target="_blank"} platform baked right into GitHub.
 
 Before you start, I recommend checking out [Jim Hester's talk from rstudio::conf 2020](https://www.jimhester.com/talk/2020-rsc-github-actions/){target="_blank"} and reading [the GitHub Actions with R book](https://ropenscilabs.github.io/actions_sandbox/){target="_blank"}.
 
-GitHub Actions can be really helpful for developing R packages. For example, you can trigger actions with a push or pull request (PR) that:
+GitHub Actions can be really helpful for developing R packages.[^bot] For example, you can trigger actions with a push or pull request (PR) that:
 
 * run an [R CMD build check](http://r-pkgs.had.co.nz/check.html){target="_blank"} of your package on multiple platforms
 * run your [{testthat} unit tests](https://testthat.r-lib.org/){target="_blank"}
@@ -76,7 +86,7 @@ I recently used this method to set up GitHub Actions for the [in-development {r2
 
 This is a typical, minimal set of actions that suit me when developing R packages. Let's talk them through.
 
-### 1. Build check
+### 1. Build check{#build}
 
 An R CMD check[^check] runs a bunch of tests on your package (including your own unit tests) and returns errors, notes and warnings. You're aiming for a passing build to prove the package is up to scratch.
 
@@ -92,7 +102,7 @@ Note that this function will create `.github/workflows/` if it doesn't already e
 
 Folllowing a push or PR, GitHub Actions will now automatically set up and run a build check on each OS to make sure the package meets the requirements. 
 
-### 2. Test coverage
+### 2. Test coverage{#test}
 
 The R CMD check runs your unit tests, but it doesn't calculate how much of your code is actually [covered](https://en.wikipedia.org/wiki/Code_coverage){target="_blank"} by testing. Ideally you want this to be 100%, but also bear in mind that the metric doesn't take account of the volume or quality of tests. 
 
@@ -116,7 +126,7 @@ usethis::use_github_action("test-coverage")
 
 The 'test-coverage' GitHub Action will recheck coverage when you next push to the repo, with the results being updated on your coverage service of choice.
 
-### 3. Build {pkgdown} site
+### 3. Build {pkgdown} site{#pkgdown}
 
 [{pkgdown}, also from r-lib,](https://pkgdown.r-lib.org/){target="_blank"} can automatically and painlessly generate a simple website from your package's documentation, which you are free to customise. You can serve the site on the web via GitHub Pages so users can access the docs easily online.
 
@@ -124,7 +134,7 @@ For example, here's [the {pkgdown} website for the {r2eng} package](https://matt
 
 [The GitHub Actions with R book has a section on {pkgdown}](https://ropenscilabs.github.io/actions_sandbox/websites-using-pkgdown-bookdown-and-blogdown.html){target="_blank"}. In short, the steps are:
 
-1. Set-up an empty 'gh-pages' branch in your repo ([the book has some code to do this from the command line](https://ropenscilabs.github.io/actions_sandbox/websites-using-pkgdown-bookdown-and-blogdown.html){target="_blank"})
+1. Set-up an empty 'gh-pages' branch in your repo ([the book has some code to do this from the command line](https://ropenscilabs.github.io/actions_sandbox/websites-using-pkgdown-bookdown-and-blogdown.html){target="_blank"})[^posterity]
 1. Back in the main branch, run the {usethis} `usethis::use_pkgdown()` to activate {pkgdown} for your package repo
 1. Run `usethis::use_github_action("pkgdown")` to add the YAML file that tells GitHub Actions to build the website on push
 1. Push to your repo and GitHub Actions will generate the website files in the gh-pages branch
@@ -184,3 +194,12 @@ sessioninfo::session_info()
 [^check]: Learn more about checks from [Hadley Wickham](http://r-pkgs.had.co.nz/check.html){target="_blank"} and [Karl Broman](https://kbroman.org/pkg_primer/pages/check.html){target="_blank"}.
 [^usethis-build]: The other two functions test on macOS only (`use_github_action_check_release()`) and on all three operating systems and also on some minor R releases too (`use_github_action_check_full()`), though the latter is considered 'overkill' according to the documentation.
 [^badgr]: I showed how to create these sorts of badges in an earlier blog post: ['Make a README badge with {badgr}'](https://www.rostrum.blog/2020/05/08/readme-badge/){target="_blank"}.
+[^posterity]: For posterity, and in case the book ever disappears, the code that creates an empty 'gh-pages' branch from the command line is like:
+```
+git checkout --orphan gh-pages
+git rm -rf .
+git commit --allow-empty -m 'Initial gh-pages commit'
+git push origin gh-pages
+git checkout main
+```
+[^bot]: You can do other interesting things with it, like run code on schedule. [I used GitHub Actions](https://github.com/matt-dray/londonmapbot) to [automate the posting of tweets to a Twitter bot account](https://www.rostrum.blog/2020/09/21/londonmapbot/), [\@londonmapbot](https://twitter.com/londonmapbot), for example.
