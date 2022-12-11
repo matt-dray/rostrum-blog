@@ -1,0 +1,136 @@
+---
+title: "Animate sprites in R with {pixeltrix}"
+author: 'Matt Dray'
+date: '2022-12-11'
+slug: pixeltrix-animate
+categories:
+  - code
+  - package
+tags:
+  - image
+  - gif
+  - gifski
+  - locator
+  - pixel-art
+  - r
+  - sprite
+draft: no
+---
+
+```{r echo=FALSE}
+suppressPackageStartupMessages(library(pixeltrix))
+```
+
+<img src="/post/2022-12-10-pixeltrix-animate_files/mario.gif" alt="Gif of Mario walkcycle." width="20%"><img src="/post/2022-12-10-pixeltrix-animate_files/mario.gif" alt="" width="20%"><img src="/post/2022-12-10-pixeltrix-animate_files/mario.gif" alt="" width="20%">
+
+# tl;dr
+
+I've updated [the {pixeltrix} package](https://github.com/matt-dray/pixeltrix) so you can create animated sprite gifs with a simple, interactive pixel editor from within R's plot window.
+
+# Pix all the right boxes
+
+The {pixeltrix} package---which I've [written about before](https://www.rostrum.blog/2022/09/24/pixeltrix/)---lets you open an interactive R plot that you can click to turn 'pixels' on and off. 
+
+I created it for one purpose: to quickly create simple, blocky sprites for [my {tamRgo} package](https://github.com/matt-dray/tamRgo), which lets you keep a persistent cyberpet on your computer ([yes, really](https://www.rostrum.blog/2022/11/13/tamrgo/)).
+
+But wouldn't it be nice if {pixeltrix} were more... general? Read on for a couple of improvements that might help.
+
+# Pixellate to accumulate
+
+First, you can [install the updated package from GitHub](https://github.com/matt-dray/pixeltrix):
+
+```{r eval=FALSE}
+remotes::install_github("matt-dray/pixeltrix")
+library(pixeltrix)
+```
+
+Now the improvements: plotting with colour, and creating gif animations.
+
+## 1. Plot
+
+The `click_pixel()` function opens an interactive plot. If `n_state = 3`, for example, then each pixel will cycle through three states as you keep clicking it. You're returned a matrix of these values when you hit <kbd>Esc</kbd>.
+
+That was enough for {tamRgo}: I turned a binary matrix into a 1-bit sprite. But wouldn't it be good---fundamental!---to be able to plot the matrix as an image with user-specified colours? So I made `draw_pixels()`.
+
+I've added a three-state matrix into the package as an example dataset. Let's plot it with simple colours:
+
+```{r eval=FALSE}
+draw_pixels(
+  m = pixeltrix::blue, 
+  colours = c("white", "#879afb", "gray20")
+)
+```
+
+<img src="/post/2022-12-10-pixeltrix-animate_files/blue_draw.png" alt="A 14 by 16 pixel grid with a sprite of the main character from the first generation of Pokemon games for the Game Boy. The background is white, the outlines are dark grey and the highlights are light blue." width="33%">
+
+Of course, it's the subtly-coloured player character from _Pokémon Blue_ (1996) as seen on the Nintendo Game Boy Color.
+
+## 2. Animate
+
+Of course, you could use `click_pixels()` and `draw_pixels()` to generate several images and combine them as 'frames' of an animation.
+
+So that's what I did: 
+
+* `frame_pixels()` calls click_pixels(), saves the output to a list, then passes the output matrix into `edit_pixels()` so you can adjust it to create the next frame, and so on
+* `gif_pixels()` takes the frames---the list of matrices---from `frame_pixels()` and writes them out as a gif animation
+
+I've prepared `pixeltrix::mario` as an example of an output from `frame_pixels()`. It contains each of three frames that comprise Mario's walk cycle from _Super Mario Bros_ on the NES. Here's the console output from when I produced it:
+
+```{r eval=FALSE}
+mario <- frame_pixels(
+  n_rows = 16,
+  n_cols = 16,
+  n_states = 4
+)
+# Click squares in the plot window. Press <Esc> to end.
+# Add a frame? y/n: y
+# Click squares in the plot window. Press <Esc> to end.
+# Current frame count: 2
+# Add a frame? y/n: y
+# Click squares in the plot window. Press <Esc> to end.
+# Current frame count: 3
+# Add a frame? y/n: n
+# Final frame count: 3
+```
+
+And so you can see it's a list of three matrices:
+
+```{r}
+str(pixeltrix::mario)
+```
+
+You can then convert the list to a gif with `gif_pixels()`, which draws each matrix and smashes them together into an animated gif file using [{gifski}](https://cloud.r-project.org/web/packages/gifski/index.html).[^engine]
+
+```{r eval=FALSE}
+gif_pixels(
+  frames = mario,
+  colours = c("white", "#FDA428", "#FC0D1B", "#A32B2E")
+  file = "mario.gif",
+  delay = 0.15  # passed via dots to gifski::save_gif()
+)
+# Inserting image 3 at 0.30s (100%)...
+# Encoding to gif... done!
+# [1] "mario.gif"
+```
+
+And if we open that file:
+
+<img src="/post/2022-12-10-pixeltrix-animate_files/mario.gif" alt="An animated 16 by 16 pixel grid with a coloured sprite of Mario from the original Super Mario Bros for the NES. There are three frames that each show a step in Mario's walk cycle." width="33%">
+
+Yes, created entirely with R. Noice.
+
+## Pix n mix
+
+So {pixeltrix} finally got a couple of nice-to-have (well, must-have) functions. This is enough for me to continue just messing around with it as a novelty[^aseprite].
+
+I mean, come on: animated pixelart created in an interactive R plot window? Why? I mean, er... wow!
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^engine]: The {pixeltrix} package has no dependencies and I didn't want to force a user to install {gifski} if they weren't going to use `gif_pixels()`. It's therefore up to the user to install it. [I also wonder](https://github.com/matt-dray/pixeltrix/issues/15) if I should provide an argument for the user to name a 'gif engine' of choice, e.g. {gifski} or {magick}, depending on what they've got installed on their machine.
+[^aseprite]: It's never, ever going to have the features and quality of a premium pixel-art program like [Aseprite](https://www.aseprite.org/), obviously.

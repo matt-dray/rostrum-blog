@@ -1,0 +1,154 @@
+---
+title: "Animate sprites in R with {pixeltrix}"
+author: 'Matt Dray'
+date: '2022-12-11'
+slug: pixeltrix-animate
+categories:
+  - code
+  - package
+tags:
+  - image
+  - gif
+  - gifski
+  - locator
+  - pixel-art
+  - r
+  - sprite
+draft: no
+---
+
+
+
+<p><img src="/post/2022-12-10-pixeltrix-animate_files/mario.gif" alt="Gif of Mario walkcycle." width="20%"><img src="/post/2022-12-10-pixeltrix-animate_files/mario.gif" alt="" width="20%"><img src="/post/2022-12-10-pixeltrix-animate_files/mario.gif" alt="" width="20%"></p>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I’ve updated <a href="https://github.com/matt-dray/pixeltrix">the {pixeltrix} package</a> so you can create animated sprite gifs with a simple, interactive pixel editor from within R’s plot window.</p>
+</div>
+<div id="pix-all-the-right-boxes" class="section level1">
+<h1>Pix all the right boxes</h1>
+<p>The {pixeltrix} package—which I’ve <a href="https://www.rostrum.blog/2022/09/24/pixeltrix/">written about before</a>—lets you open an interactive R plot that you can click to turn ‘pixels’ on and off.</p>
+<p>I created it for one purpose: to quickly create simple, blocky sprites for <a href="https://github.com/matt-dray/tamRgo">my {tamRgo} package</a>, which lets you keep a persistent cyberpet on your computer (<a href="https://www.rostrum.blog/2022/11/13/tamrgo/">yes, really</a>).</p>
+<p>But wouldn’t it be nice if {pixeltrix} were more… general? Read on for a couple of improvements that might help.</p>
+</div>
+<div id="pixellate-to-accumulate" class="section level1">
+<h1>Pixellate to accumulate</h1>
+<p>First, you can <a href="https://github.com/matt-dray/pixeltrix">install the updated package from GitHub</a>:</p>
+<pre class="r"><code>remotes::install_github(&quot;matt-dray/pixeltrix&quot;)
+library(pixeltrix)</code></pre>
+<p>Now the improvements: plotting with colour, and creating gif animations.</p>
+<div id="plot" class="section level2">
+<h2>1. Plot</h2>
+<p>The <code>click_pixel()</code> function opens an interactive plot. If <code>n_state = 3</code>, for example, then each pixel will cycle through three states as you keep clicking it. You’re returned a matrix of these values when you hit <kbd>Esc</kbd>.</p>
+<p>That was enough for {tamRgo}: I turned a binary matrix into a 1-bit sprite. But wouldn’t it be good—fundamental!—to be able to plot the matrix as an image with user-specified colours? So I made <code>draw_pixels()</code>.</p>
+<p>I’ve added a three-state matrix into the package as an example dataset. Let’s plot it with simple colours:</p>
+<pre class="r"><code>draw_pixels(
+  m = pixeltrix::blue, 
+  colours = c(&quot;white&quot;, &quot;#879afb&quot;, &quot;gray20&quot;)
+)</code></pre>
+<p><img src="/post/2022-12-10-pixeltrix-animate_files/blue_draw.png" alt="A 14 by 16 pixel grid with a sprite of the main character from the first generation of Pokemon games for the Game Boy. The background is white, the outlines are dark grey and the highlights are light blue." width="33%"></p>
+<p>Of course, it’s the subtly-coloured player character from <em>Pokémon Blue</em> (1996) as seen on the Nintendo Game Boy Color.</p>
+</div>
+<div id="animate" class="section level2">
+<h2>2. Animate</h2>
+<p>Of course, you could use <code>click_pixels()</code> and <code>draw_pixels()</code> to generate several images and combine them as ‘frames’ of an animation.</p>
+<p>So that’s what I did:</p>
+<ul>
+<li><code>frame_pixels()</code> calls click_pixels(), saves the output to a list, then passes the output matrix into <code>edit_pixels()</code> so you can adjust it to create the next frame, and so on</li>
+<li><code>gif_pixels()</code> takes the frames—the list of matrices—from <code>frame_pixels()</code> and writes them out as a gif animation</li>
+</ul>
+<p>I’ve prepared <code>pixeltrix::mario</code> as an example of an output from <code>frame_pixels()</code>. It contains each of three frames that comprise Mario’s walk cycle from <em>Super Mario Bros</em> on the NES. Here’s the console output from when I produced it:</p>
+<pre class="r"><code>mario &lt;- frame_pixels(
+  n_rows = 16,
+  n_cols = 16,
+  n_states = 4
+)
+# Click squares in the plot window. Press &lt;Esc&gt; to end.
+# Add a frame? y/n: y
+# Click squares in the plot window. Press &lt;Esc&gt; to end.
+# Current frame count: 2
+# Add a frame? y/n: y
+# Click squares in the plot window. Press &lt;Esc&gt; to end.
+# Current frame count: 3
+# Add a frame? y/n: n
+# Final frame count: 3</code></pre>
+<p>And so you can see it’s a list of three matrices:</p>
+<pre class="r"><code>str(pixeltrix::mario)</code></pre>
+<pre><code>## List of 3
+##  $ : int [1:16, 1:16] 0 0 0 0 0 0 0 0 1 1 ...
+##  $ : int [1:16, 1:16] 0 0 0 0 0 0 0 0 0 0 ...
+##  $ : int [1:16, 1:16] 0 0 0 0 0 0 0 0 0 0 ...</code></pre>
+<p>You can then convert the list to a gif with <code>gif_pixels()</code>, which draws each matrix and smashes them together into an animated gif file using <a href="https://cloud.r-project.org/web/packages/gifski/index.html">{gifski}</a>.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<pre class="r"><code>gif_pixels(
+  frames = mario,
+  colours = c(&quot;white&quot;, &quot;#FDA428&quot;, &quot;#FC0D1B&quot;, &quot;#A32B2E&quot;)
+  file = &quot;mario.gif&quot;,
+  delay = 0.15  # passed via dots to gifski::save_gif()
+)
+# Inserting image 3 at 0.30s (100%)...
+# Encoding to gif... done!
+# [1] &quot;mario.gif&quot;</code></pre>
+<p>And if we open that file:</p>
+<p><img src="/post/2022-12-10-pixeltrix-animate_files/mario.gif" alt="An animated 16 by 16 pixel grid with a coloured sprite of Mario from the original Super Mario Bros for the NES. There are three frames that each show a step in Mario's walk cycle." width="33%"></p>
+<p>Yes, created entirely with R. Noice.</p>
+</div>
+<div id="pix-n-mix" class="section level2">
+<h2>Pix n mix</h2>
+<p>So {pixeltrix} finally got a couple of nice-to-have (well, must-have) functions. This is enough for me to continue just messing around with it as a novelty<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>.</p>
+<p>I mean, come on: animated pixelart created in an interactive R plot window? Why? I mean, er… wow!</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
+##  os       macOS Big Sur/Monterey 10.16
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_GB.UTF-8
+##  ctype    en_GB.UTF-8
+##  tz       Europe/London
+##  date     2022-12-11
+##  pandoc   2.18 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/tools/ (via rmarkdown)
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date (UTC) lib source
+##  blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.3.0   2022-04-25 [1] CRAN (R 4.2.0)
+##  digest        0.6.29  2021-12-01 [1] CRAN (R 4.2.0)
+##  evaluate      0.15    2022-02-18 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.0   2022-02-22 [1] CRAN (R 4.2.0)
+##  knitr         1.39    2022-04-26 [1] CRAN (R 4.2.0)
+##  magrittr      2.0.3   2022-03-30 [1] CRAN (R 4.2.0)
+##  pixeltrix   * 0.1.1   2022-12-10 [1] Github (matt-dray/pixeltrix@d454979)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+##  rlang         1.0.2   2022-03-04 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.14    2022-08-22 [1] CRAN (R 4.2.0)
+##  sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+##  stringi       1.7.6   2021-11-29 [1] CRAN (R 4.2.0)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.2.0)
+##  xfun          0.30    2022-03-02 [1] CRAN (R 4.2.0)
+##  yaml          2.3.5   2022-02-21 [1] CRAN (R 4.2.0)
+## 
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>The {pixeltrix} package has no dependencies and I didn’t want to force a user to install {gifski} if they weren’t going to use <code>gif_pixels()</code>. It’s therefore up to the user to install it. <a href="https://github.com/matt-dray/pixeltrix/issues/15">I also wonder</a> if I should provide an argument for the user to name a ‘gif engine’ of choice, e.g. {gifski} or {magick}, depending on what they’ve got installed on their machine.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>It’s never, ever going to have the features and quality of a premium pixel-art program like <a href="https://www.aseprite.org/">Aseprite</a>, obviously.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
