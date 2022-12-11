@@ -9,11 +9,10 @@ categories:
 tags:
   - base
   - image
-  - interactive
   - locator
-  - pixel
+  - pixel-art
+  - pixeltrix
   - r
-  - sprite
 draft: no
 ---
 
@@ -34,6 +33,10 @@ draft: no
 <p>I couldn’t find an R package to do this, so I decided to make a very simple one: <a href="https://github.com/matt-dray/pixeltrix">{pixeltrix}</a> (as in ‘pixel’ and ‘matrix’, but also as in ‘tricks’<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>, lol).</p>
 <p>It’s written entirely in base R (no Shiny or server needed) and can be run in the R console. It’s basically a <code>repeat</code> loop that runs <code>image()</code> to plot squares<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> (hereafter ‘pixels’) and <code>locator()</code><a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> to let you click those pixels on and off. The coordinates of each click are matched to the nearest pixel centre, the pixel’s value is incremented by 1 (or wrapped back to zero) and the image is redrawn.</p>
 <p>The package is still in development, but I think it’s reached a useable state for my own purposes.</p>
+<div class="tip">
+<p><svg aria-hidden="true" role="img" viewBox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;"><path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"/></svg> <b>Update</b></p>
+<p><a href="https://www.rostrum.blog/2022/12/11/pixeltrix-animate/">I’ve now written an update post</a> about a couple of improvements to {pixeltrix}: re-plotting the images with user-specified colours and the ability to make animation frames and write to a gif.</p>
+</div>
 </div>
 <div id="enter-the-matrix" class="section level1">
 <h1>Enter the matrix</h1>
@@ -43,8 +46,8 @@ remotes::install_github(&quot;matt-dray/pixeltrix&quot;)
 library(pixeltrix)</code></pre>
 <p>The main function is <code>click_pixels()</code>, to which you pass plot dimensions (how many pixels tall and wide), the number of pixel ‘states’ (the number of values a pixel can take, so binary would be <code>2</code>) and whether you want to put a grid over the plot (makes it easier to see where the pixels are).</p>
 <pre class="r"><code>click_pixels(
-  n_rows = 3,
-  n_cols = 3,
+  n_rows   = 3,
+  n_cols   = 3,
   n_states = 2,
   grid = TRUE
 ) -&gt; x</code></pre>
@@ -127,6 +130,10 @@ Click to expand matrix
 <p>Turns out the {pixeltrix} package is actually <a href="https://en.wiktionary.org/wiki/yak_shaving">yak-shaving</a> for another package I’m developing: <a href="https://github.com/matt-dray/tamRgo/">{tamRgo}</a>.</p>
 <p>{tamRgo} is a (very much work-in-progress) conceptual package for a Tamagotchi-like experience in the R console. You get a persistent interactive digital pet on your computer whose stats update in ‘real time’ while you’re away.</p>
 <p>I want to print a largeish canvas of pixels to visualise multiple pet ‘species’ and for the various interactions you can have (playing, feeding, cleaning). {pixeltrix} makes it much easier to design these scenes and returns matrices that I can add directly to {tamRgo}.</p>
+<div class="tip">
+<p><svg aria-hidden="true" role="img" viewBox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;"><path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"/></svg> <b>Update</b></p>
+<p>I’ve now <a href="https://www.rostrum.blog/2022/11/13/tamrgo/">written a post about {tamRgo}</a>, where you can see how {pixeltrix} was used for the character sprites.</p>
+</div>
 <hr />
 <details>
 <summary>
@@ -142,34 +149,35 @@ Session info
 ##  collate  en_GB.UTF-8
 ##  ctype    en_GB.UTF-8
 ##  tz       Europe/London
-##  date     2022-09-25
+##  date     2022-12-11
 ##  pandoc   2.18 @ /Applications/RStudio.app/Contents/MacOS/quarto/bin/tools/ (via rmarkdown)
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
-##  package     * version    date (UTC) lib source
-##  blogdown      1.9        2022-03-28 [1] CRAN (R 4.2.0)
-##  bookdown      0.26       2022-04-15 [1] CRAN (R 4.2.0)
-##  bslib         0.3.1      2021-10-06 [1] CRAN (R 4.2.0)
-##  cli           3.3.0      2022-04-25 [1] CRAN (R 4.2.0)
-##  digest        0.6.29     2021-12-01 [1] CRAN (R 4.2.0)
-##  evaluate      0.15       2022-02-18 [1] CRAN (R 4.2.0)
-##  fastmap       1.1.0      2021-01-25 [1] CRAN (R 4.2.0)
-##  htmltools     0.5.2      2021-08-25 [1] CRAN (R 4.2.0)
-##  jquerylib     0.1.4      2021-04-26 [1] CRAN (R 4.2.0)
-##  jsonlite      1.8.0      2022-02-22 [1] CRAN (R 4.2.0)
-##  knitr         1.39       2022-04-26 [1] CRAN (R 4.2.0)
-##  magrittr      2.0.3      2022-03-30 [1] CRAN (R 4.2.0)
-##  pixeltrix   * 0.0.0.9003 2022-09-24 [1] Github (matt-dray/pixeltrix@de72d43)
-##  R6            2.5.1      2021-08-19 [1] CRAN (R 4.2.0)
-##  rlang         1.0.2      2022-03-04 [1] CRAN (R 4.2.0)
-##  rmarkdown     2.14       2022-04-25 [1] CRAN (R 4.2.0)
-##  rstudioapi    0.13       2020-11-12 [1] CRAN (R 4.2.0)
-##  sass          0.4.1      2022-03-23 [1] CRAN (R 4.2.0)
-##  sessioninfo   1.2.2      2021-12-06 [1] CRAN (R 4.2.0)
-##  stringi       1.7.6      2021-11-29 [1] CRAN (R 4.2.0)
-##  stringr       1.4.0      2019-02-10 [1] CRAN (R 4.2.0)
-##  xfun          0.30       2022-03-02 [1] CRAN (R 4.2.0)
-##  yaml          2.3.5      2022-02-21 [1] CRAN (R 4.2.0)
+##  package     * version date (UTC) lib source
+##  blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.3.0   2022-04-25 [1] CRAN (R 4.2.0)
+##  digest        0.6.29  2021-12-01 [1] CRAN (R 4.2.0)
+##  evaluate      0.15    2022-02-18 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  fontawesome   0.2.2   2021-07-02 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.0   2022-02-22 [1] CRAN (R 4.2.0)
+##  knitr         1.39    2022-04-26 [1] CRAN (R 4.2.0)
+##  magrittr      2.0.3   2022-03-30 [1] CRAN (R 4.2.0)
+##  pixeltrix   * 0.1.1   2022-12-10 [1] Github (matt-dray/pixeltrix@d454979)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+##  rlang         1.0.2   2022-03-04 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.14    2022-08-22 [1] CRAN (R 4.2.0)
+##  sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+##  stringi       1.7.6   2021-11-29 [1] CRAN (R 4.2.0)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.2.0)
+##  xfun          0.30    2022-03-02 [1] CRAN (R 4.2.0)
+##  yaml          2.3.5   2022-02-21 [1] CRAN (R 4.2.0)
 ## 
 ##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
 ## 

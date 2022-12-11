@@ -12,8 +12,8 @@ tags:
   - gifski
   - locator
   - pixel-art
+  - pixeltrix
   - r
-  - sprite
 draft: no
 ---
 
@@ -40,7 +40,7 @@ library(pixeltrix)</code></pre>
 <h2>1. Plot</h2>
 <p>The <code>click_pixel()</code> function opens an interactive plot. If <code>n_state = 3</code>, for example, then each pixel will cycle through three states as you keep clicking it. You’re returned a matrix of these values when you hit <kbd>Esc</kbd>.</p>
 <p>That was enough for {tamRgo}: I turned a binary matrix into a 1-bit sprite. But wouldn’t it be good—fundamental!—to be able to plot the matrix as an image with user-specified colours? So I made <code>draw_pixels()</code>.</p>
-<p>I’ve added a three-state matrix into the package as an example dataset. Let’s plot it with simple colours:</p>
+<p>I’ve added a three-state matrix, <code>blue</code>, into the package as an example dataset. Let’s plot it with simple colours:</p>
 <pre class="r"><code>draw_pixels(
   m = pixeltrix::blue, 
   colours = c(&quot;white&quot;, &quot;#879afb&quot;, &quot;gray20&quot;)
@@ -50,17 +50,18 @@ library(pixeltrix)</code></pre>
 </div>
 <div id="animate" class="section level2">
 <h2>2. Animate</h2>
-<p>Of course, you could use <code>click_pixels()</code> and <code>draw_pixels()</code> to generate several images and combine them as ‘frames’ of an animation.</p>
+<p>Naturally, you could use <code>click_pixels()</code> and <code>draw_pixels()</code> to generate several images and combine them as ‘frames’ of an animation. Why not have a function that does this automatically?</p>
 <p>So that’s what I did:</p>
 <ul>
-<li><code>frame_pixels()</code> calls click_pixels(), saves the output to a list, then passes the output matrix into <code>edit_pixels()</code> so you can adjust it to create the next frame, and so on</li>
-<li><code>gif_pixels()</code> takes the frames—the list of matrices—from <code>frame_pixels()</code> and writes them out as a gif animation</li>
+<li><code>frame_pixels()</code> calls <code>click_pixels()</code> and adds the output as the first element of a list, then it passes that matrix into <code>edit_pixels()</code> as the template for the next frame (and so on until you choose to stop making frames)</li>
+<li><code>gif_pixels()</code> takes the list of matrices created by <code>frame_pixels()</code> and draws, combines and writes them to a gif</li>
 </ul>
-<p>I’ve prepared <code>pixeltrix::mario</code> as an example of an output from <code>frame_pixels()</code>. It contains each of three frames that comprise Mario’s walk cycle from <em>Super Mario Bros</em> on the NES. Here’s the console output from when I produced it:</p>
+<p>I’ve prepared <code>pixeltrix::mario</code> as an example of an output from <code>frame_pixels()</code>. It contains each of three frames that comprise Mario’s walk cycle from <em>Super Mario Bros</em> on the NES.</p>
+<p>Here’s what the console output looked like when I made <code>mario</code>:</p>
 <pre class="r"><code>mario &lt;- frame_pixels(
-  n_rows = 16,
-  n_cols = 16,
-  n_states = 4
+  n_rows   = 16,
+  n_cols   = 16,
+  n_states = 4  # background + 3 colours
 )
 # Click squares in the plot window. Press &lt;Esc&gt; to end.
 # Add a frame? y/n: y
@@ -71,16 +72,22 @@ library(pixeltrix)</code></pre>
 # Current frame count: 3
 # Add a frame? y/n: n
 # Final frame count: 3</code></pre>
+<p>You can see there’s interactivity; the user is prompted to add another frame with <code>Add a frame? y/n:</code>, where <code>y</code> will let you create a new frame and <code>n</code> will stop the process and return the list of matrices.</p>
 <p>And so you can see it’s a list of three matrices:</p>
 <pre class="r"><code>str(pixeltrix::mario)</code></pre>
 <pre><code>## List of 3
 ##  $ : int [1:16, 1:16] 0 0 0 0 0 0 0 0 1 1 ...
 ##  $ : int [1:16, 1:16] 0 0 0 0 0 0 0 0 0 0 ...
 ##  $ : int [1:16, 1:16] 0 0 0 0 0 0 0 0 0 0 ...</code></pre>
-<p>You can then convert the list to a gif with <code>gif_pixels()</code>, which draws each matrix and smashes them together into an animated gif file using <a href="https://cloud.r-project.org/web/packages/gifski/index.html">{gifski}</a>.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>You can then convert the list to a gif with <code>gif_pixels()</code>, which engifs the frames using <a href="https://cloud.r-project.org/web/packages/gifski/index.html">{gifski}</a>.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
 <pre class="r"><code>gif_pixels(
   frames = mario,
-  colours = c(&quot;white&quot;, &quot;#FDA428&quot;, &quot;#FC0D1B&quot;, &quot;#A32B2E&quot;)
+  colours = c(
+    &quot;white&quot;,    # background
+    &quot;#FDA428&quot;,  # skin (yellowish)
+    &quot;#FC0D1B&quot;,  # overalls/hat (red)
+    &quot;#A32B2E&quot;   # hair, eyes, shirt, boots (brown)
+  ),
   file = &quot;mario.gif&quot;,
   delay = 0.15  # passed via dots to gifski::save_gif()
 )
@@ -89,7 +96,7 @@ library(pixeltrix)</code></pre>
 # [1] &quot;mario.gif&quot;</code></pre>
 <p>And if we open that file:</p>
 <p><img src="/post/2022-12-10-pixeltrix-animate_files/mario.gif" alt="An animated 16 by 16 pixel grid with a coloured sprite of Mario from the original Super Mario Bros for the NES. There are three frames that each show a step in Mario's walk cycle." width="33%"></p>
-<p>Yes, created entirely with R. Noice.</p>
+<p>Yahoooooo, created entirely with R. Noice.</p>
 </div>
 <div id="pix-n-mix" class="section level2">
 <h2>Pix n mix</h2>
