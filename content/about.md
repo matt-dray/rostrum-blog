@@ -7,19 +7,17 @@ title: "rostrum.blog"
 
 ## tl;dr
 
-Fun and learning with the [R language](https://www.r-project.org/) for programming and statistics. It's a bonus if you find any of it useful and/or amusing. All views belong to us.
+Fun and learning with [R](https://www.r-project.org/), usually off-piste. It's a bonus if you find any of it useful and/or amusing. All views belong to us.
 
-Check out [R Weekly](https://rweekly.org/) for more R blog content.
+Check out [R Weekly](https://rweekly.org/) for more R content.
 
 ## Creators
 
 ### Matt Dray
 
-[Personal site](https://www.matt-dray.com) | [Github](https://github.com/matt-dray) | [Twitter](https://twitter.com/mattdray) | <a rel="me" href="https://fosstodon.org/@mattdray">Mastodon</a>
+[Personal site](https://www.matt-dray.com) | [Github](https://github.com/matt-dray) | [Twitter](https://twitter.com/mattdray) | [Mastodon](https://fosstodon.org/@mattdray)
 
-
-
-I like using R to learn and teach, particularly if it involves important pop-culture references like Pokémon and Dawson's Creek. I'm a datapoint influencer in the UK's public sector and have a PhD in watching leaves rot (Cardiff) and an Entomology MSc (Imperial). I'm not [the rapper](https://en.wikipedia.org/wiki/Dr._Dre). <img src="https://raw.githubusercontent.com/matt-dray/postcard/master/favicon.ico" alt="A 16-by-16 pixel favicon gif of the author, whose eyebrows are bobbing up and down."/>
+I use R professionally for analysis and reproducibility, and as an amateur for memes and ironic trolling. I make R do odd things, often with the aid of important pop-culture references like Pokémon and Dawson's Creek.
 
 ### Adriana De Palma
 
@@ -37,8 +35,3 @@ In terms of my research, I am particularly interested in using large scale ecolo
 * Read about our modifications to the theme's [post headers](https://www.rostrum.blog/2019/09/06/lithium-metadata/) and [fonts](https://www.rostrum.blog/2018/11/29/fontface-lithium/)
 * The site is deployed continuously with [Netlify](https://www.netlify.com/)
 * Site visits are counted using [GoatCounter by Martin Tournoij](https://www.goatcounter.com/) (read about [our switch from Google Analytics](https://www.rostrum.blog/2020/09/16/goatcounter-blogdown/)).
-
-## Miscellania
-
-* A 'rostrum' is the mouthparts of [insects in the order Hemiptera](https://en.wikipedia.org/wiki/Hemiptera) (true bugs) and also [a speaker's platform](https://en.wikipedia.org/wiki/Rostra) (yes, it's an excellent pun)
-* This blog was originally [a Wordpress blog]('https://therostrumblog.wordpress.com/) that is now defunct
