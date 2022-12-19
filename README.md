@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 7 day(s) ago: [Animate sprites in R with
+🆕 The latest post was published 8 day(s) ago: [Animate sprites in R with
 {pixeltrix}](https://www.rostrum.blog/2022/12/11/pixeltrix-animate/).
 
 📈 This 2D plot shows posts over time:
@@ -182,4 +182,4 @@ since 2018-04-14.
 
 -----
 
-*Updated on 2022-12-18 at 02:40.*
+*Updated on 2022-12-19 at 02:39.*
