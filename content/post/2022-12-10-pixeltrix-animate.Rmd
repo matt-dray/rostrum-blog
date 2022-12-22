@@ -19,6 +19,12 @@ draft: no
 
 ```{r echo=FALSE}
 suppressPackageStartupMessages(library(pixeltrix))
+
+# Recreate the 'mario' object (was removed in v0.2)
+mario <- pixeltrix::mario_frames
+attr(mario[[1]], "colours") <- NULL
+attr(mario[[2]], "colours") <- NULL
+attr(mario[[3]], "colours") <- NULL
 ```
 
 <img src="/post/2022-12-10-pixeltrix-animate_files/mario.gif" alt="Gif of Mario walkcycle." width="20%"><img src="/post/2022-12-10-pixeltrix-animate_files/mario.gif" alt="" width="20%"><img src="/post/2022-12-10-pixeltrix-animate_files/mario.gif" alt="" width="20%">
@@ -33,7 +39,16 @@ The {pixeltrix} package---which I've [written about before](https://www.rostrum.
 
 I created it for one purpose: to quickly create simple, blocky sprites for [my {tamRgo} package](https://github.com/matt-dray/tamRgo), which lets you keep a persistent cyberpet on your computer ([yes, really](https://www.rostrum.blog/2022/11/13/tamrgo/)).
 
-But wouldn't it be nice if {pixeltrix} were more... general? Read on for a couple of improvements that might help.
+But wouldn't it be nice if {pixeltrix} were more... general? Read on for a couple of improvements to the package that might help.
+
+<div class="tip"> `r fontawesome::fa("exclamation-circle")` <b>Update</b>
+
+The package has been updated again since this post. From version 0.2 you:
+
+* can provide colours as input to `click_pixels()` and `frame_pixels()`
+* receive a `colours` attribute with the output matrices, which encodes the state and colour values
+
+</div>
 
 # Pixellate to accumulate
 
@@ -100,7 +115,7 @@ You can see there's interactivity; the user is prompted to add another frame wit
 And so you can see it's a list of three matrices:
 
 ```{r}
-str(pixeltrix::mario)
+str(mario)
 ```
 
 You can then convert the list to a gif with `gif_pixels()`, which engifs the frames using [{gifski}](https://cloud.r-project.org/web/packages/gifski/index.html).[^engine]
