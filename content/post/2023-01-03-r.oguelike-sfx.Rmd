@@ -1,7 +1,7 @@
 ---
 title: 'Ding! Sound effects in {r.oguelike}'
 author: Matt Dray
-date: '2023-01-03'
+date: '2023-01-04'
 slug: rogue-sfx
 categories:
   - code
@@ -10,53 +10,60 @@ tags:
   - r
   - r.oguelike
   - sonify
-draft: yes
+  - video
+draft: no
 ---
+
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/HD1cPWcQUc4" title="Demo of {r.oguelike} for R" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+<p class="caption">new wr — r.oguelike any% tenkeyless noglitch</p>
 
 # tl;dr
 
-[The {r.oguelike} package](https://github.com/matt-dray/r.oguelike)---a toy roguelike game for the R console---now has sound effects [thanks to {sonify}](https://cran.r-project.org/package=sonify). Pew pew!
+[The {r.oguelike} package](https://github.com/matt-dray/r.oguelike)---a toy roguelike microadventure for the R console---now has little sound effects [thanks to {sonify}](https://cran.r-project.org/package=sonify). Pew pew!
 
 # The adventure continues?
 
-This is apparently episode 5 of the {r.oguelike} [devlog](https://en.wiktionary.org/wiki/devlog). You can read earlier posts about:
+Apparently this is part 5 of the {r.oguelike} [devlog](https://en.wiktionary.org/wiki/devlog). You can read earlier posts about:
 
 * [its inception](https://www.rostrum.blog/2022/04/25/r.oguelike-dev/)
 * [creating simple procedural dungeons](https://www.rostrum.blog/2022/05/01/dungeon/)
-* [making the enemy chase the player](https://www.rostrum.blog/2022/06/10/basic-search/)
-* [moving the tiles into the third dimension](https://www.rostrum.blog/2022/06/28/isometric-dungeon/)
+* [making an enemy chase the player](https://www.rostrum.blog/2022/06/10/basic-search/)
+* [3D dungeons and continuous keypress inputs](https://www.rostrum.blog/2022/06/28/isometric-dungeon/)
 
-Alas, this is also probably the last installment. The package has reached version 0.1  and was always intended as a proof of concept (i.e. for the lols). 
+Alas, this is also probably the last installment. 
 
-Ultimately, the dungeons are dank (i.e. cool and edgy), but also they are dank (i.e. cool and damp) and mildly claustrophobic. 
+Yes, the dungeons have been dank (cool, edgy), but also _dank_ (cool, damp, claustrophobic). Time to unspelunk myself.
 
-<div class="figure">
-<img src="/post/2022-04-30-dungeon_files/r.oguelike-hex.png" alt="Hex sticker design for the 'r.oguelike' R package. Black background with bright green font, reminiscent of old computer terminal output. In the centre, a three-by-ten arrangement of hashmarks and periods, along with a single at symbol and dollar sign, which looks like a classic ACII tile-based roguelike game. The text 'r.oguelike' is underneath." width="25%"/>
-</div>
+There may be time for a {r.oguelike2} in future. I'd like to try a class-based approach to help limit code spaghetti and make it more extensible. Perhaps it will even have a proper game loop! Call me when you're ready, Kojima.
 
-There may be time for a {r.oguelike2} in future. I'd like to try a class-based approach to help limit code spaghetti and make it more extensible. Perhaps it will even have a proper game loop! Call me when you're ready, Nintendo.
-
-Until then, beeeeeeep beeeeeeep BEEEEEEEP.
+Until then, one more little feature to tie things up. Beeeeeeep. BOOOOOOOP.
 
 # Hi-Sonifi
 
-Anyway, yes: {r.oguelike} now has sound effects with quality as high as its graphics and gameplay.
+So, yes: {r.oguelike} now has sound effects with quality as high as its graphics and gameplay. See all these in concert in the video embedded at the top of this page.
 
-I used [the {sonify} package](https://cran.r-project.org/package=sonify) to create little beeps and toots that I think fit the game's aesthetic. These are fired as the player moves and interacts with things in the dungeon.
+I used [the {sonify} package](https://cran.r-project.org/package=sonify) to create a few little beeps and toots that I think fit the game's retro aesthetic.[^mikefc] These are fired when the player moves and interacts with things in the dungeon.
 
-I've written about {sonify} before when I sonified data about [COVID-19 infections](https://www.rostrum.blog/2021/02/02/sonify-covid/) and [GitHub activity](https://www.rostrum.blog/2021/02/21/skyphone/) (incredible juxtaposition). 
+I've written about {sonify} before when I sonified data about [COVID-19 infections](https://www.rostrum.blog/2021/02/02/sonify-covid/) and [GitHub activity](https://www.rostrum.blog/2021/02/21/skyphone/) (incredible juxtaposition), which can offer a more interesting and accessible way of presenting data.
 
-Basically you can make an audible plot, which offers a more interesting and accessible way of presenting data. A bell curve will sound like woooOOOOooop, for example.
+You can also demean {sonify} by making funny little honks and parps, which is what I've done for {r.oguelike}.
 
-You can also hijack {sonify} to make funny little honks and parps, which is what I've done for {r.oguelike}. [I wrote about this for {ActionSquirrel}](https://www.rostrum.blog/2021/10/03/squirrel/), a sort-of proto-{r.oguelike}.
-
-How did I arrive at the sounds for {r.oguelike}? I did the bare minimum of fiddling around with the arguments in `sonify::sonify()` until the noises amused me.
+How did I arrive at the soundscape for {r.oguelike}? I did the bare minimum of fiddling around with the arguments in `sonify::sonify()` until the noises amused me.
 
 # Demo cassette
 
-The outputs are [{tuneR}](https://CRAN.R-project.org/package=tuneR) objects, which I've saved as wav files with `tuneR::writeWav()` so they can be embedded below.
+Sounds are played in the code of the package via functions after each triggering event. The user can prevent these sounds from playing with the logical `has_sfx` argument in the `start_game()` function.
 
-In reality, the sounds play a little slower in the game, but it was a bit fiddly to reproduce it for these clips. You get the idea.
+For example, here's the function for the simplest sound effect:
+
+```{r eval=FALSE}
+.sfx_move <- function(has_sfx) {
+  if (has_sfx) sonify::sonify(1, 1, duration = 0.001)
+}
+```
+
+The `sonify()` outputs are [{tuneR}](https://CRAN.R-project.org/package=tuneR) objects. I've saved these as wav files with `tuneR::writeWav()` so they can be embedded in this post.
 
 <details><summary>Click for illustrative code to create the wav files.</summary>
 
@@ -103,19 +110,23 @@ walk2(
 
 </details>
 
+In reality, the sounds play a little slower in the game itself, but it was a bit fiddly to reproduce it for these clips. You'll get the idea.
+
 ## Move
 
-If you move onto an unoccupied floor tile (`.`), you get a very quick 'tap' like a footstep.
+Step onto unoccupied floor tile (`.`) and you'll hear the very quick tap of your boot.
+
+Click to play the sound:
 
 <html><audio controls><source src="/output/rogue-sfx/move.wav" type="audio/wav"></audio></html>
+
+And here's the corresponding code to reproduce it:
 
 ```{r eval=FALSE}
 sonify(1, 1, duration = 0.001)
 ```
 
-## Bump
-
-Bump into the dungeon wall (`#`) and you'll get a dull thud, you absolute clod.
+But bump into the dungeon wall (`#`) and you'll get a dull thud, you absolute clod.
 
 <html><audio controls><source src="/output/rogue-sfx/bump.wav" type="audio/wav"></audio></html>
 
@@ -125,20 +136,9 @@ sonify(1, 1, duration = 0.01, flim = c(100, 110))
 
 Yes, `flim`, as in: 'this post is absolute flimflam'.
 
-## Gold
+## Food
 
-Collect gold (`$`) and get a celebratory ding.
-
-<html><audio controls><source src="/output/rogue-sfx/gold.wav" type="audio/wav"></audio></html>
-
-```{r eval=FALSE}
-sonify(1, 1, duration = 0.05, flim = c(800, 800))
-sonify(1, 1, duration = 0.05, flim = c(1000, 1000))
-```
-
-## Apple
-
-A cartoony sound for picking up the apple (`a`).
+Would you pick up an apple (`a`) you found on the floor of a cave? Here's what it might sound like as it pops into your inventory.
 
 <html><audio controls><source src="/output/rogue-sfx/apple.wav" type="audio/wav"></audio></html>
 
@@ -146,14 +146,23 @@ A cartoony sound for picking up the apple (`a`).
 sonify(0:1, c(0, 1), duration = 0.05),
 ```
 
-## Eat
-
-A swallowing noise as the apple (`a`) heads down your gullet.
+More importantly, would you eat an apple (`a`) you found on the floor of a cave? Here's how it would sound as it rolls down your gullet.
 
 <html><audio controls><source src="/output/rogue-sfx/eat.wav" type="audio/wav"></audio></html>
 
 ```{r eval=FALSE}
 sonify(0:1, c(1, 0), duration = 0.05)
+```
+
+## Gold
+
+Collecting gold (`$`) grants you a celebratory chirp of excitement. Although there's not actually anything in the dungeon to spend it on, sorry.
+
+<html><audio controls><source src="/output/rogue-sfx/gold.wav" type="audio/wav"></audio></html>
+
+```{r eval=FALSE}
+sonify(1, 1, duration = 0.05, flim = c(800, 800))
+sonify(1, 1, duration = 0.05, flim = c(1000, 1000))
 ```
 
 ## Defeat enemy
@@ -170,7 +179,7 @@ sonify(0:1, rep(1, 2), duration = 0.1, flim = c(800, 800))
 
 ## Lose
 
-Conversely, a sad lament for being crushed by your enemies (`E`).
+Conversely, a sad lament for being crushed by your enemies (`E`) or running out of turns (`T`).
 
 <html><audio controls><source src="/output/rogue-sfx/lose.wav" type="audio/wav"></audio></html>
 
@@ -180,9 +189,32 @@ sonify(0:1, rep(1, 2), duration = 0.1, flim = c(600, 600))
 sonify(0:1, rep(1, 2), duration = 0.1, flim = c(400, 400))
 ```
 
+# Echo echo echo
+
+If you want to try out {r.oguelike}, you can install it from GitHub:
+
+```{r eval = FALSE}
+install.github("remotes")  # if not yet installed
+remotes::install_github("matt-dray/r.oguelike")  # v0.1 currently
+r.oguelike::start_game()
+```
+
+You can also [run {r.oguelike} in an RStudio instance in your browser](https://mybinder.org/v2/gh/matt-dray/play-r.oguelike/main?urlpath=rstudio) (!), thanks to [the Binder project](https://mybinder.org/).
+
+Free feel to highlight any bugs via [the issues](https://github.com/matt-dray/rostrum-blog/issues), or create a pull request that adds all the things that stop me from calling {r.oguelike} a proper 'game'.[^game]
+
+<a href="https://github.com/matt-dray/r.oguelike"><div class="figure">
+<img src="/post/2022-04-30-dungeon_files/r.oguelike-hex.png" alt="Hex sticker design for the 'r.oguelike' R package. Black background with bright green font, reminiscent of old computer terminal output. In the centre, a three-by-ten arrangement of hashmarks and periods, along with a single at symbol and dollar sign, which looks like a classic ACII tile-based roguelike game. The text 'r.oguelike' is underneath." width="25%"/>
+</div></a>
+
+Most importantly, don't forget to wishlist me on Steam and remember that pre-order bonuses will include an apple that's been left on a dungeon floor for a few months.
+
 ---
 <details><summary>Session info</summary>
 ```{r sessioninfo, echo=FALSE}
 sessioninfo::session_info()
 ```
 </details>
+
+[^mikefc]: Meanwhile, I'm looking forward to what [Mike (coolbutuseless) is up to with audio for games in R](https://twitter.com/coolbutuseless/status/1561664096860524545).
+[^game]: Find some actual real R games in [this list I've put together](https://github.com/matt-dray/awesome-r-games).
