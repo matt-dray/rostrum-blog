@@ -1,0 +1,218 @@
+---
+title: 'Ding! Sound effects in {r.oguelike}'
+author: Matt Dray
+date: '2023-01-03'
+slug: rogue-sfx
+categories:
+  - code
+  - package
+tags:
+  - r
+  - r.oguelike
+  - sonify
+draft: yes
+---
+
+
+
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p><a href="https://github.com/matt-dray/r.oguelike">The {r.oguelike} package</a>—a toy roguelike game for the R console—now has sound effects <a href="https://cran.r-project.org/package=sonify">thanks to {sonify}</a>. Pew pew!</p>
+</div>
+<div id="the-adventure-continues" class="section level1">
+<h1>The adventure continues?</h1>
+<p>This is apparently episode 5 of the {r.oguelike} <a href="https://en.wiktionary.org/wiki/devlog">devlog</a>. You can read earlier posts about:</p>
+<ul>
+<li><a href="https://www.rostrum.blog/2022/04/25/r.oguelike-dev/">its inception</a></li>
+<li><a href="https://www.rostrum.blog/2022/05/01/dungeon/">creating simple procedural dungeons</a></li>
+<li><a href="https://www.rostrum.blog/2022/06/10/basic-search/">making the enemy chase the player</a></li>
+<li><a href="https://www.rostrum.blog/2022/06/28/isometric-dungeon/">moving the tiles into the third dimension</a></li>
+</ul>
+<p>Alas, this is also probably the last installment. The package has reached version 0.1 and was always intended as a proof of concept (i.e. for the lols).</p>
+<p>Ultimately, the dungeons are dank (i.e. cool and edgy), but also they are dank (i.e. cool and damp) and mildly claustrophobic.</p>
+<div class="figure">
+<p><img src="/post/2022-04-30-dungeon_files/r.oguelike-hex.png" alt="Hex sticker design for the 'r.oguelike' R package. Black background with bright green font, reminiscent of old computer terminal output. In the centre, a three-by-ten arrangement of hashmarks and periods, along with a single at symbol and dollar sign, which looks like a classic ACII tile-based roguelike game. The text 'r.oguelike' is underneath." width="25%"/></p>
+</div>
+<p>There may be time for a {r.oguelike2} in future. I’d like to try a class-based approach to help limit code spaghetti and make it more extensible. Perhaps it will even have a proper game loop! Call me when you’re ready, Nintendo.</p>
+<p>Until then, beeeeeeep beeeeeeep BEEEEEEEP.</p>
+</div>
+<div id="hi-sonifi" class="section level1">
+<h1>Hi-Sonifi</h1>
+<p>Anyway, yes: {r.oguelike} now has sound effects with quality as high as its graphics and gameplay.</p>
+<p>I used <a href="https://cran.r-project.org/package=sonify">the {sonify} package</a> to create little beeps and toots that I think fit the game’s aesthetic. These are fired as the player moves and interacts with things in the dungeon.</p>
+<p>I’ve written about {sonify} before when I sonified data about <a href="https://www.rostrum.blog/2021/02/02/sonify-covid/">COVID-19 infections</a> and <a href="https://www.rostrum.blog/2021/02/21/skyphone/">GitHub activity</a> (incredible juxtaposition).</p>
+<p>Basically you can make an audible plot, which offers a more interesting and accessible way of presenting data. A bell curve will sound like woooOOOOooop, for example.</p>
+<p>You can also hijack {sonify} to make funny little honks and parps, which is what I’ve done for {r.oguelike}. <a href="https://www.rostrum.blog/2021/10/03/squirrel/">I wrote about this for {ActionSquirrel}</a>, a sort-of proto-{r.oguelike}.</p>
+<p>How did I arrive at the sounds for {r.oguelike}? I did the bare minimum of fiddling around with the arguments in <code>sonify::sonify()</code> until the noises amused me.</p>
+</div>
+<div id="demo-cassette" class="section level1">
+<h1>Demo cassette</h1>
+<p>The outputs are <a href="https://CRAN.R-project.org/package=tuneR">{tuneR}</a> objects, which I’ve saved as wav files with <code>tuneR::writeWav()</code> so they can be embedded below.</p>
+<p>In reality, the sounds play a little slower in the game, but it was a bit fiddly to reproduce it for these clips. You get the idea.</p>
+<details>
+<summary>
+Click for illustrative code to create the wav files.
+</summary>
+<pre class="r"><code>library(sonify)
+library(tuneR)
+library(purrr)
+
+sfx &lt;- list(
+  
+  move = sonify(1, 1, duration = 0.001),
+  
+  bump = sonify(1, 1, duration = 0.01, flim = c(100, 110)),
+  
+  gold = bind(
+    sonify(1, 1, duration = 0.05, flim = c(800, 800)),
+    sonify(1, 1, duration = 0.05, flim = c(1000, 1000))
+  ),
+  
+  apple = sonify(0:1, c(0, 1), duration = 0.05),
+  
+  eat = sonify(0:1, c(1, 0), duration = 0.05),
+  
+  win = bind(
+    sonify(0:1, rep(1, 2), duration = 0.1, flim = c(600, 600)),
+    sonify(0:1, rep(1, 2), duration = 0.1, flim = c(600, 600)),
+    sonify(0:1, rep(1, 2), duration = 0.1, flim = c(800, 800))
+  ),
+  
+  lose = bind(
+    sonify(0:1, rep(1, 2), duration = 0.1, flim = c(600, 600)),
+    sonify(0:1, rep(1, 2), duration = 0.1, flim = c(600, 600)),
+    sonify(0:1, rep(1, 2), duration = 0.1, flim = c(400, 400))
+  )
+  
+)
+
+walk2(
+  .x = sfx,
+  .y = names(sfx), 
+  ~writeWave(.x, paste0(.y, &quot;.wav&quot;))
+)</code></pre>
+</details>
+<div id="move" class="section level2">
+<h2>Move</h2>
+<p>If you move onto an unoccupied floor tile (<code>.</code>), you get a very quick ‘tap’ like a footstep.</p>
+<html>
+<audio controls>
+<source src="/output/rogue-sfx/move.wav" type="audio/wav">
+</audio>
+</html>
+<pre class="r"><code>sonify(1, 1, duration = 0.001)</code></pre>
+</div>
+<div id="bump" class="section level2">
+<h2>Bump</h2>
+<p>Bump into the dungeon wall (<code>#</code>) and you’ll get a dull thud, you absolute clod.</p>
+<html>
+<audio controls>
+<source src="/output/rogue-sfx/bump.wav" type="audio/wav">
+</audio>
+</html>
+<pre class="r"><code>sonify(1, 1, duration = 0.01, flim = c(100, 110))</code></pre>
+<p>Yes, <code>flim</code>, as in: ‘this post is absolute flimflam’.</p>
+</div>
+<div id="gold" class="section level2">
+<h2>Gold</h2>
+<p>Collect gold (<code>$</code>) and get a celebratory ding.</p>
+<html>
+<audio controls>
+<source src="/output/rogue-sfx/gold.wav" type="audio/wav">
+</audio>
+</html>
+<pre class="r"><code>sonify(1, 1, duration = 0.05, flim = c(800, 800))
+sonify(1, 1, duration = 0.05, flim = c(1000, 1000))</code></pre>
+</div>
+<div id="apple" class="section level2">
+<h2>Apple</h2>
+<p>A cartoony sound for picking up the apple (<code>a</code>).</p>
+<html>
+<audio controls>
+<source src="/output/rogue-sfx/apple.wav" type="audio/wav">
+</audio>
+</html>
+<pre class="r"><code>sonify(0:1, c(0, 1), duration = 0.05),</code></pre>
+</div>
+<div id="eat" class="section level2">
+<h2>Eat</h2>
+<p>A swallowing noise as the apple (<code>a</code>) heads down your gullet.</p>
+<html>
+<audio controls>
+<source src="/output/rogue-sfx/eat.wav" type="audio/wav">
+</audio>
+</html>
+<pre class="r"><code>sonify(0:1, c(1, 0), duration = 0.05)</code></pre>
+</div>
+<div id="defeat-enemy" class="section level2">
+<h2>Defeat enemy</h2>
+<p>A powerful victory ditty after you crush your enemies (<code>E</code>).</p>
+<html>
+<audio controls>
+<source src="/output/rogue-sfx/win.wav" type="audio/wav">
+</audio>
+</html>
+<pre class="r"><code>sonify(0:1, rep(1, 2), duration = 0.1, flim = c(600, 600))
+sonify(0:1, rep(1, 2), duration = 0.1, flim = c(600, 600))
+sonify(0:1, rep(1, 2), duration = 0.1, flim = c(800, 800))</code></pre>
+</div>
+<div id="lose" class="section level2">
+<h2>Lose</h2>
+<p>Conversely, a sad lament for being crushed by your enemies (<code>E</code>).</p>
+<html>
+<audio controls>
+<source src="/output/rogue-sfx/lose.wav" type="audio/wav">
+</audio>
+</html>
+<pre class="r"><code>sonify(0:1, rep(1, 2), duration = 0.1, flim = c(600, 600))
+sonify(0:1, rep(1, 2), duration = 0.1, flim = c(600, 600))
+sonify(0:1, rep(1, 2), duration = 0.1, flim = c(400, 400))</code></pre>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
+##  os       macOS Big Sur/Monterey 10.16
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_US.UTF-8
+##  ctype    en_US.UTF-8
+##  tz       Europe/London
+##  date     2023-01-04
+##  pandoc   2.19.2 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date (UTC) lib source
+##  blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.3.0   2022-04-25 [1] CRAN (R 4.2.0)
+##  digest        0.6.29  2021-12-01 [1] CRAN (R 4.2.0)
+##  evaluate      0.15    2022-02-18 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.0   2022-02-22 [1] CRAN (R 4.2.0)
+##  knitr         1.39    2022-04-26 [1] CRAN (R 4.2.0)
+##  magrittr      2.0.3   2022-03-30 [1] CRAN (R 4.2.0)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+##  rlang         1.0.2   2022-03-04 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.14    2022-08-22 [1] CRAN (R 4.2.0)
+##  sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+##  stringi       1.7.6   2021-11-29 [1] CRAN (R 4.2.0)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.2.0)
+##  xfun          0.30    2022-03-02 [1] CRAN (R 4.2.0)
+##  yaml          2.3.5   2022-02-21 [1] CRAN (R 4.2.0)
+## 
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>
+</div>

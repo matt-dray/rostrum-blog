@@ -1,0 +1,188 @@
+---
+title: 'Ding! Sound effects in {r.oguelike}'
+author: Matt Dray
+date: '2023-01-03'
+slug: rogue-sfx
+categories:
+  - code
+  - package
+tags:
+  - r
+  - r.oguelike
+  - sonify
+draft: yes
+---
+
+# tl;dr
+
+[The {r.oguelike} package](https://github.com/matt-dray/r.oguelike)---a toy roguelike game for the R console---now has sound effects [thanks to {sonify}](https://cran.r-project.org/package=sonify). Pew pew!
+
+# The adventure continues?
+
+This is apparently episode 5 of the {r.oguelike} [devlog](https://en.wiktionary.org/wiki/devlog). You can read earlier posts about:
+
+* [its inception](https://www.rostrum.blog/2022/04/25/r.oguelike-dev/)
+* [creating simple procedural dungeons](https://www.rostrum.blog/2022/05/01/dungeon/)
+* [making the enemy chase the player](https://www.rostrum.blog/2022/06/10/basic-search/)
+* [moving the tiles into the third dimension](https://www.rostrum.blog/2022/06/28/isometric-dungeon/)
+
+Alas, this is also probably the last installment. The package has reached version 0.1  and was always intended as a proof of concept (i.e. for the lols). 
+
+Ultimately, the dungeons are dank (i.e. cool and edgy), but also they are dank (i.e. cool and damp) and mildly claustrophobic. 
+
+<div class="figure">
+<img src="/post/2022-04-30-dungeon_files/r.oguelike-hex.png" alt="Hex sticker design for the 'r.oguelike' R package. Black background with bright green font, reminiscent of old computer terminal output. In the centre, a three-by-ten arrangement of hashmarks and periods, along with a single at symbol and dollar sign, which looks like a classic ACII tile-based roguelike game. The text 'r.oguelike' is underneath." width="25%"/>
+</div>
+
+There may be time for a {r.oguelike2} in future. I'd like to try a class-based approach to help limit code spaghetti and make it more extensible. Perhaps it will even have a proper game loop! Call me when you're ready, Nintendo.
+
+Until then, beeeeeeep beeeeeeep BEEEEEEEP.
+
+# Hi-Sonifi
+
+Anyway, yes: {r.oguelike} now has sound effects with quality as high as its graphics and gameplay.
+
+I used [the {sonify} package](https://cran.r-project.org/package=sonify) to create little beeps and toots that I think fit the game's aesthetic. These are fired as the player moves and interacts with things in the dungeon.
+
+I've written about {sonify} before when I sonified data about [COVID-19 infections](https://www.rostrum.blog/2021/02/02/sonify-covid/) and [GitHub activity](https://www.rostrum.blog/2021/02/21/skyphone/) (incredible juxtaposition). 
+
+Basically you can make an audible plot, which offers a more interesting and accessible way of presenting data. A bell curve will sound like woooOOOOooop, for example.
+
+You can also hijack {sonify} to make funny little honks and parps, which is what I've done for {r.oguelike}. [I wrote about this for {ActionSquirrel}](https://www.rostrum.blog/2021/10/03/squirrel/), a sort-of proto-{r.oguelike}.
+
+How did I arrive at the sounds for {r.oguelike}? I did the bare minimum of fiddling around with the arguments in `sonify::sonify()` until the noises amused me.
+
+# Demo cassette
+
+The outputs are [{tuneR}](https://CRAN.R-project.org/package=tuneR) objects, which I've saved as wav files with `tuneR::writeWav()` so they can be embedded below.
+
+In reality, the sounds play a little slower in the game, but it was a bit fiddly to reproduce it for these clips. You get the idea.
+
+<details><summary>Click for illustrative code to create the wav files.</summary>
+
+```{r eval=FALSE}
+library(sonify)
+library(tuneR)
+library(purrr)
+
+sfx <- list(
+  
+  move = sonify(1, 1, duration = 0.001),
+  
+  bump = sonify(1, 1, duration = 0.01, flim = c(100, 110)),
+  
+  gold = bind(
+    sonify(1, 1, duration = 0.05, flim = c(800, 800)),
+    sonify(1, 1, duration = 0.05, flim = c(1000, 1000))
+  ),
+  
+  apple = sonify(0:1, c(0, 1), duration = 0.05),
+  
+  eat = sonify(0:1, c(1, 0), duration = 0.05),
+  
+  win = bind(
+    sonify(0:1, rep(1, 2), duration = 0.1, flim = c(600, 600)),
+    sonify(0:1, rep(1, 2), duration = 0.1, flim = c(600, 600)),
+    sonify(0:1, rep(1, 2), duration = 0.1, flim = c(800, 800))
+  ),
+  
+  lose = bind(
+    sonify(0:1, rep(1, 2), duration = 0.1, flim = c(600, 600)),
+    sonify(0:1, rep(1, 2), duration = 0.1, flim = c(600, 600)),
+    sonify(0:1, rep(1, 2), duration = 0.1, flim = c(400, 400))
+  )
+  
+)
+
+walk2(
+  .x = sfx,
+  .y = names(sfx), 
+  ~writeWave(.x, paste0(.y, ".wav"))
+)
+```
+
+</details>
+
+## Move
+
+If you move onto an unoccupied floor tile (`.`), you get a very quick 'tap' like a footstep.
+
+<html><audio controls><source src="/output/rogue-sfx/move.wav" type="audio/wav"></audio></html>
+
+```{r eval=FALSE}
+sonify(1, 1, duration = 0.001)
+```
+
+## Bump
+
+Bump into the dungeon wall (`#`) and you'll get a dull thud, you absolute clod.
+
+<html><audio controls><source src="/output/rogue-sfx/bump.wav" type="audio/wav"></audio></html>
+
+```{r eval=FALSE}
+sonify(1, 1, duration = 0.01, flim = c(100, 110))
+```
+
+Yes, `flim`, as in: 'this post is absolute flimflam'.
+
+## Gold
+
+Collect gold (`$`) and get a celebratory ding.
+
+<html><audio controls><source src="/output/rogue-sfx/gold.wav" type="audio/wav"></audio></html>
+
+```{r eval=FALSE}
+sonify(1, 1, duration = 0.05, flim = c(800, 800))
+sonify(1, 1, duration = 0.05, flim = c(1000, 1000))
+```
+
+## Apple
+
+A cartoony sound for picking up the apple (`a`).
+
+<html><audio controls><source src="/output/rogue-sfx/apple.wav" type="audio/wav"></audio></html>
+
+```{r eval=FALSE}
+sonify(0:1, c(0, 1), duration = 0.05),
+```
+
+## Eat
+
+A swallowing noise as the apple (`a`) heads down your gullet.
+
+<html><audio controls><source src="/output/rogue-sfx/eat.wav" type="audio/wav"></audio></html>
+
+```{r eval=FALSE}
+sonify(0:1, c(1, 0), duration = 0.05)
+```
+
+## Defeat enemy
+
+A powerful victory ditty after you crush your enemies (`E`).
+
+<html><audio controls><source src="/output/rogue-sfx/win.wav" type="audio/wav"></audio></html>
+
+```{r eval=FALSE}
+sonify(0:1, rep(1, 2), duration = 0.1, flim = c(600, 600))
+sonify(0:1, rep(1, 2), duration = 0.1, flim = c(600, 600))
+sonify(0:1, rep(1, 2), duration = 0.1, flim = c(800, 800))
+```
+
+## Lose
+
+Conversely, a sad lament for being crushed by your enemies (`E`).
+
+<html><audio controls><source src="/output/rogue-sfx/lose.wav" type="audio/wav"></audio></html>
+
+```{r eval=FALSE}
+sonify(0:1, rep(1, 2), duration = 0.1, flim = c(600, 600))
+sonify(0:1, rep(1, 2), duration = 0.1, flim = c(600, 600))
+sonify(0:1, rep(1, 2), duration = 0.1, flim = c(400, 400))
+```
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
