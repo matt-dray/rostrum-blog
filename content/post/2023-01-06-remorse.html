@@ -1,0 +1,144 @@
+---
+title: '.-././--/---/.-./.../.'
+author: Matt Dray
+date: '2023-01-06'
+slug: remorse
+categories:
+  - code
+  - package
+tags:
+  - morse
+  - r
+  - remorse
+  - sonify
+draft: no
+---
+
+
+
+<div class="figure">
+<img src="/post/2023-01-06-remorse_files/morse.png" alt="Crudely drawn lineart of a Morse Code tapping machine with text saying 'dit' and 'dah' above it." width="100%"/>
+<p class="caption">
+You may not believe it, but I am releasing this art under CC0.
+</p>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p><a href="https://github.com/matt-dray/remorse">{remorse}</a> is a tiny R package that converts text to <a href="https://en.wikipedia.org/wiki/Morse_code">Morse Code</a> to audio.</p>
+</div>
+<div id="beat-a-dead-morse" class="section level1">
+<h1>Beat a dead morse</h1>
+<p>In <a href="https://www.rostrum.blog/2023/01/04/rogue-sfx/">the last post</a> I mentioned <a href="https://cran.r-project.org/package=sonify">{sonify}</a> for making R do little audible beeps and boops.</p>
+<p>It reminded me of one (of many) unwritten micro-projects I’ve got kicking around in my brain: obviously you could use {sonify} to communicate Morse Code. And why not translate from text to Morse (and back) while you’re at it?</p>
+<p>To be honest this was a classic case of name-driven development (NDD): I thought {remorse} was a funny name for a package and worked backwards from there.</p>
+<p>Obviously it says ‘Morse’ in the name, but also ‘remorse’ is usually what I feel after putting together a small pointless package; pointless-package existentialism (PPE) is something I have <a href="https://matt-dray.github.io/projects/">a track history</a> with.</p>
+<p>But of course, the true remorse is that I didn’t find the better package-name pun: {morseinspector}. But maybe that’s too long of a name and maybe non-Brits wouldn’t understand <a href="https://en.wikipedia.org/wiki/Inspector_Morse_(TV_series)">the reference</a>. Maybe I’m thinking too hard.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+</div>
+<div id="oh-dahling" class="section level1">
+<h1>Oh dahling</h1>
+<p>Consider this highly plausible scenario: it’s 20XX, the apocalypse has come, and the remaining humans on planet Earth communicate by Morse Code. For some reason.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>Wow, wouldn’t it be handy to have a text-to-Morse translator?</p>
+<p>Well friend, if you’ve managed to find an electronic thinking box in the apocalyptic barren wastelands (assuming electricity is still available (and it has R installed (and the {remorse} package was downloaded before the world’s internet cut out (and you know how to use R (and you don’t own a simpler, more portable Morse Code translation pamphlet))))), then you will have this incredible power at your fingertips.</p>
+<p>Or maybe you’d rather risk it? Pfft.</p>
+</div>
+<div id="dit-dit-demo" class="section level1">
+<h1>Dit-dit-demo</h1>
+<p>That’s an awful lot of build-up for a very simple package. Let’s take a look at what little it does.</p>
+<p>As usual, {remorse} lives on GitHub<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>, so it can be downloaded with a little help from the typographically-adjacent {remotes} package:</p>
+<pre class="r"><code>install.github(&quot;remotes&quot;)
+remotes::install_github(&quot;matt-dray/remorse&quot;)  # v0.1.1 here</code></pre>
+<p>That’ll install {sonify} as well, which is needed for the audio.</p>
+<p>Right so: text to Morse Code.</p>
+<pre class="r"><code>text_in &lt;- &quot;Ahoy pal!&quot;
+morse &lt;- remorse::txt2morse(text_in)
+morse</code></pre>
+<pre><code>## [1] &quot;.-/..../---/-.-- .--./.-/.-../-.-.--&quot;</code></pre>
+<p>So each letter has been translated to the relevant string of ‘dits and dahs’ (‘dots’ and ‘dashes’) that make up Morse Code. I’ve used a period (<code>.</code>) and hyphen (<code>-</code>) to represent these in {remorse}, with forward slashes (<code>/</code>) between Morse groups that represent individual characters and a space (<code></code>) for the spaces between words.</p>
+<p>Note that not all characters can be converted to Morse Code. I did some research (Wikipedia) to discover the mappings from letters, numbers and punctuation to Morse Code and the information is used internally to the package and also exported in <code>morse_lookup</code>:</p>
+<pre class="r"><code>remorse::morse_lookup</code></pre>
+<pre><code>##        A        B        C        D        E        F        G        H 
+##     &quot;.-&quot;   &quot;-...&quot;   &quot;-.-.&quot;    &quot;-..&quot;      &quot;.&quot;   &quot;..-.&quot;    &quot;--.&quot;   &quot;....&quot; 
+##        I        J        K        L        M        N        O        P 
+##     &quot;..&quot;   &quot;.---&quot;    &quot;-.-&quot;   &quot;.-..&quot;     &quot;--&quot;     &quot;-.&quot;    &quot;---&quot;   &quot;.--.&quot; 
+##        Q        R        S        T        U        V        W        X 
+##   &quot;--.-&quot;    &quot;.-.&quot;    &quot;...&quot;      &quot;-&quot;    &quot;..-&quot;   &quot;...-&quot;    &quot;.--&quot;   &quot;-..-&quot; 
+##        Y        Z        0        1        2        3        4        5 
+##   &quot;-.--&quot;   &quot;--..&quot;  &quot;-----&quot;  &quot;.----&quot;  &quot;..---&quot;  &quot;...--&quot;  &quot;....-&quot;  &quot;.....&quot; 
+##        6        7        8        9        &amp;        &#39;        @        ) 
+##  &quot;-....&quot;  &quot;--...&quot;  &quot;---..&quot;  &quot;----.&quot;  &quot;.-...&quot; &quot;.----.&quot; &quot;.--.-.&quot; &quot;-.--.-&quot; 
+##        (        :        ,        =        !        .        -        * 
+##  &quot;-.--.&quot; &quot;---...&quot; &quot;--..--&quot;  &quot;-...-&quot; &quot;-.-.--&quot; &quot;.-.-.-&quot; &quot;-....-&quot;   &quot;-..-&quot; 
+##        +        &quot;        ?        /          
+##  &quot;.-.-.&quot; &quot;.-..-.&quot; &quot;..--..&quot;  &quot;-..-.&quot;      &quot; &quot;</code></pre>
+<p>Of course, this means we can map backwards from Morse Code to letters, numbers and punctuation:</p>
+<pre class="r"><code>text_out &lt;- remorse::morse2txt(morse)
+text_out</code></pre>
+<pre><code>## [1] &quot;AHOY PAL!&quot;</code></pre>
+<p>Morse Code has no sense of case, so it just converts it all to uppercase. Like you’re shouting; the most clear form of communication.</p>
+<p>So, you can argue justifiably that <code>txt2morse("yo") |&gt; morse2txt()</code> is just a worse version of <code>toupper()</code> that strips out certain unmappable characters.</p>
+<p>But of course it does so much more. Well, one thing more. Lets go from Morse to audio:</p>
+<pre class="r"><code>remorse::morse2sfx(morse)</code></pre>
+<p>The output sounds like this:</p>
+<html>
+<audio controls>
+<source src="/output/remorse/remorse.wav" type="audio/wav">
+</audio>
+</html>
+<p>Wow. It plays audible dits (one time unit), dahs (three), spaces between dits and dahs (one), spaces between Morse character groupings (three) and spaces between words (seven). Tell all your friends.</p>
+<p>So, do I still feel remorse for writing {remorse} after demonstrating its power? Yes. All I ask is that you think of me in those apocalyptic wastelands.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
+##  os       macOS Big Sur/Monterey 10.16
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_US.UTF-8
+##  ctype    en_US.UTF-8
+##  tz       Europe/London
+##  date     2023-01-06
+##  pandoc   2.19.2 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date (UTC) lib source
+##  blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.3.0   2022-04-25 [1] CRAN (R 4.2.0)
+##  digest        0.6.29  2021-12-01 [1] CRAN (R 4.2.0)
+##  evaluate      0.15    2022-02-18 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.0   2022-02-22 [1] CRAN (R 4.2.0)
+##  knitr         1.39    2022-04-26 [1] CRAN (R 4.2.0)
+##  magrittr      2.0.3   2022-03-30 [1] CRAN (R 4.2.0)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+##  remorse       0.1.1   2023-01-06 [1] Github (matt-dray/remorse@4540098)
+##  rlang         1.0.2   2022-03-04 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.14    2022-08-22 [1] CRAN (R 4.2.0)
+##  sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+##  stringi       1.7.6   2021-11-29 [1] CRAN (R 4.2.0)
+##  stringr       1.4.0   2019-02-10 [1] CRAN (R 4.2.0)
+##  xfun          0.30    2022-03-02 [1] CRAN (R 4.2.0)
+##  yaml          2.3.5   2022-02-21 [1] CRAN (R 4.2.0)
+## 
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>Not to mention that it’s a bad pun: the package doesn’t ‘inspect’ Morse; it translates it. Yep, definitely I’m thinking too hard about this.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>Personally I’d rather see <a href="https://en.wikipedia.org/wiki/Telegraphy">telegraphy</a> make a comeback.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>Wow, how edgy, maybe he’s had a bad run in with the CRAN maintainers, or perhaps he’s read the bit of <a href="https://cran.r-project.org/web/packages/policies.html">the CRAN repository policy</a> that says ‘a package’s contribution has to be non-trivial’ (<a href="https://fosstodon.org/@mattdray/109644645694966586">whatever that means</a>). Or he’s just lazy.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>

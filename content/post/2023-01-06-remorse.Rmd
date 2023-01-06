@@ -1,0 +1,110 @@
+---
+title: '.-././--/---/.-./.../.'
+author: Matt Dray
+date: '2023-01-06'
+slug: remorse
+categories:
+  - code
+  - package
+tags:
+  - morse
+  - r
+  - remorse
+  - sonify
+draft: no
+---
+
+<div class="figure">
+<img src="/post/2023-01-06-remorse_files/morse.png" alt="Crudely drawn lineart of a Morse Code tapping machine with text saying 'dit' and 'dah' above it." width="100%"/>
+<p class="caption">You may not believe it, but I am releasing this art under CC0.</p>
+
+# tl;dr
+
+[{remorse}](https://github.com/matt-dray/remorse) is a tiny R package that converts text to [Morse Code](https://en.wikipedia.org/wiki/Morse_code) to audio.
+
+# Beat a dead morse
+
+In [the last post](https://www.rostrum.blog/2023/01/04/rogue-sfx/) I mentioned [{sonify}](https://cran.r-project.org/package=sonify) for making R do little audible beeps and boops.
+
+It reminded me of one (of many) unwritten micro-projects I've got kicking around in my brain: obviously you could use {sonify} to communicate Morse Code. And why not translate from text to Morse (and back) while you're at it?
+
+To be honest this was a classic case of name-driven development (NDD): I thought {remorse} was a funny name for a package and worked backwards from there. 
+
+Obviously it says 'Morse' in the name, but also 'remorse' is usually what I feel after putting together a small pointless package; pointless-package existentialism (PPE) is something I have [a track history](https://matt-dray.github.io/projects/) with.
+
+But of course, the true remorse is that I didn't find the better package-name pun: {morseinspector}. But maybe that's too long of a name and maybe non-Brits wouldn't understand [the reference](https://en.wikipedia.org/wiki/Inspector_Morse_(TV_series)). Maybe I'm thinking too hard.[^inspector]
+
+# Oh dahling
+
+Consider this highly plausible scenario: it's 20XX, the apocalypse has come, and the remaining humans on planet Earth communicate by Morse Code. For some reason.[^telegraph]
+
+Wow, wouldn't it be handy to have a text-to-Morse translator? 
+
+Well friend, if you've managed to find an electronic thinking box in the apocalyptic barren  wastelands (assuming electricity is still available (and it has R installed (and the {remorse} package was downloaded before the world's internet cut out (and you know how to use R (and you don't own a simpler, more portable Morse Code translation pamphlet))))), then you will have this incredible power at your fingertips.
+
+Or maybe you'd rather risk it? Pfft.
+
+# Dit-dit-demo
+
+That's an awful lot of build-up for a very simple package. Let's take a look at what little it does.
+
+As usual, {remorse} lives on GitHub[^edgy], so it can be downloaded with a little help from the typographically-adjacent {remotes} package:
+
+```{r eval=FALSE}
+install.github("remotes")
+remotes::install_github("matt-dray/remorse")  # v0.1.1 here
+```
+
+That'll install {sonify} as well, which is needed for the audio.
+
+Right so: text to Morse Code.
+
+```{r}
+text_in <- "Ahoy pal!"
+morse <- remorse::txt2morse(text_in)
+morse
+```
+
+So each letter has been translated to the relevant string of 'dits and dahs' ('dots' and 'dashes') that make up Morse Code. I've used a period (`.`) and hyphen (`-`) to represent these in {remorse}, with forward slashes (`/`) between Morse groups that represent individual characters and a space (` `) for the spaces between words.
+
+Note that not all characters can be converted to Morse Code. I did some research (Wikipedia) to discover the mappings from letters, numbers and punctuation to Morse Code and the information is used internally to the package and also exported in `morse_lookup`:
+
+```{r}
+remorse::morse_lookup
+```
+
+Of course, this means we can map backwards from Morse Code to letters, numbers and punctuation:
+
+```{r}
+text_out <- remorse::morse2txt(morse)
+text_out
+```
+
+Morse Code has no sense of case, so it just converts it all to uppercase. Like you're shouting; the most clear form of communication.
+
+So, you can argue justifiably that `txt2morse("yo") |> morse2txt()` is just a worse version of `toupper()` that strips out certain unmappable characters.
+
+But of course it does so much more. Well, one thing more. Lets go from Morse to audio:
+
+```{r eval=FALSE}
+remorse::morse2sfx(morse)
+```
+
+The output sounds like this:
+
+<html><audio controls><source src="/output/remorse/remorse.wav" type="audio/wav"></audio></html>
+
+Wow. It plays audible dits (one time unit), dahs (three), spaces between dits and dahs (one), spaces between Morse character groupings (three) and spaces between words (seven). Tell all your friends.
+
+So, do I still feel remorse for writing {remorse} after demonstrating its power? Yes. All I ask is that you think of me in those apocalyptic wastelands.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^inspector]: Not to mention that it's a bad pun: the package doesn't 'inspect' Morse; it translates it. Yep, definitely I'm thinking too hard about this.
+[^telegraph]: Personally I'd rather see [telegraphy](https://en.wikipedia.org/wiki/Telegraphy) make a comeback.
+[^edgy]: Wow, how edgy, maybe he's had a bad run in with the CRAN maintainers, or perhaps he's read the bit of [the CRAN repository policy](https://cran.r-project.org/web/packages/policies.html) that says 'a package’s contribution has to be non-trivial' ([whatever that means](https://fosstodon.org/@mattdray/109644645694966586)). Or he's just lazy.
