@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.3 posts per month.
 
-🆕 The latest post was published 1 day(s) ago: [Ding\! Sound effects in
+🆕 The latest post was published 2 day(s) ago: [Ding\! Sound effects in
 {r.oguelike}](https://www.rostrum.blog/2023/01/04/rogue-sfx/).
 
 📈 This 2D plot shows posts over time:
@@ -183,4 +183,4 @@ since 2018-04-14.
 
 -----
 
-*Updated on 2023-01-05 at 02:47.*
+*Updated on 2023-01-06 at 02:51.*
