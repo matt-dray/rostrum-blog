@@ -25,13 +25,13 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 135 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 136 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
-📅 That’s a post roughly every 13 days, or about 2.3 posts per month.
+📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 2 day(s) ago: [Ding\! Sound effects in
-{r.oguelike}](https://www.rostrum.blog/2023/01/04/rogue-sfx/).
+🆕 The latest post was published 1 day(s) ago:
+[.-././–/—/.-./…/.](https://www.rostrum.blog/2023/01/06/remorse/).
 
 📈 This 2D plot shows posts over time:
 
@@ -43,6 +43,7 @@ since 2018-04-14.
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|    136 | 2023-01-06 | [.-././–/—/.-./…/.](https://www.rostrum.blog/2023/01/06/remorse/)                                                         |
 |    135 | 2023-01-04 | [Ding\! Sound effects in {r.oguelike}](https://www.rostrum.blog/2023/01/04/rogue-sfx/)                                    |
 |    134 | 2022-12-11 | [Animate sprites in R with {pixeltrix}](https://www.rostrum.blog/2022/12/11/pixeltrix-animate/)                           |
 |    133 | 2022-11-13 | [Tamagotchi in R?](https://www.rostrum.blog/2022/11/13/tamrgo/)                                                           |
@@ -183,4 +184,4 @@ since 2018-04-14.
 
 -----
 
-*Updated on 2023-01-06 at 02:51.*
+*Updated on 2023-01-07 at 02:45.*
