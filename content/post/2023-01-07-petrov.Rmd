@@ -15,22 +15,20 @@ draft: no
 ---
 
 <div class="figure">
-<img src="/post/2023-01-07-stylian_files/petrov.jpg" alt="Close up of former footballer Stiliyan Petrov playing for Bulgaria. Text around his head says 'Stan Petrov', 'am jebus?' and 'get rekt opta' in Comic Sans font.'." width="100%"/>
+<img src="/post/2023-01-07-petrov_files/petrov.jpg" alt="Close up of former footballer Stiliyan Petrov playing for Bulgaria. Text around his head says 'Stan Petrov', 'am jebus?', 'nativity' and 'get rekt opta' in Comic Sans font." width="100%"/>
 </div>
-
-
 
 # tl;dr
 
-In which I prove [Opta](https://en.wikipedia.org/wiki/Opta_Sports) wrong with [my {soccercolleagues} R package](https://github.com/matt-dray/soccercolleagues). Oh wait, actually they were right. Ah, heck.
+In which I prove wrong an [Opta](https://en.wikipedia.org/wiki/Opta_Sports) statistic with [my {soccercolleagues} R package](https://github.com/matt-dray/soccercolleagues). Oh wait, actually they were right. Ah, heck.
 
 # Petrov Rescue
 
-Basically, I hate [the Opta Twitter feed](https://twitter.com/OptaJoe/).
+Basically, for little reason, I dislike the style of the tweets on [the Twitter feed for Opta](https://twitter.com/OptaJoe/)[^sponsor] (the company who do all the football stats).
 
-The only reason is because of the noun (or whatever) they put at the end of their tweets.
+What is so outrageous? Each tweet always ends in a single, summary word that makes me cringe. 
 
-Let's take a look at  [their most recent tweet](https://twitter.com/OptaJoe/status/1611735498233622534?s=20) at time of writing:
+Wait, what? Let's take a look at [their most recent tweet](https://twitter.com/OptaJoe/status/1611735498233622534?s=20) at time of writing:
 
 > 14 - Harry Kane has scored 14 goals in his last 14 appearances in the FA Cup, averaging a goal every 63 minutes in the competition in this period. Guarantee.
 
@@ -40,39 +38,33 @@ Or [this tweet](https://twitter.com/OptaJoe/status/1611722890298404866?s=20):
 
 > 16 - Since his first appearance in the competition in January 2016, Leicester's Kelechi Iheanacho has scored more FA Cup goals than any other player (16). Specialist.
 
-'Specialist'. Sigh.
+'Specialist'.
 
-Hate it.
+A completely small and pointless thing to be annoyed by, right?
 
-Which is why I thought I'd prove the Opta wankers wrong by ousting a nonsense tweet.
-
-Basically, a chance to be a hero in the niche R-user/soccer-fan community. (So [Ryo](https://ryo-n7.github.io/), [Ben](https://torvaney.github.io/) and [Tony](https://tonyelhabr.rbind.io/), yes?)
-
-Here's the scenario: over the yuletide period (on Christmas day!) they ran [this tweet](https://twitter.com/OptaJoe/status/1607028528289030144?s=20):
+But here's the scenario. Over the yuletide period (on Christmas day!) they ran [this tweet](https://twitter.com/OptaJoe/status/1607028528289030144?s=20):
 
 > 1 - Stiliyan Petrov (@StanPetrov19) is the only player to have played in the Premier League whose name contains all the letters in the word 'Nativity'. Star.
 
-'Star'. Ergh.
+Obviously, I have absolutely nothing against ['Big Stan'](https://en.wikipedia.org/wiki/Stiliyan_Petrov). He's a legend; a 'star', if you will. Captain of Aston Villa! Bulgaria! Battled leukaemia and still made it to nearly 600 games.
 
-Now, I have absolutely nothing against Big Stan. He's a legend; a 'star', if you will. Captain of Aston Villa! Bulgaria! He had to retire because of leukaemia! But I don't trust Opta. I don't trust them to respect Stan.
+But could this stat possibly be true? Surely there's at least one other player. Perhaps a window of opportunity for me to avenge my feelings of cringe?
 
-Is the tweet true? What data are they looking at? I don't trust them. Do not take Stan's name in vain.
-
-And you can ignore the candid dismissals by [folks like 'Smyles'](https://twitter.com/duke_smyles/status/1607052807680524289?s=20), who said of opta's tweet:
+Obviously you can ignore the candid dismissals in the tweets' replies, [for example](https://twitter.com/duke_smyles/status/1607052807680524289?s=20):
 
 > What are we supposed to do with this information? [Picture of wryly-smiling duck.]
 
-No! Fool! This is more important than any Opta tweet ever; I'm certain they could be wrong and I am going to uncover their shenanigans.
+No, this is more important than any Opta tweet ever: what if it's... _wrong_.
 
-So I looked into it.
+# Stan in R, but not {rstan}
 
-Of course, this is completely trivial with [my {soccercolleagues} package for R](https://github.com/matt-dray/soccercolleagues) that I wrote earlier in 2022, which is built heavily (heavily!) on [the excellent {worldfootballR} package by Jason Zivkovic](https://jaseziv.github.io/worldfootballR/), which helps fetch player data from [Transfermarkt](https://www.transfermarkt.com/).
+So I looked into it using R, of course. 
 
-The package's primary objective is to let you [find pairs of football players that were colleagues at some point](https://www.rostrum.blog/2022/02/04/soccercolleagues/). Like: 'which current Premier League footballer has been team mates with each of the following: Kevin Phillips, Mark Viduka, Dejan Lovren, Danny Ings and Nicky Butt?'[^boring]
+Turns out it's pretty straightforward with [my little {soccercolleagues} package](https://github.com/matt-dray/soccercolleagues) that [I wrote about in early 2022](https://www.rostrum.blog/2022/02/04/soccercolleagues/). It's built heavily (heavily!) on [the excellent {worldfootballR} package by Jason Zivkovic](https://jaseziv.github.io/worldfootballR/), which helps fetch player data from [Transfermarkt](https://www.transfermarkt.com/).
 
-The package works by fetching data about footballers from every team in a given league's season since its inception.
+The niche[^footballr] package's primary objective is to let you [find pairs of football players that were colleagues at some point](https://www.rostrum.blog/2022/02/04/soccercolleagues/). Like: 'which current Premier League footballer has been team mates with each of the following: Kevin Phillips, Mark Viduka, Dejan Lovren, Danny Ings and Nicky Butt?'[^boring]
 
-So, aha! You cannot escape me, Opta!
+The package works by fetching data about footballers from every team in a given league's season since its inception. So, aha, you cannot escape, Opta!
 
 Follow along. As ever, you can install the {soccercolleagues} package from GitHub:
 
@@ -81,7 +73,7 @@ if(!require(remotes)) install.packages("remotes")
 remotes::install_github("matt-dray/soccercolleagues")
 ```
 
-We'll also use the {tidyverse} for the lols.
+We'll also use the {tidyverse} for wrangling.
 
 ```{r eval=FALSE}
 library(soccercolleagues)
@@ -90,10 +82,10 @@ library(tidyverse)
 
 The package contains a helper function to grab every human that's played in a given league over a certain set of seasons.
 
-So we can obviously ask for all the years of the English Premier League, which began in 1992:
+So we can ask for all the years of the English Premier League, which began in 1992:
 
 ```{r eval=FALSE}
-# Takes a while to load!
+# This will take quite a long time...
 epl_players <- soccercolleagues::get_players(
   seasons = 1992:2022,
   country = "England"
@@ -138,9 +130,9 @@ To be clear: I trust Opta's data analysts. Not their social media managers. I've
 
 And of course, regardless of outcome, I still respect Stiliyan (and other Bulgarian Premier League 'Petrovs', like cult legend [Martin](https://en.wikipedia.org/wiki/Martin_Petrov)).
 
-...But wait! Opta were misnaming Stan as 'Stylian Petrov' [as late as 2012](https://twitter.com/OptaJoe/status/169439820584714240?s=20)! Get rekt! You're missing the extra 'i' you need in 'nativity', idiots! Put respect on Siliyan's name!
+...But wait. Opta were misnaming Stan as 'Stylian Petrov' [in tweets as late as 2012](https://twitter.com/OptaJoe/status/169439820584714240?s=20). Get rekt! You're missing the extra 'i' you need in 'nativity', fools! Put respect on Stiliyan's name!
 
-'Result'.
+'Result'.[^score]
 
 ---
 <details><summary>Session info</summary>
@@ -149,4 +141,7 @@ sessioninfo::session_info()
 ```
 </details>
 
+[^sponsor]: This post is not guerilla marketing for Opta. It would be _extremely_ guerilla if they wanted to advertise on _this_ blog.
+[^footballr]: There is definitely a burgeoning crossover of R users and footabll stats, see [Ryo](https://ryo-n7.github.io/), [Ben](https://torvaney.github.io/) and [Tony](https://tonyelhabr.rbind.io/), for example.
 [^boring]: Hint: it's a very 'boring' footballer, lol.
+[^score]: By which I mean I lost 1-0.
