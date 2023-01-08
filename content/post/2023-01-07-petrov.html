@@ -21,7 +21,7 @@ draft: no
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>In which I prove wrong an <a href="https://en.wikipedia.org/wiki/Opta_Sports">Opta</a> statistic with <a href="https://github.com/matt-dray/soccercolleagues">my {soccercolleagues} R package</a>. Oh wait, actually they were right. Ah, heck.</p>
+<p>In which I prove wrong an <a href="https://en.wikipedia.org/wiki/Opta_Sports">Opta</a> statistic using R and Tranfermarkt data. Oh wait, actually they were right. Ah, heck.</p>
 </div>
 <div id="petrov-rescue" class="section level1">
 <h1>Petrov Rescue</h1>
@@ -53,16 +53,16 @@ draft: no
 <div id="stan-in-r-but-not-rstan" class="section level1">
 <h1>Stan in R, but not {rstan}</h1>
 <p>So I looked into it using R, of course.</p>
-<p>Turns out it’s pretty straightforward with <a href="https://github.com/matt-dray/soccercolleagues">my little {soccercolleagues} package</a> that <a href="https://www.rostrum.blog/2022/02/04/soccercolleagues/">I wrote about in early 2022</a>. It’s built heavily (heavily!) around <a href="https://jaseziv.github.io/worldfootballR/">the excellent {worldfootballR} package by Jason Zivkovic</a>, which helps fetch player data from <a href="https://www.transfermarkt.com/">Transfermarkt</a> (among other suppliers).</p>
+<p>Turns out it’s pretty straightforward with <a href="https://jaseziv.github.io/worldfootballR/">the excellent {worldfootballR} package by Jason Zivkovic</a>, which helps fetch player data from <a href="https://www.transfermarkt.com/">Transfermarkt</a> (among other suppliers).</p>
+<p>Basically, we can fetch data about footballers from every team in a given league’s season since its inception. So, aha, you cannot escape, Opta!</p>
+<p>My little <a href="https://github.com/matt-dray/soccercolleagues">{soccercolleagues} package</a> that <a href="https://www.rostrum.blog/2022/02/04/soccercolleagues/">I wrote about in early 2022</a> is built heavily (heavily!) around {worldfootballR} and has a convenience function we can use.</p>
 <p>The niche<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> primary objective of {soccercolleagues} is to let you <a href="https://www.rostrum.blog/2022/02/04/soccercolleagues/">find pairs of football players that were colleagues at some point</a>. Like: ‘which current Premier League footballer has been team mates with each of the following: Kevin Phillips, Mark Viduka, Dejan Lovren, Danny Ings and Nicky Butt?’<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
-<p>The package works by fetching data about footballers from every team in a given league’s season since its inception. So, aha, you cannot escape, Opta!</p>
 <p>Follow along. As ever, you can install the {soccercolleagues} package from GitHub:</p>
 <pre class="r"><code>if(!require(remotes)) install.packages(&quot;remotes&quot;)
 remotes::install_github(&quot;matt-dray/soccercolleagues&quot;)</code></pre>
 <p>We’ll also use the {tidyverse} for wrangling.</p>
 <pre class="r"><code>library(soccercolleagues)
 library(tidyverse)</code></pre>
-<p>The package contains a helper function to grab every human that’s played in a given league over a certain set of seasons.</p>
 <p>So we can ask Transfermarkt for all the years of the English Premier League, which began in 1992:</p>
 <pre class="r"><code># This will take quite a long time...
 epl_players &lt;- soccercolleagues::get_players(
