@@ -1,0 +1,160 @@
+---
+title: 'Stiliyan Petrov: Jesus?'
+author: Matt Dray
+date: '2023-01-08'
+slug: petrov
+categories:
+  - code
+tags:
+  - football
+  - opta
+  - r
+  - soccer
+  - soccercolleagues
+draft: no
+---
+
+
+
+<div class="figure">
+<p><img src="/post/2023-01-07-stylian_files/petrov.jpg" alt="Close up of former footballer Stiliyan Petrov playing for Bulgaria. Text around his head says 'Stan Petrov', 'am jebus?' and 'get rekt opta' in Comic Sans font.'." width="100%"/></p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>In which I prove <a href="https://en.wikipedia.org/wiki/Opta_Sports">Opta</a> wrong with <a href="https://github.com/matt-dray/soccercolleagues">my {soccercolleagues} R package</a>. Oh wait, actually they were right. Ah, heck.</p>
+</div>
+<div id="petrov-rescue" class="section level1">
+<h1>Petrov Rescue</h1>
+<p>Basically, I hate <a href="https://twitter.com/OptaJoe/">the Opta Twitter feed</a>.</p>
+<p>The only reason is because of the noun (or whatever) they put at the end of their tweets.</p>
+<p>Let’s take a look at <a href="https://twitter.com/OptaJoe/status/1611735498233622534?s=20">their most recent tweet</a> at time of writing:</p>
+<blockquote>
+<p>14 - Harry Kane has scored 14 goals in his last 14 appearances in the FA Cup, averaging a goal every 63 minutes in the competition in this period. Guarantee.</p>
+</blockquote>
+<p>‘Guarantee’. Gah.</p>
+<p>Or <a href="https://twitter.com/OptaJoe/status/1611722890298404866?s=20">this tweet</a>:</p>
+<blockquote>
+<p>16 - Since his first appearance in the competition in January 2016, Leicester’s Kelechi Iheanacho has scored more FA Cup goals than any other player (16). Specialist.</p>
+</blockquote>
+<p>‘Specialist’. Sigh.</p>
+<p>Hate it.</p>
+<p>Which is why I thought I’d prove the Opta wankers wrong by ousting a nonsense tweet.</p>
+<p>Basically, a chance to be a hero in the niche R-user/soccer-fan community. (So <a href="https://ryo-n7.github.io/">Ryo</a>, <a href="https://torvaney.github.io/">Ben</a> and <a href="https://tonyelhabr.rbind.io/">Tony</a>, yes?)</p>
+<p>Here’s the scenario: over the yuletide period (on Christmas day!) they ran <a href="https://twitter.com/OptaJoe/status/1607028528289030144?s=20">this tweet</a>:</p>
+<blockquote>
+<p>1 - Stiliyan Petrov (<span class="citation">@StanPetrov19</span>) is the only player to have played in the Premier League whose name contains all the letters in the word ‘Nativity’. Star.</p>
+</blockquote>
+<p>‘Star’. Ergh.</p>
+<p>Now, I have absolutely nothing against Big Stan. He’s a legend; a ‘star’, if you will. Captain of Aston Villa! Bulgaria! He had to retire because of leukaemia! But I don’t trust Opta. I don’t trust them to respect Stan.</p>
+<p>Is the tweet true? What data are they looking at? I don’t trust them. Do not take Stan’s name in vain.</p>
+<p>And you can ignore the candid dismissals by <a href="https://twitter.com/duke_smyles/status/1607052807680524289?s=20">folks like ‘Smyles’</a>, who said of opta’s tweet:</p>
+<blockquote>
+<p>What are we supposed to do with this information? [Picture of wryly-smiling duck.]</p>
+</blockquote>
+<p>No! Fool! This is more important than any Opta tweet ever; I’m certain they could be wrong and I am going to uncover their shenanigans.</p>
+<p>So I looked into it.</p>
+<p>Of course, this is completely trivial with <a href="https://github.com/matt-dray/soccercolleagues">my {soccercolleagues} package for R</a> that I wrote earlier in 2022, which is built heavily (heavily!) on <a href="https://jaseziv.github.io/worldfootballR/">the excellent {worldfootballR} package by Jason Zivkovic</a>, which helps fetch player data from <a href="https://www.transfermarkt.com/">Transfermarkt</a>.</p>
+<p>The package’s primary objective is to let you <a href="https://www.rostrum.blog/2022/02/04/soccercolleagues/">find pairs of football players that were colleagues at some point</a>. Like: ‘which current Premier League footballer has been team mates with each of the following: Kevin Phillips, Mark Viduka, Dejan Lovren, Danny Ings and Nicky Butt?’<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>The package works by fetching data about footballers from every team in a given league’s season since its inception.</p>
+<p>So, aha! You cannot escape me, Opta!</p>
+<p>Follow along. As ever, you can install the {soccercolleagues} package from GitHub:</p>
+<pre class="r"><code>if(!require(remotes)) install.packages(&quot;remotes&quot;)
+remotes::install_github(&quot;matt-dray/soccercolleagues&quot;)</code></pre>
+<p>We’ll also use the {tidyverse} for the lols.</p>
+<pre class="r"><code>library(soccercolleagues)
+library(tidyverse)</code></pre>
+<p>The package contains a helper function to grab every human that’s played in a given league over a certain set of seasons.</p>
+<p>So we can obviously ask for all the years of the English Premier League, which began in 1992:</p>
+<pre class="r"><code># Takes a while to load!
+epl_players &lt;- soccercolleagues::get_players(
+  seasons = 1992:2022,
+  country = &quot;England&quot;
+)</code></pre>
+<p>Right, so we have every Premier League player from 1992 to the current season.</p>
+<p>And now we can look for the players whose names contain the letters in ‘nativity’, as Opta mentioned in their tweet:</p>
+<pre class="r"><code>epl_players |&gt;
+  distinct(player_name) |&gt;
+  mutate(
+    player_name = str_remove_all(tolower(player_name), &quot; &quot;),
+    n_count = str_count(player_name, &quot;n&quot;),
+    a_count = str_count(player_name, &quot;a&quot;),
+    t_count = str_count(player_name, &quot;t&quot;),
+    i_count = str_count(player_name, &quot;i&quot;),
+    v_count = str_count(player_name, &quot;v&quot;),
+    y_count = str_count(player_name, &quot;y&quot;)
+  ) |&gt;
+  filter(
+    n_count &gt;= 1 &amp;
+      a_count &gt;= 1 &amp;
+      t_count &gt;= 2 &amp;
+      i_count &gt;= 2 &amp;
+      v_count &gt;= 1 &amp;
+      y_count &gt;= 1
+  )
+## # A tibble: 1 × 7
+##   player_name    n_count a_count t_count i_count v_count y_count
+##   &lt;chr&gt;            &lt;int&gt;   &lt;int&gt;   &lt;int&gt;   &lt;int&gt;   &lt;int&gt;   &lt;int&gt;
+## 1 stiliyanpetrov       1       1       2       2       1       1</code></pre>
+<p>Oof… they were right. He is the only one.</p>
+<p>Wow, this humble pie is so delicious, thank you so much Opta for unintentionally spoonfeeding it to me.</p>
+<p>To be clear: I trust Opta’s data analysts. Not their social media managers. I’ve got my eye on you. You’ll slip up one day.</p>
+<p>And of course, regardless of outcome, I still respect Stiliyan (and other Bulgarian Premier League ‘Petrovs’, like cult legend <a href="https://en.wikipedia.org/wiki/Martin_Petrov">Martin</a>).</p>
+<p>…But wait! Opta were misnaming Stan as ‘Stylian Petrov’ <a href="https://twitter.com/OptaJoe/status/169439820584714240?s=20">as late as 2012</a>! Get rekt! You’re missing the extra ‘i’ you need in ‘nativity’, idiots! Put respect on Siliyan’s name!</p>
+<p>‘Result’.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
+##  os       macOS Big Sur/Monterey 10.16
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_US.UTF-8
+##  ctype    en_US.UTF-8
+##  tz       Europe/London
+##  date     2023-01-08
+##  pandoc   2.19.2 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date (UTC) lib source
+##  blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.5.0   2022-12-20 [1] CRAN (R 4.2.0)
+##  digest        0.6.29  2021-12-01 [1] CRAN (R 4.2.0)
+##  evaluate      0.15    2022-02-18 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  glue          1.6.2   2022-02-24 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.4   2022-12-06 [1] CRAN (R 4.2.0)
+##  knitr         1.39    2022-04-26 [1] CRAN (R 4.2.0)
+##  lifecycle     1.0.3   2022-10-07 [1] CRAN (R 4.2.0)
+##  magrittr      2.0.3   2022-03-30 [1] CRAN (R 4.2.0)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+##  rlang         1.0.6   2022-09-24 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.14    2022-08-22 [1] CRAN (R 4.2.0)
+##  sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+##  stringi       1.7.8   2022-07-11 [1] CRAN (R 4.2.0)
+##  stringr       1.5.0   2022-12-02 [1] CRAN (R 4.2.0)
+##  vctrs         0.5.1   2022-11-16 [1] CRAN (R 4.2.0)
+##  xfun          0.30    2022-03-02 [1] CRAN (R 4.2.0)
+##  yaml          2.3.5   2022-02-21 [1] CRAN (R 4.2.0)
+## 
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>Hint: it’s a very ‘boring’ footballer, lol.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>

@@ -1,0 +1,152 @@
+---
+title: 'Stiliyan Petrov: Jesus?'
+author: Matt Dray
+date: '2023-01-08'
+slug: petrov
+categories:
+  - code
+tags:
+  - football
+  - opta
+  - r
+  - soccer
+  - soccercolleagues
+draft: no
+---
+
+<div class="figure">
+<img src="/post/2023-01-07-stylian_files/petrov.jpg" alt="Close up of former footballer Stiliyan Petrov playing for Bulgaria. Text around his head says 'Stan Petrov', 'am jebus?' and 'get rekt opta' in Comic Sans font.'." width="100%"/>
+</div>
+
+
+
+# tl;dr
+
+In which I prove [Opta](https://en.wikipedia.org/wiki/Opta_Sports) wrong with [my {soccercolleagues} R package](https://github.com/matt-dray/soccercolleagues). Oh wait, actually they were right. Ah, heck.
+
+# Petrov Rescue
+
+Basically, I hate [the Opta Twitter feed](https://twitter.com/OptaJoe/).
+
+The only reason is because of the noun (or whatever) they put at the end of their tweets.
+
+Let's take a look at  [their most recent tweet](https://twitter.com/OptaJoe/status/1611735498233622534?s=20) at time of writing:
+
+> 14 - Harry Kane has scored 14 goals in his last 14 appearances in the FA Cup, averaging a goal every 63 minutes in the competition in this period. Guarantee.
+
+'Guarantee'. Gah.
+
+Or [this tweet](https://twitter.com/OptaJoe/status/1611722890298404866?s=20): 
+
+> 16 - Since his first appearance in the competition in January 2016, Leicester's Kelechi Iheanacho has scored more FA Cup goals than any other player (16). Specialist.
+
+'Specialist'. Sigh.
+
+Hate it.
+
+Which is why I thought I'd prove the Opta wankers wrong by ousting a nonsense tweet.
+
+Basically, a chance to be a hero in the niche R-user/soccer-fan community. (So [Ryo](https://ryo-n7.github.io/), [Ben](https://torvaney.github.io/) and [Tony](https://tonyelhabr.rbind.io/), yes?)
+
+Here's the scenario: over the yuletide period (on Christmas day!) they ran [this tweet](https://twitter.com/OptaJoe/status/1607028528289030144?s=20):
+
+> 1 - Stiliyan Petrov (@StanPetrov19) is the only player to have played in the Premier League whose name contains all the letters in the word 'Nativity'. Star.
+
+'Star'. Ergh.
+
+Now, I have absolutely nothing against Big Stan. He's a legend; a 'star', if you will. Captain of Aston Villa! Bulgaria! He had to retire because of leukaemia! But I don't trust Opta. I don't trust them to respect Stan.
+
+Is the tweet true? What data are they looking at? I don't trust them. Do not take Stan's name in vain.
+
+And you can ignore the candid dismissals by [folks like 'Smyles'](https://twitter.com/duke_smyles/status/1607052807680524289?s=20), who said of opta's tweet:
+
+> What are we supposed to do with this information? [Picture of wryly-smiling duck.]
+
+No! Fool! This is more important than any Opta tweet ever; I'm certain they could be wrong and I am going to uncover their shenanigans.
+
+So I looked into it.
+
+Of course, this is completely trivial with [my {soccercolleagues} package for R](https://github.com/matt-dray/soccercolleagues) that I wrote earlier in 2022, which is built heavily (heavily!) on [the excellent {worldfootballR} package by Jason Zivkovic](https://jaseziv.github.io/worldfootballR/), which helps fetch player data from [Transfermarkt](https://www.transfermarkt.com/).
+
+The package's primary objective is to let you [find pairs of football players that were colleagues at some point](https://www.rostrum.blog/2022/02/04/soccercolleagues/). Like: 'which current Premier League footballer has been team mates with each of the following: Kevin Phillips, Mark Viduka, Dejan Lovren, Danny Ings and Nicky Butt?'[^boring]
+
+The package works by fetching data about footballers from every team in a given league's season since its inception.
+
+So, aha! You cannot escape me, Opta!
+
+Follow along. As ever, you can install the {soccercolleagues} package from GitHub:
+
+```{r eval=FALSE}
+if(!require(remotes)) install.packages("remotes")
+remotes::install_github("matt-dray/soccercolleagues")
+```
+
+We'll also use the {tidyverse} for the lols.
+
+```{r eval=FALSE}
+library(soccercolleagues)
+library(tidyverse)
+```
+
+The package contains a helper function to grab every human that's played in a given league over a certain set of seasons.
+
+So we can obviously ask for all the years of the English Premier League, which began in 1992:
+
+```{r eval=FALSE}
+# Takes a while to load!
+epl_players <- soccercolleagues::get_players(
+  seasons = 1992:2022,
+  country = "England"
+)
+```
+
+Right, so we have every Premier League player from 1992 to the current season.
+
+And now we can look for the players whose names contain the letters in 'nativity', as Opta mentioned in their tweet:
+
+```{r eval=FALSE}
+epl_players |>
+  distinct(player_name) |>
+  mutate(
+    player_name = str_remove_all(tolower(player_name), " "),
+    n_count = str_count(player_name, "n"),
+    a_count = str_count(player_name, "a"),
+    t_count = str_count(player_name, "t"),
+    i_count = str_count(player_name, "i"),
+    v_count = str_count(player_name, "v"),
+    y_count = str_count(player_name, "y")
+  ) |>
+  filter(
+    n_count >= 1 &
+      a_count >= 1 &
+      t_count >= 2 &
+      i_count >= 2 &
+      v_count >= 1 &
+      y_count >= 1
+  )
+## # A tibble: 1 × 7
+##   player_name    n_count a_count t_count i_count v_count y_count
+##   <chr>            <int>   <int>   <int>   <int>   <int>   <int>
+## 1 stiliyanpetrov       1       1       2       2       1       1
+```
+
+Oof... they were right. He is the only one.
+
+Wow, this humble pie is so delicious, thank you so much Opta for unintentionally spoonfeeding it to me.
+
+To be clear: I trust Opta's data analysts. Not their social media managers. I've got my eye on you. You'll slip up one day.
+
+And of course, regardless of outcome, I still respect Stiliyan (and other Bulgarian Premier League 'Petrovs', like cult legend [Martin](https://en.wikipedia.org/wiki/Martin_Petrov)).
+
+...But wait! Opta were misnaming Stan as 'Stylian Petrov' [as late as 2012](https://twitter.com/OptaJoe/status/169439820584714240?s=20)! Get rekt! You're missing the extra 'i' you need in 'nativity', idiots! Put respect on Siliyan's name!
+
+'Result'.
+
+---
+<details><summary>Session info</summary>
+```{r sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^boring]: Hint: it's a very 'boring' footballer, lol.
