@@ -42,19 +42,19 @@ draft: no
 <blockquote>
 <p>1 - Stiliyan Petrov (<span class="citation">@StanPetrov19</span>) is the only player to have played in the Premier League whose name contains all the letters in the word ‘Nativity’. Star.</p>
 </blockquote>
-<p>Obviously, I have absolutely nothing against <a href="https://en.wikipedia.org/wiki/Stiliyan_Petrov">‘Big Stan’</a>. He’s a legend; a ‘star’, if you will. Captain of Aston Villa! Bulgaria! Battled leukaemia and still made it to nearly 600 games.</p>
+<p>Obviously, I have absolutely nothing against <a href="https://en.wikipedia.org/wiki/Stiliyan_Petrov">‘Big Stan’</a>. He’s a legend; a ‘star’, if you will. Captain of Aston Villa! Bulgaria! Battled leukaemia and still made it to nearly 600 games. One of the best Bulgarian/Premier League ‘Petrovs’, along with cult legend <a href="https://en.wikipedia.org/wiki/Martin_Petrov">Martin</a>.</p>
 <p>But could this stat possibly be true? Surely there’s at least one other player. Perhaps a window of opportunity for me to avenge my feelings of cringe?</p>
-<p>Obviously you can ignore the candid dismissals in the tweets’ replies, <a href="https://twitter.com/duke_smyles/status/1607052807680524289?s=20">for example</a>:</p>
+<p>Oh, and obviously you can ignore the candid dismissals in the tweet’s replies, <a href="https://twitter.com/duke_smyles/status/1607052807680524289?s=20">for example</a>:</p>
 <blockquote>
 <p>What are we supposed to do with this information? [Picture of wryly-smiling duck.]</p>
 </blockquote>
-<p>No, this is more important than any Opta tweet ever: what if it’s… <em>wrong</em>.</p>
+<p>No, this is more important than any Opta tweet ever: what if it’s… <em>wrong</em>?</p>
 </div>
 <div id="stan-in-r-but-not-rstan" class="section level1">
 <h1>Stan in R, but not {rstan}</h1>
 <p>So I looked into it using R, of course.</p>
-<p>Turns out it’s pretty straightforward with <a href="https://github.com/matt-dray/soccercolleagues">my little {soccercolleagues} package</a> that <a href="https://www.rostrum.blog/2022/02/04/soccercolleagues/">I wrote about in early 2022</a>. It’s built heavily (heavily!) on <a href="https://jaseziv.github.io/worldfootballR/">the excellent {worldfootballR} package by Jason Zivkovic</a>, which helps fetch player data from <a href="https://www.transfermarkt.com/">Transfermarkt</a>.</p>
-<p>The niche<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> package’s primary objective is to let you <a href="https://www.rostrum.blog/2022/02/04/soccercolleagues/">find pairs of football players that were colleagues at some point</a>. Like: ‘which current Premier League footballer has been team mates with each of the following: Kevin Phillips, Mark Viduka, Dejan Lovren, Danny Ings and Nicky Butt?’<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<p>Turns out it’s pretty straightforward with <a href="https://github.com/matt-dray/soccercolleagues">my little {soccercolleagues} package</a> that <a href="https://www.rostrum.blog/2022/02/04/soccercolleagues/">I wrote about in early 2022</a>. It’s built heavily (heavily!) around <a href="https://jaseziv.github.io/worldfootballR/">the excellent {worldfootballR} package by Jason Zivkovic</a>, which helps fetch player data from <a href="https://www.transfermarkt.com/">Transfermarkt</a> (among other suppliers).</p>
+<p>The niche<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> primary objective of {soccercolleagues} is to let you <a href="https://www.rostrum.blog/2022/02/04/soccercolleagues/">find pairs of football players that were colleagues at some point</a>. Like: ‘which current Premier League footballer has been team mates with each of the following: Kevin Phillips, Mark Viduka, Dejan Lovren, Danny Ings and Nicky Butt?’<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
 <p>The package works by fetching data about footballers from every team in a given league’s season since its inception. So, aha, you cannot escape, Opta!</p>
 <p>Follow along. As ever, you can install the {soccercolleagues} package from GitHub:</p>
 <pre class="r"><code>if(!require(remotes)) install.packages(&quot;remotes&quot;)
@@ -63,14 +63,13 @@ remotes::install_github(&quot;matt-dray/soccercolleagues&quot;)</code></pre>
 <pre class="r"><code>library(soccercolleagues)
 library(tidyverse)</code></pre>
 <p>The package contains a helper function to grab every human that’s played in a given league over a certain set of seasons.</p>
-<p>So we can ask for all the years of the English Premier League, which began in 1992:</p>
+<p>So we can ask Transfermarkt for all the years of the English Premier League, which began in 1992:</p>
 <pre class="r"><code># This will take quite a long time...
 epl_players &lt;- soccercolleagues::get_players(
   seasons = 1992:2022,
   country = &quot;England&quot;
 )</code></pre>
-<p>Right, so we have every Premier League player from 1992 to the current season.</p>
-<p>And now we can look for the players whose names contain the letters in ‘nativity’, as Opta mentioned in their tweet:</p>
+<p>And now we can look for the players whose names contain the letters in ‘nativity’:</p>
 <pre class="r"><code>epl_players |&gt;
   distinct(player_name) |&gt;
   mutate(
@@ -96,9 +95,8 @@ epl_players &lt;- soccercolleagues::get_players(
 ## 1 stiliyanpetrov       1       1       2       2       1       1</code></pre>
 <p>Oof… they were right. He is the only one.</p>
 <p>Wow, this humble pie is so delicious, thank you so much Opta for unintentionally spoonfeeding it to me.</p>
-<p>To be clear: I trust Opta’s data analysts. Not their social media managers. I’ve got my eye on you. You’ll slip up one day.</p>
-<p>And of course, regardless of outcome, I still respect Stiliyan (and other Bulgarian Premier League ‘Petrovs’, like cult legend <a href="https://en.wikipedia.org/wiki/Martin_Petrov">Martin</a>).</p>
-<p>…But wait. Opta were misnaming Stan as ‘Stylian Petrov’ <a href="https://twitter.com/OptaJoe/status/169439820584714240?s=20">in tweets as late as 2012</a>. Get rekt! You’re missing the extra ‘i’ you need in ‘nativity’, fools! Put respect on Stiliyan’s name!</p>
+<p>To be clear: Opta’s data analysts have a good track record. But I’ve got my eye on you! You’ll slip up one day!</p>
+<p>…But wait. Opta were misnaming Stan as ‘Stylian Petrov’ <a href="https://twitter.com/OptaJoe/status/169439820584714240?s=20">in tweets as late as 2012</a>. Get rekt! You missed the extra ‘i’ you need in ‘nativity’, fools! Put respect on Stiliyan’s name!</p>
 <p>‘Result’.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
 <hr />
 <details>
@@ -155,7 +153,7 @@ Session info
 <hr />
 <ol>
 <li id="fn1"><p>This post is not guerilla marketing for Opta. It would be <em>extremely</em> guerilla if they wanted to advertise on <em>this</em> blog.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>There is definitely a burgeoning crossover of R users and footabll stats, see <a href="https://ryo-n7.github.io/">Ryo</a>, <a href="https://torvaney.github.io/">Ben</a> and <a href="https://tonyelhabr.rbind.io/">Tony</a>, for example.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>There is definitely a burgeoning crossover of football stats and R users, see <a href="https://ryo-n7.github.io/">Ryo</a>, <a href="https://torvaney.github.io/">Ben</a> and <a href="https://tonyelhabr.rbind.io/">Tony</a>, for example.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 <li id="fn3"><p>Hint: it’s a very ‘boring’ footballer, lol.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
 <li id="fn4"><p>By which I mean I lost 1-0.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
 </ol>

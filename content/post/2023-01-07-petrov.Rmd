@@ -46,23 +46,23 @@ But here's the scenario. Over the yuletide period (on Christmas day!) they ran [
 
 > 1 - Stiliyan Petrov (@StanPetrov19) is the only player to have played in the Premier League whose name contains all the letters in the word 'Nativity'. Star.
 
-Obviously, I have absolutely nothing against ['Big Stan'](https://en.wikipedia.org/wiki/Stiliyan_Petrov). He's a legend; a 'star', if you will. Captain of Aston Villa! Bulgaria! Battled leukaemia and still made it to nearly 600 games.
+Obviously, I have absolutely nothing against ['Big Stan'](https://en.wikipedia.org/wiki/Stiliyan_Petrov). He's a legend; a 'star', if you will. Captain of Aston Villa! Bulgaria! Battled leukaemia and still made it to nearly 600 games. One of the best Bulgarian/Premier League 'Petrovs', along with cult legend [Martin](https://en.wikipedia.org/wiki/Martin_Petrov).
 
 But could this stat possibly be true? Surely there's at least one other player. Perhaps a window of opportunity for me to avenge my feelings of cringe?
 
-Obviously you can ignore the candid dismissals in the tweets' replies, [for example](https://twitter.com/duke_smyles/status/1607052807680524289?s=20):
+Oh, and obviously you can ignore the candid dismissals in the tweet's replies, [for example](https://twitter.com/duke_smyles/status/1607052807680524289?s=20):
 
 > What are we supposed to do with this information? [Picture of wryly-smiling duck.]
 
-No, this is more important than any Opta tweet ever: what if it's... _wrong_.
+No, this is more important than any Opta tweet ever: what if it's... _wrong_?
 
 # Stan in R, but not {rstan}
 
 So I looked into it using R, of course. 
 
-Turns out it's pretty straightforward with [my little {soccercolleagues} package](https://github.com/matt-dray/soccercolleagues) that [I wrote about in early 2022](https://www.rostrum.blog/2022/02/04/soccercolleagues/). It's built heavily (heavily!) on [the excellent {worldfootballR} package by Jason Zivkovic](https://jaseziv.github.io/worldfootballR/), which helps fetch player data from [Transfermarkt](https://www.transfermarkt.com/).
+Turns out it's pretty straightforward with [my little {soccercolleagues} package](https://github.com/matt-dray/soccercolleagues) that [I wrote about in early 2022](https://www.rostrum.blog/2022/02/04/soccercolleagues/). It's built heavily (heavily!) around [the excellent {worldfootballR} package by Jason Zivkovic](https://jaseziv.github.io/worldfootballR/), which helps fetch player data from [Transfermarkt](https://www.transfermarkt.com/) (among other suppliers).
 
-The niche[^footballr] package's primary objective is to let you [find pairs of football players that were colleagues at some point](https://www.rostrum.blog/2022/02/04/soccercolleagues/). Like: 'which current Premier League footballer has been team mates with each of the following: Kevin Phillips, Mark Viduka, Dejan Lovren, Danny Ings and Nicky Butt?'[^boring]
+The niche[^footballr] primary objective of {soccercolleagues} is to let you [find pairs of football players that were colleagues at some point](https://www.rostrum.blog/2022/02/04/soccercolleagues/). Like: 'which current Premier League footballer has been team mates with each of the following: Kevin Phillips, Mark Viduka, Dejan Lovren, Danny Ings and Nicky Butt?'[^boring]
 
 The package works by fetching data about footballers from every team in a given league's season since its inception. So, aha, you cannot escape, Opta!
 
@@ -82,7 +82,7 @@ library(tidyverse)
 
 The package contains a helper function to grab every human that's played in a given league over a certain set of seasons.
 
-So we can ask for all the years of the English Premier League, which began in 1992:
+So we can ask Transfermarkt for all the years of the English Premier League, which began in 1992:
 
 ```{r eval=FALSE}
 # This will take quite a long time...
@@ -92,9 +92,7 @@ epl_players <- soccercolleagues::get_players(
 )
 ```
 
-Right, so we have every Premier League player from 1992 to the current season.
-
-And now we can look for the players whose names contain the letters in 'nativity', as Opta mentioned in their tweet:
+And now we can look for the players whose names contain the letters in 'nativity':
 
 ```{r eval=FALSE}
 epl_players |>
@@ -126,11 +124,9 @@ Oof... they were right. He is the only one.
 
 Wow, this humble pie is so delicious, thank you so much Opta for unintentionally spoonfeeding it to me.
 
-To be clear: I trust Opta's data analysts. Not their social media managers. I've got my eye on you. You'll slip up one day.
+To be clear: Opta's data analysts have a good track record. But I've got my eye on you! You'll slip up one day!
 
-And of course, regardless of outcome, I still respect Stiliyan (and other Bulgarian Premier League 'Petrovs', like cult legend [Martin](https://en.wikipedia.org/wiki/Martin_Petrov)).
-
-...But wait. Opta were misnaming Stan as 'Stylian Petrov' [in tweets as late as 2012](https://twitter.com/OptaJoe/status/169439820584714240?s=20). Get rekt! You're missing the extra 'i' you need in 'nativity', fools! Put respect on Stiliyan's name!
+...But wait. Opta were misnaming Stan as 'Stylian Petrov' [in tweets as late as 2012](https://twitter.com/OptaJoe/status/169439820584714240?s=20). Get rekt! You missed the extra 'i' you need in 'nativity', fools! Put respect on Stiliyan's name!
 
 'Result'.[^score]
 
@@ -142,6 +138,6 @@ sessioninfo::session_info()
 </details>
 
 [^sponsor]: This post is not guerilla marketing for Opta. It would be _extremely_ guerilla if they wanted to advertise on _this_ blog.
-[^footballr]: There is definitely a burgeoning crossover of R users and footabll stats, see [Ryo](https://ryo-n7.github.io/), [Ben](https://torvaney.github.io/) and [Tony](https://tonyelhabr.rbind.io/), for example.
+[^footballr]: There is definitely a burgeoning crossover of football stats and R users, see [Ryo](https://ryo-n7.github.io/), [Ben](https://torvaney.github.io/) and [Tony](https://tonyelhabr.rbind.io/), for example.
 [^boring]: Hint: it's a very 'boring' footballer, lol.
 [^score]: By which I mean I lost 1-0.
