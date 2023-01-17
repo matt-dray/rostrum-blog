@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 8 day(s) ago: [Stiliyan Petrov:
+🆕 The latest post was published 9 day(s) ago: [Stiliyan Petrov:
 Jesus?](https://www.rostrum.blog/2023/01/08/petrov/).
 
 📈 This 2D plot shows posts over time:
@@ -185,4 +185,4 @@ Jesus?](https://www.rostrum.blog/2023/01/08/petrov/).
 
 -----
 
-*Updated on 2023-01-16 at 02:53.*
+*Updated on 2023-01-17 at 02:48.*
