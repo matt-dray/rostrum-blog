@@ -1,8 +1,8 @@
 ---
 title: 'Wrapping PokéAPI with {trapinch}'
 author: Matt Dray
-date: '2023-01-30'
-slug: trapinch-begin
+date: '2023-02-02'
+slug: trapinch
 categories:
   - code
   - package
@@ -19,56 +19,56 @@ draft: no
 
 
 <div class="figure">
-<p><img src="/post/2023-01-30-trapinch-begin_files/trapinch_hex.png" alt="Hex sticker design for the 'trapinch' R package. An orange background and grey border are sampled from the official art of the Pokémon trapinch. A pixellated black zig-zag goes left-to-right above centre to represent the Pokémon trapnich's distinctive mouth. A pixellated font says 'trapinch' and underneath 'R interface to PokéAPI'" width="33%"/></p>
+<p><img src="/post/2023-01-30-trapinch-begin_files/trapinch_hex.png" alt="Hex sticker design for the 'trapinch' R package. An orange background and grey border are sampled from the official art of the Pokémon trapinch. A pixellated black zig-zag goes left-to-right above centre to represent the Pokémon trapinch's distinctive mouth. A pixellated font says 'trapinch' in the font used for the original Pokémon Game Boy games and underneath it says 'R interface to PokéAPI'." width="40%"/></p>
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>I’ve begun the <a href="https://github.com/matt-dray/trapinch">{trapinch}</a> R package to wrap the <a href="https://pokeapi.co/">PokéAPI</a>, underpinned by <a href="https://httr2.r-lib.org/">{httr2}</a>.</p>
+<p>I’ve used <a href="https://httr2.r-lib.org/">the {httr2} R package</a> to create <a href="https://github.com/matt-dray/trapinch">{trapinch}</a>, a package that wraps <a href="https://pokeapi.co/">PokéAPI</a> for fetching Pokémon data.</p>
 </div>
 <div id="httr-me-baby-one-more-time" class="section level1">
 <h1>{httr} me baby one more time</h1>
-<p><a href="https://httr2.r-lib.org/">The {httr2} package</a> is a friendly, modular rewrite of <a href="https://httr.r-lib.org/">{httr}</a> for dealing with HTTP requests and responses (‘talking to the internet’).</p>
-<p>By ‘friendly’ I mean that the functions are abstracted and consistently prefixed. By ‘modular’ I mean the functions are relatively small and pipeable so they can be built up to generate requests and handle responses.</p>
-<p>I’ve made use of {httr} to <a href="https://www.rostrum.blog/2021/08/27/zzz/">expore package startup messages</a> and <a href="https://www.rostrum.blog/2021/07/10/linkrot/">to detect linkrot on webpages</a>, so now it’s time to try {httr2}. What would be a rostrum.blog-appropriate API to work with?</p>
+<p><a href="https://httr2.r-lib.org/">The {httr2} package</a> lets you talk to the internet. Or, if you’re fancy, it ‘helps you deal programmatically with HTTP requests and responses’ so you can use it to fetch data from <a href="https://en.wikipedia.org/wiki/API">Application Programming Interfaces</a> (APIs).</p>
+<p>{httr2} has functions that are prefixed consistently (<code>req_*()</code>, <code>resp_()*</code>, etc), are narrow in scope, pipeable (<code>|&gt;</code>) and which return nice errors and messages. These are neat improvements on <a href="https://httr.r-lib.org/">the original {httr} package</a>.</p>
+<p>I’ve used {httr} before to <a href="https://www.rostrum.blog/2021/08/27/zzz/">explore R package startup messages</a> and <a href="https://www.rostrum.blog/2021/07/10/linkrot/">detect linkrot</a>. It’s time to try out {httr2}. What simple API can I wrap into an R package?<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
 </div>
-<div id="pokéapi" class="section level1">
-<h1>PokéAPI</h1>
-<p>Yup.</p>
-<p>You can query the <a href="https://pokeapi.co/">PokéAPI</a> API for all sorts of information related to the Pokémon series of games.</p>
-<p>It’s a relatively simple API and good to practice with. It doesn’t require sign-up nor API tokens. URLs used for getting data are simple too: you append an endpoint and a resource of interest to the base URL in the form <code>https://pokeapi.co/api/v2/{endpoint}/{resource}</code>.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
-<p>In other words, you could type <a href="https://pokeapi.co/api/v2/pokemon/lotad/" class="uri">https://pokeapi.co/api/v2/pokemon/lotad/</a> in your browser and the API would respond with information about <a href="https://archives.bulbagarden.net/media/upload/2/2c/Lotad_PMRS.png">Lotad, the best Pokémon</a>.</p>
-<p>But {httr2} will let us do this programmatically.</p>
+<div id="poke-an-api" class="section level1">
+<h1>Poke an API</h1>
+<p>Regular readers will be unsurprised that I’ve chosen <a href="https://pokeapi.co/">the PokéAPI API</a> for fetching all sorts of information related to <a href="https://en.wikipedia.org/wiki/Pok%C3%A9mon">the Pokémon game franchise</a>.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>PokéAPI provides a <a href="https://pokeapi.co/docs/v2">relatively simple API</a>. Sign-up and API tokens aren’t required and you can only read (‘GET’) data from it.</p>
+<p>URL paths for fetching data are also straightforward: you append an endpoint and a resource of interest to the base URL in the form <code>https://pokeapi.co/api/v2/{endpoint}/{resource}</code>.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<p>In other words, you could type <a href="https://pokeapi.co/api/v2/pokemon/lotad"><code>https://pokeapi.co/api/v2/pokemon/lotad</code></a> in your browser and the API would respond with a JSON file containing data about <a href="https://archives.bulbagarden.net/media/upload/2/2c/Lotad_PMRS.png">Lotad, the best Pokémon</a>.</p>
+<p>{httr2} lets us do this programmatically and can return a more R-friendly list object.</p>
 </div>
-<div id="features" class="section level1">
-<h1>Features</h1>
-<p>There’s a lot to improve in {trapinch}, but I’m sharing it in case I don’t take it any further, or in case you want to contribute <a href="https://github.com/matt-dray/trapinch/issues">an issue</a> or pull request.</p>
-<p>The package requires R version 4.1 or higher (because it uses <code>R_user_dir</code> and the base pipe, <code>|&gt;</code>, internally) and can be downloaded from GitHub:</p>
+<div id="its-a-trapinch" class="section level1">
+<h1>It’s a trapinch</h1>
+<p>So, I’ve created <a href="https://github.com/matt-dray/trapinch">the {trapinch} package</a>.</p>
+<p>It’s a proof of concept; a work in progress. There’s probably <a href="https://bulbapedia.bulbagarden.net/wiki/Bug_(type)">bugs</a>. I’m sharing it in case I don’t take it any further, or if you want to contribute <a href="https://github.com/matt-dray/trapinch/issues">an issue</a> or pull request.</p>
+<p>You can download it from GitHub. It depends on {httr2} (obviously), <a href="https://CRAN.R-project.org/package=RCurl">{rcurl}</a> and R version 4.1 or higher<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> and can be downloaded from GitHub:</p>
 <pre class="r"><code>install.packages(&quot;remotes&quot;)  # if not yet installed
-remotes::install_github(&quot;matt-dray/trapinch&quot;)  # v0.1 here</code></pre>
-<p>And then we can attach it as usual:</p>
-<pre class="r"><code>library(trapinch)</code></pre>
-<div id="main-functions" class="section level2">
-<h2>Main functions</h2>
-<p>There’s a generic low-level function, <code>get_pokeapi()</code>, to which you pass the <code>endpoint</code> and <code>resource</code> ID (numeric) or name (character) of interest. Each endpoint also has its own dedicated function, like <code>get_item()</code> or <code>get_move()</code>, which ultimately calls <code>get_pokeapi()</code> under the hood.</p>
-<p>You can look at <code>resource_lookups</code> to get a dataframe of resource IDs and names for each endpoint. Here’s the first few:</p>
+remotes::install_github(&quot;matt-dray/trapinch&quot;)  # v0.0.1 in this post
+library(trapinch)</code></pre>
+<p>Do not be surprised if function names or general functionality change in future.</p>
+<div id="gotta-get-em-all" class="section level2">
+<h2>Gotta GET ’em all</h2>
+<p>There’s a generic low-level function, <code>get_pokeapi()</code>, to which you pass the <code>endpoint</code> and <code>resource</code> ID (numeric) or name (character) of interest. Each endpoint also has its own dedicated function, like <code>get_item()</code> or <code>get_move()</code> that calls <code>get_pokeapi()</code> under the hood.</p>
+<p>You can look at the inbuilt <code>resource_lookups</code> list to get a dataframe of resource IDs and names for each endpoint, as well as the full URL needed to query the API. Here’s the first few:</p>
 <pre class="r"><code>head(names(resource_lookups))</code></pre>
-<pre><code>## [1] &quot;ability&quot;        &quot;berry&quot;          &quot;berry-firmness&quot; &quot;berry-flavor&quot;  
+<pre class="r"><code>## [1] &quot;ability&quot;        &quot;berry&quot;          &quot;berry-firmness&quot; &quot;berry-flavor&quot;  
 ## [5] &quot;characteristic&quot; &quot;contest-effect&quot;</code></pre>
-<p>And here’s the first few rows of the resource dataframe for the ‘pokemon’ endpoint:</p>
+<p>So here’s the first few rows of the resource dataframe for the ‘pokemon’ endpoint:</p>
 <pre class="r"><code>head(resource_lookups[[&quot;pokemon&quot;]])</code></pre>
-<pre><code>##   id       name                                  url
+<pre class="r"><code>##   id       name                                  url
 ## 1  1  bulbasaur https://pokeapi.co/api/v2/pokemon/1/
 ## 2  2    ivysaur https://pokeapi.co/api/v2/pokemon/2/
 ## 3  3   venusaur https://pokeapi.co/api/v2/pokemon/3/
 ## 4  4 charmander https://pokeapi.co/api/v2/pokemon/4/
 ## 5  5 charmeleon https://pokeapi.co/api/v2/pokemon/5/
 ## 6  6  charizard https://pokeapi.co/api/v2/pokemon/6/</code></pre>
-<p>One of these resource names is ‘mew’, the legendary first-generation Pokémon. You could use <code>get_pokeapi("pokemon", "mew")</code> to retrieve its data, or more simply:</p>
+<p>One of these resource names is ‘mew’, <a href="https://bulbapedia.bulbagarden.net/wiki/Mew_(Pok%C3%A9mon)">the legendary first-generation Pokémon</a>.<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> You could use <code>get_pokeapi("pokemon", "mew")</code> to retrieve its data, or more simply:</p>
 <pre class="r"><code>mew &lt;- get_pokemon(&quot;mew&quot;)</code></pre>
-<pre><code>## Please check your internet connection.</code></pre>
-<p>The function outputs a list of lists, which is parsed from the JSON response provided by the API. So for the ‘pokemon’ endpoint we get 18 different elements of various classes:</p>
+<p>The function returns a list of lists, which is parsed from the JSON response returned by the API. So for the ‘pokemon’ endpoint we get 18 different elements of various classes:</p>
 <pre class="r"><code>str(mew, max.level = 1)</code></pre>
-<pre><code>## List of 18
+<pre class="r"><code>## List of 18
 ##  $ abilities               :List of 1
 ##  $ base_experience         : int 300
 ##  $ forms                   :List of 1
@@ -87,32 +87,46 @@ remotes::install_github(&quot;matt-dray/trapinch&quot;)  # v0.1 here</code></pre
 ##  $ stats                   :List of 6
 ##  $ types                   :List of 1
 ##  $ weight                  : int 40</code></pre>
-<p>I’ve shown only the top level <code>str</code>ucture to hide some of the complexity. For example, the ‘moves’ item contains all the moves a Pokémon can learn, at what level it can learn them, in which game it learns them, and so on. So grabbing the first of the 363 moves listed for Mew looks like this (oof):</p>
+<p>I’ve shown only the top level <code>str</code>ucture to hide some of the complexity. For example, the ‘moves’ item contains all the moves a Pokémon can learn, at what level it can learn them, in which game it learns them, and so on. Grabbing the first of the 363 ‘moves’ items (!) listed for Mew looks like this (oof):</p>
 <pre class="r"><code>mew[[&quot;moves&quot;]][[1]][[&quot;move&quot;]][[&quot;name&quot;]]</code></pre>
-<pre><code>## [1] &quot;pound&quot;</code></pre>
+<pre class="r"><code>## [1] &quot;pound&quot;</code></pre>
 <p>A future task might be to simplify some of this complexity by collapsing deep lists into dataframes where possible.</p>
 </div>
-<div id="auto-paging" class="section level2">
-<h2>Auto-paging</h2>
+<div id="thumbing-the-pokédex" class="section level2">
+<h2>Thumbing the Pokédex</h2>
 <p>The API responses are ‘paged’, meaning that you must make successive requests of a set size to retrieve all the data for a given endpoint. The <code>get_*()</code> functions automatically expand the request to ask for all the items in one go.</p>
 <p>We know the maximum number of items to be returned from an endpoint because the stored in the <code>resource_lookups</code> object, so this can be appended automatically to the request string.</p>
 </div>
-<div id="caching" class="section level2">
-<h2>Caching</h2>
+<div id="bills-pc" class="section level2">
+<h2>BILL’s PC</h2>
 <p>Responses are cached, which means that the data is saved on your computer. If you make the same request, the data will be retrieved first from the cache rather than calling the API again. That means there’s one less request for the API to deal with.</p>
-<p>The cache is the path resolved by <code>R_user_dir("trapinch", "cache")</code>, a function that was introduced in R v4.0 for platform-independent storage of package-related data on a user’s machine.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> You can delete everything from the cache with <code>clear_cache()</code>.</p>
+<p>The cache is the path resolved by <code>R_user_dir("trapinch", "cache")</code>. This function was introduced in R v4.0 for platform-independent storage of package-related data on a user’s machine.<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a> You can delete everything from the cache with <code>clear_cache()</code>.</p>
+</div>
+<div id="substitute" class="section level2">
+<h2>Substitute</h2>
+<p><a href="https://enpiar.com/httptest2/">{httptest2}</a> is a handy package that lets you test code written with {httr2}, specifically.</p>
+<p>Why would you need special testing for API calls? The idea is that you should be able to test your package without the need for an active internet connection. {httptest2} ‘records’ the calls you make when you run your tests, then chooses when testing between this ‘mock’ response and a ‘live’ response.</p>
+<p>The approach is pretty simple if you’ve tested before with {testthat}: you wrap your normal <code>test_that()</code> call with <code>httr2::with_mock_dir()</code>. Here’s an example of a test that make sure we get a list back from the API when we use <code>get_pokeapi()</code>:</p>
+<pre class="r"><code>with_mock_dir(&quot;endpoint&quot;, {
+  test_that(&quot;a list is returned&quot;, {
+    expect_type(get_pokeapi(&quot;move-battle-style&quot;), &quot;list&quot;)
+  })
+})</code></pre>
+<p>By wrapping the test in <code>with_mock_dir()</code>, {httptest2} creates the directory <code>tests/endpoint/</code> that stores a copy of the JSON returned for this call when an internet connection was live.</p>
+<p>As an aside, I learnt about <code>curl::has_internet()</code> in <a href="https://colinfay.me/build-api-wrapper-package-r/">Colin’s blogpost</a>, which can <code>stop()</code> the <code>get_*()</code> functions if there’s no internet connection. But <code>has_internet()</code> will trigger if you’re offline when you test, defeating the purpose of {httptest2}! Luckily, I saw <a href="https://blog.r-hub.io/2023/01/23/code-switch-escape-hatch-test/">a timely post by Maëlle</a> about integrating this type of check into an ‘escape hatch’ so your unit tests can be run successfully in this scenario.</p>
+<p>The <a href="https://books.ropensci.org/http-testing/">rOpenSci HTTP Testing book</a> is a good general port of call as well.</p>
 </div>
 </div>
-<div id="httr2" class="section level1">
-<h1>{httr2}</h1>
-<p>The user-facing functions of {trapinch} are therefore pretty simple. How daunting does the code look in the back-end? Turns out that it’s not that scary, thanks to those friendly and modular functions of {httr2}.</p>
-<p>So let’s walk through what’s happening in that earlier <code>get_pokemon("mew")</code> call.</p>
-<p>We can use the {httr2} functions to build up an API call by:</p>
+<div id="inside-the-poké-ball" class="section level1">
+<h1>Inside the Poké Ball</h1>
+<p>The user-facing functions of {trapinch} are therefore pretty simple. I could leave it at that.</p>
+<p>But how daunting does the underlying {httr2} code look in the back-end? Turns out that it’s not that scary, thanks to those friendly and modular functions of {httr2}.</p>
+<p>We can walk through that earlier <code>get_pokemon("mew")</code> call using bare {httr2} functions by:</p>
 <ol style="list-style-type: decimal">
-<li>Starting with the base URL</li>
-<li>Appending the endpoint and resource as extensions (in the form <code>/pokemon/mew</code>)</li>
-<li>Adding a query for the maximum number of items in this endpoint-resource combo (in the form <code>?limit=1279</code>)</li>
-<li>Announcing to the API, as courtesy, who has made the call</li>
+<li>Starting with the base API URL</li>
+<li>Appending the endpoint and resource as extensions (i.e. in the form <code>/pokemon/mew</code>)</li>
+<li>Adding a query for the maximum number of items in this endpoint-resource combo (i.e. <code>?limit=1279</code>)</li>
+<li>Announcing to the API, as courtesy, who has made the call (i.e. who is the ‘user agent’)</li>
 <li>Specifying the cache location for results to be saved</li>
 </ol>
 <p>First some variables:</p>
@@ -132,28 +146,30 @@ mew_request &lt;- request(base_url) |&gt;
   req_cache(cache_dir)</code></pre>
 <p>Printing the object summarises the request:</p>
 <pre class="r"><code>mew_request</code></pre>
-<pre><code>## &lt;httr2_request&gt;</code></pre>
-<pre><code>## GET https://pokeapi.co/api/v2/pokemon/mew?limit=1279</code></pre>
-<pre><code>## Body: empty</code></pre>
-<pre><code>## Options:</code></pre>
-<pre><code>## • useragent: &#39;trapinch (http://github.com/matt-dray/trapinch)&#39;</code></pre>
-<pre><code>## Policies:</code></pre>
-<pre><code>## • cache_path: &#39;/Users/mattdray/Library/Caches/org.R-project.R/R/trapinch&#39;</code></pre>
-<pre><code>## • cache_use_on_error: FALSE</code></pre>
-<pre><code>## • cache_debug: FALSE</code></pre>
+<pre><code>## &lt;httr2_request&gt;
+## GET https://pokeapi.co/api/v2/pokemon/mew?limit=1279
+## Body: empty
+## Options:
+## • useragent: &#39;trapinch (http://github.com/matt-dray/trapinch)&#39;
+## Policies:
+## • cache_path: &#39;/Users/mattdray/Library/Caches/org.R-project.R/R/trapinch&#39;
+## • cache_use_on_error: FALSE
+## • cache_debug: FALSE</code></pre>
 <p>Then we can actually execute the request:</p>
-<pre class="r"><code>mew_perform &lt;- req_perform(mew_request)
-mew_perform</code></pre>
-<pre><code>## &lt;httr2_response&gt;</code></pre>
-<pre><code>## GET https://pokeapi.co/api/v2/pokemon/mew?limit=1279</code></pre>
-<pre><code>## Status: 200 OK</code></pre>
-<pre><code>## Content-Type: application/json</code></pre>
-<pre><code>## Body: In memory (561317 bytes)</code></pre>
+<pre class="r"><code>mew_perform &lt;- req_perform(mew_request)</code></pre>
+<p>Again, we can peek at the object to get some extra information about the processing of the request:</p>
+<pre class="r"><code>mew_perform</code></pre>
+<pre><code>## &lt;httr2_response&gt;
+## GET https://pokeapi.co/api/v2/pokemon/mew?limit=1279
+## Status: 200 OK
+## Content-Type: application/json
+## Body: In memory (561317 bytes)</code></pre>
 <p>We can see the request was successful, since the HTTP status was <code>200 OK</code>. Other <a href="https://en.wikipedia.org/wiki/List_of_HTTP_status_codes">status values</a> are possible and may require us to try again later, for example.</p>
+<p>A couple of functions to mention here are <code>last_request()</code> and <code>last_response()</code>, which will also (surprise!) spit out info about the last request you made and the response received.</p>
 <p>Finally we can parse the JSON returned by the API. Again, I’m presenting the top-level <code>str</code>ucture only, given its complexity:</p>
 <pre class="r"><code>mew_response &lt;- resp_body_json(mew_perform)
 str(mew_response, max.level = 1)</code></pre>
-<pre><code>## List of 18
+<pre class="r"><code>## List of 18
 ##  $ abilities               :List of 1
 ##  $ base_experience         : int 300
 ##  $ forms                   :List of 1
@@ -172,28 +188,16 @@ str(mew_response, max.level = 1)</code></pre>
 ##  $ stats                   :List of 6
 ##  $ types                   :List of 1
 ##  $ weight                  : int 40</code></pre>
-<p>And so yes, this is indeed the same information we retrieved earlier with <code>get_pokemon("mew")</code>.</p>
+<p>Boom: this matches the information we retrieved earlier with <code>get_pokemon("mew")</code>.</p>
 </div>
-<div id="testing-testing" class="section level1">
-<h1>Testing testing</h1>
-<p><a href="https://enpiar.com/httptest2/">{httptest2}</a> is a neat package that lets you test code written with {httr2}, specifically.</p>
-<p>Why would you need special testing for API calls? The idea is that you should be able to test your package without the need for an active internet connection. {httptest2} ‘records’ the calls you make when you run your tests, then chooses when testing between this ‘mock’ response and a ‘live’ response.</p>
-<p>The approach is pretty simple if you’ve tested with {testthat} before: you wrap your normal <code>test_that()</code> call with <code>httr2::with_mock_dir()</code>. Here’s an example of a test that make sure we get a list back from the API when we use <code>get_pokeapi()</code>:</p>
-<pre class="r"><code>with_mock_dir(&quot;endpoint&quot;, {
-  test_that(&quot;a list is returned&quot;, {
-    expect_type(get_pokeapi(&quot;move-battle-style&quot;), &quot;list&quot;)
-  })
-})</code></pre>
-<p>By wrapping the test in <code>with_mock_dir()</code>, {httptest2} creates the directory <code>tests/endpoint/</code> that stores a copy of the JSON returned for this call when an internet connection was live.</p>
-<p>As an aside, I learnt about <code>curl::has_internet()</code> in <a href="https://colinfay.me/build-api-wrapper-package-r/">Colin’s blogpost</a>, which can <code>stop()</code> the <code>get_*()</code> functions if there’s no internet connection. But <code>has_internet()</code> will trigger if you’re offline when you test, defeating the purpose of {httptest2}! Luckily, I saw <a href="https://blog.r-hub.io/2023/01/23/code-switch-escape-hatch-test/">a timely post by Maëlle</a> about integrating this type of check into an ‘escape hatch’ so your unit tests can be run successfully offline.</p>
-</div>
-<div id="whats-in-a-name" class="section level1">
-<h1>What’s in a name?</h1>
-<p>Why ‘trapinch’? In short, <a href="https://bulbapedia.bulbagarden.net/wiki/Trapinch_(Pok%C3%A9mon)">‘trapinch’ is the name of a Pokémon</a> that contains the letters ‘R API’, which is cute. It also makes for an easy hex sticker with the Pokémon’s characteristic zigzag mouth and colour palette of orange and grey.</p>
-<p>So why not ‘rapidash’, which starts with ‘R API’? Easy, lol: ‘trapinch’ isn’t taken yet on <a href="https://cheeaun.github.io/repokemon/">Repokémon</a>, a page by <a href="https://github.com/cheeaun">Chee Aun</a> that lists GitHub repositories that are named after Pokémon.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<div id="whos-that-pokémon" class="section level1">
+<h1>Who’s that Pokémon?</h1>
+<p>I know you’re thinking ‘why trapinch?’ In short, <a href="https://bulbapedia.bulbagarden.net/wiki/Trapinch_(Pok%C3%A9mon)">it’s the name of a Pokémon</a> that contains the letters ‘R API’, which is cute. It also makes for an easy hex sticker with the Pokémon’s characteristic zigzag mouth and colour palette of orange and grey.</p>
+<p>So why not ‘rapidash’, which starts with ‘R API’? Easy, lol: trapinch isn’t taken yet on <a href="https://cheeaun.github.io/repokemon/">Repokémon</a>, a page by <a href="https://github.com/cheeaun">Chee Aun</a> that lists GitHub repositories that are named after Pokémon.<a href="#fn7" class="footnote-ref" id="fnref7"><sup>7</sup></a></p>
 <div class="figure">
-<p><img src="/post/2023-01-30-trapinch-begin_files/trapinch-repokemon.png" alt="A screenshot of a portion of the Repokémon webpage. It's an image of the Pokémon called trapinch. Underneath is its name and then the blurb, fork- and star-count for the matt-dray/trapinch GitHub repository." width="33%"/></p>
+<p><img src="/post/2023-01-30-trapinch-begin_files/trapinch-repokemon.png" alt="A screenshot of a portion of the Repokémon webpage. It's an image of the Pokémon called trapinch. Underneath is its name and then the blurb, fork- and star-count for the matt-dray/trapinch GitHub repository." width="40%"/></p>
 </div>
+<p>Join me next time as I continue my quest to write (sometimes) useful R packages that help me squat all the remaining spots on Repokémon.</p>
 <hr />
 <details>
 <summary>
@@ -209,41 +213,36 @@ Session info
 ##  collate  en_US.UTF-8
 ##  ctype    en_US.UTF-8
 ##  tz       Europe/London
-##  date     2023-02-01
+##  date     2023-02-02
 ##  pandoc   2.19.2 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
-##  package     * version    date (UTC) lib source
-##  blogdown      1.9        2022-03-28 [1] CRAN (R 4.2.0)
-##  bookdown      0.26       2022-04-15 [1] CRAN (R 4.2.0)
-##  bslib         0.3.1      2021-10-06 [1] CRAN (R 4.2.0)
-##  cli           3.6.0      2023-01-09 [1] CRAN (R 4.2.0)
-##  curl          5.0.0      2023-01-12 [1] CRAN (R 4.2.0)
-##  digest        0.6.29     2021-12-01 [1] CRAN (R 4.2.0)
-##  evaluate      0.15       2022-02-18 [1] CRAN (R 4.2.0)
-##  fastmap       1.1.0      2021-01-25 [1] CRAN (R 4.2.0)
-##  glue          1.6.2      2022-02-24 [1] CRAN (R 4.2.0)
-##  htmltools     0.5.2      2021-08-25 [1] CRAN (R 4.2.0)
-##  httr2       * 0.2.2      2022-09-25 [1] CRAN (R 4.2.0)
-##  jquerylib     0.1.4      2021-04-26 [1] CRAN (R 4.2.0)
-##  jsonlite      1.8.4      2022-12-06 [1] CRAN (R 4.2.0)
-##  knitr         1.39       2022-04-26 [1] CRAN (R 4.2.0)
-##  lifecycle     1.0.3      2022-10-07 [1] CRAN (R 4.2.0)
-##  magrittr      2.0.3      2022-03-30 [1] CRAN (R 4.2.0)
-##  R6            2.5.1      2021-08-19 [1] CRAN (R 4.2.0)
-##  rappdirs      0.3.3      2021-01-31 [1] CRAN (R 4.2.0)
-##  rlang         1.0.6      2022-09-24 [1] CRAN (R 4.2.0)
-##  rmarkdown     2.14       2022-04-25 [1] CRAN (R 4.2.0)
-##  rstudioapi    0.14       2022-08-22 [1] CRAN (R 4.2.0)
-##  sass          0.4.1      2022-03-23 [1] CRAN (R 4.2.0)
-##  sessioninfo   1.2.2      2021-12-06 [1] CRAN (R 4.2.0)
-##  stringi       1.7.8      2022-07-11 [1] CRAN (R 4.2.0)
-##  stringr       1.5.0      2022-12-02 [1] CRAN (R 4.2.0)
-##  trapinch    * 0.0.0.9000 2023-01-30 [1] Github (matt-dray/trapinch@420641f)
-##  vctrs         0.5.1      2022-11-16 [1] CRAN (R 4.2.0)
-##  withr         2.5.0      2022-03-03 [1] CRAN (R 4.2.0)
-##  xfun          0.30       2022-03-02 [1] CRAN (R 4.2.0)
-##  yaml          2.3.5      2022-02-21 [1] CRAN (R 4.2.0)
+##  package     * version date (UTC) lib source
+##  blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.6.0   2023-01-09 [1] CRAN (R 4.2.0)
+##  digest        0.6.29  2021-12-01 [1] CRAN (R 4.2.0)
+##  evaluate      0.15    2022-02-18 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  glue          1.6.2   2022-02-24 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.4   2022-12-06 [1] CRAN (R 4.2.0)
+##  knitr         1.39    2022-04-26 [1] CRAN (R 4.2.0)
+##  lifecycle     1.0.3   2022-10-07 [1] CRAN (R 4.2.0)
+##  magrittr      2.0.3   2022-03-30 [1] CRAN (R 4.2.0)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+##  rlang         1.0.6   2022-09-24 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.14    2022-08-22 [1] CRAN (R 4.2.0)
+##  sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+##  stringi       1.7.8   2022-07-11 [1] CRAN (R 4.2.0)
+##  stringr       1.5.0   2022-12-02 [1] CRAN (R 4.2.0)
+##  vctrs         0.5.1   2022-11-16 [1] CRAN (R 4.2.0)
+##  xfun          0.30    2022-03-02 [1] CRAN (R 4.2.0)
+##  yaml          2.3.5   2022-02-21 [1] CRAN (R 4.2.0)
 ## 
 ##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
 ## 
@@ -253,8 +252,15 @@ Session info
 <div class="footnotes footnotes-end-of-document">
 <hr />
 <ol>
-<li id="fn1"><p>There’s one exception: for Pokémon encounters you need the form <code>/pokemon/{resource}/encounters</code>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>I made a mockery of <code>R_user_dir</code>‘s functionality in <a href="https://www.rostrum.blog/2022/11/13/tamrgo/">my toy package {tamRgo}</a>, which uses the location to store data for a persistent cyberpet (’Tamagotchi’) that you can interact with in the R console.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
-<li id="fn3"><p>I have history with this: <a href="https://www.rostrum.blog/2021/04/10/dialga/">my {dialga} package</a> is named for <a href="https://bulbapedia.bulbagarden.net/wiki/Dialga_(Pok%C3%A9mon)">the legendary ‘temporal’ Pokémon</a> from the <em>Diamond</em> and <em>Pearl</em> games, which is fitting because the package converts between R code, <a href="https://en.wikipedia.org/wiki/Cron">cron strings</a> and English.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn1"><p>There’s <a href="https://github.com/public-apis/public-apis">a GitHub repo with a big long list of free APIs</a> that you can try out.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p><a href="https://pokeapi.co/docs/v2#wrap">The PokéAPI
+website</a> notes several wrappers in various languages. There exist R wrappers like <a href="https://github.com/UBC-MDS/pokedex">UBC-MDS’s
+{pokedex}</a> and <a href="https://nguyeneva.github.io/2020-02-06-rwrapper/">Eva Nguyen’s
+{pokeWrapper}</a>, but these appear smaller in scope and haven’t been updated for a while.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>There’s one exception: for Pokémon encounters you need the form <code>/pokemon/{resource}/encounters</code>. The <code>get_pokeapi()</code> function handles this extension with a third argument, <code>ext</code>, which is pre-filled with the string <code>"encounters"</code> in the <code>get_pokemon_location_areas()</code> function, so you don’t have to think about it.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>This is entirely because I wanted to use <code>tools::R_user_dir()</code> for caching, which was introduced in v4.0. And if we’re depending on v4.0, why not bump to v4.1 and use the base pipe, <code>|&gt;</code>?<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>I’ll say it: <a href="https://bulbapedia.bulbagarden.net/wiki/Mew_(Pok%C3%A9mon)#Sprites">the original Japanese Red/Green Mew sprite</a> was baller. Battle me.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+<li id="fn6"><p>I made a mockery of <code>R_user_dir</code>’s functionality in <a href="https://www.rostrum.blog/2022/11/13/tamrgo/">my toy package {tamRgo}</a>, which uses the location to store data for a persistent cyberpet (like a <a href="https://en.wikipedia.org/wiki/Tamagotchi">Tamagotchi</a>) that you can interact with in the R console.<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
+<li id="fn7"><p>I have history with this: <a href="https://www.rostrum.blog/2021/04/10/dialga/">my {dialga} package</a> is named for <a href="https://bulbapedia.bulbagarden.net/wiki/Dialga_(Pok%C3%A9mon)">the legendary ‘temporal’ Pokémon</a> from the <em>Diamond</em> and <em>Pearl</em> games, which is fitting because the package converts between R code, <a href="https://en.wikipedia.org/wiki/Cron">cron strings</a> and English.<a href="#fnref7" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
