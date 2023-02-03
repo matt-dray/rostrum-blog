@@ -25,13 +25,13 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 137 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 138 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
-📅 That’s a post roughly every 13 days, or about 2.3 posts per month.
+📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 25 day(s) ago: [Stiliyan Petrov:
-Jesus?](https://www.rostrum.blog/2023/01/08/petrov/).
+🆕 The latest post was published 1 day(s) ago: [Wrapping PokéAPI with
+{trapinch}](https://www.rostrum.blog/2023/02/02/trapinch/).
 
 📈 This 2D plot shows posts over time:
 
@@ -43,6 +43,7 @@ Jesus?](https://www.rostrum.blog/2023/01/08/petrov/).
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|    138 | 2023-02-02 | [Wrapping PokéAPI with {trapinch}](https://www.rostrum.blog/2023/02/02/trapinch/)                                         |
 |    137 | 2023-01-08 | [Stiliyan Petrov: Jesus?](https://www.rostrum.blog/2023/01/08/petrov/)                                                    |
 |    136 | 2023-01-06 | [.-././–/—/.-./…/.](https://www.rostrum.blog/2023/01/06/remorse/)                                                         |
 |    135 | 2023-01-04 | [Ding\! Sound effects in {r.oguelike}](https://www.rostrum.blog/2023/01/04/rogue-sfx/)                                    |
@@ -185,4 +186,4 @@ Jesus?](https://www.rostrum.blog/2023/01/08/petrov/).
 
 -----
 
-*Updated on 2023-02-02 at 02:51.*
+*Updated on 2023-02-03 at 02:55.*
