@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 2 day(s) ago: [Wrapping PokéAPI with
+🆕 The latest post was published 3 day(s) ago: [Wrapping PokéAPI with
 {trapinch}](https://www.rostrum.blog/2023/02/02/trapinch/).
 
 📈 This 2D plot shows posts over time:
@@ -186,4 +186,4 @@ since 2018-04-14.
 
 -----
 
-*Updated on 2023-02-04 at 02:44.*
+*Updated on 2023-02-05 at 02:56.*
