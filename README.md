@@ -28,9 +28,9 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 🔢 There have been 138 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
-📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
+📅 That’s a post roughly every 13 days, or about 2.3 posts per month.
 
-🆕 The latest post was published 6 day(s) ago: [Wrapping PokéAPI with
+🆕 The latest post was published 7 day(s) ago: [Wrapping PokéAPI with
 {trapinch}](https://www.rostrum.blog/2023/02/02/trapinch/).
 
 📈 This 2D plot shows posts over time:
@@ -186,4 +186,4 @@ since 2018-04-14.
 
 -----
 
-*Updated on 2023-02-08 at 02:55.*
+*Updated on 2023-02-09 at 02:54.*
