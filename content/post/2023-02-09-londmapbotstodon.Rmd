@@ -1,0 +1,173 @@
+---
+title: 'London from space via botsin.space'
+author: Matt Dray
+date: '2023-02-09'
+slug: londonmapbotstodon
+categories:
+  - code
+tags:
+  - github-actions
+  - londonmapbot
+  - mapbox
+  - mastodon
+  - openstreetmap
+  - r
+  - rtoot
+  - rtweet
+  - twitter 
+draft: no
+---
+
+```{r, setup, include=FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+<div class="figure">
+<img src="/post/2023-02-09-londmapbotstodon_files/toot-hyde.jpg" alt="Aerial image of Hyde Park, London, with three emoji mammoths overlaid, each one tooting on an emoji trumpet, with the word 'toot' coming out the end of the trumpet." width="100%"/>
+</div>
+
+# tl;dr
+
+I've (finally) ported the [londonmapbot](https://github.com/matt-dray/londonmapbot) [Twitter](https://twitter.com/londonmapbot) bot to [Mastodon](https://botsin.space/@londonmapbot). Like a mammoth rising from the ashes.
+
+# TOOOOOOOT
+
+Twitter is burning to the ground, yada yada.
+
+For example, it appears that the free API tier will disappear soon. Soon like... [today](https://twitter.com/TwitterDev/status/1621026986784337922). Oh wait, [maybe not yet](https://twitter.com/TwitterDev/status/1623467615539859456)?[^heart] Cool customer communication, brah.
+
+Anyway, this news will obviously devastate contributors and fans of [the mapbotverse Twitter list](https://mobile.twitter.com/i/lists/1492559073287581707).
+
+You don't know what the mapbotverse is? Oof. It's a collection of 25 bot accounts that take some inspiration from [my londonmapbot account](https://twitter.com/londonmapbot), which uses [GitHub Actions](https://github.com/features/actions) and [the {rtweet} package](https://docs.ropensci.org/rtweet/) to tweet on schedule a picture of a random spot in Greater London via [MapBox](https://www.mapbox.com/).
+
+And so it's time to update [the code behind londonmapbot](https://github.com/matt-dray/londonmapbot) so that it continues to [post to Twitter](https://twitter.com/londonmapbot) for as long as it survives. But also so that it lives on by [posting to Mastodon](https://botsin.space/@londonmapbot) via [the {rtoot} package](https://schochastics.github.io/rtoot/) as well.
+
+Mastowhat? Something something [federated Twitter-replacement](https://en.wikipedia.org/wiki/Mastodon_(social_network)) sort of thing. Tooooooot tooooooot.
+
+# Masto-do or masto-do-not
+
+I'm slightly behind the curve on this: [Matt Kerlogue](https://lapsedgeographer.london/) has already ported his [narrowbotR](https://t.co/gP6YeqHzAL) ('narrow boater') bot from [Twitter](https://twitter.com/narrowbotR) to [Mastodon](https://fosstodon.org/@narrowbotr@botsin.space) and [written about it](https://lapsedgeographer.london/2022-11/mastodon-switch/).
+
+The fix was fairly rudimentary in the end, thanks to standing on the shoulder of mammoths. Particularly the creators of [the {rtoot} R package](https://schochastics.github.io/rtoot/).
+
+{rtoot} lets you interact with the [Mastodon API](https://docs.joinmastodon.org/api/). It's a sort-of analogue to [the {rtweet} package](https://docs.ropensci.org/rtweet/) for [the Twitter API](https://developer.twitter.com/en/docs/twitter-api). {rtoot} was stood up very quickly by [David Schoch](https://www.mr.schochastics.net/) (with co-author [Chung-hong Chan](http://www.chainsawriot.com/) and contributor [Johannes Gruber](https://www.johannesbgruber.eu/)) when it became clear that Mastodon was becoming the platform-du-jour for nerds.
+
+## Set up Mastodon
+
+It's easier to set yourself up with API access for Mastodon compared to Twitter:
+
+1. Set up a Mastodon account on the dedicated bot server [botsin.space](https://botsin.space/) (londonmapbot is [@londonmapbot@botsin.space](https://botsin.space/@londonmapbot)).[^magic]
+1. Install the {rtoot} package.
+1. Authorise yourself with Mastodon and get an API token.
+1. ???
+1. Absolutely do not profit whatsoever.
+
+Steps 2 and 3 look like this:
+
+```{r}
+install.packages("rtoot")  # on CRAN
+
+rtoot::auth_setup(
+  instance  = "botsin.space",  # the Mastodon server the account is on
+  type      = "user",          # i.e. for posting from R
+  name      = "londonmapbot",  # name the token file
+  clipboard = TRUE             # copy to clipboard
+)
+```
+
+This process interrupts you to interactively authorise the {rtoot} package in a browser window and copy a big long code to a dialogiue box that appears in your R session.
+
+<div class="figure">
+<img src="/post/2023-02-09-londmapbotstodon_files/rtoot-permission.png" alt="A prompt on the Mastodon website that asks the user to provide authorisation for the rtoot package to have permission for read and write access. There's a big blue button that says 'authorise' and a big red one that says 'deny'." width="100%"/>
+</div>
+
+It'll then return:
+
+```
+## Token of type "user" for instance botsin.space is valid
+## Token (in environment variable format) has been copied to clipboard.
+## <mastodon bearer token> for instance: botsin.space of type: user 
+```
+
+I pasted this API token to a safe place and also stored it as [a GitHub repo secret](https://docs.github.com/en/rest/actions/secrets) in the londonmapbot GitHub repo so it could be referred to while the GitHub Action was running.
+
+## Post to Mastodon
+
+Now we can use the `post_toot()` function to... toot a post. Publish a toot? Entoot a noote. It requires a `token` argument that takes a special 'bearer token' with a particular structure that's not too dissimilar from what the rtweet package expects of the object passed to its own `token` function.
+
+Aside: token setup is made easy in {rtweet} thanks to the `rtweet_bot()` function, to which you can pass your API keys and secrets. It's a little less obvious in {rtoot}, which was initially built with the intention of running API calls from your personal machine, so you could just store your keys in your .Renviron file or whatever.
+
+But actually you can just mimic how {rtweet} accepts the token. To do this, I did not use my brain at all and simply ripped-off [Matt Kerlogue's post](https://lapsedgeographer.london/).[^matt] [My updated R script](https://github.com/matt-dray/londonmapbot/blob/main/post-image.R) now contains this:[^envvar]
+
+```{r}
+mastodon_token <- structure(
+  list(  # it's just a list
+    bearer   = Sys.getenv("RTOOT_DEFAULT_TOKEN"),
+    type     = "user",  # i.e. to post from R
+    instance = "botsin.space"  # the server
+  ),
+  class = "rtoot_bearer"  # special token class
+)
+```
+
+Where `RTOOT_DEFAULT_TOKEN` is that API token from earlier, which is required for accessing Mastodon. As mentioned, it's stored as [a GitHub repo secret](https://docs.github.com/en/rest/actions/secrets) and called into the GitHub Action environment thanks to the `env: RTOOT_DEFAULT_TOKEN: ${{ secrets.RTOOT_DEFAULT_TOKEN }}` call in [the YAML file](https://github.com/matt-dray/londonmapbot/blob/main/.github/workflows/post-image.yml).
+
+This object can be passed quite happily to the `post_toot()` function.
+
+```{r}
+rtoot::post_toot(
+  status   = latlon_details,
+  media    = temp_file,
+  alt_text = alt_text,
+  token    = mastodon_token
+)
+```
+
+Where the `status` (body text), `media` (image file) and `alt_text` (alternative text for the image) objects have been generated already ([see the R script](https://github.com/matt-dray/londonmapbot/blob/main/post-image.R) for details).
+
+This is then executed on schedule according to the [cron string](https://en.wikipedia.org/wiki/Cron)[^dialga] specified in [the YAML file](https://github.com/matt-dray/londonmapbot/blob/main/.github/workflows/post-image.yml) (currently twice a day at 0914 and 1714) to publish stuff like this:
+
+<div class="figure">
+<img src="/post/2023-02-09-londmapbotstodon_files/londonmapbot-mastodon.png" alt="Example of a toot on Mastodon from the londonmapbot account. The image is an aerial image of London. The text provides the latitude and longitude of the centre of the image and also an OpenStreetMap link." width="100%"/>
+</div>
+
+## Await Twitter implosion
+
+I want the bot to keep posting to Twitter for as long as I'm allowed to. In other words, we should _try_ to post a tweet and _catch_ any error silently, without disrupting the GitHub Action. So naturally I wrapped `post_tweet()` in a `tryCatch()` statement, yes? No, actually I used `purrr::possibly()` instead.
+
+Why? Basically because the syntax is easy to remember, lol. And what difference does it make to have one extra dependency for this task? To use it, you wrap your function of interest in `possibly()` and then it can fail without erroring-out the whole function.
+
+```{r}
+possibly_post_tweet <- purrr::possibly(rtweet::post_tweet)
+
+possibly_post_tweet(
+  status         = latlon_details,
+  media          = temp_file,
+  media_alt_text = alt_text,
+  token          = twitter_token
+)
+```
+
+## Fiddle while Frisco burns
+
+While I was messing about with the londonmapbot code, I made a few things in the repo a bit more generic. For example, I altered the name of the GitHub Actions YAML file and the R script to be called 'post-image'. This is more descriptive and it removes the need for someone forking the repo to have to manually change the name away from 'londonmapbot'. You are so welcome.
+
+# Parp
+
+Farewell, until the next time we have to port londonmapot to another API-enabled microblogging site. We've had bird- and mammal-themed sites; my prediction is that the next site will be called 'Seacucumber' and we won't 'tweet' or 'toot', we'll 'eviscerate'.[^tummy] 
+
+I mean, inverting one's stomach is a daily reaction on Twitter anyway, amirite?
+
+---
+<details><summary>Session info</summary>
+```{r eval=TRUE, sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^heart]: Happy Valentine's to all my fellow monetisable users.
+[^magic]: During this process you have to explain why you want to set up the account. Don't forget to say the magic word in your application, wink wink.
+[^matt]: 'Matt hivemind prerogative', this is called.
+[^dialga]: Did I mention I made [the R package {dialga}](https://github.com/matt-dray/dialga) to convert R to cron to English, lol?
+[^tummy]: I [fact-checked myself on Wikipedia](https://en.wikipedia.org/wiki/Evisceration_(autotomy)) and read this brand new sentence: '[evisceration] causes the wall of the cloaca to tear and the anus to gape.'
+[^envvar]: Kerlogue influenced the {rtoot} team to [update the package](https://github.com/schochastics/rtoot/issues/68) to handle environmental variables, but I could not get this to work, alas.

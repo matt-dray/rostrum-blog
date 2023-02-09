@@ -1,0 +1,177 @@
+---
+title: 'London from space via botsin.space'
+author: Matt Dray
+date: '2023-02-09'
+slug: londonmapbotstodon
+categories:
+  - code
+tags:
+  - github-actions
+  - londonmapbot
+  - mapbox
+  - mastodon
+  - openstreetmap
+  - r
+  - rtoot
+  - rtweet
+  - twitter 
+draft: no
+---
+
+
+
+<div class="figure">
+<p><img src="/post/2023-02-09-londmapbotstodon_files/toot-hyde.jpg" alt="Aerial image of Hyde Park, London, with three emoji mammoths overlaid, each one tooting on an emoji trumpet, with the word 'toot' coming out the end of the trumpet." width="100%"/></p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I’ve (finally) ported the <a href="https://github.com/matt-dray/londonmapbot">londonmapbot</a> <a href="https://twitter.com/londonmapbot">Twitter</a> bot to <a href="https://botsin.space/@londonmapbot">Mastodon</a>. Like a mammoth rising from the ashes.</p>
+</div>
+<div id="tooooooot" class="section level1">
+<h1>TOOOOOOOT</h1>
+<p>Twitter is burning to the ground, yada yada.</p>
+<p>For example, it appears that the free API tier will disappear soon. Soon like… <a href="https://twitter.com/TwitterDev/status/1621026986784337922">today</a>. Oh wait, <a href="https://twitter.com/TwitterDev/status/1623467615539859456">maybe not yet</a>?<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> Cool customer communication, brah.</p>
+<p>Anyway, this news will obviously devastate contributors and fans of <a href="https://mobile.twitter.com/i/lists/1492559073287581707">the mapbotverse Twitter list</a>.</p>
+<p>You don’t know what the mapbotverse is? Oof. It’s a collection of 25 bot accounts that take some inspiration from <a href="https://twitter.com/londonmapbot">my londonmapbot account</a>, which uses <a href="https://github.com/features/actions">GitHub Actions</a> and <a href="https://docs.ropensci.org/rtweet/">the {rtweet} package</a> to tweet on schedule a picture of a random spot in Greater London via <a href="https://www.mapbox.com/">MapBox</a>.</p>
+<p>And so it’s time to update <a href="https://github.com/matt-dray/londonmapbot">the code behind londonmapbot</a> so that it continues to <a href="https://twitter.com/londonmapbot">post to Twitter</a> for as long as it survives. But also so that it lives on by <a href="https://botsin.space/@londonmapbot">posting to Mastodon</a> via <a href="https://schochastics.github.io/rtoot/">the {rtoot} package</a> as well.</p>
+<p>Mastowhat? Something something <a href="https://en.wikipedia.org/wiki/Mastodon_(social_network)">federated Twitter-replacement</a> sort of thing. Tooooooot tooooooot.</p>
+</div>
+<div id="masto-do-or-masto-do-not" class="section level1">
+<h1>Masto-do or masto-do-not</h1>
+<p>I’m slightly behind the curve on this: <a href="https://lapsedgeographer.london/">Matt Kerlogue</a> has already ported his <a href="https://t.co/gP6YeqHzAL">narrowbotR</a> (‘narrow boater’) bot from <a href="https://twitter.com/narrowbotR">Twitter</a> to <a href="https://fosstodon.org/@narrowbotr@botsin.space">Mastodon</a> and <a href="https://lapsedgeographer.london/2022-11/mastodon-switch/">written about it</a>.</p>
+<p>The fix was fairly rudimentary in the end, thanks to standing on the shoulder of mammoths. Particularly the creators of <a href="https://schochastics.github.io/rtoot/">the {rtoot} R package</a>.</p>
+<p>{rtoot} lets you interact with the <a href="https://docs.joinmastodon.org/api/">Mastodon API</a>. It’s a sort-of analogue to <a href="https://docs.ropensci.org/rtweet/">the {rtweet} package</a> for <a href="https://developer.twitter.com/en/docs/twitter-api">the Twitter API</a>. {rtoot} was stood up very quickly by <a href="https://www.mr.schochastics.net/">David Schoch</a> (with co-author <a href="http://www.chainsawriot.com/">Chung-hong Chan</a> and contributor <a href="https://www.johannesbgruber.eu/">Johannes Gruber</a>) when it became clear that Mastodon was becoming the platform-du-jour for nerds.</p>
+<div id="set-up-mastodon" class="section level2">
+<h2>Set up Mastodon</h2>
+<p>It’s easier to set yourself up with API access for Mastodon compared to Twitter:</p>
+<ol style="list-style-type: decimal">
+<li>Set up a Mastodon account on the dedicated bot server <a href="https://botsin.space/">botsin.space</a> (londonmapbot is <a href="https://botsin.space/@londonmapbot"><span class="citation">@londonmapbot</span><span class="citation">@botsin.space</span></a>).<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></li>
+<li>Install the {rtoot} package.</li>
+<li>Authorise yourself with Mastodon and get an API token.</li>
+<li>???</li>
+<li>Absolutely do not profit whatsoever.</li>
+</ol>
+<p>Steps 2 and 3 look like this:</p>
+<pre class="r"><code>install.packages(&quot;rtoot&quot;)  # on CRAN
+
+rtoot::auth_setup(
+  instance  = &quot;botsin.space&quot;,  # the Mastodon server the account is on
+  type      = &quot;user&quot;,          # i.e. for posting from R
+  name      = &quot;londonmapbot&quot;,  # name the token file
+  clipboard = TRUE             # copy to clipboard
+)</code></pre>
+<p>This process interrupts you to interactively authorise the {rtoot} package in a browser window and copy a big long code to a dialogiue box that appears in your R session.</p>
+<div class="figure">
+<p><img src="/post/2023-02-09-londmapbotstodon_files/rtoot-permission.png" alt="A prompt on the Mastodon website that asks the user to provide authorisation for the rtoot package to have permission for read and write access. There's a big blue button that says 'authorise' and a big red one that says 'deny'." width="100%"/></p>
+</div>
+<p>It’ll then return:</p>
+<pre><code>## Token of type &quot;user&quot; for instance botsin.space is valid
+## Token (in environment variable format) has been copied to clipboard.
+## &lt;mastodon bearer token&gt; for instance: botsin.space of type: user </code></pre>
+<p>I pasted this API token to a safe place and also stored it as <a href="https://docs.github.com/en/rest/actions/secrets">a GitHub repo secret</a> in the londonmapbot GitHub repo so it could be referred to while the GitHub Action was running.</p>
+</div>
+<div id="post-to-mastodon" class="section level2">
+<h2>Post to Mastodon</h2>
+<p>Now we can use the <code>post_toot()</code> function to… toot a post. Publish a toot? Entoot a noote. It requires a <code>token</code> argument that takes a special ‘bearer token’ with a particular structure that’s not too dissimilar from what the rtweet package expects of the object passed to its own <code>token</code> function.</p>
+<p>Aside: token setup is made easy in {rtweet} thanks to the <code>rtweet_bot()</code> function, to which you can pass your API keys and secrets. It’s a little less obvious in {rtoot}, which was initially built with the intention of running API calls from your personal machine, so you could just store your keys in your .Renviron file or whatever.</p>
+<p>But actually you can just mimic how {rtweet} accepts the token. To do this, I did not use my brain at all and simply ripped-off <a href="https://lapsedgeographer.london/">Matt Kerlogue’s post</a>.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> <a href="https://github.com/matt-dray/londonmapbot/blob/main/post-image.R">My updated R script</a> now contains this:<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
+<pre class="r"><code>mastodon_token &lt;- structure(
+  list(  # it&#39;s just a list
+    bearer   = Sys.getenv(&quot;RTOOT_DEFAULT_TOKEN&quot;),
+    type     = &quot;user&quot;,  # i.e. to post from R
+    instance = &quot;botsin.space&quot;  # the server
+  ),
+  class = &quot;rtoot_bearer&quot;  # special token class
+)</code></pre>
+<p>Where <code>RTOOT_DEFAULT_TOKEN</code> is that API token from earlier, which is required for accessing Mastodon. As mentioned, it’s stored as <a href="https://docs.github.com/en/rest/actions/secrets">a GitHub repo secret</a> and called into the GitHub Action environment thanks to the <code>env: RTOOT_DEFAULT_TOKEN: ${{ secrets.RTOOT_DEFAULT_TOKEN }}</code> call in <a href="https://github.com/matt-dray/londonmapbot/blob/main/.github/workflows/post-image.yml">the YAML file</a>.</p>
+<p>This object can be passed quite happily to the <code>post_toot()</code> function.</p>
+<pre class="r"><code>rtoot::post_toot(
+  status   = latlon_details,
+  media    = temp_file,
+  alt_text = alt_text,
+  token    = mastodon_token
+)</code></pre>
+<p>Where the <code>status</code> (body text), <code>media</code> (image file) and <code>alt_text</code> (alternative text for the image) objects have been generated already (<a href="https://github.com/matt-dray/londonmapbot/blob/main/post-image.R">see the R script</a> for details).</p>
+<p>This is then executed on schedule according to the <a href="https://en.wikipedia.org/wiki/Cron">cron string</a><a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> specified in <a href="https://github.com/matt-dray/londonmapbot/blob/main/.github/workflows/post-image.yml">the YAML file</a> (currently twice a day at 0914 and 1714) to publish stuff like this:</p>
+<div class="figure">
+<p><img src="/post/2023-02-09-londmapbotstodon_files/londonmapbot-mastodon.png" alt="Example of a toot on Mastodon from the londonmapbot account. The image is an aerial image of London. The text provides the latitude and longitude of the centre of the image and also an OpenStreetMap link." width="100%"/></p>
+</div>
+</div>
+<div id="await-twitter-implosion" class="section level2">
+<h2>Await Twitter implosion</h2>
+<p>I want the bot to keep posting to Twitter for as long as I’m allowed to. In other words, we should <em>try</em> to post a tweet and <em>catch</em> any error silently, without disrupting the GitHub Action. So naturally I wrapped <code>post_tweet()</code> in a <code>tryCatch()</code> statement, yes? No, actually I used <code>purrr::possibly()</code> instead.</p>
+<p>Why? Basically because the syntax is easy to remember, lol. And what difference does it make to have one extra dependency for this task? To use it, you wrap your function of interest in <code>possibly()</code> and then it can fail without erroring-out the whole function.</p>
+<pre class="r"><code>possibly_post_tweet &lt;- purrr::possibly(rtweet::post_tweet)
+
+possibly_post_tweet(
+  status         = latlon_details,
+  media          = temp_file,
+  media_alt_text = alt_text,
+  token          = twitter_token
+)</code></pre>
+</div>
+<div id="fiddle-while-frisco-burns" class="section level2">
+<h2>Fiddle while Frisco burns</h2>
+<p>While I was messing about with the londonmapbot code, I made a few things in the repo a bit more generic. For example, I altered the name of the GitHub Actions YAML file and the R script to be called ‘post-image’. This is more descriptive and it removes the need for someone forking the repo to have to manually change the name away from ‘londonmapbot’. You are so welcome.</p>
+</div>
+</div>
+<div id="parp" class="section level1">
+<h1>Parp</h1>
+<p>Farewell, until the next time we have to port londonmapot to another API-enabled microblogging site. We’ve had bird- and mammal-themed sites; my prediction is that the next site will be called ‘Seacucumber’ and we won’t ‘tweet’ or ‘toot’, we’ll ‘eviscerate’.<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a></p>
+<p>I mean, inverting one’s stomach is a daily reaction on Twitter anyway, amirite?</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
+##  os       macOS Big Sur/Monterey 10.16
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_US.UTF-8
+##  ctype    en_US.UTF-8
+##  tz       Europe/London
+##  date     2023-02-09
+##  pandoc   2.19.2 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date (UTC) lib source
+##  blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.6.0   2023-01-09 [1] CRAN (R 4.2.0)
+##  digest        0.6.31  2022-12-11 [1] CRAN (R 4.2.0)
+##  evaluate      0.20    2023-01-17 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.4   2022-12-06 [1] CRAN (R 4.2.0)
+##  knitr         1.42    2023-01-25 [1] CRAN (R 4.2.0)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+##  rlang         1.0.6   2022-09-24 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.14    2022-08-22 [1] CRAN (R 4.2.0)
+##  sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+##  xfun          0.37    2023-01-31 [1] CRAN (R 4.2.0)
+##  yaml          2.3.7   2023-01-23 [1] CRAN (R 4.2.0)
+## 
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>Happy Valentine’s to all my fellow monetisable users.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>During this process you have to explain why you want to set up the account. Don’t forget to say the magic word in your application, wink wink.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>‘Matt hivemind prerogative’, this is called.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>Kerlogue influenced the {rtoot} team to <a href="https://github.com/schochastics/rtoot/issues/68">update the package</a> to handle environmental variables, but I could not get this to work, alas.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>Did I mention I made <a href="https://github.com/matt-dray/dialga">the R package {dialga}</a> to convert R to cron to English, lol?<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+<li id="fn6"><p>I <a href="https://en.wikipedia.org/wiki/Evisceration_(autotomy)">fact-checked myself on Wikipedia</a> and read this brand new sentence: ‘[evisceration] causes the wall of the cloaca to tear and the anus to gape.’<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
