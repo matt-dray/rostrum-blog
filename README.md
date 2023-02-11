@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 1 day(s) ago: [London from space via
+🆕 The latest post was published 2 day(s) ago: [London from space via
 botsin.space](https://www.rostrum.blog/2023/02/09/londonmapbotstodon/).
 
 📈 This 2D plot shows posts over time:
@@ -187,4 +187,4 @@ botsin.space](https://www.rostrum.blog/2023/02/09/londonmapbotstodon/).
 
 -----
 
-*Updated on 2023-02-10 at 03:00.*
+*Updated on 2023-02-11 at 02:48.*
