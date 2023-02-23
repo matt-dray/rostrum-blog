@@ -1,0 +1,269 @@
+---
+title: 'Repaying Tom Nook with {S7}'
+author: Matt Dray
+date: '2023-02-23'
+slug: nook-s7
+categories:
+  - code
+  - tutorial
+tags:
+  - animal-crossing
+  - oop
+  - r
+  - R6
+  - S7 
+draft: yes
+---
+
+
+
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+</div>
+<div id="its-2020-again-oh-no" class="section level1">
+<h1>It’s 2020 again, oh no</h1>
+<p>I think ‘S7’ is pronounced how a snake might say ‘seven’, like ‘sseven’.</p>
+<p><a href="https://github.com/RConsortium/OOP-WG/">The R Consortium’s OOP-WG GitHub repo</a> contains the {S7} package, which also has <a href="https://rconsortium.github.io/OOP-WG/">a documentation webpage</a>.</p>
+<p>{S7} is under development and could change at any time, rendering everything in this post useless.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> I mean, last time I checked, the package was called {R7}. There’s also a chance that much of it will have been integrated in base R itself by the time you read this.</p>
+<p><a href="https://www.jumpingrivers.com/">Jumping Rivers</a> have… jumped the gun on this one and produced <a href="https://www.jumpingrivers.com/blog/r7-oop-object-oriented-programming-r/">an intro to <del>R7</del> S7</a> already</p>
+</div>
+<div id="i-do-what-i-like" class="section level1">
+<h1>I do what I like</h1>
+<p>Last time I focused on a (new to me) class system, I was looking at OOP with {R6} in the post <a href="https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/">Repaying Tom Nook with {R6}</a>. Here I’m going to replicate the general approach, but with {S7}.</p>
+<p>Aha, but actually the {S7} package is more like a development of S3 and S4 objects, and is not a ‘new version’ of {R6}.</p>
+<p>Ah well. I’m noodling around with {S7} for my own devices and thought I’d post it here so I can refer back to it later. Basically I’m recycling content from a previous post to get a feel for the new system. But only in the most superficial, basic way.</p>
+</div>
+<div id="install" class="section level1">
+<h1>Install</h1>
+<p>For now, the package is in <a href="https://github.com/RConsortium/OOP-WG/">the R Consortium’s OOP-WG GitHub repo</a>:</p>
+<pre class="r"><code>install.packages(&quot;remotes&quot;)  # if not yet installed
+remotes::install_github(&quot;RConsortium/OOP-WG&quot;)</code></pre>
+<p>And for this post we’ll also use the quintessential {emoji} package.</p>
+<pre class="r"><code>install.packages(&quot;emoji&quot;)  # if not yet installed
+library(emoji)</code></pre>
+</div>
+<div id="that-is-class" class="section level1">
+<h1>That is class</h1>
+<p>A new class is constructed with… <code>new_class()</code></p>
+<pre class="r"><code>ABD &lt;- new_class(
+  name = &quot;ABD&quot;,
+  properties = list(
+    savings = new_property(class_integer, default = 0L),
+    loan = new_property(class_integer, default = 2498000L)
+  ),
+  validator = function(self) {
+    if (self@savings &lt; 0L) {
+      &quot;@savings must be zero or more&quot;
+    } else if (self@loan &lt; 0L) {
+      &quot;@loan must be zero or more&quot;
+    }
+  }
+)</code></pre>
+<p>For new methods, you can create a new generic and define a function. For example, the deposit method is pretty straightforward: it adds an amount to the current savings value:</p>
+<pre class="r"><code>deposit &lt;- new_generic(&quot;deposit&quot;, &quot;x&quot;)
+
+method(deposit, ABD) &lt;- function(x, amount) {
+  x@savings &lt;- x@savings + amount
+  x
+}</code></pre>
+<p>I specified some other methods, but I hid them because they’re not that much more complicated.</p>
+<details>
+<summary>
+Click for more methods
+</summary>
+<p>The withdraw method subtracts a specified amount from the savings property. You’re warned if you specify an amount greater than the amount available.</p>
+<pre class="r"><code>withdraw &lt;- new_generic(&quot;withdraw&quot;, &quot;x&quot;)
+
+method(withdraw, ABD) &lt;- function(x, amount) {
+  
+  if (x@savings - amount &lt; 0L) {
+    warning(
+      &quot;Withdrew all savings: &quot;, x@savings, &quot; Bells.\n&quot;, 
+      call. = FALSE
+    )
+    x@savings &lt;- 0L
+  } else {
+    x@savings &lt;- x@savings - amount
+  }
+  
+  x
+  
+}</code></pre>
+<p>The pay method moves funds from savings to loan. You’re warned if the loan is already paid, if you specify a greater amount than there are savings, or if you pay a greater amount than the loan remaining. You’ll get a victory message if you pay off the whole loan.</p>
+<pre class="r"><code>pay &lt;- new_generic(&quot;pay&quot;, &quot;x&quot;)
+
+method(pay, ABD) &lt;- function(x, amount) {
+  
+  if (x@loan == 0L) {
+    stop(&quot;You already finished paying your loan!\n&quot;, call. = FALSE)
+  }
+  
+  if (x@savings - amount &lt; 0L) {
+    warning(
+      &quot;Paid total amount from savings instead: &quot;, x@savings, &quot; Bells.\n&quot;,
+      call. = FALSE
+    )
+    x@loan &lt;- x@loan - x@savings
+    x@savings &lt;- 0L
+  } else if (x@loan - amount &lt; 0L) {
+    warning(
+      &quot;Paid total remaining loan instead: &quot;, x@loan, &quot; Bells.\n&quot;,
+      call. = FALSE
+    )
+    x@savings &lt;- x@savings - x@loan 
+    x@loan &lt;- 0L
+  } else {
+    x@savings &lt;- x@savings - amount
+    x@loan &lt;- x@loan - amount
+  }
+  
+  if (x@loan == 0L) {
+    cat(
+      emoji(&quot;smiley&quot;),
+      &quot;Sweet! I finally finished paying off my very last home loan!&quot;,
+      emoji(&quot;tada&quot;), &quot;\n\n&quot;
+    )
+  }
+  
+  x
+  
+}</code></pre>
+<p>The check method is basically a print method. It reports the loan and savings amounts currently stored in the bank.</p>
+<pre class="r"><code>check &lt;- new_generic(&quot;check&quot;, &quot;x&quot;)
+
+method(check, ABD) &lt;- function(x) {
+
+  loan_formatted &lt;- format(x@loan, big.mark = &quot;,&quot;, scientific = FALSE)
+
+  savings_formatted &lt;- format(x@savings, big.mark = &quot;,&quot;, scientific = FALSE)
+
+  cat(&quot;Automatic Bell Dispenser (ABD)\n\n&quot;)
+  cat(emoji(&quot;bell&quot;), &quot;Loan Balance:&quot;, loan_formatted, &quot;Bells\n&quot;)
+  cat(emoji(&quot;pig2&quot;), &quot;Savings Balance:&quot;, savings_formatted, &quot;Bells\n\n&quot;)
+  cat(
+    &quot;Please make a selection from the menu below\n\n&quot;,
+    emoji(&quot;house&quot;), &quot;pay()\n&quot;,
+    emoji(&quot;arrow_up&quot;), &quot;deposit()\n&quot;,
+    emoji(&quot;arrow_down&quot;), &quot;withdraw()&quot;
+  )
+
+}</code></pre>
+</details>
+<p>You can start a new instance of the ABD class by, y’know, calling it.</p>
+<pre class="r"><code>bank &lt;- ABD()</code></pre>
+<p>When you check the class of this object, you’ll see both the custom class name and a reminder that it has the S7 class.</p>
+<pre class="r"><code>class(bank)</code></pre>
+<pre><code>## [1] &quot;ABD&quot;       &quot;S7_object&quot;</code></pre>
+<p>The vanilla print method gives you this tidy output that exposes the properties and their startup values:</p>
+<pre class="r"><code>bank</code></pre>
+<pre><code>## &lt;ABD&gt;
+##  @ savings: int 0
+##  @ loan   : int 2498000</code></pre>
+<p>Note that the properties are pre-pended with <code>@</code>. This indicates that we can use the ‘at’ symbol to access these ‘slots’ from the object, like:</p>
+<pre class="r"><code>bank@loan</code></pre>
+<pre><code>## [1] 2498000</code></pre>
+<p>While we’re printing stuff, we can use the <code>check()</code> method (that I’ve pre-specified) to see the properties in a manner that more closely resembles the game.</p>
+<pre class="r"><code>check(bank)</code></pre>
+<pre><code>## Automatic Bell Dispenser (ABD)
+## 
+## 🔔 Loan Balance: 2,498,000 Bells
+## 🐖 Savings Balance: 0 Bells
+## 
+## Please make a selection from the menu below
+## 
+##  🏠 pay()
+##  ⬆️ deposit()
+##  ⬇️ withdraw()</code></pre>
+<p>You can very easily and directly change the properties. To add 10 Bells:</p>
+<pre class="r"><code>bank@savings &lt;- 9.99</code></pre>
+<pre><code>Error: &lt;ABD&gt;@savings must be &lt;integer&gt;, not &lt;double&gt;</code></pre>
+<p>Haha, whoops. Of course, I specified that the property can only be an integer, so we need to provide an integer value instead of a double value. In other words, we can only provide whole numbers of Bells. Remember that the <code>L</code> suffix is used in R to signify an integer.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<pre class="r"><code>bank@savings &lt;- 10L</code></pre>
+<p>Is there an overdraft? Tom Nook would probably love that and would ask for massive overdraft fees, but it’s not programmed into the game. This is where our validator comes in handy. We specified that you can’t have a negative amount of savings, so this errors:</p>
+<pre class="r"><code>bank@savings &lt;- -11L</code></pre>
+<p>That’s fine, but I have sometimes I have extra logic I want to evaluate when I adjust the properties. That’s why I created new methods earlier on. It means I can use a function to add to the savings property instead, for example.</p>
+<pre class="r"><code>bank &lt;- deposit(bank, 10L)
+bank@savings</code></pre>
+<pre><code>## [1] 10</code></pre>
+<p>We can retrieve money in this fashion too:</p>
+<pre class="r"><code>bank &lt;- withdraw(bank, 10L)
+bank@savings</code></pre>
+<pre><code>## [1] 0</code></pre>
+<p>What if we deposit enough to pay the loan?</p>
+<pre class="r"><code>bank &lt;- deposit(bank, 2500000L)
+bank &lt;- pay(bank, 2500000L)</code></pre>
+<pre><code>## Warning: Paid total remaining loan instead: 2498000 Bells.</code></pre>
+<pre><code>## 😃 Sweet! I finally finished paying off my very last home loan! 🎉</code></pre>
+<p>The method warns us when we try to pay off a value greater than the remaining loan and prints a nice congratulatory method.</p>
+<p>And so we end up with this view:</p>
+<pre class="r"><code>check(bank)</code></pre>
+<pre><code>## Automatic Bell Dispenser (ABD)
+## 
+## 🔔 Loan Balance: 0 Bells
+## 🐖 Savings Balance: 2,000 Bells
+## 
+## Please make a selection from the menu below
+## 
+##  🏠 pay()
+##  ⬆️ deposit()
+##  ⬇️ withdraw()</code></pre>
+<p>Get rekt, raccoon dog.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
+##  os       macOS Big Sur/Monterey 10.16
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_US.UTF-8
+##  ctype    en_US.UTF-8
+##  tz       Europe/London
+##  date     2023-02-23
+##  pandoc   2.19.2 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version    date (UTC) lib source
+##  blogdown      1.9        2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26       2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1      2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.6.0      2023-01-09 [1] CRAN (R 4.2.0)
+##  digest        0.6.31     2022-12-11 [1] CRAN (R 4.2.0)
+##  emoji       * 15.0       2022-11-03 [1] CRAN (R 4.2.0)
+##  evaluate      0.20       2023-01-17 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0      2021-01-25 [1] CRAN (R 4.2.0)
+##  glue          1.6.2      2022-02-24 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2      2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4      2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.4      2022-12-06 [1] CRAN (R 4.2.0)
+##  knitr         1.42       2023-01-25 [1] CRAN (R 4.2.0)
+##  lifecycle     1.0.3      2022-10-07 [1] CRAN (R 4.2.0)
+##  magrittr      2.0.3      2022-03-30 [1] CRAN (R 4.2.0)
+##  R6            2.5.1      2021-08-19 [1] CRAN (R 4.2.0)
+##  rlang         1.0.6      2022-09-24 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14       2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.14       2022-08-22 [1] CRAN (R 4.2.0)
+##  S7          * 0.0.0.9000 2023-02-23 [1] Github (RConsortium/OOP-WG@f2db260)
+##  sass          0.4.1      2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2      2021-12-06 [1] CRAN (R 4.2.0)
+##  stringi       1.7.8      2022-07-11 [1] CRAN (R 4.2.0)
+##  stringr       1.5.0      2022-12-02 [1] CRAN (R 4.2.0)
+##  xfun          0.37       2023-01-31 [1] CRAN (R 4.2.0)
+##  yaml          2.3.7      2023-01-23 [1] CRAN (R 4.2.0)
+## 
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>‘Useless’ is an extremely relative term with regard to this blog.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>Why <code>L</code>? <a href="https://stackoverflow.com/questions/22191324/clarification-of-l-in-r/22192378#22192378">Shrug</a>.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>

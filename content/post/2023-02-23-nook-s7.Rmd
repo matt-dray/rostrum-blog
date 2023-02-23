@@ -1,0 +1,277 @@
+---
+title: 'Repaying Tom Nook with {S7}'
+author: Matt Dray
+date: '2023-02-23'
+slug: nook-s7
+categories:
+  - code
+  - tutorial
+tags:
+  - animal-crossing
+  - oop
+  - r
+  - R6
+  - S7 
+draft: yes
+---
+
+```{r, setup, include=FALSE}
+knitr::opts_chunk$set(eval = TRUE)
+library(S7)
+library(emoji)
+```
+
+# tl;dr
+
+# It's 2020 again, oh no
+
+I think 'S7' is pronounced how a snake might say 'seven', like 'sseven'.
+
+[The R Consortium's OOP-WG GitHub repo](https://github.com/RConsortium/OOP-WG/) contains the {S7} package, which also has [a documentation webpage](https://rconsortium.github.io/OOP-WG/). 
+
+{S7} is under development and could change at any time, rendering everything in this post useless.[^useless] I mean, last time I checked, the package was called {R7}. There's also a chance that much of it will have been integrated in base R itself by the time you read this.
+
+[Jumping Rivers](https://www.jumpingrivers.com/) have... jumped the gun on this one and produced [an intro to ~~R7~~ S7](https://www.jumpingrivers.com/blog/r7-oop-object-oriented-programming-r/) already
+
+
+# I do what I like
+
+Last time I focused on a (new to me) class system, I was looking at OOP with {R6} in the post [Repaying Tom Nook with {R6}](https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/). Here I'm going to replicate the general approach, but with {S7}.
+
+Aha, but actually the {S7} package is more like a development of S3 and S4 objects, and is not a 'new version' of {R6}.
+
+Ah well. I'm noodling around with {S7} for my own devices and thought I'd post it here so I can refer back to it later. Basically I'm recycling content from a previous post to get a feel for the new system. But only in the most superficial, basic way.
+
+# Install
+
+For now, the package is in [the R Consortium's OOP-WG GitHub repo](https://github.com/RConsortium/OOP-WG/):
+
+```{r eval=FALSE}
+install.packages("remotes")  # if not yet installed
+remotes::install_github("RConsortium/OOP-WG")
+```
+
+And for this post we'll also use the quintessential {emoji} package.
+
+```{r eval=FALSE}
+install.packages("emoji")  # if not yet installed
+library(emoji)
+```
+
+# That is class
+
+A new class is constructed with... `new_class()`
+
+```{r}
+ABD <- new_class(
+  name = "ABD",
+  properties = list(
+    savings = new_property(class_integer, default = 0L),
+    loan = new_property(class_integer, default = 2498000L)
+  ),
+  validator = function(self) {
+    if (self@savings < 0L) {
+      "@savings must be zero or more"
+    } else if (self@loan < 0L) {
+      "@loan must be zero or more"
+    }
+  }
+)
+```
+
+For new methods, you can create a new generic and define a function. For example, the deposit method is pretty straightforward: it adds an amount to the current savings value:
+
+```{r}
+deposit <- new_generic("deposit", "x")
+
+method(deposit, ABD) <- function(x, amount) {
+  x@savings <- x@savings + amount
+  x
+}
+```
+
+I specified some other methods, but I hid them because they're not that much more complicated.
+
+<details><summary>Click for more methods</summary>
+
+The withdraw method subtracts a specified amount from the savings property. You're warned if you specify an amount greater than the amount available. 
+
+```{r}
+withdraw <- new_generic("withdraw", "x")
+
+method(withdraw, ABD) <- function(x, amount) {
+  
+  if (x@savings - amount < 0L) {
+    warning(
+      "Withdrew all savings: ", x@savings, " Bells.\n", 
+      call. = FALSE
+    )
+    x@savings <- 0L
+  } else {
+    x@savings <- x@savings - amount
+  }
+  
+  x
+  
+}
+```
+
+The pay method moves funds from savings to loan. You're warned if the loan is already paid, if you specify a greater amount than there are savings, or if you pay a greater amount than the loan remaining. You'll get a victory message if you pay off the whole loan.
+
+```{r}
+pay <- new_generic("pay", "x")
+
+method(pay, ABD) <- function(x, amount) {
+  
+  if (x@loan == 0L) {
+    stop("You already finished paying your loan!\n", call. = FALSE)
+  }
+  
+  if (x@savings - amount < 0L) {
+    warning(
+      "Paid total amount from savings instead: ", x@savings, " Bells.\n",
+      call. = FALSE
+    )
+    x@loan <- x@loan - x@savings
+    x@savings <- 0L
+  } else if (x@loan - amount < 0L) {
+    warning(
+      "Paid total remaining loan instead: ", x@loan, " Bells.\n",
+      call. = FALSE
+    )
+    x@savings <- x@savings - x@loan 
+    x@loan <- 0L
+  } else {
+    x@savings <- x@savings - amount
+    x@loan <- x@loan - amount
+  }
+  
+  if (x@loan == 0L) {
+    cat(
+      emoji("smiley"),
+      "Sweet! I finally finished paying off my very last home loan!",
+      emoji("tada"), "\n\n"
+    )
+  }
+  
+  x
+  
+}
+```
+
+The check method is basically a print method. It reports the loan and savings amounts currently stored in the bank.
+
+```{r}
+check <- new_generic("check", "x")
+
+method(check, ABD) <- function(x) {
+
+  loan_formatted <- format(x@loan, big.mark = ",", scientific = FALSE)
+
+  savings_formatted <- format(x@savings, big.mark = ",", scientific = FALSE)
+
+  cat("Automatic Bell Dispenser (ABD)\n\n")
+  cat(emoji("bell"), "Loan Balance:", loan_formatted, "Bells\n")
+  cat(emoji("pig2"), "Savings Balance:", savings_formatted, "Bells\n\n")
+  cat(
+    "Please make a selection from the menu below\n\n",
+    emoji("house"), "pay()\n",
+    emoji("arrow_up"), "deposit()\n",
+    emoji("arrow_down"), "withdraw()"
+  )
+
+}
+```
+</details>
+
+You can start a new instance of the ABD class by, y'know, calling it. 
+
+```{r}
+bank <- ABD()
+```
+
+When you check the class of this object, you'll see both the custom class name and a reminder that it has the S7 class.
+
+```{r}
+class(bank)
+```
+
+The vanilla print method gives you this tidy output that exposes the properties and their startup values:
+
+```{r}
+bank
+```
+
+Note that the properties are pre-pended with `@`. This indicates that we can use the 'at' symbol to access these 'slots' from the object, like:
+
+```{r}
+bank@loan
+```
+
+While we're printing stuff, we can use the `check()` method (that I've pre-specified) to see the properties in a manner that more closely resembles the game.
+
+```{r}
+check(bank)
+```
+
+You can very easily and directly change the properties. To add 10 Bells:
+
+```{r eval=FALSE}
+bank@savings <- 9.99
+```
+```
+Error: <ABD>@savings must be <integer>, not <double>
+```
+
+Haha, whoops. Of course, I specified that the property can only be an integer, so we need to provide an integer value instead of a double value. In other words, we can only provide whole numbers of Bells. Remember that the `L` suffix is used in R to signify an integer.[^why]
+
+```{r eval=FALSE}
+bank@savings <- 10L
+```
+
+Is there an overdraft? Tom Nook would probably love that and would ask for massive overdraft fees, but it's not programmed into the game. This is where our validator comes in handy. We specified that you can't have a negative amount of savings, so this errors: 
+
+```{r eval=FALSE}
+bank@savings <- -11L
+```
+
+That's fine, but I have sometimes I have extra logic I want to evaluate when I adjust the properties. That's why I created new methods earlier on. It means I can use a function to add to the savings property instead, for example.
+
+```{r}
+bank <- deposit(bank, 10L)
+bank@savings
+```
+
+We can retrieve money in this fashion too:
+
+```{r}
+bank <- withdraw(bank, 10L)
+bank@savings
+```
+
+What if we deposit enough to pay the loan?
+
+```{r}
+bank <- deposit(bank, 2500000L)
+bank <- pay(bank, 2500000L)
+```
+
+The method warns us when we try to pay off a value greater than the remaining loan and prints a nice congratulatory method.
+
+And so we end up with this view:
+
+```{r}
+check(bank)
+```
+
+Get rekt, raccoon dog.
+
+---
+<details><summary>Session info</summary>
+```{r eval=TRUE, sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^useless]: 'Useless' is an extremely relative term with regard to this blog.
+[^why]: Why `L`? [Shrug](https://stackoverflow.com/questions/22191324/clarification-of-l-in-r/22192378#22192378).
