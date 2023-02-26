@@ -1,7 +1,7 @@
 ---
 title: 'Repaying Tom Nook with {S7}'
 author: Matt Dray
-date: '2023-02-23'
+date: '2023-02-26'
 slug: nook-s7
 categories:
   - code
@@ -12,39 +12,55 @@ tags:
   - r
   - R6
   - S7 
-draft: yes
+draft: no
 ---
 
 
 
+<div class="figure">
+<p><img src="/post/2023-02-23-nook-s7_files/acnh-s7-knit.jpg" alt="Fish-eye lens selfie of the player-character from the game Animal Crossing New Horizons. The character is wearing a knitted black hoodie with bright green letters that say 'S7'. The picture is taken in the Resident Services building. Tom Nook, a raccoon-dog character, is in the background staring ominously at the player." width="100%"/></p>
+</div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
+<p>The <del>R7</del> <a href="https://rconsortium.github.io/OOP-WG/">S7 object-oriented system</a> is coming to R. I’ve done a little R6-to-S7 translation on <a href="https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/">an old project</a> to get a very cursory feel for it, featuring <a href="https://www.animal-crossing.com/new-horizons/">Animal Crossing New Horizons</a>.</p>
+<div class="tip">
+<p><svg aria-hidden="true" role="img" viewBox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;"><path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"/></svg> <b>Update</b></p>
+<p>The S7 system and package are under development and could change at any time, rendering everything in this post useless.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> Heck, last time I checked, the system was called ‘R7’. There’s also a chance that S7 elements may have been integrated into base R itself by the time you read this.</p>
 </div>
-<div id="its-2020-again-oh-no" class="section level1">
-<h1>It’s 2020 again, oh no</h1>
-<p>I think ‘S7’ is pronounced how a snake might say ‘seven’, like ‘sseven’.</p>
-<p><a href="https://github.com/RConsortium/OOP-WG/">The R Consortium’s OOP-WG GitHub repo</a> contains the {S7} package, which also has <a href="https://rconsortium.github.io/OOP-WG/">a documentation webpage</a>.</p>
-<p>{S7} is under development and could change at any time, rendering everything in this post useless.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> I mean, last time I checked, the package was called {R7}. There’s also a chance that much of it will have been integrated in base R itself by the time you read this.</p>
-<p><a href="https://www.jumpingrivers.com/">Jumping Rivers</a> have… jumped the gun on this one and produced <a href="https://www.jumpingrivers.com/blog/r7-oop-object-oriented-programming-r/">an intro to <del>R7</del> S7</a> already</p>
 </div>
-<div id="i-do-what-i-like" class="section level1">
-<h1>I do what I like</h1>
-<p>Last time I focused on a (new to me) class system, I was looking at OOP with {R6} in the post <a href="https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/">Repaying Tom Nook with {R6}</a>. Here I’m going to replicate the general approach, but with {S7}.</p>
-<p>Aha, but actually the {S7} package is more like a development of S3 and S4 objects, and is not a ‘new version’ of {R6}.</p>
-<p>Ah well. I’m noodling around with {S7} for my own devices and thought I’d post it here so I can refer back to it later. Basically I’m recycling content from a previous post to get a feel for the new system. But only in the most superficial, basic way.</p>
+<div id="again-oh-no" class="section level1">
+<h1>2020 again, oh no</h1>
+<p>Animal Crossing New Horizons (ACNH) was the perfect pandemic game. And the pandemic was the perfect time to <a href="https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/">build an ersatz version of the ACNH in-game banking system</a> to solve <a href="https://adv-r.hadley.nz/r6.html#exercises-44">an exercise in the Advanced R book</a> using <a href="https://r6.r-lib.org/">the {R6} package for object-oriented programming (OOP)</a> in R.</p>
+<p>The exercise helped me fantasize about defeating the game’s main boss, the predatory loanshark (loanraccoon?) <a href="https://animalcrossing.fandom.com/wiki/Tom_Nook">Tom Nook</a>, via endless wire transfers of hard-earned in-game currency, called ‘Bells’.</p>
+<p>Of course, a lot has changed since 2020. Most importantly, <a href="https://github.com/RConsortium/OOP-WG">a new OOP system for R is being developed</a>. Conversely, Tom Nook has not changed. He is still a scourge.</p>
+<p>Anyway, maybe this is a chance to twitch my OOP muscles with this new system.</p>
+</div>
+<div id="oop-they-did-it-again" class="section level1">
+<h1>OOP they did it again</h1>
+<p>The <a href="https://www.r-consortium.org/">R Consortium</a>’s OOP working group has been beavering (raccooning?) away to develop a new OOP system from the ground up: S7<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> (<a href="https://github.com/RConsortium/OOP-WG/issues/262">S3 + S4</a>, geddit?).</p>
+<p>The idea is to take the best elements of <a href="https://adv-r.hadley.nz/oo.html">the existing and in-built S3 and S4 systems</a>, interface with them and improve on them.</p>
+<p>You can <a href="https://rconsortium.github.io/OOP-WG/">read various design docs and meeting minutes on their documentation site</a>, which is housed in their <a href="https://github.com/RConsortium/OOP-WG/">‘OOP-WG’ GitHub repo</a>, and try out the current iteration of the associated package, fittingly called {S7}.</p>
+<p>You should refer to their docs in the first instance, or a useful third party review. For example, <a href="https://www.jumpingrivers.com/">Jumping Rivers</a> have… jumped the river on this one and produced <a href="https://www.jumpingrivers.com/blog/r7-oop-object-oriented-programming-r/">a handy intro</a>.</p>
+</div>
+<div id="a-new-horizon-for-oop" class="section level1">
+<h1>A new horizon for OOP</h1>
+<p>Naturally, I should revisit my post on <a href="https://www.rostrum.blog/2020/04/04/repaying-tom-nook-with-r6/">Repaying Tom Nook with {R6}</a> by replicating it with {S7}. Naturally.</p>
+<p>Aha, but actually the {S7} package is more like a development of S3 and S4 objects, and is not a ‘new version’ of {R6}! Ah well. I’m noodling around with {S7} for my own devices and thought I’d post it here so I can refer back to it later.</p>
+<p>Basically I’m recycling content from a previous post to get a feel for the new system. But only in the most superficial, basic way. I spent about 15 minutes on this. Look elsewhere for actually-usefully material. You have been warned.</p>
 </div>
 <div id="install" class="section level1">
 <h1>Install</h1>
-<p>For now, the package is in <a href="https://github.com/RConsortium/OOP-WG/">the R Consortium’s OOP-WG GitHub repo</a>:</p>
+<p>For now, the {S7} package is in <a href="https://github.com/RConsortium/OOP-WG/">the R Consortium’s OOP-WG GitHub repo</a>.</p>
 <pre class="r"><code>install.packages(&quot;remotes&quot;)  # if not yet installed
 remotes::install_github(&quot;RConsortium/OOP-WG&quot;)</code></pre>
-<p>And for this post we’ll also use the quintessential {emoji} package.</p>
+<p>And for some glamour we’ll also use the quintessential <a href="https://emilhvitfeldt.github.io/emoji/">{emoji} package</a><a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
 <pre class="r"><code>install.packages(&quot;emoji&quot;)  # if not yet installed
 library(emoji)</code></pre>
 </div>
 <div id="that-is-class" class="section level1">
 <h1>That is class</h1>
 <p>A new class is constructed with… <code>new_class()</code></p>
+<p>We can give it a name. We can also give it properties: fields that contain data and can be provided a type check and default value. It’s possible to build validators for these as well, which ensure that certain conditions are met when the properties are adjusted. I’ll keep this simple for now: I just want the values to remain equal or greater than zero.</p>
 <pre class="r"><code>ABD &lt;- new_class(
   name = &quot;ABD&quot;,
   properties = list(
@@ -59,19 +75,19 @@ library(emoji)</code></pre>
     }
   }
 )</code></pre>
-<p>For new methods, you can create a new generic and define a function. For example, the deposit method is pretty straightforward: it adds an amount to the current savings value:</p>
+<p>For new methods, you can create a new ‘generic’ and define a function for it. For example, the ‘deposit’ method is pretty straightforward: it just adds an amount to the current savings value.</p>
 <pre class="r"><code>deposit &lt;- new_generic(&quot;deposit&quot;, &quot;x&quot;)
 
 method(deposit, ABD) &lt;- function(x, amount) {
   x@savings &lt;- x@savings + amount
   x
 }</code></pre>
-<p>I specified some other methods, but I hid them because they’re not that much more complicated.</p>
+<p>I specified some other methods, but I hid them because they’re not much more complicated.</p>
 <details>
 <summary>
 Click for more methods
 </summary>
-<p>The withdraw method subtracts a specified amount from the savings property. You’re warned if you specify an amount greater than the amount available.</p>
+<p>The ‘withdraw’ method subtracts a specified amount from the savings property. You’re warned if you specify an amount greater than the amount available.</p>
 <pre class="r"><code>withdraw &lt;- new_generic(&quot;withdraw&quot;, &quot;x&quot;)
 
 method(withdraw, ABD) &lt;- function(x, amount) {
@@ -89,7 +105,7 @@ method(withdraw, ABD) &lt;- function(x, amount) {
   x
   
 }</code></pre>
-<p>The pay method moves funds from savings to loan. You’re warned if the loan is already paid, if you specify a greater amount than there are savings, or if you pay a greater amount than the loan remaining. You’ll get a victory message if you pay off the whole loan.</p>
+<p>The ‘pay’ method moves funds from savings to loan. You’re warned if the loan is already paid, if you specify a greater amount than there are savings, or if you pay a greater amount than the loan remaining. You’ll get a victory message if you pay off the whole loan.</p>
 <pre class="r"><code>pay &lt;- new_generic(&quot;pay&quot;, &quot;x&quot;)
 
 method(pay, ABD) &lt;- function(x, amount) {
@@ -151,15 +167,15 @@ method(check, ABD) &lt;- function(x) {
 </details>
 <p>You can start a new instance of the ABD class by, y’know, calling it.</p>
 <pre class="r"><code>bank &lt;- ABD()</code></pre>
-<p>When you check the class of this object, you’ll see both the custom class name and a reminder that it has the S7 class.</p>
+<p>When you check the class of this object, you’ll see both the custom class name and a reminder that it has the ‘S7’ class.</p>
 <pre class="r"><code>class(bank)</code></pre>
 <pre><code>## [1] &quot;ABD&quot;       &quot;S7_object&quot;</code></pre>
-<p>The vanilla print method gives you this tidy output that exposes the properties and their startup values:</p>
+<p>The vanilla print method exposes the properties and their startup values:</p>
 <pre class="r"><code>bank</code></pre>
 <pre><code>## &lt;ABD&gt;
 ##  @ savings: int 0
 ##  @ loan   : int 2498000</code></pre>
-<p>Note that the properties are pre-pended with <code>@</code>. This indicates that we can use the ‘at’ symbol to access these ‘slots’ from the object, like:</p>
+<p>Note that the properties are prepended with <code>@</code>. This indicates that we can use the ‘at’ symbol to access these ‘slots’ (like S4) from the object, like:</p>
 <pre class="r"><code>bank@loan</code></pre>
 <pre><code>## [1] 2498000</code></pre>
 <p>While we’re printing stuff, we can use the <code>check()</code> method (that I’ve pre-specified) to see the properties in a manner that more closely resembles the game.</p>
@@ -174,27 +190,29 @@ method(check, ABD) &lt;- function(x) {
 ##  🏠 pay()
 ##  ⬆️ deposit()
 ##  ⬇️ withdraw()</code></pre>
-<p>You can very easily and directly change the properties. To add 10 Bells:</p>
+<p>You can easily and directly change the properties. To add 10 Bells:</p>
 <pre class="r"><code>bank@savings &lt;- 9.99</code></pre>
 <pre><code>Error: &lt;ABD&gt;@savings must be &lt;integer&gt;, not &lt;double&gt;</code></pre>
-<p>Haha, whoops. Of course, I specified that the property can only be an integer, so we need to provide an integer value instead of a double value. In other words, we can only provide whole numbers of Bells. Remember that the <code>L</code> suffix is used in R to signify an integer.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>Haha, whoops. Remember I specified that the property can only be an integer, so we need to provide an integer value instead of a double value. In other words, we can only provide whole numbers of Bells. Remember that the <code>L</code> suffix is used in R to signify an integer.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
 <pre class="r"><code>bank@savings &lt;- 10L</code></pre>
-<p>Is there an overdraft? Tom Nook would probably love that and would ask for massive overdraft fees, but it’s not programmed into the game. This is where our validator comes in handy. We specified that you can’t have a negative amount of savings, so this errors:</p>
+<p>Is there an overdraft? Tom Nook would probably love that and would ask for massive overdraft fees, but it’s not programmed into the game. This is where our validator comes in handy. We specified that you can’t have a negative amount of savings, so this causes an error:</p>
 <pre class="r"><code>bank@savings &lt;- -11L</code></pre>
+<pre><code>Error: &lt;ABD&gt; object is invalid:
+- @savings must be zero or more</code></pre>
 <p>That’s fine, but I have sometimes I have extra logic I want to evaluate when I adjust the properties. That’s why I created new methods earlier on. It means I can use a function to add to the savings property instead, for example.</p>
 <pre class="r"><code>bank &lt;- deposit(bank, 10L)
 bank@savings</code></pre>
 <pre><code>## [1] 10</code></pre>
-<p>We can retrieve money in this fashion too:</p>
+<p>We can retrieve Bells in this fashion too:</p>
 <pre class="r"><code>bank &lt;- withdraw(bank, 10L)
 bank@savings</code></pre>
 <pre><code>## [1] 0</code></pre>
-<p>What if we deposit enough to pay the loan?</p>
+<p>What if we deposit enough Bells to pay the loan?</p>
 <pre class="r"><code>bank &lt;- deposit(bank, 2500000L)
 bank &lt;- pay(bank, 2500000L)</code></pre>
 <pre><code>## Warning: Paid total remaining loan instead: 2498000 Bells.</code></pre>
 <pre><code>## 😃 Sweet! I finally finished paying off my very last home loan! 🎉</code></pre>
-<p>The method warns us when we try to pay off a value greater than the remaining loan and prints a nice congratulatory method.</p>
+<p>The method warns us when we try to pay off a value greater than the remaining loan and prints a nice congratulatory message if we’ve cleared the whole debt.</p>
 <p>And so we end up with this view:</p>
 <pre class="r"><code>check(bank)</code></pre>
 <pre><code>## Automatic Bell Dispenser (ABD)
@@ -207,7 +225,10 @@ bank &lt;- pay(bank, 2500000L)</code></pre>
 ##  🏠 pay()
 ##  ⬆️ deposit()
 ##  ⬇️ withdraw()</code></pre>
-<p>Get rekt, raccoon dog.</p>
+<p>Huzzah. Get rekt, raccoon dog. More like Tom <em>Crook</em> amirite.</p>
+<div class="figure">
+<p><img src="/post/2023-02-23-nook-s7_files/acnh-s7-knit-2.jpg" alt="Fish-eye lens selfie of the player-character from the game Animal Crossing New Horizons. The character is wearing a knitted black hoodie with bright green letters that say 'S7'. The picture is taken in the Resident Services building." width="100%"/></p>
+</div>
 <hr />
 <details>
 <summary>
@@ -223,7 +244,7 @@ Session info
 ##  collate  en_US.UTF-8
 ##  ctype    en_US.UTF-8
 ##  tz       Europe/London
-##  date     2023-02-23
+##  date     2023-02-26
 ##  pandoc   2.19.2 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
@@ -236,6 +257,7 @@ Session info
 ##  emoji       * 15.0       2022-11-03 [1] CRAN (R 4.2.0)
 ##  evaluate      0.20       2023-01-17 [1] CRAN (R 4.2.0)
 ##  fastmap       1.1.0      2021-01-25 [1] CRAN (R 4.2.0)
+##  fontawesome   0.2.2      2021-07-02 [1] CRAN (R 4.2.0)
 ##  glue          1.6.2      2022-02-24 [1] CRAN (R 4.2.0)
 ##  htmltools     0.5.2      2021-08-25 [1] CRAN (R 4.2.0)
 ##  jquerylib     0.1.4      2021-04-26 [1] CRAN (R 4.2.0)
@@ -264,6 +286,8 @@ Session info
 <hr />
 <ol>
 <li id="fn1"><p>‘Useless’ is an extremely relative term with regard to this blog.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>Why <code>L</code>? <a href="https://stackoverflow.com/questions/22191324/clarification-of-l-in-r/22192378#22192378">Shrug</a>.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>95% certain that ‘S7’ is pronounced how a snake might say ‘seven’: like ‘sseven’.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p><a href="https://github.com/hadley/emo">{emo}</a> is dead, long live <a href="https://emilhvitfeldt.github.io/emoji/">{emoji}</a>. Haha, joke’s on you, emo will never die. I know this because ‘emo’ was in my top 5 genres on Spotify Wrapped 2022, lololol.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>Why <code>L</code>? <a href="https://stackoverflow.com/questions/22191324/clarification-of-l-in-r/22192378#22192378">Shrug</a>. Just take the L.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
