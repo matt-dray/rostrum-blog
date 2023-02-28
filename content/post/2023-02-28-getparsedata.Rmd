@@ -1,0 +1,84 @@
+---
+title: "I can't be parsed, mate"
+author: Matt Dray
+date: '2023-02-28'
+slug: getparsedata
+categories:
+  - code
+  - tutorial
+tags:
+  - r
+draft: yes
+---
+
+```{r, setup, include=FALSE}
+knitr::opts_chunk$set(eval = TRUE)
+
+```
+
+
+# tl;dr
+
+
+I've dabbled with static code analysis before.
+
+* For the biscuits, `(` and `)` (parentheses) are extracted from the tokens and pairs identified.
+* For the assignment trolling, `<-` (LEFT_ASSIGN) and `->` (RIGHT_ASSIGN) are identified, as well as `=` (EQ_ASSIGN).
+* In {r2eng}, tokens are parsed out and then matched against a dictionary of terms. For example, in `x <- 1` is 'x' is recognised as an object name and pronounced as-is, the assignment arrow is 'gets' and the 1 is recognised as a numeric constant.
+
+
+I was never trained in computer science. You can argue that 'writing R code' is not 'programming' in a gatekeeping sense.
+
+I'm going to write a little function that parses an R expression from a character string. First, it uses `parse()` to convert the R string to an 'expression', then extracts the 'tokens' from the parsed expression. Optionally you can remove the spaces, which aren't that interesting to us anyway. I've called the function parsley, because it's on the edge of being amusing.
+
+```{r}
+parsley <- function(string, simplify = TRUE) {
+  p <- parse(text = string)
+  pd <- getParseData(p)
+  if (simplify) {
+    keep_cols <- c("id", "parent", "token", "text")
+    pd <- pd[pd$text != "", keep_cols]
+  }
+  pd
+}
+```
+
+
+Just to prove that R can recognise a string as an R expression, you can `parse()` a string containing R code and then `eval()`uate it:
+
+```{r}
+code <- "mtcars[mtcars$cyl == 4, ] |> head()"
+eval(parse(text = code))
+```
+
+Our cheeky little parsing function does this step and then also extracts all the tokens:
+
+```{r}
+parsley(code, simplify = FALSE)
+```
+
+You'll notice that there's a kind of nesting explained by these columns. Note how the square brackets and the comma are under the same 'parent'.
+
+```{r}
+lobstr::ast(
+  mtcars[mtcars$cyl == 4, ] |> head()
+)
+```
+You might be wondering where's the pipe (`|>`) gone? In short, the R parser recognises and evaluates a string like `mtcars |> head()` literally as `head(mtcars)`. Compare this to `lobstr::ast(mtcars %>% head)`, where `%>%` is actually a function that is evaluated more like ```%>%`(mtcars, head)``.
+
+You may also be wondering what is meant by `[` being presented a level above `mtcars` and why there's no matching closing bracket? Or why `[`, `==` and `$` are all being presented with backticks around them? Well, like everything in R, these are all actually functions. See how these two things are equivalent?
+
+```{r}
+normal  <- mtcars[mtcars$cyl == 4, ] |> head()
+bonkers <- head(`[`(mtcars, `==`(`$`(mtcars, cyl), 4), ))
+all(normal == bonkers)
+```
+
+
+
+---
+<details><summary>Session info</summary>
+```{r eval=TRUE, sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>

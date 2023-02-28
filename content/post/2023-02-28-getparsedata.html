@@ -1,0 +1,113 @@
+---
+title: "I can't be parsed, mate"
+author: Matt Dray
+date: '2023-02-28'
+slug: getparsedata
+categories:
+  - code
+  - tutorial
+tags:
+  - r
+draft: yes
+---
+
+
+
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I’ve dabbled with static code analysis before.</p>
+<ul>
+<li>For the biscuits, <code>(</code> and <code>)</code> (parentheses) are extracted from the tokens and pairs identified.</li>
+<li>For the assignment trolling, <code>&lt;-</code> (LEFT_ASSIGN) and <code>-&gt;</code> (RIGHT_ASSIGN) are identified, as well as <code>=</code> (EQ_ASSIGN).</li>
+<li>In {r2eng}, tokens are parsed out and then matched against a dictionary of terms. For example, in <code>x &lt;- 1</code> is ‘x’ is recognised as an object name and pronounced as-is, the assignment arrow is ‘gets’ and the 1 is recognised as a numeric constant.</li>
+</ul>
+<p>I was never trained in computer science. You can argue that ‘writing R code’ is not ‘programming’ in a gatekeeping sense.</p>
+<p>I’m going to write a little function that parses an R expression from a character string. First, it uses <code>parse()</code> to convert the R string to an ‘expression’, then extracts the ‘tokens’ from the parsed expression. Optionally you can remove the spaces, which aren’t that interesting to us anyway. I’ve called the function parsley, because it’s on the edge of being amusing.</p>
+<pre class="r"><code>parsley &lt;- function(string, simplify = TRUE) {
+  p &lt;- parse(text = string)
+  pd &lt;- getParseData(p)
+  if (simplify) {
+    keep_cols &lt;- c(&quot;id&quot;, &quot;parent&quot;, &quot;token&quot;, &quot;text&quot;)
+    pd &lt;- pd[pd$text != &quot;&quot;, keep_cols]
+  }
+  pd
+}</code></pre>
+<p>Just to prove that R can recognise a string as an R expression, you can <code>parse()</code> a string containing R code and then <code>eval()</code>uate it:</p>
+<pre class="r"><code>code &lt;- &quot;mtcars[mtcars$cyl == 4, ] |&gt; head()&quot;
+eval(parse(text = code))</code></pre>
+<pre><code>##                 mpg cyl  disp hp drat    wt  qsec vs am gear carb
+## Datsun 710     22.8   4 108.0 93 3.85 2.320 18.61  1  1    4    1
+## Merc 240D      24.4   4 146.7 62 3.69 3.190 20.00  1  0    4    2
+## Merc 230       22.8   4 140.8 95 3.92 3.150 22.90  1  0    4    2
+## Fiat 128       32.4   4  78.7 66 4.08 2.200 19.47  1  1    4    1
+## Honda Civic    30.4   4  75.7 52 4.93 1.615 18.52  1  1    4    2
+## Toyota Corolla 33.9   4  71.1 65 4.22 1.835 19.90  1  1    4    1</code></pre>
+<p>Our cheeky little parsing function does this step and then also extracts all the tokens:</p>
+<pre class="r"><code>parsley(code, simplify = FALSE)</code></pre>
+<pre><code>## NULL</code></pre>
+<p>You’ll notice that there’s a kind of nesting explained by these columns. Note how the square brackets and the comma are under the same ‘parent’.</p>
+<pre class="r"><code>lobstr::ast(
+  mtcars[mtcars$cyl == 4, ] |&gt; head()
+)</code></pre>
+<pre><code>## █─head 
+## └─█─`[` 
+##   ├─mtcars 
+##   ├─█─`==` 
+##   │ ├─█─`$` 
+##   │ │ ├─mtcars 
+##   │ │ └─cyl 
+##   │ └─4 
+##   └─``</code></pre>
+<p>You might be wondering where’s the pipe (<code>|&gt;</code>) gone? In short, the R parser recognises and evaluates a string like <code>mtcars |&gt; head()</code> literally as <code>head(mtcars)</code>. Compare this to <code>lobstr::ast(mtcars %&gt;% head)</code>, where <code>%&gt;%</code> is actually a function that is evaluated more like `<code>%&gt;%`(mtcars, head)</code>.</p>
+<p>You may also be wondering what is meant by <code>[</code> being presented a level above <code>mtcars</code> and why there’s no matching closing bracket? Or why <code>[</code>, <code>==</code> and <code>$</code> are all being presented with backticks around them? Well, like everything in R, these are all actually functions. See how these two things are equivalent?</p>
+<pre class="r"><code>normal  &lt;- mtcars[mtcars$cyl == 4, ] |&gt; head()
+bonkers &lt;- head(`[`(mtcars, `==`(`$`(mtcars, cyl), 4), ))
+all(normal == bonkers)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
+##  os       macOS Big Sur/Monterey 10.16
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_US.UTF-8
+##  ctype    en_US.UTF-8
+##  tz       Europe/London
+##  date     2023-02-28
+##  pandoc   2.19.2 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date (UTC) lib source
+##  blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.6.0   2023-01-09 [1] CRAN (R 4.2.0)
+##  crayon        1.5.2   2022-09-29 [1] CRAN (R 4.2.0)
+##  digest        0.6.31  2022-12-11 [1] CRAN (R 4.2.0)
+##  evaluate      0.20    2023-01-17 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.4   2022-12-06 [1] CRAN (R 4.2.0)
+##  knitr         1.42    2023-01-25 [1] CRAN (R 4.2.0)
+##  lobstr        1.1.2   2022-06-22 [1] CRAN (R 4.2.0)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+##  rlang         1.0.6   2022-09-24 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.14    2022-08-22 [1] CRAN (R 4.2.0)
+##  sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+##  xfun          0.37    2023-01-31 [1] CRAN (R 4.2.0)
+##  yaml          2.3.7   2023-01-23 [1] CRAN (R 4.2.0)
+## 
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>
