@@ -11,29 +11,67 @@ tags:
 draft: yes
 ---
 
-```{r, setup, include=FALSE}
-knitr::opts_chunk$set(eval = TRUE)
-
-```
-
-
 # tl;dr
 
+R is capable of reading R code. Obviously. You can use `getParseData()` to see what's going on.
 
-I've dabbled with static code analysis before.
+# Static prevails
 
-* For the biscuits, `(` and `)` (parentheses) are extracted from the tokens and pairs identified.
-* For the assignment trolling, `<-` (LEFT_ASSIGN) and `->` (RIGHT_ASSIGN) are identified, as well as `=` (EQ_ASSIGN).
-* In {r2eng}, tokens are parsed out and then matched against a dictionary of terms. For example, in `x <- 1` is 'x' is recognised as an object name and pronounced as-is, the assignment arrow is 'gets' and the 1 is recognised as a numeric constant.
+This is handy for stuff like linters. These are programs that can detect the structure and content of some code without actually running it. They can be used to spot ugly code and make it prettier.
 
+I've used this approach a few times to:
+
+* insert a comment after a closing parenthesis (a so-called 'biscuit') to label it with the name of the function that it's closing
+* identify files that contain equals assignment (`x = 1`), rather than an assignment arrow (`x <- 1`)
+* match tokens against words so an expression can be translated to English (`<-` is recognised as the token 'LEFT_ASSIGN' which we might call 'gets' in a translation of `x <- 1` to 'x gets 1')
 
 I was never trained in computer science. You can argue that 'writing R code' is not 'programming' in a gatekeeping sense.
+
+# Parse the parcel
+
+You can pass a string of R code to `parse()` for it to be converted to an 'expression' class. In other words, the string has been parsed as R code, but not yet evaluated.
+
+```{r}
+string <- "x <- subset(beaver1, temp < 36.4)"
+expression <- parse(text = string)
+expression
+```
+
+A string is just a string. A captured expression is potent code.
+
+When you're ready, you can `eval()`uate the expression. As a result, the dataframe `x` is now in our environment and contains only rows of `beaver1` where body temperatures were less than 36.4.
+
+```{r}
+eval(expression)
+x
+```
+
+Wow, we have the power to delay code execution!
+
+That's great, but we actually froze in time the expression so we can pick it apart.
+
+This is done with `getParseData()`, which identifies from an expression its 'tokens': its smallest, atomic units of code. These are returned in a dataframe with a row per token. 
+
+```{r}
+getParseData(parse(text = string, keep.source = TRUE))
+```
+
+While presented as a dataframe, the information has actually been parsed as a tree-like structure. For example, note that each token is shown with the unique `id` of a `parent` token under which it sits.
+
+
+
+Provided are columns giving the line and column location of each token, a unique identifier within the expression, the id of parent of the token, the special internal name for the type of token, whether it's a 'leaf' node in the parse tree.
+
+Note how tokens have been detected in context: `<-` is recognised as the assignment arrow rather than a less-than and a hyphen, for example, while `subset` and `beaver1` are recognised as different types of token despite both being unquoted strings.
+
+
+
 
 I'm going to write a little function that parses an R expression from a character string. First, it uses `parse()` to convert the R string to an 'expression', then extracts the 'tokens' from the parsed expression. Optionally you can remove the spaces, which aren't that interesting to us anyway. I've called the function parsley, because it's on the edge of being amusing.
 
 ```{r}
 parsley <- function(string, simplify = TRUE) {
-  p <- parse(text = string)
+  p <- parse(text = string, keep.source = TRUE)
   pd <- getParseData(p)
   if (simplify) {
     keep_cols <- c("id", "parent", "token", "text")

@@ -15,16 +15,63 @@ draft: yes
 
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>I’ve dabbled with static code analysis before.</p>
+<p>R is capable of reading R code. Obviously. You can use <code>getParseData()</code> to see what’s going on.</p>
+</div>
+<div id="static-prevails" class="section level1">
+<h1>Static prevails</h1>
+<p>This is handy for stuff like linters. These are programs that can detect the structure and content of some code without actually running it. They can be used to spot ugly code and make it prettier.</p>
+<p>I’ve used this approach a few times to:</p>
 <ul>
-<li>For the biscuits, <code>(</code> and <code>)</code> (parentheses) are extracted from the tokens and pairs identified.</li>
-<li>For the assignment trolling, <code>&lt;-</code> (LEFT_ASSIGN) and <code>-&gt;</code> (RIGHT_ASSIGN) are identified, as well as <code>=</code> (EQ_ASSIGN).</li>
-<li>In {r2eng}, tokens are parsed out and then matched against a dictionary of terms. For example, in <code>x &lt;- 1</code> is ‘x’ is recognised as an object name and pronounced as-is, the assignment arrow is ‘gets’ and the 1 is recognised as a numeric constant.</li>
+<li>insert a comment after a closing parenthesis (a so-called ‘biscuit’) to label it with the name of the function that it’s closing</li>
+<li>identify files that contain equals assignment (<code>x = 1</code>), rather than an assignment arrow (<code>x &lt;- 1</code>)</li>
+<li>match tokens against words so an expression can be translated to English (<code>&lt;-</code> is recognised as the token ‘LEFT_ASSIGN’ which we might call ‘gets’ in a translation of <code>x &lt;- 1</code> to ‘x gets 1’)</li>
 </ul>
 <p>I was never trained in computer science. You can argue that ‘writing R code’ is not ‘programming’ in a gatekeeping sense.</p>
+</div>
+<div id="parse-the-parcel" class="section level1">
+<h1>Parse the parcel</h1>
+<p>You can pass a string of R code to <code>parse()</code> for it to be converted to an ‘expression’ class. In other words, the string has been parsed as R code, but not yet evaluated.</p>
+<pre class="r"><code>string &lt;- &quot;x &lt;- subset(beaver1, temp &lt; 36.4)&quot;
+expression &lt;- parse(text = string)
+expression</code></pre>
+<pre><code>## expression(x &lt;- subset(beaver1, temp &lt; 36.4))</code></pre>
+<p>A string is just a string. A captured expression is potent code.</p>
+<p>When you’re ready, you can <code>eval()</code>uate the expression. As a result, the dataframe <code>x</code> is now in our environment and contains only rows of <code>beaver1</code> where body temperatures were less than 36.4.</p>
+<pre class="r"><code>eval(expression)
+x</code></pre>
+<pre><code>##   day time  temp activ
+## 1 346  840 36.33     0
+## 2 346  850 36.34     0
+## 3 346  900 36.35     0</code></pre>
+<p>Wow, we have the power to delay code execution!</p>
+<p>That’s great, but we actually froze in time the expression so we can pick it apart.</p>
+<p>This is done with <code>getParseData()</code>, which identifies from an expression its ‘tokens’: its smallest, atomic units of code. These are returned in a dataframe with a row per token.</p>
+<pre class="r"><code>getParseData(parse(text = string, keep.source = TRUE))</code></pre>
+<pre><code>##    line1 col1 line2 col2 id parent                token terminal    text
+## 25     1    1     1   33 25      0                 expr    FALSE        
+## 1      1    1     1    1  1      3               SYMBOL     TRUE       x
+## 3      1    1     1    1  3     25                 expr    FALSE        
+## 2      1    3     1    4  2     25          LEFT_ASSIGN     TRUE      &lt;-
+## 23     1    6     1   33 23     25                 expr    FALSE        
+## 4      1    6     1   11  4      6 SYMBOL_FUNCTION_CALL     TRUE  subset
+## 6      1    6     1   11  6     23                 expr    FALSE        
+## 5      1   12     1   12  5     23                  &#39;(&#39;     TRUE       (
+## 7      1   13     1   19  7      9               SYMBOL     TRUE beaver1
+## 9      1   13     1   19  9     23                 expr    FALSE        
+## 8      1   20     1   20  8     23                  &#39;,&#39;     TRUE       ,
+## 19     1   22     1   32 19     23                 expr    FALSE        
+## 13     1   22     1   25 13     15               SYMBOL     TRUE    temp
+## 15     1   22     1   25 15     19                 expr    FALSE        
+## 14     1   27     1   27 14     19                   LT     TRUE       &lt;
+## 16     1   29     1   32 16     17            NUM_CONST     TRUE    36.4
+## 17     1   29     1   32 17     19                 expr    FALSE        
+## 18     1   33     1   33 18     23                  &#39;)&#39;     TRUE       )</code></pre>
+<p>While presented as a dataframe, the information has actually been parsed as a tree-like structure. For example, note that each token is shown with the unique <code>id</code> of a <code>parent</code> token under which it sits.</p>
+<p>Provided are columns giving the line and column location of each token, a unique identifier within the expression, the id of parent of the token, the special internal name for the type of token, whether it’s a ‘leaf’ node in the parse tree.</p>
+<p>Note how tokens have been detected in context: <code>&lt;-</code> is recognised as the assignment arrow rather than a less-than and a hyphen, for example, while <code>subset</code> and <code>beaver1</code> are recognised as different types of token despite both being unquoted strings.</p>
 <p>I’m going to write a little function that parses an R expression from a character string. First, it uses <code>parse()</code> to convert the R string to an ‘expression’, then extracts the ‘tokens’ from the parsed expression. Optionally you can remove the spaces, which aren’t that interesting to us anyway. I’ve called the function parsley, because it’s on the edge of being amusing.</p>
 <pre class="r"><code>parsley &lt;- function(string, simplify = TRUE) {
-  p &lt;- parse(text = string)
+  p &lt;- parse(text = string, keep.source = TRUE)
   pd &lt;- getParseData(p)
   if (simplify) {
     keep_cols &lt;- c(&quot;id&quot;, &quot;parent&quot;, &quot;token&quot;, &quot;text&quot;)
@@ -44,7 +91,29 @@ eval(parse(text = code))</code></pre>
 ## Toyota Corolla 33.9   4  71.1 65 4.22 1.835 19.90  1  1    4    1</code></pre>
 <p>Our cheeky little parsing function does this step and then also extracts all the tokens:</p>
 <pre class="r"><code>parsley(code, simplify = FALSE)</code></pre>
-<pre><code>## NULL</code></pre>
+<pre><code>##    line1 col1 line2 col2 id parent                token terminal   text
+## 28     1    1     1   35 28      0                 expr    FALSE       
+## 19     1    1     1   25 19     28                 expr    FALSE       
+## 1      1    1     1    6  1      3               SYMBOL     TRUE mtcars
+## 3      1    1     1    6  3     19                 expr    FALSE       
+## 2      1    7     1    7  2     19                  &#39;[&#39;     TRUE      [
+## 13     1    8     1   22 13     19                 expr    FALSE       
+## 8      1    8     1   17  8     13                 expr    FALSE       
+## 4      1    8     1   13  4      6               SYMBOL     TRUE mtcars
+## 6      1    8     1   13  6      8                 expr    FALSE       
+## 5      1   14     1   14  5      8                  &#39;$&#39;     TRUE      $
+## 7      1   15     1   17  7      8               SYMBOL     TRUE    cyl
+## 9      1   19     1   20  9     13                   EQ     TRUE     ==
+## 10     1   22     1   22 10     11            NUM_CONST     TRUE      4
+## 11     1   22     1   22 11     13                 expr    FALSE       
+## 12     1   23     1   23 12     19                  &#39;,&#39;     TRUE      ,
+## 17     1   25     1   25 17     19                  &#39;]&#39;     TRUE      ]
+## 20     1   27     1   28 20     28                 PIPE     TRUE     |&gt;
+## 26     1   30     1   35 26     28                 expr    FALSE       
+## 21     1   30     1   33 21     23 SYMBOL_FUNCTION_CALL     TRUE   head
+## 23     1   30     1   33 23     26                 expr    FALSE       
+## 22     1   34     1   34 22     26                  &#39;(&#39;     TRUE      (
+## 24     1   35     1   35 24     26                  &#39;)&#39;     TRUE      )</code></pre>
 <p>You’ll notice that there’s a kind of nesting explained by these columns. Note how the square brackets and the comma are under the same ‘parent’.</p>
 <pre class="r"><code>lobstr::ast(
   mtcars[mtcars$cyl == 4, ] |&gt; head()
@@ -79,7 +148,7 @@ Session info
 ##  collate  en_US.UTF-8
 ##  ctype    en_US.UTF-8
 ##  tz       Europe/London
-##  date     2023-02-28
+##  date     2023-03-01
 ##  pandoc   2.19.2 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
