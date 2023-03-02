@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 3 day(s) ago: [Repaying Tom Nook with
+🆕 The latest post was published 4 day(s) ago: [Repaying Tom Nook with
 {S7}](https://www.rostrum.blog/2023/02/26/nook-s7/).
 
 📈 This 2D plot shows posts over time:
@@ -188,4 +188,4 @@ since 2018-04-14.
 
 -----
 
-*Updated on 2023-03-01 at 03:06.*
+*Updated on 2023-03-02 at 03:00.*
