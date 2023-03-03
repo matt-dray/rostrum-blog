@@ -25,13 +25,13 @@ Image by <a href="https://pixabay.com/users/keithjj-2328014/">Keith Johnston</a>
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>R is capable of reading R code. Obviously. You can use <code>getParseData(parse())</code> to see what’s going on. A very simple intro.</p>
+<p>R is capable of reading R code. Obviously. You can use <code>getParseData(parse())</code> to see what’s going on. A very naive intro.</p>
 </div>
 <div id="static-prevails" class="section level1">
 <h1>Static Prevails</h1>
 <p>There’s a few things that delight me about coding that I’m sure are quite trivial to gatekeepers.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> One meta thing I like is the idea that R has to recognise the code that you give it as… R code.</p>
 <p>For example, does <code>x&lt;-1</code> mean ‘x is less than minus-one’? Hm, actually R recognises <code>&lt;-</code> as a ‘left-assignment operator’—a special ‘token’—that gives the name <code>x</code> the value of <code>1</code>. Subtle, but important.</p>
-<p>Another example: the tokens <code>&lt;-</code> and <code>=</code> have an equivalent role in <code>x &lt;- 1</code> and <code>x = 1</code>. For style reasons, you might want to find-and-replace <code>=</code> with <code>&lt;-</code> in your scripts.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> Except you shouldn’t because <code>=</code> is context dependent. In <code>x = subset(mtcars, subset = carb == 8)</code>, it’s used to assign (<code>=</code>), to set a function argument (<code>=</code>) <em>and</em> as part of the equivalence operator (<code>==</code>).</p>
+<p>Another example: the tokens <code>&lt;-</code> and <code>=</code> have an equivalent role in <code>x &lt;- 1</code> and <code>x = 1</code>. For style reasons, you’ll probably want to replace <code>=</code> with <code>&lt;-</code>.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> But don’t just ‘find and replace’ because <code>=</code> is context dependent. In <code>x = subset(mtcars, subset = carb == 8)</code>, it’s used to assign (<code>=</code>), to set a function argument (<code>=</code>) and as part of the equivalence operator (<code>==</code>). Oof.</p>
 <p>How can a mere human understand this better?</p>
 </div>
 <div id="parsed-tense" class="section level1">
@@ -82,7 +82,7 @@ code_parsed[code_parsed$text != &quot;&quot;, c(&quot;text&quot;, &quot;token&qu
 </div>
 <div id="parse-away" class="section level1">
 <h1>Parse away</h1>
-<p>If you want to take a look at a given R string you can use this little function that contains parse() and getParseData() and returns you the simplified dataframe I showed above if <code>simplify = TRUE</code>, otherwise it gives the full read out. An exercise for the reader is to alter this function to accept an R script file rather than a string (hint: <code>parse()</code> takes a <code>file</code> argument).</p>
+<p>If you want to take a look at a given R string you can use this little function that contains <code>parse()</code> and <code>getParseData()</code> and returns you the simplified dataframe I showed above if <code>simplify = TRUE</code>, otherwise it gives the full read out.<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a></p>
 <pre class="r"><code>parse_out &lt;- function(string, simplify = TRUE) {
   p &lt;- parse(text = string, keep.source = TRUE)
   pd &lt;- getParseData(p)
@@ -122,7 +122,7 @@ code_parsed[code_parsed$text != &quot;&quot;, c(&quot;text&quot;, &quot;token&qu
 ## 5                  &#39;(&#39;      (
 ## 7                  &#39;)&#39;      )</code></pre>
 <p>Okay, not that surprising: it’s recognised as <code>PIPE</code> (line 2).</p>
-<p>But wait. We’ve come this far, let’s go one step further. We’ve seen how R parses tokens, what about how it actually executes code? One way to see this is to look at an ‘abstract syntax tree’ with <a href="https://lobstr.r-lib.org/">the {lobstr} package</a>.<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a> A ‘tree’ to show the nested structure of code, with its functions within functions and so on.</p>
+<p>But wait. We’ve come this far, let’s go one step further. We’ve seen how R parses tokens, what about how it actually executes code? One way to see this is to look at an ‘abstract syntax tree’ with <a href="https://lobstr.r-lib.org/">the {lobstr} package</a>.<a href="#fn7" class="footnote-ref" id="fnref7"><sup>7</sup></a> A ‘tree’ to show the nested structure of code, with its functions within functions and so on.</p>
 <pre class="r"><code>library(lobstr)    # install from CRAN
 library(magrittr)  # install from CRAN
 ast(mtcars %&gt;% head())</code></pre>
@@ -138,7 +138,7 @@ ast(mtcars %&gt;% head())</code></pre>
 </div>
 <div id="parsed-away" class="section level1">
 <h1>Parsed away</h1>
-<p>Well, ‘cool’ I guess. Now it’s up to you: you can either parse on this knowledge, or leave it in the parsed.<a href="#fn7" class="footnote-ref" id="fnref7"><sup>7</sup></a></p>
+<p>Well, ‘cool’ I guess. Now it’s up to you: you can either parse on this knowledge, or leave it in the parsed.<a href="#fn8" class="footnote-ref" id="fnref8"><sup>8</sup></a></p>
 <hr />
 <details>
 <summary>
@@ -195,7 +195,8 @@ Session info
 <li id="fn3"><p>Of course, I’m not mentioning right assignment (<code>-&gt;</code>) here, nor the plucky upstart of <a href="https://www.rostrum.blog/2022/06/07/assign-down/">down-asignment</a>, which is certain to be the future for assignment in R.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
 <li id="fn4"><p>‘Non-car people’ should take a look at the ‘Format’ section of <code>?mtcars</code>. I mean, <code>drat</code> means ‘rear axle ratio’, what?<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
 <li id="fn5"><p>You can <a href="https://github.com/wch/r-source/blob/0ee550ff68f22b8a1807377e728f99f2775cc43c/src/main/gram.y#L2312-L2350">see a list of these with English translations</a> in Winston Chang’s GitHub copy of R’s source code. So <code>NUM_CONST</code> is ‘numeric constant’, for example.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
-<li id="fn6"><p>A package with one of my favourite names and <a href="https://lobstr.r-lib.org/logo.png">hex logos</a>. The ‘str’ is from ‘structure’, as in ‘the structure of code’. The logo is a lobster snipping apart the ‘lob’ from ‘str’ text. I mean, *(lobster) chef’s kiss* on that one. 🦞<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
-<li id="fn7"><p>Yeah, I’m hoping you didn’t read this far. Obviously I didn’t know how to end the post, sorry.<a href="#fnref7" class="footnote-back">↩︎</a></p></li>
+<li id="fn6"><p>An exercise for the reader is to alter this function to accept an R script file rather than a string (hint: <code>parse()</code> takes a <code>file</code> argument).<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
+<li id="fn7"><p>A package with one of my favourite names and <a href="https://lobstr.r-lib.org/logo.png">hex logos</a>. The ‘str’ is from ‘structure’, as in ‘the structure of code’. The logo is a lobster snipping apart the ‘lob’ from ‘str’ text. I mean, *(lobster) chef’s kiss* on that one. 🦞<a href="#fnref7" class="footnote-back">↩︎</a></p></li>
+<li id="fn8"><p>Yeah, I’m hoping you didn’t read this far. Obviously I didn’t know how to end the post, sorry.<a href="#fnref8" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>

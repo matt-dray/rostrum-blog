@@ -22,7 +22,7 @@ draft: no
 
 # tl;dr
 
-R is capable of reading R code. Obviously. You can use `getParseData(parse())` to see what's going on. A very simple intro.
+R is capable of reading R code. Obviously. You can use `getParseData(parse())` to see what's going on. A very naive intro.
 
 # Static Prevails
 
@@ -30,7 +30,7 @@ There's a few things that delight me about coding that I'm sure are quite trivia
 
 For example, does `x<-1` mean 'x is less than minus-one'? Hm, actually R recognises `<-` as a 'left-assignment operator'—a special 'token'—that gives the name `x` the value of `1`. Subtle, but important.
 
-Another example: the tokens `<-` and `=` have an equivalent role in `x <- 1` and `x = 1`. For style reasons, you might want to find-and-replace `=` with `<-` in your scripts.[^down] Except you shouldn't because `=` is context dependent. In `x = subset(mtcars, subset = carb == 8)`, it's used to assign (`=`), to set a function argument (`=`) _and_ as part of the equivalence operator (`==`).
+Another example: the tokens `<-` and `=` have an equivalent role in `x <- 1` and `x = 1`. For style reasons, you'll probably want to replace `=` with `<-`.[^down] But don't just 'find and replace' because `=` is context dependent. In `x = subset(mtcars, subset = carb == 8)`, it's used to assign (`=`), to set a function argument (`=`) and as part of the equivalence operator (`==`). Oof.
 
 How can a mere human understand this better?
 
@@ -84,7 +84,7 @@ Oh neato, so you can see `=` is indeed recognised as the token `EQ_ASSIGN` ('equ
 
 # Parse away
 
-If you want to take a look at a given R string you can use this little function that contains parse() and getParseData() and returns you the simplified dataframe I showed above if `simplify = TRUE`, otherwise it gives the full read out. An exercise for the reader is to alter this function to accept an R script file rather than a string (hint: `parse()` takes a `file` argument).
+If you want to take a look at a given R string you can use this little function that contains `parse()` and `getParseData()` and returns you the simplified dataframe I showed above if `simplify = TRUE`, otherwise it gives the full read out.[^ex] 
 
 ```{r}
 parse_out <- function(string, simplify = TRUE) {
@@ -154,3 +154,4 @@ sessioninfo::session_info()
 [^carb]: 'Non-car people' should take a look at the 'Format' section of `?mtcars`. I mean, `drat` means 'rear axle ratio', what?
 [^lobstr]: A package with one of my favourite names and [hex logos](https://lobstr.r-lib.org/logo.png). The 'str' is from 'structure', as in 'the structure of code'. The logo is a lobster snipping apart the 'lob' from 'str' text. I mean, \*(lobster) chef's kiss\* on that one. `r emoji::emoji("lobster")`
 [^end]: Yeah, I'm hoping you didn't read this far. Obviously I didn't know how to end the post, sorry.
+[^ex]: An exercise for the reader is to alter this function to accept an R script file rather than a string (hint: `parse()` takes a `file` argument).
