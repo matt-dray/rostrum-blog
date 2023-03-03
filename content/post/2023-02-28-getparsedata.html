@@ -1,138 +1,138 @@
 ---
 title: "I can't be parsed, mate"
 author: Matt Dray
-date: '2023-02-28'
+date: '2023-03-23'
 slug: getparsedata
 categories:
   - code
   - tutorial
 tags:
+  - lintr
+  - lobstr
+  - magrittr
+  - pipe
   - r
-draft: yes
+draft: no
 ---
 
 
 
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>R is capable of reading R code. Obviously. You can use <code>getParseData()</code> to see what’s going on.</p>
+<p>R is capable of reading R code. Obviously. You can use <code>getParseData(parse())</code> to see what’s going on. A very simple intro.</p>
 </div>
 <div id="static-prevails" class="section level1">
-<h1>Static prevails</h1>
-<p>This is handy for stuff like linters. These are programs that can detect the structure and content of some code without actually running it. They can be used to spot ugly code and make it prettier.</p>
-<p>I’ve used this approach a few times to:</p>
+<h1>Static Prevails</h1>
+<p>There’s a few things that delight me about coding that I’m sure are quite trivial to gatekeepers.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> One meta thing I like is the idea that R has to recognise the code that you give it as… R code.</p>
+<p>For example, does <code>x&lt;-1</code> mean ‘x is less than minus-one’? Hm, actually R recognises <code>&lt;-</code> as a ‘left-assignment operator’—a special ‘token’—that gives the name <code>x</code> the value of <code>1</code>. Subtle, but important.</p>
+<p>Another example: the tokens <code>&lt;-</code> and <code>=</code> have an equivalent role in <code>x &lt;- 1</code> and <code>x = 1</code>. For style reasons, you might want to find-and-replace <code>=</code> with <code>&lt;-</code> in your scripts.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> Except you shouldn’t because <code>=</code> is context dependent. In <code>x = subset(mtcars, subset = carb == 8)</code>, it’s used to assign (<code>=</code>), to set a function argument (<code>=</code>) <em>and</em> as part of the equivalence operator (<code>==</code>).</p>
+<p>How can a mere human understand this better?</p>
+</div>
+<div id="parsed-tense" class="section level1">
+<h1>Parsed tense</h1>
+<p>The cool (‘cool’) thing is that R gives you tools to be able to see the world as R sees it.</p>
+<p>This is sometimes called ‘static code analysis’, in that you can interrogate the code for syntax errors <em>before</em> it executes. Another example is in the {lintr} package, which can tidy up (‘lint’) your code by adjusting or replacing the tokens.</p>
+<p>I’ve used this approach before to:</p>
 <ul>
-<li>insert a comment after a closing parenthesis (a so-called ‘biscuit’) to label it with the name of the function that it’s closing</li>
-<li>identify files that contain equals assignment (<code>x = 1</code>), rather than an assignment arrow (<code>x &lt;- 1</code>)</li>
-<li>match tokens against words so an expression can be translated to English (<code>&lt;-</code> is recognised as the token ‘LEFT_ASSIGN’ which we might call ‘gets’ in a translation of <code>x &lt;- 1</code> to ‘x gets 1’)</li>
+<li><a href="https://www.rostrum.blog/2020/11/14/hello-r2eng/">create the {r2eng} package</a>, which matches tokens against words so an expression can be translated to English (e.g. <code>&lt;-</code> is matched to the word ‘gets’)</li>
+<li><a href="https://www.rostrum.blog/2021/08/31/add-biscuits/">write an RStudio addin that auto-labels closing parentheses</a> with the name of the function they belong to (known cutely as a ‘biscuit’)</li>
+<li><a href="https://www.rostrum.blog/2021/03/13/assign/">identify and destroy files that contain equals assignment</a> (<code>x = 1</code>), rather than an assignment arrow (<code>x &lt;- 1</code>)</li>
 </ul>
-<p>I was never trained in computer science. You can argue that ‘writing R code’ is not ‘programming’ in a gatekeeping sense.</p>
+<p>How might you tinker about with this yourself?</p>
 </div>
 <div id="parse-the-parcel" class="section level1">
 <h1>Parse the parcel</h1>
-<p>You can pass a string of R code to <code>parse()</code> for it to be converted to an ‘expression’ class. In other words, the string has been parsed as R code, but not yet evaluated.</p>
-<pre class="r"><code>string &lt;- &quot;x &lt;- subset(beaver1, temp &lt; 36.4)&quot;
-expression &lt;- parse(text = string)
-expression</code></pre>
-<pre><code>## expression(x &lt;- subset(beaver1, temp &lt; 36.4))</code></pre>
-<p>A string is just a string. A captured expression is potent code.</p>
-<p>When you’re ready, you can <code>eval()</code>uate the expression. As a result, the dataframe <code>x</code> is now in our environment and contains only rows of <code>beaver1</code> where body temperatures were less than 36.4.</p>
-<pre class="r"><code>eval(expression)
+<p>I’ll talk about two main functions: <code>parse()</code> and <code>getParseData()</code>, which are both part of base R</p>
+<p>You can pass a string of R code to <code>parse()</code> for it to be recognised as an ‘expression’. Let’s use the equals-rich example from above.</p>
+<pre class="r"><code>code_str &lt;- &quot;x = subset(mtcars, subset = carb == 8)&quot;
+code_expr &lt;- parse(text = code_str)
+class(code_expr)</code></pre>
+<pre><code>## [1] &quot;expression&quot;</code></pre>
+<p>The string is recognised as R code at this point, but we haven’t broken it down into tokens and we haven’t evaluated it.</p>
+<p>You could jump ahead here and just <code>eval()</code>uate this expression object.</p>
+<pre class="r"><code>eval(code_expr)
 x</code></pre>
-<pre><code>##   day time  temp activ
-## 1 346  840 36.33     0
-## 2 346  850 36.34     0
-## 3 346  900 36.35     0</code></pre>
-<p>Wow, we have the power to delay code execution!</p>
-<p>That’s great, but we actually froze in time the expression so we can pick it apart.</p>
-<p>This is done with <code>getParseData()</code>, which identifies from an expression its ‘tokens’: its smallest, atomic units of code. These are returned in a dataframe with a row per token.</p>
-<pre class="r"><code>getParseData(parse(text = string, keep.source = TRUE))</code></pre>
-<pre><code>##    line1 col1 line2 col2 id parent                token terminal    text
-## 25     1    1     1   33 25      0                 expr    FALSE        
-## 1      1    1     1    1  1      3               SYMBOL     TRUE       x
-## 3      1    1     1    1  3     25                 expr    FALSE        
-## 2      1    3     1    4  2     25          LEFT_ASSIGN     TRUE      &lt;-
-## 23     1    6     1   33 23     25                 expr    FALSE        
-## 4      1    6     1   11  4      6 SYMBOL_FUNCTION_CALL     TRUE  subset
-## 6      1    6     1   11  6     23                 expr    FALSE        
-## 5      1   12     1   12  5     23                  &#39;(&#39;     TRUE       (
-## 7      1   13     1   19  7      9               SYMBOL     TRUE beaver1
-## 9      1   13     1   19  9     23                 expr    FALSE        
-## 8      1   20     1   20  8     23                  &#39;,&#39;     TRUE       ,
-## 19     1   22     1   32 19     23                 expr    FALSE        
-## 13     1   22     1   25 13     15               SYMBOL     TRUE    temp
-## 15     1   22     1   25 15     19                 expr    FALSE        
-## 14     1   27     1   27 14     19                   LT     TRUE       &lt;
-## 16     1   29     1   32 16     17            NUM_CONST     TRUE    36.4
-## 17     1   29     1   32 17     19                 expr    FALSE        
-## 18     1   33     1   33 18     23                  &#39;)&#39;     TRUE       )</code></pre>
-<p>While presented as a dataframe, the information has actually been parsed as a tree-like structure. For example, note that each token is shown with the unique <code>id</code> of a <code>parent</code> token under which it sits.</p>
-<p>Provided are columns giving the line and column location of each token, a unique identifier within the expression, the id of parent of the token, the special internal name for the type of token, whether it’s a ‘leaf’ node in the parse tree.</p>
-<p>Note how tokens have been detected in context: <code>&lt;-</code> is recognised as the assignment arrow rather than a less-than and a hyphen, for example, while <code>subset</code> and <code>beaver1</code> are recognised as different types of token despite both being unquoted strings.</p>
-<p>I’m going to write a little function that parses an R expression from a character string. First, it uses <code>parse()</code> to convert the R string to an ‘expression’, then extracts the ‘tokens’ from the parsed expression. Optionally you can remove the spaces, which aren’t that interesting to us anyway. I’ve called the function parsley, because it’s on the edge of being amusing.</p>
-<pre class="r"><code>parsley &lt;- function(string, simplify = TRUE) {
+<pre><code>##               mpg cyl disp  hp drat   wt qsec vs am gear carb
+## Maserati Bora  15   8  301 335 3.54 3.57 14.6  0  1    5    8</code></pre>
+<p>As a result, the dataframe <code>x</code> is now in our environment and contains only rows of the <code>mtcars</code> that have 8 <code>carb</code>… ohydrates? No wait, <code>carb</code>uretors.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> Jeepers! We have the power to delay code execution!</p>
+<p>That’s great, but we can actually pick apart the expression into its constituent tokens. This is where <code>getParseData()</code> comes in.</p>
+<p>The function takes the expression object as the input and outputs a dataframe with one token per row and several columns of handy information. Here I just want to show you two things: the units of <code>text</code> that have been recognised as tokens, along with the name that R gives to each <code>token</code> under the hood (e.g. <code>&lt;-</code> is recognised as <code>LEFT_ASSIGN</code>).<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
+<pre class="r"><code>code_parsed &lt;- getParseData(parse(text = code_str, keep.source = TRUE))
+code_parsed[code_parsed$text != &quot;&quot;, c(&quot;text&quot;, &quot;token&quot;)]</code></pre>
+<pre><code>##      text                token
+## 1       x               SYMBOL
+## 2       =            EQ_ASSIGN
+## 5  subset SYMBOL_FUNCTION_CALL
+## 6       (                  &#39;(&#39;
+## 8  mtcars               SYMBOL
+## 9       ,                  &#39;,&#39;
+## 14 subset           SYMBOL_SUB
+## 15      =               EQ_SUB
+## 16   carb               SYMBOL
+## 17     ==                   EQ
+## 19      8            NUM_CONST
+## 21      )                  &#39;)&#39;</code></pre>
+<p>Oh neato, so you can see <code>=</code> is indeed recognised as the token <code>EQ_ASSIGN</code> (‘equals assign’), <code>=</code> as <code>EQ_SUB</code> (equals in the context of supplying function arguments) and <code>==</code> as in <code>EQ</code> (the equivalence operator).</p>
+</div>
+<div id="parse-away" class="section level1">
+<h1>Parse away</h1>
+<p>If you want to take a look at a given R string you can use this little function that contains parse() and getParseData() and returns you the simplified dataframe I showed above if <code>simplify = TRUE</code>, otherwise it gives the full read out. An exercise for the reader is to alter this function to accept an R script file rather than a string (hint: <code>parse()</code> takes a <code>file</code> argument).</p>
+<pre class="r"><code>parse_out &lt;- function(string, simplify = TRUE) {
   p &lt;- parse(text = string, keep.source = TRUE)
   pd &lt;- getParseData(p)
   if (simplify) {
-    keep_cols &lt;- c(&quot;id&quot;, &quot;parent&quot;, &quot;token&quot;, &quot;text&quot;)
+    keep_cols &lt;- c(&quot;token&quot;, &quot;text&quot;)
     pd &lt;- pd[pd$text != &quot;&quot;, keep_cols]
   }
   pd
 }</code></pre>
-<p>Just to prove that R can recognise a string as an R expression, you can <code>parse()</code> a string containing R code and then <code>eval()</code>uate it:</p>
-<pre class="r"><code>code &lt;- &quot;mtcars[mtcars$cyl == 4, ] |&gt; head()&quot;
-eval(parse(text = code))</code></pre>
-<pre><code>##                 mpg cyl  disp hp drat    wt  qsec vs am gear carb
-## Datsun 710     22.8   4 108.0 93 3.85 2.320 18.61  1  1    4    1
-## Merc 240D      24.4   4 146.7 62 3.69 3.190 20.00  1  0    4    2
-## Merc 230       22.8   4 140.8 95 3.92 3.150 22.90  1  0    4    2
-## Fiat 128       32.4   4  78.7 66 4.08 2.200 19.47  1  1    4    1
-## Honda Civic    30.4   4  75.7 52 4.93 1.615 18.52  1  1    4    2
-## Toyota Corolla 33.9   4  71.1 65 4.22 1.835 19.90  1  1    4    1</code></pre>
-<p>Our cheeky little parsing function does this step and then also extracts all the tokens:</p>
-<pre class="r"><code>parsley(code, simplify = FALSE)</code></pre>
-<pre><code>##    line1 col1 line2 col2 id parent                token terminal   text
-## 28     1    1     1   35 28      0                 expr    FALSE       
-## 19     1    1     1   25 19     28                 expr    FALSE       
-## 1      1    1     1    6  1      3               SYMBOL     TRUE mtcars
-## 3      1    1     1    6  3     19                 expr    FALSE       
-## 2      1    7     1    7  2     19                  &#39;[&#39;     TRUE      [
-## 13     1    8     1   22 13     19                 expr    FALSE       
-## 8      1    8     1   17  8     13                 expr    FALSE       
-## 4      1    8     1   13  4      6               SYMBOL     TRUE mtcars
-## 6      1    8     1   13  6      8                 expr    FALSE       
-## 5      1   14     1   14  5      8                  &#39;$&#39;     TRUE      $
-## 7      1   15     1   17  7      8               SYMBOL     TRUE    cyl
-## 9      1   19     1   20  9     13                   EQ     TRUE     ==
-## 10     1   22     1   22 10     11            NUM_CONST     TRUE      4
-## 11     1   22     1   22 11     13                 expr    FALSE       
-## 12     1   23     1   23 12     19                  &#39;,&#39;     TRUE      ,
-## 17     1   25     1   25 17     19                  &#39;]&#39;     TRUE      ]
-## 20     1   27     1   28 20     28                 PIPE     TRUE     |&gt;
-## 26     1   30     1   35 26     28                 expr    FALSE       
-## 21     1   30     1   33 21     23 SYMBOL_FUNCTION_CALL     TRUE   head
-## 23     1   30     1   33 23     26                 expr    FALSE       
-## 22     1   34     1   34 22     26                  &#39;(&#39;     TRUE      (
-## 24     1   35     1   35 24     26                  &#39;)&#39;     TRUE      )</code></pre>
-<p>You’ll notice that there’s a kind of nesting explained by these columns. Note how the square brackets and the comma are under the same ‘parent’.</p>
-<pre class="r"><code>lobstr::ast(
-  mtcars[mtcars$cyl == 4, ] |&gt; head()
-)</code></pre>
+</div>
+<div id="lateral-parse" class="section level1">
+<h1>Lateral parse</h1>
+<p>I’ll leave you with another interesting thing that shows you the inner workings of R, which you might not realise just by running code. We’ll look at how the code is executed, not just the tokens that it’s composed of.</p>
+<p>Consider how the {magrittr} pipe <code>%&gt;%</code> is used. Here I’ve slightly adjusted the input to filter for 6 and 8 carburetors; you’ll see why in a second.</p>
+<pre class="r"><code>parse_out(&quot;mtcars %&gt;% subset(carb %in% c(6, 8))&quot;)</code></pre>
+<pre><code>##                   token   text
+## 1                SYMBOL mtcars
+## 2               SPECIAL    %&gt;%
+## 4  SYMBOL_FUNCTION_CALL subset
+## 5                   &#39;(&#39;      (
+## 7                SYMBOL   carb
+## 8               SPECIAL   %in%
+## 10 SYMBOL_FUNCTION_CALL      c
+## 11                  &#39;(&#39;      (
+## 13            NUM_CONST      6
+## 15                  &#39;,&#39;      ,
+## 19            NUM_CONST      8
+## 21                  &#39;)&#39;      )
+## 26                  &#39;)&#39;      )</code></pre>
+<p>Okay yeah, <code>%&gt;%</code> is recognised as a token called <code>SPECIAL</code> (line 2) between the left-hand side of <code>mtcars</code> and the right-hand side of <code>subset(carb %in% c(6, 8))</code>. Notice also that <code>%in%</code> is also recognised as <code>SPECIAL</code> (line 10). In fact, this is how R recognises all <a href="https://adv-r.hadley.nz/functions.html?q=infix%20operator#infix-functions">‘infix operators’</a> bound by percent symbols. This is some special syntactical magic that lets you put the function name <em>between</em> two arguments. So <code>x %&gt;% head</code> is equivalent to <code>`%&gt;%`(mtcars, head)</code>.</p>
+<p>If <code>%&gt;%</code> is <code>SPECIAL</code>, how do you think the base pipe is recognised in this simpler example?</p>
+<pre class="r"><code>parse_out(&quot;mtcars |&gt; head()&quot;)</code></pre>
+<pre><code>##                  token   text
+## 1               SYMBOL mtcars
+## 2                 PIPE     |&gt;
+## 4 SYMBOL_FUNCTION_CALL   head
+## 5                  &#39;(&#39;      (
+## 7                  &#39;)&#39;      )</code></pre>
+<p>Okay, not that surprising: it’s recognised as <code>PIPE</code> (line 2).</p>
+<p>But wait. We’ve come this far, let’s go one step further. We’ve seen how R parses tokens, what about how it actually executes code? One way to see this is to look at an ‘abstract syntax tree’ with <a href="https://lobstr.r-lib.org/">the {lobstr} package</a>.<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> A ‘tree’ to show the nested structure of code, with its functions within functions and so on.</p>
+<pre class="r"><code>library(lobstr)    # install from CRAN
+library(magrittr)  # install from CRAN
+ast(mtcars %&gt;% head())</code></pre>
+<pre><code>## █─`%&gt;%` 
+## ├─mtcars 
+## └─█─head</code></pre>
+<p>Yeah, like I said: <code>x %&gt;% head()</code> is ultimately executed by R like a normal function (block symbol), in the form <code>`%&gt;%`(mtcars, head)</code>. You can see how the <code>`%&gt;%`</code> is a parent to <code>mtcars</code> and <code>head()</code> below it.</p>
+<p>So the same happens for the base pipe, right?</p>
+<pre class="r"><code>ast(mtcars |&gt; head())</code></pre>
 <pre><code>## █─head 
-## └─█─`[` 
-##   ├─mtcars 
-##   ├─█─`==` 
-##   │ ├─█─`$` 
-##   │ │ ├─mtcars 
-##   │ │ └─cyl 
-##   │ └─4 
-##   └─``</code></pre>
-<p>You might be wondering where’s the pipe (<code>|&gt;</code>) gone? In short, the R parser recognises and evaluates a string like <code>mtcars |&gt; head()</code> literally as <code>head(mtcars)</code>. Compare this to <code>lobstr::ast(mtcars %&gt;% head)</code>, where <code>%&gt;%</code> is actually a function that is evaluated more like `<code>%&gt;%`(mtcars, head)</code>.</p>
-<p>You may also be wondering what is meant by <code>[</code> being presented a level above <code>mtcars</code> and why there’s no matching closing bracket? Or why <code>[</code>, <code>==</code> and <code>$</code> are all being presented with backticks around them? Well, like everything in R, these are all actually functions. See how these two things are equivalent?</p>
-<pre class="r"><code>normal  &lt;- mtcars[mtcars$cyl == 4, ] |&gt; head()
-bonkers &lt;- head(`[`(mtcars, `==`(`$`(mtcars, cyl), 4), ))
-all(normal == bonkers)</code></pre>
-<pre><code>## [1] TRUE</code></pre>
+## └─mtcars</code></pre>
+<p>Sucker! <code>mtcars |&gt; head</code> is not executed like <code>`|&gt;`(mtcars, head)</code>. It’s literally executed like <code>head(mtcars)</code>. The base pipe is so special because it’s baked right into the R source code as a separate type of token that is recognised to have a job distinct from a basic <code>SPECIAL</code>. This should make it a little faster to run compared to <code>%&gt;%</code> as well.</p>
+</div>
+<div id="parsed-away" class="section level1">
+<h1>Parsed away</h1>
+<p>Well, ‘cool’ I guess. Now it’s up to you: you can either parse on this knowledge, or leave it in the parsed.<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a></p>
 <hr />
 <details>
 <summary>
@@ -148,7 +148,7 @@ Session info
 ##  collate  en_US.UTF-8
 ##  ctype    en_US.UTF-8
 ##  tz       Europe/London
-##  date     2023-03-01
+##  date     2023-03-03
 ##  pandoc   2.19.2 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
@@ -165,7 +165,8 @@ Session info
 ##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
 ##  jsonlite      1.8.4   2022-12-06 [1] CRAN (R 4.2.0)
 ##  knitr         1.42    2023-01-25 [1] CRAN (R 4.2.0)
-##  lobstr        1.1.2   2022-06-22 [1] CRAN (R 4.2.0)
+##  lobstr      * 1.1.2   2022-06-22 [1] CRAN (R 4.2.0)
+##  magrittr    * 2.0.3   2022-03-30 [1] CRAN (R 4.2.0)
 ##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
 ##  rlang         1.0.6   2022-09-24 [1] CRAN (R 4.2.0)
 ##  rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
@@ -179,4 +180,15 @@ Session info
 ## 
 ## ──────────────────────────────────────────────────────────────────────────────</code></pre>
 </details>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>I learnt minimal amounts of R to help me wrangle ecological data and ‘do statistics’. I’m not a computer scientist, nor was I trained as a programmer.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>Of course, I’m not mentioning right assignment (<code>-&gt;</code>) here, not the plucky upstart of <a href="https://www.rostrum.blog/2022/06/07/assign-down/">down-asignment</a>, which is certain to be the future for assignment in R.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>‘Non-car people’ should take a look at the ‘Format’ section of <code>?mtcars</code>. I mean, <code>drat</code> means ‘rear axle ratio’, lol.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>You can <a href="https://github.com/wch/r-source/blob/0ee550ff68f22b8a1807377e728f99f2775cc43c/src/main/gram.y#L2312-L2350">see a list of these with English translations</a> in Winston Chang’s GitHub copy of R’s source code. So <code>NUM_CONST</code> is ‘numeric constant’, for example.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>A package with one of my favourite names and <a href="https://lobstr.r-lib.org/logo.png">hex logos</a>. The ‘str’ is from ‘structure’, as in ‘the structure of code’. The logo is a lobster snipping apart the ‘lob’ from ‘str’ text. I mean, *(lobster) chef’s kiss* on that one. 🦞<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+<li id="fn6"><p>Yeah, I’m hoping you didn’t read this far. Obviously I didn’t know how to end the post.<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
+</ol>
 </div>
