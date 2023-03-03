@@ -1,0 +1,156 @@
+---
+title: "I can't be parsed, mate"
+author: Matt Dray
+date: '2023-03-03'
+slug: getparsedata
+categories:
+  - code
+  - tutorial
+tags:
+  - lintr
+  - lobstr
+  - magrittr
+  - pipe
+  - r
+draft: no
+---
+
+<div class="figure">
+<img src="/post/2023-02-28-getparsedata_files/handegg.png" alt="An American football quarterback about to pass the ball. He has the R logo on his shirt. Text above says 'pass the ball', text below is R code reading 'parse(text = 'the('ball')')'. The format is a 'deep-fried', highly pixellated meme where the centre of the iumage bloats out. A wide-eyed, smiling and crying emoji is in the corner." width="100%"/>
+<p class="caption">Image by <a href="https://pixabay.com/users/keithjj-2328014/">Keith Johnston</a> from <a href="https://pixabay.com">Pixabay</a>. Deep fried by Matt Dray.[^fry]</p>
+</div>
+
+# tl;dr
+
+R is capable of reading R code. Obviously. You can use `getParseData(parse())` to see what's going on. A very simple intro.
+
+# Static Prevails
+
+There's a few things that delight me about coding that I'm sure are quite trivial to gatekeepers.[^train] One meta thing I like is the idea that R has to recognise the code that you give it as... R code.
+
+For example, does `x<-1` mean 'x is less than minus-one'? Hm, actually R recognises `<-` as a 'left-assignment operator'—a special 'token'—that gives the name `x` the value of `1`. Subtle, but important.
+
+Another example: the tokens `<-` and `=` have an equivalent role in `x <- 1` and `x = 1`. For style reasons, you might want to find-and-replace `=` with `<-` in your scripts.[^down] Except you shouldn't because `=` is context dependent. In `x = subset(mtcars, subset = carb == 8)`, it's used to assign (`=`), to set a function argument (`=`) _and_ as part of the equivalence operator (`==`).
+
+How can a mere human understand this better?
+
+# Parsed tense
+
+The cool ('cool') thing is that R gives you tools to be able to see the world as R sees it. 
+
+This is sometimes called 'static code analysis', in that you can interrogate the code for syntax errors _before_ it executes. Another example is in the {lintr} package, which can tidy up ('lint') your code by adjusting or replacing the tokens.
+
+I've used this approach before to:
+
+* [create the {r2eng} package](https://www.rostrum.blog/2020/11/14/hello-r2eng/), which matches tokens against words so an expression can be translated to English (e.g. `<-` is matched to the word 'gets')
+* [write an RStudio addin that auto-labels closing parentheses](https://www.rostrum.blog/2021/08/31/add-biscuits/) with the name of the function they belong to (known cutely as a 'biscuit')
+* [identify and destroy files that contain equals assignment](https://www.rostrum.blog/2021/03/13/assign/) (`x = 1`), rather than an assignment arrow (`x <- 1`)
+
+How might you tinker about with this yourself?
+
+# Parse the parcel
+
+I'll talk about two main functions: `parse()` and `getParseData()`, which are both part of base R
+
+You can pass a string of R code to `parse()` for it to be recognised as an 'expression'. Let's use the equals-rich example from above.
+
+```{r}
+code_str <- "x = subset(mtcars, subset = carb == 8)"
+code_expr <- parse(text = code_str)
+class(code_expr)
+```
+
+The string is recognised as R code at this point, but we haven't broken it down into tokens and we haven't evaluated it.
+
+You could jump ahead here and just `eval()`uate this expression object. 
+
+```{r}
+eval(code_expr)
+x
+```
+
+As a result, the dataframe `x` is now in our environment and contains only rows of the `mtcars` that have 8 `carb`... ohydrates? No wait, `carb`uretors.[^carb] Jeepers! We have the power to delay code execution!
+
+That's great, but we can actually pick apart the expression into its constituent tokens. This is where `getParseData()` comes in.
+
+The function takes the expression object as the input and outputs a dataframe with one token per row and several columns of handy information. Here I just want to show you two things: the units of `text` that have been recognised as tokens, along with the name that R gives to each `token` under the hood (e.g. `<-` is recognised as `LEFT_ASSIGN`).[^tokens]
+
+```{r}
+code_parsed <- getParseData(parse(text = code_str, keep.source = TRUE))
+code_parsed[code_parsed$text != "", c("text", "token")]
+```
+
+Oh neato, so you can see `=` is indeed recognised as the token `EQ_ASSIGN` ('equals assign'), `=` as `EQ_SUB` (equals in the context of supplying function arguments) and `==` as in `EQ` (the equivalence operator).
+
+# Parse away
+
+If you want to take a look at a given R string you can use this little function that contains parse() and getParseData() and returns you the simplified dataframe I showed above if `simplify = TRUE`, otherwise it gives the full read out. An exercise for the reader is to alter this function to accept an R script file rather than a string (hint: `parse()` takes a `file` argument).
+
+```{r}
+parse_out <- function(string, simplify = TRUE) {
+  p <- parse(text = string, keep.source = TRUE)
+  pd <- getParseData(p)
+  if (simplify) {
+    keep_cols <- c("token", "text")
+    pd <- pd[pd$text != "", keep_cols]
+  }
+  pd
+}
+```
+
+# Lateral parse
+
+I'll leave you with another interesting thing that shows you the inner workings of R, which you might not realise just by running code. We'll look at how the code is executed, not just the tokens that it's composed of.
+
+Consider how the {magrittr} pipe `%>%` is used. Here I've slightly adjusted the input to filter for 6 and 8 carburetors; you'll see why in a second.
+
+```{r}
+parse_out("mtcars %>% subset(carb %in% c(6, 8))")
+```
+
+Okay yeah, `%>%` is recognised as a token called `SPECIAL` (line 2) between the left-hand side of `mtcars` and the right-hand side of `subset(carb %in% c(6, 8))`. Notice also that `%in%` is also recognised as `SPECIAL` (line 10). In fact, this is how R recognises all ['infix operators'](https://adv-r.hadley.nz/functions.html?q=infix%20operator#infix-functions) bound by percent symbols. This is some special syntactical magic that lets you put the function name _between_ two arguments. So `x %>% head` is equivalent to `` `%>%`(mtcars, head) ``.
+
+If `%>%` is `SPECIAL`, how do you think the base pipe is recognised in this simpler example?
+
+```{r}
+parse_out("mtcars |> head()")
+```
+
+Okay, not that surprising: it's recognised as `PIPE` (line 2).
+
+But wait. We've come this far, let's go one step further. We've seen how R parses tokens, what about how it actually executes code? One way to see this is to look at an 'abstract syntax tree' with [the {lobstr} package](https://lobstr.r-lib.org/).[^lobstr] A 'tree' to show the nested structure of code, with its functions within functions and so on.
+
+```{r}
+library(lobstr)    # install from CRAN
+library(magrittr)  # install from CRAN
+ast(mtcars %>% head())
+```
+
+Yeah, like I said: `x %>% head()` is ultimately executed by R like a normal function (block symbol), in the form `` `%>%`(mtcars, head) ``. You can see how the `` `%>%` `` is a parent to `mtcars` and `head()` below it.
+
+So the same happens for the base pipe, right?
+
+```{r}
+ast(mtcars |> head())
+```
+
+Surprise! `mtcars |> head` is not executed like `` `|>`(mtcars, head) ``. It's literally executed like `head(mtcars)`. The base pipe is so special because it's baked right into the R source code as a separate type of token that is recognised to have a job distinct from a basic `SPECIAL`. This should make it a little faster to run compared to `%>%` as well.
+
+# Parsed away
+
+Well, 'cool' I guess. Now it's up to you: you can either parse on this knowledge, or leave it in the parsed.[^end]
+
+---
+<details><summary>Session info</summary>
+```{r eval=TRUE, sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^fry]: You too [can use R to deep fry a meme](https://www.rostrum.blog/2021/11/07/deepfry/).
+[^train]: I learnt minimal amounts of R to help me wrangle ecological data and 'do statistics'. I'm not a computer scientist, nor was I trained as a programmer. 
+[^down]: Of course, I'm not mentioning right assignment (`->`) here, nor the plucky upstart of [down-asignment](https://www.rostrum.blog/2022/06/07/assign-down/), which is certain to be the future for assignment in R.
+[^tokens]: You can [see a list of these with English translations](https://github.com/wch/r-source/blob/0ee550ff68f22b8a1807377e728f99f2775cc43c/src/main/gram.y#L2312-L2350) in Winston Chang's GitHub copy of R's source code. So `NUM_CONST` is 'numeric constant', for example.
+[^carb]: 'Non-car people' should take a look at the 'Format' section of `?mtcars`. I mean, `drat` means 'rear axle ratio', what?
+[^lobstr]: A package with one of my favourite names and [hex logos](https://lobstr.r-lib.org/logo.png). The 'str' is from 'structure', as in 'the structure of code'. The logo is a lobster snipping apart the 'lob' from 'str' text. I mean, \*(lobster) chef's kiss\* on that one. `r emoji::emoji("lobster")`
+[^end]: Yeah, I'm hoping you didn't read this far. Obviously I didn't know how to end the post, sorry.

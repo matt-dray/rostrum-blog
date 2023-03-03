@@ -1,0 +1,201 @@
+---
+title: "I can't be parsed, mate"
+author: Matt Dray
+date: '2023-03-03'
+slug: getparsedata
+categories:
+  - code
+  - tutorial
+tags:
+  - lintr
+  - lobstr
+  - magrittr
+  - pipe
+  - r
+draft: no
+---
+
+
+
+<div class="figure">
+<img src="/post/2023-02-28-getparsedata_files/handegg.png" alt="An American football quarterback about to pass the ball. He has the R logo on his shirt. Text above says 'pass the ball', text below is R code reading 'parse(text = 'the('ball')')'. The format is a 'deep-fried', highly pixellated meme where the centre of the iumage bloats out. A wide-eyed, smiling and crying emoji is in the corner." width="100%"/>
+<p class="caption">
+Image by <a href="https://pixabay.com/users/keithjj-2328014/">Keith Johnston</a> from <a href="https://pixabay.com">Pixabay</a>. Deep fried by Matt Dray.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>
+</p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>R is capable of reading R code. Obviously. You can use <code>getParseData(parse())</code> to see what’s going on. A very simple intro.</p>
+</div>
+<div id="static-prevails" class="section level1">
+<h1>Static Prevails</h1>
+<p>There’s a few things that delight me about coding that I’m sure are quite trivial to gatekeepers.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> One meta thing I like is the idea that R has to recognise the code that you give it as… R code.</p>
+<p>For example, does <code>x&lt;-1</code> mean ‘x is less than minus-one’? Hm, actually R recognises <code>&lt;-</code> as a ‘left-assignment operator’—a special ‘token’—that gives the name <code>x</code> the value of <code>1</code>. Subtle, but important.</p>
+<p>Another example: the tokens <code>&lt;-</code> and <code>=</code> have an equivalent role in <code>x &lt;- 1</code> and <code>x = 1</code>. For style reasons, you might want to find-and-replace <code>=</code> with <code>&lt;-</code> in your scripts.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> Except you shouldn’t because <code>=</code> is context dependent. In <code>x = subset(mtcars, subset = carb == 8)</code>, it’s used to assign (<code>=</code>), to set a function argument (<code>=</code>) <em>and</em> as part of the equivalence operator (<code>==</code>).</p>
+<p>How can a mere human understand this better?</p>
+</div>
+<div id="parsed-tense" class="section level1">
+<h1>Parsed tense</h1>
+<p>The cool (‘cool’) thing is that R gives you tools to be able to see the world as R sees it.</p>
+<p>This is sometimes called ‘static code analysis’, in that you can interrogate the code for syntax errors <em>before</em> it executes. Another example is in the {lintr} package, which can tidy up (‘lint’) your code by adjusting or replacing the tokens.</p>
+<p>I’ve used this approach before to:</p>
+<ul>
+<li><a href="https://www.rostrum.blog/2020/11/14/hello-r2eng/">create the {r2eng} package</a>, which matches tokens against words so an expression can be translated to English (e.g. <code>&lt;-</code> is matched to the word ‘gets’)</li>
+<li><a href="https://www.rostrum.blog/2021/08/31/add-biscuits/">write an RStudio addin that auto-labels closing parentheses</a> with the name of the function they belong to (known cutely as a ‘biscuit’)</li>
+<li><a href="https://www.rostrum.blog/2021/03/13/assign/">identify and destroy files that contain equals assignment</a> (<code>x = 1</code>), rather than an assignment arrow (<code>x &lt;- 1</code>)</li>
+</ul>
+<p>How might you tinker about with this yourself?</p>
+</div>
+<div id="parse-the-parcel" class="section level1">
+<h1>Parse the parcel</h1>
+<p>I’ll talk about two main functions: <code>parse()</code> and <code>getParseData()</code>, which are both part of base R</p>
+<p>You can pass a string of R code to <code>parse()</code> for it to be recognised as an ‘expression’. Let’s use the equals-rich example from above.</p>
+<pre class="r"><code>code_str &lt;- &quot;x = subset(mtcars, subset = carb == 8)&quot;
+code_expr &lt;- parse(text = code_str)
+class(code_expr)</code></pre>
+<pre><code>## [1] &quot;expression&quot;</code></pre>
+<p>The string is recognised as R code at this point, but we haven’t broken it down into tokens and we haven’t evaluated it.</p>
+<p>You could jump ahead here and just <code>eval()</code>uate this expression object.</p>
+<pre class="r"><code>eval(code_expr)
+x</code></pre>
+<pre><code>##               mpg cyl disp  hp drat   wt qsec vs am gear carb
+## Maserati Bora  15   8  301 335 3.54 3.57 14.6  0  1    5    8</code></pre>
+<p>As a result, the dataframe <code>x</code> is now in our environment and contains only rows of the <code>mtcars</code> that have 8 <code>carb</code>… ohydrates? No wait, <code>carb</code>uretors.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> Jeepers! We have the power to delay code execution!</p>
+<p>That’s great, but we can actually pick apart the expression into its constituent tokens. This is where <code>getParseData()</code> comes in.</p>
+<p>The function takes the expression object as the input and outputs a dataframe with one token per row and several columns of handy information. Here I just want to show you two things: the units of <code>text</code> that have been recognised as tokens, along with the name that R gives to each <code>token</code> under the hood (e.g. <code>&lt;-</code> is recognised as <code>LEFT_ASSIGN</code>).<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a></p>
+<pre class="r"><code>code_parsed &lt;- getParseData(parse(text = code_str, keep.source = TRUE))
+code_parsed[code_parsed$text != &quot;&quot;, c(&quot;text&quot;, &quot;token&quot;)]</code></pre>
+<pre><code>##      text                token
+## 1       x               SYMBOL
+## 2       =            EQ_ASSIGN
+## 5  subset SYMBOL_FUNCTION_CALL
+## 6       (                  &#39;(&#39;
+## 8  mtcars               SYMBOL
+## 9       ,                  &#39;,&#39;
+## 14 subset           SYMBOL_SUB
+## 15      =               EQ_SUB
+## 16   carb               SYMBOL
+## 17     ==                   EQ
+## 19      8            NUM_CONST
+## 21      )                  &#39;)&#39;</code></pre>
+<p>Oh neato, so you can see <code>=</code> is indeed recognised as the token <code>EQ_ASSIGN</code> (‘equals assign’), <code>=</code> as <code>EQ_SUB</code> (equals in the context of supplying function arguments) and <code>==</code> as in <code>EQ</code> (the equivalence operator).</p>
+</div>
+<div id="parse-away" class="section level1">
+<h1>Parse away</h1>
+<p>If you want to take a look at a given R string you can use this little function that contains parse() and getParseData() and returns you the simplified dataframe I showed above if <code>simplify = TRUE</code>, otherwise it gives the full read out. An exercise for the reader is to alter this function to accept an R script file rather than a string (hint: <code>parse()</code> takes a <code>file</code> argument).</p>
+<pre class="r"><code>parse_out &lt;- function(string, simplify = TRUE) {
+  p &lt;- parse(text = string, keep.source = TRUE)
+  pd &lt;- getParseData(p)
+  if (simplify) {
+    keep_cols &lt;- c(&quot;token&quot;, &quot;text&quot;)
+    pd &lt;- pd[pd$text != &quot;&quot;, keep_cols]
+  }
+  pd
+}</code></pre>
+</div>
+<div id="lateral-parse" class="section level1">
+<h1>Lateral parse</h1>
+<p>I’ll leave you with another interesting thing that shows you the inner workings of R, which you might not realise just by running code. We’ll look at how the code is executed, not just the tokens that it’s composed of.</p>
+<p>Consider how the {magrittr} pipe <code>%&gt;%</code> is used. Here I’ve slightly adjusted the input to filter for 6 and 8 carburetors; you’ll see why in a second.</p>
+<pre class="r"><code>parse_out(&quot;mtcars %&gt;% subset(carb %in% c(6, 8))&quot;)</code></pre>
+<pre><code>##                   token   text
+## 1                SYMBOL mtcars
+## 2               SPECIAL    %&gt;%
+## 4  SYMBOL_FUNCTION_CALL subset
+## 5                   &#39;(&#39;      (
+## 7                SYMBOL   carb
+## 8               SPECIAL   %in%
+## 10 SYMBOL_FUNCTION_CALL      c
+## 11                  &#39;(&#39;      (
+## 13            NUM_CONST      6
+## 15                  &#39;,&#39;      ,
+## 19            NUM_CONST      8
+## 21                  &#39;)&#39;      )
+## 26                  &#39;)&#39;      )</code></pre>
+<p>Okay yeah, <code>%&gt;%</code> is recognised as a token called <code>SPECIAL</code> (line 2) between the left-hand side of <code>mtcars</code> and the right-hand side of <code>subset(carb %in% c(6, 8))</code>. Notice also that <code>%in%</code> is also recognised as <code>SPECIAL</code> (line 10). In fact, this is how R recognises all <a href="https://adv-r.hadley.nz/functions.html?q=infix%20operator#infix-functions">‘infix operators’</a> bound by percent symbols. This is some special syntactical magic that lets you put the function name <em>between</em> two arguments. So <code>x %&gt;% head</code> is equivalent to <code>`%&gt;%`(mtcars, head)</code>.</p>
+<p>If <code>%&gt;%</code> is <code>SPECIAL</code>, how do you think the base pipe is recognised in this simpler example?</p>
+<pre class="r"><code>parse_out(&quot;mtcars |&gt; head()&quot;)</code></pre>
+<pre><code>##                  token   text
+## 1               SYMBOL mtcars
+## 2                 PIPE     |&gt;
+## 4 SYMBOL_FUNCTION_CALL   head
+## 5                  &#39;(&#39;      (
+## 7                  &#39;)&#39;      )</code></pre>
+<p>Okay, not that surprising: it’s recognised as <code>PIPE</code> (line 2).</p>
+<p>But wait. We’ve come this far, let’s go one step further. We’ve seen how R parses tokens, what about how it actually executes code? One way to see this is to look at an ‘abstract syntax tree’ with <a href="https://lobstr.r-lib.org/">the {lobstr} package</a>.<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a> A ‘tree’ to show the nested structure of code, with its functions within functions and so on.</p>
+<pre class="r"><code>library(lobstr)    # install from CRAN
+library(magrittr)  # install from CRAN
+ast(mtcars %&gt;% head())</code></pre>
+<pre><code>## █─`%&gt;%` 
+## ├─mtcars 
+## └─█─head</code></pre>
+<p>Yeah, like I said: <code>x %&gt;% head()</code> is ultimately executed by R like a normal function (block symbol), in the form <code>`%&gt;%`(mtcars, head)</code>. You can see how the <code>`%&gt;%`</code> is a parent to <code>mtcars</code> and <code>head()</code> below it.</p>
+<p>So the same happens for the base pipe, right?</p>
+<pre class="r"><code>ast(mtcars |&gt; head())</code></pre>
+<pre><code>## █─head 
+## └─mtcars</code></pre>
+<p>Surprise! <code>mtcars |&gt; head</code> is not executed like <code>`|&gt;`(mtcars, head)</code>. It’s literally executed like <code>head(mtcars)</code>. The base pipe is so special because it’s baked right into the R source code as a separate type of token that is recognised to have a job distinct from a basic <code>SPECIAL</code>. This should make it a little faster to run compared to <code>%&gt;%</code> as well.</p>
+</div>
+<div id="parsed-away" class="section level1">
+<h1>Parsed away</h1>
+<p>Well, ‘cool’ I guess. Now it’s up to you: you can either parse on this knowledge, or leave it in the parsed.<a href="#fn7" class="footnote-ref" id="fnref7"><sup>7</sup></a></p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
+##  os       macOS Big Sur/Monterey 10.16
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_US.UTF-8
+##  ctype    en_US.UTF-8
+##  tz       Europe/London
+##  date     2023-03-03
+##  pandoc   2.19.2 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date (UTC) lib source
+##  blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.6.0   2023-01-09 [1] CRAN (R 4.2.0)
+##  crayon        1.5.2   2022-09-29 [1] CRAN (R 4.2.0)
+##  digest        0.6.31  2022-12-11 [1] CRAN (R 4.2.0)
+##  evaluate      0.20    2023-01-17 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.4   2022-12-06 [1] CRAN (R 4.2.0)
+##  knitr         1.42    2023-01-25 [1] CRAN (R 4.2.0)
+##  lobstr      * 1.1.2   2022-06-22 [1] CRAN (R 4.2.0)
+##  magrittr    * 2.0.3   2022-03-30 [1] CRAN (R 4.2.0)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+##  rlang         1.0.6   2022-09-24 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.14    2022-08-22 [1] CRAN (R 4.2.0)
+##  sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+##  xfun          0.37    2023-01-31 [1] CRAN (R 4.2.0)
+##  yaml          2.3.7   2023-01-23 [1] CRAN (R 4.2.0)
+## 
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>You too <a href="https://www.rostrum.blog/2021/11/07/deepfry/">can use R to deep fry a meme</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>I learnt minimal amounts of R to help me wrangle ecological data and ‘do statistics’. I’m not a computer scientist, nor was I trained as a programmer.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>Of course, I’m not mentioning right assignment (<code>-&gt;</code>) here, nor the plucky upstart of <a href="https://www.rostrum.blog/2022/06/07/assign-down/">down-asignment</a>, which is certain to be the future for assignment in R.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>‘Non-car people’ should take a look at the ‘Format’ section of <code>?mtcars</code>. I mean, <code>drat</code> means ‘rear axle ratio’, what?<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>You can <a href="https://github.com/wch/r-source/blob/0ee550ff68f22b8a1807377e728f99f2775cc43c/src/main/gram.y#L2312-L2350">see a list of these with English translations</a> in Winston Chang’s GitHub copy of R’s source code. So <code>NUM_CONST</code> is ‘numeric constant’, for example.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+<li id="fn6"><p>A package with one of my favourite names and <a href="https://lobstr.r-lib.org/logo.png">hex logos</a>. The ‘str’ is from ‘structure’, as in ‘the structure of code’. The logo is a lobster snipping apart the ‘lob’ from ‘str’ text. I mean, *(lobster) chef’s kiss* on that one. 🦞<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
+<li id="fn7"><p>Yeah, I’m hoping you didn’t read this far. Obviously I didn’t know how to end the post, sorry.<a href="#fnref7" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
