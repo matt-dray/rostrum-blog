@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 9 day(s) ago: [I can’t be parsed,
+🆕 The latest post was published 10 day(s) ago: [I can’t be parsed,
 mate](https://www.rostrum.blog/2023/03/03/getparsedata/).
 
 📈 This 2D plot shows posts over time:
@@ -189,4 +189,4 @@ mate](https://www.rostrum.blog/2023/03/03/getparsedata/).
 
 -----
 
-*Updated on 2023-03-12 at 02:53.*
+*Updated on 2023-03-13 at 02:45.*
