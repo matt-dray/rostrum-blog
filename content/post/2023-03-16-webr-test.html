@@ -1,0 +1,104 @@
+---
+title: "Playgrounds with WebR and Quarto"
+author: Matt Dray
+date: '2023-03-16'
+slug: webr-quarto
+categories:
+  - code
+tags:
+  - quarto
+  - r
+  - webr
+---
+
+
+
+<div class="figure">
+<p><img src="/post/2023-03-16-webr-test_files/webr-quarto-test.png" alt="A screenshot of a webpage that has an embedded R code block. Some text asks the user to adjust the code and then click a button that says 'run code'. A shocked Pikachu appears in the corner." width="100%"/></p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p><a href="https://docs.r-wasm.org/webr/latest/">WebR</a> lets you run R in the browser(!). Now you can <a href="https://github.com/coatless/quarto-webr">make WebR chunks in Quarto</a> that render to editable, executable blocks(!). This could be great for larking about.</p>
+</div>
+<div id="sliding-into-tedium" class="section level1">
+<h1>Sliding into tedium</h1>
+<p>I wrote recently <a href="https://www.rostrum.blog/2023/03/03/getparsedata/">a simple introduction to how R parses code</a>. I provided a function that I said the reader could go away and run themselves.</p>
+<p>As in… copy-paste it into an instance of R running on their machine. Gross.</p>
+<p>Wouldn’t it be better if people could just tinker with the code right there in the post? This kind of ‘playground’ could be great for explaining concepts and teaching.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+</div>
+<div id="i-seesaw-a-solution" class="section level1">
+<h1>I seesaw a solution</h1>
+<p>WebR lets you run R in the browser. Read that again! This is a landmark piece of work from George Stagg and Lionel Henry.</p>
+<p>I won’t go into technicals here. For more information, check out:</p>
+<ul>
+<li><a href="https://docs.r-wasm.org/webr/latest/">the docs</a></li>
+<li><a href="https://www.tidyverse.org/blog/2023/03/webr-0-1-0/">the v0.1 launch post</a></li>
+<li><a href="https://github.com/nanxstats/awesome-webr">an ‘awesome’ list</a></li>
+</ul>
+<p>Crucially for my needs, you can now run WebR chunks in a Quarto document <a href="https://github.com/coatless/quarto-webr">thanks to James J Balamuta</a> too. This renders interactive blocks of R code that the reader can adjust and execute with button-click.</p>
+</div>
+<div id="swinging-into-action" class="section level1">
+<h1>Swinging into action</h1>
+<p>Follow <a href="https://github.com/coatless/quarto-webr">the setup steps in James’s quarto-webr README</a>, but ultimately you end up switching the Quarto chunk engine from <code>{r}</code> to <code>{webr}</code>.</p>
+<p>This made it straightforward to prepare a little Quarto doc with chunks powered by the ‘webr’ engine, which I deployed to the web via <a href="https://www.netlify.com/">Netlify</a>.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>You can <a href="https://webr-parse-test.netlify.app/">visit that live page</a> or see the underlying <a href="https://github.com/matt-dray/webr-parse-test">source on GitHub</a>.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<p>So now you <em>can</em> tinker with the example I gave in the original blogpost about parsing R code.</p>
+</div>
+<div id="a-blog-platform-merry-go-round" class="section level1">
+<h1>A blog-platform merry-go-round</h1>
+<p>I’ve written this quick demo and post because I was excited about what George &amp; Lionel and James have put together. There’s so many system-independent applications of this approach that could help with teaching and learning.</p>
+<p>In fact, this blog may eventually switch from {blogdown} to Quarto to take advantage of WebR. It’ll be a pain to convert old posts, but luckily I already missed the earlier {blogdown}-to-{distill} bandwagon!<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
+##  os       macOS Big Sur/Monterey 10.16
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_US.UTF-8
+##  ctype    en_US.UTF-8
+##  tz       Europe/London
+##  date     2023-03-16
+##  pandoc   2.19.2 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date (UTC) lib source
+##  blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.6.0   2023-01-09 [1] CRAN (R 4.2.0)
+##  digest        0.6.31  2022-12-11 [1] CRAN (R 4.2.0)
+##  evaluate      0.20    2023-01-17 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.4   2022-12-06 [1] CRAN (R 4.2.0)
+##  knitr         1.42    2023-01-25 [1] CRAN (R 4.2.0)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+##  rlang         1.0.6   2022-09-24 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.14    2022-08-22 [1] CRAN (R 4.2.0)
+##  sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+##  xfun          0.37    2023-01-31 [1] CRAN (R 4.2.0)
+##  yaml          2.3.7   2023-01-23 [1] CRAN (R 4.2.0)
+## 
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>A nice example of this in a teaching context is W3 Schools, who have a <a href="https://www.w3schools.com/html/tryit.asp?filename=tryhtml_intro">‘Try It Yourself’</a> space that lets you take code from the lessons and tinker with it yourself in the browser.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>Self-deployment and Netlify are viable for now, GitHub Pages is coming later. Netlify is how this blog is deployed.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>Originally I tried to embed the Quarto demo in an iframe, but WebR failed to load inside it when the blog was rendered. That’s interesting.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>But came close when I thought I’d found <a href="https://www.rostrum.blog/2022/03/15/renv-profiles/">a system for making individual posts reproducible</a>.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
