@@ -25,13 +25,13 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 141 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 142 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 12 day(s) ago: [I can’t be parsed,
-mate](https://www.rostrum.blog/2023/03/03/getparsedata/).
+🆕 The latest post was published 1 day(s) ago: [Fun and learning. In a
+dungeon.](https://www.rostrum.blog/2023/03/15/in-a-dungeon/).
 
 📈 This 2D plot shows posts over time:
 
@@ -43,6 +43,7 @@ mate](https://www.rostrum.blog/2023/03/03/getparsedata/).
 
 | Number | Date       | Title                                                                                                                     |
 | -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|    142 | 2023-03-15 | [Fun and learning. In a dungeon.](https://www.rostrum.blog/2023/03/15/in-a-dungeon/)                                      |
 |    141 | 2023-03-03 | [I can’t be parsed, mate](https://www.rostrum.blog/2023/03/03/getparsedata/)                                              |
 |    140 | 2023-02-26 | [Repaying Tom Nook with {S7}](https://www.rostrum.blog/2023/02/26/nook-s7/)                                               |
 |    139 | 2023-02-09 | [London from space via botsin.space](https://www.rostrum.blog/2023/02/09/londonmapbotstodon/)                             |
@@ -189,4 +190,4 @@ mate](https://www.rostrum.blog/2023/03/03/getparsedata/).
 
 -----
 
-*Updated on 2023-03-15 at 02:45.*
+*Updated on 2023-03-16 at 02:47.*
