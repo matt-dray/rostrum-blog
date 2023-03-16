@@ -1,0 +1,67 @@
+---
+title: "Playgrounds with WebR and Quarto"
+author: Matt Dray
+date: '2023-03-16'
+slug: webr-quarto
+categories:
+  - code
+tags:
+  - quarto
+  - r
+  - webr
+---
+
+<div class="figure">
+<img src="/post/2023-03-16-webr-test_files/webr-quarto-test.png" alt="A screenshot of a webpage that has an embedded R code block. Some text asks the user to adjust the code and then click a button that says 'run code'. A shocked Pikachu appears in the corner." width="100%"/>
+</div>
+
+# tl;dr
+
+[WebR](https://docs.r-wasm.org/webr/latest/) lets you run R in the browser(!). Now you can [make WebR chunks in Quarto](https://github.com/coatless/quarto-webr) that render to editable, executable blocks(!). This could be great for larking about.
+
+# Sliding into tedium
+
+I wrote recently [a simple introduction to how R parses code](https://www.rostrum.blog/2023/03/03/getparsedata/). I provided a function that I said the reader could go away and run themselves. 
+
+As in... copy-paste it into an instance of R running on their machine. Gross.
+
+Wouldn't it be better if people could just tinker with the code right there in the post? This kind of 'playground' could be great for explaining concepts and teaching.[^w3]
+
+# I seesaw a solution
+
+WebR lets you run R in the browser. Read that again! This is a landmark piece of work from George Stagg and Lionel Henry.
+
+I won't go into technicals here. For more information, check out:
+
+* [the docs](https://docs.r-wasm.org/webr/latest/)
+* [the v0.1 launch post](https://www.tidyverse.org/blog/2023/03/webr-0-1-0/)
+* [an 'awesome' list](https://github.com/nanxstats/awesome-webr)
+
+Crucially for my needs, you can now run WebR chunks in a Quarto document [thanks to James J Balamuta](https://github.com/coatless/quarto-webr) too. This renders interactive blocks of R code that the reader can adjust and execute with button-click.
+
+# Swinging into action
+
+Follow [the setup steps in James's quarto-webr README](https://github.com/coatless/quarto-webr), but ultimately you end up switching the Quarto chunk engine from `{r}` to `{webr}`.
+
+This made it straightforward to prepare a little Quarto doc with chunks powered by the 'webr' engine, which I deployed to the web via [Netlify](https://www.netlify.com/).[^netlify] So now you _can_ tinker with the example I gave in the blogpost.
+
+You can [visit that live page](https://webr-parse-test.netlify.app/) or see the underlying [source on GitHub](https://github.com/matt-dray/webr-parse-test). I've also embedded the post below.[^iframe]
+
+<iframe width="700" height="400" src="https://webr-parse-test.netlify.app/" title="An interactive web page that lets the user alter R code in the browser."></iframe>
+
+# A blog-platform merry-go-round
+
+I've written this quick demo and post because I was excited about what George & Lionel and James have put together. There's so many system-independent applications of this approach that could help with teaching and learning.
+
+In fact, this blog may eventually switch from {blogdown} to Quarto to take advantage of WebR. It'll be a pain to convert old posts, but I'm glad I missed the earlier {blogdown}-to-{distill} bandwagon!
+
+---
+<details><summary>Session info</summary>
+```{r eval=TRUE, sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^w3]: A nice example of this in a teaching context is W3 Schools, who have a ['Try It Yourself'](https://www.w3schools.com/html/tryit.asp?filename=tryhtml_intro) space that lets you take code from the lessons and tinker with it yourself in the browser.
+[^netlify]: Self-deployment and Netlify are viable for now, GitHub Pages is coming later. Netlify is how this blog is deployed.
+[^iframe]: An iframe containing a link to a Quarto site is pretty garbage, so probably best just to visit the site.
