@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 1 day(s) ago: [Playgrounds with WebR and
+🆕 The latest post was published 2 day(s) ago: [Playgrounds with WebR and
 Quarto](https://www.rostrum.blog/2023/03/16/webr-quarto/).
 
 📈 This 2D plot shows posts over time:
@@ -191,4 +191,4 @@ Quarto](https://www.rostrum.blog/2023/03/16/webr-quarto/).
 
 -----
 
-*Updated on 2023-03-17 at 02:44.*
+*Updated on 2023-03-18 at 02:44.*
