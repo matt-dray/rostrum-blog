@@ -17,7 +17,7 @@ tags:
 
 # tl;dr
 
-[WebR](https://docs.r-wasm.org/webr/latest/) lets you run R in the browser(!). Now you can [make WebR chunks in Quarto](https://github.com/coatless/quarto-webr) that render to editable, executable blocks(!). This could be great for larking about.
+[WebR](https://docs.r-wasm.org/webr/latest/) lets you run R in the browser(!). Now you can [make WebR chunks in Quarto](https://github.com/coatless/quarto-webr) that render to editable, executable blocks(!).
 
 # Sliding into tedium
 
@@ -31,29 +31,42 @@ Wouldn't it be better if people could just tinker with the code right there in t
 
 WebR lets you run R in the browser. Read that again! This is a landmark piece of work from George Stagg and Lionel Henry.
 
-I won't go into technicals here. For more information, check out:
+I won't go into technicals and limitations here. For more information, see:
 
 * [the docs](https://docs.r-wasm.org/webr/latest/)
 * [the v0.1 launch post](https://www.tidyverse.org/blog/2023/03/webr-0-1-0/)
-* [an 'awesome' list](https://github.com/nanxstats/awesome-webr)
+* [an 'awesome' list of resources](https://github.com/nanxstats/awesome-webr)
 
-Crucially for my needs, you can now run WebR chunks in a Quarto document [thanks to James J Balamuta](https://github.com/coatless/quarto-webr) too. This renders interactive blocks of R code that the reader can adjust and execute with button-click.
+Crucially for my needs, you can now [run WebR chunks in a Quarto document](https://github.com/coatless/quarto-webr), thanks to James J Balamuta. This renders interactive blocks of R code that the reader can adjust and execute with button-click:
+
+<div class="figure">
+<img src="/post/2023-03-16-webr-test_files/webr-demo.gif" alt="Animated gif showing a code block with R code inside that sets the value of 'x' to 'world' then pastes it together with the string 'hello'. A 'run code' button is clicked and the string 'hello world' is printed. The word 'hello' is then changed to 'ahoy' and the code is re-run and the printout changes to 'ahoy world'." width="40%"/>
+<p class="caption">Beware: this is a gif, not an embedded demo!</p>
+</div>
+
+Check out James's [coatless/quarto-webr](https://github.com/coatless/quarto-webr) GitHub repo for the source. There's also [a live demo](https://rd.thecoatlessprofessor.com/webR-quarto-demos/webr-quarto-html-demo.html) and [its source](https://github.com/coatless-r-n-d/webR-quarto-demos/blob/main/webr-quarto-html-demo.qmd).
 
 # Swinging into action
 
-Follow [the setup steps in James's quarto-webr README](https://github.com/coatless/quarto-webr), but ultimately you end up switching the Quarto chunk engine from `{r}` to `{webr}`.
+To have a go yourself, do follow [the setup steps](https://github.com/coatless/quarto-webr) in James's quarto-webr README and look at [the source of his demo](https://github.com/coatless-r-n-d/webR-quarto-demos/blob/main/webr-quarto-html-demo.qmd). 
+
+Ultimately you can:
+
+1. Install the extension to your project folder by running `quarto add coatless/quarto-webr` in the terminal
+2. Set `filter: webr` in the YAML of your qmd file[^knitr]
+3. Write code chunks in the qmd using the `{webr}` engine
 
 This made it straightforward to prepare a little Quarto doc with chunks powered by the 'webr' engine, which I deployed to the web via [Netlify](https://www.netlify.com/).[^netlify] 
 
 You can [visit that live page](https://webr-parse-test.netlify.app/) or see the underlying [source on GitHub](https://github.com/matt-dray/webr-parse-test).[^iframe]
 
-So now you _can_ tinker with the example I gave in the original blogpost about parsing R code.
+So now you _can_ tinker with the example I gave in the original blogpost about parsing R code. Unfortunately I can't add this directly to the post, since this blog is not made with Quarto.
 
 # A blog-platform merry-go-round
 
-I've written this quick demo and post because I was excited about what George & Lionel and James have put together. There's so many system-independent applications of this approach that could help with teaching and learning.
+I've written this quick demo and post because I was excited about what George & Lionel and James have put together. There's so many system-independent applications of this approach that could help with teaching and learning, or explaining simple ideas in a blog post.
 
-In fact, this blog may eventually switch from {blogdown} to Quarto to take advantage of WebR. It'll be a pain to convert old posts, but luckily I already missed the earlier {blogdown}-to-{distill} bandwagon![^distill]
+In fact, this blog may eventually switch from {blogdown} to Quarto to take advantage of WebR. It'll be a pain to convert old posts, but luckily I already missed the earlier {blogdown}-to-{distill} bandwagon, lol.[^distill]
 
 ---
 <details><summary>Session info</summary>
@@ -66,3 +79,4 @@ sessioninfo::session_info()
 [^netlify]: Self-deployment and Netlify are viable for now, GitHub Pages is coming later. Netlify is how this blog is deployed.
 [^iframe]: Originally I tried to embed the Quarto demo in an iframe, but WebR failed to load inside it when the blog was rendered. That's interesting.
 [^distill]: But came close when I thought I'd found [a system for making individual posts reproducible](https://www.rostrum.blog/2022/03/15/renv-profiles/).
+[^knitr]: Set also `engine: knitr` in the YAML to use {knitr} instead of Jupyter to handle the conversion. You can add `format: html` to ensure that the output is rendered to HTML.

@@ -18,7 +18,7 @@ tags:
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p><a href="https://docs.r-wasm.org/webr/latest/">WebR</a> lets you run R in the browser(!). Now you can <a href="https://github.com/coatless/quarto-webr">make WebR chunks in Quarto</a> that render to editable, executable blocks(!). This could be great for larking about.</p>
+<p><a href="https://docs.r-wasm.org/webr/latest/">WebR</a> lets you run R in the browser(!). Now you can <a href="https://github.com/coatless/quarto-webr">make WebR chunks in Quarto</a> that render to editable, executable blocks(!).</p>
 </div>
 <div id="sliding-into-tedium" class="section level1">
 <h1>Sliding into tedium</h1>
@@ -29,25 +29,38 @@ tags:
 <div id="i-seesaw-a-solution" class="section level1">
 <h1>I seesaw a solution</h1>
 <p>WebR lets you run R in the browser. Read that again! This is a landmark piece of work from George Stagg and Lionel Henry.</p>
-<p>I won’t go into technicals here. For more information, check out:</p>
+<p>I won’t go into technicals and limitations here. For more information, see:</p>
 <ul>
 <li><a href="https://docs.r-wasm.org/webr/latest/">the docs</a></li>
 <li><a href="https://www.tidyverse.org/blog/2023/03/webr-0-1-0/">the v0.1 launch post</a></li>
-<li><a href="https://github.com/nanxstats/awesome-webr">an ‘awesome’ list</a></li>
+<li><a href="https://github.com/nanxstats/awesome-webr">an ‘awesome’ list of resources</a></li>
 </ul>
-<p>Crucially for my needs, you can now run WebR chunks in a Quarto document <a href="https://github.com/coatless/quarto-webr">thanks to James J Balamuta</a> too. This renders interactive blocks of R code that the reader can adjust and execute with button-click.</p>
+<p>Crucially for my needs, you can now <a href="https://github.com/coatless/quarto-webr">run WebR chunks in a Quarto document</a>, thanks to James J Balamuta. This renders interactive blocks of R code that the reader can adjust and execute with button-click:</p>
+<div class="figure">
+<img src="/post/2023-03-16-webr-test_files/webr-demo.gif" alt="Animated gif showing a code block with R code inside that sets the value of 'x' to 'world' then pastes it together with the string 'hello'. A 'run code' button is clicked and the string 'hello world' is printed. The word 'hello' is then changed to 'ahoy' and the code is re-run and the printout changes to 'ahoy world'." width="40%"/>
+<p class="caption">
+Beware: this is a gif, not an embedded demo!
+</p>
+</div>
+<p>Check out James’s <a href="https://github.com/coatless/quarto-webr">coatless/quarto-webr</a> GitHub repo for the source. There’s also <a href="https://rd.thecoatlessprofessor.com/webR-quarto-demos/webr-quarto-html-demo.html">a live demo</a> and <a href="https://github.com/coatless-r-n-d/webR-quarto-demos/blob/main/webr-quarto-html-demo.qmd">its source</a>.</p>
 </div>
 <div id="swinging-into-action" class="section level1">
 <h1>Swinging into action</h1>
-<p>Follow <a href="https://github.com/coatless/quarto-webr">the setup steps in James’s quarto-webr README</a>, but ultimately you end up switching the Quarto chunk engine from <code>{r}</code> to <code>{webr}</code>.</p>
-<p>This made it straightforward to prepare a little Quarto doc with chunks powered by the ‘webr’ engine, which I deployed to the web via <a href="https://www.netlify.com/">Netlify</a>.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
-<p>You can <a href="https://webr-parse-test.netlify.app/">visit that live page</a> or see the underlying <a href="https://github.com/matt-dray/webr-parse-test">source on GitHub</a>.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
-<p>So now you <em>can</em> tinker with the example I gave in the original blogpost about parsing R code.</p>
+<p>To have a go yourself, do follow <a href="https://github.com/coatless/quarto-webr">the setup steps</a> in James’s quarto-webr README and look at <a href="https://github.com/coatless-r-n-d/webR-quarto-demos/blob/main/webr-quarto-html-demo.qmd">the source of his demo</a>.</p>
+<p>Ultimately you can:</p>
+<ol style="list-style-type: decimal">
+<li>Install the extension to your project folder by running <code>quarto add coatless/quarto-webr</code> in the terminal</li>
+<li>Set <code>filter: webr</code> in the YAML of your qmd file<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></li>
+<li>Write code chunks in the qmd using the <code>{webr}</code> engine</li>
+</ol>
+<p>This made it straightforward to prepare a little Quarto doc with chunks powered by the ‘webr’ engine, which I deployed to the web via <a href="https://www.netlify.com/">Netlify</a>.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<p>You can <a href="https://webr-parse-test.netlify.app/">visit that live page</a> or see the underlying <a href="https://github.com/matt-dray/webr-parse-test">source on GitHub</a>.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
+<p>So now you <em>can</em> tinker with the example I gave in the original blogpost about parsing R code. Unfortunately I can’t add this directly to the post, since this blog is not made with Quarto.</p>
 </div>
 <div id="a-blog-platform-merry-go-round" class="section level1">
 <h1>A blog-platform merry-go-round</h1>
-<p>I’ve written this quick demo and post because I was excited about what George &amp; Lionel and James have put together. There’s so many system-independent applications of this approach that could help with teaching and learning.</p>
-<p>In fact, this blog may eventually switch from {blogdown} to Quarto to take advantage of WebR. It’ll be a pain to convert old posts, but luckily I already missed the earlier {blogdown}-to-{distill} bandwagon!<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
+<p>I’ve written this quick demo and post because I was excited about what George &amp; Lionel and James have put together. There’s so many system-independent applications of this approach that could help with teaching and learning, or explaining simple ideas in a blog post.</p>
+<p>In fact, this blog may eventually switch from {blogdown} to Quarto to take advantage of WebR. It’ll be a pain to convert old posts, but luckily I already missed the earlier {blogdown}-to-{distill} bandwagon, lol.<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a></p>
 <hr />
 <details>
 <summary>
@@ -63,7 +76,7 @@ Session info
 ##  collate  en_US.UTF-8
 ##  ctype    en_US.UTF-8
 ##  tz       Europe/London
-##  date     2023-03-16
+##  date     2023-03-22
 ##  pandoc   2.19.2 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
@@ -97,8 +110,9 @@ Session info
 <hr />
 <ol>
 <li id="fn1"><p>A nice example of this in a teaching context is W3 Schools, who have a <a href="https://www.w3schools.com/html/tryit.asp?filename=tryhtml_intro">‘Try It Yourself’</a> space that lets you take code from the lessons and tinker with it yourself in the browser.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>Self-deployment and Netlify are viable for now, GitHub Pages is coming later. Netlify is how this blog is deployed.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
-<li id="fn3"><p>Originally I tried to embed the Quarto demo in an iframe, but WebR failed to load inside it when the blog was rendered. That’s interesting.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
-<li id="fn4"><p>But came close when I thought I’d found <a href="https://www.rostrum.blog/2022/03/15/renv-profiles/">a system for making individual posts reproducible</a>.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>Set also <code>engine: knitr</code> in the YAML to use {knitr} instead of Jupyter to handle the conversion. You can add <code>format: html</code> to ensure that the output is rendered to HTML.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>Self-deployment and Netlify are viable for now, GitHub Pages is coming later. Netlify is how this blog is deployed.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>Originally I tried to embed the Quarto demo in an iframe, but WebR failed to load inside it when the blog was rendered. That’s interesting.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>But came close when I thought I’d found <a href="https://www.rostrum.blog/2022/03/15/renv-profiles/">a system for making individual posts reproducible</a>.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
