@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 13 day(s) ago: [R is a game engine,
+🆕 The latest post was published 14 day(s) ago: [R is a game engine,
 fight me](https://www.rostrum.blog/2023/04/02/splendid-r-games/).
 
 📈 This 2D plot shows posts over time:
@@ -192,4 +192,4 @@ fight me](https://www.rostrum.blog/2023/04/02/splendid-r-games/).
 
 -----
 
-*Updated on 2023-04-15 at 02:37.*
+*Updated on 2023-04-16 at 02:40.*
