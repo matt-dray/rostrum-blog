@@ -1,0 +1,235 @@
+---
+title: "Matt Dray Teaches (Data) Typing"
+author: Matt Dray
+date: '2023-04-23'
+slug: type-convert
+categories:
+  - code
+  - tutorial
+tags:
+  - a11ytables
+  - base
+  - Excel
+  - r
+---
+
+
+
+<div class="figure">
+<img src="/post/2023-04-20-type-convert_files/unown.png" alt="A crudely drawn picture of three Pokémon as elements of a vector being constructed using R's 'c' function. All three are the Pokémon called Unown, which can be found in multiple forms that represent letters of the alphabet." width="100%"/>
+<p class="caption">
+Confirmed: <a href="https://bulbapedia.bulbagarden.net/wiki/Unown_(Pok%C3%A9mon)">Unown</a> is character type.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>
+</p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>In which I proselytise about <code>type.convert()</code>. Handy for ‘simplifying’ all the columns of a dataframe to appropriate data types.</p>
+</div>
+<div id="suppression-depression" class="section level1">
+<h1>Suppression depression</h1>
+<p><a href="https://co-analysis.github.io/a11ytables/">{a11ytables}</a> is an R package that lets you generate publishable spreadsheets that follow the UK government’s <a href="https://analysisfunction.civilservice.gov.uk/policy-store/releasing-statistics-in-spreadsheets/">best practice guidance</a>.</p>
+<p>One requirement is to replace missing values with placeholder symbols. For example, suppressed data can be replaced with <code>[c]</code> for ‘confidential’.</p>
+<p>This causes a small problem: a column of numeric data in an R dataframe will be coerced to character type with the presence of even a single placeholder symbol.</p>
+<p>So this vector of 100 sampled values is ‘double’, which is a kind of ‘numeric’ value:</p>
+<pre class="r"><code>nums &lt;- runif(100)
+typeof(nums)</code></pre>
+<pre><code>## [1] &quot;double&quot;</code></pre>
+<pre class="r"><code>class(nums)</code></pre>
+<pre><code>## [1] &quot;numeric&quot;</code></pre>
+<p>But the addition of a single character value coerces<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> the whole thing to ‘character’.</p>
+<pre class="r"><code>typeof(c(nums, &quot;[c]&quot;))</code></pre>
+<pre><code>## [1] &quot;character&quot;</code></pre>
+<p>R can only store one data type per column, of course. But this causes a minor annoyance in the xlsx files output from an {a11ytables} workflow: Excel puts a warning marker in the corner of any cell in a text column that contains a numeric value.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<div class="figure">
+<p><img src="/post/2023-04-20-type-convert_files/number-text.png" alt="Screenshot of an Excel worksheet. A cell containing a number has a warning that reads 'number stored as text'." width="100%"/></p>
+</div>
+<p><a href="https://github.com/co-analysis/a11ytables/issues/93">Cat left a GitHub issue</a> related to this: columns entirely made of numbers were being marked by Excel with the ‘number in a text column’ warning. In this case, it was because Cat’s suppression process resulted in <em>all</em> columns being converted to character.</p>
+<p>It would be great to convert back to numeric any columns that did not receive a placeholder symbol during the wrangling process. How can you do this?</p>
+</div>
+<div id="type-specimen" class="section level1">
+<h1>Type specimen</h1>
+<p>Let’s consider a demo example. First I’ll attach {dplyr}, which is commonly used by stats producers in the UK government.</p>
+<pre class="r"><code>suppressPackageStartupMessages(library(dplyr))</code></pre>
+<p>Here’s a very simple dataframe, <code>tbl</code>, to use as a demo. Column <code>x</code> contains values that will need to be suppressed because they’re lower than 5. There are no such values in column <code>y</code>.</p>
+<pre class="r"><code>set.seed(1337)
+
+tbl &lt;- tibble(
+  id = LETTERS[1:5],
+  x  = round(runif(5, 0, 10), 2),
+  y  = round(runif(5, 6, 10), 2)
+)
+
+tbl</code></pre>
+<pre><code>## # A tibble: 5 × 3
+##   id        x     y
+##   &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 A      5.76  7.33
+## 2 B      5.65  9.79
+## 3 C      0.74  7.12
+## 4 D      4.54  6.98
+## 5 E      3.73  6.58</code></pre>
+<p>So, to borrow and simplify Cat’s approach: for each numeric column in <code>tbl</code> (i.e. <code>x</code> and <code>y</code>), replace any value of less than 5 with the placeholder value <code>[c]</code>, otherwise retain the original value.</p>
+<pre class="r"><code>tbl_supp &lt;- tbl |&gt; 
+  mutate(
+    across(
+      where(is.numeric),
+      \(value) if_else(
+        condition = value &lt; 5, 
+        true      = &quot;[c]&quot;,
+        false     = as.character(value)
+      )
+    )
+  )
+
+tbl_supp</code></pre>
+<pre><code>## # A tibble: 5 × 3
+##   id    x     y    
+##   &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;
+## 1 A     5.76  7.33 
+## 2 B     5.65  9.79 
+## 3 C     [c]   7.12 
+## 4 D     [c]   6.98 
+## 5 E     [c]   6.58</code></pre>
+<p>So column <code>x</code> now contains text values and has predictably been converted to character, which you can see as <code>&lt;chr&gt;</code> in the tibble header. But notice that <code>y</code> is also character type despite all the numeric values being retained.</p>
+<p>This happened because the <code>if_else</code> we used to create <code>tbl_supp</code> requires the <code>true</code> and <code>false</code> arguments to resolve to the same type. The <code>false</code> option must output character since <code>true</code> resolves to the string <code>[c]</code>,</p>
+<p>Ideally we would perform our suppression step, but column <code>x</code> would end up as character and <code>y</code> as numeric. How can we achieve this?</p>
+</div>
+<div id="adjust-my-type" class="section level1">
+<h1>Adjust my type</h1>
+<p>Below are some methods to fix the problem: (1) what not to do, (2) how to use a special base R function, and (3) how it should really probably actually be done.</p>
+<div id="nah" class="section level2">
+<h2>1. Nah</h2>
+<p>Of course, we could run <code>tbl_supp |&gt; mutate(y = as.numeric(y))</code> to convert that specific column back to numeric. But imagine if you have a lot more columns and you can’t be sure which ones need to be converted.</p>
+<p>Maybe you could apply <code>as.numeric()</code> across <em>all</em> columns? Columns of numbers stored as text will then be converted entirely to numeric:</p>
+<pre class="r"><code>as.numeric(c(&quot;1&quot;, &quot;2&quot;, &quot;3&quot;))</code></pre>
+<pre><code>## [1] 1 2 3</code></pre>
+<p>But this causes a problem for character columns that contain text, like our placeholder symbol:</p>
+<pre class="r"><code>as.numeric(c(&quot;1&quot;, &quot;[c]&quot;))</code></pre>
+<pre><code>## Warning: NAs introduced by coercion</code></pre>
+<pre><code>## [1]  1 NA</code></pre>
+<p>So <code>"1"</code> becomes <code>1</code>, but we’re warned that <code>[c]</code> has been converted to <code>NA</code> (well, <code>NA_real_</code>, which is the numeric form of <code>NA</code>). This approach actually makes things worse because we’ve just lost some information! We could do something convoluted, like see which columns gained <code>NA</code> values in the process, but that’s bonkers.</p>
+<p>Really we want to check each column to see if it contains numbers only and then convert it to numeric. How?</p>
+</div>
+<div id="maybe" class="section level2">
+<h2>2. Maybe</h2>
+<p>I’ll cut to the chase. There’s a handy base R function that I had forgotten about: <code>type.convert()</code>.</p>
+<p>It takes a vector and, in turn, tries to coerce it to each data type. The process stops when coercion occurs without error. As the help file (<code>?type.convert</code>) puts it:</p>
+<blockquote>
+<p>Given a vector, the function attempts to convert it to logical, integer, numeric or complex, and when additionally as.is = FALSE… converts a character vector to factor. The first type that can accept all the non-missing values is chosen.</p>
+</blockquote>
+<p>And handily:</p>
+<blockquote>
+<p>When the data object x is a data frame or list, the function is called recursively for each column or list element.</p>
+</blockquote>
+<p>So we can pass our entire dataframe to <code>type.convert()</code> and it’ll check them all for us:</p>
+<pre class="r"><code>tbl_supp_conv &lt;- type.convert(tbl_supp, as.is = TRUE)
+
+tbl_supp_conv</code></pre>
+<pre><code>## # A tibble: 5 × 3
+##   id    x         y
+##   &lt;chr&gt; &lt;chr&gt; &lt;dbl&gt;
+## 1 A     5.76   7.33
+## 2 B     5.65   9.79
+## 3 C     [c]    7.12
+## 4 D     [c]    6.98
+## 5 E     [c]    6.58</code></pre>
+<p>As we wanted, our character column <code>y</code> has become numeric type (<code>&lt;dbl&gt;</code>) while <code>x</code> remains as character. Neato.</p>
+</div>
+<div id="okay" class="section level2">
+<h2>3. Okay</h2>
+<p>Having said all this, there are probably better approaches to this problem from the outset.</p>
+<p>For example, you could restrict the suppression method to the columns that actually require it. Numeric columns would remain untouched. You could do that with a simple <code>for</code> and <code>if</code>:</p>
+<pre class="r"><code>cols_numeric &lt;- names(select(tbl, where(is.numeric)))
+
+for (col in cols_numeric) {
+  if (any(tbl[col] &lt; 5)) {
+    tbl[col] &lt;- ifelse(
+      tbl[col] &lt; 5,
+      &quot;[c]&quot;,
+      as.character(tbl[[col]])
+    )
+  }
+}
+
+tbl</code></pre>
+<pre><code>## # A tibble: 5 × 3
+##   id    x         y
+##   &lt;chr&gt; &lt;chr&gt; &lt;dbl&gt;
+## 1 A     5.76   7.33
+## 2 B     5.65   9.79
+## 3 C     [c]    7.12
+## 4 D     [c]    6.98
+## 5 E     [c]    6.58</code></pre>
+<p>This reads as ‘for each numeric column that contains at least one value less than 5, replace those values with the placeholder symbol <code>[c]</code>.’ That’s way easier.</p>
+</div>
+</div>
+<div id="preach-to-the-converted-types" class="section level1">
+<h1>Preach to the converted types</h1>
+<p>It’s almost like this post could have just been a tweet saying ‘🤭 yo, <code>type.conversion()</code> is 🪄magic🪄 y’all’. But this post is now a handy reference in case anyone has the same problems with Excel’s handling of {a11ytables} outputs in future. Also I needed to hit my pun quota for the month.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
+##  os       macOS Big Sur/Monterey 10.16
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_US.UTF-8
+##  ctype    en_US.UTF-8
+##  tz       Europe/London
+##  date     2023-04-23
+##  pandoc   2.19.2 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date (UTC) lib source
+##  blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.6.1   2023-03-23 [1] CRAN (R 4.2.0)
+##  digest        0.6.31  2022-12-11 [1] CRAN (R 4.2.0)
+##  dplyr       * 1.1.0   2023-01-29 [1] CRAN (R 4.2.0)
+##  evaluate      0.20    2023-01-17 [1] CRAN (R 4.2.0)
+##  fansi         1.0.4   2023-01-22 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  generics      0.1.3   2022-07-05 [1] CRAN (R 4.2.0)
+##  glue          1.6.2   2022-02-24 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.4   2022-12-06 [1] CRAN (R 4.2.0)
+##  knitr         1.42    2023-01-25 [1] CRAN (R 4.2.0)
+##  lifecycle     1.0.3   2022-10-07 [1] CRAN (R 4.2.0)
+##  magrittr      2.0.3   2022-03-30 [1] CRAN (R 4.2.0)
+##  pillar        1.9.0   2023-03-22 [1] CRAN (R 4.2.0)
+##  pkgconfig     2.0.3   2019-09-22 [1] CRAN (R 4.2.0)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+##  rlang         1.1.0   2023-03-14 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.14    2022-08-22 [1] CRAN (R 4.2.0)
+##  sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+##  tibble        3.1.8   2022-07-22 [1] CRAN (R 4.2.0)
+##  tidyselect    1.2.0   2022-10-10 [1] CRAN (R 4.2.0)
+##  utf8          1.2.3   2023-01-31 [1] CRAN (R 4.2.0)
+##  vctrs         0.6.1   2023-03-22 [1] CRAN (R 4.2.0)
+##  withr         2.5.0   2022-03-03 [1] CRAN (R 4.2.0)
+##  xfun          0.37    2023-01-31 [1] CRAN (R 4.2.0)
+##  yaml          2.3.7   2023-01-23 [1] CRAN (R 4.2.0)
+## 
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>This is a Pokémon joke. I could have gone with <a href="https://bulbapedia.bulbagarden.net/wiki/Type:_Null_(Pok%C3%A9mon)">Type: Null</a>, but it’s too hard to draw.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>There’s a sort of ‘coercion hierarchy’ in R. The order is like logical &gt; integer &gt; numeric &gt; character, where the latter are ‘dominant’ to those prior (massive oversimplification). This results in some oddities to the untrained eye: <code>sum(2, TRUE)</code> resolves to <code>3</code>, because <code>TRUE</code> is coerced to numeric (since <code>2</code> is in the sum), which forces <code>TRUE</code> to be coerced to <code>1</code> (<code>FALSE</code> is <code>0</code>).<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>You can dismiss these warning markers in the Excel GUI, but I don’t think it’s possible to suppress these markers programmatically and proactively in {a11ytables}. Note also that {a11ytables} cheats a bit here for sake of presentation. The <code>generate_workbook()</code> function guesses that the column was intended to be numeric and adds style information to right-align the values in the output xlsx, which is how numeric values are normally treated in Excel.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>Turns out there’s literally such a thing as <a href="https://en.wikipedia.org/wiki/Type_punning">type punning</a>.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
