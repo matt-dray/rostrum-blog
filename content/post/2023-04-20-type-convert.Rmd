@@ -1,0 +1,187 @@
+---
+title: "Matt Dray Teaches (Data) Typing"
+author: Matt Dray
+date: '2023-04-23'
+slug: type-convert
+categories:
+  - code
+  - tutorial
+tags:
+  - a11ytables
+  - base
+  - Excel
+  - r
+---
+
+<div class="figure">
+<img src="/post/2023-04-20-type-convert_files/unown.png" alt="A crudely drawn picture of three Pokémon as elements of a vector being constructed using R's 'c' function. All three are the Pokémon called Unown, which can be found in multiple forms that represent letters of the alphabet." width="100%"/>
+<p class="caption">Confirmed: [Unown](https://bulbapedia.bulbagarden.net/wiki/Unown_(Pok%C3%A9mon)) is character type.[^unown]</p>
+</div>
+
+# tl;dr
+
+In which I proselytise about `type.convert()`. Handy for 'simplifying' all the columns of a dataframe to appropriate data types.
+
+# Suppression depression
+
+[{a11ytables}](https://co-analysis.github.io/a11ytables/) is an R package that lets you generate publishable spreadsheets that follow the UK government's [best practice guidance](https://analysisfunction.civilservice.gov.uk/policy-store/releasing-statistics-in-spreadsheets/).
+
+One requirement is to replace missing values with placeholder symbols. For example, suppressed data can be replaced with `[c]` for 'confidential'.
+
+This causes a small problem: a column of numeric data in an R dataframe will be coerced to character type with the presence of even a single placeholder symbol.
+
+So this vector of 100 sampled values is 'double', which is a kind of 'numeric' value:
+
+```{r}
+nums <- runif(100)
+typeof(nums)
+class(nums)
+```
+
+But the addition of a single character value coerces[^coerce] the whole thing to 'character'.
+
+```{r}
+typeof(c(nums, "[c]"))
+```
+
+R can only store one data type per column, of course. But this causes a minor annoyance in the xlsx files output from an {a11ytables} workflow: Excel puts a warning marker in the corner of any cell in a text column that contains a numeric value.[^align]
+
+<div class="figure">
+<img src="/post/2023-04-20-type-convert_files/number-text.png" alt="Screenshot of an Excel worksheet. A cell containing a number has a warning that reads 'number stored as text'." width="100%"/>
+</div>
+
+[Cat left a GitHub issue](https://github.com/co-analysis/a11ytables/issues/93) related to this: columns entirely made of numbers were being marked by Excel with the 'number in a text column' warning. In this case, it was because Cat's suppression process resulted in _all_ columns being converted to character.
+
+It would be great to convert back to numeric any columns that did not receive a placeholder symbol during the wrangling process. How can you do this?
+
+# Type specimen
+
+Let's consider a demo example. First I'll attach {dplyr}, which is commonly used by stats producers in the UK government.
+
+```{r}
+suppressPackageStartupMessages(library(dplyr))
+```
+
+Here's a very simple dataframe, `tbl`, to use as a demo. Column `x` contains values that will need to be suppressed because they're lower than 5. There are no such values in column `y`.
+
+```{r}
+set.seed(1337)
+
+tbl <- tibble(
+  id = LETTERS[1:5],
+  x  = round(runif(5, 0, 10), 2),
+  y  = round(runif(5, 6, 10), 2)
+)
+
+tbl
+```
+
+So, to borrow and simplify Cat's approach: for each numeric column in `tbl` (i.e. `x` and `y`), replace any value of less than 5 with the placeholder value `[c]`, otherwise retain the original value.
+
+```{r}
+tbl_supp <- tbl |> 
+  mutate(
+    across(
+      where(is.numeric),
+      \(value) if_else(
+        condition = value < 5, 
+        true      = "[c]",
+        false     = as.character(value)
+      )
+    )
+  )
+
+tbl_supp
+```
+
+So column `x` now contains text values and has predictably been converted to character, which you can see as `<chr>` in the tibble header. But notice that `y` is also character type despite all the numeric values being retained.
+
+This happened because the `if_else` we used to create `tbl_supp` requires the `true` and `false` arguments to resolve to the same type. The `false` option must output character since `true` resolves to the string `[c]`, 
+
+Ideally we would perform our suppression step, but column `x` would end up as character and `y` as numeric. How can we achieve this?
+
+# Adjust my type
+
+Below are some methods to fix the problem: (1) what not to do, (2) how to use a special base R function, and (3) how it should really probably actually be done.
+
+## 1. Nah
+
+Of course, we could run `tbl_supp |> mutate(y = as.numeric(y))` to convert that specific column back to numeric. But imagine if you have a lot more columns and you can't be sure which ones need to be converted.
+
+Maybe you could apply `as.numeric()` across _all_ columns? Columns of numbers stored as text will then be converted entirely to numeric:
+
+```{r}
+as.numeric(c("1", "2", "3"))
+```
+
+But this causes a problem for character columns that contain text, like our placeholder symbol:
+
+```{r}
+as.numeric(c("1", "[c]"))
+```
+
+So `"1"` becomes `1`, but we're warned that `[c]` has been converted to `NA` (well, `NA_real_`, which is the numeric form of `NA`). This approach actually makes things worse because we've just lost some information! We could do something convoluted, like see which columns gained `NA` values in the process, but that's bonkers.
+
+Really we want to check each column to see if it contains numbers only and then convert it to numeric. How?
+
+## 2. Maybe
+
+I'll cut to the chase. There's a handy base R function that I had forgotten about: `type.convert()`. 
+
+It takes a vector and, in turn, tries to coerce it to each data type. The process stops when coercion occurs without error. As the help file (`?type.convert`) puts it:
+
+> Given a vector, the function attempts to convert it to logical, integer, numeric or complex, and when additionally as.is = FALSE... converts a character vector to factor. The first type that can accept all the non-missing values is chosen.
+
+And handily:
+
+> When the data object x is a data frame or list, the function is called recursively for each column or list element.
+
+So we can pass our entire dataframe to `type.convert()` and it'll check them all for us:
+
+```{r}
+tbl_supp_conv <- type.convert(tbl_supp, as.is = TRUE)
+
+tbl_supp_conv
+```
+
+As we wanted, our character column `y` has become numeric type (`<dbl>`) while `x` remains as character. Neato.
+
+## 3. Okay
+
+Having said all this, there are probably better approaches to this problem from the outset. 
+
+For example, you could restrict the suppression method to the columns that actually require it. Numeric columns would remain untouched. You could do that with a simple `for` and `if`:
+
+```{r}
+cols_numeric <- names(select(tbl, where(is.numeric)))
+
+for (col in cols_numeric) {
+  if (any(tbl[col] < 5)) {
+    tbl[col] <- ifelse(
+      tbl[col] < 5,
+      "[c]",
+      as.character(tbl[[col]])
+    )
+  }
+}
+
+tbl
+```
+
+This reads as 'for each numeric column that contains at least one value less than 5, replace those values with the placeholder symbol `[c]`.' That's way easier. 
+
+# Preach to the converted types
+
+It's almost like this post could have just been a tweet saying '🤭 yo, `type.conversion()` is 🪄magic🪄 y'all'. But this post is now a handy reference in case anyone has the same problems with Excel's handling of {a11ytables} outputs in future. Also I needed to hit my pun quota for the month.[^pun]
+
+---
+<details><summary>Session info</summary>
+```{r eval=TRUE, sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^unown]: This is a Pokémon joke. I could have gone with [Type: Null](https://bulbapedia.bulbagarden.net/wiki/Type:_Null_(Pok%C3%A9mon)), but it's too hard to draw.
+[^align]: You can dismiss these warning markers in the Excel GUI, but I don't think it's possible to suppress these markers programmatically and proactively in {a11ytables}. Note also that {a11ytables} cheats a bit here for sake of presentation. The `generate_workbook()` function guesses that the column was intended to be numeric and adds style information to right-align the values in the output xlsx, which is how numeric values are normally treated in Excel.
+[^coerce]: There's a sort of 'coercion hierarchy' in R. The order is like logical > integer > numeric > character, where the latter are 'dominant' to those prior (massive oversimplification). This results in some oddities to the untrained eye: `sum(2, TRUE)` resolves to `3`, because `TRUE` is coerced to numeric (since `2` is in the sum), which forces `TRUE` to be coerced to `1` (`FALSE` is `0`). 
+[^pun]: Turns out there's literally such a thing as [type punning](https://en.wikipedia.org/wiki/Type_punning).
