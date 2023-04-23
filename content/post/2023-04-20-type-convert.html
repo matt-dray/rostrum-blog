@@ -23,23 +23,22 @@ Confirmed: <a href="https://bulbapedia.bulbagarden.net/wiki/Unown_(Pok%C3%A9mon)
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>In which I proselytise about <code>type.convert()</code>. Handy for ‘simplifying’ all the columns of a dataframe to appropriate data types.</p>
+<p>I forgot that the base R function <code>type.convert()</code> exists. Handy for ‘simplifying’ all the columns of a dataframe to appropriate data types.</p>
 </div>
 <div id="suppression-depression" class="section level1">
 <h1>Suppression depression</h1>
 <p><a href="https://co-analysis.github.io/a11ytables/">{a11ytables}</a> is an R package that lets you generate publishable spreadsheets that follow the UK government’s <a href="https://analysisfunction.civilservice.gov.uk/policy-store/releasing-statistics-in-spreadsheets/">best practice guidance</a>.</p>
-<p>One requirement is to replace missing values with placeholder symbols. For example, suppressed data can be replaced with <code>[c]</code> for ‘confidential’.</p>
-<p>This causes a small problem: a column of numeric data in an R dataframe will be coerced to character type with the presence of even a single placeholder symbol.</p>
-<p>So this vector of 100 sampled values is ‘double’, which is a kind of ‘numeric’ value:</p>
+<p>One requirement is to replace missing values with placeholder symbols. For example, suppressed data can be replaced with the string <code>"[c]"</code> (‘confidential’).</p>
+<p>Of course, R’s behaviour means it can store only one data type per column, so a numeric-type column will be automatically converted to character when you introduce at least one string value (i.e. something in <code>"quotes"</code>).<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>For example, this vector is type ‘double’ (i.e. decimals and not ‘whole-number’ integers) and has the more general ‘numeric’ class:</p>
 <pre class="r"><code>nums &lt;- runif(100)
-typeof(nums)</code></pre>
+typeof(nums); class(nums)</code></pre>
 <pre><code>## [1] &quot;double&quot;</code></pre>
-<pre class="r"><code>class(nums)</code></pre>
 <pre><code>## [1] &quot;numeric&quot;</code></pre>
-<p>But the addition of a single character value coerces<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> the whole thing to ‘character’.</p>
+<p>The whole thing is converted to character type if you append just one character value.</p>
 <pre class="r"><code>typeof(c(nums, &quot;[c]&quot;))</code></pre>
 <pre><code>## [1] &quot;character&quot;</code></pre>
-<p>R can only store one data type per column, of course. But this causes a minor annoyance in the xlsx files output from an {a11ytables} workflow: Excel puts a warning marker in the corner of any cell in a text column that contains a numeric value.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<p>This is known behaviour, yes, but it causes a minor annoyance in the xlsx files output from an {a11ytables} workflow: Excel puts a warning marker in the corner of any cell in a text column that contains a numeric value.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
 <div class="figure">
 <p><img src="/post/2023-04-20-type-convert_files/number-text.png" alt="Screenshot of an Excel worksheet. A cell containing a number has a warning that reads 'number stored as text'." width="100%"/></p>
 </div>
@@ -68,7 +67,7 @@ tbl</code></pre>
 ## 3 C      0.74  7.12
 ## 4 D      4.54  6.98
 ## 5 E      3.73  6.58</code></pre>
-<p>So, to borrow and simplify Cat’s approach: for each numeric column in <code>tbl</code> (i.e. <code>x</code> and <code>y</code>), replace any value of less than 5 with the placeholder value <code>[c]</code>, otherwise retain the original value.</p>
+<p>So, to borrow and simplify Cat’s approach: for each numeric column in <code>tbl</code> (i.e. <code>x</code> and <code>y</code>), replace any value of less than 5 with the placeholder string <code>"[c]"</code>, otherwise retain the original value.</p>
 <pre class="r"><code>tbl_supp &lt;- tbl |&gt; 
   mutate(
     across(
@@ -91,14 +90,19 @@ tbl_supp</code></pre>
 ## 4 D     [c]   6.98 
 ## 5 E     [c]   6.58</code></pre>
 <p>So column <code>x</code> now contains text values and has predictably been converted to character, which you can see as <code>&lt;chr&gt;</code> in the tibble header. But notice that <code>y</code> is also character type despite all the numeric values being retained.</p>
-<p>This happened because the <code>if_else</code> we used to create <code>tbl_supp</code> requires the <code>true</code> and <code>false</code> arguments to resolve to the same type. The <code>false</code> option must output character since <code>true</code> resolves to the string <code>[c]</code>,</p>
-<p>Ideally we would perform our suppression step, but column <code>x</code> would end up as character and <code>y</code> as numeric. How can we achieve this?</p>
+<p>This happened because the <code>if_else()</code> we used to create <code>tbl_supp</code> required the <code>true</code> and <code>false</code> arguments to resolve to the same type. The <code>false</code> argument must use <code>as.character()</code> because <code>true</code> resolves to the character value <code>"[c]"</code>.</p>
+<p>Ideally we’d perform our suppression step but column <code>x</code> would end up as character and <code>y</code> as numeric. How can we achieve this?</p>
 </div>
 <div id="adjust-my-type" class="section level1">
 <h1>Adjust my type</h1>
-<p>Below are some methods to fix the problem: (1) what not to do, (2) how to use a special base R function, and (3) how it should really probably actually be done.</p>
-<div id="nah" class="section level2">
-<h2>1. Nah</h2>
+<p>In this section are some methods to fix the problem by:</p>
+<ol style="list-style-type: decimal">
+<li>Causing yourself further brainache</li>
+<li>Using a (relatively little known?) base R function</li>
+<li>Doing it ‘properly’ from the outset</li>
+</ol>
+<div id="type-1-nah" class="section level2">
+<h2>Type 1: nah</h2>
 <p>Of course, we could run <code>tbl_supp |&gt; mutate(y = as.numeric(y))</code> to convert that specific column back to numeric. But imagine if you have a lot more columns and you can’t be sure which ones need to be converted.</p>
 <p>Maybe you could apply <code>as.numeric()</code> across <em>all</em> columns? Columns of numbers stored as text will then be converted entirely to numeric:</p>
 <pre class="r"><code>as.numeric(c(&quot;1&quot;, &quot;2&quot;, &quot;3&quot;))</code></pre>
@@ -107,12 +111,13 @@ tbl_supp</code></pre>
 <pre class="r"><code>as.numeric(c(&quot;1&quot;, &quot;[c]&quot;))</code></pre>
 <pre><code>## Warning: NAs introduced by coercion</code></pre>
 <pre><code>## [1]  1 NA</code></pre>
-<p>So <code>"1"</code> becomes <code>1</code>, but we’re warned that <code>[c]</code> has been converted to <code>NA</code> (well, <code>NA_real_</code>, which is the numeric form of <code>NA</code>). This approach actually makes things worse because we’ve just lost some information! We could do something convoluted, like see which columns gained <code>NA</code> values in the process, but that’s bonkers.</p>
+<p>So <code>"1"</code> becomes <code>1</code>, but we’re warned that <code>"[c]"</code> has been converted to <code>NA</code> (well, <code>NA_real_</code>, which is the numeric form of <code>NA</code>).</p>
+<p>We could do something convoluted, like see which columns didn’t gain <code>NA</code> values and should be retained as numeric. But that’s bonkers. This approach ultimately makes things worse because we’ve actually lost information!</p>
 <p>Really we want to check each column to see if it contains numbers only and then convert it to numeric. How?</p>
 </div>
-<div id="maybe" class="section level2">
-<h2>2. Maybe</h2>
-<p>I’ll cut to the chase. There’s a handy base R function that I had forgotten about: <code>type.convert()</code>.</p>
+<div id="type-2-better" class="section level2">
+<h2>Type 2: better</h2>
+<p>There’s a handy base R function that I had forgotten about: <code>type.convert()</code>.</p>
 <p>It takes a vector and, in turn, tries to coerce it to each data type. The process stops when coercion occurs without error. As the help file (<code>?type.convert</code>) puts it:</p>
 <blockquote>
 <p>Given a vector, the function attempts to convert it to logical, integer, numeric or complex, and when additionally as.is = FALSE… converts a character vector to factor. The first type that can accept all the non-missing values is chosen.</p>
@@ -135,8 +140,8 @@ tbl_supp_conv</code></pre>
 ## 5 E     [c]    6.58</code></pre>
 <p>As we wanted, our character column <code>y</code> has become numeric type (<code>&lt;dbl&gt;</code>) while <code>x</code> remains as character. Neato.</p>
 </div>
-<div id="okay" class="section level2">
-<h2>3. Okay</h2>
+<div id="type-3-betterer" class="section level2">
+<h2>Type 3: betterer</h2>
 <p>Having said all this, there are probably better approaches to this problem from the outset.</p>
 <p>For example, you could restrict the suppression method to the columns that actually require it. Numeric columns would remain untouched. You could do that with a simple <code>for</code> and <code>if</code>:</p>
 <pre class="r"><code>cols_numeric &lt;- names(select(tbl, where(is.numeric)))
@@ -160,12 +165,13 @@ tbl</code></pre>
 ## 3 C     [c]    7.12
 ## 4 D     [c]    6.98
 ## 5 E     [c]    6.58</code></pre>
-<p>This reads as ‘for each numeric column that contains at least one value less than 5, replace those values with the placeholder symbol <code>[c]</code>.’ That’s way easier.</p>
+<p>This reads as ‘for each numeric column that contains at least one value less than 5, replace those values with the placeholder symbol <code>"[c]"</code>.’ That’s way easier.</p>
 </div>
 </div>
 <div id="preach-to-the-converted-types" class="section level1">
 <h1>Preach to the converted types</h1>
-<p>It’s almost like this post could have just been a tweet saying ‘🤭 yo, <code>type.conversion()</code> is 🪄magic🪄 y’all’. But this post is now a handy reference in case anyone has the same problems with Excel’s handling of {a11ytables} outputs in future. Also I needed to hit my pun quota for the month.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
+<p>It’s almost like this post could have just been a tweet saying ‘🤭 yo, <code>type.conversion()</code> is 🪄magic🪄 y’all’. But this post is now a handy reference in case anyone has the same problems with Excel’s handling of {a11ytables} outputs in future.</p>
+<p>Also I needed to hit my pun quota for the month.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
 <hr />
 <details>
 <summary>
@@ -228,7 +234,7 @@ Session info
 <hr />
 <ol>
 <li id="fn1"><p>This is a Pokémon joke. I could have gone with <a href="https://bulbapedia.bulbagarden.net/wiki/Type:_Null_(Pok%C3%A9mon)">Type: Null</a>, but it’s too hard to draw.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>There’s a sort of ‘coercion hierarchy’ in R. The order is like logical &gt; integer &gt; numeric &gt; character, where the latter are ‘dominant’ to those prior (massive oversimplification). This results in some oddities to the untrained eye: <code>sum(2, TRUE)</code> resolves to <code>3</code>, because <code>TRUE</code> is coerced to numeric (since <code>2</code> is in the sum), which forces <code>TRUE</code> to be coerced to <code>1</code> (<code>FALSE</code> is <code>0</code>).<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>There’s a sort of ‘coercion hierarchy’ in R. The order is like logical &gt; integer &gt; numeric &gt; character, where the latter are ‘dominant’ to those prior (massive oversimplification). As an aside, this results in some oddities to the untrained eye: <code>sum(2, TRUE)</code> resolves to <code>3</code>, because <code>TRUE</code> is coerced to the numeric value <code>1</code> (<code>FALSE</code> is <code>0</code>) and so we get 2 + 1 = 3.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 <li id="fn3"><p>You can dismiss these warning markers in the Excel GUI, but I don’t think it’s possible to suppress these markers programmatically and proactively in {a11ytables}. Note also that {a11ytables} cheats a bit here for sake of presentation. The <code>generate_workbook()</code> function guesses that the column was intended to be numeric and adds style information to right-align the values in the output xlsx, which is how numeric values are normally treated in Excel.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
 <li id="fn4"><p>Turns out there’s literally such a thing as <a href="https://en.wikipedia.org/wiki/Type_punning">type punning</a>.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
 </ol>
