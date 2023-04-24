@@ -153,9 +153,27 @@ As we wanted, our character column `y` has become numeric type (`<dbl>`) while `
 
 ## Type 3: betterer
 
-Having said all this, there are probably better approaches to this problem from the outset. 
+There are probably better approaches to this problem from the outset, rather than after-the-fact application of `type.convert()`.
 
-For example, you could restrict the suppression method to the columns that actually require it. Numeric columns would remain untouched. You could do that with a simple `for` and `if`:
+As [Tim](https://www.hiddenelephants.co.uk/) has pointed out, you could actually just use the base R form of `ifelse()`:
+
+```{r}
+tbl |> 
+  mutate(
+    across(
+      where(is.numeric),
+      \(value) ifelse(
+        test = value < 5, 
+        yes  = "[c]",
+        no   = value
+      )
+    )
+  )
+```
+
+I think people use `dplyr::if_else()` for (a) consistency if they're already using tidyverse in the script and (b) it's 'strictness' compared to `ifelse()`. `if_else()` will force you to declare the `true` and `false` arguments so they resolve to the same type, whereas `ifelse()` will silently force type coercion, which may be undesirable in some cases.
+
+Another method would be to iterate the suppression over only the columns that need it. For example, you could do that with a simple `for` and `if`:
 
 ```{r}
 cols_numeric <- names(select(tbl, where(is.numeric)))
@@ -173,7 +191,7 @@ for (col in cols_numeric) {
 tbl
 ```
 
-This reads as 'for each numeric column that contains at least one value less than 5, replace those values with the placeholder symbol `"[c]"`.' That's way easier. 
+This reads as 'for each numeric column that contains at least one value less than 5, replace those values with the placeholder symbol `"[c]"`.' 
 
 # Preach to the converted types
 

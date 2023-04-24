@@ -142,8 +142,29 @@ tbl_supp_conv</code></pre>
 </div>
 <div id="type-3-betterer" class="section level2">
 <h2>Type 3: betterer</h2>
-<p>Having said all this, there are probably better approaches to this problem from the outset.</p>
-<p>For example, you could restrict the suppression method to the columns that actually require it. Numeric columns would remain untouched. You could do that with a simple <code>for</code> and <code>if</code>:</p>
+<p>There are probably better approaches to this problem from the outset, rather than after-the-fact application of <code>type.convert()</code>.</p>
+<p>As <a href="https://www.hiddenelephants.co.uk/">Tim</a> has pointed out, you could actually just use the base R form of <code>ifelse()</code>:</p>
+<pre class="r"><code>tbl |&gt; 
+  mutate(
+    across(
+      where(is.numeric),
+      \(value) ifelse(
+        test = value &lt; 5, 
+        yes  = &quot;[c]&quot;,
+        no   = value
+      )
+    )
+  )</code></pre>
+<pre><code>## # A tibble: 5 × 3
+##   id    x         y
+##   &lt;chr&gt; &lt;chr&gt; &lt;dbl&gt;
+## 1 A     5.76   7.33
+## 2 B     5.65   9.79
+## 3 C     [c]    7.12
+## 4 D     [c]    6.98
+## 5 E     [c]    6.58</code></pre>
+<p>I think people use <code>dplyr::if_else()</code> for (a) consistency if they’re already using tidyverse in the script and (b) it’s ‘strictness’ compared to <code>ifelse()</code>. <code>if_else()</code> will force you to declare the <code>true</code> and <code>false</code> arguments so they resolve to the same type, whereas <code>ifelse()</code> will silently force type coercion, which may be undesirable in some cases.</p>
+<p>Another method would be to iterate the suppression over only the columns that need it. For example, you could do that with a simple <code>for</code> and <code>if</code>:</p>
 <pre class="r"><code>cols_numeric &lt;- names(select(tbl, where(is.numeric)))
 
 for (col in cols_numeric) {
@@ -165,7 +186,7 @@ tbl</code></pre>
 ## 3 C     [c]    7.12
 ## 4 D     [c]    6.98
 ## 5 E     [c]    6.58</code></pre>
-<p>This reads as ‘for each numeric column that contains at least one value less than 5, replace those values with the placeholder symbol <code>"[c]"</code>.’ That’s way easier.</p>
+<p>This reads as ‘for each numeric column that contains at least one value less than 5, replace those values with the placeholder symbol <code>"[c]"</code>.’</p>
 </div>
 </div>
 <div id="preach-to-the-converted-types" class="section level1">
@@ -187,7 +208,7 @@ Session info
 ##  collate  en_US.UTF-8
 ##  ctype    en_US.UTF-8
 ##  tz       Europe/London
-##  date     2023-04-23
+##  date     2023-04-24
 ##  pandoc   2.19.2 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
