@@ -9,8 +9,8 @@
 
 [![rostrum.blog
 post](https://img.shields.io/badge/rostrum-blog-008900?style=flat&labelColor=black&logo=data:image/gif;base64,R0lGODlhEAAQAPEAAAAAABWCBAAAAAAAACH5BAlkAAIAIf8LTkVUU0NBUEUyLjADAQAAACwAAAAAEAAQAAAC55QkISIiEoQQQgghRBBCiCAIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAAh+QQJZAACACwAAAAAEAAQAAAC55QkIiESIoQQQgghhAhCBCEIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAA7)](https://www.rostrum.blog/)
-[![License: CC
-BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+[![License: CC BY-NC-SA
+4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 [![Netlify
 Status](https://api.netlify.com/api/v1/badges/ebfbdae4-a903-43e8-9f53-75becd95b42e/deploy-status)](https://app.netlify.com/sites/rostrum/deploys)
 <!-- badges: end -->
@@ -25,24 +25,26 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 144 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 145 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 20 day(s) ago: [R is a game engine,
-fight me](https://www.rostrum.blog/2023/04/02/splendid-r-games/).
+🆕 The latest post was published 2 day(s) ago: [Matt Dray Teaches (Data)
+Typing](https://www.rostrum.blog/2023/04/23/type-convert/).
 
 📈 This 2D plot shows posts over time:
 
 <img src="README_files/figure-gfm/plot-out-1.png" alt="A 2D chart where each point represents a published blog post on a Y axis of time spanning from 2018 to the present. There are some gaps, but posts have been relatively consistent over time."  />
 
 <details>
-
-<summary>📂 Click to expand a full list of posts</summary>
+<summary>
+📂 Click to expand a full list of posts
+</summary>
 
 | Number | Date       | Title                                                                                                                     |
-| -----: | :--------- | :------------------------------------------------------------------------------------------------------------------------ |
+|-------:|:-----------|:--------------------------------------------------------------------------------------------------------------------------|
+|    145 | 2023-04-23 | [Matt Dray Teaches (Data) Typing](https://www.rostrum.blog/2023/04/23/type-convert/)                                      |
 |    144 | 2023-04-02 | [R is a game engine, fight me](https://www.rostrum.blog/2023/04/02/splendid-r-games/)                                     |
 |    143 | 2023-03-16 | [Playgrounds with WebR and Quarto](https://www.rostrum.blog/2023/03/16/webr-quarto/)                                      |
 |    142 | 2023-03-15 | [Fun and learning. In a dungeon.](https://www.rostrum.blog/2023/03/15/in-a-dungeon/)                                      |
@@ -52,7 +54,7 @@ fight me](https://www.rostrum.blog/2023/04/02/splendid-r-games/).
 |    138 | 2023-02-02 | [Wrapping PokéAPI with {trapinch}](https://www.rostrum.blog/2023/02/02/trapinch/)                                         |
 |    137 | 2023-01-08 | [Stiliyan Petrov: Jesus?](https://www.rostrum.blog/2023/01/08/petrov/)                                                    |
 |    136 | 2023-01-06 | [.-././–/—/.-./…/.](https://www.rostrum.blog/2023/01/06/remorse/)                                                         |
-|    135 | 2023-01-04 | [Ding\! Sound effects in {r.oguelike}](https://www.rostrum.blog/2023/01/04/rogue-sfx/)                                    |
+|    135 | 2023-01-04 | [Ding! Sound effects in {r.oguelike}](https://www.rostrum.blog/2023/01/04/rogue-sfx/)                                     |
 |    134 | 2022-12-11 | [Animate sprites in R with {pixeltrix}](https://www.rostrum.blog/2022/12/11/pixeltrix-animate/)                           |
 |    133 | 2022-11-13 | [Tamagotchi in R?](https://www.rostrum.blog/2022/11/13/tamrgo/)                                                           |
 |    132 | 2022-09-24 | [Interactive pixel art in R with {pixeltrix}](https://www.rostrum.blog/2022/09/24/pixeltrix/)                             |
@@ -63,7 +65,7 @@ fight me](https://www.rostrum.blog/2023/04/02/splendid-r-games/).
 |    127 | 2022-07-08 | [Stop opening the same RStudio Project twice](https://www.rostrum.blog/2022/07/08/rproj-dupes/)                           |
 |    126 | 2022-06-28 | [An isometric dungeon chase in R](https://www.rostrum.blog/2022/06/28/isometric-dungeon/)                                 |
 |    125 | 2022-06-10 | [Automated pathfinding in {r.oguelike}](https://www.rostrum.blog/2022/06/10/basic-search/)                                |
-|    124 | 2022-06-07 | [Down with R’s assignment flamewars\!](https://www.rostrum.blog/2022/06/07/assign-down/)                                  |
+|    124 | 2022-06-07 | [Down with R’s assignment flamewars!](https://www.rostrum.blog/2022/06/07/assign-down/)                                   |
 |    123 | 2022-06-01 | [Try R v4.2 in your browser](https://www.rostrum.blog/2022/06/01/try-r/)                                                  |
 |    122 | 2022-05-01 | [Simple procedural dungeons in R](https://www.rostrum.blog/2022/05/01/dungeon/)                                           |
 |    121 | 2022-04-27 | [Turn the {tide} on R’s secret spreadsheet editor](https://www.rostrum.blog/2022/04/27/tide/)                             |
@@ -76,7 +78,7 @@ fight me](https://www.rostrum.blog/2023/04/02/splendid-r-games/).
 |    114 | 2022-01-19 | [Impress with {keypress}](https://www.rostrum.blog/2022/01/19/keypress/)                                                  |
 |    113 | 2022-01-14 | [Wordle, twirdle and eldrow](https://www.rostrum.blog/2022/01/14/wordle/)                                                 |
 |    112 | 2022-01-07 | [The most popular Animal Crossing villagers](https://www.rostrum.blog/2022/01/07/acnh-swipe-results/)                     |
-|    111 | 2021-12-30 | [Your workout route (in three dimensions\!)](https://www.rostrum.blog/2021/12/30/gpx3d/)                                  |
+|    111 | 2021-12-30 | [Your workout route (in three dimensions!)](https://www.rostrum.blog/2021/12/30/gpx3d/)                                   |
 |    110 | 2021-11-27 | [{itdepends} on {lubridate}](https://www.rostrum.blog/2021/11/27/lubridate-fns/)                                          |
 |    109 | 2021-11-27 | [R has obscenely long function names](https://www.rostrum.blog/2021/11/27/long-fns/)                                      |
 |    108 | 2021-11-07 | [Deep fried memes in R](https://www.rostrum.blog/2021/11/07/deepfry/)                                                     |
@@ -92,7 +94,7 @@ fight me](https://www.rostrum.blog/2023/04/02/splendid-r-games/).
 |     98 | 2021-07-31 | [OG emoji SVGs](https://www.rostrum.blog/2021/07/31/og-emoji-svg/)                                                        |
 |     97 | 2021-07-25 | [Make an art gallery with {bs4cards}](https://www.rostrum.blog/2021/07/25/faxcrayon/)                                     |
 |     96 | 2021-07-23 | [What colour is London?](https://www.rostrum.blog/2021/07/23/london-colour/)                                              |
-|     95 | 2021-07-15 | [EXPOSED: a Kiwi conspiracy built into R\!](https://www.rostrum.blog/2021/07/15/dollar-dollar/)                           |
+|     95 | 2021-07-15 | [EXPOSED: a Kiwi conspiracy built into R!](https://www.rostrum.blog/2021/07/15/dollar-dollar/)                            |
 |     94 | 2021-07-10 | [Decay is inevitable, accept {linkrot}?](https://www.rostrum.blog/2021/07/10/linkrot/)                                    |
 |     93 | 2021-07-05 | [\#RecreationThursday: a LeWitt Shiny app](https://www.rostrum.blog/2021/07/05/recreate-lewitt/)                          |
 |     92 | 2021-06-28 | [Very simple pixel art in R](https://www.rostrum.blog/2021/06/28/pixel-art/)                                              |
@@ -106,7 +108,7 @@ fight me](https://www.rostrum.blog/2023/04/02/splendid-r-games/).
 |     84 | 2021-04-10 | [Convert R to cron to English with {dialga}](https://www.rostrum.blog/2021/04/10/dialga/)                                 |
 |     83 | 2021-03-23 | [Make a {shiny} app README badge](https://www.rostrum.blog/2021/03/23/shiny-badge/)                                       |
 |     82 | 2021-03-23 | [Apple Health and Nike Run Club with {xml2}](https://www.rostrum.blog/2021/03/23/xml-health/)                             |
-|     81 | 2021-03-13 | [Protect yourself from equals assignment\!](https://www.rostrum.blog/2021/03/13/assign/)                                  |
+|     81 | 2021-03-13 | [Protect yourself from equals assignment!](https://www.rostrum.blog/2021/03/13/assign/)                                   |
 |     80 | 2021-03-02 | [A tiny {shiny} flag challenge](https://www.rostrum.blog/2021/03/02/randoflag/)                                           |
 |     79 | 2021-02-27 | [Typo-shaming my Git commits](https://www.rostrum.blog/2021/02/27/typos/)                                                 |
 |     78 | 2021-02-21 | [\#GithubSkyline but hear me out](https://www.rostrum.blog/2021/02/21/skyphone/)                                          |
@@ -190,6 +192,6 @@ fight me](https://www.rostrum.blog/2023/04/02/splendid-r-games/).
 
 </details>
 
------
+------------------------------------------------------------------------
 
-*Updated on 2023-04-22 at 02:37.*
+*Updated on 2023-04-25 at 02:40.*
