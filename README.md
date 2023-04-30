@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 6 day(s) ago: [Matt Dray Teaches (Data)
+🆕 The latest post was published 7 day(s) ago: [Matt Dray Teaches (Data)
 Typing](https://www.rostrum.blog/2023/04/23/type-convert/).
 
 📈 This 2D plot shows posts over time:
@@ -194,4 +194,4 @@ Typing](https://www.rostrum.blog/2023/04/23/type-convert/).
 
 ------------------------------------------------------------------------
 
-*Updated on 2023-04-29 at 02:37.*
+*Updated on 2023-04-30 at 02:38.*
