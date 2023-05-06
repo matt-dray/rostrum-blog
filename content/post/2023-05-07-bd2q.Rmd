@@ -1,0 +1,144 @@
+---
+title: "Automate {blogdown} to Quarto"
+author: Matt Dray
+date: '2023-05-07'
+slug: bd2q
+categories:
+  - code
+  - meta
+  - package
+tags:
+  - bd2q
+  - blogdown
+  - quarto
+  - r
+---
+
+
+# tl;dr
+
+I've written a quick package, [{bd2q}](https://github.com/matt-dray/bd2q), to help me convert my {blogdown} blog to Quarto.
+
+# Feeling down
+
+No-one is ever happy with their blog. The structure or style is never perfect.
+
+There have been a few frameworks over time for R bloggers. 
+
+I began this blog five years ago and chose {blogdown}[^wp], which lets you write R Markdown files. {blogdown} is based on Hugo.
+
+# Blog up
+
+Three things were in scope:
+
+1. Create a template Quarto blog
+2. Create the necessary Quarto folder structure for posts, then transfer posts and resources from the {blogdown} project
+3. Make tweaks to the posts to remove or replace selected lines
+
+### 1. Quarto blog template
+
+I assume someone has already written a version of `usethis::create_project()` for creating a Quarto blog. Regardless, I've written `bd2q::create_template()` to generate a folder with the minimal structure required. The exact content is slightly different to the one generated when you start a new Quarto blog project through RStudio's menus.
+
+```{r eval = FALSE}
+bd2q::create_template(
+  q_path = "~/Documents/new-quarto-blog"
+)
+## ✔ Created template Quarto blog at /Users/mattdray/Documents/new-quarto-blog
+```
+
+### 2. Transfer posts and resources
+
+In {blogdown}, R Markdown posts and their rendered HTML are all stored together in `content/post/` in the form `YYYY-MM-DD-post-name.Rmd` and `YYYY-MM-DD-post-name.html`. Resources, like images, live separately in `static/post/` with a folder per post in the form `YYYY-MM-DD-post-name_files/`.
+
+Quarto simplifies this. Each post gets its own folder in `posts/`, like `YYYY-MM-DD-post-name`, which contains the post as `index.qmd` and a folder of resources. This means the post and all its content are stored together.
+
+To make the conversion, `bd2q::transfer_posts()` copies posts from a {blogdown} blog structure to a Quarto blog structure, setting up the required folders and renaming each post to `index.qmd`. 
+
+```{r eval = FALSE}
+transfer_posts(
+  bd_path = "~/Documents/old-blogdown-blog",
+  q_path = "~/Documents/new-quarto-blog"
+)
+## ✔ Created posts/ directory structure.
+## ℹ Copying posts.
+## ✔ Copied 148 posts to /Users/mattdray/Documents/new-quarto-blog.
+```
+
+Once that's been run, `bd2q::transfer_resources()` can copy each post's resources into an accompanying subfolder.
+
+```{r eval = FALSE}
+transfer_resources(
+  bd_path = "~/Documents/old-blogdown-blog",
+  q_path = "~/Documents/new-quarto-blog"
+)
+## ℹ Copying resources.
+## ✔ Copied 455 resources to each post's resources/ folder in Users/mattdray/Documents/new-quarto-blog/posts.
+```
+
+### 3. Tweak post content
+
+There are some things I'd like to tidy up in the content of each post to make it more suited to Quarto. I made a few functions that iterate over all the posts in the new Quarto blog structure and replace or remove certain content.
+
+One obvious necessity is to update the resource paths, which can be done specifically with `bd2q::update_resource_paths()`.
+
+I added two more functions that are a little more generic.
+
+The first is `bd2q::remove_line()`, which deletes a single line from a post based on a provided regular expression. When I was messing around with converting the blog to Quarto manually, I found that the presence of the 'draft' status in the YAML header would prevent the post from appearing on the homepage, even if was set to 'no'. As a result, you can run something like this to find and remove the lines that start with 'draft':
+
+```{r eval = FALSE}
+bd2q::remove_line(
+  q_path = "~/Documents/new-quarto-blog",
+  detect_rx = "^draft:"
+)
+## ℹ Making corrections.
+## ✔ Removed lines matching the regular expression '^draft:' from 128 out of 148 posts.
+```
+
+That's fine for individual lines, but what if you have a sequence of consecutive lines that you want to find and remove, or replace with some other text?
+
+That's what `bd2q::replace_lines()` does. Provide a vector of strings that exactly match some consecutive lines in each post, then provide a vector of strings to replace them with (or NULL to simply remove them).
+
+This addresses another specific problem I was having. I wanted to update my custom session-info blocks at the bottom of each post so that they instead appear as [a Quarto 'appendix'](https://quarto.org/docs/authoring/appendices.html). That can be done like this:
+
+```{r eval = FALSE}
+old_lines <- c(
+  "---",
+  "<details><summary>Session info</summary>",
+  "```{r eval=TRUE, sessioninfo, echo=FALSE}",
+  "sessioninfo::session_info()",
+  "```",
+  "</details>"
+)
+
+new_lines <- c(
+  "## Details {.appendix}",
+  "<details><summary>Session info</summary>",
+  "```{r}",
+  "#' eval = TRUE,",
+  "#' echo = FALSE",
+  'cat("Date:", cat(format(Sys.time(), format = "%Y-%m-%d")), "\n\n"); sessionInfo()',
+  "```"
+)
+
+bd2q::replace_lines(
+  q_path = "~/Documents/new-quarto-blog",
+  match_str = old_lines,
+  replace_str = new_lines
+)
+```
+
+This was actually more painful than I was hoping. There's no easy way to match consecutive strings between vectors[^vecmatch] (please tell me if I'm wrong), so I ended up collapsing all the lines of a post into a single string and then finding the matching (collapsed) string provided by the user. Of course, the string will have to be 'uncollapsed' to get a string per line, so you can use `paste()` with a string provide to the `collapse` argument. But this separator will need to be a string that doesn't appear in any of your posts, otherwise the uncollapsing process will break a line that you didn't intend to be broken! I went with `///` by default, but the user can change this with the `collapse_str` argument in `replace_lines()`.
+
+# Tools
+
+fs, cli
+
+---
+<details><summary>Session info</summary>
+```{r eval=TRUE, sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^wp]: Actually, we began this blog on WordPress in 2013. But WordPress doesn't evaluate R code, so code outputs had to be pasted in manually. The original blog was meant to be more about general ecology, hence the name 'rostrum', which refers to the snouty bit of an insect and also the platform a speaker talks from. Seemed like a neat pun at the time, but the joke is kinda lost on an audience that's no longer comprised mostly of entomologists.
+[^vecmatch]: In other words, try to extract the sequence `c("a", "b", "c")`, in that order, from the vector `c("a", "b", "d", "a", "b", "c", "d")`. Surely there's an R function that will do this?
