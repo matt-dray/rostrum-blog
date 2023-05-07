@@ -1,0 +1,216 @@
+---
+title: "Automate {blogdown} to Quarto"
+author: Matt Dray
+date: '2023-05-07'
+slug: bd2q
+categories:
+  - code
+  - blog-meta
+  - package
+tags:
+  - bd2q
+  - blogdown
+  - quarto
+  - r
+---
+
+
+
+<div class="figure">
+<img src="/post/2023-05-07-bd2q_files/rostrum-blog-2.png" alt="A screenshot of a version of this blog designed with Quarto. The style is very similar, using green and black and the blog logo, which is a 16 by 16 pixel picture of an insect. There are new sections for 'About', 'RSS' and 'Source', as well as s search button. The posts are displayed as 'cards' rather than in a list." width="100%"/>
+<p class="caption">
+gRaPhIc DeSiGn Is My PaSsIoN.
+</p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I’ve written a quick R package, <a href="https://github.com/matt-dray/bd2q">{bd2q}</a>, to help me convert my <a href="https://pkgs.rstudio.com/blogdown/">{blogdown}</a> blog to <a href="https://quarto.org/">Quarto</a>. Whether I’ll actually complete the conversion is another story.</p>
+</div>
+<div id="upside-blogdown" class="section level1">
+<h1>Upside blogdown</h1>
+<p>It is destiny: no-one is ever completely happy with their blog.</p>
+<p>This site was built five years ago<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> with <a href="https://pkgs.rstudio.com/blogdown/">{blogdown}</a>, which lets you write R Markdown files and have them knitted into a blog. I ignored <a href="https://rstudio.github.io/distill/">the newer {distill} package</a><a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>, but <a href="https://quarto.org/">Quarto</a> may be worth the switch. It’ll let me simplify the blog’s structure<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> and take advantage of Quarto’s snazzy features<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>.</p>
+<p>But I didn’t fancy transferring and editing ~150 posts by hand, so I’ve written a few functions to help out.</p>
+</div>
+<div id="when-in-doubt-make-a-package" class="section level1">
+<h1>When in doubt, make a package</h1>
+<p>And so the {bd2q} R package<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> is <a href="https://github.com/matt-dray/bd2q">available from GitHub</a>. It does what I need it to do for now, but note it only has basic error checking, has no unit tests, etc. Use at own risk, etc. It’s likely to remain unpolished forever, but feel free to add issues or pull requests. To install:</p>
+<pre class="r"><code>install.packages(&quot;remotes&quot;)  # if not yet installed
+remotes::install_github(&quot;matt-dray/bd2q&quot;)</code></pre>
+<p>Three things were in scope for this package:</p>
+<ol style="list-style-type: decimal">
+<li>Create a template Quarto blog.</li>
+<li>Create the necessary Quarto folder structure for posts, then transfer posts and resources from the old {blogdown} blog.</li>
+<li>Tweak the posts to remove or replace selected lines.</li>
+</ol>
+<div id="quarto-blog-template" class="section level2">
+<h2>1. Quarto blog template</h2>
+<p>I assume someone has already written a version of <code>usethis::create_project()</code> for creating a Quarto blog. Regardless, I’ve written <code>bd2q::create_template()</code> to generate a folder with the minimal structure required, which makes my life easier for testing purposes.</p>
+<pre class="r"><code>bd2q::create_template(q_path = &quot;~/new-quarto-blog&quot;)</code></pre>
+<pre class="r"><code>## ✔ Created template Quarto blog at /Users/mattdray/new-quarto-blog</code></pre>
+<p>The skeleton content is opinionated and differs a bit to the one generated through RStudio’s ‘new project’ menu, for example, but the structure is the same:</p>
+<pre><code>blog
+├── about.qmd
+├── index.qmd
+├── posts/
+│   └── metadata.yml
+├── styles.css
+└── blog.rproj</code></pre>
+<p>Of course, now we need to pull in the posts from the old {blogdown} blog.</p>
+</div>
+<div id="transfer-posts-and-resources" class="section level2">
+<h2>2. Transfer posts and resources</h2>
+<p>Typically in a {blogdown} blog, all R Markdown posts and their rendered HTML files are stored together in <code>content/post/</code> in the form <code>YYYY-MM-DD-post-name.Rmd</code> and <code>YYYY-MM-DD-post-name.html</code>. Resources, like images, live separately in <code>static/post/</code> with a folder per post in the form <code>YYYY-MM-DD-post-name_files/</code>.</p>
+<p>Here’s a simplified folder structure that focuses on a single post and its resources:</p>
+<pre><code>blog/
+├── content/
+│   └── post/
+│       ├── YYYY-MM-DD-post-name.Rmd
+│       └── YYYY-MM-DD-post-name.html
+└── static/
+    └── post/
+        └── YYYY-MM-DD-post-name_files/
+            └── image.png</code></pre>
+<p>Quarto simplifies this structure. Each post gets its own folder in <code>posts/</code>, like <code>YYYY-MM-DD-post-name</code>, which contains the post as <code>index.qmd</code> and a folder of resources. This means the post and all its content are stored together in one containing folder.</p>
+<pre><code>blog/
+└── posts/
+    └── YYYY-MM-DD-post-name/
+        ├── index.qmd
+        └── resources/
+            └── image.png</code></pre>
+<p>To do the conversion, <code>bd2q::transfer_posts()</code> copies posts from a {blogdown} blog structure to a Quarto blog structure, setting up the required folders and renaming each post to <code>index.qmd</code>.</p>
+<pre class="r"><code>transfer_posts(
+  bd_path = &quot;~/old-blogdown-blog&quot;,
+  q_path = &quot;~/new-quarto-blog&quot;
+)</code></pre>
+<pre class="r"><code>## ✔ Created posts/ directory structure.
+## ℹ Copying posts.
+## ✔ Copied 148 posts to /Users/mattdray/new-quarto-blog.</code></pre>
+<p>Once that’s been run, <code>bd2q::transfer_resources()</code> can copy each post’s resources into an accompanying subfolder, which defaults to the name ‘resources’. You can choose which file types you want transfer with the <code>exts_keep</code> argument.</p>
+<pre class="r"><code>transfer_resources(
+  bd_path = &quot;~/old-blogdown-blog&quot;,
+  q_path = &quot;~/new-quarto-blog&quot;,
+  resources_dir = &quot;resources&quot;,
+  exts_keep = c(&quot;gif&quot;, &quot;jpg&quot;, &quot;jpeg&quot;, &quot;png&quot;, &quot;svg&quot;, &quot;wav&quot;),
+)</code></pre>
+<pre class="r"><code>## ℹ Copying resources.
+## ✔ Copied 455 resources to each post&#39;s resources/ folder in Users/mattdray/new-quarto-blog/posts.</code></pre>
+<p>Of course this doesn’t account for everything, like bits of JavaScript and CSS related to the use of <a href="https://www.htmlwidgets.org/">htmlwidgets</a>. I’m not really bothered about this, because these should be recreated when I re-render each post.</p>
+<p>Note that you can use <code>bd2q::create_and_transfer()</code> if you want to run <code>create_template()</code>, <code>transfer_posts()</code> and <code>transfer_resources()</code> all at once. Regardless, once you’ve got the structure sorted, you can begin to adjust the posts if you need to.</p>
+</div>
+<div id="tweak-post-content" class="section level2">
+<h2>3. Tweak post content</h2>
+<p>There’s content in the body of each post that I want to get rid of or make more Quarto-like. I made a few functions that iterate over all the <code>index.qmd</code> files and replace or remove certain content.</p>
+<p>One obvious necessity is to rebuild the resource paths (to images, sound files, etc), which can be done specifically with <code>bd2q::update_resource_paths()</code>. It defaults to creating paths to each post’s ‘resources’ subfolder, as generated by <code>bd2q::transfer_resources()</code>. For example, you could use a regular expression to match rows you know will contain a resource path and have them updated for the new Quarto folder structure (I tend to insert images with HTML rather than Markdown, hence the <code>&lt;img&gt;</code> tag in the example below).</p>
+<pre class="r"><code>update_resource_paths(
+  q_path = &quot;~/new-quarto-blog&quot;,
+  resources_dir = &quot;resources&quot;,
+  resource_rx = &quot;&lt;img src=&quot;
+)</code></pre>
+<pre class="r"><code>## ℹ Updating posts.
+## ✔ 148 posts updated.  </code></pre>
+<p>I also added two replace/remove functions that are a little more generic.</p>
+<p>The first is <code>bd2q::remove_line()</code>, which deletes a single line from each post based on a provided regular expression. When I was messing around with converting the blog to Quarto manually, I found that the presence of the ‘draft’ status in the YAML header would prevent the post from appearing on the homepage, even if was set to ‘no’. As a result, you can run something like this to find and remove the lines that start with ‘draft’:</p>
+<pre class="r"><code>bd2q::remove_line(
+  q_path = &quot;~/new-quarto-blog&quot;,
+  detect_rx = &quot;^draft:&quot;
+)</code></pre>
+<pre class="r"><code>## ℹ Making corrections.
+## ✔ Removed lines matching the regular expression &#39;^draft:&#39; from 128 out of 148 posts.</code></pre>
+<p>That’s fine for individual lines, but what if you have a sequence of <em>consecutive</em> lines that you want to find and remove, or replace with some other text?</p>
+<p>That’s what <code>bd2q::replace_lines()</code> does. Provide a vector of strings that exactly match some consecutive lines in each post, then provide a vector of strings to replace them with (or NULL to simply remove them)<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a>.</p>
+<p>This addresses another specific problem I was having. I wanted to update my custom session-info blocks at the bottom of each post so that they instead appear as <a href="https://quarto.org/docs/authoring/appendices.html">a Quarto ‘appendix’</a>. That can be done like this:</p>
+<pre class="r"><code>old_lines &lt;- c(
+  &quot;---&quot;,
+  &quot;&lt;details&gt;&lt;summary&gt;Session info&lt;/summary&gt;&quot;,
+  &quot;```{r eval=TRUE, sessioninfo, echo=FALSE}&quot;,
+  &quot;sessioninfo::session_info()&quot;,
+  &quot;```&quot;,
+  &quot;&lt;/details&gt;&quot;
+)
+
+new_lines &lt;- c(
+  &quot;## Details {.appendix}&quot;,
+  &quot;&lt;details&gt;&lt;summary&gt;Session info&lt;/summary&gt;&quot;,
+  &quot;```{r}&quot;,
+  &quot;#&#39; eval = TRUE,&quot;,
+  &quot;#&#39; echo = FALSE&quot;,
+  &#39;cat(&quot;Date:&quot;, cat(format(Sys.time(), format = &quot;%Y-%m-%d&quot;)), &quot;\n\n&quot;); sessionInfo()&#39;,
+  &quot;```&quot;
+)
+
+bd2q::replace_lines(
+  q_path = &quot;~/new-quarto-blog&quot;,
+  match_str = old_lines,
+  replacement_str = new_lines
+)</code></pre>
+<pre class="r"><code>## ℹ Making corrections.
+## ✔ Removed lines matching the provided string vector from 9 out of 148 posts.   </code></pre>
+<p>Haha, uhoh, I was expecting to have fixed more posts than that! Looks like I might have written my custom session-info block slightly differently in each post (maybe an extra space or empty line?), so I’ll have to run the <code>bd2q::replace_lines()</code> multiple times to make sure I can replace it in each post that it appears.</p>
+</div>
+</div>
+<div id="actually-use-the-package-pfft" class="section level1">
+<h1>Actually use the package? Pfft!</h1>
+<p>So, is {bd2q} objectively good? No. Does it do what I personally want it to do? Absolutely. Mostly. Yeah?</p>
+<p>Of course, transferring files into a new structure is the easy part. The hard part is to see if each post will still re-render after all these years. It’s unlikely! There’s no dependency management in this blog because there was no easy easy to do it. Quarto, meanwhile, has <a href="https://quarto.org/docs/projects/code-execution.html#freeze">the ability to ‘freeze’ posts</a> and <a href="https://albert-rapp.de/posts/13_quarto_blog_writing_guide/13_quarto_blog_writing_guide.html#make-posts-robust-with-renv">link each post to a {renv} lockfile</a> (thanks Albert) that captures each post’s package dependencies.</p>
+<p>There are some other dependencies outside of packages though. For example, I have posts that use <a href="https://docs.ropensci.org/rtweet/">the {rtweet} package</a> to fetch tweets from Twitter, but Twitter is a garbage fire and I may never be able to fetch tweets from the API in future. I may have to just copy-paste the outputs that were created when the post was originally rendered, oh well.</p>
+<p>To be clear: this is hard work. I may not be brave enough to do it any time soon. I’ve set up <a href="https://github.com/matt-dray/rostrum-blog-2">a GitHub repo for ‘rostrum-blog-2’</a> where I’ve been experimenting with styles and structure, so if I ever get round to this task then that’s where the fireworks will be happening.</p>
+<p>And hey, at worst I got more familiar with the <a href="https://fs.r-lib.org/">{fs}</a> and <a href="https://cli.r-lib.org/">{cli}</a> packages when making {bd2q}, which are for ‘tidy’ path handling and nice user interfaces. A convoluted way to learn!</p>
+<p>But that’s what this blog is all about, amirite.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
+##  os       macOS Big Sur/Monterey 10.16
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_US.UTF-8
+##  ctype    en_US.UTF-8
+##  tz       Europe/London
+##  date     2023-05-07
+##  pandoc   2.19.2 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version    date (UTC) lib source
+##  bd2q        * 0.0.0.9000 2023-05-07 [1] Github (matt-dray/bd2q@1a383e5)
+##  blogdown      1.9        2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26       2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1      2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.6.1      2023-03-23 [1] CRAN (R 4.2.0)
+##  digest        0.6.31     2022-12-11 [1] CRAN (R 4.2.0)
+##  evaluate      0.20       2023-01-17 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0      2021-01-25 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2      2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4      2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.4      2022-12-06 [1] CRAN (R 4.2.0)
+##  knitr         1.42       2023-01-25 [1] CRAN (R 4.2.0)
+##  R6            2.5.1      2021-08-19 [1] CRAN (R 4.2.0)
+##  rlang         1.1.1      2023-04-28 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14       2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.14       2022-08-22 [1] CRAN (R 4.2.0)
+##  sass          0.4.1      2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2      2021-12-06 [1] CRAN (R 4.2.0)
+##  xfun          0.37       2023-01-31 [1] CRAN (R 4.2.0)
+##  yaml          2.3.7      2023-01-23 [1] CRAN (R 4.2.0)
+## 
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>Actually, we began this blog on WordPress in 2013. But WordPress doesn’t evaluate R code, so code outputs had to be pasted in manually. The original blog was meant to be more about general ecology, hence the name ‘rostrum’, which refers to the snouty bit of an insect and also the platform a speaker talks from. Seemed like a neat pun at the time, but the joke is kinda lost on an audience that’s no longer comprised mostly of entomologists. But the audience is mostly me, so I can live with it.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>Although I did use it to <a href="https://www.rostrum.blog/2022/03/15/renv-profiles/">investigate a method with {renv}</a> for managing dependencies on a post-by-post basis.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>In particular, {blogdown} <a href="https://gohugo.io/">depends on Hugo</a>, a ‘framework for building websites’. Quarto blogs are just… built on Quarto.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>Especially things like <a href="https://github.com/coatless/quarto-webr">WebR for Quarto</a> that helps you embed interactive R chunks into your posts, which <a href="https://www.rostrum.blog/2023/03/16/webr-quarto/">I wrote about recently</a>.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>‘bd2q’ as in ‘{blogdown} to Quarto’. Which is a boring name, I know.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+<li id="fn6"><p>This was actually more painful than I was hoping. There’s no easy way to match consecutive strings between vectors. In other words, try to extract the sequence <code>c("a", "b", "c")</code>, in that order, from the vector <code>c("a", "b", "d", "a", "b", "c", "d")</code>. Surely there’s an R function that will do this? Anyway, I fudged it by collapsing all the lines of a post into a single string and then finding the matching (collapsed) string provided by the user. Of course, the string will have to be ‘uncollapsed’ to get a string per line, so you can use <code>paste()</code> with a string provide to the <code>collapse</code> argument. But this separator will need to be a string that doesn’t appear in any of your posts, otherwise the uncollapsing process will break a line that you didn’t intend to be broken! I went with <code>///</code> by default, but the user can change this with the <code>collapse_str</code> argument in <code>bd2q::replace_lines()</code>. Sheesh.<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
