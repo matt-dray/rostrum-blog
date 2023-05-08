@@ -25,13 +25,13 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 145 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 146 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 14 day(s) ago: [Matt Dray Teaches
-(Data) Typing](https://www.rostrum.blog/2023/04/23/type-convert/).
+🆕 The latest post was published 1 day(s) ago: [Automate {blogdown} to
+Quarto](https://www.rostrum.blog/2023/05/07/bd2q/).
 
 📈 This 2D plot shows posts over time:
 
@@ -44,6 +44,7 @@ since 2018-04-14.
 
 | Number | Date       | Title                                                                                                                     |
 |-------:|:-----------|:--------------------------------------------------------------------------------------------------------------------------|
+|    146 | 2023-05-07 | [Automate {blogdown} to Quarto](https://www.rostrum.blog/2023/05/07/bd2q/)                                                |
 |    145 | 2023-04-23 | [Matt Dray Teaches (Data) Typing](https://www.rostrum.blog/2023/04/23/type-convert/)                                      |
 |    144 | 2023-04-02 | [R is a game engine, fight me](https://www.rostrum.blog/2023/04/02/splendid-r-games/)                                     |
 |    143 | 2023-03-16 | [Playgrounds with WebR and Quarto](https://www.rostrum.blog/2023/03/16/webr-quarto/)                                      |
@@ -194,4 +195,4 @@ since 2018-04-14.
 
 ------------------------------------------------------------------------
 
-*Updated on 2023-05-07 at 02:49.*
+*Updated on 2023-05-08 at 02:39.*
