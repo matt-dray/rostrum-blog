@@ -1,0 +1,220 @@
+---
+title: "Recreating Spear's #CottonViz in {gpplot2}"
+author: Matt Dray
+date: '2023-05-10'
+slug: spear-ggplot2
+categories:
+  - code
+  - data-viz
+  - tutorial
+tags:
+  - ggplot2
+  - r
+  - recreation
+---
+
+
+
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I won a data viz recreation competition a couple of years ago. I wrote it in base R and then wrote a {ggplot2} how-to that I don’t think was ever published in ‘Significance’ magazine. It’s been a while; I figured I’d publish it myself.</p>
+</div>
+<div id="recreate-spears-cotton-visualisation-with-ggplot2" class="section level1">
+<h1>Recreate Spear’s cotton visualisation with {ggplot2}</h1>
+<p>This short code walkthrough will get you started on recreating Spear’s cotton plot, as used in <a href="https://rss.org.uk/news-publication/news-publications/2021/general-news/cottonviz-data-visualisation-challenge-winners-ann/">the #CottonViz challenge</a>.</p>
+<p><a href="https://ggplot2.tidyverse.org/">The {ggplot2} package in R</a> is a good choice, since we can build up the chart in steps: first, we’ll build a basic line chart, remove unneeded elements, fix the axes and finally add the labels. It won’t look perfectly like Spear’s original, but we’ll get close.</p>
+<p>This isn’t a guide to learn {ggplot2}, so you may want to learn the basics first. Alternatively, <a href="https://www.rostrum.blog/2021/06/08/recreate-spear/">I wrote a blog post</a> about building Spear’s entire visualisation using base R.</p>
+</div>
+<div id="requirements" class="section level1">
+<h1>Requirements</h1>
+<p>First, some preparation. If you haven’t already, install the <a href="https://ggplot2.tidyverse.org/">{ggplot2}</a> package for plotting, <a href="https://tidyr.tidyverse.org/">{tidyr}</a> data reshaping and <a href="https://github.com/wch/extrafont">{extrafont}</a> for font handling.</p>
+<pre class="r"><code>install.packages(&quot;ggplot2&quot;, &quot;tidyr&quot;, &quot;extrafont&quot;)</code></pre>
+<p>You can download for free <a href="https://webonastick.com/fonts/routed-gothic/">the Routed Gothic font by Darren Embry</a>, which is a good approximation of the stencil lettering used by Spear. Installation will depend on your system, but in macOS you can simply drag the font files to the Font Book app. When you attach {extrafont} it’ll fetch automatically your installed fonts to use in R.</p>
+<pre class="r"><code>library(extrafont)</code></pre>
+<div id="registering-fonts-with-r" class="section level2">
+<h2>Registering fonts with R</h2>
+<p>The cotton dataset is quite small, so we can create the dataframe ourselves. It provides information on the supply of cotton in the USA in the 1940s.</p>
+<pre class="r"><code>cotton_raw &lt;- data.frame(
+  year           = 1942:1948,
+  us_consumption = c(11160, 9993,  9693,  9423,  10072, 9374,  7833),
+  exports        = c(1480,  1139,  2007,  3613,  3545,  1968,  4785),
+  stocks         = c(10657, 10744, 11164, 7326,  2530,  3080,  5283),
+  total_supply   = c(23297, 21876, 22864, 20362, 16147, 14422, 17901)
+)</code></pre>
+<p>It’s preferable to make the data ‘tidy’ so that there’s one row per year and consumption type, and one column for each variable. The {tidyr} package can help us pivot the data from ‘long’ format to this ‘wide’ format.</p>
+<pre class="r"><code>library(tidyr)
+
+cotton &lt;- cotton_raw %&gt;% 
+  pivot_longer(
+    c(us_consumption, exports, stocks), 
+    names_to = &quot;consumption_type&quot;, values_to = &quot;boles&quot;
+  )
+
+head(cotton, 4)  # preview first few rows</code></pre>
+<pre><code>## # A tibble: 4 × 4
+##    year total_supply consumption_type boles
+##   &lt;int&gt;        &lt;dbl&gt; &lt;chr&gt;            &lt;dbl&gt;
+## 1  1942        23297 us_consumption   11160
+## 2  1942        23297 exports           1480
+## 3  1942        23297 stocks           10657
+## 4  1943        21876 us_consumption    9993</code></pre>
+</div>
+</div>
+<div id="step-1-line-chart" class="section level1">
+<h1>Step 1: line chart</h1>
+<p>Now we can create a basic line chart of the data with <code>geom_line()</code> and set with <code>scale_linetype_manual()</code> a unique dashed line per group. Further arguments set the title and the typeface to be used throughout the plot, while a small tweak to <code>theme()</code> adjusts the title’s position.</p>
+<pre class="r"><code>library(ggplot2)
+
+p1 &lt;- ggplot() +
+  geom_line(
+    data = cotton,
+    aes(x = year, y = boles / 1000, linetype = consumption_type),
+    linewidth = 1.5
+  ) +
+  scale_linetype_manual(values = c(&quot;longdash&quot;, &quot;dashed&quot;, &quot;solid&quot;)) +
+  labs(title = &quot;Millions of Boles&quot;) +
+  theme(
+    plot.title = element_text(hjust = -0.05),
+    text = element_text(family = &quot;Routed Gothic&quot;)
+  )
+
+p1</code></pre>
+<p><img src="/post/2023-05-07-spear-ggplot2_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+</div>
+<div id="step-2-remove-features" class="section level1">
+<h1>Step 2: remove features</h1>
+<p>Let’s clear away the unneeded features: the background panel, the axes titles and the legend. You can empty these with <code>element_blank()</code> in the <code>theme()</code> function.</p>
+<pre class="r"><code>p2 &lt;- p1 + 
+  theme(
+    panel.background = element_blank(),
+    axis.title = element_blank(),
+    legend.position = &quot;none&quot;
+  )
+
+p2</code></pre>
+<p><img src="/post/2023-05-07-spear-ggplot2_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+</div>
+<div id="step-3-correct-the-axes" class="section level1">
+<h1>Step 3: correct the axes</h1>
+<p>Now we can address the axes. Use the <code>scale_*_continuous()</code> functions to set the axes values, limits, origin and labels. With sec.axis you can create a secondary y-axis that mirrors the first, then remove the tick labels in the <code>theme()</code> function. You can also put a box around the chart area with the <code>panel.border</code> argument.</p>
+<pre class="r"><code>p3 &lt;- p2 +
+  scale_x_continuous(
+    breaks = seq(1942, 1948, 1),
+    labels = c(&quot;1942&quot;, paste0(&quot;&#39;&quot;, 43:48)),
+    expand = c(0, 0)
+  ) +
+  scale_y_continuous(
+    breaks = seq(0, 12, 2),
+    limits = c(0, 12),
+    expand = c(0, 0),
+    sec.axis = dup_axis()
+  ) +
+  theme(
+    axis.ticks = element_line(linewidth = c(0, rep(0.5, 5), 0)),
+    axis.ticks.length = unit(-0.5, &quot;lines&quot;),
+    axis.text.y.right = element_blank(),
+    panel.border = element_rect(fill = NA, linewidth = 1)
+  )
+
+p3</code></pre>
+<p><img src="/post/2023-05-07-spear-ggplot2_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+</div>
+<div id="step-4-labels" class="section level1">
+<h1>Step 4: labels</h1>
+<p>The only missing features are the labels and arrows, which can be added with the <code>annotate()</code> and <code>geom_segment()</code>, respectively. A bit of trial-and-error will help you find the correct coordinates to place these elements.</p>
+<pre class="r"><code>p4 &lt;- p3 +
+  annotate(
+    geom = &quot;text&quot;,
+    x = c(1946.1, 1945.9, 1943.75),
+    y = c(10.8, 7.1, 3.2),
+    label = c(&quot;U. S. Consumption&quot;, &quot;Carry – over\nStocks&quot;, &quot;Exports&quot;),
+    family = &quot;Routed Gothic&quot;
+  ) +
+  geom_segment(
+    aes(
+      x = c(1945.2, 1945.3, 1944.2),
+      y = c(10.5, 7.4, 3.1),
+      xend = c(1945, 1945.1, 1944.4), 
+      yend = c(9.7, 7.1, 2.8)
+    ),
+    arrow = arrow(
+      length = unit(2, &quot;mm&quot;),
+      type = &quot;closed&quot;
+    )
+  )
+
+p4</code></pre>
+<p><img src="/post/2023-05-07-spear-ggplot2_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+</div>
+<div id="next-steps" class="section level1">
+<h1>Next steps</h1>
+<p>Finally we’ve got a lineplot that looks pretty close to Spear’s visualisation. What subtle differences do you notice, though? Try to find ways to improve them.</p>
+<p>Next, try to recreate the stacked-barchart from Spear’s original and then arrange the plots with a main title and surrounding text labels. <a href="https://coolbutuseless.github.io/package/ggpattern/index.html">The {ggpattern} package</a> may help you recreate the hatchlines on the bars and <a href="https://patchwork.data-imaginist.com/">{patchwork}</a> could help with the arrangement of the plot and text elements.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
+##  os       macOS Big Sur/Monterey 10.16
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_US.UTF-8
+##  ctype    en_US.UTF-8
+##  tz       Europe/London
+##  date     2023-05-09
+##  pandoc   2.19.2 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date (UTC) lib source
+##  blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.6.1   2023-03-23 [1] CRAN (R 4.2.0)
+##  colorspace    2.0-3   2022-02-21 [1] CRAN (R 4.2.0)
+##  digest        0.6.31  2022-12-11 [1] CRAN (R 4.2.0)
+##  dplyr         1.1.0   2023-01-29 [1] CRAN (R 4.2.0)
+##  evaluate      0.20    2023-01-17 [1] CRAN (R 4.2.0)
+##  fansi         1.0.4   2023-01-22 [1] CRAN (R 4.2.0)
+##  farver        2.1.1   2022-07-06 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  generics      0.1.3   2022-07-05 [1] CRAN (R 4.2.0)
+##  ggplot2     * 3.4.1   2023-02-10 [1] CRAN (R 4.2.0)
+##  glue          1.6.2   2022-02-24 [1] CRAN (R 4.2.0)
+##  gtable        0.3.1   2022-09-01 [1] CRAN (R 4.2.0)
+##  highr         0.10    2022-12-22 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.4   2022-12-06 [1] CRAN (R 4.2.0)
+##  knitr         1.42    2023-01-25 [1] CRAN (R 4.2.0)
+##  labeling      0.4.2   2020-10-20 [1] CRAN (R 4.2.0)
+##  lifecycle     1.0.3   2022-10-07 [1] CRAN (R 4.2.0)
+##  magrittr      2.0.3   2022-03-30 [1] CRAN (R 4.2.0)
+##  munsell       0.5.0   2018-06-12 [1] CRAN (R 4.2.0)
+##  pillar        1.9.0   2023-03-22 [1] CRAN (R 4.2.0)
+##  pkgconfig     2.0.3   2019-09-22 [1] CRAN (R 4.2.0)
+##  purrr         1.0.1   2023-01-10 [1] CRAN (R 4.2.0)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+##  rlang         1.1.1   2023-04-28 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.14    2022-08-22 [1] CRAN (R 4.2.0)
+##  sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+##  scales        1.2.1   2022-08-20 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+##  tibble        3.2.1   2023-03-20 [1] CRAN (R 4.2.0)
+##  tidyr       * 1.3.0   2023-01-24 [1] CRAN (R 4.2.0)
+##  tidyselect    1.2.0   2022-10-10 [1] CRAN (R 4.2.0)
+##  utf8          1.2.3   2023-01-31 [1] CRAN (R 4.2.0)
+##  vctrs         0.6.2   2023-04-19 [1] CRAN (R 4.2.0)
+##  withr         2.5.0   2022-03-03 [1] CRAN (R 4.2.0)
+##  xfun          0.37    2023-01-31 [1] CRAN (R 4.2.0)
+##  yaml          2.3.7   2023-01-23 [1] CRAN (R 4.2.0)
+## 
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>
