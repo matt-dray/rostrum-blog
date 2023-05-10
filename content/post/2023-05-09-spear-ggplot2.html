@@ -15,15 +15,24 @@ tags:
 
 
 
+<div class="figure">
+<img src="/post/2023-05-09-spear-ggplot2_files/corporate.png" alt="The Office meme that says 'corporate needs you to find the difference between these two pictures. A crudely copy-pasted image of an original data visualisation by Mary Eleanor Spear is on the left and a recreation of it is on the right. They look pretty similar." width="100%"/>
+<p class="caption">
+They’re the same picture.
+</p>
+</div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p>I won a data viz recreation competition a couple of years ago. I wrote it in base R and then wrote a {ggplot2} how-to that I don’t think was ever published in ‘Significance’ magazine. It’s been a while; I figured I’d publish it myself.</p>
+<p>Two years ago I won <a href="https://rss.org.uk/news-publication/news-publications/2021/general-news/cottonviz-data-visualisation-challenge-winners-ann/">a data-viz recreation competition run by the Royal Statistical Society</a> (RSS) using base R’s plotting. I wrote a short {ggplot2} how-to for RSS’s ‘Significance’ magazine that was never published<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>, so here it is now.</p>
 </div>
-<div id="recreate-spears-cotton-visualisation-with-ggplot2" class="section level1">
-<h1>Recreate Spear’s cotton visualisation with {ggplot2}</h1>
-<p>This short code walkthrough will get you started on recreating Spear’s cotton plot, as used in <a href="https://rss.org.uk/news-publication/news-publications/2021/general-news/cottonviz-data-visualisation-challenge-winners-ann/">the #CottonViz challenge</a>.</p>
+<div id="recreate" class="section level1">
+<h1>Recreate</h1>
+<p>This short code walkthrough will get you started on recreating Mary Eleanor Spear’s cotton plot (1952), as used in <a href="https://rss.org.uk/news-publication/news-publications/2021/general-news/cottonviz-data-visualisation-challenge-winners-ann/">the Royal Statistical Society’s #CottonViz challenge</a>. We’ll concentrate on the line chart for now.</p>
+<div class="figure">
+<p><img src="/post/2023-05-09-spear-ggplot2_files/spear.jpg" alt="Mary Eleanor Spear's original plot of cotton supplies in 1940s USA. On the left is a line plot showing that carry-over stocks fell from 1942 to 1948, while consumption dropped slightly and exports rose slightly. A bar plot to the right shows the same data as a stacked bar chart. There are titles and captions around the plots." width="100%"/></p>
+</div>
 <p><a href="https://ggplot2.tidyverse.org/">The {ggplot2} package in R</a> is a good choice, since we can build up the chart in steps: first, we’ll build a basic line chart, remove unneeded elements, fix the axes and finally add the labels. It won’t look perfectly like Spear’s original, but we’ll get close.</p>
-<p>This isn’t a guide to learn {ggplot2}, so you may want to learn the basics first. Alternatively, <a href="https://www.rostrum.blog/2021/06/08/recreate-spear/">I wrote a blog post</a> about building Spear’s entire visualisation using base R.</p>
+<p>This isn’t a guide to learn {ggplot2}, so you may want to <a href="https://r4ds.had.co.nz/data-visualisation.html">learn the basics first</a>. Alternatively, <a href="https://www.rostrum.blog/2021/06/08/recreate-spear/">I wrote a blog post</a> about building Spear’s entire visualisation using base R only.</p>
 </div>
 <div id="requirements" class="section level1">
 <h1>Requirements</h1>
@@ -41,7 +50,7 @@ tags:
   stocks         = c(10657, 10744, 11164, 7326,  2530,  3080,  5283),
   total_supply   = c(23297, 21876, 22864, 20362, 16147, 14422, 17901)
 )</code></pre>
-<p>It’s preferable to make the data ‘tidy’ so that there’s one row per year and consumption type, and one column for each variable. The {tidyr} package can help us pivot the data from ‘long’ format to this ‘wide’ format.</p>
+<p>It’s preferable to make the data ‘tidy’ so that there’s one row per year and consumption type, and one column for each variable. The {tidyr} package can help us pivot the data to ‘long’ format from this ‘wide’ format.</p>
 <pre class="r"><code>library(tidyr)
 
 cotton &lt;- cotton_raw %&gt;% 
@@ -60,8 +69,10 @@ head(cotton, 4)  # preview first few rows</code></pre>
 ## 4  1943        21876 us_consumption    9993</code></pre>
 </div>
 </div>
-<div id="step-1-line-chart" class="section level1">
-<h1>Step 1: line chart</h1>
+<div id="how-to" class="section level1">
+<h1>How-to</h1>
+<div id="step-1-line-chart" class="section level2">
+<h2>Step 1: line chart</h2>
 <p>Now we can create a basic line chart of the data with <code>geom_line()</code> and set with <code>scale_linetype_manual()</code> a unique dashed line per group. Further arguments set the title and the typeface to be used throughout the plot, while a small tweak to <code>theme()</code> adjusts the title’s position.</p>
 <pre class="r"><code>library(ggplot2)
 
@@ -79,10 +90,10 @@ p1 &lt;- ggplot() +
   )
 
 p1</code></pre>
-<p><img src="/post/2023-05-07-spear-ggplot2_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p><img src="/post/2023-05-09-spear-ggplot2_files/figure-html/unnamed-chunk-5-1.png" width="480" /></p>
 </div>
-<div id="step-2-remove-features" class="section level1">
-<h1>Step 2: remove features</h1>
+<div id="step-2-remove-features" class="section level2">
+<h2>Step 2: remove features</h2>
 <p>Let’s clear away the unneeded features: the background panel, the axes titles and the legend. You can empty these with <code>element_blank()</code> in the <code>theme()</code> function.</p>
 <pre class="r"><code>p2 &lt;- p1 + 
   theme(
@@ -92,11 +103,11 @@ p1</code></pre>
   )
 
 p2</code></pre>
-<p><img src="/post/2023-05-07-spear-ggplot2_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p><img src="/post/2023-05-09-spear-ggplot2_files/figure-html/unnamed-chunk-6-1.png" width="480" /></p>
 </div>
-<div id="step-3-correct-the-axes" class="section level1">
-<h1>Step 3: correct the axes</h1>
-<p>Now we can address the axes. Use the <code>scale_*_continuous()</code> functions to set the axes values, limits, origin and labels. With sec.axis you can create a secondary y-axis that mirrors the first, then remove the tick labels in the <code>theme()</code> function. You can also put a box around the chart area with the <code>panel.border</code> argument.</p>
+<div id="step-3-correct-the-axes" class="section level2">
+<h2>Step 3: correct the axes</h2>
+<p>Now we can address the axes. Use the <code>scale_*_continuous()</code> functions to set the axes values, limits, origin and labels. With <code>sec.axis</code> you can create a secondary y-axis that mirrors the first, then remove the tick labels in the <code>theme()</code> function. You can also put a box around the chart area with the <code>panel.border</code> argument.</p>
 <pre class="r"><code>p3 &lt;- p2 +
   scale_x_continuous(
     breaks = seq(1942, 1948, 1),
@@ -117,10 +128,10 @@ p2</code></pre>
   )
 
 p3</code></pre>
-<p><img src="/post/2023-05-07-spear-ggplot2_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p><img src="/post/2023-05-09-spear-ggplot2_files/figure-html/unnamed-chunk-7-1.png" width="480" /></p>
 </div>
-<div id="step-4-labels" class="section level1">
-<h1>Step 4: labels</h1>
+<div id="step-4-labels" class="section level2">
+<h2>Step 4: labels</h2>
 <p>The only missing features are the labels and arrows, which can be added with the <code>annotate()</code> and <code>geom_segment()</code>, respectively. A bit of trial-and-error will help you find the correct coordinates to place these elements.</p>
 <pre class="r"><code>p4 &lt;- p3 +
   annotate(
@@ -144,12 +155,21 @@ p3</code></pre>
   )
 
 p4</code></pre>
-<p><img src="/post/2023-05-07-spear-ggplot2_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p><img src="/post/2023-05-09-spear-ggplot2_files/figure-html/unnamed-chunk-8-1.png" width="480" /></p>
+</div>
 </div>
 <div id="next-steps" class="section level1">
 <h1>Next steps</h1>
 <p>Finally we’ve got a lineplot that looks pretty close to Spear’s visualisation. What subtle differences do you notice, though? Try to find ways to improve them.</p>
 <p>Next, try to recreate the stacked-barchart from Spear’s original and then arrange the plots with a main title and surrounding text labels. <a href="https://coolbutuseless.github.io/package/ggpattern/index.html">The {ggpattern} package</a> may help you recreate the hatchlines on the bars and <a href="https://patchwork.data-imaginist.com/">{patchwork}</a> could help with the arrangement of the plot and text elements.</p>
+</div>
+<div id="full-base-r-alternative" class="section level1">
+<h1>Full base R alternative</h1>
+<p>For the original challenge I used only base R’s plotting system rather than {ggplot2}. This is what my submitted image looked like:</p>
+<div class="figure">
+<p><img src="/post/2023-05-09-spear-ggplot2_files/recreation.png" alt="The recreated plot in progress: the recreation is complete, with both the line and bar plots completed and the titles and captions added." width="100%"/></p>
+</div>
+<p>You can read more about it in <a href="https://www.rostrum.blog/2021/06/08/recreate-spear/">the accompanying blog post</a> and you can find <a href="https://github.com/matt-dray/viz-recreation/tree/main/2021-06-08_cottonviz_spear">the original code on GitHub</a>.</p>
 <hr />
 <details>
 <summary>
@@ -165,7 +185,7 @@ Session info
 ##  collate  en_US.UTF-8
 ##  ctype    en_US.UTF-8
 ##  tz       Europe/London
-##  date     2023-05-09
+##  date     2023-05-10
 ##  pandoc   2.19.2 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
@@ -217,4 +237,10 @@ Session info
 ## 
 ## ──────────────────────────────────────────────────────────────────────────────</code></pre>
 </details>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>At least I don’t think so. I can’t find it by searching on the website, anyway. Also, enough time has passed that certain bits of the original code have since been deprecated in {ggplot2}, lol.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
 </div>

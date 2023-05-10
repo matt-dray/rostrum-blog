@@ -13,17 +13,30 @@ tags:
   - recreation
 ---
 
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(fig.width=5, fig.height=5)
+```
+
+<div class="figure">
+<img src="/post/2023-05-09-spear-ggplot2_files/corporate.png" alt="The Office meme that says 'corporate needs you to find the difference between these two pictures. A crudely copy-pasted image of an original data visualisation by Mary Eleanor Spear is on the left and a recreation of it is on the right. They look pretty similar." width="100%"/>
+<p class="caption">They're the same picture.</p>
+</div>
+
 # tl;dr
 
-I won a data viz recreation competition a couple of years ago. I wrote it in base R and then wrote a {ggplot2} how-to that I don't think was ever published in 'Significance' magazine. It's been a while; I figured I'd publish it myself.
+Two years ago I won [a data-viz recreation competition run by the Royal Statistical Society](https://rss.org.uk/news-publication/news-publications/2021/general-news/cottonviz-data-visualisation-challenge-winners-ann/) (RSS) using base R's plotting. I wrote a short {ggplot2} how-to for RSS's 'Significance' magazine that was never published[^sig], so here it is now.
 
-# Recreate Spear’s cotton visualisation with {ggplot2}
+# Recreate
 
-This short code walkthrough will get you started on recreating Spear’s cotton plot, as used in [the #CottonViz challenge](https://rss.org.uk/news-publication/news-publications/2021/general-news/cottonviz-data-visualisation-challenge-winners-ann/).
+This short code walkthrough will get you started on recreating Mary Eleanor Spear’s cotton plot (1952), as used in [the Royal Statistical Society's #CottonViz challenge](https://rss.org.uk/news-publication/news-publications/2021/general-news/cottonviz-data-visualisation-challenge-winners-ann/). We'll concentrate on the line chart for now.
+
+<div class="figure">
+<img src="/post/2023-05-09-spear-ggplot2_files/spear.jpg" alt="Mary Eleanor Spear's original plot of cotton supplies in 1940s USA. On the left is a line plot showing that carry-over stocks fell from 1942 to 1948, while consumption dropped slightly and exports rose slightly. A bar plot to the right shows the same data as a stacked bar chart. There are titles and captions around the plots." width="100%"/>
+</div>
 
 [The {ggplot2} package in R](https://ggplot2.tidyverse.org/) is a good choice, since we can build up the chart in steps: first, we’ll build a basic line chart, remove unneeded elements, fix the axes and finally add the labels. It won’t look perfectly like Spear’s original, but we’ll get close.
 
-This isn’t a guide to learn {ggplot2}, so you may want to learn the basics first. Alternatively, [I wrote a blog post](https://www.rostrum.blog/2021/06/08/recreate-spear/) about building Spear’s entire visualisation using base R.
+This isn’t a guide to learn {ggplot2}, so you may want to [learn the basics first](https://r4ds.had.co.nz/data-visualisation.html). Alternatively, [I wrote a blog post](https://www.rostrum.blog/2021/06/08/recreate-spear/) about building Spear’s entire visualisation using base R only.
 
 # Requirements
 
@@ -53,7 +66,7 @@ cotton_raw <- data.frame(
 )
 ```
 
-It’s preferable to make the data ‘tidy’ so that there’s one row per year and consumption type, and one column for each variable. The {tidyr} package can help us pivot the data from ‘long’ format to this ‘wide’ format.
+It’s preferable to make the data ‘tidy’ so that there’s one row per year and consumption type, and one column for each variable. The {tidyr} package can help us pivot the data to ‘long’ format from this ‘wide’ format.
 
 ```{r}
 library(tidyr)
@@ -67,7 +80,9 @@ cotton <- cotton_raw %>%
 head(cotton, 4)  # preview first few rows
 ```
 
-# Step 1: line chart
+# How-to
+
+## Step 1: line chart
 
 Now we can create a basic line chart of the data with `geom_line()` and set with `scale_linetype_manual()` a unique dashed line per group. Further arguments set the title and the typeface to be used throughout the plot, while a small tweak to `theme()` adjusts the title’s position.
 
@@ -90,7 +105,7 @@ p1 <- ggplot() +
 p1
 ```
 
-# Step 2: remove features
+## Step 2: remove features
 
 Let’s clear away the unneeded features: the background panel, the axes titles and the legend. You can empty these with `element_blank()` in the `theme()` function.
 
@@ -105,9 +120,9 @@ p2 <- p1 +
 p2
 ```
 
-# Step 3: correct the axes
+## Step 3: correct the axes
 
-Now we can address the axes. Use the `scale_*_continuous()` functions to set the axes values, limits, origin and labels. With sec.axis you can create a secondary y-axis that mirrors the first, then remove the tick labels in the `theme()` function. You can also put a box around the chart area with the `panel.border` argument.
+Now we can address the axes. Use the `scale_*_continuous()` functions to set the axes values, limits, origin and labels. With `sec.axis` you can create a secondary y-axis that mirrors the first, then remove the tick labels in the `theme()` function. You can also put a box around the chart area with the `panel.border` argument.
 
 ```{r}
 p3 <- p2 +
@@ -132,7 +147,7 @@ p3 <- p2 +
 p3
 ```
 
-# Step 4: labels
+## Step 4: labels
 
 The only missing features are the labels and arrows, which can be added with the `annotate()` and `geom_segment()`, respectively. A bit of trial-and-error will help you find the correct coordinates to place these elements.
 
@@ -167,9 +182,21 @@ Finally we’ve got a lineplot that looks pretty close to Spear’s visualisatio
 
 Next, try to recreate the stacked-barchart from Spear’s original and then arrange the plots with a main title and surrounding text labels. [The {ggpattern} package](https://coolbutuseless.github.io/package/ggpattern/index.html) may help you recreate the hatchlines on the bars and [{patchwork}](https://patchwork.data-imaginist.com/) could help with the arrangement of the plot and text elements.
 
+# Full base R alternative
+
+For the original challenge I used only base R's plotting system rather than {ggplot2}. This is what my submitted image looked like:
+
+<div class="figure">
+<img src="/post/2023-05-09-spear-ggplot2_files/recreation.png" alt="The recreated plot in progress: the recreation is complete, with both the line and bar plots completed and the titles and captions added." width="100%"/>
+</div>
+
+You can read more about it in [the accompanying blog post](https://www.rostrum.blog/2021/06/08/recreate-spear/) and you can find [the original code on GitHub](https://github.com/matt-dray/viz-recreation/tree/main/2021-06-08_cottonviz_spear).
+
 ---
 <details><summary>Session info</summary>
 ```{r eval=TRUE, sessioninfo, echo=FALSE}
 sessioninfo::session_info()
 ```
 </details>
+
+[^sig]: At least I don't think so. I can't find it by searching on the website, anyway. Also, enough time has passed that certain bits of the original code have since been deprecated in {ggplot2}, lol.
