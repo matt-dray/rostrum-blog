@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 7 day(s) ago: [Recreating a dataviz
+🆕 The latest post was published 8 day(s) ago: [Recreating a dataviz
 with {ggplot2}](https://www.rostrum.blog/2023/05/10/spear-ggplot2/).
 
 📈 This 2D plot shows posts over time:
@@ -196,4 +196,4 @@ with {ggplot2}](https://www.rostrum.blog/2023/05/10/spear-ggplot2/).
 
 ------------------------------------------------------------------------
 
-*Updated on 2023-05-17 at 02:39.*
+*Updated on 2023-05-18 at 02:39.*
