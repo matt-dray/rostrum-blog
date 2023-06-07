@@ -81,7 +81,7 @@ str(doc_tidy)</code></pre>
 <p>I’ve made two functions using base R:</p>
 <ol style="list-style-type: decimal">
 <li><code>rectangularise_tables()</code> (note the plural) takes the dataframe provided by <code>docx_summary()</code> and outputs a list of dataframes, one per table in the original Word file</li>
-<li><code>rectangularise_table()</code> (not pluralised), which runs inside <code>rectangularise_tables()</code> to reformat the tidy representation of a single Word table into an R dataframe</li>
+<li><code>.rectangularise_table()</code> (not pluralised and starts with a dot for disambiguation), which runs inside <code>rectangularise_tables()</code> to reformat the tidy representation of a single Word table into an R dataframe</li>
 </ol>
 <p>You’ll need to copy both of these into your session and run them. For convenience, <a href="https://gist.github.com/matt-dray/d4837f106bcee80ea39235b6465a7cac">I’ve added them to a GitHub gist</a>. I’ve added commentary so you can see what’s happening in each bit.</p>
 <p>First, <code>rectangularise_tables()</code>:</p>
@@ -129,7 +129,7 @@ str(doc_tidy)</code></pre>
     docx_summary_table &lt;- 
       docx_summary_tables[docx_summary_tables[[&quot;doc_index&quot;]] == doc_index, ]
     
-    extracted_table &lt;- rectangularise_table(docx_summary_table, assume_headers)
+    extracted_table &lt;- .rectangularise_table(docx_summary_table, assume_headers)
     
     list_element_name &lt;- paste0(&quot;doc_index_&quot;, doc_index)
     tables_out[[list_element_name]] &lt;- extracted_table
@@ -145,7 +145,7 @@ str(doc_tidy)</code></pre>
   
 }</code></pre>
 <p>You’ll have seen <code>rectangularise_table()</code> in the <code>for</code> loop inside <code>rectangularise_tables()</code>. Here’s what’s it’s doing:</p>
-<pre class="r"><code>rectangularise_table &lt;- function(
+<pre class="r"><code>.rectangularise_table &lt;- function(
     table_cells,  # docx_summary output filtered for &#39;table cells&#39; only
     assume_headers = TRUE  # assume headers in first row?
 ) {

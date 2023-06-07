@@ -89,7 +89,7 @@ Now to extract the table elements and 're-rectangularise' back into a dataframe.
 I've made two functions using base R:
 
 1. `rectangularise_tables()` (note the plural) takes the dataframe provided by `docx_summary()` and outputs a list of dataframes, one per table in the original Word file
-1. `rectangularise_table()` (not pluralised), which runs inside `rectangularise_tables()` to reformat the tidy representation of a single Word table into an R dataframe
+1. `.rectangularise_table()` (not pluralised and starts with a dot for disambiguation), which runs inside `rectangularise_tables()` to reformat the tidy representation of a single Word table into an R dataframe
 
 You'll need to copy both of these into your session and run them. For convenience, [I've added them to a GitHub gist](https://gist.github.com/matt-dray/d4837f106bcee80ea39235b6465a7cac). I've added commentary so you can see what's happening in each bit.
 
@@ -140,7 +140,7 @@ rectangularise_tables <- function(
     docx_summary_table <- 
       docx_summary_tables[docx_summary_tables[["doc_index"]] == doc_index, ]
     
-    extracted_table <- rectangularise_table(docx_summary_table, assume_headers)
+    extracted_table <- .rectangularise_table(docx_summary_table, assume_headers)
     
     list_element_name <- paste0("doc_index_", doc_index)
     tables_out[[list_element_name]] <- extracted_table
@@ -160,7 +160,7 @@ rectangularise_tables <- function(
 You'll have seen `rectangularise_table()` in the `for` loop inside `rectangularise_tables()`. Here's what's it's doing:
 
 ```{r}
-rectangularise_table <- function(
+.rectangularise_table <- function(
     table_cells,  # docx_summary output filtered for 'table cells' only
     assume_headers = TRUE  # assume headers in first row?
 ) {
