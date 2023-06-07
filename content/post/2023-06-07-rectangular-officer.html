@@ -1,0 +1,278 @@
+---
+title: "Rectangularise Word tables extracted by {officer}"
+author: Matt Dray
+date: '2023-06-07'
+slug: rectangular-officer
+categories:
+  - code
+  - tutorial
+tags:
+  - officer
+  - r
+---
+
+
+
+<div class="figure">
+<p><img src="/post/2023-06-07-rectangular-officer_files/owl.png" alt="The 'draw the rest of the owl' meme. The title is 'how to draw an owl' but it's been scribble dout and replaced with comic sans text that says 'How to extract an R data.frame from a Word table'. There are two steps: 'draw some circles' and then 'draw the rest of the owl'. The text for these has been replaced with Comic Sans that reads 'let officer do all the hard work' and then 'overengineer an unecessary new function.'" width="100%"/></p>
+</div>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p><a href="https://davidgohel.github.io/officer/">{officer} is an R package</a> that lets you extract elements of a Word document, including tables, into a tidy dataframe. I’ve written a function to ‘re-rectangularise’ an extracted Word table into an R dataframe.</p>
+</div>
+<div id="whats-the-officer-problem" class="section level1">
+<h1>What’s the officer, problem?</h1>
+<p>Someone on Slack asked about some difficulty with scraping a table from a Word document. We’ve all been there.</p>
+<p>My mind immediately went to <a href="https://davidgohel.github.io/officer/">{officer} by David Gohel</a>, which is part of <a href="https://ardata-fr.github.io/officeverse/">the ‘officeverse’</a> for reading, creating and manipulating common Microsoft documents<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> with R.</p>
+<p>In particular, the function <code>docx_summary()</code> extracts all the elements of a Word doc into a tidy dataframe. Each row of that dataframe is a heading, or a paragraph, or the contents of a table cell<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>.</p>
+<p>This means tables are ‘unstacked’, with a row per ‘cell’ of the original Word table. How could you convert these Word tables into dataframes for further use in R? There’s <a href="https://ardata-fr.github.io/officeverse/extract-content.html#word-tables">an suggestion in the docs</a>, but I <a href="https://knowyourmeme.com/memes/how-to-draw-an-owl">drew the rest of the heckin’ owl</a> by creating a slightly overengineered function to do it.</p>
+</div>
+<div id="allo-allo" class="section level1">
+<h1>’Allo ’allo</h1>
+<p>First, you can download the {officer} package from CRAN:</p>
+<pre class="r"><code>install.packages(&quot;officer&quot;) # if not yet installed
+library(officer)</code></pre>
+<p>Let’s create a Word document to test with and save it to a temporary location:</p>
+<pre class="r"><code># Create a test docx file
+doc_test &lt;- read_docx() |&gt;
+  body_add_par(&quot;This is a test&quot;, style = &quot;heading 1&quot;) |&gt;
+  body_add_par(&quot;Below is a table.&quot;, style = &quot;Normal&quot;) |&gt;
+  body_add_table(mtcars[1:3, 1:5]) |&gt; 
+  body_add_par(&quot;Below is another table&quot;, style = &quot;Normal&quot;) |&gt;
+  body_add_table(airquality[1:3, 1:5])
+
+# Save docx to temp location
+temp_docx &lt;- tempfile(fileext = &quot;.docx&quot;)
+print(doc_test, target = temp_docx)</code></pre>
+<p>The package has a nice system of pipeable functions for building up document. This code created a file with a heading, followed by two tables that each have a line of text above them.</p>
+<p>We can read the document with <code>read_docx()</code> and extract the contents into a tidy dataframe:</p>
+<pre class="r"><code># Read the file from temp path
+doc_path &lt;- list.files(tempdir(), pattern = &quot;.docx$&quot;, full.names = TRUE)
+doc_in &lt;- read_docx(doc_path)
+
+# Get the content of the document as a dataframe
+doc_tidy &lt;- docx_summary(doc_in)
+str(doc_tidy)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    43 obs. of  11 variables:
+##  $ doc_index   : int  1 2 3 3 3 3 3 3 3 3 ...
+##  $ content_type: chr  &quot;paragraph&quot; &quot;paragraph&quot; &quot;table cell&quot; &quot;table cell&quot; ...
+##  $ style_name  : chr  &quot;heading 1&quot; &quot;Normal&quot; NA NA ...
+##  $ text        : chr  &quot;This is a test&quot; &quot;Below is a table.&quot; &quot;mpg&quot; &quot;21.0&quot; ...
+##  $ level       : num  NA NA NA NA NA NA NA NA NA NA ...
+##  $ num_id      : int  NA NA NA NA NA NA NA NA NA NA ...
+##  $ row_id      : int  NA NA 1 2 3 4 1 2 3 4 ...
+##  $ is_header   : logi  NA NA TRUE FALSE FALSE FALSE ...
+##  $ cell_id     : num  NA NA 1 1 1 1 2 2 2 2 ...
+##  $ col_span    : num  NA NA 1 1 1 1 1 1 1 1 ...
+##  $ row_span    : int  NA NA 1 1 1 1 1 1 1 1 ...</code></pre>
+<p>The <code>doc_in</code> object has ‘rdocx’ class that carries the extracted elements and associated style information. Running <code>docx_summary()</code> converts this to the single tidy dataframe that we’re after.</p>
+<p>You can see we have information here about the content of our doc. For purposes of this post, we care about:</p>
+<ul>
+<li><code>text</code>, which is the actual written content</li>
+<li><code>content_type</code>, which can tell us if we’re looking at table cells</li>
+<li><code>doc_index</code>, which assigns an ID value so document elements stay together (e.g. cells of a table will all carry the same <code>doc_index</code>)</li>
+<li><code>cell_id</code> and <code>row_id</code>, which tell us the x and y cell locations in tables</li>
+<li><code>is_header</code>, which can tell us if the row contains a table header.</li>
+</ul>
+<p>Now to extract the table elements and ‘re-rectangularise’ back into a dataframe.</p>
+</div>
+<div id="cop-a-load-of-this" class="section level1">
+<h1>Cop a load of this</h1>
+<p>I’ve made two functions using base R:</p>
+<ol style="list-style-type: decimal">
+<li><code>rectangularise_tables()</code> (note the plural) takes the dataframe provided by <code>docx_summary()</code> and outputs a list of dataframes, one per table in the original Word file</li>
+<li><code>rectangularise_table()</code> (not pluralised), which runs inside <code>rectangularise_tables()</code> to reformat the tidy representation of a single Word table into an R dataframe</li>
+</ol>
+<p>You’ll need to copy both of these into your session and run them. For convenience, <a href="https://gist.github.com/matt-dray/d4837f106bcee80ea39235b6465a7cac">I’ve added them to a GitHub gist</a>. I’ve added commentary so you can see what’s happening in each bit.</p>
+<p>First, <code>rectangularise_tables()</code>:</p>
+<pre class="r"><code>rectangularise_tables &lt;- function(
+    docx_summary,  # output dataframe from docx_summary
+    assume_headers = TRUE,  # assume headers in first row?
+    type_convert = TRUE  # try to coerce columns to most likely data type?
+) {
+  
+  # Check inputs
+  
+  is_data.frame &lt;- inherits(docx_summary, &quot;data.frame&quot;)
+  
+  docx_summary_names &lt;- c(
+    &quot;doc_index&quot;, &quot;content_type&quot;, &quot;style_name&quot;, &quot;text&quot;, &quot;level&quot;, &quot;num_id&quot;, 
+    &quot;row_id&quot;, &quot;is_header&quot;, &quot;cell_id&quot;, &quot;col_span&quot;, &quot;row_span&quot;
+  )  # column names we can expect in the output from docx_summary
+  
+  is_docx_summary &lt;- all(names(docx_summary) %in% docx_summary_names)
+  
+  if (!is_data.frame | !is_docx_summary) {
+    stop(
+      paste(
+        &quot;Argument &#39;docx_summary&#39; must be a data.frame created with&quot;,
+        &quot;&#39;officer::docx_summary&#39;.&quot;
+      ),
+      call. = FALSE
+    )
+  }
+  
+  # Get only the rows that relate to Word tables
+  docx_summary_tables &lt;- 
+    docx_summary[docx_summary[[&quot;content_type&quot;]] %in% &quot;table cell&quot;, ]
+  
+  # Get the ID value for each Word table
+  doc_indices &lt;- unique(docx_summary_tables[[&quot;doc_index&quot;]])
+  
+  # Initiate an empty list to hold dataframe representations of the Word tables
+  tables_out &lt;- vector(mode = &quot;list&quot;, length = length(doc_indices))
+  names(tables_out) &lt;- paste0(&quot;doc_index_&quot;, doc_indices)
+  
+  # For each Word table, &#39;rectangularise&#39; into a dataframe and add to the list
+  for (doc_index in doc_indices) {
+    
+    docx_summary_table &lt;- 
+      docx_summary_tables[docx_summary_tables[[&quot;doc_index&quot;]] == doc_index, ]
+    
+    extracted_table &lt;- rectangularise_table(docx_summary_table, assume_headers)
+    
+    list_element_name &lt;- paste0(&quot;doc_index_&quot;, doc_index)
+    tables_out[[list_element_name]] &lt;- extracted_table
+    
+  }
+  
+  # Optionally convert columns to appropriate type (integer, etc)
+  if (type_convert) {
+    tables_out &lt;- lapply(tables_out, type.convert, as.is = TRUE)
+  }
+  
+  return(tables_out)
+  
+}</code></pre>
+<p>You’ll have seen <code>rectangularise_table()</code> in the <code>for</code> loop inside <code>rectangularise_tables()</code>. Here’s what’s it’s doing:</p>
+<pre class="r"><code>rectangularise_table &lt;- function(
+    table_cells,  # docx_summary output filtered for &#39;table cells&#39; only
+    assume_headers = TRUE  # assume headers in first row?
+) {
+  
+  # Check inputs
+  
+  is_table_cells &lt;- all(table_cells[[&quot;content_type&quot;]] == &quot;table cell&quot;)
+  is_one_table &lt;- length(unique(table_cells[[&quot;doc_index&quot;]])) == 1
+  
+  if (!is_table_cells | !is_one_table) {
+    stop(
+      paste(
+        &quot;Argument &#39;table_cells&#39; must be a dataframe created with&quot;,
+        &quot;&#39;officer::docx_summary&#39; where &#39;content_type&#39; is filtered for&quot;,
+        &quot;&#39;table cell&#39; only.&quot;
+      ),
+      call. = FALSE
+    )
+  }
+  
+  # Split each Word table into a list element, isolate headers and cell contents
+  cell_id_split &lt;- split(table_cells, table_cells[[&quot;cell_id&quot;]])
+  headers &lt;- lapply(cell_id_split, function(x) x[x[[&quot;is_header&quot;]], &quot;text&quot;])
+  content &lt;- lapply(cell_id_split, function(x) x[!x[[&quot;is_header&quot;]], &quot;text&quot;])
+  table_out &lt;- as.data.frame(content)
+  
+  # Column headers are identified by TRUE in the is_header column, but may not
+  # be marked up as such. Use them as dataframe headers if they exist.
+  has_headers &lt;- length(unlist(headers)) &gt; 0
+  if (has_headers) {
+    names(table_out) &lt;- headers
+  }
+  
+  # If headers are not identified by is_header, assume that the first row of the
+  # Word table contains the headers. The user can control this behaviour with
+  # the argument assume_headers.
+  if (!has_headers &amp; assume_headers) {
+    headers &lt;- table_out[1, ]  # assume first row is headers
+    table_out &lt;- table_out[2:nrow(table_out), ]  # rest of table is content
+    names(table_out) &lt;- headers
+  }
+  
+  return(table_out)
+  
+}</code></pre>
+<p>You’ll notice the <code>assume_headers</code> argument. The headers for a Word table are marked by <code>TRUE</code> in the <code>is_header</code> column of the output from <code>docx_summary()</code>. Except when they aren’t. It’s possible that you’ll read a Word doc where the table headers aren’t identified. Set <code>assume_headers</code> to <code>TRUE</code> (the default) to allow <code>rectangularise_table()</code> to instead use the first row of the table as headers. The setting will apply to all tables; I reckon that it’s all or nothing whether table headers will be marked up in a given Word document.</p>
+<p>You may also have seen the <code>type_convert</code> argument. By default, the <code>text</code> column in the output from <code>docx_summary()</code> will be character class, but the actual data might be integers, for example. <a href="https://www.rostrum.blog/2023/04/23/type-convert/">As explained in a recent blog post</a>, the <code>type.convert()</code> function attempts to coerce a column to the appropriate data type if possible.</p>
+<p>And now we can see that the dataset works using our test document:</p>
+<pre class="r"><code>df_list &lt;- rectangularise_tables(doc_tidy)
+str(df_list)</code></pre>
+<pre><code>## List of 2
+##  $ doc_index_3:&#39;data.frame&#39;: 3 obs. of  5 variables:
+##   ..$ mpg : num [1:3] 21 21 22.8
+##   ..$ cyl : int [1:3] 6 6 4
+##   ..$ disp: int [1:3] 160 160 108
+##   ..$ hp  : int [1:3] 110 110 93
+##   ..$ drat: num [1:3] 3.9 3.9 3.85
+##  $ doc_index_5:&#39;data.frame&#39;: 3 obs. of  5 variables:
+##   ..$ Ozone  : int [1:3] 41 36 12
+##   ..$ Solar.R: int [1:3] 190 118 149
+##   ..$ Wind   : num [1:3] 7.4 8 12.6
+##   ..$ Temp   : int [1:3] 67 72 74
+##   ..$ Month  : int [1:3] 5 5 5</code></pre>
+<p>Smashing. We have a list of two dataframes: one for each of the tables in the test document. I took the liberty of naming the list elements like <code>doc_index_*</code> so you can trace which <code>doc_index</code> they were in the original output from <code>docx_summary()</code>.</p>
+</div>
+<div id="prisonr" class="section level1">
+<h1>PrisonR</h1>
+<p>To summarise, this is absolutely not the worst code-related crime I’ve committed on this blog. Sorry guv! I’ll definitely be sentenced to the most severe punishment if caught and tried: several minutes of hard labour, or ‘refactoring’ as they call it on the inside.</p>
+<p>At worst I’ll build an Andy-Dufresne-style tunnel out of my prison cell and hide the entrance behind years of accumulated hex stickers.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
+##  os       macOS Big Sur/Monterey 10.16
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_US.UTF-8
+##  ctype    en_US.UTF-8
+##  tz       Europe/London
+##  date     2023-06-07
+##  pandoc   2.19.2 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date (UTC) lib source
+##  askpass       1.1     2019-01-13 [1] CRAN (R 4.2.0)
+##  blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.6.1   2023-03-23 [1] CRAN (R 4.2.0)
+##  digest        0.6.31  2022-12-11 [1] CRAN (R 4.2.0)
+##  evaluate      0.20    2023-01-17 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.4   2022-12-06 [1] CRAN (R 4.2.0)
+##  knitr         1.42    2023-01-25 [1] CRAN (R 4.2.0)
+##  officer     * 0.6.2   2023-03-28 [1] CRAN (R 4.2.0)
+##  openssl       2.0.5   2022-12-06 [1] CRAN (R 4.2.0)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+##  ragg          1.2.5   2023-01-12 [1] CRAN (R 4.2.0)
+##  rlang         1.1.1   2023-04-28 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.14    2022-08-22 [1] CRAN (R 4.2.0)
+##  sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+##  systemfonts   1.0.4   2022-02-11 [1] CRAN (R 4.2.0)
+##  textshaping   0.3.6   2021-10-13 [1] CRAN (R 4.2.0)
+##  uuid          1.1-0   2022-04-19 [1] CRAN (R 4.2.0)
+##  xfun          0.37    2023-01-31 [1] CRAN (R 4.2.0)
+##  xml2          1.3.3   2021-11-30 [1] CRAN (R 4.2.0)
+##  yaml          2.3.7   2023-01-23 [1] CRAN (R 4.2.0)
+##  zip           2.3.0   2023-04-17 [1] CRAN (R 4.2.0)
+## 
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>Related: I have some experience with R-to-Excel: <a href="https://co-analysis.github.io/a11ytables/">my {a11ytables} package</a> generates best-practice spreadsheets <a href="https://ycphs.github.io/openxlsx/">using {openxlsx}</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>Merged cells in the table end up being unmerged, with the upper- and left-most cells holding the content and the remianing cells being assigned <code>NA</code>.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
