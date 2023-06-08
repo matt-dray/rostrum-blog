@@ -21,17 +21,23 @@ library(officer)
 
 # tl;dr
 
-[{officer} is an R package](https://davidgohel.github.io/officer/) that lets you extract elements of a Word document, including tables, into a tidy dataframe. I've written a function to 're-rectangularise' an extracted Word table into an R dataframe.
+[{officer} is an R package](https://davidgohel.github.io/officer/) that lets you extract elements of a Word document, including tables, into a tidy dataframe. I've written a function to 're-rectangularise' extracted Word tables into a list of R dataframes.
+
+<div class="tip"> `r fontawesome::fa("exclamation-circle")` <b>Update</b>
+
+Turns out that [Eli Pousson](https://elipousson.github.io/) has written the [{officerExtras} package](https://elipousson.github.io/officerExtras) ([install it from GitHub](https://github.com/elipousson/officerExtras/)), which already contains this functionality in [the `officer_tables()` and `officer_table()` functions](https://elipousson.github.io/officerExtras/reference/officer_tables.html). At least this proves my idea wasn't too far-fetched!
+
+</div>
 
 # What's the officer, problem?
 
 Someone on Slack asked about some difficulty with scraping a table from a Word document. We've all been there.
 
-My mind immediately went to [{officer} by David Gohel](https://davidgohel.github.io/officer/), which is part of [the 'officeverse'](https://ardata-fr.github.io/officeverse/) for reading, creating and manipulating common Microsoft documents[^ms] with R.
+You could use [`docxtractr::docx_extract_all_tbls()` by Bob Rudis](https://github.com/hrbrmstr/docxtractr), but my mind immediately went to [{officer} by David Gohel](https://davidgohel.github.io/officer/), which is part of [the 'officeverse'](https://ardata-fr.github.io/officeverse/) for reading, creating and manipulating common Microsoft documents with R[^ms].
 
-In particular, the function `docx_summary()` extracts all the elements of a Word doc into a tidy dataframe. Each row of that dataframe is a heading, or a paragraph, or the contents of a table cell[^merge].
+In particular, the function `docx_summary()` extracts all the elements of a Word doc into a tidy dataframe[^tidyxl]. Each row of that dataframe is a heading, or a paragraph, or the contents of a table cell[^merge].
 
-This means tables are 'unstacked', with a row per 'cell' of the original Word table. How could you convert these Word tables into dataframes for further use in R? There's [an suggestion in the docs](https://ardata-fr.github.io/officeverse/extract-content.html#word-tables), but I [drew the rest of the heckin' owl](https://knowyourmeme.com/memes/how-to-draw-an-owl) by creating a slightly overengineered function to do it.
+This means tables are 'unstacked', with a row per 'cell' of the original Word table. How could you convert these tidy Word tables into dataframes for further use in R? There's [a suggestion in the docs](https://ardata-fr.github.io/officeverse/extract-content.html#word-tables), but I [drew the rest of the heckin' owl](https://knowyourmeme.com/memes/how-to-draw-an-owl) by creating a slightly overengineered function to do it[^curiosity].
 
 # 'Allo 'allo
 
@@ -210,7 +216,7 @@ You'll have seen `rectangularise_table()` in the `for` loop inside `rectangulari
 
 You'll notice the `assume_headers` argument. The headers for a Word table are marked by `TRUE` in the `is_header` column of the output from `docx_summary()`. Except when they aren't. It's possible that you'll read a Word doc where the table headers aren't identified. Set `assume_headers` to `TRUE` (the default) to allow `rectangularise_table()` to instead use the first row of the table as headers. The setting will apply to all tables; I reckon that it's all or nothing whether table headers will be marked up in a given Word document.
 
-You may also have seen the `type_convert` argument. By default, the `text` column in the output from `docx_summary()` will be character class, but the actual data might be integers, for example. [As explained in a recent blog post](https://www.rostrum.blog/2023/04/23/type-convert/), the `type.convert()` function attempts to coerce a column to the appropriate data type if possible.
+You may also have seen the `type_convert` argument[^type]. By default, the `text` column in the output from `docx_summary()` will be character class, but the actual data might be integers, for example. [As explained in a recent blog post](https://www.rostrum.blog/2023/04/23/type-convert/), the `type.convert()` function attempts to coerce a column to the appropriate data type if possible.
 
 And now we can see that the dataset works using our test document:
 
@@ -235,3 +241,6 @@ sessioninfo::session_info()
 
 [^ms]: Related: I have some experience with R-to-Excel: [my {a11ytables} package](https://co-analysis.github.io/a11ytables/) generates best-practice spreadsheets [using {openxlsx}](https://ycphs.github.io/openxlsx/).
 [^merge]: Merged cells in the table end up being unmerged, with the upper- and left-most cells holding the content and the remianing cells being assigned `NA`.
+[^curiosity]: I did this for my own curiosity, really. Just like everything else on this blog! As mentioned, check out [{docxtractr}](https://github.com/hrbrmstr/docxtractr) and [{officerExtras}](https://elipousson.github.io/officerExtras) for better implementations.
+[^tidyxl]: It would be wrong for me not to point out that you can extract Excel and ODS cells into 'tidy' dataframes with [Duncan Garmonsway's {tidyxl}](https://nacnudus.github.io/tidyxl/index.html) and [Matt Kerlogue's {tidyods}](https://mattkerlogue.github.io/tidyods/). No, they haven't sponsored this post (invoices in the mail, chaps).
+[^type]: What a handy function. This was useful enough that Eli has now added it to [{officerExtras}](https://elipousson.github.io/officerExtras/reference/officer_tables.html).

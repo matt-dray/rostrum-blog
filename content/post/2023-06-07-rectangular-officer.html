@@ -18,14 +18,18 @@ tags:
 </div>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
-<p><a href="https://davidgohel.github.io/officer/">{officer} is an R package</a> that lets you extract elements of a Word document, including tables, into a tidy dataframe. I’ve written a function to ‘re-rectangularise’ an extracted Word table into an R dataframe.</p>
+<p><a href="https://davidgohel.github.io/officer/">{officer} is an R package</a> that lets you extract elements of a Word document, including tables, into a tidy dataframe. I’ve written a function to ‘re-rectangularise’ extracted Word tables into a list of R dataframes.</p>
+<div class="tip">
+<p><svg aria-hidden="true" role="img" viewBox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;"><path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"/></svg> <b>Update</b></p>
+<p>Turns out that <a href="https://elipousson.github.io/">Eli Pousson</a> has written the <a href="https://elipousson.github.io/officerExtras">{officerExtras} package</a> (<a href="https://github.com/elipousson/officerExtras/">install it from GitHub</a>), which already contains this functionality in <a href="https://elipousson.github.io/officerExtras/reference/officer_tables.html">the <code>officer_tables()</code> and <code>officer_table()</code> functions</a>. At least this proves my idea wasn’t too far-fetched!</p>
+</div>
 </div>
 <div id="whats-the-officer-problem" class="section level1">
 <h1>What’s the officer, problem?</h1>
 <p>Someone on Slack asked about some difficulty with scraping a table from a Word document. We’ve all been there.</p>
-<p>My mind immediately went to <a href="https://davidgohel.github.io/officer/">{officer} by David Gohel</a>, which is part of <a href="https://ardata-fr.github.io/officeverse/">the ‘officeverse’</a> for reading, creating and manipulating common Microsoft documents<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> with R.</p>
-<p>In particular, the function <code>docx_summary()</code> extracts all the elements of a Word doc into a tidy dataframe. Each row of that dataframe is a heading, or a paragraph, or the contents of a table cell<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>.</p>
-<p>This means tables are ‘unstacked’, with a row per ‘cell’ of the original Word table. How could you convert these Word tables into dataframes for further use in R? There’s <a href="https://ardata-fr.github.io/officeverse/extract-content.html#word-tables">an suggestion in the docs</a>, but I <a href="https://knowyourmeme.com/memes/how-to-draw-an-owl">drew the rest of the heckin’ owl</a> by creating a slightly overengineered function to do it.</p>
+<p>You could use <a href="https://github.com/hrbrmstr/docxtractr"><code>docxtractr::docx_extract_all_tbls()</code> by Bob Rudis</a>, but my mind immediately went to <a href="https://davidgohel.github.io/officer/">{officer} by David Gohel</a>, which is part of <a href="https://ardata-fr.github.io/officeverse/">the ‘officeverse’</a> for reading, creating and manipulating common Microsoft documents with R<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>.</p>
+<p>In particular, the function <code>docx_summary()</code> extracts all the elements of a Word doc into a tidy dataframe<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>. Each row of that dataframe is a heading, or a paragraph, or the contents of a table cell<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>.</p>
+<p>This means tables are ‘unstacked’, with a row per ‘cell’ of the original Word table. How could you convert these tidy Word tables into dataframes for further use in R? There’s <a href="https://ardata-fr.github.io/officeverse/extract-content.html#word-tables">a suggestion in the docs</a>, but I <a href="https://knowyourmeme.com/memes/how-to-draw-an-owl">drew the rest of the heckin’ owl</a> by creating a slightly overengineered function to do it<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>.</p>
 </div>
 <div id="allo-allo" class="section level1">
 <h1>’Allo ’allo</h1>
@@ -192,7 +196,7 @@ str(doc_tidy)</code></pre>
   
 }</code></pre>
 <p>You’ll notice the <code>assume_headers</code> argument. The headers for a Word table are marked by <code>TRUE</code> in the <code>is_header</code> column of the output from <code>docx_summary()</code>. Except when they aren’t. It’s possible that you’ll read a Word doc where the table headers aren’t identified. Set <code>assume_headers</code> to <code>TRUE</code> (the default) to allow <code>rectangularise_table()</code> to instead use the first row of the table as headers. The setting will apply to all tables; I reckon that it’s all or nothing whether table headers will be marked up in a given Word document.</p>
-<p>You may also have seen the <code>type_convert</code> argument. By default, the <code>text</code> column in the output from <code>docx_summary()</code> will be character class, but the actual data might be integers, for example. <a href="https://www.rostrum.blog/2023/04/23/type-convert/">As explained in a recent blog post</a>, the <code>type.convert()</code> function attempts to coerce a column to the appropriate data type if possible.</p>
+<p>You may also have seen the <code>type_convert</code> argument<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a>. By default, the <code>text</code> column in the output from <code>docx_summary()</code> will be character class, but the actual data might be integers, for example. <a href="https://www.rostrum.blog/2023/04/23/type-convert/">As explained in a recent blog post</a>, the <code>type.convert()</code> function attempts to coerce a column to the appropriate data type if possible.</p>
 <p>And now we can see that the dataset works using our test document:</p>
 <pre class="r"><code>df_list &lt;- rectangularise_tables(doc_tidy)
 str(df_list)</code></pre>
@@ -230,7 +234,7 @@ Session info
 ##  collate  en_US.UTF-8
 ##  ctype    en_US.UTF-8
 ##  tz       Europe/London
-##  date     2023-06-07
+##  date     2023-06-08
 ##  pandoc   2.19.2 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
@@ -243,6 +247,7 @@ Session info
 ##  digest        0.6.31  2022-12-11 [1] CRAN (R 4.2.0)
 ##  evaluate      0.20    2023-01-17 [1] CRAN (R 4.2.0)
 ##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  fontawesome   0.2.2   2021-07-02 [1] CRAN (R 4.2.0)
 ##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
 ##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
 ##  jsonlite      1.8.4   2022-12-06 [1] CRAN (R 4.2.0)
@@ -273,6 +278,9 @@ Session info
 <hr />
 <ol>
 <li id="fn1"><p>Related: I have some experience with R-to-Excel: <a href="https://co-analysis.github.io/a11ytables/">my {a11ytables} package</a> generates best-practice spreadsheets <a href="https://ycphs.github.io/openxlsx/">using {openxlsx}</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>Merged cells in the table end up being unmerged, with the upper- and left-most cells holding the content and the remianing cells being assigned <code>NA</code>.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>It would be wrong for me not to point out that you can extract Excel and ODS cells into ‘tidy’ dataframes with <a href="https://nacnudus.github.io/tidyxl/index.html">Duncan Garmonsway’s {tidyxl}</a> and <a href="https://mattkerlogue.github.io/tidyods/">Matt Kerlogue’s {tidyods}</a>. No, they haven’t sponsored this post (invoices in the mail, chaps).<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>Merged cells in the table end up being unmerged, with the upper- and left-most cells holding the content and the remianing cells being assigned <code>NA</code>.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>I did this for my own curiosity, really. Just like everything else on this blog! As mentioned, check out <a href="https://github.com/hrbrmstr/docxtractr">{docxtractr}</a> and <a href="https://elipousson.github.io/officerExtras">{officerExtras}</a> for better implementations.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>What a handy function. This was useful enough that Eli has now added it to <a href="https://elipousson.github.io/officerExtras/reference/officer_tables.html">{officerExtras}</a>.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
