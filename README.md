@@ -25,13 +25,14 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 147 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 148 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
-📅 That’s a post roughly every 13 days, or about 2.3 posts per month.
+📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 28 day(s) ago: [Recreating a dataviz
-with {ggplot2}](https://www.rostrum.blog/2023/05/10/spear-ggplot2/).
+🆕 The latest post was published 1 day(s) ago: [Rectangularise Word
+tables extracted by
+{officer}](https://www.rostrum.blog/2023/06/07/rectangular-officer/).
 
 📈 This 2D plot shows posts over time:
 
@@ -44,6 +45,7 @@ with {ggplot2}](https://www.rostrum.blog/2023/05/10/spear-ggplot2/).
 
 | Number | Date       | Title                                                                                                                     |
 |-------:|:-----------|:--------------------------------------------------------------------------------------------------------------------------|
+|    148 | 2023-06-07 | [Rectangularise Word tables extracted by {officer}](https://www.rostrum.blog/2023/06/07/rectangular-officer/)             |
 |    147 | 2023-05-10 | [Recreating a dataviz with {ggplot2}](https://www.rostrum.blog/2023/05/10/spear-ggplot2/)                                 |
 |    146 | 2023-05-07 | [Automate {blogdown} to Quarto](https://www.rostrum.blog/2023/05/07/bd2q/)                                                |
 |    145 | 2023-04-23 | [Matt Dray Teaches (Data) Typing](https://www.rostrum.blog/2023/04/23/type-convert/)                                      |
@@ -196,4 +198,4 @@ with {ggplot2}](https://www.rostrum.blog/2023/05/10/spear-ggplot2/).
 
 ------------------------------------------------------------------------
 
-*Updated on 2023-06-07 at 03:01.*
+*Updated on 2023-06-08 at 03:01.*
