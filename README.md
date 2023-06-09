@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 1 day(s) ago: [Rectangularise Word
+🆕 The latest post was published 2 day(s) ago: [Rectangularise Word
 tables extracted by
 {officer}](https://www.rostrum.blog/2023/06/07/rectangular-officer/).
 
@@ -198,4 +198,4 @@ tables extracted by
 
 ------------------------------------------------------------------------
 
-*Updated on 2023-06-08 at 03:01.*
+*Updated on 2023-06-09 at 03:02.*
