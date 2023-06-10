@@ -1,0 +1,168 @@
+---
+title: "Extract run data from Apple Health XML"
+author: Matt Dray
+date: '2023-06-10'
+slug: apple-health-runs
+categories:
+  - code
+  - tutorial
+tags:
+  - apple
+  - health
+  - r
+  - running
+  - xml2 
+---
+
+# tl;dr
+
+You can use R to extract running details from a downloaded of your Apple Health data.
+
+# On your marks
+
+In 2021 [I extracted my running activities from my Apple Health data](https://www.rostrum.blog/2021/03/23/xml-health/) using [the {xml2} package](https://xml2.r-lib.org/). At that point I'd been running for one year.
+
+I've now reached 500 runs, so I thought I would re-execute my code with the latest data. Alas, the original code no longer works because the format of the XML seems to have been updated.
+
+So I've written a new function that takes a path to the zipped download of my Apple Health data and outputs a dataframe with a row per run.
+
+# Get set
+
+I followed [the same steps as before](https://www.rostrum.blog/2021/03/23/xml-health/#warm-up) to get my Apple Health data off my phone.
+
+I quickly hacked on a function to unzip the file to a temporary location and then wrangle the XML inside it with {xml2} and list handling. The output is a a dataframe with a row per run workout with information about time and distance.
+
+I've hidden the function below, which has added commentary to explain what's happening at each step. It does what I need it to do for now. No doubt there's some refactoring to be done. 
+
+<details><summary>Click to expand the full function definition</summary>
+
+```{r}
+get_run_distances <- function(zip_path_in) {
+  
+  # Unzip Apple Health export to temporary location
+  message("Unzipping and reading XML")
+  temp <- tempdir()
+  unzip(zipfile = zip_path_in, exdir = temp)
+  xml_in <- xml2::read_xml(file.path(temp, "apple_health_export", "export.xml"))
+  unlink(temp)
+  
+  # Isolate workouts only and convert to a list
+  message("Isolating workouts from XML")
+  workouts_xml <- xml2::xml_find_all(xml_in, "//Workout")
+  workouts_list <- xml2::as_list(workouts_xml)
+  
+  # Preallocate a list to be filled with output data
+  workout_total <- length(workouts_list)
+  workout_details_list <- vector("list", workout_total)
+  
+  # For each viable workout, extract the details
+  message("Iterating over workouts to extract run data")
+  for (workout_n in seq(workout_total)) {
+    
+    # Extract details for current workout
+    workout <- workouts_list[[workout_n]]
+    workout_attrs <- attributes(workout)  # the data is stored as attributes
+    is_run <- 
+      workout_attrs[["workoutActivityType"]] == "HKWorkoutActivityTypeRunning"
+    
+    # Make an empty dataframe for non-running workouts (we don't care)
+    if (!is_run) next  # skip to next iteration
+    
+    # Extract data for runs
+    if (is_run) {
+      
+      # There can be more than one element named 'WorkoutStatistics'. We want to 
+      # get the one with distance information and extract the details.
+      workout_stats <- workout[grep("WorkoutStatistics", names(workout))]
+      workout_stats_type <- lapply(workout_stats, function(x) attr(x, c("type")))
+      dist_index <- which(
+        workout_stats_type == "HKQuantityTypeIdentifierDistanceWalkingRunning"
+      )
+      dist_element <- workout_stats[[dist_index]]
+      
+      # Prepare data and add to the preallocated list
+      df_out <- data.frame(
+        source = workout_attrs[["sourceName"]],
+        start = as.POSIXct(workout_attrs[["startDate"]]),
+        end = as.POSIXct(workout_attrs[["endDate"]]),
+        distance_km = round(as.numeric(attr(dist_element, "sum")), 2)
+      )
+      df_out[["duration"]] <- lubridate::seconds_to_period(
+        difftime(df_out[["end"]], df_out[["start"]], units = "secs")
+      )
+      workout_details_list[[workout_n]] <- df_out
+      
+    }
+    
+  }
+  
+  # Convert to dataframe, filter and select
+  message("Combining data")
+  workout_details_df <- do.call(rbind, workout_details_list)
+  workout_details_df <- workout_details_df[
+    !is.na(workout_details_df[["source"]]), 
+    c("source", "start", "end", "duration", "distance_km")
+  ]
+  
+}
+```
+</details>
+
+There's a few things to note:
+
+* I'm more comfortable handling R objects, so I converted early to a list with `xml2::as_list()`.
+* Awkwardly, the data in the list object was stored as [attributes](https://xml2.r-lib.org/) to each element.
+* The distance data is stored in an element called 'WorkoutStatistics', but more than one element will have this name. We have to isolate the one that is of the type 'HKQuantityTypeIdentifierDistanceWalkingRunning'.
+* There's one use of [{lubridate}](https://lubridate.tidyverse.org/) to convert the run duration to a minutes-and-seconds 'period' class (e.g. 21:30) rather than the 'difftime' class that returns decimal minutes (e.g. 21.5).
+
+# Go
+
+Here's what we get when we run the code:
+
+```{r cache=TRUE}
+all_runs <- get_run_distances("~/Downloads/export.zip")
+```
+
+I'll filter for the rows that were recorded by the Nike Run Club app, which will avoid some duplication where I also recorded in tandem with Apple's Workouts app. I'll also include runs of over 1 km only, because I think I accidentally started recording some runs that I didn't mean to.
+
+Here's the most recent few:
+
+```{r}
+runs <- all_runs[
+  all_runs[["source"]] == "Nike Run Club" & 
+    all_runs[["distance_km"]] > 1, 
+  c("start", "distance_km", "duration")
+]
+
+row.names(runs) <- NULL
+
+tail(runs)
+```
+
+For my own tracking purposes, the basic summary is that I've run:
+
+* `r nrow(runs)` times
+* for a total distance of `r round(sum(runs$distance_km))` km
+* for a total duration of about `r round(sum(as.numeric(runs$duration)) / 60 / 60 / 24, 0)` days
+
+And I can recreate one of the plots from the old post while we're here:
+
+```{r}
+plot(
+  runs[["start"]], 
+  runs[["distance_km"]], 
+  las = 1, 
+  main = "Runs captured with Nike Run Club in Apple Health",
+  xlab = "Date",
+  ylab = "Distance (km)"
+)
+```
+
+Some patterns are obvious. There's lots of 5 km runs until about mid-2021, when it hops to more like 7 km. That's when I started running for 30 mins at a time, rather than for 5 km specifically. There's greater consistency over time around 10 km, which is no surprise given its 'roundness'. You can see I'm pretty happy at these two distances, but maybe I should do more 21.1 km half-marathons (or a full marathon?).
+
+---
+<details><summary>Session info</summary>
+```{r eval=TRUE, sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>

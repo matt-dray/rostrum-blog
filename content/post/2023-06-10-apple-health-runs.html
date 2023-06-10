@@ -1,0 +1,201 @@
+---
+title: "Extract run data from Apple Health XML"
+author: Matt Dray
+date: '2023-06-10'
+slug: apple-health-runs
+categories:
+  - code
+  - tutorial
+tags:
+  - apple
+  - health
+  - r
+  - running
+  - xml2 
+---
+
+
+
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>You can use R to extract running details from a downloaded of your Apple Health data.</p>
+</div>
+<div id="on-your-marks" class="section level1">
+<h1>On your marks</h1>
+<p>In 2021 <a href="https://www.rostrum.blog/2021/03/23/xml-health/">I extracted my running activities from my Apple Health data</a> using <a href="https://xml2.r-lib.org/">the {xml2} package</a>. At that point I’d been running for one year.</p>
+<p>I’ve now reached 500 runs, so I thought I would re-execute my code with the latest data. Alas, the original code no longer works because the format of the XML seems to have been updated.</p>
+<p>So I’ve written a new function that takes a path to the zipped download of my Apple Health data and outputs a dataframe with a row per run.</p>
+</div>
+<div id="get-set" class="section level1">
+<h1>Get set</h1>
+<p>I followed <a href="https://www.rostrum.blog/2021/03/23/xml-health/#warm-up">the same steps as before</a> to get my Apple Health data off my phone.</p>
+<p>I quickly hacked on a function to unzip the file to a temporary location and then wrangle the XML inside it with {xml2} and list handling. The output is a a dataframe with a row per run workout with information about time and distance.</p>
+<p>I’ve hidden the function below, which has added commentary to explain what’s happening at each step. It does what I need it to do for now. No doubt there’s some refactoring to be done.</p>
+<details>
+<summary>
+Click to expand the full function definition
+</summary>
+<pre class="r"><code>get_run_distances &lt;- function(zip_path_in) {
+  
+  # Unzip Apple Health export to temporary location
+  message(&quot;Unzipping and reading XML&quot;)
+  temp &lt;- tempdir()
+  unzip(zipfile = zip_path_in, exdir = temp)
+  xml_in &lt;- xml2::read_xml(file.path(temp, &quot;apple_health_export&quot;, &quot;export.xml&quot;))
+  unlink(temp)
+  
+  # Isolate workouts only and convert to a list
+  message(&quot;Isolating workouts from XML&quot;)
+  workouts_xml &lt;- xml2::xml_find_all(xml_in, &quot;//Workout&quot;)
+  workouts_list &lt;- xml2::as_list(workouts_xml)
+  
+  # Preallocate a list to be filled with output data
+  workout_total &lt;- length(workouts_list)
+  workout_details_list &lt;- vector(&quot;list&quot;, workout_total)
+  
+  # For each viable workout, extract the details
+  message(&quot;Iterating over workouts to extract run data&quot;)
+  for (workout_n in seq(workout_total)) {
+    
+    # Extract details for current workout
+    workout &lt;- workouts_list[[workout_n]]
+    workout_attrs &lt;- attributes(workout)  # the data is stored as attributes
+    is_run &lt;- 
+      workout_attrs[[&quot;workoutActivityType&quot;]] == &quot;HKWorkoutActivityTypeRunning&quot;
+    
+    # Make an empty dataframe for non-running workouts (we don&#39;t care)
+    if (!is_run) { 
+      next  # skip to next iteration
+    }
+    
+    # Extract data for runs
+    if (is_run) {
+      
+      # There can be more than one element named &#39;WorkoutStatistics&#39;. We want to 
+      # get the one with distance information and extract the details.
+      workout_stats &lt;- workout[grep(&quot;WorkoutStatistics&quot;, names(workout))]
+      workout_stats_type &lt;- lapply(workout_stats, function(x) attr(x, c(&quot;type&quot;)))
+      dist_index &lt;- which(
+        workout_stats_type == &quot;HKQuantityTypeIdentifierDistanceWalkingRunning&quot;
+      )
+      dist_element &lt;- workout_stats[[dist_index]]
+      
+      # Prepare data and add to the preallocated list
+      df_out &lt;- data.frame(
+        source = workout_attrs[[&quot;sourceName&quot;]],
+        start = as.POSIXct(workout_attrs[[&quot;startDate&quot;]]),
+        end = as.POSIXct(workout_attrs[[&quot;endDate&quot;]]),
+        distance_km = round(as.numeric(attr(dist_element, &quot;sum&quot;)), 2)
+      )
+      df_out[[&quot;duration&quot;]] &lt;- lubridate::seconds_to_period(
+        difftime(df_out[[&quot;end&quot;]], df_out[[&quot;start&quot;]], units = &quot;secs&quot;)
+      )
+      workout_details_list[[workout_n]] &lt;- df_out
+      
+    }
+    
+  }
+  
+  # Convert to dataframe, remove NAs, filter for preferred source
+  message(&quot;Combining data&quot;)
+  workout_details_df &lt;- do.call(rbind, workout_details_list)
+  workout_details_df[
+    !is.na(workout_details_df[[&quot;source&quot;]]), 
+    c(&quot;source&quot;, &quot;start&quot;, &quot;end&quot;, &quot;duration&quot;, &quot;distance_km&quot;)
+  ]
+  
+}</code></pre>
+</details>
+<p>There’s a few things to note:</p>
+<ul>
+<li>I’m more comfortable handling R objects, so I converted early to a list with <code>xml2::as_list()</code>.</li>
+<li>Awkwardly, the data in the list object was stored as <a href="https://xml2.r-lib.org/">attributes</a> to each element.</li>
+<li>The distance data is stored in an element called ‘WorkoutStatistics’, but more than one element will have this name. We have to isolate the one that is of the type ‘HKQuantityTypeIdentifierDistanceWalkingRunning’.</li>
+<li>There’s one use of <a href="https://lubridate.tidyverse.org/">{lubridate}</a> to convert the run duration to a minutes-and-seconds ‘period’ class (e.g. 21:30) rather than the ‘difftime’ class that returns decimal minutes (e.g. 21.5).</li>
+</ul>
+</div>
+<div id="go" class="section level1">
+<h1>Go</h1>
+<p>Here’s what we get when we run the code:</p>
+<pre class="r"><code>all_runs &lt;- get_run_distances(&quot;~/Downloads/export.zip&quot;)</code></pre>
+<pre><code>## Unzipping and reading XML</code></pre>
+<pre><code>## Isolating workouts from XML</code></pre>
+<pre><code>## Iterating over workouts to extract run data</code></pre>
+<pre><code>## Combining data</code></pre>
+<p>I’ll filter for the rows that were recorded by the Nike Run Club app, which will avoid some duplication where I also recorded in tandem with Apple’s Workouts app. I’ll also include runs of over 1 km only, because I think I accidentally started recording some runs that I didn’t mean to.</p>
+<pre class="r"><code>runs &lt;- all_runs[
+  all_runs[[&quot;source&quot;]] == &quot;Nike Run Club&quot; &amp; 
+    all_runs[[&quot;distance_km&quot;]] &gt; 1, 
+]</code></pre>
+<pre><code>## Loading required package: lubridate</code></pre>
+<pre><code>## 
+## Attaching package: &#39;lubridate&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     date, intersect, setdiff, union</code></pre>
+<p>The basic summary is that I’ve run:</p>
+<ul>
+<li>495 times</li>
+<li>for a total distance of 4052 km</li>
+<li>for a total duration of about 14 days</li>
+</ul>
+<p>And we can recreate one of the plots from the old post while we’re here:</p>
+<pre class="r"><code>plot(
+  runs[[&quot;start&quot;]], 
+  runs[[&quot;distance_km&quot;]], 
+  las = 1, 
+  main = &quot;Runs captured with Nike Run Club in Apple Health&quot;,
+  xlab = &quot;Date&quot;,
+  ylab = &quot;Distance (km)&quot;
+)</code></pre>
+<p><img src="/post/2023-06-10-apple-health-runs_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>Some patterns are obvious. There’s lots of 5 km runs until about mid-2021, when it hops to more like 7 km. That’s when I started running for 30 mins at a time, rather than for 5 km specifically. There’s greater consistency over time around 10 km, which is no surprise given its ‘roundness’. You can see I’m pretty happy at these two distances, but maybe I should try more half-marathons; 21.1 km at the top of the chart.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value
+##  version  R version 4.2.0 (2022-04-22)
+##  os       macOS Big Sur/Monterey 10.16
+##  system   x86_64, darwin17.0
+##  ui       X11
+##  language (EN)
+##  collate  en_US.UTF-8
+##  ctype    en_US.UTF-8
+##  tz       Europe/London
+##  date     2023-06-11
+##  pandoc   2.19.2 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date (UTC) lib source
+##  blogdown      1.9     2022-03-28 [1] CRAN (R 4.2.0)
+##  bookdown      0.26    2022-04-15 [1] CRAN (R 4.2.0)
+##  bslib         0.3.1   2021-10-06 [1] CRAN (R 4.2.0)
+##  cli           3.6.1   2023-03-23 [1] CRAN (R 4.2.0)
+##  digest        0.6.31  2022-12-11 [1] CRAN (R 4.2.0)
+##  evaluate      0.20    2023-01-17 [1] CRAN (R 4.2.0)
+##  fastmap       1.1.0   2021-01-25 [1] CRAN (R 4.2.0)
+##  generics      0.1.3   2022-07-05 [1] CRAN (R 4.2.0)
+##  highr         0.10    2022-12-22 [1] CRAN (R 4.2.0)
+##  htmltools     0.5.2   2021-08-25 [1] CRAN (R 4.2.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.2.0)
+##  jsonlite      1.8.4   2022-12-06 [1] CRAN (R 4.2.0)
+##  knitr         1.42    2023-01-25 [1] CRAN (R 4.2.0)
+##  lubridate   * 1.9.2   2023-02-10 [1] CRAN (R 4.2.0)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.2.0)
+##  rlang         1.1.1   2023-04-28 [1] CRAN (R 4.2.0)
+##  rmarkdown     2.14    2022-04-25 [1] CRAN (R 4.2.0)
+##  rstudioapi    0.14    2022-08-22 [1] CRAN (R 4.2.0)
+##  sass          0.4.1   2022-03-23 [1] CRAN (R 4.2.0)
+##  sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.2.0)
+##  timechange    0.1.1   2022-11-04 [1] CRAN (R 4.2.0)
+##  xfun          0.37    2023-01-31 [1] CRAN (R 4.2.0)
+##  yaml          2.3.7   2023-01-23 [1] CRAN (R 4.2.0)
+## 
+##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>
