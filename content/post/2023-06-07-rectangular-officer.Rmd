@@ -27,15 +27,17 @@ library(officer)
 
 Turns out that [Eli Pousson](https://elipousson.github.io/) has written the [{officerExtras} package](https://elipousson.github.io/officerExtras) ([install it from GitHub](https://github.com/elipousson/officerExtras/)), which already contains this functionality in [the `officer_tables()` and `officer_table()` functions](https://elipousson.github.io/officerExtras/reference/officer_tables.html). At least this proves my idea wasn't too far-fetched!
 
+Also you can just use [`docxtractr::docx_extract_all_tbls()` by Bob Rudis](https://github.com/hrbrmstr/docxtractr) to extract all the tables in one go, lol.
+
 </div>
 
 # What's the officer, problem?
 
 Someone on Slack asked about some difficulty with scraping a table from a Word document. We've all been there.
 
-You could use [`docxtractr::docx_extract_all_tbls()` by Bob Rudis](https://github.com/hrbrmstr/docxtractr), but my mind immediately went to [{officer} by David Gohel](https://davidgohel.github.io/officer/), which is part of [the 'officeverse'](https://ardata-fr.github.io/officeverse/) for reading, creating and manipulating common Microsoft documents with R[^ms].
+My mind immediately went to [{officer} by David Gohel](https://davidgohel.github.io/officer/), which is part of [the 'officeverse'](https://ardata-fr.github.io/officeverse/) for reading, creating and manipulating common Microsoft documents with R[^ms]. 
 
-In particular, the function `docx_summary()` extracts all the elements of a Word doc into a tidy dataframe[^tidyxl]. Each row of that dataframe is a heading, or a paragraph, or the contents of a table cell[^merge].
+In particular, the function `officer::docx_summary()` extracts all the elements of a Word doc into a tidy dataframe[^tidyxl]. Each row of that dataframe is a heading, or a paragraph, or the contents of a table cell[^merge].
 
 This means tables are 'unstacked', with a row per 'cell' of the original Word table. How could you convert these tidy Word tables into dataframes for further use in R? There's [a suggestion in the docs](https://ardata-fr.github.io/officeverse/extract-content.html#word-tables), but I [drew the rest of the heckin' owl](https://knowyourmeme.com/memes/how-to-draw-an-owl) by creating a slightly overengineered function to do it[^curiosity].
 
@@ -231,6 +233,70 @@ Smashing. We have a list of two dataframes: one for each of the tables in the te
 To summarise, this is absolutely not the worst code-related crime I've committed on this blog. Sorry guv! I'll definitely be sentenced to the most severe punishment if caught and tried: several minutes of hard labour, or 'refactoring' as they call it on the inside. 
 
 At worst I'll build an Andy-Dufresne-style tunnel out of my prison cell and hide the entrance behind years of accumulated hex stickers.
+
+<div class="tip"> `r fontawesome::fa("exclamation-circle")` <b>Update</b>
+
+As a bonus, I later wrote a quick reproducible example that part-solves the original reason for this post. Here I've used {docxtractr} to extract tables from docx files in separate subfolders and then combine them.
+
+<details><summary>Click to expand code.</summary>
+
+```{r eval=FALSE}
+# Attach packages (all are available from CRAN)
+library(docxtractr)  # to extract tables from docx files
+library(officer)  # to create dummy docx files
+library(charlatan)  # to generate fake data
+
+# Create multiple dummy docx files in separate temporary folders
+
+my_folder <- tempdir()  # temporary locations to store the files
+n_files <- 5  # the number of dummy files to generate
+
+for (i in seq(n_files)) {
+  
+  # Create subfolders
+  subfolder_name <- paste0("subfolder_", i)
+  dir.create(file.path(my_folder, subfolder_name))
+  
+  # Create dummy dataframe
+  
+  n_fake <- 10  # number of fake data items to generate
+  
+  temp_df <- data.frame(
+    name = ch_name(n_fake),
+    job = ch_job(n_fake),
+    phone = ch_phone_number(n_fake)
+  )
+  
+  # Add dummy dataframe to a docx file and save it
+  path <- file.path(my_folder, subfolder_name, paste0("df_", i, ".docx"))
+  officer::read_docx() |> body_add_table(temp_df) |> print(target = path)
+  
+}
+
+# Get the file paths to all the docx files
+docx_paths <- list.files(
+  my_folder,
+  pattern = ".docx$",
+  full.names = TRUE,  # return full filepaths
+  recursive = TRUE  # look in all subfolders
+)
+
+# Preallocate a list to be filled with extracted tables, one element per file
+extracted_tables <- vector("list", n_files)
+
+# Extract tables and add to the list (not tested: I think that read_docx will
+# read .doc files, but only if you have LibreOffice installed.
+for (i in docx_paths) {
+  tables <- docxtractr::read_docx(i) |> docx_extract_all_tbls()
+  extracted_tables[basename(i)] <- tables
+}
+
+# In this simple demo, the dataframes in each list element can be appended
+# because they all have the same column names and types.
+do.call(rbind, extracted_tables)
+```
+
+</div>
 
 ---
 <details><summary>Session info</summary>
