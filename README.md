@@ -25,14 +25,14 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 148 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 149 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 4 day(s) ago: [Rectangularise Word
-tables extracted by
-{officer}](https://www.rostrum.blog/2023/06/07/rectangular-officer/).
+🆕 The latest post was published 1 day(s) ago: [Extract run data from
+Apple Health
+(redux)](https://www.rostrum.blog/2023/06/11/apple-health-redux/).
 
 📈 This 2D plot shows posts over time:
 
@@ -45,6 +45,7 @@ tables extracted by
 
 | Number | Date       | Title                                                                                                                     |
 |-------:|:-----------|:--------------------------------------------------------------------------------------------------------------------------|
+|    149 | 2023-06-11 | [Extract run data from Apple Health (redux)](https://www.rostrum.blog/2023/06/11/apple-health-redux/)                     |
 |    148 | 2023-06-07 | [Rectangularise Word tables extracted by {officer}](https://www.rostrum.blog/2023/06/07/rectangular-officer/)             |
 |    147 | 2023-05-10 | [Recreating a dataviz with {ggplot2}](https://www.rostrum.blog/2023/05/10/spear-ggplot2/)                                 |
 |    146 | 2023-05-07 | [Automate {blogdown} to Quarto](https://www.rostrum.blog/2023/05/07/bd2q/)                                                |
@@ -198,4 +199,4 @@ tables extracted by
 
 ------------------------------------------------------------------------
 
-*Updated on 2023-06-11 at 03:07.*
+*Updated on 2023-06-12 at 03:01.*
