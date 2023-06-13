@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 1 day(s) ago: [Extract run data from
+🆕 The latest post was published 2 day(s) ago: [Extract run data from
 Apple Health
 (redux)](https://www.rostrum.blog/2023/06/11/apple-health-redux/).
 
@@ -199,4 +199,4 @@ Apple Health
 
 ------------------------------------------------------------------------
 
-*Updated on 2023-06-12 at 03:01.*
+*Updated on 2023-06-13 at 02:47.*
