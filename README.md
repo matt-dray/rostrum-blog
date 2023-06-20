@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 6 day(s) ago: [Panic! In The
+🆕 The latest post was published 7 day(s) ago: [Panic! In The
 Toolshed](https://www.rostrum.blog/2023/06/13/panic-in-the-toolshed/).
 
 📈 This 2D plot shows posts over time:
@@ -199,4 +199,4 @@ Toolshed](https://www.rostrum.blog/2023/06/13/panic-in-the-toolshed/).
 
 ------------------------------------------------------------------------
 
-*Updated on 2023-06-19 at 02:55.*
+*Updated on 2023-06-20 at 02:43.*
