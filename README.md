@@ -25,13 +25,13 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 150 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 151 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 8 day(s) ago: [Panic! In The
-Toolshed](https://www.rostrum.blog/2023/06/13/panic-in-the-toolshed/).
+🆕 The latest post was published 1 day(s) ago: [Convert a Word table to
+Markdown](https://www.rostrum.blog/2023/06/21/wordup-tables/).
 
 📈 This 2D plot shows posts over time:
 
@@ -44,6 +44,7 @@ Toolshed](https://www.rostrum.blog/2023/06/13/panic-in-the-toolshed/).
 
 | Number | Date       | Title                                                                                                                     |
 |-------:|:-----------|:--------------------------------------------------------------------------------------------------------------------------|
+|    151 | 2023-06-21 | [Convert a Word table to Markdown](https://www.rostrum.blog/2023/06/21/wordup-tables/)                                    |
 |    150 | 2023-06-13 | [Panic! In The Toolshed](https://www.rostrum.blog/2023/06/13/panic-in-the-toolshed/)                                      |
 |    149 | 2023-06-11 | [Extract run data from Apple Health (redux)](https://www.rostrum.blog/2023/06/11/apple-health-redux/)                     |
 |    148 | 2023-06-07 | [Rectangularise Word tables extracted by {officer}](https://www.rostrum.blog/2023/06/07/rectangular-officer/)             |
@@ -199,4 +200,4 @@ Toolshed](https://www.rostrum.blog/2023/06/13/panic-in-the-toolshed/).
 
 ------------------------------------------------------------------------
 
-*Updated on 2023-06-21 at 02:44.*
+*Updated on 2023-06-22 at 02:49.*
