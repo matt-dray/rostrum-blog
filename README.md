@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 22 day(s) ago: [Convert a Word table to
+🆕 The latest post was published 23 day(s) ago: [Convert a Word table to
 Markdown](https://www.rostrum.blog/2023/06/21/wordup-tables/).
 
 📈 This 2D plot shows posts over time:
@@ -200,4 +200,4 @@ Markdown](https://www.rostrum.blog/2023/06/21/wordup-tables/).
 
 ------------------------------------------------------------------------
 
-*Updated on 2023-07-13 at 03:06.*
+*Updated on 2023-07-14 at 03:07.*
