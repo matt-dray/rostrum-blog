@@ -1,0 +1,141 @@
+---
+title: Save high scores for your R game
+author: Matt Dray
+date: 2023-07-15
+slug: hiscore
+categories:
+  - code
+  - package
+tags:
+  - games
+  - hiscore
+  - r
+---
+
+```{r setup, echo=FALSE}
+knitr::opts_chunk$set(eval = FALSE)  # interactive elements, so hard-coded
+```
+
+![](/post/2023-07-15-hiscore_files/hiscore.gif){fig-alt="R code run in an RStudio window. The hiscore package is attached and the play_coinflip function is run. The user guesses heads, it's wrong, they score zero,m which is the new high score. The user tries again, is reminded that the high score is currently zero and then scores 1. The get_save_data functino proves that the top score has been saved." width="100%}
+ 
+# tl;dr
+
+You can save your high score in games made with R. See [the package {hiscore}](https://github.com/matt-dray/hiscore) for a demo.
+
+# Boot up
+
+I wrote recently about how [R is a game engine](https://www.rostrum.blog/2023/04/02/splendid-r-games/) and started [a list of games written in R](https://github.com/matt-dray/splendid-r-games).
+
+All good game engines should let you save a high score, right?
+
+So I've implemented this in a tiny concept package called [{hiscore}](https://github.com/matt-dray/hiscore))[^hiscore] which contains a simple coinflip game. The package saves your high score, which is retained between play sessions.
+
+# Install
+
+You can install the package [from GitHub](https://github.com/matt-dray/hiscore).
+
+```{r install, eval=3}
+install.package("remotes")  # if not yet installed
+remotes::install_github("matt-dray/hiscore")
+library(hiscore)
+```
+
+I've intentionally kept this as trivial as possible, but you can [leave an issue](https://github.com/matt-dray/hiscore/issues) with bugs or ideas.
+
+# Play
+
+The package contains a really simple game-of-luck for demonstration purposes: get the longest streak of correctly guessed coinflips.
+
+To play, run `play_coinflip()` and type <kbd>H</kbd> or <kbd>T</kbd> and <kbd>Enter</kbd> when prompted. Basically, the coinflip is run with `sample(c("H", "T"), 1)` and then compared to the user's input, supplied from the console following a `readline()` call.
+
+Keep going until you get it wrong. If you get a new high score, it'll be saved.
+
+```{r play}
+play_coinflip()
+```
+```
+[H]eads or [T]ails? Answer: H
+Correct! Current score: 1
+[H]eads or [T]ails? Answer: H
+Incorrect! Final score: 1
+New high score!
+New high score saved.
+```
+
+You can retrieve the current high score with `get_save_data()`, which returns a little table.
+
+```{r get-save-data}
+hiscore::get_save_data()
+```
+```
+      game high_score
+1 coinflip          1
+```
+
+Of course, you could also set up the function so that it records a player name too. And I could add additional games to {hiscore} that would get their own row in this table.
+
+## Memory
+
+Note that the high score data is retained on your computer even if you restart your session or reboot your machine. How so?
+
+This is thanks to the [`tools::R_user_dir()`](https://rdrr.io/r/tools/userdir.html) function, which was added to R in version 4.0. It builds system-specific paths to 'directories for storing R-related user-specific data, configuration and cache files' where you can save package-related information.
+
+Regular readers may remember that I used `tools::R_user_dir()` in the {tamRgo} package ([blog](https://www.rostrum.blog/2022/11/13/tamrgo/), [source](https://github.com/matt-dray/tamRgo)), which lets you look after a Tamagotchi-style cyber-pet in your console. I used the function to save a pet's 'blueprint' (details such as name, age and hunger level) persistently.
+
+{hiscore} records top scores in this fashion. On my machine, the save location resolves to the following:
+
+```{r r-user-dir, eval=TRUE}
+tools::R_user_dir("hiscore", "data")
+```
+
+Now you can retry to try and beat your score. Let's say we double our previous best.
+
+```{r play-2}
+play_coinflip()
+```
+```
+Welcome. Your current high score is 1
+[H]eads or [T]ails? Answer: h
+Correct! Current score: 1
+[H]eads or [T]ails? Answer: t
+Correct! Current score: 2
+[H]eads or [T]ails? Answer: h
+Incorrect! Final score: 2
+New high score!
+New high score saved.
+```
+
+The `play_coinflip()` function checks the current high score and compares it to the final score for the current play session. So now the high score table has been updated.
+
+```{r get-save-data-2}
+hiscore::get_save_data()
+```
+```
+      game high_score
+1 coinflip          2
+```
+
+I think it's a good idea to make it easy for people to destroy the stored data if they want to, which you can do easily with `delete_save_data()`.
+
+``` r
+hiscore::delete_save_data()
+```
+```
+Really delete? [Y]es/[N]o: Y
+High score data deleted.
+```
+
+Of course, this could be amended to delete only the high score for a given player or game, rather than deleting the whole thing.
+
+# Next
+
+How else could this approach be used in an R gaming perspective? You could use this to save a game state, similar to what's done for [{tamRgo}](https://www.rostrum.blog/2022/11/13/tamrgo/). The user could choose `H`eads or `T`ails... or `S`ave, which would record the current streak so the user can return to the game later. But that feels like cheating for this kind of simple game!
+
+---
+<details><summary>Session info</summary>
+```{r eval=TRUE, sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^hiscore]: As in 'high score' not as in 'his core'.
