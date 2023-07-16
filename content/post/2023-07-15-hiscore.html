@@ -14,7 +14,7 @@ tags:
 
 
 
-<p><img src="/post/2023-07-15-hiscore_files/hiscore.gif" fig-alt="R code run in an RStudio window. The hiscore package is attached and the play_coinflip function is run. The user guesses heads, it&#39;s wrong, they score zero,m which is the new high score. The user tries again, is reminded that the high score is currently zero and then scores 1. The get_save_data functino proves that the top score has been saved." /></p>
+<p><img src="/post/2023-07-15-hiscore_files/hiscore.gif" fig-alt="R code run in an RStudio window. The hiscore package is attached and the play_coinflip function is run. The user guesses heads, it&#39;s wrong, they score zero, which is the new high score. The user tries again, is reminded that the high score is currently zero and then scores 1. The session is restarted, but the get_save_data function proves that the top score has been saved." /></p>
 <div id="tldr" class="section level1">
 <h1>tl;dr</h1>
 <p>You can save your high score in games made with R. See <a href="https://github.com/matt-dray/hiscore">the package {hiscore}</a> for a demo.</p>
@@ -23,20 +23,21 @@ tags:
 <h1>Boot up</h1>
 <p>I wrote recently about how <a href="https://www.rostrum.blog/2023/04/02/splendid-r-games/">R is a game engine</a> and started <a href="https://github.com/matt-dray/splendid-r-games">a list of games written in R</a>.</p>
 <p>All good game engines should let you save a high score, right?</p>
-<p>So I’ve implemented this in a tiny concept package called <a href="https://github.com/matt-dray/hiscore">{hiscore}</a>)<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> which contains a simple coinflip game. The package saves your high score, which is retained between play sessions.</p>
+<p>So I’ve done exactly this for a tiny concept package called <a href="https://github.com/matt-dray/hiscore">{hiscore}</a><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> that contains a simple game of luck</p>
+<p>The package runs code that saves your high score, which is retained between play sessions.</p>
 </div>
 <div id="install" class="section level1">
 <h1>Install</h1>
-<p>You can install the package <a href="https://github.com/matt-dray/hiscore">from GitHub</a>.</p>
-<pre class="r"><code>## install.package(&quot;remotes&quot;)  # if not yet installed
-## remotes::install_github(&quot;matt-dray/hiscore&quot;)
+<p>You can install the package <a href="https://github.com/matt-dray/hiscore">from GitHub</a>. It has no dependencies, but you’ll need to be running R version 4, at least.</p>
+<pre class="r"><code>install.package(&quot;remotes&quot;)  # if not yet installed
+remotes::install_github(&quot;matt-dray/hiscore&quot;)
 library(hiscore)</code></pre>
-<p>I’ve intentionally kept this as trivial as possible, but you can <a href="https://github.com/matt-dray/hiscore/issues">leave an issue</a> with bugs or ideas.</p>
+<p>Of course, it’s just a concept and I’ve intentionally kept this as trivial as possible, but you can <a href="https://github.com/matt-dray/hiscore/issues">leave an issue</a> with bugs or ideas.</p>
 </div>
 <div id="play" class="section level1">
 <h1>Play</h1>
-<p>The package contains a really simple game-of-luck for demonstration purposes: get the longest streak of correctly guessed coinflips.</p>
-<p>To play, run <code>play_coinflip()</code> and type <kbd>H</kbd> or <kbd>T</kbd> and <kbd>Enter</kbd> when prompted. Basically, the coinflip is run with <code>sample(c("H", "T"), 1)</code> and then compared to the user’s input, supplied from the console following a <code>readline()</code> call.</p>
+<p>For demonstration purposes, the inbuilt game is super simple: get the longest streak of correctly guessed coinflips.</p>
+<p>To play, run <code>play_coinflip()</code> and type <kbd>H</kbd> or <kbd>T</kbd> and <kbd>Enter</kbd> when prompted. Basically, a coinflip is simulated with <code>sample(c("H", "T"), 1)</code> and then compared to the user’s input, supplied from the console following a <code>readline()</code> call.</p>
 <p>Keep going until you get it wrong. If you get a new high score, it’ll be saved.</p>
 <pre class="r"><code>play_coinflip()</code></pre>
 <pre><code>[H]eads or [T]ails? Answer: H
@@ -46,20 +47,27 @@ Incorrect! Final score: 1
 New high score!
 New high score saved.</code></pre>
 <p>You can retrieve the current high score with <code>get_save_data()</code>, which returns a little table.</p>
-<pre class="r"><code>hiscore::get_save_data()</code></pre>
-<pre><code>      game high_score
+<pre class="r"><code>get_save_data()</code></pre>
+<pre><code>game high_score
 1 coinflip          1</code></pre>
-<p>Of course, you could also set up the function so that it records a player name too. And I could add additional games to {hiscore} that would get their own row in this table.</p>
-<div id="memory" class="section level2">
-<h2>Memory</h2>
+<p>Of course, you could also set up the function so that it records different player names too. And you could add additional games that would get their own row in this table.</p>
+</div>
+<div id="memory" class="section level1">
+<h1>Memory</h1>
 <p>Note that the high score data is retained on your computer even if you restart your session or reboot your machine. How so?</p>
-<p>This is thanks to the <a href="https://rdrr.io/r/tools/userdir.html"><code>tools::R_user_dir()</code></a> function, which was added to R in version 4.0. It builds system-specific paths to ‘directories for storing R-related user-specific data, configuration and cache files’ where you can save package-related information.</p>
-<p>Regular readers may remember that I used <code>tools::R_user_dir()</code> in the {tamRgo} package (<a href="https://www.rostrum.blog/2022/11/13/tamrgo/">blog</a>, <a href="https://github.com/matt-dray/tamRgo">source</a>), which lets you look after a Tamagotchi-style cyber-pet in your console. I used the function to save a pet’s ‘blueprint’ (details such as name, age and hunger level) persistently.</p>
+<p>This is thanks to <a href="https://rdrr.io/r/tools/userdir.html">the <code>tools::R_user_dir()</code> function</a>, which was added to R in version 4.0. It builds system-specific paths to ‘directories for storing R-related user-specific data, configuration and cache files’ where you can save package-related information.</p>
 <p>{hiscore} records top scores in this fashion. On my machine, the save location resolves to the following:</p>
 <pre class="r"><code>tools::R_user_dir(&quot;hiscore&quot;, &quot;data&quot;)</code></pre>
 <pre><code>## [1] &quot;/Users/mattdray/Library/Application Support/org.R-project.R/R/hiscore&quot;</code></pre>
-<p>Now you can retry to try and beat your score. Let’s say we double our previous best.</p>
-<pre class="r"><code>play_coinflip()</code></pre>
+<p>Regular readers[^exist] may remember that I used <code>R_user_dir()</code> in the {tamRgo} package (<a href="https://www.rostrum.blog/2022/11/13/tamrgo/">blog</a>, <a href="https://github.com/matt-dray/tamRgo">source</a>), which lets you look after a Tamagotchi-style cyber-pet in your console. I used the function to save a pet’s ‘blueprint’ (details such as name, age and hunger level) persistently.</p>
+</div>
+<div id="retry" class="section level1">
+<h1>Retry</h1>
+<p>Now imagine you want to retry to beat that incredible top score of 1. Since you last played, you probably restarted your session or computer.</p>
+<pre><code>Restarting R session...</code></pre>
+<p>But never fear: the high score was retained. You can see that when you run <code>play_coinflip()</code> again and are reminded of the current best.</p>
+<pre class="r"><code>library(hiscore)
+play_coinflip()</code></pre>
 <pre><code>Welcome. Your current high score is 1
 [H]eads or [T]ails? Answer: h
 Correct! Current score: 1
@@ -69,20 +77,33 @@ Correct! Current score: 2
 Incorrect! Final score: 2
 New high score!
 New high score saved.</code></pre>
-<p>The <code>play_coinflip()</code> function checks the current high score and compares it to the final score for the current play session. So now the high score table has been updated.</p>
-<pre class="r"><code>hiscore::get_save_data()</code></pre>
+<p>Great job, you doubled the previous record!</p>
+<p>When you get a game over, the <code>play_coinflip()</code> function checks the current high score and compares it to the final score for the current play session. The saved data is overwritten if the score is higher.</p>
+<pre class="r"><code>get_save_data()</code></pre>
 <pre><code>      game high_score
 1 coinflip          2</code></pre>
-<p>I think it’s a good idea to make it easy for people to destroy the stored data if they want to, which you can do easily with <code>delete_save_data()</code>.</p>
-<pre class="r"><code>hiscore::delete_save_data()</code></pre>
+<p>I think it’s a good idea to make it easy for people to destroy the stored data if they want, which you can do easily with <code>delete_save_data()</code>.</p>
+<pre class="r"><code>delete_save_data()</code></pre>
 <pre><code>Really delete? [Y]es/[N]o: Y
 High score data deleted.</code></pre>
-<p>Of course, this could be amended to delete only the high score for a given player or game, rather than deleting the whole thing.</p>
 </div>
-</div>
-<div id="next" class="section level1">
-<h1>Next</h1>
-<p>How else could this approach be used in an R gaming perspective? You could use this to save a game state, similar to what’s done for <a href="https://www.rostrum.blog/2022/11/13/tamrgo/">{tamRgo}</a>. The user could choose <code>H</code>eads or <code>T</code>ails… or <code>S</code>ave, which would record the current streak so the user can return to the game later. But that feels like cheating for this kind of simple game!</p>
+<div id="game-over" class="section level1">
+<h1>Game over</h1>
+<p>How else could this approach be used in an R gaming perspective? You could use this to save a game state, similar to what’s done for <a href="https://www.rostrum.blog/2022/11/13/tamrgo/">{tamRgo}</a>. The user could input <code>S</code>ave instead of performing a guess, which would record the current status of the game so the user can return later. But that would feel like cheating for a game like coinflip.</p>
+<p>Speaking of, here’s a cheatcode as a bonus for reading this far:</p>
+<pre class="r"><code>cheat &lt;- function(game, score) {
+  user_dir &lt;- tools::R_user_dir(&quot;hiscore&quot;, &quot;data&quot;)
+  score_path &lt;- file.path(user_dir, &quot;score_table.rds&quot;)
+  score_table &lt;- readRDS(score_path)
+  score_game &lt;- score_table[score_table[[&quot;game&quot;]] == game, ]
+  score_game[[&quot;high_score&quot;]] &lt;- score
+  saveRDS(score_table, score_path)
+  message(&quot;Congrats! You scored &quot;, score, &quot; at &quot;, game, &quot;!&quot;)
+}
+
+cheat(&quot;coinflip&quot;, 1e100)</code></pre>
+<pre><code>Congrats! You scored 1e+100 at coinflip!</code></pre>
+<p>Heh heh heh.</p>
 <hr />
 <details>
 <summary>
@@ -98,7 +119,7 @@ Session info
 ##  collate  en_US.UTF-8
 ##  ctype    en_US.UTF-8
 ##  tz       Europe/London
-##  date     2023-07-15
+##  date     2023-07-16
 ##  pandoc   3.1.1 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)
 ## 
 ## ─ Packages ───────────────────────────────────────────────────────────────────
