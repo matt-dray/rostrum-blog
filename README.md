@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 4 day(s) ago: [Save high scores for
+🆕 The latest post was published 5 day(s) ago: [Save high scores for
 your R game](https://www.rostrum.blog/2023/07/15/hiscore/).
 
 📈 This 2D plot shows posts over time:
@@ -201,4 +201,4 @@ your R game](https://www.rostrum.blog/2023/07/15/hiscore/).
 
 ------------------------------------------------------------------------
 
-*Updated on 2023-07-19 at 03:48.*
+*Updated on 2023-07-20 at 02:40.*
