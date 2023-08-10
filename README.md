@@ -30,7 +30,7 @@ since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 8 day(s) ago: [One weird trick to
+🆕 The latest post was published 9 day(s) ago: [One weird trick to
 {monetize} your R
 package](https://www.rostrum.blog/2023/08/01/monetize/).
 
@@ -203,4 +203,4 @@ package](https://www.rostrum.blog/2023/08/01/monetize/).
 
 ------------------------------------------------------------------------
 
-*Updated on 2023-08-09 at 02:36.*
+*Updated on 2023-08-10 at 02:40.*
