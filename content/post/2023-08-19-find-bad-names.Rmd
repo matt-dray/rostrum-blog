@@ -1,0 +1,148 @@
+---
+title: 'Object of type closure can shut up'
+author: Matt Dray
+date: 2023-08-19
+slug: find-bad-names
+categories:
+  - code
+tags:
+  - r
+draft: yes
+---
+
+# tl;dr
+
+I wrote an R function to help identify where you've used a variable name that's already in use as a function name, like `c <- 1` or `head <- "x"`.
+
+# Naming and shaming
+
+Naming things is hard, yes, but `data` is a short and sensible choice for a dataframe, right?
+
+```{r error=TRUE}
+data[data$column == 1, ]
+```
+
+Oh, silly me, I tried to subset a dataframe called `data` without actually, y'know, creating it first.
+
+This is [a classic stumbling block](https://stackoverflow.com/search?q=%22object+of+type+%27closure%27+is+not+subsettable%22+%5Br%5D) in R. In short, there's already a function in base R called `data` and so ended up trying subset it. But you can't subset a function, hence the error.
+
+# What's in a name?
+
+Using existing function names as variable names is a [code smell](https://en.wikipedia.org/wiki/Code_smell). Especially if they're frequently used functions from base R like `head`, `str`, `paste`,  etc. 
+
+But R doesn't stop you from using these names. In general, R is pretty loose with variable naming, though you can't use a small set of [reserved words](https://search.r-project.org/R/refmans/base/html/Reserved.html) like `TRUE`, `if` or `NA`.
+
+For example, here we can call the `c()` function to see its (very short) definition. But using it as a variable name obscures the function definition.
+
+```{r c}
+c
+c <- 1; c; rm(c)
+```
+
+Can we write a generic function to identify if some code contains 'bad' variable names in this way?
+
+# Symbolic gesture
+
+Of course. I've made a function called `find_var_names()`. I'm certain the functionality already exists; consider this a thought experiment.
+
+You provide (a) a string of code to evaluate[^conn] and (b) a vector of names to avoid. The code is parsed to identify variable names. It checks for a `SYMBOL` token followed by the assignment operators `<-` or `=`[^assign], or preceded by an assignment operator in the case of `->`[^dassign] (i.e. `*_ASSIGN` tokens). These variable names are then compared to the set of names provided.
+
+```{r find-var-names}
+find_var_names <- function(code_string, names_to_find) {
+  
+  # Parse the string of code to identify R 'tokens'
+  parsed <- getParseData(parse(text = code_string, keep.source = TRUE))
+  parsed <- parsed[parsed$text != "", ]
+  
+  # Identify subsequent tokens (to help find 'x' in x <- 1 and x = 1)
+  parsed$next_token <- 
+    c(parsed$token[2:nrow(parsed)], NA_character_)
+  
+  # Identify prior token (to help find 'x' in 1 -> x)
+  parsed$last_token <- 
+    c(NA_character_, parsed$token[1:nrow(parsed) - 1])
+  
+  # Identify variable names with left-assignment
+  lassign <- 
+    parsed[parsed$token == "SYMBOL" & grepl("ASSIGN", parsed$next_token), ]
+  
+  # Identify row index for variable names following right-assignment
+  rassign_i <- 
+    which(parsed$token == "RIGHT_ASSIGN" & parsed$next_token == "SYMBOL") + 1
+  
+  # Filter for right-assigned variable names
+  rassign <- parsed[rassign_i, ]
+  
+  # Combine the results and sort by location
+  var_names <- rbind(lassign, rassign)
+  var_names <- var_names[sort(row.names(var_names)), ]
+  
+  # Filter for variable names that are in the provided names list
+  var_names[var_names$text %in% names_to_find, !grepl("_token", names(var_names))]
+  
+}
+```
+
+So, let's say we have this snippet of R code[^rstring] below. It uses some variable names that are already function names, as well as each flavour of assignment.
+
+```{r demo-code}
+demo_code <- r"{data <- "x"
+head = head(chickwts)
+"y" -> df
+a <- beaver1[1:3]
+b <- 2 -> c}"
+```
+
+And here's a function that grabs the base packages and the function names within. This is what we'll use as our 'no-go' variable names. You could expand this to include other names, like function names from the tidyverse, for example.
+
+```{r get-base-functions}
+get_base_functions <- function() {
+  base_names <- sessionInfo()$basePkgs
+  base_pkgs <- paste0("package:", base_names)
+  lapply(base_pkgs, ls) |> unlist() |> unique() |> sort()
+}
+
+tail(get_base_functions())
+```
+
+Aside: this function uses a little hack. It specificaloy grabs the attached base packages from the `sessionInfo()` listing. There are other base and 'recommended' packages that are actually not attached from the start of your session; see the `Priority` value from the output of `installed.packages()`.
+
+Now we can run the function to check the code for the list of function names.
+
+```{r naughty-wrods}
+naughty_words <- find_var_names(
+  code_string = demo_code,
+  names_to_find = get_base_functions()
+)
+
+naughty_words
+```
+
+The output is what you get from `getparsedata(parse())`[^parse], filtered for the illegal names. Helpfully it shows you the exact row and column indices for where the string exists in the code you provided.
+
+And of course you can just isolate the offenders.
+
+```{r}
+naughty$text |> unique() |> sort()
+```
+
+Yes, sometimes I use `df` as a name for temporary dataframes too.
+
+## Seeking closure
+
+I probably won't use this function in real life, but maybe the concepts are interesting to you or you can tell me about a linter that does this already.
+
+At least for now, object of type 'Matthew' is not upsettable.
+
+---
+<details><summary>Session info</summary>
+```{r eval=TRUE, sessioninfo, echo=FALSE}
+sessioninfo::session_info()
+```
+</details>
+
+[^rstring]: This is an 'R string', introduced in R version 4.0.0. It deals with escaping characters and using quotes within quotes. So `"x <- "y""` will error but `r"(x <- "y")"` will return `"x <- \"y\""`.  You can use symbols other than parentheses, such as curly braces, if your expression already contains parentheses itself.
+[^assign]: If you haven't already [expunged](https://www.rostrum.blog/2021/03/13/assign/) any files containing equals assignment.
+[^dassign]: I'll have to update this in future to work with [down-assignment arrows](https://www.rostrum.blog/2022/06/07/assign-down/).
+[^parse]: If you can be parsed, I've [written about this](https://www.rostrum.blog/2023/03/03/getparsedata/) before.
+[^conn]: Exercise for the reader: have the function accept script files from a connection, not just as a string. I didn't bother for this silly demo.
