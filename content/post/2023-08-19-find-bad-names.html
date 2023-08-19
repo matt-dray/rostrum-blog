@@ -1,0 +1,174 @@
+---
+title: Object of type closure can shut up
+author: Matt Dray
+date: 2023-08-19
+slug: find-bad-names
+categories:
+  - code
+tags:
+  - r
+---
+
+
+
+<p><img src="/post/2023-08-19-find-bad-names_files/paste.png" style="width:100.0%" fig-alt="A string of R code written in Comic Sans that says &#39;paste &lt;- paste(paste)&#39;." /></p>
+<div id="tldr" class="section level1">
+<h1>tl;dr</h1>
+<p>I wrote an R function to help identify variable names that already exist as function names, like in <code>c &lt;- 1</code> or <code>head &lt;- "x"</code>.</p>
+</div>
+<div id="naming-and-shaming" class="section level1">
+<h1>Naming and shaming</h1>
+<p>Naming things is hard, yes, but <code>data</code> is a short and sensible choice for a dataframe, right?</p>
+<pre class="r"><code>data[data$column == 1, ]</code></pre>
+<pre><code>## Error in data$column: object of type &#39;closure&#39; is not subsettable</code></pre>
+<p>Oh, silly me, I tried to subset a dataframe called <code>data</code> without actually, y’know, creating it first.</p>
+<p>This is <a href="https://stackoverflow.com/search?q=%22object+of+type+%27closure%27+is+not+subsettable%22+%5Br%5D">a classic stumbling block</a> in R. In short, there’s already a function in base R called <code>data</code> and so ended up trying subset it. But you can’t subset a function, hence the error.</p>
+<p>Here’s what happens if you subset a non-existent object that has a name that’s different to any existing functions:</p>
+<pre class="r"><code>x[x$column == 1, ]</code></pre>
+<pre><code>## Error in eval(expr, envir, enclos): object &#39;x&#39; not found</code></pre>
+<p>‘Object not found’ is a much more helpful error message.</p>
+</div>
+<div id="whats-in-a-name" class="section level1">
+<h1>What’s in a name?</h1>
+<p>So it’s not a big deal, but using existing function names as variable names is a <a href="https://en.wikipedia.org/wiki/Code_smell">code smell</a>. Especially if they’re frequently used functions from base R like <code>head</code>, <code>str</code>, <code>paste</code>, etc.</p>
+<p>But R doesn’t stop you from using these names. In general, R is pretty loose with variable naming, though you can’t use a small set of <a href="https://search.r-project.org/R/refmans/base/html/Reserved.html">reserved words</a> like <code>TRUE</code>, <code>if</code> or <code>NA</code>.</p>
+<p>For example, here we can call the <code>c()</code> function to see its (very short) definition. But using it as a variable name obscures the function definition.</p>
+<pre class="r"><code>c  # this refers to the function</code></pre>
+<pre><code>## function (...)  .Primitive(&quot;c&quot;)</code></pre>
+<pre class="r"><code>c &lt;- 1
+c  # this now refers to the variable!</code></pre>
+<pre><code>## [1] 1</code></pre>
+<pre class="r"><code>rm(c)  # tidy up by removing variable</code></pre>
+<p>Can we write a generic function to identify if some code contains ‘bad’ variable names in this way?</p>
+</div>
+<div id="symbolic-gesture" class="section level1">
+<h1>Symbolic gesture</h1>
+<p>Of course. I’ve made a function called <code>find_var_names()</code>. I’m certain the functionality already exists; consider this a thought experiment.</p>
+<p>You provide (a) a string of code to evaluate<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> and (b) a vector of names to avoid. The code is parsed with <code>getparsedata(parse())</code> to identify variable names<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>. It checks for a <code>SYMBOL</code> token followed by the assignment operators <code>&lt;-</code> or <code>=</code><a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>, or preceded by an assignment operator in the case of <code>-&gt;</code><a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> (i.e. <code>*_ASSIGN</code> tokens). These variable names are then compared to the set of names provided.</p>
+<pre class="r"><code>find_var_names &lt;- function(code_string, names_to_find) {
+  
+  # Parse the string of code to identify R &#39;tokens&#39;
+  parsed &lt;- getParseData(parse(text = code_string, keep.source = TRUE))
+  parsed &lt;- parsed[parsed$text != &quot;&quot;, ]
+  
+  # Identify subsequent tokens (to help find &#39;x&#39; in x &lt;- 1 and x = 1)
+  parsed$next_token &lt;- 
+    c(parsed$token[2:nrow(parsed)], NA_character_)
+  
+  # Identify prior token (to help find &#39;x&#39; in 1 -&gt; x)
+  parsed$last_token &lt;- 
+    c(NA_character_, parsed$token[1:nrow(parsed) - 1])
+  
+  # Identify variable names with left-assignment
+  lassign &lt;- 
+    parsed[parsed$token == &quot;SYMBOL&quot; &amp; grepl(&quot;ASSIGN&quot;, parsed$next_token), ]
+  
+  # Identify row index for variable names following right-assignment
+  rassign_i &lt;- 
+    which(parsed$token == &quot;RIGHT_ASSIGN&quot; &amp; parsed$next_token == &quot;SYMBOL&quot;) + 1
+  
+  # Filter for right-assigned variable names
+  rassign &lt;- parsed[rassign_i, ]
+  
+  # Combine the results and sort by location
+  var_names &lt;- rbind(lassign, rassign)
+  var_names &lt;- var_names[sort(row.names(var_names)), ]
+  
+  # Filter for variable names that are in the provided names list
+  var_names[var_names$text %in% names_to_find, !grepl(&quot;_token&quot;, names(var_names))]
+  
+}</code></pre>
+<p>So, let’s say we have this snippet of R code<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> below. It uses some variable names that are already function names, as well as each flavour of assignment.</p>
+<pre class="r"><code>demo_code &lt;- r&quot;{data &lt;- &quot;x&quot;
+head = head(chickwts)
+&quot;y&quot; -&gt; df
+a &lt;- beaver1[1:3]
+b &lt;- 2 -&gt; c}&quot;</code></pre>
+<p>And here’s a function that grabs the base packages and the function names within. This is what we’ll use as our ‘no-go’ variable names. You could expand this to include other names, like function names from the tidyverse, for example.</p>
+<pre class="r"><code>get_base_functions &lt;- function() {
+  base_names &lt;- sessionInfo()$basePkgs
+  base_pkgs &lt;- paste0(&quot;package:&quot;, base_names)
+  lapply(base_pkgs, ls) |&gt; unlist() |&gt; unique() |&gt; sort()
+}
+
+tail(get_base_functions())</code></pre>
+<pre><code>## [1] &quot;xyTable&quot;    &quot;xyz.coords&quot; &quot;xzfile&quot;     &quot;yinch&quot;      &quot;zapsmall&quot;  
+## [6] &quot;zip&quot;</code></pre>
+<p>Aside: this function uses a little hack. It specificaloy grabs the attached base packages from the <code>sessionInfo()</code> listing. There are other base and ‘recommended’ packages that are actually not attached from the start of your session; see the <code>Priority</code> value from the output of <code>installed.packages()</code>.</p>
+<p>Now we can run the function to check the code for the list of function names.</p>
+<pre class="r"><code>naughty_words &lt;- find_var_names(
+  code_string = demo_code,
+  names_to_find = get_base_functions()
+)
+
+naughty_words</code></pre>
+<pre><code>##    line1 col1 line2 col2 id parent  token terminal text
+## 1      1    1     1    4  1      3 SYMBOL     TRUE data
+## 10     2    1     2    4 10     12 SYMBOL     TRUE head
+## 31     3    8     3    9 31     33 SYMBOL     TRUE   df
+## 64     5   11     5   11 64     66 SYMBOL     TRUE    c</code></pre>
+<p>The output is what you normally get from <code>getparsedata(parse())</code>, filtered for the illegal names. Helpfully it shows you the exact row and column indices for where the string exists in the code you provided.</p>
+<p>And of course you can just isolate the offenders.</p>
+<pre class="r"><code>naughty_words$text |&gt; unique() |&gt; sort()</code></pre>
+<pre><code>## [1] &quot;c&quot;    &quot;data&quot; &quot;df&quot;   &quot;head&quot;</code></pre>
+<div id="seeking-closure" class="section level2">
+<h2>Seeking closure</h2>
+<p>I probably won’t use this function in real life, but maybe the concepts are interesting to you or you can tell me about a linter that does this already.</p>
+<p>At least for now, object of type ‘Matthew’ is not upsettable.</p>
+<hr />
+<details>
+<summary>
+Session info
+</summary>
+<pre><code>## ─ Session info ───────────────────────────────────────────────────────────────
+##  setting  value
+##  version  R version 4.3.1 (2023-06-16)
+##  os       macOS Big Sur 11.6.7
+##  system   x86_64, darwin20
+##  ui       X11
+##  language (EN)
+##  collate  en_US.UTF-8
+##  ctype    en_US.UTF-8
+##  tz       Europe/London
+##  date     2023-08-19
+##  pandoc   3.1.1 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)
+## 
+## ─ Packages ───────────────────────────────────────────────────────────────────
+##  package     * version date (UTC) lib source
+##  blogdown      1.18    2023-06-19 [1] CRAN (R 4.3.0)
+##  bookdown      0.34    2023-05-09 [1] CRAN (R 4.3.0)
+##  bslib         0.5.0   2023-06-09 [1] CRAN (R 4.3.0)
+##  cachem        1.0.8   2023-05-01 [1] CRAN (R 4.3.0)
+##  cli           3.6.1   2023-03-23 [1] CRAN (R 4.3.0)
+##  digest        0.6.31  2022-12-11 [1] CRAN (R 4.3.0)
+##  evaluate      0.21    2023-05-05 [1] CRAN (R 4.3.0)
+##  fastmap       1.1.1   2023-02-24 [1] CRAN (R 4.3.0)
+##  htmltools     0.5.5   2023-03-23 [1] CRAN (R 4.3.0)
+##  jquerylib     0.1.4   2021-04-26 [1] CRAN (R 4.3.0)
+##  jsonlite      1.8.5   2023-06-05 [1] CRAN (R 4.3.0)
+##  knitr         1.43    2023-05-25 [1] CRAN (R 4.3.0)
+##  R6            2.5.1   2021-08-19 [1] CRAN (R 4.3.0)
+##  rlang         1.1.1   2023-04-28 [1] CRAN (R 4.3.0)
+##  rmarkdown     2.22    2023-06-01 [1] CRAN (R 4.3.0)
+##  rstudioapi    0.14    2022-08-22 [1] CRAN (R 4.3.0)
+##  sass          0.4.6   2023-05-03 [1] CRAN (R 4.3.0)
+##  sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.3.0)
+##  xfun          0.39    2023-04-20 [1] CRAN (R 4.3.0)
+##  yaml          2.3.7   2023-01-23 [1] CRAN (R 4.3.0)
+## 
+##  [1] /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/library
+## 
+## ──────────────────────────────────────────────────────────────────────────────</code></pre>
+</details>
+</div>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>Exercise for the reader: have the function accept script files from a connection, not just as a string. I didn’t bother for this silly demo.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>If you can be parsed, I’ve <a href="https://www.rostrum.blog/2023/03/03/getparsedata/">written about this</a> before.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>If you haven’t already <a href="https://www.rostrum.blog/2021/03/13/assign/">expunged</a> any files containing equals assignment.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>I’ll have to update this in future to work with <a href="https://www.rostrum.blog/2022/06/07/assign-down/">down-assignment arrows</a>.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>This is an ‘R string’, introduced in R version 4.0.0. It deals with escaping certain characters and quotes within quotes so that you don’t have to. So <code>"x &lt;- "y""</code> will error but <code>r"(x &lt;- "y")"</code> will return <code>"x &lt;- \"y\""</code>. You can use symbols other than parentheses, such as curly braces, if your expression already contains parentheses itself.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>

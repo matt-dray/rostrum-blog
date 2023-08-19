@@ -1,5 +1,5 @@
 ---
-title: 'Object of type closure can shut up'
+title: Object of type closure can shut up
 author: Matt Dray
 date: 2023-08-19
 slug: find-bad-names
@@ -7,12 +7,13 @@ categories:
   - code
 tags:
   - r
-draft: yes
 ---
+
+![](/post/2023-08-19-find-bad-names_files/paste.png){fig-alt="A string of R code written in Comic Sans that says 'paste <- paste(paste)'." width="100%"}
 
 # tl;dr
 
-I wrote an R function to help identify where you've used a variable name that's already in use as a function name, like `c <- 1` or `head <- "x"`.
+I wrote an R function to help identify variable names that already exist as function names, like in `c <- 1` or `head <- "x"`.
 
 # Naming and shaming
 
@@ -26,17 +27,27 @@ Oh, silly me, I tried to subset a dataframe called `data` without actually, y'kn
 
 This is [a classic stumbling block](https://stackoverflow.com/search?q=%22object+of+type+%27closure%27+is+not+subsettable%22+%5Br%5D) in R. In short, there's already a function in base R called `data` and so ended up trying subset it. But you can't subset a function, hence the error.
 
+Here's what happens if you subset a non-existent object that has a name that's different to any existing functions:
+
+```{r x, error=TRUE}
+x[x$column == 1, ]
+```
+
+'Object not found' is a much more helpful error message.
+
 # What's in a name?
 
-Using existing function names as variable names is a [code smell](https://en.wikipedia.org/wiki/Code_smell). Especially if they're frequently used functions from base R like `head`, `str`, `paste`,  etc. 
+So it's not a big deal, but using existing function names as variable names is a [code smell](https://en.wikipedia.org/wiki/Code_smell). Especially if they're frequently used functions from base R like `head`, `str`, `paste`,  etc. 
 
 But R doesn't stop you from using these names. In general, R is pretty loose with variable naming, though you can't use a small set of [reserved words](https://search.r-project.org/R/refmans/base/html/Reserved.html) like `TRUE`, `if` or `NA`.
 
 For example, here we can call the `c()` function to see its (very short) definition. But using it as a variable name obscures the function definition.
 
 ```{r c}
-c
-c <- 1; c; rm(c)
+c  # this refers to the function
+c <- 1
+c  # this now refers to the variable!
+rm(c)  # tidy up by removing variable
 ```
 
 Can we write a generic function to identify if some code contains 'bad' variable names in this way?
@@ -45,7 +56,7 @@ Can we write a generic function to identify if some code contains 'bad' variable
 
 Of course. I've made a function called `find_var_names()`. I'm certain the functionality already exists; consider this a thought experiment.
 
-You provide (a) a string of code to evaluate[^conn] and (b) a vector of names to avoid. The code is parsed to identify variable names. It checks for a `SYMBOL` token followed by the assignment operators `<-` or `=`[^assign], or preceded by an assignment operator in the case of `->`[^dassign] (i.e. `*_ASSIGN` tokens). These variable names are then compared to the set of names provided.
+You provide (a) a string of code to evaluate[^conn] and (b) a vector of names to avoid. The code is parsed with `getparsedata(parse())` to identify variable names[^parse]. It checks for a `SYMBOL` token followed by the assignment operators `<-` or `=`[^assign], or preceded by an assignment operator in the case of `->`[^dassign] (i.e. `*_ASSIGN` tokens). These variable names are then compared to the set of names provided.
 
 ```{r find-var-names}
 find_var_names <- function(code_string, names_to_find) {
@@ -109,7 +120,7 @@ Aside: this function uses a little hack. It specificaloy grabs the attached base
 
 Now we can run the function to check the code for the list of function names.
 
-```{r naughty-wrods}
+```{r naughty-words-df}
 naughty_words <- find_var_names(
   code_string = demo_code,
   names_to_find = get_base_functions()
@@ -118,15 +129,13 @@ naughty_words <- find_var_names(
 naughty_words
 ```
 
-The output is what you get from `getparsedata(parse())`[^parse], filtered for the illegal names. Helpfully it shows you the exact row and column indices for where the string exists in the code you provided.
+The output is what you normally get from `getparsedata(parse())`, filtered for the illegal names. Helpfully it shows you the exact row and column indices for where the string exists in the code you provided.
 
 And of course you can just isolate the offenders.
 
-```{r}
-naughty$text |> unique() |> sort()
+```{r naughty-words-vec}
+naughty_words$text |> unique() |> sort()
 ```
-
-Yes, sometimes I use `df` as a name for temporary dataframes too.
 
 ## Seeking closure
 
@@ -141,7 +150,7 @@ sessioninfo::session_info()
 ```
 </details>
 
-[^rstring]: This is an 'R string', introduced in R version 4.0.0. It deals with escaping characters and using quotes within quotes. So `"x <- "y""` will error but `r"(x <- "y")"` will return `"x <- \"y\""`.  You can use symbols other than parentheses, such as curly braces, if your expression already contains parentheses itself.
+[^rstring]: This is an 'R string', introduced in R version 4.0.0. It deals with escaping certain characters and quotes within quotes so that you don't have to. So `"x <- "y""` will error but `r"(x <- "y")"` will return `"x <- \"y\""`.  You can use symbols other than parentheses, such as curly braces, if your expression already contains parentheses itself.
 [^assign]: If you haven't already [expunged](https://www.rostrum.blog/2021/03/13/assign/) any files containing equals assignment.
 [^dassign]: I'll have to update this in future to work with [down-assignment arrows](https://www.rostrum.blog/2022/06/07/assign-down/).
 [^parse]: If you can be parsed, I've [written about this](https://www.rostrum.blog/2023/03/03/getparsedata/) before.
