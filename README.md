@@ -25,14 +25,13 @@ theme. Deployed with [Netlify](https://www.netlify.com/).
 
 # Stats
 
-🔢 There have been 153 posts on [the blog](https://www.rostrum.blog/)
+🔢 There have been 154 posts on [the blog](https://www.rostrum.blog/)
 since 2018-04-14.
 
 📅 That’s a post roughly every 13 days, or about 2.4 posts per month.
 
-🆕 The latest post was published 18 day(s) ago: [One weird trick to
-{monetize} your R
-package](https://www.rostrum.blog/2023/08/01/monetize/).
+🆕 The latest post was published 1 day(s) ago: [Object of type closure
+can shut up](https://www.rostrum.blog/2023/08/19/find-bad-names/).
 
 📈 This 2D plot shows posts over time:
 
@@ -45,6 +44,7 @@ package](https://www.rostrum.blog/2023/08/01/monetize/).
 
 | Number | Date       | Title                                                                                                                     |
 |-------:|:-----------|:--------------------------------------------------------------------------------------------------------------------------|
+|    154 | 2023-08-19 | [Object of type closure can shut up](https://www.rostrum.blog/2023/08/19/find-bad-names/)                                 |
 |    153 | 2023-08-01 | [One weird trick to {monetize} your R package](https://www.rostrum.blog/2023/08/01/monetize/)                             |
 |    152 | 2023-07-15 | [Save high scores for your R game](https://www.rostrum.blog/2023/07/15/hiscore/)                                          |
 |    151 | 2023-06-21 | [Convert a Word table to Markdown](https://www.rostrum.blog/2023/06/21/wordup-tables/)                                    |
@@ -203,4 +203,4 @@ package](https://www.rostrum.blog/2023/08/01/monetize/).
 
 ------------------------------------------------------------------------
 
-*Updated on 2023-08-19 at 02:22.*
+*Updated on 2023-08-20 at 02:26.*
