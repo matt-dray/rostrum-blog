@@ -25,7 +25,7 @@ data[data$column == 1, ]
 
 Oh, silly me, I tried to subset a dataframe called `data` without actually, y'know, creating it first.
 
-This is [a classic stumbling block](https://stackoverflow.com/search?q=%22object+of+type+%27closure%27+is+not+subsettable%22+%5Br%5D) in R. In short, there's already a function in base R called `data` and I ended up trying subset it. But you can't subset a function, hence the error.
+This is [a classic stumbling block](https://stackoverflow.com/search?q=%22object+of+type+%27closure%27+is+not+subsettable%22+%5Br%5D) in R. In short, there's already a function in base R called `data()` (!) and I ended up trying subset it. But you can't subset a function, hence the error.
 
 Here's what happens if you subset a non-existent object that has a name that's different to any existing functions:
 
@@ -37,9 +37,9 @@ x[x$column == 1, ]
 
 # What's in a name?
 
-So it's not a big deal, but using existing function names as variable names is a [code smell](https://en.wikipedia.org/wiki/Code_smell). Especially if they're frequently used functions from base R like `head`, `str`, `paste`,  etc[^subtweet].
+So it's not a big deal, but using existing function names as variable names is a [code smell](https://en.wikipedia.org/wiki/Code_smell). Especially if they're frequently used functions from base R like `head()`, `str()`, `paste()`,  etc[^subtweet].
 
-But R doesn't stop you from using these names. In general, R is pretty loose with variable naming, though you can't use a small set of [reserved words](https://search.r-project.org/R/refmans/base/html/Reserved.html) like `TRUE`, `if` or `NA`.
+But R doesn't stop you from using these names. In general, R is pretty loose with variable naming, though you can't use a small set of [reserved words](https://search.r-project.org/R/refmans/base/html/Reserved.html) like `TRUE`, `if` or `NA`[^backticks].
 
 For example, here we can call the `c()` function to see its (very short) definition. But using it as a variable name obscures the function definition.
 
@@ -97,11 +97,13 @@ find_var_names <- function(code_string, names_to_find) {
 So, let's say we have this snippet of R code[^rstring] below. It uses some variable names that are already function names, as well as each flavour of assignment.
 
 ```{r demo-code}
-demo_code <- r"{data <- "x"
+demo_code <- r"{
+data <- "x"
 head = head(chickwts)
 "y" -> df
-a <- beaver1[1:3]
-b <- 2 -> c}"
+a <- beaver1[1:3, ]
+b <- 2 -> c
+}"
 ```
 
 And here's a function that grabs the base packages and the function names within. This is what we'll use as our 'no-go' variable names. You could expand this to include other names, like function names from the tidyverse, for example.
@@ -137,6 +139,10 @@ And of course you can just isolate the offenders.
 naughty_words$text |> unique() |> sort()
 ```
 
+So the variable names `a` and `b` in `demo_code` were ignored because they're not function names in base R. And the in-built data sets `beaver1` and `chickwts` were also ignored, because they're not being used as variable names. 
+
+And yes, `df`---a commonly-used variable name for dataframes---is also a function!
+
 ## Seeking closure
 
 I probably won't use this function in real life, but maybe the concepts are interesting to you or you can tell me about a linter that does this already.
@@ -155,4 +161,5 @@ sessioninfo::session_info()
 [^dassign]: I'll have to update this in future to work with [down-assignment arrows](https://www.rostrum.blog/2022/06/07/assign-down/).
 [^parse]: If you can be parsed, I've [written about this](https://www.rostrum.blog/2023/03/03/getparsedata/) before.
 [^conn]: Exercise for the reader: have the function accept script files from a connection, not just as a string. I didn't bother for this silly demo.
-[^subtweet]: Please note that this post is not a subtweet! I've read a bunch of code recently---including my own!---that uses variable names in this way.
+[^subtweet]: Please note that this post is not a subtweet. I've read a bunch of code recently---including my own!---that uses variable names in this way.
+[^backticks]: Although the more nefarious among you will know you can put just about anything in backticks and it can be a legit variable name. So `` `TRUE` <- FALSE `` will work, but you'll have to supply `` `TRUE` `` with the backticks to use it.
