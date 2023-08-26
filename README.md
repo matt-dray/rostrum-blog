@@ -7,13 +7,18 @@
 
 <!-- badges: start -->
 
+[![Project Status: Moved to http://github.com/matt-dray/rostrum-blog-2 – The project has been moved to a new location, and the version at that location should be considered authoritative.](https://www.repostatus.org/badges/latest/moved.svg)](https://www.repostatus.org/#moved)
 [![rostrum.blog
 post](https://img.shields.io/badge/rostrum-blog-008900?style=flat&labelColor=black&logo=data:image/gif;base64,R0lGODlhEAAQAPEAAAAAABWCBAAAAAAAACH5BAlkAAIAIf8LTkVUU0NBUEUyLjADAQAAACwAAAAAEAAQAAAC55QkISIiEoQQQgghRBBCiCAIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAAh+QQJZAACACwAAAAAEAAQAAAC55QkIiESIoQQQgghhAhCBCEIgiAIgiAIQiAIgSAIgiAIQiAIgRAEQiAQBAQCgUAQEAQEgYAgIAgIBAKBQBAQCAKBQEAgCAgEAoFAIAgEBAKBIBAQCAQCgUAgEAgCgUBAICAgICAgIBAgEBAgEBAgEBAgECAgICAgECAQIBAQIBAgECAgICAgICAgECAQECAQICAgICAgICAgEBAgEBAgEBAgICAgICAgECAQIBAQIBAgECAgICAgIBAgECAQECAQIBAgICAgIBAgIBAgEBAgECAgECAgICAgICAgECAgECAgQIAAAQIKAAA7)](https://www.rostrum.blog/)
 [![License: CC BY-NC-SA
 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
-[![Netlify
-Status](https://api.netlify.com/api/v1/badges/ebfbdae4-a903-43e8-9f53-75becd95b42e/deploy-status)](https://app.netlify.com/sites/rostrum/deploys)
 <!-- badges: end -->
+
+The source code for [rostrum.blog](https://www.rostrum.blog) has moved to [github.com/matt-dray/rostrum-blog-2](https://www.github.com/matt-dray/rostrum-blog-2) (August 2023).
+
+This original source code was written with [{blogdown}](https://cran.r-project.org/package=blogdown). The new version is in [Quarto](https://quarto.org/).
+
+<details><summary>Click for the final README content before the switch.</summary>
 
 Source files for [rostrum.blog](https://www.rostrum.blog/): fun and
 learning with the R language. Read more on the
@@ -204,3 +209,4 @@ can shut up](https://www.rostrum.blog/2023/08/19/find-bad-names/).
 ------------------------------------------------------------------------
 
 *Updated on 2023-08-26 at 02:25.*
+</details>
